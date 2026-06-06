@@ -13,14 +13,11 @@ user = "greeter"
 command = "dms-greeter --command niri"
 EOF
 
-# Set Greetd as default display manager
-rm -f /etc/systemd/system/display-manager.service
-ln -s /usr/lib/systemd/system/greetd.service /etc/systemd/system/display-manager.service
-systemctl enable --force greetd.service
+# Set Greetd as default display manager (Approccio nativo Systemd)
+systemctl enable greetd.service
 
-# Setup DMS service for new users
-mkdir -p /etc/skel/.config/systemd/user/graphical-session.target.wants
-ln -s /usr/lib/systemd/user/dms.service /etc/skel/.config/systemd/user/graphical-session.target.wants/
+# Setup DMS service for all new users (Abilitazione globale)
+systemctl --global enable dms.service
 
 # Copy Niri dotfiles to skel
 mkdir -p /etc/skel/.config/niri/
