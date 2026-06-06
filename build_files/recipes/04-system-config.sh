@@ -13,18 +13,24 @@ user = "greeter"
 command = "dms-greeter --command niri"
 EOF
 
-# Set Greetd as default display manager (Approccio nativo Systemd)
-systemctl enable greetd.service
+# FIX: Architettura Systemd nativa (Systemd Presets) invece di usare systemctl enable
+mkdir -p /usr/lib/systemd/system-preset/
+mkdir -p /usr/lib/systemd/user-preset/
 
-# Setup DMS service for all new users (Abilitazione globale)
-systemctl --global enable dms.service
+# Set Greetd e Podman come default (livello System)
+echo "enable greetd.service" > /usr/lib/systemd/system-preset/99-ermeteos.preset
+echo "enable podman.socket" >> /usr/lib/systemd/system-preset/99-ermeteos.preset
+
+# Setup DMS service for all new users (livello User)
+echo "enable dms.service" > /usr/lib/systemd/user-preset/99-ermeteos.preset
 
 # Copy Niri dotfiles to skel
 mkdir -p /etc/skel/.config/niri/
 cp -rf /ctx/dot_config/niri/config.kdl /etc/skel/.config/niri/
 
-#### Enable podman
-systemctl enable podman.socket
+# FIX: Assicura i permessi corretti per lo skeleton directory
+chown -R root:root /etc/skel/
+chmod -R 755 /etc/skel/
 
 # Remove waybar
 dnf -y remove waybar
