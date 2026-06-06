@@ -1,14 +1,15 @@
 # Allow build scripts to be referenced without being copied into the final image
 FROM scratch AS ctx
-COPY build_files /
+# FIX: Applica permessi sicuri già nello stage rootless per evitare LPE nei mount bindati
+COPY --chown=0:0 build_files /
 
 # Base Image
 FROM ghcr.io/rakuos/rakuos-base-nvidia:latest
 RUN sed -i 's/^ID=.*/ID=fedora/' /etc/os-release
 
 # Copy Homebrew files from the brew image
-# And enable
-COPY --from=ghcr.io/ublue-os/brew:latest /system_files /
+# FIX: Aggiunto --chown=0:0 per coerenza di sicurezza sui binari iniettati
+COPY --from=ghcr.io/ublue-os/brew:latest --chown=0:0 /system_files /
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     --mount=type=tmpfs,dst=/tmp \
