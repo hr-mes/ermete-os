@@ -1,9 +1,9 @@
-name: Build and Package Morros OS
+name: Build and Package Ermeteos OS
 
 on:
   push:
-    branches: [ "main", "master" ] # Modifica se il tuo branch principale si chiama diversamente
-  workflow_dispatch: # Ti permette di avviare la build manualmente da GitHub
+    branches: [ "main", "master" ]
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
@@ -20,7 +20,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up QEMU (for multi-architecture support if needed)
+      - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
@@ -37,7 +37,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }} / ${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest
             type=sha,format=short
@@ -68,7 +68,6 @@ jobs:
         run: mkdir -p ./output
 
       - name: Build ISO via bootc-image-builder
-        # Usiamo sudo perché l'esecutore di bootc-image-builder richiede privilegi di root per isolare i container di loopback
         run: |
           sudo docker run \
             --rm \
@@ -77,12 +76,12 @@ jobs:
             -v ./output:/output \
             quay.io/centos-bootc/bootc-image-builder:latest \
             --type iso \
-            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
       - name: Upload ISO Artifact
         uses: actions/actions-artifact@v4
         with:
-          name: morros-fedora-iso
+          name: ermeteos-iso
           path: ./output/bootiso/install.iso
           if-no-files-found: error
           retention-days: 7
