@@ -1,7 +1,6 @@
 # Allow build scripts to be referenced without being copied into the final image
 FROM scratch AS ctx
 COPY build_files /
-COPY dot_config /dot_config
 
 # Base Image
 FROM ghcr.io/rakuos/rakuos-base-nvidia:latest
