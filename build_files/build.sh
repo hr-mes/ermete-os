@@ -18,25 +18,15 @@ dnf -y install ffmpeg x264-libs obs-studio obs-studio-plugin-x264 libva-utils --
 # Nautilus open any terminal extension
 curl -Lo /etc/yum.repos.d/nautilus-open-any-terminal.repo \
   https://copr.fedorainfracloud.org/coprs/monkeygold/nautilus-open-any-terminal/repo/fedora-$(rpm -E %fedora)/monkeygold-nautilus-open-any-terminal-fedora-$(rpm -E %fedora).repo
-# dnf install -y nautilus-open-any-terminal
-# glib-compile-schemas /usr/share/glib-2.0/schemas
-# gsettings set com.github.stunkymonkey.nautilus-open-any-terminal terminal kitty
-
 
 # Install Niri 
 dnf -y install niri bibata-cursor-theme
-
-# # Install Noctalia shell
-# curl -fsSL https://github.com/terrapkg/subatomic-repos/raw/main/terra.repo -o /etc/yum.repos.d/terra.repo
-# dnf -y install terra-release
-# dnf -y install noctalia-shell 
-# # ABILITARE LE NOTIFICHE: systemctl --user enable --now swaync.service
 
 # Install Dank Linux shell
 sudo curl --output-dir "/etc/yum.repos.d/" \
   --remote-name "https://copr.fedorainfracloud.org/coprs/avengemedia/dms/repo/fedora-$(rpm -E %fedora)/avengemedia-dms-fedora-$(rpm -E %fedora).repo"
 dnf -y install quickshell dms greetd dms-greeter --allowerasing 
-#
+
 # Install greetd login manager with dank configuration (still needs some work)
 mkdir -p /etc/greetd/
 cat > /etc/greetd/config.toml << EOF
@@ -55,13 +45,7 @@ ln -s /usr/lib/systemd/user/dms.service /etc/skel/.config/systemd/user/graphical
 mkdir -p /etc/skel/.config/niri/
 cp -rf /ctx/dot_config/niri/config.kdl /etc/skel/.config/niri/
 
-# DEV packages
-# cargo evtest git input-remapper libevdev-devel libinput-utils python3-devel
-
-# dnf -y install bitwarden-cli 
-
 #### Enable podman
-
 systemctl enable podman.socket
 
 # Remove waybar
