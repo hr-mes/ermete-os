@@ -2,20 +2,23 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:best-practices",
+    "docker:enableMajor",
+    "github>whitesource/merge-confidence:beta"
   ],
-
-  "rebaseWhen": "never",
-
-  "packageRules": [
-    {
+  "rebaseWhen": "auto",
+  "packageRules":,
       "automerge": true,
-      "matchUpdateTypes": ["pin", "pinDigest"]
+      "automergeType": "pr"
     },
     {
-      "enabled": false,
-      "matchUpdateTypes": ["digest", "pinDigest", "pin"],
-      "matchDepTypes": ["container"],
-      "matchFileNames": [".github/workflows/**.yaml", ".github/workflows/**.yml"],
+      "matchManagers": ["github-actions"],
+      "pinDigests": true,
+      "extends":
     },
+    {
+      "matchManagers": ["dockerfile"],
+      "matchUpdateTypes":,
+      "automerge": true
+    }
   ]
 }
