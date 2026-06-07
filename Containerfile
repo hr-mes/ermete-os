@@ -10,6 +10,7 @@ RUN sed -i 's/^ID=.*/ID=fedora/' /etc/os-release
 # Copy Homebrew files from the brew image
 # FIX: Aggiunto --chown=0:0 per coerenza di sicurezza sui binari iniettati
 COPY --from=ghcr.io/ublue-os/brew:latest --chown=0:0 /system_files /
+
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     --mount=type=tmpfs,dst=/tmp \
@@ -18,8 +19,12 @@ RUN --mount=type=cache,dst=/var/cache \
     /usr/bin/systemctl preset brew-upgrade.timer
 
 # Execute all modular scripts in the recipes directory
+# FIX: Aggiunti mount espliciti per libdnf5 e dnf per impedire sprechi di I/O, preservando
+# il database SQLite dei metadati tra le transazioni intermedie.
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/lib/dnf \
+    --mount=type=cache,dst=/var/cache/libdnf5 \
     --mount=type=cache,dst=/var/log \
     --mount=type=tmpfs,dst=/tmp \
     for script in /ctx/recipes/*.sh; do \
@@ -29,4 +34,5 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 
 ### LINTING
 ## Verify final image and contents are correct.
+# Questo step convaliderà ora correttamente l'assenza di violazioni tmpfiles.d
 RUN bootc container lint
