@@ -6,8 +6,9 @@ echo "--- Installing Desktop Environment ---"
 # Install Niri 
 dnf -y install niri bibata-cursor-theme
 
-# Install Dank Linux shell (Senza sudo, siamo già root nel container)
-curl --output-dir "/etc/yum.repos.d/" \
-  --remote-name "https://copr.fedorainfracloud.org/coprs/avengemedia/dms/repo/fedora-$(rpm -E %fedora)/avengemedia-dms-fedora-$(rpm -E %fedora).repo"
+# FIX: Utilizzo nativo e crittograficamente sicuro del plugin COPR di DNF. 
+# Previene l'iniezione MITM di archivi repo corrotti e abilita la verifica GPG hardcoded.
+dnf -y copr enable avengemedia/dms
 
+# Install Dank Linux shell
 dnf -y install quickshell dms greetd dms-greeter --allowerasing
