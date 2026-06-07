@@ -6,19 +6,16 @@
     "github>whitesource/merge-confidence:beta"
   ],
   "rebaseWhen": "auto",
-  "packageRules":,
-      "automerge": true,
-      "automergeType": "pr"
-    },
+  "packageRules": [
     {
       "matchManagers": ["github-actions"],
-      "pinDigests": true,
-      "extends":
+      "pinDigests": true
     },
     {
       "matchManagers": ["dockerfile"],
-      "matchUpdateTypes":,
-      "automerge": true
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true,
+      "automergeType": "pr"
     }
   ]
 }
