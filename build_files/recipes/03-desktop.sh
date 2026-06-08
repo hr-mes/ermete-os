@@ -6,7 +6,7 @@ echo "--- Installing Desktop Environment ---"
 # Install Niri e dipendenze cursori
 dnf -y install niri bibata-cursor-theme
 
-# Install Greetd (Rust) e Tuigreet (Greeter da terminale in Rust)
+# Install Greetd e Tuigreet (Greeter da terminale in Rust)
 dnf -y install greetd tuigreet
 
 # Abilita i COPR per l'ecosistema Rust Wayland e installa i pacchetti
