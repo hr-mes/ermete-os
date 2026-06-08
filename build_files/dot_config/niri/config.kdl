@@ -154,8 +154,8 @@ binds {
     Mod+Shift+Slash { show-hotkey-overlay; }
 
     Mod+T hotkey-overlay-title="Open a Terminal: alacritty" { spawn "alacritty"; }
-    Mod+D { spawn "qs" "-c" "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
-    Super+Alt+L hotkey-overlay-title="Lock the Screen: swaylock" { spawn "swaylock"; }
+    Mod+D hotkey-overlay-title="Open Launcher: anyrun" { spawn "anyrun"; }
+    Super+Alt+L hotkey-overlay-title="Lock the Screen: swaylock" { spawn "swaylock" "-f" "-c" "000000"; }
 
     // FIX: Uso corretto del flag -c con exec per rimpiazzare il processo shell (no zombie PID)
     Super+Alt+S allow-when-locked=true hotkey-overlay-title=null { spawn "sh" "-c" "pkill orca || exec orca"; }
@@ -306,5 +306,5 @@ binds {
     Mod+MouseMiddle { close-window; }
 
     Mod+E { spawn "nautilus"; }
-    Mod+Return { spawn "kitty"; }
+    Mod+Return { spawn "alacritty"; }
 }
