@@ -5,58 +5,102 @@ echo "--- Configuring system services and user defaults ---"
 
 mkdir -p /etc/greetd/
 
-# FIX: Creazione di un profilo Niri in confinamento isolato per prevenire Privilege Escalation (LPE)
-# via Mod+T o manipolazioni non autorizzate sulla lock screen.
-cat > /etc/greetd/niri.kdl << 'EOF'
+# 1. FIX LPE: Creazione di una configurazione Niri minimale ed ermetica per Greetd.
+# Inibisce qualsiasi input o escape manuale e avvia ReGreet in confinamento.
+cat > /etc/greetd/niri-regreet.kdl << 'EOF'
 hotkey-overlay {
     skip-at-startup
 }
-environment {
-    DMS_RUN_GREETER "1"
+window-rule {
+    geometry-corner-radius 0
+    clip-to-geometry true
 }
-layout {
-    background-color "#000000"
-}
-binds {
-    // Esclusivamente controlli hardware e spegnimento.
-    // L'ESECUZIONE DI TERMINALI O LANCIATORI APPLICATIVI È SEVERAMENTE INIBITA.
-    XF86AudioRaiseVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.1+" "-l" "1.0"; }
-    XF86AudioLowerVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.1-"; }
-    XF86AudioMute        allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"; }
-    Mod+Shift+E { quit; }
-    Ctrl+Alt+Delete { quit; }
-}
+// Avvia unicamente il greeter in Rust
+spawn-at-startup "regreet"
+// Nessuna scorciatoia da tastiera configurata pre-autenticazione
+binds {}
 EOF
 
-# Install greetd login manager vincolato alla configurazione restrittiva appena creata
+# Configurazione di ReGreet (login manager)
+cat > /etc/greetd/regreet.toml << 'EOF'
+[background]
+path = "/usr/share/backgrounds/default.png"
+fit = "Cover"
+
+
+application_prefer_dark_theme = true
+cursor_theme_name = "Adwaita"
+font_name = "Cantarell 11"
+icon_theme_name = "Adwaita"
+theme_name = "Adwaita"
+EOF
+
+# Configurazione principale di greetd
 cat > /etc/greetd/config.toml << EOF
 [terminal]
 vt = 1
 [default_session]
 user = "greeter"
-command = "dms-greeter --command niri -C /etc/greetd/niri.kdl"
+command = "niri --config /etc/greetd/niri-regreet.kdl"
 EOF
 
-# Architettura Systemd nativa (Systemd Presets)
+# 2. Definizione servizi Systemd utente per l'ambiente Rust
+mkdir -p /usr/lib/systemd/user/
 mkdir -p /usr/lib/systemd/system-preset/
 mkdir -p /usr/lib/systemd/user-preset/
 
-# Set Greetd e Podman come default attivi (livello System)
+# Servizio utente per la barra Ironbar
+cat > /usr/lib/systemd/user/ironbar.service << 'EOF'
+[Unit]
+Description=Ironbar GTK4 Status Bar (Rust)
+PartOf=graphical-session.target
+After=graphical-session-pre.target
+
+
+ExecStart=/usr/bin/ironbar
+Restart=on-failure
+
+[Install]
+WantedBy=graphical-session.target
+EOF
+
+# Servizio utente per il demone degli sfondi Swww
+cat > /usr/lib/systemd/user/swww.service << 'EOF'
+[Unit]
+Description=Swww Wayland Wallpaper Daemon (Rust)
+PartOf=graphical-session.target
+After=graphical-session-pre.target
+
+
+ExecStart=/usr/bin/swww-daemon
+ExecStartPost=/usr/bin/swww img /usr/share/backgrounds/default.png
+Restart=on-failure
+
+[Install]
+WantedBy=graphical-session.target
+EOF
+
+# Configurazione Presets (abilitazione automatica dei servizi)
 echo "enable greetd.service" > /usr/lib/systemd/system-preset/99-ermeteos.preset
 echo "enable podman.socket" >> /usr/lib/systemd/system-preset/99-ermeteos.preset
 
-# Setup DMS service per l'inizializzazione dell'ambiente Wayland (livello User)
-echo "enable dms.service" > /usr/lib/systemd/user-preset/99-ermeteos.preset
+echo "enable ironbar.service" > /usr/lib/systemd/user-preset/99-ermeteos.preset
+echo "enable swww.service" >> /usr/lib/systemd/user-preset/99-ermeteos.preset
 
-# Copy Niri dotfiles to skel
+# 3. Preparazione directory di default per i nuovi utenti
 mkdir -p /etc/skel/.config/niri/
-cp -rf /ctx/dot_config/niri/config.kdl /etc/skel/.config/niri/
+mkdir -p /etc/skel/.config/ironbar/
+mkdir -p /etc/skel/.config/anyrun/
 
-# FIX: Assicura i permessi corretti per lo skeleton directory garantendo la Privacy
-# dei futuri utenti. Le directory diventano non-attraversabili, i file non-eseguibili.
+# Copia dei file di configurazione degli strumenti Rust nello skel
+cp -rf /ctx/dot_config/niri/config.kdl /etc/skel/.config/niri/
+cp -rf /ctx/dot_config/ironbar/config.json /etc/skel/.config/ironbar/
+cp -rf /ctx/dot_config/anyrun/config.ron /etc/skel/.config/anyrun/
+
+# Blindatura dei permessi dello skeleton per il principio del privilegio minimo
 chown -R root:root /etc/skel/
 find /etc/skel/ -type d -exec chmod 700 {} \;
 find /etc/skel/ -type f -exec chmod 600 {} \;
 
-# Remove waybar
+# Rimozione pacchetti non necessari
 dnf -y remove waybar
