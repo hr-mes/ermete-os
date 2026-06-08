@@ -7,7 +7,7 @@ echo "--- Configuring DNF and installing base system packages ---"
 mkdir -p /etc/dnf/dnf.conf.d/
 cat > /etc/dnf/dnf.conf.d/99-parallel-downloads.conf << EOF
 [main]
-max_parallel_downloads=10
+max_parallel_downloads=9
 EOF
 
 # System apps & Dipendenze Core
