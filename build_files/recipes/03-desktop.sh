@@ -1,24 +1,19 @@
 #!/bin/bash
 set -ouex pipefail
 
-echo "--- Installing Full-Stack Rust Desktop Environment ---"
+echo "--- Installing Desktop Environment ---"
 
-# 1. Abilitazione repository COPR per i componenti grafici scritti in Rust
-dnf -y copr enable psoldunov/regreet
-dnf -y copr enable victorvintorez/packages # Contiene ironbar-git
-dnf -y copr enable reisaraujo-miguel/Anyrun
-dnf -y copr enable jvssdev/waylock
-dnf -y copr enable agonie/swww
+# Install Niri e dipendenze cursori
+dnf -y install niri bibata-cursor-theme
 
-# 2. Installazione dello stack grafico nativo Rust
-dnf -y install \
-    niri \
-    alacritty \
-    yazi \
-    greetd \
-    regreet \
-    ironbar \
-    anyrun \
-    waylock \
-    swww \
-    --allowerasing
+# Install Greetd (Rust) e Tuigreet (Greeter da terminale in Rust)
+dnf -y install greetd tuigreet
+
+# Abilita i COPR per l'ecosistema Rust Wayland e installa i pacchetti
+# Anyrun: App Launcher iper-veloce in Rust
+dnf -y copr enable anyrun-org/anyrun
+dnf -y install anyrun
+
+# Ironbar: Status bar moderna e configurabile scritta in Rust
+dnf -y copr enable sneexy/ironbar
+dnf -y install ironbar
