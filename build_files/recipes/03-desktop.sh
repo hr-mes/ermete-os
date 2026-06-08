@@ -1,14 +1,24 @@
 #!/bin/bash
 set -ouex pipefail
 
-echo "--- Installing Desktop Environment ---"
+echo "--- Installing Full-Stack Rust Desktop Environment ---"
 
-# Install Niri 
-dnf -y install niri bibata-cursor-theme
+# 1. Abilitazione repository COPR per i componenti grafici scritti in Rust
+dnf -y copr enable psoldunov/regreet
+dnf -y copr enable victorvintorez/packages # Contiene ironbar-git
+dnf -y copr enable reisaraujo-miguel/Anyrun
+dnf -y copr enable jvssdev/waylock
+dnf -y copr enable agonie/swww
 
-# FIX: Utilizzo nativo e crittograficamente sicuro del plugin COPR di DNF. 
-# Previene l'iniezione MITM di archivi repo corrotti e abilita la verifica GPG hardcoded.
-dnf -y copr enable avengemedia/dms
-
-# Install Dank Linux shell
-dnf -y install quickshell dms greetd dms-greeter --allowerasing
+# 2. Installazione dello stack grafico nativo Rust
+dnf -y install \
+    niri \
+    alacritty \
+    yazi \
+    greetd \
+    regreet \
+    ironbar \
+    anyrun \
+    waylock \
+    swww \
+    --allowerasing
