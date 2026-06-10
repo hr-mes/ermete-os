@@ -1,20 +1,12 @@
- [4/5] Installing greetd-0:0.10.3-6.fc43 100% |  27.1 MiB/s |   1.3 MiB |  00m00s
-[5/5] Installing tuigreet-0:0.9.1-7.fc4 100% |   9.5 MiB/s |   2.4 MiB |  00m00s
->>> Running %triggerin scriptlet: systemd-0:258.7-1.fc43.x86_64                 
->>> Finished %triggerin scriptlet: systemd-0:258.7-1.fc43.x86_64                
->>> Scriptlet output:                                                           
->>> Failed to connect to audit log, ignoring: Invalid argument                  
->>>                                                                             
 Complete!
 + cat
-+ dnf -y install --setopt=install_weak_deps=False anyrun
++ dnf -y install --setopt=install_weak_deps=False Anyrun
 Updating and loading repositories:
- Copr repo for Anyrun owned by reisarau 100% |   2.4 KiB/s |   1.6 KiB |  00m01s
+ Copr repo for Anyrun owned by reisarau 100% |   2.9 KiB/s |   1.6 KiB |  00m01s
 Repositories loaded.
 Failed to resolve the transaction:
-No match for argument: anyrun
+No match for argument: Anyrun
 You can try to add to command line:
   --skip-unavailable to skip unavailable packages
 Error: building at STEP "RUN --mount=type=bind,from=ctx,source=/,target=/ctx --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 bash /ctx/recipes/03-desktop.sh": while running runtime: exit status 1
 Error: Error: buildah exited with code 1
-Trying to pull ghcr.io/rakuos/rakuos-base-nvidia:latest...
