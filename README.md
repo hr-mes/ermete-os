@@ -17,19 +17,21 @@ Driven by an absolute **Infrastructure-as-Code (IaC)** philosophy, Ermete OS is 
 
 ---
 
-## 🛡️ Privacy & Security Fortress
-Ermete OS implements paranoid-level defaults to protect user data and telemetry:
+## 🛡️ Paranoid Privacy & Security Fortress
+Ermete OS implements extreme enterprise-grade defaults to protect user data and telemetry:
+- **Zero-Trust Network (Firewalld Drop Zone)**: The firewall defaults to `drop` out-of-the-box, ensuring your machine is completely invisible to port scans and unauthorized LAN requests.
 - **DNS-over-TLS (DoT)**: Enforced system-wide via `systemd-resolved` to prevent ISP tracking.
 - **MAC Address Randomization**: Automatically anonymizes your hardware signature across both Wi-Fi and Ethernet connections.
-- **Zero Memory Leaks to Disk**: Core dumps are intentionally disabled at the `systemd` level. Your RAM data (passwords, encryption keys) will never be written to unencrypted persistent storage upon application crashes.
+- **Global Flatpak Hardening**: Flatpaks are globally stripped of X11 socket support (`--nosocket=x11`) and blocked from directly accessing the home directory (`--nofilesystem=home`). Applications must exclusively use XDG Desktop Portals to interact with user files.
 - **Total Clone Anonymity**: The `/etc/machine-id` is erased during OCI builds. Every instance generates a unique signature only upon first boot, preventing container telemetry tracking.
+- **Zero Memory Leaks to Disk**: Core dumps are intentionally disabled at the `systemd` level. Your RAM data (passwords, encryption keys) will never be written to unencrypted persistent storage upon application crashes.
 - **Strict User Boundaries & SELinux**: The `/etc/skel` profile applies draconian `700/600` permissions. SELinux MAC policies are strictly enforced and relabeled during the container build to prevent unauthorized access.
-- **Firewalled by Default**: `firewalld` is baked in and enabled at boot to block all unsolicited inbound traffic.
 
 ---
 
 ## ⚡ Extreme Performance & Architecture
 - **ZRAM Compressed Memory**: Out-of-the-box `zram-generator` configuration uses **ZSTD compression** and allocates up to 100% of RAM dynamically (`vm.swappiness=150`), maximizing multitasking fluidity without prematurely wearing out NVMe/SSD drives via disk swap.
+- **OOMD Wayland Protection**: `systemd-oomd` is aggressively tuned (90% limit / 5 seconds threshold) to surgically kill memory-hogging processes *before* the Wayland session freezes, guaranteeing total GUI stability during heavy compilations.
 - **TCP BBR**: The Linux kernel is tuned to use Google's BBR congestion control algorithm, minimizing latency and maximizing network throughput.
 - **Silent & Lightning Boot**: `NetworkManager-wait-online.service` is disabled, Dracut is debloated from legacy modules (floppy, pcspkr), and kernel arguments are tuned for a completely silent, high-speed boot process.
 - **Silent Immutable Updates**: A background `bootc-fetch-apply.timer` silently downloads the latest OCI image once a week. The system updates atomically on your next reboot without any manual intervention.
@@ -46,6 +48,7 @@ The graphical layer abandons monolithic desktops in favor of individual, hyper-f
 - **App Launcher**: [Anyrun](https://github.com/anyrun-org/anyrun) (Compiled natively, styled as a modern floating overlay).
 - **Login Greeter**: `tuigreet` (Terminal-based greeter with password masking).
 - **Terminal**: `Alacritty` (GPU-accelerated, zero-latency emulator).
+- **Functional Package Manager**: **Nix** is installed out-of-the-box for purely functional, immutable, and reproducible CLI development tools.
 - **Core Utilities**: Modern Rust replacements for UNIX tools (`eza`, `bat`, `fd-find`, `ripgrep`, `bottom`, `nushell`, `starship`).
 - **Terminal IDE**: **Neovim** is pre-configured with **LazyVim** (Catppuccin Mocha theme), offering a complete, lightning-fast Rust development environment (LSP, autocomplete) straight out of the box.
 
@@ -53,6 +56,7 @@ The graphical layer abandons monolithic desktops in favor of individual, hyper-f
 
 ## 💎 Seamless Desktop Integration
 Despite being a power-user terminal-centric OS, Ermete OS integrates flawlessly with modern Wayland standards:
+- **Native Noise Suppression**: The PipeWire stack runs **EasyEffects** silently in the background upon login, automatically providing studio-grade echo cancellation and microphone noise reduction.
 - **XDG Desktop Portals**: Native `xdg-desktop-portal-gnome` and D-Bus activation ensure screensharing (e.g., OBS Studio, Discord) and GUI file pickers work out of the box.
 - **Polkit GUI Escalation**: `lxqt-policykit-agent` runs in the background, allowing graphical apps (like Virt-Manager) to seamlessly prompt for root passwords.
 - **Gnome Keyring**: A fully integrated keyring daemon securely manages your SSH keys, OAuth tokens, and browser passwords, automatically unlocking upon login.
@@ -94,11 +98,11 @@ sudo bootc switch ghcr.io/patapem/ermete:latest
 ## 🛠️ Modifying the OS (IaC)
 Ermete OS abandons post-install scripts. To modify the OS, simply edit the `Containerfile` or the modular bash recipes in `build_files/recipes/`:
 
-* `01-system-setup.sh`: Base packages, ZRAM, core Rust CLI tools, and Idempotent DNF rules.
+* `01-system-setup.sh`: Base packages, ZRAM, core Rust CLI tools, Nix Package Manager, and Idempotent DNF rules.
 * `02-repos-and-codecs.sh`: RPMFusion repositories and host-level multimedia codecs.
 * `03-desktop.sh`: Native Rust compilations for the Wayland UI, plus typography and icon themes.
-* `04-system-config.sh`: Security presets, DNS-over-TLS, MAC randomization, and dotfiles distribution.
-* `04b-private-optimizations.sh`: Greenboot auto-repair, silent boot kargs, and the First-Boot Flatpak provisioner.
+* `04-system-config.sh`: Security presets (Firewalld Drop Zone), DNS-over-TLS, MAC randomization, OOMD protection, and dotfiles distribution.
+* `04b-private-optimizations.sh`: Global Flatpak Hardening, Greenboot auto-repair, silent boot kargs, and the First-Boot Flatpak provisioner (including EasyEffects).
 * `04c-kernel-tuning.sh`: Aggressive kernel optimization, TCP BBR, ZSTD ZRAM, and Dracut debloating.
 * `05-cleanup.sh`: Cache management, Machine-ID resets, and SELinux relabeling for OCI cleanliness.
 
