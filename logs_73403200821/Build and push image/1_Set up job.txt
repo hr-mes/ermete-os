@@ -1,0 +1,37 @@
+﻿2026-06-10T20:33:24.0251793Z Current runner version: '2.335.1'
+2026-06-10T20:33:24.0277900Z ##[group]Runner Image Provisioner
+2026-06-10T20:33:24.0278862Z Hosted Compute Agent
+2026-06-10T20:33:24.0279518Z Version: 20260527.539
+2026-06-10T20:33:24.0280154Z Commit: a891dd388383b896fa6ac04a82c0b75cec981078
+2026-06-10T20:33:24.0280945Z Build Date: 2026-05-27T21:39:57Z
+2026-06-10T20:33:24.0281627Z Worker ID: {2bc149af-c12a-4ff3-96bf-4d0430a89ee9}
+2026-06-10T20:33:24.0282340Z Azure Region: eastus
+2026-06-10T20:33:24.0283007Z ##[endgroup]
+2026-06-10T20:33:24.0284787Z ##[group]Operating System
+2026-06-10T20:33:24.0285582Z Ubuntu
+2026-06-10T20:33:24.0286535Z 24.04.4
+2026-06-10T20:33:24.0287099Z LTS
+2026-06-10T20:33:24.0287740Z ##[endgroup]
+2026-06-10T20:33:24.0288298Z ##[group]Runner Image
+2026-06-10T20:33:24.0288930Z Image: ubuntu-24.04
+2026-06-10T20:33:24.0289516Z Version: 20260607.184.1
+2026-06-10T20:33:24.0290590Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260607.184/images/ubuntu/Ubuntu2404-Readme.md
+2026-06-10T20:33:24.0292391Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260607.184
+2026-06-10T20:33:24.0293394Z ##[endgroup]
+2026-06-10T20:33:24.0294559Z ##[group]GITHUB_TOKEN Permissions
+2026-06-10T20:33:24.0297141Z Contents: read
+2026-06-10T20:33:24.0297808Z Metadata: read
+2026-06-10T20:33:24.0298451Z Packages: write
+2026-06-10T20:33:24.0299065Z ##[endgroup]
+2026-06-10T20:33:24.0301750Z Secret source: Actions
+2026-06-10T20:33:24.0302771Z Prepare workflow directory
+2026-06-10T20:33:24.0852422Z Prepare all required actions
+2026-06-10T20:33:24.0889953Z Getting action download info
+2026-06-10T20:33:24.6677011Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2026-06-10T20:33:24.7721562Z Download action repository 'ublue-os/remove-unwanted-software@v9' (SHA:cc0becac701cf642c8f0a6613bbdaf5dc36b259e)
+2026-06-10T20:33:24.8944075Z Download action repository 'docker/metadata-action@v5' (SHA:c299e40c65443455700f0fdfc63efafe5b349051)
+2026-06-10T20:33:25.1593406Z Download action repository 'redhat-actions/buildah-build@v2' (SHA:7a95fa7ee0f02d552a32753e7414641a04307056)
+2026-06-10T20:33:25.2442069Z Download action repository 'docker/login-action@v3' (SHA:c94ce9fb468520275223c153574b00df6fe4bcc9)
+2026-06-10T20:33:25.4468595Z Download action repository 'redhat-actions/push-to-registry@v2' (SHA:5ed88d269cf581ea9ef6dd6806d01562096bee9c)
+2026-06-10T20:33:25.5924273Z Download action repository 'sigstore/cosign-installer@v3' (SHA:398d4b0eeef1380460a10c8013a76f728fb906ac)
+2026-06-10T20:33:25.8805784Z Complete job name: Build and push image

@@ -1,0 +1,183 @@
+﻿2026-06-10T20:33:26.5969396Z ##[group]Run ublue-os/remove-unwanted-software@v9
+2026-06-10T20:33:26.5970636Z with:
+2026-06-10T20:33:26.5971437Z   use-sudo: true
+2026-06-10T20:33:26.5972289Z   remove-dotnet: true
+2026-06-10T20:33:26.5973191Z   remove-android: true
+2026-06-10T20:33:26.5974096Z   remove-haskell: true
+2026-06-10T20:33:26.5975005Z   remove-codeql: true
+2026-06-10T20:33:26.5975928Z   remove-docker-images: true
+2026-06-10T20:33:26.5977134Z   remove-large-packages: true
+2026-06-10T20:33:26.5978142Z   remove-cached-tools: true
+2026-06-10T20:33:26.5979116Z   remove-swapfile: false
+2026-06-10T20:33:26.5980047Z   verbose: false
+2026-06-10T20:33:26.5980888Z env:
+2026-06-10T20:33:26.5981823Z   IMAGE_DESC: Ermete OS - Immutable Cloud-Native System
+2026-06-10T20:33:26.5983138Z   IMAGE_KEYWORDS: bootc,fedora,Ermete,immutable
+2026-06-10T20:33:26.5984281Z   IMAGE_LOGO_URL: 
+2026-06-10T20:33:26.5985127Z   IMAGE_NAME: ermete
+2026-06-10T20:33:26.5986048Z   IMAGE_REGISTRY: ghcr.io/patapem
+2026-06-10T20:33:26.5987485Z   DEFAULT_TAG: latest
+2026-06-10T20:33:26.5988406Z ##[endgroup]
+2026-06-10T20:33:26.6093979Z ##[group]Run echo "==> Available space before cleanup"
+2026-06-10T20:33:26.6095323Z [36;1mecho "==> Available space before cleanup"[0m
+2026-06-10T20:33:26.6096612Z [36;1mecho[0m
+2026-06-10T20:33:26.6097410Z [36;1mdf -h[0m
+2026-06-10T20:33:26.6133644Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-06-10T20:33:26.6134887Z env:
+2026-06-10T20:33:26.6135814Z   IMAGE_DESC: Ermete OS - Immutable Cloud-Native System
+2026-06-10T20:33:26.6137290Z   IMAGE_KEYWORDS: bootc,fedora,Ermete,immutable
+2026-06-10T20:33:26.6138422Z   IMAGE_LOGO_URL: 
+2026-06-10T20:33:26.6139434Z   IMAGE_NAME: ermete
+2026-06-10T20:33:26.6140324Z   IMAGE_REGISTRY: ghcr.io/patapem
+2026-06-10T20:33:26.6141312Z   DEFAULT_TAG: latest
+2026-06-10T20:33:26.6142149Z ##[endgroup]
+2026-06-10T20:33:26.6205262Z ==> Available space before cleanup
+2026-06-10T20:33:26.6207243Z 
+2026-06-10T20:33:26.6771773Z Filesystem      Size  Used Avail Use% Mounted on
+2026-06-10T20:33:26.6773100Z /dev/root       145G   57G   89G  39% /
+2026-06-10T20:33:26.6774192Z tmpfs           7.9G   84K  7.9G   1% /dev/shm
+2026-06-10T20:33:26.6775308Z tmpfs           3.2G 1008K  3.2G   1% /run
+2026-06-10T20:33:26.6776853Z tmpfs           5.0M     0  5.0M   0% /run/lock
+2026-06-10T20:33:26.6779099Z efivarfs        128M   32K  128M   1% /sys/firmware/efi/efivars
+2026-06-10T20:33:26.6781126Z /dev/sda16      881M   64M  756M   8% /boot
+2026-06-10T20:33:26.6782256Z /dev/sda15      105M  6.2M   99M   6% /boot/efi
+2026-06-10T20:33:26.6783412Z tmpfs           1.6G   12K  1.6G   1% /run/user/1001
+2026-06-10T20:33:26.6878549Z ##[group]Run set -euo pipefail
+2026-06-10T20:33:26.6879661Z [36;1mset -euo pipefail[0m
+2026-06-10T20:33:26.6880627Z [36;1mif [[ "true" == 'true' ]]; then[0m
+2026-06-10T20:33:26.6881658Z [36;1m  SUDO_PREFIX="sudo"[0m
+2026-06-10T20:33:26.6882581Z [36;1melse[0m
+2026-06-10T20:33:26.6883389Z [36;1m  SUDO_PREFIX=""[0m
+2026-06-10T20:33:26.6884267Z [36;1mfi[0m
+2026-06-10T20:33:26.6885019Z [36;1m[0m
+2026-06-10T20:33:26.6885892Z [36;1mecho -n "  Removing:     "[0m
+2026-06-10T20:33:26.6887312Z [36;1mif [[ true == 'true' ]]; then[0m
+2026-06-10T20:33:26.6888362Z [36;1m  echo -n "dotnet "[0m
+2026-06-10T20:33:26.6889275Z [36;1mfi[0m
+2026-06-10T20:33:26.6890074Z [36;1mif [[ true == 'true' ]]; then[0m
+2026-06-10T20:33:26.6891097Z [36;1m  echo -n "android "[0m
+2026-06-10T20:33:26.6891998Z [36;1mfi[0m
+2026-06-10T20:33:26.6892805Z [36;1mif [[ true == 'true' ]]; then[0m
+2026-06-10T20:33:26.6893823Z [36;1m  echo -n "haskell "[0m
+2026-06-10T20:33:26.6894732Z [36;1mfi[0m
+2026-06-10T20:33:26.6895532Z [36;1mif [[ true == 'true' ]]; then[0m
+2026-06-10T20:33:26.6896825Z [36;1m  echo -n "codeql "[0m
+2026-06-10T20:33:26.6897737Z [36;1mfi[0m
+2026-06-10T20:33:26.6898540Z [36;1mif [[ true == 'true' ]]; then[0m
+2026-06-10T20:33:26.6899553Z [36;1m  echo -n "docker "[0m
+2026-06-10T20:33:26.6900457Z [36;1mfi[0m
+2026-06-10T20:33:26.6901262Z [36;1mif [[ true == 'true' ]]; then[0m
+2026-06-10T20:33:26.6902545Z [36;1m  echo -n "large_packages "[0m
+2026-06-10T20:33:26.6903521Z [36;1mfi[0m
+2026-06-10T20:33:26.6904322Z [36;1mif [[ true == 'true' ]]; then[0m
+2026-06-10T20:33:26.6905352Z [36;1m  echo -n "cached_tools "[0m
+2026-06-10T20:33:26.6906569Z [36;1mfi[0m
+2026-06-10T20:33:26.6907393Z [36;1mif [[ false == 'true' ]]; then[0m
+2026-06-10T20:33:26.6908438Z [36;1m  echo -n "swapfile "[0m
+2026-06-10T20:33:26.6909357Z [36;1mfi[0m
+2026-06-10T20:33:26.6910114Z [36;1mecho[0m
+2026-06-10T20:33:26.6910884Z [36;1m[0m
+2026-06-10T20:33:26.6911637Z [36;1mverbose=""[0m
+2026-06-10T20:33:26.6912514Z [36;1mif [[ false == 'true' ]]; then[0m
+2026-06-10T20:33:26.6913541Z [36;1m  verbose=-v[0m
+2026-06-10T20:33:26.6914379Z [36;1mfi[0m
+2026-06-10T20:33:26.6915141Z [36;1m[0m
+2026-06-10T20:33:26.6915991Z [36;1mecho "Removing unwanted software... "[0m
+2026-06-10T20:33:26.6917371Z [36;1mif [[ true == 'true' ]]; then[0m
+2026-06-10T20:33:26.6918506Z [36;1m  sudo rm -rf ${verbose} /usr/share/dotnet[0m
+2026-06-10T20:33:26.6919626Z [36;1mfi[0m
+2026-06-10T20:33:26.6920428Z [36;1mif [[ true == 'true' ]]; then[0m
+2026-06-10T20:33:26.6921577Z [36;1m  sudo rm -rf ${verbose} /usr/local/lib/android[0m
+2026-06-10T20:33:26.6922718Z [36;1mfi[0m
+2026-06-10T20:33:26.6923520Z [36;1mif [[ true == 'true' ]]; then[0m
+2026-06-10T20:33:26.6924585Z [36;1m  sudo rm -rf ${verbose} /opt/ghc[0m
+2026-06-10T20:33:26.6925763Z [36;1m  sudo rm -rf ${verbose} /usr/local/.ghcup[0m
+2026-06-10T20:33:26.6927089Z [36;1mfi[0m
+2026-06-10T20:33:26.6927896Z [36;1mif [[ true == 'true' ]]; then[0m
+2026-06-10T20:33:26.6929102Z [36;1m  sudo rm -rf ${verbose} /opt/hostedtoolcache/CodeQL[0m
+2026-06-10T20:33:26.6930473Z [36;1mfi[0m
+2026-06-10T20:33:26.6931277Z [36;1mif [[ true == 'true' ]]; then[0m
+2026-06-10T20:33:26.6932357Z [36;1m  if [[ false == 'true' ]]; then[0m
+2026-06-10T20:33:26.6933508Z [36;1m    sudo docker image prune --all --force[0m
+2026-06-10T20:33:26.6934611Z [36;1m  else[0m
+2026-06-10T20:33:26.6935623Z [36;1m    sudo docker image prune --all --force > /dev/null[0m
+2026-06-10T20:33:26.6937074Z [36;1m  fi[0m
+2026-06-10T20:33:26.6937857Z [36;1mfi[0m
+2026-06-10T20:33:26.6938853Z [36;1mCODENAME=$(lsb_release -c | cut -d ":" -f 2 | xargs)[0m
+2026-06-10T20:33:26.6940106Z [36;1mif [[ true == 'true' ]]; then[0m
+2026-06-10T20:33:26.6941140Z [36;1m  if [[ false == 'true' ]]; then[0m
+2026-06-10T20:33:26.6942281Z [36;1m    sudo apt-get remove -y '^aspnetcore-.*'[0m
+2026-06-10T20:33:26.6943494Z [36;1m    sudo apt-get remove -y '^dotnet-.*'[0m
+2026-06-10T20:33:26.6944663Z [36;1m    sudo apt-get remove -y '^llvm-.*'[0m
+2026-06-10T20:33:26.6945820Z [36;1m    sudo apt-get remove -y 'php.*'[0m
+2026-06-10T20:33:26.6947420Z [36;1m    sudo apt-get remove -y '^mongodb-.*'[0m
+2026-06-10T20:33:26.6948633Z [36;1m    sudo apt-get remove -y '^mysql-.*'[0m
+2026-06-10T20:33:26.6949805Z [36;1m    if [[ "$(uname -m)" == "x86_64" ]]; then[0m
+2026-06-10T20:33:26.6951277Z [36;1m      sudo apt-get remove -y google-chrome-stable microsoft-edge-stable[0m
+2026-06-10T20:33:26.6952951Z [36;1m      sudo apt-get remove -y google-cloud-cli --fix-missing[0m
+2026-06-10T20:33:26.6954414Z [36;1m      sudo apt-get remove -y powershell --fix-missing[0m
+2026-06-10T20:33:26.6955605Z [36;1m    fi[0m
+2026-06-10T20:33:26.6957205Z [36;1m    sudo apt-get remove -y azure-cli firefox mono-devel libgl1-mesa-dri --fix-missing[0m
+2026-06-10T20:33:26.6958856Z [36;1m    sudo apt-get autoremove -y[0m
+2026-06-10T20:33:26.6959922Z [36;1m    sudo apt-get clean[0m
+2026-06-10T20:33:26.6960864Z [36;1m  else[0m
+2026-06-10T20:33:26.6961881Z [36;1m    sudo apt-get remove -y '^aspnetcore-.*' > /dev/null[0m
+2026-06-10T20:33:26.6963289Z [36;1m    sudo apt-get remove -y '^dotnet-.*' > /dev/null[0m
+2026-06-10T20:33:26.6964614Z [36;1m    sudo apt-get remove -y '^llvm-.*' > /dev/null[0m
+2026-06-10T20:33:26.6965907Z [36;1m    sudo apt-get remove -y 'php.*' > /dev/null[0m
+2026-06-10T20:33:26.6967446Z [36;1m    sudo apt-get remove -y '^mongodb-.*' > /dev/null[0m
+2026-06-10T20:33:26.6969004Z [36;1m    sudo apt-get remove -y '^mysql-.*' > /dev/null[0m
+2026-06-10T20:33:26.6970262Z [36;1m    if [[ "$(uname -m)" == "x86_64" ]]; then[0m
+2026-06-10T20:33:26.6971846Z [36;1m      sudo apt-get remove -y google-chrome-stable microsoft-edge-stable > /dev/null[0m
+2026-06-10T20:33:26.6973747Z [36;1m      sudo apt-get remove -y google-cloud-cli --fix-missing > /dev/null[0m
+2026-06-10T20:33:26.6975424Z [36;1m      sudo apt-get remove -y powershell --fix-missing > /dev/null[0m
+2026-06-10T20:33:26.6977098Z [36;1m    fi[0m
+2026-06-10T20:33:26.6978574Z [36;1m    sudo apt-get remove -y azure-cli firefox mono-devel libgl1-mesa-dri --fix-missing > /dev/null[0m
+2026-06-10T20:33:26.6980379Z [36;1m    sudo apt-get autoremove -y > /dev/null[0m
+2026-06-10T20:33:26.6981567Z [36;1m    sudo apt-get clean > /dev/null[0m
+2026-06-10T20:33:26.6982617Z [36;1m  fi[0m
+2026-06-10T20:33:26.6983391Z [36;1mfi[0m
+2026-06-10T20:33:26.6984195Z [36;1mif [[ true == 'true' ]]; then[0m
+2026-06-10T20:33:26.6985367Z [36;1m  sudo rm -rf ${verbose} "$AGENT_TOOLSDIRECTORY"[0m
+2026-06-10T20:33:26.6986748Z [36;1mfi[0m
+2026-06-10T20:33:26.6987564Z [36;1mif [[ false == 'true' ]]; then[0m
+2026-06-10T20:33:26.6988617Z [36;1m  sudo swapoff -a ${verbose}[0m
+2026-06-10T20:33:26.6989716Z [36;1m  sudo rm -f ${verbose} /mnt/swapfile[0m
+2026-06-10T20:33:26.6990786Z [36;1mfi[0m
+2026-06-10T20:33:26.6991562Z [36;1mecho "... done"[0m
+2026-06-10T20:33:26.7024700Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-06-10T20:33:26.7025922Z env:
+2026-06-10T20:33:26.7027143Z   IMAGE_DESC: Ermete OS - Immutable Cloud-Native System
+2026-06-10T20:33:26.7028634Z   IMAGE_KEYWORDS: bootc,fedora,Ermete,immutable
+2026-06-10T20:33:26.7029758Z   IMAGE_LOGO_URL: 
+2026-06-10T20:33:26.7030562Z   IMAGE_NAME: ermete
+2026-06-10T20:33:26.7031463Z   IMAGE_REGISTRY: ghcr.io/patapem
+2026-06-10T20:33:26.7032442Z   DEFAULT_TAG: latest
+2026-06-10T20:33:26.7033273Z ##[endgroup]
+2026-06-10T20:33:26.7096826Z   Removing:     dotnet android haskell codeql docker large_packages cached_tools 
+2026-06-10T20:33:26.7099446Z Removing unwanted software... 
+2026-06-10T20:36:59.2550965Z ... done
+2026-06-10T20:36:59.2623293Z ##[group]Run echo "==> Available space after cleanup"
+2026-06-10T20:36:59.2624053Z [36;1mecho "==> Available space after cleanup"[0m
+2026-06-10T20:36:59.2626356Z [36;1mecho[0m
+2026-06-10T20:36:59.2626717Z [36;1mdf -h[0m
+2026-06-10T20:36:59.2661723Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-06-10T20:36:59.2662292Z env:
+2026-06-10T20:36:59.2662709Z   IMAGE_DESC: Ermete OS - Immutable Cloud-Native System
+2026-06-10T20:36:59.2663324Z   IMAGE_KEYWORDS: bootc,fedora,Ermete,immutable
+2026-06-10T20:36:59.2663839Z   IMAGE_LOGO_URL: 
+2026-06-10T20:36:59.2664186Z   IMAGE_NAME: ermete
+2026-06-10T20:36:59.2664561Z   IMAGE_REGISTRY: ghcr.io/patapem
+2026-06-10T20:36:59.2664991Z   DEFAULT_TAG: latest
+2026-06-10T20:36:59.2665347Z ##[endgroup]
+2026-06-10T20:36:59.2722686Z ==> Available space after cleanup
+2026-06-10T20:36:59.2724277Z 
+2026-06-10T20:36:59.2738140Z Filesystem      Size  Used Avail Use% Mounted on
+2026-06-10T20:36:59.2738844Z /dev/root       145G   25G  120G  18% /
+2026-06-10T20:36:59.2740100Z tmpfs           7.9G   84K  7.9G   1% /dev/shm
+2026-06-10T20:36:59.2740647Z tmpfs           3.2G 1004K  3.2G   1% /run
+2026-06-10T20:36:59.2741163Z tmpfs           5.0M     0  5.0M   0% /run/lock
+2026-06-10T20:36:59.2741736Z efivarfs        128M   32K  128M   1% /sys/firmware/efi/efivars
+2026-06-10T20:36:59.2742121Z /dev/sda16      881M   64M  756M   8% /boot
+2026-06-10T20:36:59.2742441Z /dev/sda15      105M  6.2M   99M   6% /boot/efi
+2026-06-10T20:36:59.2742787Z tmpfs           1.6G   12K  1.6G   1% /run/user/1001

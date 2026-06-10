@@ -28,7 +28,7 @@ mv /root/.cargo/bin/anyrun /usr/bin/
 mv /root/.cargo/bin/ironbar /usr/bin/
 
 # Pulizia: rimuoviamo i tool di build per non appesantire l'immagine OCI atomica
-dnf -y remove rust cargo gcc gcc-c++ pkgconf-pkg-config \
+dnf -y remove rust cargo gcc gcc-c++ \
     glib2-devel gtk3-devel gtk4-devel gtk-layer-shell-devel gtk4-layer-shell-devel \
     cairo-devel pango-devel gdk-pixbuf2-devel graphene-devel \
     autoconf automake libtool libevdev-devel upower-devel pulseaudio-libs-devel \
