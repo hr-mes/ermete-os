@@ -1,0 +1,12 @@
+* {
+  font-family: "Inter", "Roboto", sans-serif;
+}
+#window {
+  background-color: transparent;
+}
+#main {
+  background-color: rgba(30, 30, 30, 0.9);
+  border-radius: 12px;
+  padding: 12px;
+  color: #fff;
+}

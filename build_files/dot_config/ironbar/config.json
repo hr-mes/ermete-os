@@ -1,0 +1,24 @@
+{
+  "position": "top",
+  "height": 32,
+  "start": [
+    {
+      "type": "workspaces"
+    }
+  ],
+  "center": [
+    {
+      "type": "clock",
+      "format": "%H:%M - %d/%m/%Y"
+    }
+  ],
+  "end": [
+    {
+      "type": "tray"
+    },
+    {
+      "type": "sys_info",
+      "format": ["CPU {cpu_percent}%", "RAM {memory_percent}%"]
+    }
+  ]
+}

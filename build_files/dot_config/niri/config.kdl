@@ -157,7 +157,7 @@ window-rule {
 binds {
     Mod+Shift+Slash { show-hotkey-overlay; }
 
-    Mod+T hotkey-overlay-title="Open a Terminal: alacritty" { spawn "alacritty"; }
+    Mod+T hotkey-overlay-title="Open a Terminal: alacritty" { spawn "flatpak" "run" "org.alacritty.Alacritty"; }
     Mod+D hotkey-overlay-title="Open Launcher: anyrun" { spawn "anyrun"; }
     Super+Alt+L hotkey-overlay-title="Lock the Screen: swaylock" { spawn "swaylock" "-f" "-c" "000000"; }
 
@@ -309,6 +309,6 @@ binds {
     Mod+Shift+P { power-off-monitors; }
     Mod+MouseMiddle { close-window; }
 
-    Mod+E { spawn "nautilus"; }
-    Mod+Return { spawn "alacritty"; }
+    Mod+E { spawn "flatpak" "run" "org.gnome.Nautilus"; }
+    Mod+Return { spawn "flatpak" "run" "org.alacritty.Alacritty"; }
 }

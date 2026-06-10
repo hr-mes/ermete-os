@@ -68,9 +68,9 @@ cat > /etc/systemd/resolved.conf.d/dns_over_tls.conf << EOF
 DNSOverTLS=yes
 EOF
 
-# Copy Niri dotfiles to skel
-mkdir -p /etc/skel/.config/niri/
-cp -rf /ctx/dot_config/niri/config.kdl /etc/skel/.config/niri/
+# Copy all dotfiles to skel
+mkdir -p /etc/skel/.config/
+cp -rf /ctx/dot_config/* /etc/skel/.config/
 
 # Abilita Starship (Prompt in Rust) globalmente per le shell compatibili
 echo 'eval "$(starship init bash)"' > /etc/profile.d/starship.sh

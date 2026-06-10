@@ -1,0 +1,15 @@
+* {
+    font-family: "Inter", "Roboto", sans-serif;
+    font-size: 14px;
+}
+window#ironbar {
+    background-color: rgba(10, 10, 10, 0.85);
+    color: white;
+}
+.workspaces button {
+    padding: 0 10px;
+    color: #ffffff;
+}
+.workspaces button.active {
+    background-color: #505050;
+}

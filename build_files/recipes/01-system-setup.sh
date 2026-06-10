@@ -15,7 +15,7 @@ EOF
 # Rimosso flatpak-builder (spostato in distrobox)
 # Aggiunti network-manager-applet e blueman per l'usabilità (Wi-Fi e Bluetooth)
 # Aggiunto distrobox per lo sviluppo in container
-dnf -y install --setopt=install_weak_deps=False libvirt virt-manager qemu-kvm wlr-randr sysstat lxqt-openssh-askpass lxpolkit parallel just seahorse firewalld zram-generator zram-generator-defaults network-manager-applet blueman distrobox
+dnf -y install --setopt=install_weak_deps=False libvirt virt-manager qemu-kvm wlr-randr sysstat lxqt-openssh-askpass lxpolkit parallel just seahorse firewalld zram-generator zram-generator-defaults network-manager-applet blueman distrobox flatpak playerctl brightnessctl
 dnf -y install --setopt=install_weak_deps=False swaylock # Dipendenza critica per il blocco schermo di Niri
 
 # Core Utilities in Rust (Il nuovo stack)
