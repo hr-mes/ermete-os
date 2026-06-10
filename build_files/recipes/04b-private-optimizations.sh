@@ -1,0 +1,65 @@
+#!/bin/bash
+set -ouex pipefail
+
+echo "--- Applying Private Power-User Optimizations ---"
+
+# 1. Installazione dipendenze
+dnf -y install --setopt=install_weak_deps=False greenboot fwupd
+
+# 2. Configurazione Greenboot (Auto-Riparazione)
+mkdir -p /etc/greenboot/check/required.d/
+
+# Script 01: Controllo Rete (Se fallisce 3 volte, fa scattare il rollback ostree)
+cat > /etc/greenboot/check/required.d/01-network-check.sh << 'EOF'
+#!/bin/bash
+# Ping a Cloudflare (1.1.1.1) per assicurarsi che lo stack di rete sia vivo
+if ping -c 1 -W 2 1.1.1.1 >/dev/null 2>&1; then
+    exit 0
+else
+    exit 1
+fi
+EOF
+chmod +x /etc/greenboot/check/required.d/01-network-check.sh
+
+# Script 02: Controllo Greetd (Se fallisce, Wayland/GUI rotti -> rollback)
+cat > /etc/greenboot/check/required.d/02-greetd-check.sh << 'EOF'
+#!/bin/bash
+if systemctl is-active --quiet greetd.service; then
+    exit 0
+else
+    exit 1
+fi
+EOF
+chmod +x /etc/greenboot/check/required.d/02-greetd-check.sh
+
+# 3. Manutenzione Automatica (fstrim e fwupd)
+echo "enable fstrim.timer" >> /usr/lib/systemd/system-preset/99-ermeteos.preset
+echo "enable fwupd.service" >> /usr/lib/systemd/system-preset/99-ermeteos.preset
+
+# 4. First-boot Service per installare Flatseal
+# Sfrutta ConditionFirstBoot=yes di systemd (attivato grazie al Machine-ID vuoto)
+cat > /etc/systemd/system/ermeteos-firstboot.service << 'EOF'
+[Unit]
+Description=Ermeteos First Boot Setup (Install Flatseal)
+After=network-online.target
+Wants=network-online.target
+ConditionFirstBoot=yes
+
+[Service]
+Type=oneshot
+ExecStartPre=-/usr/bin/flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+ExecStart=-/usr/bin/flatpak install -y flathub com.github.tchx84.Flatseal
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+echo "enable ermeteos-firstboot.service" >> /usr/lib/systemd/system-preset/99-ermeteos.preset
+
+# 5. Pulizia Visiva del Kernel (Silent Boot) tramite bootc kargs
+mkdir -p /usr/lib/bootc/kargs.d/
+cat > /usr/lib/bootc/kargs.d/10-silent.toml << 'EOF'
+kargs = ["quiet", "loglevel=3", "rd.udev.log_level=3", "vt.global_cursor_default=0"]
+EOF
+
+echo "--- Private Optimizations Applied ---"
