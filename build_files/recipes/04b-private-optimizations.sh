@@ -50,7 +50,8 @@ ConditionFirstBoot=yes
 [Service]
 Type=oneshot
 ExecStartPre=-/usr/bin/flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-ExecStart=-/usr/bin/flatpak install -y flathub com.github.tchx84.Flatseal
+# Installa tutte le GUI Application essenziali via Flatpak per preservare la purezza del RootFS
+ExecStart=-/usr/bin/flatpak install -y flathub com.github.tchx84.Flatseal org.gnome.Nautilus org.alacritty.Alacritty io.mpv.Mpv com.obsproject.Studio
 RemainAfterExit=yes
 
 [Install]
