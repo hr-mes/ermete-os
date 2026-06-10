@@ -12,8 +12,10 @@ mkdir -p /etc/greenboot/check/required.d/
 # Script 01: Controllo Rete (Se fallisce 3 volte, fa scattare il rollback ostree)
 cat > /etc/greenboot/check/required.d/01-network-check.sh << 'EOF'
 #!/bin/bash
-# Ping a Cloudflare (1.1.1.1) per assicurarsi che lo stack di rete sia vivo
-if ping -c 1 -W 2 1.1.1.1 >/dev/null 2>&1; then
+# Verifica semplicemente che il demone di rete non sia andato in crash.
+# Evitiamo i ping esterni (es. 1.1.1.1) per non innescare falsi positivi
+# in caso di avvio offline intenzionale, assenza Wi-Fi o captive portal in hotel/aeroporto.
+if systemctl is-active --quiet NetworkManager.service; then
     exit 0
 else
     exit 1
