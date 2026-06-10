@@ -23,21 +23,23 @@ Ermete OS implements paranoid-level defaults to protect user data and telemetry:
 - **MAC Address Randomization**: Automatically anonymizes your hardware signature across both Wi-Fi and Ethernet connections.
 - **Zero Memory Leaks to Disk**: Core dumps are intentionally disabled at the `systemd` level. Your RAM data (passwords, encryption keys) will never be written to unencrypted persistent storage upon application crashes.
 - **Total Clone Anonymity**: The `/etc/machine-id` is erased during OCI builds. Every instance generates a unique signature only upon first boot, preventing container telemetry tracking.
-- **Strict User Boundaries**: The `/etc/skel` profile applies draconian `700/600` permissions.
+- **Strict User Boundaries & SELinux**: The `/etc/skel` profile applies draconian `700/600` permissions. SELinux MAC policies are strictly enforced and relabeled during the container build to prevent unauthorized access.
 - **Firewalled by Default**: `firewalld` is baked in and enabled at boot to block all unsolicited inbound traffic.
 
 ---
 
 ## ⚡ Extreme Performance & Architecture
-- **ZRAM Compressed Memory**: Out-of-the-box `zram-generator` configuration maximizes multitasking fluidity without prematurely wearing out NVMe/SSD drives via disk swap.
-- **Silent & Lightning Boot**: `NetworkManager-wait-online.service` is disabled, and kernel arguments are tuned for a completely silent, high-speed boot process.
-- **Greenboot Auto-Repair**: Systemd health checks continuously monitor Wayland (`greetd`) and Network services. If a critical failure occurs, the OS automatically rolls back to the previous working OCI image.
+- **ZRAM Compressed Memory**: Out-of-the-box `zram-generator` configuration uses **ZSTD compression** and allocates up to 100% of RAM dynamically (`vm.swappiness=150`), maximizing multitasking fluidity without prematurely wearing out NVMe/SSD drives via disk swap.
+- **TCP BBR**: The Linux kernel is tuned to use Google's BBR congestion control algorithm, minimizing latency and maximizing network throughput.
+- **Silent & Lightning Boot**: `NetworkManager-wait-online.service` is disabled, Dracut is debloated from legacy modules (floppy, pcspkr), and kernel arguments are tuned for a completely silent, high-speed boot process.
+- **Silent Immutable Updates**: A background `bootc-fetch-apply.timer` silently downloads the latest OCI image once a week. The system updates atomically on your next reboot without any manual intervention.
+- **Greenboot Auto-Repair**: Systemd health checks continuously monitor Wayland (`greetd`) and Network services. If a critical failure occurs, the OS automatically rolls back to the previous working image.
 - **Hardware Maintenance**: Automatic `fstrim` timers and `fwupd` services keep your SSDs and firmware optimized silently in the background.
 
 ---
 
 ## 🎨 The "Full-Rust" Wayland Stack
-The graphical layer abandons monolithic desktops (GNOME/KDE) in favor of individual, hyper-fast components built in memory-safe Rust. All components are beautifully themed out-of-the-box using the **Catppuccin Mocha** palette, **Inter** UI fonts, and **JetBrains Mono**.
+The graphical layer abandons monolithic desktops in favor of individual, hyper-fast components built in memory-safe Rust. All components are beautifully themed out-of-the-box using the **Catppuccin Mocha** palette, **Inter** UI fonts, and **JetBrains Mono**.
 
 - **Compositor**: [Niri](https://github.com/YaLTeR/niri) (Scrollable Tiling Wayland Compositor).
 - **Status Bar**: [Ironbar](https://github.com/JakeStanger/ironbar) (Compiled natively, featuring custom CSS, FontAwesome icons, and UPower integration).
@@ -45,6 +47,16 @@ The graphical layer abandons monolithic desktops (GNOME/KDE) in favor of individ
 - **Login Greeter**: `tuigreet` (Terminal-based greeter with password masking).
 - **Terminal**: `Alacritty` (GPU-accelerated, zero-latency emulator).
 - **Core Utilities**: Modern Rust replacements for UNIX tools (`eza`, `bat`, `fd-find`, `ripgrep`, `bottom`, `nushell`, `starship`).
+- **Terminal IDE**: **Neovim** is pre-configured with **LazyVim** (Catppuccin Mocha theme), offering a complete, lightning-fast Rust development environment (LSP, autocomplete) straight out of the box.
+
+---
+
+## 💎 Seamless Desktop Integration
+Despite being a power-user terminal-centric OS, Ermete OS integrates flawlessly with modern Wayland standards:
+- **XDG Desktop Portals**: Native `xdg-desktop-portal-gnome` and D-Bus activation ensure screensharing (e.g., OBS Studio, Discord) and GUI file pickers work out of the box.
+- **Polkit GUI Escalation**: `lxqt-policykit-agent` runs in the background, allowing graphical apps (like Virt-Manager) to seamlessly prompt for root passwords.
+- **Gnome Keyring**: A fully integrated keyring daemon securely manages your SSH keys, OAuth tokens, and browser passwords, automatically unlocking upon login.
+- **Tray Applets**: Lightweight `nm-applet` and `blueman` sit quietly in the Ironbar tray for quick, convenient Wi-Fi and Bluetooth management.
 
 ---
 
@@ -88,7 +100,7 @@ Ermete OS abandons post-install scripts. To modify the OS, simply edit the `Cont
 * `04-system-config.sh`: Security presets, DNS-over-TLS, MAC randomization, and dotfiles distribution.
 * `04b-private-optimizations.sh`: Greenboot auto-repair, silent boot kargs, and the First-Boot Flatpak provisioner.
 * `04c-kernel-tuning.sh`: Aggressive kernel optimization, TCP BBR, ZSTD ZRAM, and Dracut debloating.
-* `05-cleanup.sh`: Cache management and Machine-ID resets for OCI cleanliness.
+* `05-cleanup.sh`: Cache management, Machine-ID resets, and SELinux relabeling for OCI cleanliness.
 
 ### Local Build & Testing
 A robust `Justfile` is provided for local development. Make sure you have `podman` and `just` installed:
