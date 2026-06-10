@@ -30,7 +30,7 @@ cat > /etc/greetd/config.toml << EOF
 vt = 1
 [default_session]
 user = "greeter"
-command = "tuigreet --time --cmd niri"
+command = "tuigreet --time --greeting 'Welcome to Ermete OS - Atomic Wayland' --asterisks --cmd niri"
 EOF
 
 # Architettura Systemd nativa (Systemd Presets)

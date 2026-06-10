@@ -1,24 +1,52 @@
 {
   "position": "top",
-  "height": 32,
+  "height": 40,
+  "margin": {
+    "top": 8,
+    "left": 16,
+    "right": 16,
+    "bottom": 0
+  },
   "start": [
     {
-      "type": "workspaces"
+      "type": "custom",
+      "class": "os-logo",
+      "bar": [
+        {
+          "type": "label",
+          "label": "🦅"
+        }
+      ]
+    },
+    {
+      "type": "workspaces",
+      "name_map": {
+        "1": "I",
+        "2": "II",
+        "3": "III",
+        "4": "IV",
+        "5": "V"
+      }
     }
   ],
   "center": [
     {
       "type": "clock",
-      "format": "%H:%M - %d/%m/%Y"
+      "format": "  %a %d %b     %H:%M"
     }
   ],
   "end": [
     {
-      "type": "tray"
+      "type": "tray",
+      "icon_size": 18
+    },
+    {
+      "type": "upower",
+      "format": "{percentage}% {icon}"
     },
     {
       "type": "sys_info",
-      "format": ["CPU {cpu_percent}%", "RAM {memory_percent}%"]
+      "format": [" {cpu_percent}%", " {memory_percent}%"]
     }
   ]
 }

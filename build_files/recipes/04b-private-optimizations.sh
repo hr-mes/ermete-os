@@ -50,6 +50,9 @@ ConditionFirstBoot=yes
 [Service]
 Type=oneshot
 ExecStartPre=-/usr/bin/flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+# Imposta i temi globalmente per tutte le app Flatpak per coerenza grafica
+ExecStartPre=-/usr/bin/flatpak override --system --env=GTK_THEME=adw-gtk3-dark
+ExecStartPre=-/usr/bin/flatpak override --system --env=ICON_THEME=Papirus-Dark
 # Installa tutte le GUI Application essenziali via Flatpak per preservare la purezza del RootFS
 ExecStart=-/usr/bin/flatpak install -y flathub com.github.tchx84.Flatseal org.gnome.Nautilus org.alacritty.Alacritty io.mpv.Mpv com.obsproject.Studio
 RemainAfterExit=yes
