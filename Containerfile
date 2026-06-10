@@ -41,6 +41,10 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
+    bash /ctx/recipes/04c-kernel-tuning.sh
+
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
     bash /ctx/recipes/05-cleanup.sh
 
 ### LINTING

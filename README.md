@@ -87,6 +87,7 @@ Ermete OS abandons post-install scripts. To modify the OS, simply edit the `Cont
 * `03-desktop.sh`: Native Rust compilations for the Wayland UI, plus typography and icon themes.
 * `04-system-config.sh`: Security presets, DNS-over-TLS, MAC randomization, and dotfiles distribution.
 * `04b-private-optimizations.sh`: Greenboot auto-repair, silent boot kargs, and the First-Boot Flatpak provisioner.
+* `04c-kernel-tuning.sh`: Aggressive kernel optimization, TCP BBR, ZSTD ZRAM, and Dracut debloating.
 * `05-cleanup.sh`: Cache management and Machine-ID resets for OCI cleanliness.
 
 ### Local Build & Testing
