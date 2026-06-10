@@ -12,7 +12,7 @@ dnf -y install --setopt=install_weak_deps=False greetd tuigreet
 # Compilazione nativa in Rust per Anyrun e Ironbar
 # Evitiamo repository COPR inaffidabili o non aggiornati per Rawhide (fc43).
 # Installiamo i tool di compilazione e le dipendenze GTK/Wayland necessarie.
-dnf -y install --setopt=install_weak_deps=False rust cargo gcc gcc-c++ pkgconf-pkg-config glib2-devel gtk3-devel gtk-layer-shell-devel cairo-devel pango-devel gdk-pixbuf2-devel
+dnf -y install --setopt=install_weak_deps=False rust cargo gcc gcc-c++ pkgconf-pkg-config glib2-devel gtk3-devel gtk4-devel gtk-layer-shell-devel gtk4-layer-shell-devel cairo-devel pango-devel gdk-pixbuf2-devel graphene-devel
 
 # Compilazione e installazione
 cargo install anyrun
@@ -23,5 +23,5 @@ mv /root/.cargo/bin/anyrun /usr/bin/
 mv /root/.cargo/bin/ironbar /usr/bin/
 
 # Pulizia: rimuoviamo i tool di build per non appesantire l'immagine OCI atomica
-dnf -y remove rust cargo gcc gcc-c++ pkgconf-pkg-config glib2-devel gtk3-devel gtk-layer-shell-devel cairo-devel pango-devel gdk-pixbuf2-devel
+dnf -y remove rust cargo gcc gcc-c++ pkgconf-pkg-config glib2-devel gtk3-devel gtk4-devel gtk-layer-shell-devel gtk4-layer-shell-devel cairo-devel pango-devel gdk-pixbuf2-devel graphene-devel
 rm -rf /root/.cargo

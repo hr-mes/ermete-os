@@ -1,0 +1,8 @@
+2026-06-10T19:41:15.1290000Z Requested labels: ubuntu-24.04
+2026-06-10T19:41:15.1290000Z Job defined at: patapem/ermete/.github/workflows/build.yml@refs/pull/1/merge
+2026-06-10T19:41:15.1290000Z Waiting for a runner to pick up this job...
+2026-06-10T19:41:15.1330000Z Evaluating build_push.if
+2026-06-10T19:41:15.1330000Z Evaluating: success()
+2026-06-10T19:41:15.1330000Z Result: true
+2026-06-10T19:41:15.1350000Z Job is about to start running on the hosted runner: GitHub Actions 1000000613
+2026-06-10T19:41:15.1360000Z Job is waiting for a hosted runner to come online.
