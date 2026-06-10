@@ -40,6 +40,33 @@ mkdir -p /usr/lib/systemd/user-preset/
 # Set Greetd e Podman come default attivi (livello System)
 echo "enable greetd.service" > /usr/lib/systemd/system-preset/99-ermeteos.preset
 echo "enable podman.socket" >> /usr/lib/systemd/system-preset/99-ermeteos.preset
+echo "disable NetworkManager-wait-online.service" >> /usr/lib/systemd/system-preset/99-ermeteos.preset
+echo "enable firewalld.service" >> /usr/lib/systemd/system-preset/99-ermeteos.preset
+
+# Disabilita i Coredump su disco per privacy totale
+mkdir -p /etc/systemd/coredump.conf.d/
+cat > /etc/systemd/coredump.conf.d/disable.conf << EOF
+[Coredump]
+Storage=none
+EOF
+
+# Randomizzazione MAC Address Wi-Fi/Ethernet (Anti-Tracking Fisico)
+mkdir -p /etc/NetworkManager/conf.d/
+cat > /etc/NetworkManager/conf.d/00-macrandomize.conf << EOF
+[device]
+wifi.scan-rand-mac-address=yes
+
+[connection]
+wifi.cloned-mac-address=random
+ethernet.cloned-mac-address=random
+EOF
+
+# DNS-over-TLS (DoT) Forzato (Anti-Tracciamento ISP)
+mkdir -p /etc/systemd/resolved.conf.d/
+cat > /etc/systemd/resolved.conf.d/dns_over_tls.conf << EOF
+[Resolve]
+DNSOverTLS=yes
+EOF
 
 # Copy Niri dotfiles to skel
 mkdir -p /etc/skel/.config/niri/

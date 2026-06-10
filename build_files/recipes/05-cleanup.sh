@@ -9,7 +9,6 @@ echo "--- Cleaning up image ---"
 dnf -y clean all
 dnf5 -y clean all
 
-# Rimozione esclusiva e puntuale dei file binari temporanei scaricati.
-# La struttura di /var/lib/dnf resta inalterata e pronta per l'operatività del first-boot.
-rm -rf /var/cache/dnf/*
-rm -rf /var/cache/libdnf5/*
+# Azzeramento del Machine ID per garantire la privacy su cloni multipli
+# systemd genererà un ID univoco e casuale al primo avvio
+truncate -s 0 /etc/machine-id
