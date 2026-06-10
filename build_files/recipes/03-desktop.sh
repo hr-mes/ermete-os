@@ -22,7 +22,7 @@ repo_gpgcheck=0
 enabled=1
 enabled_metadata=1
 EOF
-dnf -y install --setopt=install_weak_deps=False anyrun
+dnf -y install --setopt=install_weak_deps=False Anyrun
 
 # Ironbar: Status bar moderna e configurabile scritta in Rust (forzato su fedora-42)
 cat > /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:deluxe-cube:ironbar.repo << 'EOF'
