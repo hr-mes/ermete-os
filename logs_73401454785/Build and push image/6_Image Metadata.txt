@@ -1,0 +1,213 @@
+﻿2026-06-10T20:24:48.7494240Z ##[group]Run docker/metadata-action@v5
+2026-06-10T20:24:48.7494566Z with:
+2026-06-10T20:24:48.7495107Z   tags: type=raw,value=latest
+type=raw,value=latest.{{date 'YYYYMMDD'}}
+type=raw,value={{date 'YYYYMMDD'}}
+type=sha,enable=true
+type=ref,event=pr
+
+2026-06-10T20:24:48.7499408Z   labels: io.artifacthub.package.readme-url=https://raw.githubusercontent.com/patapem/ermete/93946e372b38def1ae64bdbf6a7dc45d823b4e9d/README.md
+org.opencontainers.image.created=2026-06-10T20:24:48Z
+org.opencontainers.image.description=Ermete OS - Immutable Cloud-Native System
+org.opencontainers.image.documentation=https://raw.githubusercontent.com/patapem/ermete/93946e372b38def1ae64bdbf6a7dc45d823b4e9d/README.md
+org.opencontainers.image.source=https://github.com/patapem/ermete/blob/93946e372b38def1ae64bdbf6a7dc45d823b4e9d/Containerfile
+org.opencontainers.image.title=ermete
+org.opencontainers.image.url=https://github.com/patapem/ermete/tree/93946e372b38def1ae64bdbf6a7dc45d823b4e9d
+org.opencontainers.image.vendor=patapem
+org.opencontainers.image.version=latest.{{date 'YYYYMMDD'}}
+io.artifacthub.package.deprecated=false
+io.artifacthub.package.keywords=bootc,fedora,Ermete,immutable
+io.artifacthub.package.license=Apache-2.0
+io.artifacthub.package.logo-url=
+io.artifacthub.package.prerelease=false
+containers.bootc=1
+
+2026-06-10T20:24:48.7503618Z   sep-tags:  
+2026-06-10T20:24:48.7503853Z   sep-annotations:  
+2026-06-10T20:24:48.7504114Z   context: workflow
+2026-06-10T20:24:48.7507478Z   github-token: ***
+2026-06-10T20:24:48.7507711Z env:
+2026-06-10T20:24:48.7507974Z   IMAGE_DESC: Ermete OS - Immutable Cloud-Native System
+2026-06-10T20:24:48.7508351Z   IMAGE_KEYWORDS: bootc,fedora,Ermete,immutable
+2026-06-10T20:24:48.7508675Z   IMAGE_LOGO_URL: 
+2026-06-10T20:24:48.7508899Z   IMAGE_NAME: ermete
+2026-06-10T20:24:48.7509149Z   IMAGE_REGISTRY: ghcr.io/patapem
+2026-06-10T20:24:48.7509420Z   DEFAULT_TAG: latest
+2026-06-10T20:24:48.7509648Z ##[endgroup]
+2026-06-10T20:24:49.7865668Z ##[group]Context info
+2026-06-10T20:24:49.7866168Z eventName: pull_request
+2026-06-10T20:24:49.7866673Z sha: 93946e372b38def1ae64bdbf6a7dc45d823b4e9d
+2026-06-10T20:24:49.7867158Z ref: refs/pull/1/merge
+2026-06-10T20:24:49.7867572Z workflow: Build container image
+2026-06-10T20:24:49.7867991Z action: metadata
+2026-06-10T20:24:49.7868346Z actor: patapem
+2026-06-10T20:24:49.7868692Z runNumber: 71
+2026-06-10T20:24:49.7869040Z runId: 27303964753
+2026-06-10T20:24:49.7869575Z commitDate: Wed Jun 10 2026 20:23:19 GMT+0000 (Coordinated Universal Time)
+2026-06-10T20:24:49.7870662Z ##[endgroup]
+2026-06-10T20:24:49.7873246Z ##[group]Processing images input
+2026-06-10T20:24:49.7873887Z ##[endgroup]
+2026-06-10T20:24:49.7893675Z ##[group]Processing tags input
+2026-06-10T20:24:49.7894305Z type=ref,event=pr,prefix=pr-,enable=true,priority=600
+2026-06-10T20:24:49.7894884Z type=raw,value=latest,enable=true,priority=200
+2026-06-10T20:24:49.7895624Z type=raw,value=latest.{{date 'YYYYMMDD'}},enable=true,priority=200
+2026-06-10T20:24:49.7896325Z type=raw,value={{date 'YYYYMMDD'}},enable=true,priority=200
+2026-06-10T20:24:49.7896958Z type=sha,enable=true,prefix=sha-,format=short,priority=100
+2026-06-10T20:24:49.7897716Z ##[endgroup]
+2026-06-10T20:24:49.7898284Z ##[group]Processing flavor input
+2026-06-10T20:24:49.7898693Z latest=auto
+2026-06-10T20:24:49.7899019Z prefix=
+2026-06-10T20:24:49.7899325Z prefixLatest=false
+2026-06-10T20:24:49.7899661Z suffix=
+2026-06-10T20:24:49.7899950Z suffixLatest=false
+2026-06-10T20:24:49.7900513Z ##[endgroup]
+2026-06-10T20:24:49.8021081Z ##[group]Docker image version
+2026-06-10T20:24:49.8021537Z pr-1
+2026-06-10T20:24:49.8022069Z ##[endgroup]
+2026-06-10T20:24:49.8026953Z ##[group]Docker tags
+2026-06-10T20:24:49.8027468Z pr-1
+2026-06-10T20:24:49.8027840Z latest
+2026-06-10T20:24:49.8028156Z latest.20260610
+2026-06-10T20:24:49.8028482Z 20260610
+2026-06-10T20:24:49.8028991Z sha-93946e3
+2026-06-10T20:24:49.8029662Z ##[endgroup]
+2026-06-10T20:24:49.8129706Z ##[group]Docker labels
+2026-06-10T20:24:49.8130631Z containers.bootc=1
+2026-06-10T20:24:49.8131376Z io.artifacthub.package.deprecated=false
+2026-06-10T20:24:49.8132660Z io.artifacthub.package.keywords=bootc,fedora,Ermete,immutable
+2026-06-10T20:24:49.8133313Z io.artifacthub.package.license=Apache-2.0
+2026-06-10T20:24:49.8133834Z io.artifacthub.package.logo-url=
+2026-06-10T20:24:49.8134316Z io.artifacthub.package.prerelease=false
+2026-06-10T20:24:49.8135592Z io.artifacthub.package.readme-url=https://raw.githubusercontent.com/patapem/ermete/93946e372b38def1ae64bdbf6a7dc45d823b4e9d/README.md
+2026-06-10T20:24:49.8136707Z org.opencontainers.image.created=2026-06-10T20:24:48Z
+2026-06-10T20:24:49.8137493Z org.opencontainers.image.description=Ermete OS - Immutable Cloud-Native System
+2026-06-10T20:24:49.8138794Z org.opencontainers.image.documentation=https://raw.githubusercontent.com/patapem/ermete/93946e372b38def1ae64bdbf6a7dc45d823b4e9d/README.md
+2026-06-10T20:24:49.8140154Z org.opencontainers.image.licenses=Apache-2.0
+2026-06-10T20:24:49.8140845Z org.opencontainers.image.revision=93946e372b38def1ae64bdbf6a7dc45d823b4e9d
+2026-06-10T20:24:49.8142009Z org.opencontainers.image.source=https://github.com/patapem/ermete/blob/93946e372b38def1ae64bdbf6a7dc45d823b4e9d/Containerfile
+2026-06-10T20:24:49.8143022Z org.opencontainers.image.title=ermete
+2026-06-10T20:24:49.8143890Z org.opencontainers.image.url=https://github.com/patapem/ermete/tree/93946e372b38def1ae64bdbf6a7dc45d823b4e9d
+2026-06-10T20:24:49.8144782Z org.opencontainers.image.vendor=patapem
+2026-06-10T20:24:49.8145565Z org.opencontainers.image.version=latest.20260610
+2026-06-10T20:24:49.8146458Z ##[endgroup]
+2026-06-10T20:24:49.8147399Z ##[group]Annotations
+2026-06-10T20:24:49.8147939Z manifest:org.opencontainers.image.created=2026-06-10T20:24:49.789Z
+2026-06-10T20:24:49.8148627Z manifest:org.opencontainers.image.description=
+2026-06-10T20:24:49.8149249Z manifest:org.opencontainers.image.licenses=Apache-2.0
+2026-06-10T20:24:49.8150067Z manifest:org.opencontainers.image.revision=93946e372b38def1ae64bdbf6a7dc45d823b4e9d
+2026-06-10T20:24:49.8151015Z manifest:org.opencontainers.image.source=https://github.com/patapem/ermete
+2026-06-10T20:24:49.8151765Z manifest:org.opencontainers.image.title=ermete
+2026-06-10T20:24:49.8152475Z manifest:org.opencontainers.image.url=https://github.com/patapem/ermete
+2026-06-10T20:24:49.8153179Z manifest:org.opencontainers.image.version=pr-1
+2026-06-10T20:24:49.8153937Z ##[endgroup]
+2026-06-10T20:24:49.8168228Z ##[group]JSON output
+2026-06-10T20:24:49.8168780Z {
+2026-06-10T20:24:49.8169119Z   "tags": [
+2026-06-10T20:24:49.8169437Z     "pr-1",
+2026-06-10T20:24:49.8169754Z     "latest",
+2026-06-10T20:24:49.8170075Z     "latest.20260610",
+2026-06-10T20:24:49.8170434Z     "20260610",
+2026-06-10T20:24:49.8170767Z     "sha-93946e3"
+2026-06-10T20:24:49.8171084Z   ],
+2026-06-10T20:24:49.8171387Z   "tag-names": [
+2026-06-10T20:24:49.8171702Z     "pr-1",
+2026-06-10T20:24:49.8172023Z     "latest",
+2026-06-10T20:24:49.8172342Z     "latest.20260610",
+2026-06-10T20:24:49.8172683Z     "20260610",
+2026-06-10T20:24:49.8173231Z     "sha-93946e3"
+2026-06-10T20:24:49.8173570Z   ],
+2026-06-10T20:24:49.8173877Z   "labels": {
+2026-06-10T20:24:49.8174351Z     "containers.bootc": "1",
+2026-06-10T20:24:49.8174824Z     "io.artifacthub.package.deprecated": "false",
+2026-06-10T20:24:49.8175725Z     "io.artifacthub.package.keywords": "bootc,fedora,Ermete,immutable",
+2026-06-10T20:24:49.8176450Z     "io.artifacthub.package.license": "Apache-2.0",
+2026-06-10T20:24:49.8177230Z     "io.artifacthub.package.logo-url": "",
+2026-06-10T20:24:49.8177853Z     "io.artifacthub.package.prerelease": "false",
+2026-06-10T20:24:49.8179139Z     "io.artifacthub.package.readme-url": "https://raw.githubusercontent.com/patapem/ermete/93946e372b38def1ae64bdbf6a7dc45d823b4e9d/README.md",
+2026-06-10T20:24:49.8180476Z     "org.opencontainers.image.created": "2026-06-10T20:24:48Z",
+2026-06-10T20:24:49.8181475Z     "org.opencontainers.image.description": "Ermete OS - Immutable Cloud-Native System",
+2026-06-10T20:24:49.8182894Z     "org.opencontainers.image.documentation": "https://raw.githubusercontent.com/patapem/ermete/93946e372b38def1ae64bdbf6a7dc45d823b4e9d/README.md",
+2026-06-10T20:24:49.8184412Z     "org.opencontainers.image.licenses": "Apache-2.0",
+2026-06-10T20:24:49.8185430Z     "org.opencontainers.image.revision": "93946e372b38def1ae64bdbf6a7dc45d823b4e9d",
+2026-06-10T20:24:49.8186696Z     "org.opencontainers.image.source": "https://github.com/patapem/ermete/blob/93946e372b38def1ae64bdbf6a7dc45d823b4e9d/Containerfile",
+2026-06-10T20:24:49.8187767Z     "org.opencontainers.image.title": "ermete",
+2026-06-10T20:24:49.8188686Z     "org.opencontainers.image.url": "https://github.com/patapem/ermete/tree/93946e372b38def1ae64bdbf6a7dc45d823b4e9d",
+2026-06-10T20:24:49.8189637Z     "org.opencontainers.image.vendor": "patapem",
+2026-06-10T20:24:49.8190249Z     "org.opencontainers.image.version": "latest.20260610"
+2026-06-10T20:24:49.8191033Z   },
+2026-06-10T20:24:49.8191336Z   "annotations": [
+2026-06-10T20:24:49.8191855Z     "manifest:org.opencontainers.image.created=2026-06-10T20:24:49.789Z",
+2026-06-10T20:24:49.8192562Z     "manifest:org.opencontainers.image.description=",
+2026-06-10T20:24:49.8193217Z     "manifest:org.opencontainers.image.licenses=Apache-2.0",
+2026-06-10T20:24:49.8194045Z     "manifest:org.opencontainers.image.revision=93946e372b38def1ae64bdbf6a7dc45d823b4e9d",
+2026-06-10T20:24:49.8195035Z     "manifest:org.opencontainers.image.source=https://github.com/patapem/ermete",
+2026-06-10T20:24:49.8196106Z     "manifest:org.opencontainers.image.title=ermete",
+2026-06-10T20:24:49.8218224Z     "manifest:org.opencontainers.image.url=https://github.com/patapem/ermete",
+2026-06-10T20:24:49.8235448Z     "manifest:org.opencontainers.image.version=pr-1"
+2026-06-10T20:24:49.8235953Z   ]
+2026-06-10T20:24:49.8236215Z }
+2026-06-10T20:24:49.8236850Z ##[endgroup]
+2026-06-10T20:24:49.8237520Z ##[group]Bake file definition (tags)
+2026-06-10T20:24:49.8237992Z {
+2026-06-10T20:24:49.8238289Z   "target": {
+2026-06-10T20:24:49.8238617Z     "docker-metadata-action": {
+2026-06-10T20:24:49.8239021Z       "tags": [
+2026-06-10T20:24:49.8239357Z         "pr-1",
+2026-06-10T20:24:49.8239680Z         "latest",
+2026-06-10T20:24:49.8240024Z         "latest.20260610",
+2026-06-10T20:24:49.8240363Z         "20260610",
+2026-06-10T20:24:49.8240715Z         "sha-93946e3"
+2026-06-10T20:24:49.8241061Z       ],
+2026-06-10T20:24:49.8241374Z       "args": {
+2026-06-10T20:24:49.8241722Z         "DOCKER_META_IMAGES": "",
+2026-06-10T20:24:49.8242225Z         "DOCKER_META_VERSION": "pr-1"
+2026-06-10T20:24:49.8242645Z       }
+2026-06-10T20:24:49.8242951Z     }
+2026-06-10T20:24:49.8243329Z   }
+2026-06-10T20:24:49.8243648Z }
+2026-06-10T20:24:49.8244219Z ##[endgroup]
+2026-06-10T20:24:49.8244819Z ##[group]Bake file definition (labels)
+2026-06-10T20:24:49.8245396Z {
+2026-06-10T20:24:49.8245678Z   "target": {
+2026-06-10T20:24:49.8246036Z     "docker-metadata-action": {
+2026-06-10T20:24:49.8246457Z       "labels": {
+2026-06-10T20:24:49.8246819Z         "containers.bootc": "1",
+2026-06-10T20:24:49.8247304Z         "io.artifacthub.package.deprecated": "false",
+2026-06-10T20:24:49.8248048Z         "io.artifacthub.package.keywords": "bootc,fedora,Ermete,immutable",
+2026-06-10T20:24:49.8248802Z         "io.artifacthub.package.license": "Apache-2.0",
+2026-06-10T20:24:49.8249393Z         "io.artifacthub.package.logo-url": "",
+2026-06-10T20:24:49.8249913Z         "io.artifacthub.package.prerelease": "false",
+2026-06-10T20:24:49.8251027Z         "io.artifacthub.package.readme-url": "https://raw.githubusercontent.com/patapem/ermete/93946e372b38def1ae64bdbf6a7dc45d823b4e9d/README.md",
+2026-06-10T20:24:49.8252252Z         "org.opencontainers.image.created": "2026-06-10T20:24:48Z",
+2026-06-10T20:24:49.8253148Z         "org.opencontainers.image.description": "Ermete OS - Immutable Cloud-Native System",
+2026-06-10T20:24:49.8254626Z         "org.opencontainers.image.documentation": "https://raw.githubusercontent.com/patapem/ermete/93946e372b38def1ae64bdbf6a7dc45d823b4e9d/README.md",
+2026-06-10T20:24:49.8256023Z         "org.opencontainers.image.licenses": "Apache-2.0",
+2026-06-10T20:24:49.8256906Z         "org.opencontainers.image.revision": "93946e372b38def1ae64bdbf6a7dc45d823b4e9d",
+2026-06-10T20:24:49.8258467Z         "org.opencontainers.image.source": "https://github.com/patapem/ermete/blob/93946e372b38def1ae64bdbf6a7dc45d823b4e9d/Containerfile",
+2026-06-10T20:24:49.8259592Z         "org.opencontainers.image.title": "ermete",
+2026-06-10T20:24:49.8260563Z         "org.opencontainers.image.url": "https://github.com/patapem/ermete/tree/93946e372b38def1ae64bdbf6a7dc45d823b4e9d",
+2026-06-10T20:24:49.8261600Z         "org.opencontainers.image.vendor": "patapem",
+2026-06-10T20:24:49.8262254Z         "org.opencontainers.image.version": "latest.20260610"
+2026-06-10T20:24:49.8262785Z       }
+2026-06-10T20:24:49.8263097Z     }
+2026-06-10T20:24:49.8263393Z   }
+2026-06-10T20:24:49.8263881Z }
+2026-06-10T20:24:49.8264452Z ##[endgroup]
+2026-06-10T20:24:49.8265042Z ##[group]Bake file definition (annotations)
+2026-06-10T20:24:49.8265681Z {
+2026-06-10T20:24:49.8265960Z   "target": {
+2026-06-10T20:24:49.8266325Z     "docker-metadata-action": {
+2026-06-10T20:24:49.8266758Z       "annotations": [
+2026-06-10T20:24:49.8267356Z         "manifest:org.opencontainers.image.created=2026-06-10T20:24:49.789Z",
+2026-06-10T20:24:49.8268119Z         "manifest:org.opencontainers.image.description=",
+2026-06-10T20:24:49.8268831Z         "manifest:org.opencontainers.image.licenses=Apache-2.0",
+2026-06-10T20:24:49.8269748Z         "manifest:org.opencontainers.image.revision=93946e372b38def1ae64bdbf6a7dc45d823b4e9d",
+2026-06-10T20:24:49.8270756Z         "manifest:org.opencontainers.image.source=https://github.com/patapem/ermete",
+2026-06-10T20:24:49.8271548Z         "manifest:org.opencontainers.image.title=ermete",
+2026-06-10T20:24:49.8272337Z         "manifest:org.opencontainers.image.url=https://github.com/patapem/ermete",
+2026-06-10T20:24:49.8273082Z         "manifest:org.opencontainers.image.version=pr-1"
+2026-06-10T20:24:49.8273618Z       ]
+2026-06-10T20:24:49.8273913Z     }
+2026-06-10T20:24:49.8274214Z   }
+2026-06-10T20:24:49.8274565Z }
+2026-06-10T20:24:49.8275442Z ##[endgroup]

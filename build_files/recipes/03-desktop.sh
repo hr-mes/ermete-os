@@ -16,7 +16,8 @@ dnf -y install --setopt=install_weak_deps=False rust cargo gcc gcc-c++ pkgconf-p
     glib2-devel gtk3-devel gtk4-devel gtk-layer-shell-devel gtk4-layer-shell-devel \
     cairo-devel pango-devel gdk-pixbuf2-devel graphene-devel \
     autoconf automake libtool libevdev-devel upower-devel pulseaudio-libs-devel \
-    libxkbcommon-devel wayland-devel openssl-devel luajit-devel clang
+    libxkbcommon-devel wayland-devel openssl-devel luajit-devel clang \
+    libinput-devel wayland-protocols-devel dbus-devel
 
 # Compilazione e installazione
 cargo install anyrun
@@ -31,5 +32,6 @@ dnf -y remove rust cargo gcc gcc-c++ pkgconf-pkg-config \
     glib2-devel gtk3-devel gtk4-devel gtk-layer-shell-devel gtk4-layer-shell-devel \
     cairo-devel pango-devel gdk-pixbuf2-devel graphene-devel \
     autoconf automake libtool libevdev-devel upower-devel pulseaudio-libs-devel \
-    libxkbcommon-devel wayland-devel openssl-devel luajit-devel clang
+    libxkbcommon-devel wayland-devel openssl-devel luajit-devel clang \
+    libinput-devel wayland-protocols-devel dbus-devel
 rm -rf /root/.cargo

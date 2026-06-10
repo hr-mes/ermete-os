@@ -1,0 +1,15 @@
+﻿2026-06-10T20:24:48.7308173Z ##[group]Run # This generates a timestamp like what is defined on the ArtifactHub documentation
+2026-06-10T20:24:48.7308862Z [36;1m# This generates a timestamp like what is defined on the ArtifactHub documentation[0m
+2026-06-10T20:24:48.7309336Z [36;1m# E.G: 2022-02-08T15:38:15Z'[0m
+2026-06-10T20:24:48.7309760Z [36;1m# https://artifacthub.io/docs/topics/repositories/container-images/[0m
+2026-06-10T20:24:48.7310230Z [36;1m# https://linux.die.net/man/1/date[0m
+2026-06-10T20:24:48.7310635Z [36;1mecho "date=$(date -u +%Y\-%m\-%d\T%H\:%M\:%S\Z)" >> $GITHUB_OUTPUT[0m
+2026-06-10T20:24:48.7330929Z shell: /usr/bin/bash -e {0}
+2026-06-10T20:24:48.7331208Z env:
+2026-06-10T20:24:48.7331485Z   IMAGE_DESC: Ermete OS - Immutable Cloud-Native System
+2026-06-10T20:24:48.7331865Z   IMAGE_KEYWORDS: bootc,fedora,Ermete,immutable
+2026-06-10T20:24:48.7332178Z   IMAGE_LOGO_URL: 
+2026-06-10T20:24:48.7332416Z   IMAGE_NAME: ermete
+2026-06-10T20:24:48.7332658Z   IMAGE_REGISTRY: ghcr.io/patapem
+2026-06-10T20:24:48.7332930Z   DEFAULT_TAG: latest
+2026-06-10T20:24:48.7333203Z ##[endgroup]
