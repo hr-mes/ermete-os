@@ -1,8 +1,8 @@
-# 🦅 Ermeteos OS
+# 🦅 Ermete OS
 
-**Ermeteos OS** is a modern, immutable, and cloud-native Linux operating system built on top of Fedora and Universal Blue technologies. Engineered strictly for power-users and developers, it discards bloated desktop environments in favor of a lean, ultra-fast, and keyboard-driven Wayland experience.
+**Ermete OS** is a modern, immutable, and cloud-native Linux operating system built on top of Fedora and Universal Blue technologies. Engineered strictly for power-users and developers, it discards bloated desktop environments in favor of a lean, ultra-fast, and keyboard-driven Wayland experience.
 
-Driven by an Infrastructure-as-Code (IaC) philosophy, Ermeteos OS is defined entirely by container recipes and built via GitHub Actions. It leverages OCI images to provide unbreakable, atomic system updates.
+Driven by an Infrastructure-as-Code (IaC) philosophy, Ermete OS is defined entirely by container recipes and built via GitHub Actions. It leverages OCI images to provide unbreakable, atomic system updates.
 
 ---
 
@@ -37,17 +37,17 @@ The entire graphical environment and user experience are intentionally built on 
 ## 🚀 Installation & Usage
 
 ### Option 1: Clean Install (ISO)
-To deploy Ermeteos OS on a bare-metal machine or virtual environment:
+To deploy Ermete OS on a bare-metal machine or virtual environment:
 1. Navigate to the **Actions** tab of this repository.
 2. Select the **Build disk images** workflow.
 3. Download the generated `install.iso` artifact.
 4. Flash to a USB drive using BalenaEtcher or Rufus, and boot.
 
 ### Option 2: Rebase (from an existing bootc/ublue system)
-If you are currently running an image-based OS like Bazzite, Bluefin, or Fedora Atomic, you can seamlessly mutate your system into Ermeteos OS by opening a terminal:
+If you are currently running an image-based OS like Bazzite, Bluefin, or Fedora Atomic, you can seamlessly mutate your system into Ermete OS by opening a terminal:
 
 ```bash
-sudo bootc switch ghcr.io/patapem/ermeteos:latest
+sudo bootc switch ghcr.io/patapem/Ermete:latest
 ```
 *Reboot your machine when the process finishes.*
 
@@ -55,7 +55,7 @@ sudo bootc switch ghcr.io/patapem/ermeteos:latest
 
 ## 🛠️ Architecture & Development
 
-Ermeteos OS abandons monolithic post-install scripts. Instead, the `Containerfile` sequentially iterates through modular shell scripts in `build_files/recipes/`:
+Ermete OS abandons monolithic post-install scripts. Instead, the `Containerfile` sequentially iterates through modular shell scripts in `build_files/recipes/`:
 
 * `01-system-setup.sh`: Base packages, ZRAM, core Rust CLI tools, and Idempotent DNF rules.
 * `02-repos-and-codecs.sh`: Third-party repositories and multimedia stacks.
@@ -73,7 +73,7 @@ A robust `Justfile` is provided for local development. Make sure you have `podma
 
 ## 🤝 Acknowledgements
 
-Ermeteos OS stands on the shoulders of giants:
+Ermete OS stands on the shoulders of giants:
 * The [Universal Blue](https://universal-blue.org/) project for the `bootc` frameworks.
 * [RakuOS](https://github.com/rakuos/rakuos-base) per the solid NVIDIA base image.
 * [Yalter](https://github.com/YaLTeR/niri) for the incredible Niri compositor.

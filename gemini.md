@@ -1,7 +1,7 @@
-# Gemini Context: Ermeteos OS
+# Gemini Context: Ermete OS
 
 ## 🦅 Informazioni sul Progetto e Filosofia
-**Ermeteos OS** è un sistema operativo Linux "cloud-native", immutabile e atomico, basato su **Fedora** e sulle potenti tecnologie **bootc / Universal Blue**.
+**Ermete OS** è un sistema operativo Linux "cloud-native", immutabile e atomico, basato su **Fedora** e sulle potenti tecnologie **bootc / Universal Blue**.
 Non è una distribuzione classica. Segue rigorosamente un approccio **Infrastructure-as-Code (IaC)**: l'intero sistema operativo è costruito a livelli in un'immagine OCI, azzerando l'entropia del sistema locale dell'utente.
 Gli obiettivi primari e non negoziabili del progetto sono: **Privacy Totale**, **Prestazioni Estreme (Zero-Bloat)** e **Affidabilità Infrangibile (Atomic Updates)**.
 
@@ -42,7 +42,7 @@ Chiunque apporti modifiche al progetto **deve** conformarsi rigidamente ai segue
 
 1. **Mai usare `dnf install` standard:** Ogni nuovo pacchetto deve essere installato usando esplicitamente `dnf -y install --setopt=install_weak_deps=False <pacchetto>`. L'inserimento di "weak_deps" è considerato una violazione architetturale, poiché ingrassa l'immagine OCI senza reale necessità.
 2. **Nessun salvataggio in directory persistenti (`/var`, `/home`):** Essendo il sistema un'immagine OCI per `bootc`, tutto ciò che non risiede in directory globali (`/usr`, `/etc`) non verrà distribuito o sarà sovrascritto. Per le configurazioni utente va usato SEMPRE `/etc/skel/`.
-3. **Usa le Native Systemd Policies:** Non usare mai script empirici (es. `rc.local` o hack bash) per gestire servizi. Usa esclusivamente systemd presets (`/usr/lib/systemd/system-preset/99-ermeteos.preset`) e unit files canonici in `/etc/systemd/`.
+3. **Usa le Native Systemd Policies:** Non usare mai script empirici (es. `rc.local` o hack bash) per gestire servizi. Usa esclusivamente systemd presets (`/usr/lib/systemd/system-preset/99-Ermete.preset`) e unit files canonici in `/etc/systemd/`.
 4. **Idempotenza Assoluta e Sicurezza:** Gli script in `recipes/*.sh` verranno iterati. Modifiche, aggiunte o creazioni di file devono usare flag sicuri (`mkdir -p`, e configurazioni `cat > file << EOF`).
 5. **Non Distruggere la Build-Cache:** Non inserire comandi di cancellazione indiscriminata come `rm -rf /var/cache/dnf/*` in fase di cleanup. Il Containerfile gestisce quella directory come un bind-mount dell'host, per cui distruggerla penalizza le build locali. Basterà usare `dnf clean all`.
 6. **Mantenere la Privacy Totale:** Qualsiasi demone, logger o tool diagnostico aggiunto non deve abilitare la telemetria e non deve immagazzinare dati esposti in chiaro se non strettamente legati al journal crittografato o al normale dmesg.

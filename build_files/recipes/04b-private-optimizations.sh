@@ -35,14 +35,14 @@ EOF
 chmod +x /etc/greenboot/check/required.d/02-greetd-check.sh
 
 # 3. Manutenzione Automatica (fstrim e fwupd)
-echo "enable fstrim.timer" >> /usr/lib/systemd/system-preset/99-ermeteos.preset
-echo "enable fwupd.service" >> /usr/lib/systemd/system-preset/99-ermeteos.preset
+echo "enable fstrim.timer" >> /usr/lib/systemd/system-preset/99-Ermete.preset
+echo "enable fwupd.service" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 
 # 4. First-boot Service per installare Flatseal
 # Sfrutta ConditionFirstBoot=yes di systemd (attivato grazie al Machine-ID vuoto)
-cat > /etc/systemd/system/ermeteos-firstboot.service << 'EOF'
+cat > /etc/systemd/system/Ermete-firstboot.service << 'EOF'
 [Unit]
-Description=Ermeteos First Boot Setup (Install Flatseal)
+Description=Ermete First Boot Setup (Install Flatseal)
 After=network-online.target
 Wants=network-online.target
 ConditionFirstBoot=yes
@@ -57,7 +57,7 @@ RemainAfterExit=yes
 [Install]
 WantedBy=multi-user.target
 EOF
-echo "enable ermeteos-firstboot.service" >> /usr/lib/systemd/system-preset/99-ermeteos.preset
+echo "enable Ermete-firstboot.service" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 
 # 5. Pulizia Visiva del Kernel (Silent Boot) tramite bootc kargs
 mkdir -p /usr/lib/bootc/kargs.d/
