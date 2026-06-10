@@ -122,6 +122,9 @@ hotkey-overlay {
     // skip-at-startup
 }
 
+spawn-at-startup "gnome-keyring-daemon" "--start" "--components=secrets"
+spawn-at-startup "dbus-update-activation-environment" "--systemd" "WAYLAND_DISPLAY" "XDG_CURRENT_DESKTOP=niri"
+spawn-at-startup "lxqt-policykit-agent"
 spawn-at-startup "ironbar"
 spawn-at-startup "nm-applet"
 spawn-at-startup "blueman-applet"

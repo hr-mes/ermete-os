@@ -5,7 +5,8 @@ echo "--- Installing Desktop Environment ---"
 
 # Install Niri e dipendenze cursori, temi e font
 dnf -y install --setopt=install_weak_deps=False niri bibata-cursor-theme \
-    papirus-icon-theme adw-gtk3-theme jetbrains-mono-fonts rsms-inter-fonts fontawesome-fonts-all
+    papirus-icon-theme adw-gtk3-theme jetbrains-mono-fonts rsms-inter-fonts fontawesome-fonts-all \
+    xdg-desktop-portal-gnome xdg-desktop-portal-gtk
 
 # Install Greetd e Tuigreet (Greeter da terminale in Rust)
 dnf -y install --setopt=install_weak_deps=False greetd tuigreet

@@ -40,6 +40,7 @@ mkdir -p /usr/lib/systemd/user-preset/
 # Set Greetd e Podman come default attivi (livello System)
 echo "enable greetd.service" > /usr/lib/systemd/system-preset/99-Ermete.preset
 echo "enable podman.socket" >> /usr/lib/systemd/system-preset/99-Ermete.preset
+echo "enable bootc-fetch-apply.timer" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 echo "disable NetworkManager-wait-online.service" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 echo "enable firewalld.service" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 
