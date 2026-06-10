@@ -20,17 +20,19 @@ Driven by an Infrastructure-as-Code (IaC) philosophy, Ermete OS is defined entir
 - **Asynchronous Network Boot**: `NetworkManager-wait-online.service` is disabled out-of-the-box, ensuring instantaneous boots.
 
 ### 🎨 The "Full-Rust" Graphic Stack
-The entire graphical environment and user experience are intentionally built on memory-safe Rust ecosystems:
+The entire graphical environment and user experience are intentionally built on memory-safe Rust ecosystems. To guarantee absolute stability and avoid the fragility of third-party COPR repositories, the core shell components are **compiled natively from crates.io** directly during the OCI image build:
 - **Compositor**: [Niri](https://github.com/YaLTeR/niri) (Scrollable Tiling Wayland Compositor)
-- **Status Bar**: [Ironbar](https://github.com/sneexy/ironbar)
-- **App Launcher**: [Anyrun](https://github.com/anyrun-org/anyrun)
+- **Status Bar**: [Ironbar](https://github.com/JakeStanger/ironbar) (Compiled natively with GTK4)
+- **App Launcher**: [Anyrun](https://github.com/anyrun-org/anyrun) (Compiled natively)
 - **Login Manager / Greeter**: `greetd` strictly confined to `tuigreet`.
 - **Core CLI Utilities**: Classical UNIX tools are replaced by modern Rust alternatives (`eza`, `bat`, `fd-find`, `ripgrep`, `bottom`, `nushell`, `starship`).
 - **Terminal Emulator**: GPU-accelerated `alacritty` replaces standard emulators.
 
 ### 🎮 NVIDIA & Multimedia Unleashed
 - **RakuOS Base**: Inherits from the RakuOS Nvidia base image, delivering proprietary drivers and seamless hardware acceleration instantly.
-- **RPMFusion Bundled**: Ships with RPMFusion (Free/Non-Free), `ffmpeg`, `libva-utils`, and OBS Studio.
+- **RPMFusion Bundled**: Ships with RPMFusion (Free/Non-Free) and essential host-level codecs (`ffmpeg`, `libva-utils`).
+- **Strictly Flatpak for GUI**: To preserve system purity, no graphical applications (like OBS Studio or Nautilus) are installed on the host. GUI software is exclusively delegated to Flatpak via Flathub.
+- **Zero-COPR Policy**: The build process relies solely on official Fedora repos, RPMFusion, and crates.io. We strictly forbid third-party package repositories to ensure 100% reproducible and unbreakable builds.
 
 ---
 
