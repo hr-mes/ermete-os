@@ -1,0 +1,32 @@
+Failed to resolve the transaction:
+Package "firewalld-2.3.2-1.fc43.noarch" is already installed.
+Package "zram-generator-1.2.1-3.fc43.x86_64" is already installed.
+Package "distrobox-1.8.2.4-1.fc43.noarch" is already installed.
+Package "flatpak-1.16.6-1.fc43.x86_64" is already installed.
+Problem: problem with installed package
+  - installed package cachyos-settings-1.3.4-1.fc43.x86_64 conflicts with zram-generator-defaults provided by zram-generator-defaults-1.2.1-3.fc43.noarch from fedora
+  - package cachyos-settings-1.3.4-1.fc43.x86_64 from copr:copr.fedorainfracloud.org:bieszczaders:kernel-cachyos-addons conflicts with zram-generator-defaults provided by zram-generator-defaults-1.2.1-3.fc43.noarch from fedora
+  - conflicting requests
+You can try to add to command line:
+  --allowerasing to allow removing of installed packages to resolve problems
+  --skip-broken to skip uninstallable packages
+Error: building at STEP "RUN --mount=type=bind,from=ctx,source=/,target=/ctx --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 bash /ctx/recipes/01-system-setup.sh": while running runtime: exit status 1
+Error: Error: buildah exited with code 1
+
+
+
+>> Scriptlet output:                                                           
+>>> Failed to connect to audit log, ignoring: Invalid argument                  
+>>>                                                                             
+Complete!
++ dnf -y copr enable anyrun-org/anyrun
+ https://copr.fedorainfracloud.org/api_ 100% | 543.0   B/s |  50.0   B |  00m00s
+>>> Status code: 404 for https://copr.fedorainfracloud.org/api_3/rpmrepo/anyrun-
+>>> Status code: 404 for https://copr.fedorainfracloud.org/api_3/rpmrepo/anyrun-
+>>> Status code: 404 for https://copr.fedorainfracloud.org/api_3/rpmrepo/anyrun-
+>>> Status code: 404 for https://copr.fedorainfracloud.org/api_3/rpmrepo/anyrun-
+>>> Status code: 404 for https://copr.fedorainfracloud.org/api_3/rpmrepo/anyrun-
+Failed to download files
+ Librepo error: Status code: 404 for https://copr.fedorainfracloud.org/api_3/rpmrepo/anyrun-org/anyrun/fedora-43/ (IP: 3.225.109.36)
+Error: building at STEP "RUN --mount=type=bind,from=ctx,source=/,target=/ctx --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 bash /ctx/recipes/03-desktop.sh": while running runtime: exit status 1
+Error: Error: buildah exited with code 1
