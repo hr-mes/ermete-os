@@ -122,6 +122,7 @@ hotkey-overlay {
     // skip-at-startup
 }
 
+spawn-at-startup "flatpak" "run" "--command=easyeffects" "com.github.wwmm.easyeffects" "--gapplication-service"
 spawn-at-startup "gnome-keyring-daemon" "--start" "--components=secrets"
 spawn-at-startup "dbus-update-activation-environment" "--systemd" "WAYLAND_DISPLAY" "XDG_CURRENT_DESKTOP=niri"
 spawn-at-startup "lxqt-policykit-agent"

@@ -37,12 +37,29 @@ EOF
 mkdir -p /usr/lib/systemd/system-preset/
 mkdir -p /usr/lib/systemd/user-preset/
 
-# Set Greetd e Podman come default attivi (livello System)
+# Aggressive OOMD configuration to protect Wayland session
+mkdir -p /etc/systemd/oomd.conf.d/
+cat > /etc/systemd/oomd.conf.d/10-ermete.conf << 'EOF'
+[OOM]
+DefaultMemoryPressureLimit=90%
+DefaultMemoryPressureDurationSec=5
+EOF
+
+# Set Greetd, Podman, and OOMD come default attivi (livello System)
 echo "enable greetd.service" > /usr/lib/systemd/system-preset/99-Ermete.preset
 echo "enable podman.socket" >> /usr/lib/systemd/system-preset/99-Ermete.preset
+echo "enable nix-daemon.socket" >> /usr/lib/systemd/system-preset/99-Ermete.preset
+echo "enable systemd-oomd.service" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 echo "enable bootc-fetch-apply.timer" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 echo "disable NetworkManager-wait-online.service" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 echo "enable firewalld.service" >> /usr/lib/systemd/system-preset/99-Ermete.preset
+
+# 2. Firewalld Zero-Trust (Blocca tutto il traffico in ingresso per default)
+echo "Configuring Firewalld default zone to drop..."
+mkdir -p /etc/firewalld/
+cat > /etc/firewalld/firewalld.conf << 'EOF'
+DefaultZone=drop
+EOF
 
 # Disabilita i Coredump su disco per privacy totale
 mkdir -p /etc/systemd/coredump.conf.d/
