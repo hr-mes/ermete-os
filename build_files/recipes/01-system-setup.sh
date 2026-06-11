@@ -32,6 +32,8 @@ fi
 ln -s /var/nix /nix
 
 # Core Utilities in Rust (Il nuovo stack)
-dnf -y copr enable atim/starship
-dnf -y copr enable atim/bottom
-dnf -y install --setopt=install_weak_deps=False eza bat fd-find ripgrep bottom nushell starship neovim
+dnf -y install --setopt=install_weak_deps=False eza bat fd-find ripgrep nushell neovim
+
+# Installazione statica di Starship e Bottom (Bypass COPR per rispettare il Manifesto)
+curl -sS https://starship.rs/install.sh | sh -s -- -y --bin-dir /usr/bin
+curl -sL https://github.com/ClementTsang/bottom/releases/latest/download/bottom_x86_64-unknown-linux-gnu.tar.gz | tar -xz -C /usr/bin/ btm
