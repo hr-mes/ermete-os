@@ -69,10 +69,11 @@ mv target/release/anyrun /usr/bin/
 cd /
 
 # Pulizia chirurgica
-dnf -y remove rust cargo gcc gcc-c++ \
+# NOTA: non rimuoviamo gcc, gcc-c++ e openssl-devel poiché sono protetti dal Layer 0 (Base NVIDIA) per DKMS
+dnf -y remove rust cargo \
     glib2-devel gtk3-devel gtk4-devel gtk-layer-shell-devel gtk4-layer-shell-devel \
     cairo-devel pango-devel gdk-pixbuf2-devel graphene-devel \
     autoconf automake libtool libevdev-devel upower-devel pulseaudio-libs-devel \
-    libxkbcommon-devel wayland-devel openssl-devel luajit-devel clang \
+    libxkbcommon-devel wayland-devel luajit-devel clang \
     libinput-devel wayland-protocols-devel dbus-devel
 rm -rf /tmp/cargo /tmp/${ANYRUN_COMMIT}.tar.gz /tmp/anyrun-${ANYRUN_COMMIT}
