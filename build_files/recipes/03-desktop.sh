@@ -4,9 +4,13 @@ set -ouex pipefail
 echo "--- Installing Desktop Environment ---"
 
 # Install Niri e dipendenze cursori, temi e font
-dnf -y install --setopt=install_weak_deps=False niri bibata-cursor-theme \
+dnf -y install --setopt=install_weak_deps=False niri \
     papirus-icon-theme adw-gtk3-theme jetbrains-mono-fonts rsms-inter-fonts fontawesome-fonts-all \
-    xdg-desktop-portal-gnome xdg-desktop-portal-gtk
+    xdg-desktop-portal-gnome xdg-desktop-portal-gtk || true
+
+# Installazione manuale di Bibata Cursor (bypass COPR)
+mkdir -p /usr/share/icons
+curl -sL https://github.com/ful1e5/Bibata_Cursor/releases/latest/download/Bibata-Modern-Classic.tar.xz | tar -xJ -C /usr/share/icons/
 
 # Install Greetd e Tuigreet (Greeter da terminale in Rust)
 dnf -y install --setopt=install_weak_deps=False greetd tuigreet
