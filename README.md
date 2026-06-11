@@ -89,7 +89,7 @@ To deploy Ermete OS on a bare-metal machine or virtual environment:
 ### Option 2: Rebase (from an existing bootc system)
 If you are currently running an image-based OS like Bazzite or Fedora Atomic, seamlessly mutate your system by opening a terminal:
 ```bash
-sudo bootc switch ghcr.io/patapem/ermete:latest
+sudo bootc switch ghcr.io/patapem/ermete-os:latest
 ```
 *Reboot your machine when the process finishes.*
 

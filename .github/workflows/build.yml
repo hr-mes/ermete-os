@@ -17,7 +17,7 @@ env:
   IMAGE_DESC: "Ermete OS - Immutable Cloud-Native System"
   IMAGE_KEYWORDS: "bootc,fedora,Ermete,immutable"
   IMAGE_LOGO_URL: ""  # Lasciato vuoto o inserisci l'URL del tuo futuro logo
-  IMAGE_NAME: "${{ github.event.repository.name }}"  # output image name, usually same as repo name
+  IMAGE_NAME: "ermete-os"
   IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}"  # do not edit
   DEFAULT_TAG: "latest"
 
