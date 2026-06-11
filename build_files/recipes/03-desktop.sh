@@ -64,8 +64,11 @@ dnf -y install --setopt=install_weak_deps=False rust cargo gcc gcc-c++ pkgconf-p
 export CARGO_HOME=/tmp/cargo
 cd anyrun-${ANYRUN_COMMIT}
 # Compilazione bloccata senza network dynamismo
-cargo build --release --locked --bin anyrun
+cargo build --release --locked
 mv target/release/anyrun /usr/bin/
+mkdir -p /usr/lib64/anyrun
+cp target/release/*.so /usr/lib64/anyrun/ 2>/dev/null || true
+ln -s /usr/lib64/anyrun /usr/lib/anyrun
 cd /
 
 # Pulizia chirurgica

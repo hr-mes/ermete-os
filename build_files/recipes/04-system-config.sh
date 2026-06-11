@@ -26,6 +26,15 @@ mkdir -p /usr/lib/systemd/user-preset/
 echo "enable greetd.service" > /usr/lib/systemd/system-preset/99-Ermete.preset
 echo "enable podman.socket" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 echo "enable nix-daemon.socket" >> /usr/lib/systemd/system-preset/99-Ermete.preset
+
+# Provisioning Dinamico per Nix
+# Il pacchetto Nix è stato spacchettato in /usr/share/nix-base durante la build per aggirare
+# il limite del rootfs immutabile. Systemd-tmpfiles copierà i file in /var/nix (se vuoto) al boot.
+mkdir -p /usr/lib/tmpfiles.d/
+cat > /usr/lib/tmpfiles.d/nix-provisioning.conf << 'EOF'
+d /var/nix 0755 root root - -
+C /var/nix - - - - /usr/share/nix-base
+EOF
 echo "enable systemd-oomd.service" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 echo "enable bootc-fetch-apply.timer" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 echo "disable NetworkManager-wait-online.service" >> /usr/lib/systemd/system-preset/99-Ermete.preset
