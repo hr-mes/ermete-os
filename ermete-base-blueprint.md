@@ -1,37 +1,36 @@
-# 🏗️ Progetto: Ermete Base NVIDIA (`ermete-base-nvidia`)
+# 🏗️ Ingegneria Architetturale: Ermete Base NVIDIA (`ermete-base-nvidia`)
+**Status Documento**: IMPLEMENTATO ED OPERATIVO (RFC-01)
+**Dominio**: Layer 0 (Base OCI Bootable)
 
-Questo documento delinea il piano ingegneristico definitivo per svincolare **Ermete OS** da maintainer di terze parti (come RakuOS), ottenendo il controllo del 100% della catena di approvvigionamento (Supply Chain). 
-
-L'obiettivo è creare una repository parallela che funga da fondamenta per l'OS, compilando autonomamente il **Kernel CachyOS** e i **Driver NVIDIA proprietari**.
-
----
-
-## 🎯 Obiettivi Architetturali
-1. **Zero-Trust Supply Chain:** Nessun codice esterno pre-compilato. Il sistema di base sarà generato direttamente dai sorgenti Fedora e dai COPR ufficiali tramite le nostre GitHub Actions.
-2. **Prestazioni Intatte:** Mantenimento dello scheduler `BORE` e delle ottimizzazioni `x86-64-v3` tipiche del Kernel CachyOS.
-3. **Estrema Leggerezza:** Rimozione di qualsiasi pacchetto o libreria "bloat" (es. dipendenze GNOME/KDE) che RakuOS potrebbe aver incluso per la sua utenza, mantenendo solo il layer Wayland/EGL necessario per Niri.
+Questo documento definisce l'architettura formale e la filosofia di design utilizzate per svincolare **Ermete OS** da dipendenze upstream non verificate, ottenendo la piena sovranità sulla catena di approvvigionamento (Supply Chain).
 
 ---
 
-## 🗺️ Implementazione Completata (Status: OPERATIVO)
+## 🎯 Paradigma Operativo
+1. **Sovranità Zero-Trust**: Nessun binario opaco o rootfs pre-compilato da terze parti (es. RakuOS). L'infrastruttura di base è generata in un ambiente pulito (clean-room) partendo direttamente dai sorgenti Fedora Atomic e dai repository COPR ufficiali tramite GitHub Actions auditable.
+2. **Determinismo Hardware**: Iniezione a basso livello dello scheduler `BORE` e delle istruzioni `x86-64-v3` (Kernel CachyOS), unita alla compilazione *in-situ* dei moduli DKMS NVIDIA.
+3. **Isolamento della Complessità**: Mantenimento di un confine invalicabile tra il Layer 0 (Kernel/Driver) e il Layer 1 (UI/UX). Il Layer 0 deve ignorare completamente l'esistenza di Wayland, Flatpak o configurazioni utente.
 
-### Fase 1: Creazione dell'Infrastruttura
-Il repository `ermete-base-nvidia` è stato creato e configurato correttamente. Fornisce un'infrastruttura minimalista e dedicata esclusivamente alla compilazione del kernel e dei driver.
+---
 
-### Fase 2: Il `Containerfile` dello Stack
-Il file di build è stato riscritto per operare in autonomia:
-1. **Punto di Partenza:** `FROM quay.io/fedora-ostree-desktops/base-atomic:44`
-2. **Iniezione CachyOS:** Aggiunta dei repository COPR `bieszczaders` e sostituzione del kernel (`kernel-cachyos`).
-3. **Compilazione NVIDIA (Akmods):** Compilazione forzata dei moduli `kmod` contro gli header del Kernel CachyOS tramite `dkms`.
-4. **Ottimizzazione:** Rigorosa adozione di `dnf install --setopt=install_weak_deps=False` per prevenire il bloat e rispetto della regola Zero-Persistenza per il builder.
+## 🗺️ Topologia dell'Implementazione
 
-### Fase 3: La CI/CD Pipeline (GitHub Actions)
-La pipeline di compilazione automatica è **attiva e funzionante**. 
-- Configurazione di trigger sia temporizzati (`cron`) che reattivi (`push`/`pull_request`).
-- Generazione puntuale dei tag OCI (`latest`, `YYYYMMDD`).
-- **Sicurezza:** Firma dell'immagine tramite **Keyless OIDC** (Sigstore/Cosign), abolendo la necessità di chiavi private vulnerabili nei secret.
+### Fase 1: Scaffold dell'Infrastruttura (Completata)
+Il repository parallelo `ermete-base-nvidia` fornisce l'ambiente isolato. Utilizza un pattern `scratch AS ctx` nel Containerfile per importare gli script di build senza contaminare i layer del filesystem dell'immagine finale.
 
-### Fase 4: Integrazione in Ermete OS (Completata)
-L'immagine `ghcr.io/patapem/ermete-base-nvidia:latest` è ora generata con successo dal repository dedicato.
-Ermete OS è stato agganciato a questa nuova immagine tramite il proprio `Containerfile`. 
-Ermete OS è ora un prodotto Enterprise: l'intera Supply Chain è sviluppata, controllata e firmata al 100% da noi.
+### Fase 2: Iniezione del Kernel e Risoluzione DKMS (Completata)
+Il processo di build risolve asimmetrie critiche dell'ambiente OCI:
+1. **Drop & Replace**: Sradicamento di `kernel`, `kernel-core` e `zram-generator-defaults` originali, sostituiti atomicamente dal ramo `kernel-cachyos`.
+2. **Workaround Systemd/OCI**: I moduli `dkms-nvidia` sono installati con `--setopt=tsflags=noscripts` per prevenire errori letali di systemd all'interno del container engine non privilegiato.
+3. **Compilazione Linker**: La compilazione DKMS bypassa i bug del linker `gold` forzando l'uso di `ld.bfd` (`LD=ld.bfd dkms install ...`).
+4. **Initramfs Deterministico**: Invocazione manuale di `dracut` con compressione `zstd` per includere `ostree` e i moduli NVIDIA prima del pivot-root.
+
+### Fase 3: CI/CD e Sicurezza Crittografica (Completata)
+L'automazione GitHub Actions garantisce l'immutabilità della release:
+- Costruzione su base schedulata e su commit.
+- Chiusura dell'immagine tramite firma crittografica **Sigstore (Cosign) Keyless OIDC**. Il certificato crittografico garantisce che l'immagine derivi esclusivamente dai workflow di GitHub.
+- Linting formale dei layer finali tramite `bootc container lint`.
+
+### Fase 4: Integrazione "Layer 1" (Completata)
+L'immagine risultante (`ghcr.io/patapem/ermete-base-nvidia:latest`) è stata configurata come `FROM` nel Containerfile di Ermete OS.
+L'architettura ha raggiunto lo stato **Enterprise**: ogni singolo byte in esecuzione sul sistema host (dal ring 0 al ring 3) è tracciato, compilato e firmato da Ermete OS.

@@ -1,49 +1,28 @@
-# Gemini Context: Ermete OS
+# 🧠 DIRETTIVA LAYER 1: Ermete OS (User Experience & Hardening)
 
-## 🦅 Informazioni sul Progetto e Filosofia
-**Ermete OS** è un sistema operativo Linux "cloud-native", immutabile e atomico, basato su **Fedora** e sulle potenti tecnologie **bootc / Universal Blue**.
-Non è una distribuzione classica. Segue rigorosamente un approccio **Infrastructure-as-Code (IaC)**: l'intero sistema operativo è costruito a livelli in un'immagine OCI, azzerando l'entropia del sistema locale dell'utente.
-Gli obiettivi primari e non negoziabili del progetto sono: **Privacy Totale**, **Prestazioni Estreme (Zero-Bloat)** e **Affidabilità Infrangibile (Atomic Updates)**.
+## 🦅 Identità Architetturale del Layer 1
+Sei nel repository `ermete os`. Il tuo unico obiettivo qui è costruire un ecosistema utente Wayland-First, focalizzato sulla performance estrema e sulla sicurezza paranoica, partendo dalla base inespugnabile di `ermete-base-nvidia`.
 
----
-
-## 🛠️ Stack Tecnologico & Design Pattern
-* **Base Image OCI:** `ghcr.io/patapem/ermete-base-nvidia:latest`. Garantisce out-of-the-box driver proprietari NVIDIA e kernel CachyOS, evitando le storiche frammentazioni su Wayland.
-* **Paradigma dei Pacchetti:** 
-  * Il sistema base ospita unicamente pacchetti RPM installati in build-time. 
-  * L'utente utilizzerà **esclusivamente Flatpak** per le GUI e **Nix** per la CLI (e lo sviluppo).
-* **The "Full-Rust" Stack:** L'intero livello interattivo (UX) è deliberatamente implementato in Rust per abbattere i memory leak e massimizzare i frame:
-  * Compositor: **Niri** (Scrollable Tiling).
-  * Status Bar: **Ironbar**.
-  * Launcher: **Anyrun**.
-  * Login Greeter: **Tuigreet**.
-  * CLI Tools: `eza`, `bat`, `fd-find`, `ripgrep`, `nushell`, `starship`.
-* **Zero-Bloat / High-Performance:** 
-  * Boot asincrono fulmineo (demoni di network-wait disabilitati).
-  * Nessun file di SWAP su disco; viene allocato dinamicamente lo spazio tramite **zram-generator** in RAM.
-* **Privacy "Paranoica" (Privacy-First):** 
-  * Lo skeleton di default per i nuovi utenti isola i file con permessi rigidi (700/600).
-  * **Machine ID azzerato** ad ogni build per impedire la profilazione sui cloni.
-  * **Coredump disabilitati** per evitare salvataggi non crittografati di memoria (che potrebbero contenere password o chiavi).
-  * Firewall in ingresso (`firewalld`) abilitato di default.
+**IL DOGMA DELLO SPAZIO UTENTE:** 
+Non sei autorizzato a modificare il Kernel CachyOS o i driver NVIDIA in questa directory. Qualsiasi software GUI va delegato a Flatpak al First-Boot. Nessuna applicazione grafica (GUI) può esistere nei layer RPM dell'OS.
 
 ---
 
-## 📂 Struttura della Repository
-1. `Containerfile`: Il manifesto primario che stratifica l'OS montando volumi temporanei per cache (`/var/cache/dnf`) ed eseguendo i moduli in ordine.
-2. `build_files/recipes/*.sh`: Moduli Bash idempotenti che installano e preconfigurano i pacchetti RPM nel rootfs dell'immagine OCI.
-3. `build_files/dot_config/`: Configurazione e dotfiles per popolare `/etc/skel`.
-4. `Justfile`: Task runner per testare le build in locale (`just build`, `just run-vm-qcow2`).
+## 🛠️ Tecniche OCI e Pattern di Sviluppo Avanzati
+
+Ogni modifica che effettui alle `recipes/*.sh` o al `Containerfile` deve rispettare questi teoremi:
+
+1. **Ingegneria del Caching OCI**: Le ricette Bash sono eseguite in sequenza nel `Containerfile`. Non distruggere mai indiscriminatamente `/var/cache/dnf` all'interno delle ricette, poiché è un bind-mount dell'host vitale per accelerare le build locali. Usa `dnf clean all` solo alla fine dell'ultimo layer di cleanup.
+2. **Build Transienti per il "Full-Rust" Stack**: L'OS è dominato da tool Rust (Niri, Ironbar, Anyrun, Tuigreet, Starship). Quando compili dai sorgenti via `cargo install`, sei obbligato a installare le dipendenze (gcc, gtk-devel, clang), completare la build, muovere il binario in `/usr/bin/` e **rimuovere (dnf remove) l'intero stack di compilazione nello stesso script**. L'immagine atomica finale non deve mai ospitare compilatori.
+3. **Provisioning Resiliente (First-Boot)**: Il demone di installazione Flatpak al primo avvio (`Ermete-firstboot.service`) non deve bloccare il boot. Usa sempre override sicuri (`--nosocket=x11`, `--nofilesystem=home`) e scrivi loop di rete intelligenti (che prevengano falsi positivi su captive portal, verificando `NetworkManager` prima di eseguire blind curl).
+4. **Auto-Ripristino e Greenboot**: Se aggiungi un servizio critico, aggiungi un check `greenboot`. Non testare mai la rete con ping su IP esterni (potrebbero fallire su voli o reti isolate causando rollback indesiderati); controlla solo lo stato del demone locale (`systemctl is-active`).
 
 ---
 
-## 🤖 INSTRUZIONI CRITICHE PER LO SVILUPPO (Per l'IA e gli Human Maintainers)
-Chiunque apporti modifiche al progetto **deve** conformarsi rigidamente ai seguenti divieti e prassi:
+## 🔒 Tuning del Sistema (Il Livello Estremo)
 
-1. **Mai usare `dnf install` standard:** Ogni nuovo pacchetto deve essere installato usando esplicitamente `dnf -y install --setopt=install_weak_deps=False <pacchetto>`. L'inserimento di "weak_deps" è considerato una violazione architetturale, poiché ingrassa l'immagine OCI senza reale necessità.
-2. **Nessun salvataggio in directory persistenti (`/var`, `/home`):** Essendo il sistema un'immagine OCI per `bootc`, tutto ciò che non risiede in directory globali (`/usr`, `/etc`) non verrà distribuito o sarà sovrascritto. Per le configurazioni utente va usato SEMPRE `/etc/skel/`.
-3. **Usa le Native Systemd Policies:** Non usare mai script empirici (es. `rc.local` o hack bash) per gestire servizi. Usa esclusivamente systemd presets (`/usr/lib/systemd/system-preset/99-Ermete.preset`) e unit files canonici in `/etc/systemd/`.
-4. **Idempotenza Assoluta e Sicurezza:** Gli script in `recipes/*.sh` verranno iterati. Modifiche, aggiunte o creazioni di file devono usare flag sicuri (`mkdir -p`, e configurazioni `cat > file << EOF`).
-5. **Non Distruggere la Build-Cache:** Non inserire comandi di cancellazione indiscriminata come `rm -rf /var/cache/dnf/*` in fase di cleanup. Il Containerfile gestisce quella directory come un bind-mount dell'host, per cui distruggerla penalizza le build locali. Basterà usare `dnf clean all`.
-6. **Mantenere la Privacy Totale:** Qualsiasi demone, logger o tool diagnostico aggiunto non deve abilitare la telemetria e non deve immagazzinare dati esposti in chiaro se non strettamente legati al journal crittografato o al normale dmesg.
-7. **Wayland-First:** È categoricamente vietato installare server X11 o tool incompatibili con il protocollo Wayland. Qualsiasi applicativo GUI aggiunto nel core dovrà girare nativamente su Niri.
+Sei il custode del performance tuning. Rispetta queste baseline:
+*   **Networking Ottimale**: Assicurati che il kernel sia spinto verso `bbr` e `fq_pie` per la minima latenza TCP.
+*   **ZRAM Aggressiva**: Applica la ZRAM tramite `zram-generator` forzando la compressione `zstd` e permettendo uno `zram-fraction` del 100%. Assicurati che il kernel preferisca fortemente il memory offload prima del collasso (es. `vm.swappiness=150`).
+*   **Protezione Wayland (OOMD)**: Il demone `systemd-oomd` deve essere impostato con soglie feroci (90%) per assassinare i processi utente *prima* che il compositor (Niri) si blocchi, garantendo frame-rate perpetui.
+*   **Privacy dell'Utente (`/etc/skel/`)**: Quando trasferisci file di configurazione `dot_config` nel template skeleton, sigilla la directory assicurandoti che abbia permessi `chown root:root` e `chmod -R go-rwx`. Nessun altro utente del sistema deve poter leggere configurazioni altrui.
