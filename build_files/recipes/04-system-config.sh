@@ -75,9 +75,12 @@ cp -rf /ctx/dot_config/* /etc/skel/.config/
 # Abilita Starship (Prompt in Rust) globalmente per le shell compatibili
 echo 'eval "$(starship init bash)"' > /etc/profile.d/starship.sh
 
-# Assicura i permessi corretti per lo skeleton directory garantendo la Privacy senza rompere gli eseguibili
+# Assicura i permessi corretti per lo skeleton directory garantendo la Privacy
+# senza rompere gli script (forzando +x sui file .sh)
 chown -R root:root /etc/skel/
-chmod -R go-rwx /etc/skel/
+find /etc/skel -type d -exec chmod 700 {} \;
+find /etc/skel -type f -exec chmod 600 {} \;
+find /etc/skel -type f -name "*.sh" -exec chmod 700 {} \;
 
 # Remove waybar
 dnf -y remove waybar

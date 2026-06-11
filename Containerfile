@@ -11,12 +11,18 @@ RUN sed -i 's/^ID=.*/ID=fedora/' /etc/os-release
 # FIX: Aggiunto --chown=0:0 per coerenza di sicurezza sui binari iniettati
 COPY --from=ghcr.io/ublue-os/brew:latest --chown=0:0 /system_files /
 
+# Copy Nix environment (binaries, sysusers, systemd services, SELinux policies)
+# Questa operazione bypassa la rottura di RPM in presenza del symlink immutabile /nix.
+COPY --from=ghcr.io/ublue-os/nix-init:latest --chown=0:0 / /
+
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     --mount=type=tmpfs,dst=/tmp \
     /usr/bin/systemctl preset brew-setup.service && \
     /usr/bin/systemctl preset brew-update.timer && \
-    /usr/bin/systemctl preset brew-upgrade.timer
+    /usr/bin/systemctl preset brew-upgrade.timer && \
+    /usr/bin/systemctl preset nix-daemon.socket && \
+    /usr/bin/systemctl preset nix-daemon.service
 
 # Execute all modular scripts sequentially to preserve OCI caching per-layer
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
