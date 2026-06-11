@@ -11,7 +11,7 @@ Gli obiettivi primari e non negoziabili del progetto sono: **Privacy Totale**, *
 * **Base Image OCI:** `ghcr.io/patapem/ermete-base-nvidia:latest`. Garantisce out-of-the-box driver proprietari NVIDIA e kernel CachyOS, evitando le storiche frammentazioni su Wayland.
 * **Paradigma dei Pacchetti:** 
   * Il sistema base ospita unicamente pacchetti RPM installati in build-time. 
-  * L'utente utilizzerà **esclusivamente Flatpak** per le GUI e **Homebrew** per la CLI (grazie ai preset di ublue-os).
+  * L'utente utilizzerà **esclusivamente Flatpak** per le GUI e **Nix** per la CLI (e lo sviluppo).
 * **The "Full-Rust" Stack:** L'intero livello interattivo (UX) è deliberatamente implementato in Rust per abbattere i memory leak e massimizzare i frame:
   * Compositor: **Niri** (Scrollable Tiling).
   * Status Bar: **Ironbar**.

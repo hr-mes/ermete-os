@@ -26,12 +26,13 @@ dnf -y install --setopt=install_weak_deps=False rust cargo gcc gcc-c++ pkgconf-p
     libinput-devel wayland-protocols-devel dbus-devel
 
 # Compilazione e installazione
+export CARGO_HOME=/tmp/cargo
 cargo install anyrun
 cargo install ironbar
 
 # Sposta i binari in una directory di sistema globale
-mv /root/.cargo/bin/anyrun /usr/bin/
-mv /root/.cargo/bin/ironbar /usr/bin/
+mv /tmp/cargo/bin/anyrun /usr/bin/
+mv /tmp/cargo/bin/ironbar /usr/bin/
 
 # Pulizia: rimuoviamo i tool di build per non appesantire l'immagine OCI atomica
 dnf -y remove rust cargo gcc gcc-c++ \
@@ -40,4 +41,4 @@ dnf -y remove rust cargo gcc gcc-c++ \
     autoconf automake libtool libevdev-devel upower-devel pulseaudio-libs-devel \
     libxkbcommon-devel wayland-devel openssl-devel luajit-devel clang \
     libinput-devel wayland-protocols-devel dbus-devel
-rm -rf /root/.cargo
+rm -rf /tmp/cargo
