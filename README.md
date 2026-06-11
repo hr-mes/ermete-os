@@ -9,16 +9,28 @@
 
 Driven by an absolute **Infrastructure-as-Code (IaC)** philosophy, Ermete OS is defined entirely by OCI container recipes and built via GitHub Actions. It guarantees unbreakable atomic updates, zero system entropy, and uncompromising privacy.
 
-## 🌟 The Ermete Manifesto
+## 🌟 The Enterprise Manifesto
 
 1. **Zero-Entropy**: The root filesystem is immutable. No system degradation over time.
 2. **Zero-Bloat**: Only CLI tools and core infrastructure exist on the host. Every GUI application is strictly sandboxed via Flatpak.
-3. **Zero-COPR Dependency**: To ensure 100% reproducible and unbreakable builds, the OS relies strictly on official Fedora repositories, RPMFusion, and native Rust compilations directly from `crates.io`. No fragile third-party package repositories are allowed.
+3. **100% Cryptographically Verified Supply Chain**: To ensure reproducible and unbreakable builds, the OS relies strictly on signed Fedora/RPMFusion repositories. Third-party opaque binaries are strictly prohibited; external dependencies are either natively compiled from source (via Rust `Cargo`) or cryptographically verified against pinned SHA256 checksums during the OCI build.
+4. **Cryptographic Image Signatures (Sigstore/Cosign)**: Every deployment image is signed via Keyless OIDC. Client machines automatically verify the cryptographic authenticity of the OS before applying any update, mathematically preventing downgrade attacks or man-in-the-middle container injections.
 
 ---
 
 ## 🛡️ Paranoid Privacy & Security Fortress
-Ermete OS implements extreme enterprise-grade defaults to protect user data and telemetry:
+Ermete OS implements extreme enterprise-grade defaults to protect user data and telemetry.
+
+### 🎯 Threat Model Definition
+To provide absolute clarity on our security posture, Ermete OS is engineered to mitigate the following specific threat vectors:
+- **Network Surveillance & ISP Tracking**: Neutralized via system-wide DNS-over-TLS (DoT) and physical MAC Address Randomization.
+- **Remote Exploitation & Port Scanning**: Neutralized via a Zero-Trust `drop` zone Firewalld policy applied by default.
+- **Malicious/Compromised GUI Software**: Neutralized via draconian Flatpak sandboxing (X11 sockets permanently disabled, `~/.home` directory access denied, forcing XDG portals).
+- **Post-Exploitation Data Leaks**: Neutralized by disabling systemd coredumps, preventing RAM secrets (passwords, encryption keys) from being flushed to unencrypted disk sectors upon application crashes.
+- **Local Privilege Escalation**: Mitigated by aggressive kernel hardening (`kptr_restrict`, unprivileged BPF disabled) and strict SELinux MAC enforcement.
+> **Note on Physical Access (Evil Maid Attacks)**: Protection against physical theft or unauthorized local booting requires the user to enable Secure Boot and TPM 2.0 backed LUKS Full Disk Encryption (FDE) during the initial ISO installation.
+
+### 🏰 Architectural Hardening
 - **Zero-Trust Network (Firewalld Drop Zone)**: The firewall defaults to `drop` out-of-the-box, ensuring your machine is completely invisible to port scans and unauthorized LAN requests.
 - **DNS-over-TLS (DoT)**: Enforced system-wide via `systemd-resolved` to prevent ISP tracking.
 - **MAC Address Randomization**: Automatically anonymizes your hardware signature across both Wi-Fi and Ethernet connections.

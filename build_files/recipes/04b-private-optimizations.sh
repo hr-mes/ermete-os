@@ -50,7 +50,7 @@ ConditionPathExists=!/var/lib/ermete-firstboot-done
 [Service]
 Type=simple
 ExecStart=/usr/bin/bash -c ' \
-  while ! ping -c 1 8.8.8.8 &>/dev/null; do sleep 5; done; \
+  while ! curl -s -I https://flathub.org &>/dev/null; do sleep 5; done; \
   flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo && \
   flatpak override --system --nosocket=x11 --nofilesystem=home && \
   flatpak override --system --env=GTK_THEME=adw-gtk3-dark && \

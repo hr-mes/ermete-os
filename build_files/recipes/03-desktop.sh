@@ -8,9 +8,14 @@ dnf -y install --setopt=install_weak_deps=False niri \
     papirus-icon-theme adw-gtk3-theme jetbrains-mono-fonts rsms-inter-fonts fontawesome-fonts-all \
     xdg-desktop-portal-gnome xdg-desktop-portal-gtk || true
 
-# Installazione manuale di Bibata Cursor (bypass COPR)
+# Installazione manuale sicura di Bibata Cursor (pinned version e checksum)
 mkdir -p /usr/share/icons
-curl -sL https://github.com/ful1e5/Bibata_Cursor/releases/latest/download/Bibata-Modern-Classic.tar.xz | tar -xJ -C /usr/share/icons/
+cd /tmp
+curl -sLO https://github.com/ful1e5/Bibata_Cursor/releases/download/v2.0.7/Bibata-Modern-Classic.tar.xz
+echo "7d3495864e5bbef02f5e77de760b2905903b63c71495a78ef6306d19a3b556d8  Bibata-Modern-Classic.tar.xz" | sha256sum -c -
+tar -xJ -C /usr/share/icons/ -f Bibata-Modern-Classic.tar.xz
+rm -f Bibata-Modern-Classic.tar.xz
+cd /
 
 # Install Greetd e Tuigreet (Greeter da terminale in Rust)
 dnf -y install --setopt=install_weak_deps=False greetd tuigreet
@@ -27,12 +32,13 @@ dnf -y install --setopt=install_weak_deps=False rust cargo gcc gcc-c++ pkgconf-p
 
 # Compilazione e installazione
 export CARGO_HOME=/tmp/cargo
-cargo install anyrun
-cargo install ironbar
+cargo install anyrun ironbar starship bottom
 
 # Sposta i binari in una directory di sistema globale
 mv /tmp/cargo/bin/anyrun /usr/bin/
 mv /tmp/cargo/bin/ironbar /usr/bin/
+mv /tmp/cargo/bin/starship /usr/bin/
+mv /tmp/cargo/bin/btm /usr/bin/
 
 # Pulizia: rimuoviamo i tool di build per non appesantire l'immagine OCI atomica
 dnf -y remove rust cargo gcc gcc-c++ \
