@@ -61,11 +61,12 @@ wifi.cloned-mac-address=random
 ethernet.cloned-mac-address=random
 EOF
 
-# DNS-over-TLS (DoT) Forzato (Anti-Tracciamento ISP)
+# DNS-over-TLS (DoT) Opportunistico (Anti-Tracciamento agnostico)
+# Se il DNS remoto supporta DoT lo usa, altrimenti fa fallback in chiaro per evitare Denial of Service
 mkdir -p /etc/systemd/resolved.conf.d/
 cat > /etc/systemd/resolved.conf.d/dns_over_tls.conf << EOF
 [Resolve]
-DNSOverTLS=yes
+DNSOverTLS=opportunistic
 EOF
 
 # Copy all dotfiles to skel
