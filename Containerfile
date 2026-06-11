@@ -4,7 +4,7 @@ FROM scratch AS ctx
 COPY --chown=0:0 build_files /
 
 # Base Image
-FROM ghcr.io/rakuos/rakuos-base-nvidia:latest
+FROM ghcr.io/patapem/ermete-base-nvidia:latest
 RUN sed -i 's/^ID=.*/ID=fedora/' /etc/os-release
 
 # Copy Homebrew files from the brew image

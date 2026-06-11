@@ -8,7 +8,7 @@ Gli obiettivi primari e non negoziabili del progetto sono: **Privacy Totale**, *
 ---
 
 ## 🛠️ Stack Tecnologico & Design Pattern
-* **Base Image OCI:** `ghcr.io/rakuos/rakuos-base-nvidia:latest`. Garantisce out-of-the-box driver proprietari NVIDIA, evitando le storiche frammentazioni su Wayland.
+* **Base Image OCI:** `ghcr.io/patapem/ermete-base-nvidia:latest`. Garantisce out-of-the-box driver proprietari NVIDIA e kernel CachyOS, evitando le storiche frammentazioni su Wayland.
 * **Paradigma dei Pacchetti:** 
   * Il sistema base ospita unicamente pacchetti RPM installati in build-time. 
   * L'utente utilizzerà **esclusivamente Flatpak** per le GUI e **Homebrew** per la CLI (grazie ai preset di ublue-os).

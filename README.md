@@ -116,5 +116,5 @@ A robust `Justfile` is provided for local development. Make sure you have `podma
 
 ## 🤝 Acknowledgements
 * The [Universal Blue](https://universal-blue.org/) project for the `bootc` frameworks.
-* [RakuOS](https://github.com/rakuos/rakuos-base) for the solid NVIDIA base image.
+* [RakuOS](https://github.com/rakuos/rakuos-base) for the initial inspiration of the NVIDIA base image.
 * [Yalter](https://github.com/YaLTeR/niri) for the incredible Niri compositor.
