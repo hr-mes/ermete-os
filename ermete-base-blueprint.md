@@ -13,43 +13,25 @@ L'obiettivo è creare una repository parallela che funga da fondamenta per l'OS,
 
 ---
 
-## 🗺️ Roadmap di Implementazione (Day 2)
+## 🗺️ Implementazione Completata (Status: OPERATIVO)
 
-### Fase 1: Creazione dell'Infrastruttura (Repository)
-Dovremo creare un nuovo repository GitHub chiamato `ermete-base` (es. `patapem/ermete-base`).
-Questo repository avrà una struttura minimalista:
-* `Containerfile`: Il manifesto primario per la sostituzione del Kernel e dei driver.
-* `.github/workflows/build.yml`: La pipeline CI/CD per la compilazione settimanale automatica.
+### Fase 1: Creazione dell'Infrastruttura
+Il repository `ermete-base-nvidia` è stato creato e configurato correttamente. Fornisce un'infrastruttura minimalista e dedicata esclusivamente alla compilazione del kernel e dei driver.
 
-### Fase 2: Il `Containerfile` del Motore (Lo Stack)
-Il file di build non si baserà più su RakuOS, ma eseguirà un'operazione chirurgica partendo da Fedora nuda (tramite gli strumenti di `ublue-os`):
-
-1. **Il Punto di Partenza:** `FROM ghcr.io/ublue-os/base-main:latest` (Fedora atomica pura).
-2. **Iniezione CachyOS:** 
-   - Aggiunta del repository COPR `bieszczaders/kernel-cachyos`.
-   - Esecuzione del comando di scambio nucleare: `rpm-ostree override replace kernel kernel-core kernel-modules --from repo=copr:copr.fedorainfracloud.org:bieszczaders:kernel-cachyos`.
-3. **Compilazione NVIDIA (Akmods):** 
-   - Scaricamento dei binari chiusi NVIDIA da RPMFusion.
-   - Compilazione forzata dei moduli (`kmod`) specificatamente contro gli header del nuovo Kernel CachyOS appena installato.
-4. **Ottimizzazione Firmware:** Installazione di `linux-firmware` aggiornato e spegnimento definitivo dei driver `nouveau`.
+### Fase 2: Il `Containerfile` dello Stack
+Il file di build è stato riscritto per operare in autonomia:
+1. **Punto di Partenza:** `FROM quay.io/fedora-ostree-desktops/base-atomic:44`
+2. **Iniezione CachyOS:** Aggiunta dei repository COPR `bieszczaders` e sostituzione del kernel (`kernel-cachyos`).
+3. **Compilazione NVIDIA (Akmods):** Compilazione forzata dei moduli `kmod` contro gli header del Kernel CachyOS tramite `dkms`.
+4. **Ottimizzazione:** Rigorosa adozione di `dnf install --setopt=install_weak_deps=False` per prevenire il bloat e rispetto della regola Zero-Persistenza per il builder.
 
 ### Fase 3: La CI/CD Pipeline (GitHub Actions)
-La compilazione di moduli Kernel e driver NVIDIA in un container richiede risorse elevate e logica specifica.
-* **Schedulazione:** Creeremo un job in GitHub Actions (con cron timer) che compila la base ogni martedì.
-* **Gestione degli Errori (Fallback):** Se un aggiornamento del Kernel CachyOS "rompe" la compatibilità con NVIDIA, la pipeline deve fallire silenziosamente avvisandoci via email, mantenendo intatta su GHCR l'ultima immagine `ermete-base-nvidia:latest` funzionante. In questo modo Ermete OS non si romperà mai.
+La pipeline di compilazione automatica è **attiva e funzionante**. 
+- Configurazione di trigger sia temporizzati (`cron`) che reattivi (`push`/`pull_request`).
+- Generazione puntuale dei tag OCI (`latest`, `YYYYMMDD`).
+- **Sicurezza:** Firma dell'immagine tramite **Keyless OIDC** (Sigstore/Cosign), abolendo la necessità di chiavi private vulnerabili nei secret.
 
-### Fase 4: Integrazione in Ermete OS (Il Varo)
-Una volta che la build automatica di `ermete-base` sarà completata e rilasciata con successo nei pacchetti GitHub (`ghcr.io/patapem/ermete-base-nvidia`), la migrazione finale sarà un'operazione da 1 riga di codice:
-* Nel repository principale (`ermete`), cambieremo la riga del `Containerfile`:
-  `FROM ghcr.io/rakuos/rakuos-base-nvidia:latest`
-  ⬇️
-  `FROM ghcr.io/patapem/ermete-base-nvidia:latest`
-
-Da quel preciso momento, Ermete OS sarà un prodotto "Enterprise", sviluppato, controllato e validato dal primo all'ultimo byte unicamente da noi.
-
----
-
-## 🛠️ Requisiti per Domani
-Per iniziare i lavori domani, servirà:
-1. Aver creato un nuovo repository GitHub vuoto (es. `ermete-base`).
-2. Configurare i permessi del nuovo repo per permettere alle GitHub Actions di pubblicare su *GitHub Container Registry* (GHCR).
+### Fase 4: Integrazione in Ermete OS (Completata)
+L'immagine `ghcr.io/patapem/ermete-base-nvidia:latest` è ora generata con successo dal repository dedicato.
+Ermete OS è stato agganciato a questa nuova immagine tramite il proprio `Containerfile`. 
+Ermete OS è ora un prodotto Enterprise: l'intera Supply Chain è sviluppata, controllata e firmata al 100% da noi.
