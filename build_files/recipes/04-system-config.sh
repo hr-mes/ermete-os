@@ -19,13 +19,8 @@ EOF
 mkdir -p /usr/lib/systemd/system-preset/
 mkdir -p /usr/lib/systemd/user-preset/
 
-# Aggressive OOMD configuration to protect Wayland session
-mkdir -p /etc/systemd/oomd.conf.d/
-cat > /etc/systemd/oomd.conf.d/10-ermete.conf << 'EOF'
-[OOM]
-DefaultMemoryPressureLimit=90%
-DefaultMemoryPressureDurationSec=5
-EOF
+# OOMD delegato ai default di sistema bilanciati (evita il collasso del cgroup Niri/Wayland)
+# Rimosso il tuning aggressivo che causava Denial of Service della sessione grafica.
 
 # Set Greetd, Podman, and OOMD come default attivi (livello System)
 echo "enable greetd.service" > /usr/lib/systemd/system-preset/99-Ermete.preset
@@ -36,11 +31,22 @@ echo "enable bootc-fetch-apply.timer" >> /usr/lib/systemd/system-preset/99-Ermet
 echo "disable NetworkManager-wait-online.service" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 echo "enable firewalld.service" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 
-# 2. Firewalld Zero-Trust (Blocca tutto il traffico in ingresso per default)
+# 2. Firewalld Zero-Trust (Blocca traffico in ingresso, ma preserva la UX locale)
 echo "Configuring Firewalld default zone to drop..."
 mkdir -p /etc/firewalld/
 cat > /etc/firewalld/firewalld.conf << 'EOF'
 DefaultZone=drop
+EOF
+
+# Preserva mDNS nella drop zone per la scoperta vitale di stampanti, scanner e Chromecast
+mkdir -p /etc/firewalld/zones/
+cat > /etc/firewalld/zones/drop.xml << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<zone target="DROP">
+  <short>Drop</short>
+  <description>Unsolicited incoming network packets are dropped. Incoming packets that are related to outgoing network connections are accepted.</description>
+  <service name="mdns"/>
+</zone>
 EOF
 
 # Disabilita i Coredump su disco per privacy totale
@@ -50,15 +56,16 @@ cat > /etc/systemd/coredump.conf.d/disable.conf << EOF
 Storage=none
 EOF
 
-# Randomizzazione MAC Address Wi-Fi/Ethernet (Anti-Tracking Fisico)
+# Randomizzazione MAC Address Wi-Fi/Ethernet (Privacy senza rompere DHCP e Portali Captive)
+# L'uso di "stable" genera un MAC crittografato fittizio ma costante per ogni specifica rete
 mkdir -p /etc/NetworkManager/conf.d/
 cat > /etc/NetworkManager/conf.d/00-macrandomize.conf << EOF
 [device]
 wifi.scan-rand-mac-address=yes
 
 [connection]
-wifi.cloned-mac-address=random
-ethernet.cloned-mac-address=random
+wifi.cloned-mac-address=stable
+ethernet.cloned-mac-address=stable
 EOF
 
 # DNS-over-TLS (DoT) Opportunistico (Anti-Tracciamento agnostico)
