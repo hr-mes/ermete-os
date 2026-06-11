@@ -5,24 +5,6 @@ echo "--- Configuring system services and user defaults ---"
 
 mkdir -p /etc/greetd/
 
-# Creazione di un profilo Niri in confinamento isolato per prevenire Privilege Escalation (LPE)
-cat > /etc/greetd/niri.kdl << 'EOF'
-hotkey-overlay {
-    skip-at-startup
-}
-layout {
-    background-color "#000000"
-}
-binds {
-    // Esclusivamente controlli hardware e spegnimento.
-    // L'ESECUZIONE DI TERMINALI O LANCIATORI APPLICATIVI È SEVERAMENTE INIBITA.
-    XF86AudioRaiseVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.1+" "-l" "1.0"; }
-    XF86AudioLowerVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.1-"; }
-    XF86AudioMute        allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"; }
-    Mod+Shift+E { quit; }
-    Ctrl+Alt+Delete { quit; }
-}
-EOF
 
 # Install greetd login manager vincolato alla configurazione restrittiva con tuigreet
 cat > /etc/greetd/config.toml << EOF
