@@ -22,13 +22,15 @@ Il repository parallelo `ermete-base-nvidia` fornisce l'ambiente isolato. Utiliz
 Il processo di build risolve asimmetrie critiche dell'ambiente OCI:
 1. **Drop & Replace**: Sradicamento di `kernel`, `kernel-core` e `zram-generator-defaults` originali, sostituiti atomicamente dal ramo `kernel-cachyos`.
 2. **Workaround Systemd/OCI**: I moduli `dkms-nvidia` sono installati con `--setopt=tsflags=noscripts` per prevenire errori letali di systemd all'interno del container engine non privilegiato.
-3. **Compilazione Linker**: La compilazione DKMS bypassa i bug del linker `gold` forzando l'uso di `ld.bfd` (`LD=ld.bfd dkms install ...`).
-4. **Initramfs Deterministico**: Invocazione manuale di `dracut` con compressione `zstd` per includere `ostree` e i moduli NVIDIA prima del pivot-root.
+3. **Compensazione Utenze Fantasma**: A causa dell'inattivazione degli scriptlet RPM (Punto 2), l'utente vitale `nvidia-persistenced` viene generato ed iniettato a mano prima del lockdown dell'immagine, impedendo al demone di crasciare in fase di power management della GPU.
+4. **Compilazione Linker**: La compilazione DKMS bypassa i bug del linker `gold` forzando l'uso di `ld.bfd` (`LD=ld.bfd dkms install ...`).
+5. **Initramfs Deterministico**: Invocazione manuale di `dracut` con compressione `zstd`. Al fine di garantire la funzionalità *Early KMS* essenziale per Wayland (in assenza degli scriptlet DNF), l'immagine inietta a forza i moduli video (`--force-add "nvidia nvidia_modeset nvidia_uvm nvidia_drm"`).
 
 ### Fase 3: CI/CD e Sicurezza Crittografica (Completata)
 L'automazione GitHub Actions garantisce l'immutabilità della release:
 - Costruzione su base schedulata e su commit.
-- Chiusura dell'immagine tramite firma crittografica **Sigstore (Cosign) Keyless OIDC**. Il certificato crittografico garantisce che l'immagine derivi esclusivamente dai workflow di GitHub.
+- Chiusura dell'immagine tramite firma crittografica **Sigstore (Cosign) Keyless OIDC**. Il certificato crittografico garantisce che l'immagine derivi esclusivamente dai workflow di GitHub, senza esporre mai chiavi private statiche.
+- Protezione da derive inter-layer (State Drift) blindando i file in `/etc/dnf/protected.d/`.
 - Linting formale dei layer finali tramite `bootc container lint`.
 
 ### Fase 4: Integrazione "Layer 1" (Completata)

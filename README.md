@@ -18,7 +18,7 @@ graph TD
         A[Fedora Base Atomic] --> B[Strip Vanilla Kernel]
         B --> C[Inject CachyOS Kernel BORE/x86-64-v3]
         C --> D[Compile NVIDIA DKMS via ld.bfd]
-        D --> E[Dracut ZSTD Initramfs]
+        D --> E[Dracut ZSTD Initramfs / Force KMS]
     end
     subgraph Layer 1 [Ermete OS Repository]
         E --> F[Containerfile FROM ghcr.io/.../ermete-base-nvidia]
@@ -38,21 +38,21 @@ graph TD
 
 ---
 
-## 🛡️ Paranoid Privacy & Security Fortress
-Ermete OS implements extreme enterprise-grade defaults to protect user data and telemetry.
+## 🛡️ Paranoid Privacy & The "Zero Denial of Service" Doctrine
+Ermete OS implements extreme enterprise-grade security defaults, but aggressively balances them against usability to ensure user workflows are never paralyzed by their own defenses.
 
-### 🎯 Threat Model Definition
-- **Network Surveillance & ISP Tracking**: Neutralized via system-wide DNS-over-TLS (DoT) and physical MAC Address Randomization.
-- **Remote Exploitation**: Neutralized via a Zero-Trust `drop` zone Firewalld policy applied by default. Port scanning yields zero responses.
-- **Malicious/Compromised GUI Software**: Neutralized via draconian Flatpak sandboxing (X11 sockets permanently disabled, `~/.home` directory access denied, forcing XDG portals).
+### 🎯 Threat Model & Usability Balance
+- **Network Surveillance vs UX**: DNS-over-TLS (DoT) is enforced, but set to `opportunistic` to prevent bricking the system on restrictive networks. MAC Address Randomization is set to `stable`—preventing physical tracking while guaranteeing survival on Captive Portals (hotels/airports) and standard DHCP environments.
+- **Remote Exploitation vs Discovery**: Neutralized via a Zero-Trust `drop` zone Firewalld policy. Port scanning yields zero responses, but `mdns` is surgically whitelisted to guarantee local network device discovery (Chromecast, Wireless Printers).
+- **Compromised GUI Software vs Compatibility**: Neutralized via Flatpak sandboxing and fine-grained `Flatseal` permission management, avoiding global overrides that would silently break XWayland compatibility or filesystem access for non-native applications.
 - **Post-Exploitation Data Leaks**: Neutralized by disabling systemd coredumps (`Storage=none`), preventing RAM secrets from being flushed to unencrypted disk sectors upon application crashes.
-- **Local Privilege Escalation**: Mitigated by aggressive kernel hardening (`kptr_restrict=2`, `dmesg_restrict=1`, unprivileged BPF disabled) and strict SELinux MAC enforcement. `/etc/skel` applies draconian `go-rwx` permissions.
+- **Local Privilege Escalation**: Mitigated by aggressive kernel hardening (`kptr_restrict=2`, `dmesg_restrict=1`, unprivileged BPF disabled). User skeletons (`/etc/skel`) apply fine-grained privacy permissions (`chmod 600/700`) without stripping execution flags from vital scripts.
 
 ---
 
 ## ⚡ Extreme Performance & Architecture
 - **ZRAM Compressed Memory**: Out-of-the-box `zram-generator` configuration uses **ZSTD compression** and allocates up to 100% of RAM dynamically (`vm.swappiness=150`), maximizing multitasking fluidity.
-- **OOMD Wayland Protection**: `systemd-oomd` is aggressively tuned (90% limit / 5 seconds threshold) to surgically kill memory-hogging processes *before* the Wayland session freezes.
+- **OOMD Wayland Protection**: `systemd-oomd` relies on balanced system defaults. Aggressive memory limits are explicitly avoided to prevent "Nuke Traps" where the entire Wayland graphical cgroup collapses under a browser RAM spike.
 - **TCP BBR & Network**: The kernel is tuned to use `fq_pie` and Google's `bbr` congestion control algorithm, minimizing bufferbloat and latency.
 - **Silent & Lightning Boot**: Legacy Dracut modules (floppy, pcsc) are omitted. Kernel arguments are tuned (`quiet`, `loglevel=3`) for a completely silent, high-speed boot.
 - **Greenboot Auto-Repair**: Non-blocking `greenboot` health checks monitor Wayland (`greetd`) and Network services. If a critical failure occurs, the OS automatically and seamlessly rolls back to the previous working OSTree deployment.
@@ -63,8 +63,8 @@ Ermete OS implements extreme enterprise-grade defaults to protect user data and 
 The graphical layer abandons monolithic desktops in favor of individual, hyper-fast components built in memory-safe Rust. All components are themed using the **Catppuccin Mocha** palette, **Inter** UI fonts, and **JetBrains Mono**.
 
 - **Compositor**: [Niri](https://github.com/YaLTeR/niri) (Scrollable Tiling Wayland Compositor).
-- **Status Bar**: [Ironbar](https://github.com/JakeStanger/ironbar) (Natively compiled).
-- **App Launcher**: [Anyrun](https://github.com/anyrun-org/anyrun) (Natively compiled).
+- **Status Bar**: [Ironbar](https://github.com/JakeStanger/ironbar) (Cryptographically verified).
+- **App Launcher**: [Anyrun](https://github.com/anyrun-org/anyrun) (Compiled offline via transient layer).
 - **Login Greeter**: `tuigreet` (Terminal-based greeter with password masking).
 - **Terminal**: `Alacritty` (GPU-accelerated, zero-latency emulator).
 - **Core Utilities**: Rust replacements for UNIX tools (`eza`, `bat`, `fd-find`, `ripgrep`, `bottom`, `nushell`, `starship`).
@@ -78,7 +78,7 @@ Upon your very first boot and network connection, Ermete OS provisions your user
 
 1. **Alacritty**, **Flatseal**, **Warehouse**, **Firefox**, **Nautilus**, **MPV**, **OBS Studio**.
 
-*All Flatpaks leverage the proprietary NVIDIA drivers and RPMFusion codecs seamlessly injected into the base image. The provisioner operates robustly, ensuring failures on captive portals do not permanently block installation.*
+*All Flatpaks leverage the proprietary NVIDIA drivers and RPMFusion codecs seamlessly injected into the base image. The provisioner features infinite-loop idempotency, ensuring offline bootups or captive portals never permanently break the installation sequence.*
 
 ---
 
