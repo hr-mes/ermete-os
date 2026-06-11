@@ -129,6 +129,7 @@ spawn-at-startup "lxqt-policykit-agent"
 spawn-at-startup "ironbar"
 spawn-at-startup "nm-applet"
 spawn-at-startup "blueman-applet"
+spawn-at-startup "lxpolkit"
 
 screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
 

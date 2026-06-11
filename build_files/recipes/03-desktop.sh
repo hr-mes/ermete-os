@@ -3,8 +3,8 @@ set -ouex pipefail
 
 echo "--- Installing Desktop Environment ---"
 
-# Install Niri e dipendenze cursori, temi e font
-dnf -y install --setopt=install_weak_deps=False niri \
+# Install Niri e dipendenze cursori, temi e font (aggiunto Xwayland per compatibilità assoluta con vecchie app)
+dnf -y install --setopt=install_weak_deps=False niri xorg-x11-server-Xwayland \
     papirus-icon-theme adw-gtk3-theme jetbrains-mono-fonts rsms-inter-fonts fontawesome-fonts-all \
     xdg-desktop-portal-gnome xdg-desktop-portal-gtk || true
 
