@@ -8,12 +8,22 @@ dnf -y install --setopt=install_weak_deps=False niri xorg-x11-server-Xwayland \
     papirus-icon-theme adw-gtk3-theme jetbrains-mono-fonts rsms-inter-fonts fontawesome-fonts-all \
     xdg-desktop-portal-gnome xdg-desktop-portal-gtk || true
 
+# Configurazione Ambiente Wayland/NVIDIA (Miglioramento UX)
+cat >> /etc/environment << 'EOF'
+MOZ_ENABLE_WAYLAND=1
+ELECTRON_OZONE_PLATFORM_HINT=wayland
+NVD_BACKEND=direct
+LIBVA_DRIVER_NAME=nvidia
+__GLX_VENDOR_LIBRARY_NAME=nvidia
+EOF
+
+
 # Installazione manuale sicura di Bibata Cursor (pinned version e checksum)
 mkdir -p /usr/share/icons
 cd /tmp
 curl -sLO "https://github.com/ful1e5/Bibata_Cursor/releases/download/${BIBATA_VER}/Bibata-Modern-Classic.tar.xz"
 echo "${BIBATA_HASH}  Bibata-Modern-Classic.tar.xz" | sha256sum -c -
-tar -xJ -C /usr/share/icons/ -f Bibata-Modern-Classic.tar.xz
+tar -xJ --no-same-owner -C /usr/share/icons/ -f Bibata-Modern-Classic.tar.xz
 rm -f Bibata-Modern-Classic.tar.xz
 cd /
 
@@ -29,21 +39,21 @@ cd /tmp
 # 1. Ironbar (Pre-compilato v0.19.0)
 curl -sLO "https://github.com/JakeStanger/ironbar/releases/download/${IRONBAR_VER}/ironbar-${IRONBAR_VER}-x86_64.tar.gz"
 echo "${IRONBAR_HASH}  ironbar-${IRONBAR_VER}-x86_64.tar.gz" | sha256sum -c -
-tar -xzf ironbar-${IRONBAR_VER}-x86_64.tar.gz
+tar -xzf ironbar-${IRONBAR_VER}-x86_64.tar.gz --no-same-owner
 mv ironbar /usr/bin/
 rm -f ironbar-${IRONBAR_VER}-x86_64.tar.gz
 
 # 2. Starship (Pre-compilato v1.22.1)
 curl -sLO "https://github.com/starship/starship/releases/download/${STARSHIP_VER}/starship-x86_64-unknown-linux-gnu.tar.gz"
 echo "${STARSHIP_HASH}  starship-x86_64-unknown-linux-gnu.tar.gz" | sha256sum -c -
-tar -xzf starship-x86_64-unknown-linux-gnu.tar.gz
+tar -xzf starship-x86_64-unknown-linux-gnu.tar.gz --no-same-owner
 mv starship /usr/bin/
 rm -f starship-x86_64-unknown-linux-gnu.tar.gz
 
 # 3. Bottom (Pre-compilato v0.10.2)
 curl -sLO "https://github.com/ClementTsang/bottom/releases/download/${BOTTOM_VER}/bottom_x86_64-unknown-linux-gnu.tar.gz"
 echo "${BOTTOM_HASH}  bottom_x86_64-unknown-linux-gnu.tar.gz" | sha256sum -c -
-tar -xzf bottom_x86_64-unknown-linux-gnu.tar.gz
+tar -xzf bottom_x86_64-unknown-linux-gnu.tar.gz --no-same-owner
 mv btm /usr/bin/
 rm -f bottom_x86_64-unknown-linux-gnu.tar.gz
 
@@ -52,7 +62,7 @@ rm -f bottom_x86_64-unknown-linux-gnu.tar.gz
 # ANYRUN_COMMIT è ora iniettato come ARG dal Containerfile
 curl -sLO "https://github.com/anyrun-org/anyrun/archive/${ANYRUN_COMMIT}.tar.gz"
 echo "${ANYRUN_HASH}  ${ANYRUN_COMMIT}.tar.gz" | sha256sum -c -
-tar -xzf ${ANYRUN_COMMIT}.tar.gz
+tar -xzf ${ANYRUN_COMMIT}.tar.gz --no-same-owner
 
 dnf -y install --setopt=install_weak_deps=False rust cargo gcc gcc-c++ pkgconf-pkg-config \
     glib2-devel gtk3-devel gtk4-devel gtk-layer-shell-devel gtk4-layer-shell-devel \

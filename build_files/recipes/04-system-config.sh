@@ -12,7 +12,7 @@ cat > /etc/greetd/config.toml << EOF
 vt = 1
 [default_session]
 user = "greeter"
-command = "tuigreet --time --greeting 'Welcome to Ermete OS - Atomic Wayland' --asterisks --cmd niri"
+command = "tuigreet --time --greeting 'Welcome to Ermete OS - Atomic Wayland' --asterisks --cmd niri-session"
 EOF
 
 # Architettura Systemd nativa (Systemd Presets)
@@ -98,6 +98,46 @@ chown -R root:root /etc/skel/
 find /etc/skel -type d -exec chmod 700 {} \;
 find /etc/skel -type f -exec chmod 600 {} \;
 find /etc/skel -type f -name "*.sh" -exec chmod 700 {} \;
+
+# 3. Btrfs Auto-Snapshot for /var/home (Zero-Maintenance Rollback)
+# Crea lo script idempotente per lo snapshot
+cat > /usr/libexec/ermete-snapshot.sh << 'EOF'
+#!/bin/bash
+set -euo pipefail
+
+# Controlla se /var/home esiste ed è un subvolume valido
+if [ ! -d "/var/home" ]; then
+    exit 0
+fi
+
+mkdir -p /var/home/.snapshots
+
+TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
+# Se fallisce (es. rootfs non btrfs), esce senza bloccare l'aggiornamento
+btrfs subvolume snapshot /var/home "/var/home/.snapshots/home_$TIMESTAMP" || exit 0
+
+# Rotazione: mantieni solo gli ultimi 3 snapshot (salta i primi 3 più recenti, elimina gli altri)
+cd /var/home/.snapshots
+ls -1d home_* 2>/dev/null | sort -r | tail -n +4 | xargs -r btrfs subvolume delete || true
+EOF
+chmod +x /usr/libexec/ermete-snapshot.sh
+
+# Crea il servizio systemd vincolato a ostree-finalize-staged
+cat > /etc/systemd/system/ermete-home-snapshot.service << 'EOF'
+[Unit]
+Description=Ermete OS - Auto Btrfs Snapshot for /var/home
+Before=ostree-finalize-staged.service
+ConditionPathExists=/var/home
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/ermete-snapshot.sh
+
+[Install]
+WantedBy=ostree-finalize-staged.service
+EOF
+
+echo "enable ermete-home-snapshot.service" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 
 # Remove waybar
 dnf -y remove waybar

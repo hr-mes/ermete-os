@@ -20,11 +20,11 @@ graph TD
         C --> D[Nightly CI/CD & Cosign Signature]
     end
     subgraph Layer 1 [Ermete OS Repository / Ring 3]
-        D -- "API Dispatch Trigger" --> E[Containerfile FROM ghcr.io/.../ermete-base-nvidia]
+        D -- "API Dispatch Trigger" --> E[Containerfile FROM ghcr.io/.../ermete-base-nvidia@sha256]
         E --> F[Inject Renovate ARGs (IaC Single Source of Truth)]
         F --> G[Recipe: Rust Transient Build Pipeline]
         G --> H[Recipe: Firewalld Drop / Privacy Hardening]
-        H --> I[Recipe: Extracted Systemd Flatpak Provisioner]
+        H --> I[Recipe: Asynchronous Systemd Provisioner]
     end
     Layer 1 --> J((Deployable Bootc Image))
 ```
@@ -33,8 +33,8 @@ graph TD
 
 1. **Zero-Entropy**: The root filesystem is strictly immutable. No system degradation, rot, or state drift over time. Software installation via `dnf` on the live system is mathematically banned.
 2. **Zero-Bloat**: Only CLI tools and core infrastructure exist on the host. Weak dependencies are banned (`install_weak_deps=False`).
-3. **100% Verified Supply Chain**: External binaries (Ironbar, Starship, Anyrun) are managed via a centralized `Containerfile ARG` manifest. They are either cryptographically verified against pinned SHA256 checksums or dynamically compiled from source (via Cargo) within a transient build layer that purges all compilation tools before sealing the OCI image.
-4. **Autonomous Maintenance (Renovate Bot)**: The OS "heals and updates itself." Renovate Bot parses the `Containerfile` ARGs, detects new upstream releases, recalculates the SHA256 hashes, and opens Pull Requests. The Architect (User) merely approves the PR, triggering the CI/CD pipeline to build and cryptographically sign the new immutable deployment.
+3. **100% Verified Supply Chain**: Dynamic `curl | bash` or blind binary downloads are forbidden. External binaries (Ironbar, Starship, Anyrun) are managed via a centralized `Containerfile ARG` manifest and verified against pinned SHA256 checksums. Furthermore, `tar` extractions are surgically hardened with `--no-same-owner` to prevent Local Privilege Escalation (LPE) via malicious UID injections.
+4. **Autonomous Maintenance (Zero-Touch Rolling Release)**: The OS heals and updates itself. Renovate Bot parses the `Containerfile`, detects new upstream releases, recalculates SHA256 hashes, and pins Docker images to immutable digests. The pipeline triggers automatically, compiling and signing the new immutable deployment via Sigstore/Cosign OIDC without manual intervention.
 
 ---
 
@@ -44,25 +44,20 @@ Ermete OS implements extreme enterprise-grade security defaults, aggressively ba
 - **Network Surveillance vs UX**: DNS-over-TLS (DoT) is enforced but set to `opportunistic`. MAC Address Randomization is `stable`—preventing physical tracking while surviving Captive Portals.
 - **Remote Exploitation vs Discovery**: Neutralized via a Zero-Trust `drop` zone Firewalld policy. `mdns` is surgically whitelisted to guarantee local device discovery (Chromecast, Wireless Printers).
 - **Post-Exploitation Data Leaks**: Systemd coredumps are disabled (`Storage=none`), preventing RAM secrets from bleeding onto the disk upon application crashes.
-- **Local Privilege Escalation**: Mitigated by aggressive kernel hardening (`kptr_restrict=2`, unprivileged BPF disabled) and granular `/etc/skel` permissions (`chmod 600/700`).
+- **Zero-Trust UNIX Sandboxing**: Mitigated by aggressive kernel hardening (`kptr_restrict=2`, unprivileged BPF disabled). At the user level, `/etc/skel` permissions are ruthlessly locked down (`chmod 700` for directories), ensuring privacy-by-design for every newly provisioned account.
 
 ---
 
-## 🎨 The "Premium Ricing" Aesthetic (Catppuccin Mocha)
-The graphical layer abandons standard Linux grayness. The UI is designed to evoke a "Wow" factor immediately, blending cyberpunk minimalism with modern Apple-like glassmorphism.
-- **Color Palette**: Strict adherence to the highly acclaimed **Catppuccin Mocha** dark mode palette (`#1e1e2e` backgrounds, `#89b4fa` accents).
-- **Dynamic UI**: Components float via deep `box-shadow` configurations and `border-radius: 12px/16px`. Hover and focus events feature `0.2s ease-in-out` micro-animations for an organic, tactile feel.
-- **Typography**: **Inter** for absolute UI legibility, **Font Awesome 6** for vector iconography, and **JetBrains Mono** for developer terminal superiority.
-
 ## ⚡ Extreme Performance & Wayland Stack
 - **ZRAM Compressed Memory**: 100% RAM allocation dynamically compressed via **ZSTD** (`vm.swappiness=150`).
+- **Network Latency Minimization**: Kernel TCP congestion control is forced to **BBR** combined with `fq_pie` queuing discipline for maximum throughput and minimum bufferbloat.
 - **OOMD Wayland Protection**: Aggressive memory limits are avoided to prevent "Nuke Traps" where the Wayland cgroup collapses under browser RAM spikes.
 - **The Stack**:
-  - Compositor: **Niri** (Scrollable Tiling).
+  - Compositor: **Niri** (Scrollable Tiling). Bootstrapped flawlessly via `niri-session` for perfect DBus and XDG-Desktop-Portal integration.
   - Status Bar: **Ironbar** (Floating, transparent).
-  - App Launcher: **Anyrun** (Compiled offline).
+  - App Launcher: **Anyrun** (Compiled offline dynamically).
   - Terminal: **Alacritty** (GPU-accelerated).
-  - IDE: **Neovim** (LazyVim Catppuccin).
+  - Environment: Complete Wayland/NVIDIA variable injection (`MOZ_ENABLE_WAYLAND=1`, `LIBVA_DRIVER_NAME=nvidia`).
 
 ---
 
@@ -72,7 +67,7 @@ Due to root immutability, the traditional `.exe` or `dnf install` paradigm is ob
 2. **CLI Utilities**: Managed via **Nix** or **Homebrew** (Zero-Trust mapped into `/var`).
 3. **Destructive Experiments**: Handled via integrated **Distrobox** containers (e.g., disposable Arch Linux shells).
 
-To preserve host purity, upon the very first boot and network connection, a non-blocking `oneshot` systemd service (`Ermete-firstboot.service`) silently executes a discrete script (`/usr/libexec/ermete-firstboot.sh`). It globally enforces the **Adwaita Dark** GTK theme, **Papirus-Dark** icons, and automatically installs essential Flatpaks (Warehouse, Flatseal, Firefox, MPV) with infinite-loop idempotency.
+To preserve host purity, the system employs an asynchronous, non-blocking `oneshot` systemd service (`Ermete-firstboot.service`) to install flatpaks. By decoupling the OS boot from the `NetworkManager-wait-online.service`, Ermete OS boots to the desktop in seconds, while Flatseal and core apps are provisioned silently in the background via infinite-loop idempotency.
 
 ---
 
