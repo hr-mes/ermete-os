@@ -38,9 +38,29 @@ chmod +x /etc/greenboot/check/required.d/02-greetd-check.sh
 echo "enable fstrim.timer" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 echo "enable fwupd.service" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 
-# 4. First-boot Service per installare Flatseal
+# 4. First-boot Service per installare Flatseal e flatpaks essenziali
 # Sfrutta un lockfile in /var/lib per assicurarsi che venga eseguito con successo almeno una volta,
 # anche se l'utente si connette al Wi-Fi in un secondo momento, senza bloccare il boot!
+mkdir -p /usr/libexec/
+cat > /usr/libexec/ermete-firstboot.sh << 'EOF'
+#!/bin/bash
+set -ouex pipefail
+
+while true; do
+  if curl -s -f --connect-timeout 10 "https://dl.flathub.org/repo/flathub.flatpakrepo" > /dev/null; then
+    if flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo && \
+       flatpak override --system --env=GTK_THEME=adw-gtk3-dark && \
+       flatpak override --system --env=ICON_THEME=Papirus-Dark && \
+       flatpak install -y flathub io.github.flattool.Warehouse com.github.tchx84.Flatseal org.gnome.Nautilus org.alacritty.Alacritty io.mpv.Mpv com.obsproject.Studio com.github.wwmm.easyeffects org.mozilla.firefox; then
+      touch /var/lib/ermete-firstboot-done
+      break
+    fi
+  fi
+  sleep 30
+done
+EOF
+chmod +x /usr/libexec/ermete-firstboot.sh
+
 cat > /etc/systemd/system/Ermete-firstboot.service << 'EOF'
 [Unit]
 Description=Ermete First Boot Setup (Install Flatpaks)
@@ -50,20 +70,7 @@ ConditionPathExists=!/var/lib/ermete-firstboot-done
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/bash -c ' \
-  while true; do \
-    if curl -s -f --connect-timeout 10 https://dl.flathub.org/repo/flathub.flatpakrepo > /dev/null; then \
-      if flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo && \
-         flatpak override --system --env=GTK_THEME=adw-gtk3-dark && \
-         flatpak override --system --env=ICON_THEME=Papirus-Dark && \
-         flatpak install -y flathub io.github.flattool.Warehouse com.github.tchx84.Flatseal org.gnome.Nautilus org.alacritty.Alacritty io.mpv.Mpv com.obsproject.Studio com.github.wwmm.easyeffects org.mozilla.firefox; then \
-        touch /var/lib/ermete-firstboot-done; \
-        break; \
-      fi; \
-    fi; \
-    sleep 30; \
-  done \
-'
+ExecStart=/usr/libexec/ermete-firstboot.sh
 
 [Install]
 WantedBy=multi-user.target

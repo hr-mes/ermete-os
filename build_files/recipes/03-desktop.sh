@@ -11,8 +11,8 @@ dnf -y install --setopt=install_weak_deps=False niri xorg-x11-server-Xwayland \
 # Installazione manuale sicura di Bibata Cursor (pinned version e checksum)
 mkdir -p /usr/share/icons
 cd /tmp
-curl -sLO https://github.com/ful1e5/Bibata_Cursor/releases/download/v2.0.7/Bibata-Modern-Classic.tar.xz
-echo "7d3495864e5bbef02f5e77de760b2905903b63c71495a78ef6306d19a3b556d8  Bibata-Modern-Classic.tar.xz" | sha256sum -c -
+curl -sLO "https://github.com/ful1e5/Bibata_Cursor/releases/download/${BIBATA_VER}/Bibata-Modern-Classic.tar.xz"
+echo "${BIBATA_HASH}  Bibata-Modern-Classic.tar.xz" | sha256sum -c -
 tar -xJ -C /usr/share/icons/ -f Bibata-Modern-Classic.tar.xz
 rm -f Bibata-Modern-Classic.tar.xz
 cd /
@@ -27,31 +27,31 @@ dnf -y install --setopt=install_weak_deps=False greetd tuigreet
 cd /tmp
 
 # 1. Ironbar (Pre-compilato v0.19.0)
-curl -sLO https://github.com/JakeStanger/ironbar/releases/download/v0.19.0/ironbar-v0.19.0-x86_64.tar.gz
-echo "5efbbfd79c3f97364d254c12abef24618375a2759c25c883812d23c3581081e9  ironbar-v0.19.0-x86_64.tar.gz" | sha256sum -c -
-tar -xzf ironbar-v0.19.0-x86_64.tar.gz
+curl -sLO "https://github.com/JakeStanger/ironbar/releases/download/${IRONBAR_VER}/ironbar-${IRONBAR_VER}-x86_64.tar.gz"
+echo "${IRONBAR_HASH}  ironbar-${IRONBAR_VER}-x86_64.tar.gz" | sha256sum -c -
+tar -xzf ironbar-${IRONBAR_VER}-x86_64.tar.gz
 mv ironbar /usr/bin/
-rm -f ironbar-v0.19.0-x86_64.tar.gz
+rm -f ironbar-${IRONBAR_VER}-x86_64.tar.gz
 
 # 2. Starship (Pre-compilato v1.22.1)
-curl -sLO https://github.com/starship/starship/releases/download/v1.22.1/starship-x86_64-unknown-linux-gnu.tar.gz
-echo "e57db6f6497ee8a426c5e77b4d6f5c50734d3e9cca7a18a8aef46730505a3ae7  starship-x86_64-unknown-linux-gnu.tar.gz" | sha256sum -c -
+curl -sLO "https://github.com/starship/starship/releases/download/${STARSHIP_VER}/starship-x86_64-unknown-linux-gnu.tar.gz"
+echo "${STARSHIP_HASH}  starship-x86_64-unknown-linux-gnu.tar.gz" | sha256sum -c -
 tar -xzf starship-x86_64-unknown-linux-gnu.tar.gz
 mv starship /usr/bin/
 rm -f starship-x86_64-unknown-linux-gnu.tar.gz
 
 # 3. Bottom (Pre-compilato v0.10.2)
-curl -sLO https://github.com/ClementTsang/bottom/releases/download/0.10.2/bottom_x86_64-unknown-linux-gnu.tar.gz
-echo "f20211d398b9744545b93ac4af73f3a9f3e67179c385fb0c73d0dd4d84d28a8f  bottom_x86_64-unknown-linux-gnu.tar.gz" | sha256sum -c -
+curl -sLO "https://github.com/ClementTsang/bottom/releases/download/${BOTTOM_VER}/bottom_x86_64-unknown-linux-gnu.tar.gz"
+echo "${BOTTOM_HASH}  bottom_x86_64-unknown-linux-gnu.tar.gz" | sha256sum -c -
 tar -xzf bottom_x86_64-unknown-linux-gnu.tar.gz
 mv btm /usr/bin/
 rm -f bottom_x86_64-unknown-linux-gnu.tar.gz
 
 # 4. Anyrun (Compilato offline da sorgente verificato)
 # Essendo un componente con profonde radici in GTK Layer Shell, lo compiliamo nativamente.
-export ANYRUN_COMMIT="f3b23bc5520f7673a5119da44b3570fbe060db37"
-curl -sLO https://github.com/anyrun-org/anyrun/archive/${ANYRUN_COMMIT}.tar.gz
-echo "11ac878a0e67025b4f439f0c14b8d87125c00aa573625fae0a35383fe7c18b95  ${ANYRUN_COMMIT}.tar.gz" | sha256sum -c -
+# ANYRUN_COMMIT è ora iniettato come ARG dal Containerfile
+curl -sLO "https://github.com/anyrun-org/anyrun/archive/${ANYRUN_COMMIT}.tar.gz"
+echo "${ANYRUN_HASH}  ${ANYRUN_COMMIT}.tar.gz" | sha256sum -c -
 tar -xzf ${ANYRUN_COMMIT}.tar.gz
 
 dnf -y install --setopt=install_weak_deps=False rust cargo gcc gcc-c++ pkgconf-pkg-config \
