@@ -15,18 +15,18 @@ Ermete OS strictly follows a multi-repository, decoupled architecture for ultima
 ```mermaid
 graph TD
     subgraph Layer 0 [Base NVIDIA Repository / Ring 0]
-        A[Fedora Base Atomic] --> B[Inject CachyOS Kernel]
-        B --> C[Compile NVIDIA DKMS via ld.bfd]
-        C --> D[Nightly CI/CD & Cosign Signature]
+        A["Fedora Base Atomic"] --> B["Inject CachyOS Kernel"]
+        B --> C["Compile NVIDIA DKMS via ld.bfd"]
+        C --> D["Nightly CI/CD & Cosign Signature"]
     end
     subgraph Layer 1 [Ermete OS Repository / Ring 3]
-        D -- "API Dispatch Trigger" --> E[Containerfile FROM ghcr.io/.../ermete-base-nvidia@sha256]
-        E --> F[Inject Renovate ARGs (IaC Single Source of Truth)]
-        F --> G[Recipe: Rust Transient Build Pipeline]
-        G --> H[Recipe: Firewalld Drop / Privacy Hardening]
-        H --> I[Recipe: Asynchronous Systemd Provisioner]
+        D -- "API Dispatch Trigger" --> E["Containerfile FROM ghcr.io/.../ermete-base-nvidia@sha256"]
+        E --> F["Inject Renovate ARGs (IaC Single Source of Truth)"]
+        F --> G["Recipe: Rust Transient Build Pipeline"]
+        G --> H["Recipe: Firewalld Drop / Privacy Hardening"]
+        H --> I["Recipe: Asynchronous Systemd Provisioner"]
     end
-    Layer 1 --> J((Deployable Bootc Image))
+    Layer 1 --> J(("Deployable Bootc Image"))
 ```
 
 ## 🌟 The Enterprise Manifesto
@@ -79,3 +79,31 @@ To change versions or add packages, edit the `Containerfile` or the bash recipes
 Make sure you have `podman` and `just` installed:
 - `just build`: Builds the container image locally.
 - `just run-vm-qcow2`: Compiles a QCOW2 image and boots it instantly via QEMU for rapid testing.
+
+---
+
+## 🚀 Deployment (Bare Metal Installation)
+Ermete OS is a bootable OCI container. To install it on physical hardware, use one of the following methods:
+
+### Option 1: In-Place Mutation (Recommended)
+If you are currently running a standard Fedora distribution (like Fedora Workstation or Silverblue), you can atomically mutate your root filesystem into Ermete OS:
+```bash
+sudo bootc switch ghcr.io/patapem/ermete
+```
+*Note: Depending on your exact ghcr.io path, verify the repository name.*
+
+### Option 2: Generate a Bootable ISO
+You can generate a standard `.iso` installer locally using `bootc-image-builder`:
+```bash
+sudo podman run \
+    --rm \
+    -it \
+    --privileged \
+    --pull=newer \
+    --security-opt label=type:unconfined_t \
+    -v $(pwd)/output:/output \
+    quay.io/centos-bootc/bootc-image-builder:latest \
+    --type iso \
+    ghcr.io/patapem/ermete:latest
+```
+Burn the resulting ISO in the `output/` folder to a USB drive and install normally.
