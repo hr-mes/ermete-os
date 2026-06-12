@@ -14,19 +14,19 @@ Ermete OS strictly follows a multi-repository, decoupled architecture for ultima
 
 ```mermaid
 graph TD
-    subgraph Layer 0 [Base NVIDIA Repository / Ring 0]
+    subgraph Layer0 [Base NVIDIA Repository / Ring 0]
         A["Fedora Base Atomic"] --> B["Inject CachyOS Kernel"]
         B --> C["Compile NVIDIA DKMS via ld.bfd"]
         C --> D["Nightly CI/CD & Cosign Signature"]
     end
-    subgraph Layer 1 [Ermete OS Repository / Ring 3]
+    subgraph Layer1 [Ermete OS Repository / Ring 3]
         D -- "API Dispatch Trigger" --> E["Containerfile FROM ghcr.io/.../ermete-base-nvidia@sha256"]
         E --> F["Inject Renovate ARGs (IaC Single Source of Truth)"]
         F --> G["Recipe: Rust Transient Build Pipeline"]
         G --> H["Recipe: Firewalld Drop / Privacy Hardening"]
         H --> I["Recipe: Asynchronous Systemd Provisioner"]
     end
-    Layer 1 --> J(("Deployable Bootc Image"))
+    Layer1 --> J(("Deployable Bootc Image"))
 ```
 
 ## 🌟 The Enterprise Manifesto
