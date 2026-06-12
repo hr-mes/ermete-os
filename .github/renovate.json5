@@ -17,5 +17,14 @@
       "automerge": true,
       "automergeType": "pr"
     }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["^Containerfile$"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>.*?)\\s+depName=(?<depName>.*?)\\nARG\\s+[A-Z_]+_(?:VER|COMMIT)=\"(?<currentValue>.*?)\""
+      ]
+    }
   ]
 }
