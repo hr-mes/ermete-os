@@ -37,11 +37,6 @@ zram-fraction = 1.0
 compression-algorithm = zstd
 EOF
 
-# 3. Dracut Boot Speedup (Rimuove blob inutili dal boot image)
-mkdir -p /etc/dracut.conf.d/
-cat > /etc/dracut.conf.d/99-ermete-slim-boot.conf << 'EOF'
-# Omette il PC-Speaker fastidioso, il supporto floppy e vecchi protocolli di rete
-omit_dracutmodules+=" pcsc floppy nfs cifs iscsi "
-EOF
+
 
 echo "--- Kernel Optimizations Applied ---"

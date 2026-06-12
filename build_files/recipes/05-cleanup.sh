@@ -3,9 +3,7 @@ set -ouex pipefail
 
 echo "--- Cleaning up image ---"
 
-# Clean up dnf cache to reduce image size
-dnf -y clean all
-if command -v dnf5 >/dev/null 2>&1; then dnf5 -y clean all; fi
+
 
 # Fix SELinux contexts to prevent permission denied errors on first boot
 restorecon -R / || true

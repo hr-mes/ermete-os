@@ -46,18 +46,17 @@ cat > /usr/libexec/ermete-firstboot.sh << 'EOF'
 #!/bin/bash
 set -ouex pipefail
 
-while true; do
-  if curl -s -f --connect-timeout 10 "https://dl.flathub.org/repo/flathub.flatpakrepo" > /dev/null; then
-    if flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo && \
-       flatpak override --system --env=GTK_THEME=adw-gtk3-dark && \
-       flatpak override --system --env=ICON_THEME=Papirus-Dark && \
-       flatpak install -y flathub io.github.flattool.Warehouse com.github.tchx84.Flatseal org.gnome.Nautilus org.alacritty.Alacritty io.mpv.Mpv com.obsproject.Studio com.github.wwmm.easyeffects org.mozilla.firefox; then
-      touch /var/lib/ermete-firstboot-done
-      break
-    fi
-  fi
-  sleep 30
-done
+# Fail se non c'è rete per delegare il retry a systemd
+curl -s -f --connect-timeout 10 "https://dl.flathub.org/repo/flathub.flatpakrepo" > /dev/null || exit 1
+
+if flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo && \
+   flatpak override --system --env=GTK_THEME=adw-gtk3-dark && \
+   flatpak override --system --env=ICON_THEME=Papirus-Dark && \
+   flatpak install -y flathub io.github.flattool.Warehouse com.github.tchx84.Flatseal org.gnome.Nautilus org.alacritty.Alacritty io.mpv.Mpv com.obsproject.Studio com.github.wwmm.easyeffects org.mozilla.firefox; then
+  touch /var/lib/ermete-firstboot-done
+else
+  exit 1
+fi
 EOF
 chmod +x /usr/libexec/ermete-firstboot.sh
 
@@ -69,8 +68,10 @@ Wants=network-online.target
 ConditionPathExists=!/var/lib/ermete-firstboot-done
 
 [Service]
-Type=simple
+Type=oneshot
 ExecStart=/usr/libexec/ermete-firstboot.sh
+Restart=on-failure
+RestartSec=30
 
 [Install]
 WantedBy=multi-user.target

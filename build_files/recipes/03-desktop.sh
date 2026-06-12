@@ -68,6 +68,7 @@ cargo build --release --locked
 mv target/release/anyrun /usr/bin/
 mkdir -p /usr/lib64/anyrun
 cp target/release/*.so /usr/lib64/anyrun/ 2>/dev/null || true
+strip /usr/bin/anyrun /usr/lib64/anyrun/*.so 2>/dev/null || true
 ln -s /usr/lib64/anyrun /usr/lib/anyrun
 cd /
 
