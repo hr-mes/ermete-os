@@ -39,14 +39,7 @@ echo "enable swaybg.service" >> /usr/lib/systemd/user-preset/99-Ermete.preset
 
 systemctl set-default graphical.target
 
-# Script helper per l'installazione di Nix a runtime (Zero-Trust su OSTree)
-cat > /usr/bin/install-nix << 'EOF'
-#!/bin/bash
-echo "--- Installazione di Nix Package Manager (Determinate Systems) ---"
-echo "Questo script installerà Nix in modo compatibile e sicuro con il file system immutabile."
-curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
-EOF
-chmod +x /usr/bin/install-nix
+
 echo "disable systemd-oomd.service" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 echo "enable bootc-fetch-apply.timer" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 echo "disable NetworkManager-wait-online.service" >> /usr/lib/systemd/system-preset/99-Ermete.preset

@@ -78,9 +78,8 @@ systemctl --global enable pipewire.socket pipewire.service wireplumber.service
 # Sostituiamo il fetch dinamico da crates.io con release pre-compilate validate
 # o compilazione offline da commit pinnati con hash crittografica garantita.
 
-# Scarica uno sfondo di default (aggiunto -f per fallire silenziosamente su 404 e non salvare HTML fittizio)
-mkdir -p /usr/share/backgrounds/ermete
-curl -f -sL "https://raw.githubusercontent.com/catppuccin/wallpapers/main/landscapes/forst.jpg" -o /usr/share/backgrounds/ermete/default.jpg || true
+# La gestione degli sfondi è delegata agli asset locali montati tramite Containerfile (tar --no-same-owner)
+# o al graceful fallback del demone swaybg.
 
 cd /tmp
 
