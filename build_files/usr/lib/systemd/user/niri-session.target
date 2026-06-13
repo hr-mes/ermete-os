@@ -1,0 +1,7 @@
+[Unit]
+Description=Niri Wayland Session
+BindsTo=graphical-session.target
+Wants=graphical-session-pre.target
+After=graphical-session-pre.target
+
+[Target]

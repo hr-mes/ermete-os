@@ -1,0 +1,14 @@
+[Unit]
+Description=Ironbar (Wayland Status Bar)
+PartOf=niri-session.target
+After=niri-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/ironbar
+Restart=on-failure
+RestartSec=2
+Environment=GTK_USE_PORTAL=0
+
+[Install]
+WantedBy=niri-session.target

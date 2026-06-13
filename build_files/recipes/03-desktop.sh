@@ -115,6 +115,9 @@ strip /usr/bin/anyrun /usr/lib64/anyrun/*.so 2>/dev/null || true
 ln -s /usr/lib64/anyrun /usr/lib/anyrun
 cd /
 
+# Abilita i servizi Systemd User asincroni per componenti Wayland
+systemctl --global enable ironbar.service swaybg.service || true
+
 # Pulizia chirurgica
 # NOTA: non rimuoviamo gcc, gcc-c++ e openssl-devel poiché sono protetti dal Layer 0 (Base NVIDIA) per DKMS
 dnf -y remove rust cargo \
