@@ -20,6 +20,6 @@ dnf -y install --setopt=install_weak_deps=False libvirt virt-manager qemu-kvm wl
 dnf -y install --setopt=install_weak_deps=False swaylock # Dipendenza critica per il blocco schermo di Niri
 
 # Core Utilities in Rust (Il nuovo stack)
-dnf -y install --setopt=install_weak_deps=False eza bat fd-find ripgrep nushell neovim wl-clipboard ananicy-cpp ananicy-rules-cachyos
+dnf -y install --setopt=install_weak_deps=False eza bat fd-find ripgrep nushell neovim ananicy-cpp
 
 # Installazione di Starship e Bottom ora delegata al processo nativo Cargo (vedi 03-desktop.sh)
