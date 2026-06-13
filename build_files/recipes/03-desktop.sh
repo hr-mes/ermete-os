@@ -17,6 +17,22 @@ LIBVA_DRIVER_NAME=nvidia
 __GLX_VENDOR_LIBRARY_NAME=nvidia
 EOF
 
+# Creazione del wrapper di sessione obbligatorio per Niri
+cat > /usr/bin/niri-session << 'EOF'
+#!/bin/bash
+# Wrapper di sessione: innesca l'albero DBus, XDG-Desktop-Portal e Pipewire
+export XDG_SESSION_TYPE=wayland
+export XDG_CURRENT_DESKTOP=niri
+export XDG_SESSION_DESKTOP=niri
+
+# Importa le variabili nel manager systemd --user e nell'ambiente DBus
+systemctl --user import-environment XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
+dbus-update-activation-environment --systemd XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP WAYLAND_DISPLAY
+
+exec niri
+EOF
+chmod +x /usr/bin/niri-session
+
 
 # Installazione manuale sicura di Bibata Cursor (pinned version e checksum)
 mkdir -p /usr/share/icons
