@@ -14,12 +14,12 @@ vt = 1
 
 [default_session]
 command = "tuigreet --cmd /usr/bin/niri-session --asterisks --remember --remember-session --time --theme 'border=magenta;text=cyan;prompt=green;time=red;action=blue;button=yellow;container=black;input=white'"
-user = "greeter"
+user = "greetd"
 EOF
 
 # Garantisce che tuigreet possa scrivere il cache per ricordare l'ultimo utente loggato
 mkdir -p /var/cache/tuigreet
-chown -R greeter:greeter /var/cache/tuigreet
+chown -R greetd:greetd /var/cache/tuigreet
 chmod 755 /var/cache/tuigreet
 
 # Architettura Systemd nativa (Systemd Presets)
