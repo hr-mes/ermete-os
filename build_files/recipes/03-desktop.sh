@@ -57,6 +57,7 @@ cd /
 
 # Install Greetd e Tuigreet (Greeter da terminale in Rust)
 dnf -y install --setopt=install_weak_deps=False greetd tuigreet
+systemctl enable greetd.service
 
 # 100% Verified Supply Chain per lo Stack Rust (Zero-Trust)
 # Sostituiamo il fetch dinamico da crates.io con release pre-compilate validate

@@ -23,3 +23,14 @@ dnf -y install --setopt=install_weak_deps=False swaylock # Dipendenza critica pe
 dnf -y install --setopt=install_weak_deps=False eza bat fd-find ripgrep nushell neovim ananicy-cpp
 
 # Installazione di Starship e Bottom ora delegata al processo nativo Cargo (vedi 03-desktop.sh)
+
+# Fix Missing UNIX Groups (Wayland/DRM/Audio/Input)
+# In container builds, sometimes standard groups from 'setup' rpm are not fully populated.
+# We explicitly create the critical ones to prevent udev permission failures (schermo nero post-login).
+echo "--- Fixing critical UNIX groups for Wayland/udev ---"
+for g in video render input tty audio kvm disk lp clock sgx kmem tss; do
+    getent group $g >/dev/null || groupadd -r $g || true
+done
+
+# Inneschiamo esplicitamente sysusers per assicurarci che anche systemd applichi i suoi default
+systemd-sysusers || true
