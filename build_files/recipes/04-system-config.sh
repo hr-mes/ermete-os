@@ -66,8 +66,6 @@ EOF
 
 # Implementazione della Direttiva Suprema: Firewalld Agnostico (Drop/Invisibilità)
 echo "--- Hardening Firewalld ---"
-firewall-offline-cmd --set-default-zone=drop
-firewall-offline-cmd --zone=drop --add-service=mdns
 
 # Disabilita i Coredump su disco per privacy totale
 mkdir -p /etc/systemd/coredump.conf.d/
