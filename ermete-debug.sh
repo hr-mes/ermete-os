@@ -1,10 +1,7 @@
 #!/bin/bash
 # ==============================================================================
-# Ermete OS - Diagnostica Assoluta e Omnicomprensiva (v4.0 - Massimo Teorico UX)
-# Raccoglie OGNI POSSIBILE INFORMAZIONE su: Kernel, NVIDIA, Systemd,
-# Wayland, Niri, XDG Portals, DKMS, Pipewire, Udev, Dracut, Coredumps,
-# SELinux, Networking Agnostico, e Supply Chain Repository.
-# [v4.0 Focus]: Estensione massima sul Lato User, UX, Pipewire, Flatpak e Sessione.
+# Ermete OS - Diagnostica Assoluta e Omnicomprensiva (v5.0 - X-RAY EDITION)
+# La "Lastra a Raggi X" definitiva per debugging istantaneo.
 # ==============================================================================
 
 if [ "$EUID" -ne 0 ]; then
@@ -16,15 +13,15 @@ LOG_FILE="/tmp/ermete_diagnostic_$(date +%Y%m%d_%H%M%S).txt"
 USER_ID=1000
 USER_NAME="ermete"
 
-echo "Avvio della diagnostica ESTREMA per Ermete OS (v4.0)..."
-echo "Analisi profonda dell'Infrastruttura (Layer 0) e dell'Esperienza Utente (Layer 1)..."
+echo "Avvio della diagnostica ESTREMA per Ermete OS (v5.0 X-RAY EDITION)..."
+echo "Acquisizione radiale dell'Infrastruttura, GPU, Vulkan, DBus e User Space..."
 echo "========================================" > "$LOG_FILE"
-echo " ERMETE OS - OMNI-DIAGNOSTIC LOG v4.0 " >> "$LOG_FILE"
+echo " ERMETE OS - OMNI-DIAGNOSTIC LOG v5.0 (X-RAY) " >> "$LOG_FILE"
 echo " Timestamp: $(date)" >> "$LOG_FILE"
 echo "========================================" >> "$LOG_FILE"
 
-# --- 1. SYSTEM BASE & ZERO-TRUST REPOSITORIES ---
-echo -e "\n\n========================================\n1. SYSTEM BASE & ZERO-TRUST REPOSITORIES\n========================================" >> "$LOG_FILE"
+# --- 1. SYSTEM BASE, SELINUX & ZERO-TRUST REPOSITORIES ---
+echo -e "\n\n========================================\n1. SYSTEM BASE & ZERO-TRUST\n========================================" >> "$LOG_FILE"
 uname -a >> "$LOG_FILE" 2>&1
 cat /etc/os-release >> "$LOG_FILE" 2>&1
 echo -e "\n[Bootc / Ostree Status]" >> "$LOG_FILE"
@@ -33,21 +30,22 @@ echo -e "\n[Kernel Cmdline]" >> "$LOG_FILE"
 cat /proc/cmdline >> "$LOG_FILE" 2>&1
 echo -e "\n[Secure Boot & MOK]" >> "$LOG_FILE"
 mokutil --sb-state >> "$LOG_FILE" 2>&1
+echo -e "\n[SELinux Status (sestatus)]" >> "$LOG_FILE"
+sestatus >> "$LOG_FILE" 2>&1 || echo "SELinux non disponibile" >> "$LOG_FILE"
 echo -e "\n[GPG Trust Anchors & Local Repositories]" >> "$LOG_FILE"
 ls -la /etc/yum.repos.d/ /etc/pki/rpm-gpg/ >> "$LOG_FILE" 2>&1
 
-# --- 2. PACKAGES, KERNEL, DKMS & INITRAMFS ---
+# --- 2. PACKAGES, KERNEL & INITRAMFS ---
 echo -e "\n\n========================================\n2. PACKAGES, KERNEL & DKMS\n========================================" >> "$LOG_FILE"
-echo -e "\n[Installed Kernel, NVIDIA & DKMS packages]" >> "$LOG_FILE"
-rpm -qa | grep -iE 'kernel-cachy|nvidia|dkms|niri|wayland|polkit|greetd|systemd' | sort >> "$LOG_FILE" 2>&1
+echo -e "\n[Installed Packages (Core Stack)]" >> "$LOG_FILE"
+rpm -qa | grep -iE 'kernel-cachy|nvidia|dkms|niri|wayland|polkit|greetd|systemd|mesa|vulkan|egl' | sort >> "$LOG_FILE" 2>&1
 echo -e "\n[DKMS Status]" >> "$LOG_FILE"
 dkms status >> "$LOG_FILE" 2>&1
 echo -e "\n[Initramfs / Dracut (NVIDIA & SYSUSERS)]" >> "$LOG_FILE"
 lsinitrd | grep -iE 'nvidia|nouveau|group|passwd|sysusers|systemd-udev' >> "$LOG_FILE" 2>&1
 
-# --- 3. HARDWARE, GPU, DRM & UDEV ---
-echo -e "\n\n========================================\n3. HARDWARE, GPU, DRM & UDEV\n========================================" >> "$LOG_FILE"
-lspci -nnk | grep -iA 3 vga >> "$LOG_FILE" 2>&1
+# --- 3. HARDWARE, GPU, DRM, EGL & VULKAN (LASTRA X-RAY) ---
+echo -e "\n\n========================================\n3. HARDWARE, GPU, DRM, EGL & VULKAN\n========================================" >> "$LOG_FILE"
 echo -e "\n[Loaded Modules]" >> "$LOG_FILE"
 lsmod | grep -iE 'nvidia|nouveau|video' >> "$LOG_FILE" 2>&1
 echo -e "\n[NVIDIA SMI]" >> "$LOG_FILE"
@@ -60,14 +58,21 @@ echo -e "\n[Udevadm Info per card0 e renderD128]" >> "$LOG_FILE"
 udevadm info -q all -n /dev/dri/card0 2>/dev/null >> "$LOG_FILE" 2>&1
 udevadm info -q all -n /dev/dri/renderD128 2>/dev/null >> "$LOG_FILE" 2>&1
 
+echo -e "\n[Vulkan ICD & EGL Hardware Acceleration]" >> "$LOG_FILE"
+ls -la /usr/share/vulkan/icd.d/ /usr/share/glvnd/egl_vendor.d/ >> "$LOG_FILE" 2>&1
+sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID vulkaninfo --summary >> "$LOG_FILE" 2>&1 || echo "Vulkaninfo fallito o pacchetto vulkan-tools mancante" >> "$LOG_FILE"
+
+echo -e "\n[Sensors & Throttling]" >> "$LOG_FILE"
+sensors >> "$LOG_FILE" 2>&1 || echo "lm_sensors non disponibile" >> "$LOG_FILE"
+
 # --- 4. IDENTITIES, GROUPS & IDEMPOTENCE ---
 echo -e "\n\n========================================\n4. IDENTITIES & GROUPS\n========================================" >> "$LOG_FILE"
 echo -e "\n[Contenuto /etc/group (Gruppi Vitali)]" >> "$LOG_FILE"
 grep -iE 'video|render|input|tty|audio|disk|kvm|greetd' /etc/group >> "$LOG_FILE" 2>&1
-echo -e "\n[Systemd Sysusers (Log Boot)]" >> "$LOG_FILE"
-journalctl -b -t systemd-sysusers --no-pager >> "$LOG_FILE" 2>&1
 echo -e "\n[Skel UNIX Permissions (Idempotenza & Privacy)]" >> "$LOG_FILE"
 ls -la /etc/skel/ >> "$LOG_FILE" 2>&1
+echo -e "\n[User Limits (ulimit -a)]" >> "$LOG_FILE"
+sudo -u $USER_NAME bash -c "ulimit -a" >> "$LOG_FILE" 2>&1
 
 # --- 5. SYSTEMD SERVICES & PAM ---
 echo -e "\n\n========================================\n5. SYSTEMD SERVICES & PAM\n========================================" >> "$LOG_FILE"
@@ -78,11 +83,9 @@ authselect current >> "$LOG_FILE" 2>&1
 authselect check >> "$LOG_FILE" 2>&1
 echo -e "\n[Display Manager Status]" >> "$LOG_FILE"
 systemctl status greetd sddm gdm display-manager --no-pager >> "$LOG_FILE" 2>&1
-echo -e "\n[NVIDIA Powerd / Persistenced]" >> "$LOG_FILE"
-systemctl status nvidia-powerd nvidia-persistenced --no-pager >> "$LOG_FILE" 2>&1
 
-# --- 6. LOGINCTL, USER & POLKIT ---
-echo -e "\n\n========================================\n6. LOGINCTL, USER & POLKIT\n========================================" >> "$LOG_FILE"
+# --- 6. LOGINCTL, POLKIT & DBUS ---
+echo -e "\n\n========================================\n6. LOGINCTL, POLKIT & DBUS\n========================================" >> "$LOG_FILE"
 loginctl list-sessions >> "$LOG_FILE" 2>&1
 for session in $(loginctl list-sessions --no-legend | awk '{print $1}'); do
     echo "Session $session:" >> "$LOG_FILE"
@@ -90,14 +93,13 @@ for session in $(loginctl list-sessions --no-legend | awk '{print $1}'); do
 done
 echo -e "\n[Polkit Active Agents]" >> "$LOG_FILE"
 ps aux | grep -iE 'polkit' >> "$LOG_FILE" 2>&1
+echo -e "\n[DBus User Bus Introspection (Active Connections)]" >> "$LOG_FILE"
+sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID busctl --user list --no-pager >> "$LOG_FILE" 2>&1 || echo "DBus non interrogabile" >> "$LOG_FILE"
 
 # --- 7. NIRI, WAYLAND & NETWORKING ---
 echo -e "\n\n========================================\n7. NIRI, ENV & NETWORKING\n========================================" >> "$LOG_FILE"
 echo -e "\n[Greetd & Session Wrappers]" >> "$LOG_FILE"
-echo "--- /etc/greetd/config.toml ---" >> "$LOG_FILE"
-cat /etc/greetd/config.toml >> "$LOG_FILE" 2>/dev/null || echo "File not found" >> "$LOG_FILE"
-echo "--- /usr/bin/niri-session ---" >> "$LOG_FILE"
-cat /usr/bin/niri-session >> "$LOG_FILE" 2>/dev/null || echo "File not found" >> "$LOG_FILE"
+cat /usr/bin/niri-session >> "$LOG_FILE" 2>/dev/null || echo "Wrapper non trovato" >> "$LOG_FILE"
 echo -e "\n[Active Wayland/X11 Sockets]" >> "$LOG_FILE"
 ls -la /run/user/*/wayland-* /tmp/.X11-unix/ >> "$LOG_FILE" 2>/dev/null || echo "No sockets found" >> "$LOG_FILE"
 echo -e "\n[Networking & Firewalld (Network Agnostico)]" >> "$LOG_FILE"
@@ -114,8 +116,9 @@ sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID systemctl --user --failed 
 echo -e "\n[Pipewire & Audio Status (wpctl)]" >> "$LOG_FILE"
 sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID wpctl status >> "$LOG_FILE" 2>&1 || echo "Pipewire wpctl non disponibile" >> "$LOG_FILE"
 
-echo -e "\n[Flatpak Apps & Runtimes]" >> "$LOG_FILE"
+echo -e "\n[Flatpak Configs & Overrides]" >> "$LOG_FILE"
 flatpak list >> "$LOG_FILE" 2>&1 || echo "Nessun pacchetto Flatpak trovato" >> "$LOG_FILE"
+cat /var/lib/flatpak/overrides/global >> "$LOG_FILE" 2>/dev/null || echo "Nessun global override" >> "$LOG_FILE"
 
 echo -e "\n[GSettings / GTK Theming (Lato Utente)]" >> "$LOG_FILE"
 sudo -u $USER_NAME dbus-launch gsettings get org.gnome.desktop.interface color-scheme >> "$LOG_FILE" 2>&1
@@ -134,7 +137,7 @@ echo -e "\n[SELinux AVC Denials]" >> "$LOG_FILE"
 ausearch -m AVC,USER_AVC,SELINUX_ERR,MAC_POLICY_LOAD -ts boot >> "$LOG_FILE" 2>&1 || echo "Nessun AVC Denial trovato o ausearch non installato" >> "$LOG_FILE"
 
 echo -e "\n[DMESG - Graphic/Boot Errors]" >> "$LOG_FILE"
-dmesg | grep -iE 'nvidia|nouveau|secure boot|lockdown|error|fail|drm|wayland|niri|udev' >> "$LOG_FILE" 2>&1
+dmesg | grep -iE 'nvidia|nouveau|secure boot|lockdown|error|fail|drm|wayland|niri|udev|segfault' >> "$LOG_FILE" 2>&1
 
 echo -e "\n[JOURNALCTL - All Wayland/Niri/Portals/DBUS/Greetd Traces]" >> "$LOG_FILE"
 journalctl -b | grep -iE 'niri|wayland|wlroots|pipewire|wireplumber|dbus|polkit|xdg-desktop-portal|greetd|login|ironbar|swaybg' | tail -n 1000 >> "$LOG_FILE" 2>&1
@@ -149,25 +152,17 @@ echo -e "\n========================================" >> "$LOG_FILE"
 echo " OMNI-DIAGNOSTIC COMPLETE" >> "$LOG_FILE"
 echo "========================================" >> "$LOG_FILE"
 
-echo "Raccolta dati completata! Il log ora abbraccia anche l'Esperienza Utente a 360 gradi."
+echo "Scansione X-RAY completata. Log inviato."
 echo "------------------------------------------------------"
 
-# Tentativo di esfiltrazione via rete (Pastebin sicuro)
 if ping -q -c 1 -W 1 8.8.8.8 >/dev/null 2>&1; then
-    echo "Rete rilevata. Sto caricando questo colosso in modo sicuro..."
     UPLOAD_URL=$(curl -s --data-binary @"$LOG_FILE" https://paste.rs/)
-    
     if [[ $UPLOAD_URL == http* ]]; then
         echo -e "\n✅ SUCCESSO ASSOLUTO! Il super-log è online."
-        echo "==========================================================="
         echo "🔗 COPIA E INVIA QUESTO URL AL BOT: $UPLOAD_URL"
-        echo "==========================================================="
     else
-        echo "❌ Upload fallito (forse log troppo grande per paste.rs). Usa pendrive USB."
+        echo "❌ Upload fallito (forse log troppo grande per paste.rs)."
     fi
 else
-    echo "Nessuna connessione di rete rilevata."
-    echo "Per condividere il log, copia il file su una USB:"
-    echo "  mkdir -p /mnt/usb && mount /dev/sdX1 /mnt/usb"
-    echo "  cp $LOG_FILE /mnt/usb/"
+    echo "Nessuna connessione di rete. Copia $LOG_FILE manualmente."
 fi
