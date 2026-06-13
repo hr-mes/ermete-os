@@ -122,6 +122,8 @@ hotkey-overlay {
     // skip-at-startup
 }
 
+spawn-at-startup "sh" "-c" "if [ ! -f /var/lib/ermete-firstboot-done ]; then notify-send 'Ermete OS' 'Download app essenziali in background...' -t 15000; fi"
+spawn-at-startup "sh" "-c" "if [ ! -f /var/lib/ermete-firstboot-done ]; then while [ ! -f /var/lib/ermete-firstboot-done ]; do sleep 3; done; notify-send 'Ermete OS' 'Installazione Flatpak completata!' -u normal; fi"
 spawn-at-startup "flatpak" "run" "--command=easyeffects" "com.github.wwmm.easyeffects" "--gapplication-service"
 spawn-at-startup "gnome-keyring-daemon" "--start" "--components=secrets"
 spawn-at-startup "dbus-update-activation-environment" "--systemd" "WAYLAND_DISPLAY" "XDG_CURRENT_DESKTOP=niri"
@@ -161,7 +163,7 @@ window-rule {
 binds {
     Mod+Shift+Slash { show-hotkey-overlay; }
 
-    Mod+T hotkey-overlay-title="Open a Terminal: alacritty" { spawn "flatpak" "run" "org.alacritty.Alacritty"; }
+    Mod+T hotkey-overlay-title="Open a Terminal: alacritty" { spawn "alacritty"; }
     Mod+D hotkey-overlay-title="Open Launcher: anyrun" { spawn "anyrun"; }
     Super+Alt+L hotkey-overlay-title="Lock the Screen: swaylock" { spawn "swaylock" "-f" "-c" "000000"; }
 
@@ -314,5 +316,5 @@ binds {
     Mod+MouseMiddle { close-window; }
 
     Mod+E { spawn "flatpak" "run" "org.gnome.Nautilus"; }
-    Mod+Return { spawn "flatpak" "run" "org.alacritty.Alacritty"; }
+    Mod+Return { spawn "alacritty"; }
 }

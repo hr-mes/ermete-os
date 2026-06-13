@@ -25,16 +25,15 @@ mkdir -p /usr/lib/systemd/user-preset/
 # Set Greetd, Podman, and OOMD come default attivi (livello System)
 echo "enable greetd.service" > /usr/lib/systemd/system-preset/99-Ermete.preset
 echo "enable podman.socket" >> /usr/lib/systemd/system-preset/99-Ermete.preset
-echo "enable nix-daemon.socket" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 
-# Provisioning Dinamico per Nix
-# Il pacchetto Nix è stato spacchettato in /usr/share/nix-base durante la build per aggirare
-# il limite del rootfs immutabile. Systemd-tmpfiles copierà i file in /var/nix (se vuoto) al boot.
-mkdir -p /usr/lib/tmpfiles.d/
-cat > /usr/lib/tmpfiles.d/nix-provisioning.conf << 'EOF'
-d /var/nix 0755 root root - -
-C /var/nix - - - - /usr/share/nix-base
+# Script helper per l'installazione di Nix a runtime (Zero-Trust su OSTree)
+cat > /usr/bin/install-nix << 'EOF'
+#!/bin/bash
+echo "--- Installazione di Nix Package Manager (Determinate Systems) ---"
+echo "Questo script installerà Nix in modo compatibile e sicuro con il file system immutabile."
+curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
 EOF
+chmod +x /usr/bin/install-nix
 echo "enable systemd-oomd.service" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 echo "enable bootc-fetch-apply.timer" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 echo "disable NetworkManager-wait-online.service" >> /usr/lib/systemd/system-preset/99-Ermete.preset
@@ -74,7 +73,6 @@ wifi.scan-rand-mac-address=yes
 
 [connection]
 wifi.cloned-mac-address=stable
-ethernet.cloned-mac-address=stable
 EOF
 
 # DNS-over-TLS (DoT) Opportunistico (Anti-Tracciamento agnostico)
@@ -88,6 +86,9 @@ EOF
 # Copy all dotfiles to skel
 mkdir -p /etc/skel/.config/
 cp -rf /ctx/dot_config/* /etc/skel/.config/
+
+# Crea la directory degli screenshot per i nuovi utenti
+mkdir -p /etc/skel/Pictures/Screenshots
 
 # Abilita Starship (Prompt in Rust) globalmente per le shell compatibili
 echo 'eval "$(starship init bash)"' > /etc/profile.d/starship.sh
