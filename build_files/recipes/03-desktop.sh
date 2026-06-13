@@ -27,7 +27,7 @@ export XDG_SESSION_DESKTOP=niri
 
 # Importa le variabili nel manager systemd --user e nell'ambiente DBus
 systemctl --user import-environment XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
-dbus-update-activation-environment --systemd XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP WAYLAND_DISPLAY
+dbus-update-activation-environment --systemd XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
 
 exec niri
 EOF
