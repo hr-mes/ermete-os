@@ -33,6 +33,8 @@ mkdir -p /usr/lib/systemd/user-preset/
 echo "enable greetd.service" > /usr/lib/systemd/system-preset/99-Ermete.preset
 echo "enable podman.socket" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 
+systemctl set-default graphical.target
+
 # Script helper per l'installazione di Nix a runtime (Zero-Trust su OSTree)
 cat > /usr/bin/install-nix << 'EOF'
 #!/bin/bash

@@ -53,6 +53,8 @@ echo "nvidia_drm fbdev: $(cat /sys/module/nvidia_drm/parameters/fbdev 2>/dev/nul
 
 # --- 4. SYSTEMD SERVICES ---
 echo -e "\n\n========================================\n4. SYSTEMD SERVICES\n========================================" >> "$LOG_FILE"
+echo -e "\n[System Default Target]" >> "$LOG_FILE"
+systemctl get-default >> "$LOG_FILE" 2>&1
 echo -e "\n[FAILED SERVICES (System)]" >> "$LOG_FILE"
 systemctl --failed >> "$LOG_FILE" 2>&1
 echo -e "\n[Display Manager Status]" >> "$LOG_FILE"
@@ -70,6 +72,13 @@ done
 
 # --- 6. NIRI & ENVIRONMENT CONFIGURATION ---
 echo -e "\n\n========================================\n6. NIRI & ENV CONFIG\n========================================" >> "$LOG_FILE"
+echo -e "\n[Greetd & Session Wrappers]" >> "$LOG_FILE"
+echo "--- /etc/greetd/config.toml ---" >> "$LOG_FILE"
+cat /etc/greetd/config.toml >> "$LOG_FILE" 2>/dev/null || echo "File not found" >> "$LOG_FILE"
+echo "--- /usr/bin/niri-session ---" >> "$LOG_FILE"
+cat /usr/bin/niri-session >> "$LOG_FILE" 2>/dev/null || echo "File not found" >> "$LOG_FILE"
+echo -e "\n[Active Wayland/X11 Sockets]" >> "$LOG_FILE"
+ls -la /run/user/*/wayland-* /tmp/.X11-unix/ >> "$LOG_FILE" 2>/dev/null || echo "No sockets found" >> "$LOG_FILE"
 echo -e "\n[Environment Variables in /etc/profile.d/]" >> "$LOG_FILE"
 grep -r -iE 'wayland|nvidia|gbm|wlr' /etc/profile.d/ /etc/environment >> "$LOG_FILE" 2>&1
 echo -e "\n[Niri Config Dump (Skel / Users)]" >> "$LOG_FILE"
