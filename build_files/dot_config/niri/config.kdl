@@ -146,7 +146,7 @@ window-rule {
 }
 
 window-rule {
-    match app-id=r#"^lxqt-policykit-agent$"#
+    match app-id=r#"(?i)polkit"#
     open-floating true
 }
 

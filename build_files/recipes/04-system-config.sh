@@ -41,7 +41,7 @@ echo "Questo script installerà Nix in modo compatibile e sicuro con il file sys
 curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
 EOF
 chmod +x /usr/bin/install-nix
-echo "enable systemd-oomd.service" >> /usr/lib/systemd/system-preset/99-Ermete.preset
+echo "disable systemd-oomd.service" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 echo "enable bootc-fetch-apply.timer" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 echo "disable NetworkManager-wait-online.service" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 echo "enable firewalld.service" >> /usr/lib/systemd/system-preset/99-Ermete.preset
@@ -130,6 +130,20 @@ Persistent=true
 WantedBy=timers.target
 EOF
 echo "enable btrfs-maintenance.timer" >> /usr/lib/systemd/system-preset/99-Ermete.preset
+
+# Aumenta i limiti di File Descriptor per supportare carichi heavy (Gaming, Wine, Proton, Database)
+mkdir -p /etc/systemd/system.conf.d/ /etc/systemd/user.conf.d/
+cat > /etc/systemd/system.conf.d/99-file-limits.conf << 'EOF'
+[Manager]
+DefaultLimitNOFILE=524288:524288
+EOF
+cat > /etc/systemd/user.conf.d/99-file-limits.conf << 'EOF'
+[Manager]
+DefaultLimitNOFILE=524288:524288
+EOF
+
+# SSD Trim per mantenere le performance NVMe nel lungo periodo
+echo "enable fstrim.timer" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 
 echo "--- System Configuration Applied ---"
 
