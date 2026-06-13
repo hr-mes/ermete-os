@@ -71,12 +71,15 @@ ls -la /usr/share/vulkan/icd.d/ /usr/share/glvnd/egl_vendor.d/ >> "$LOG_FILE" 2>
 sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID vulkaninfo --summary >> "$LOG_FILE" 2>&1 || echo "vulkaninfo fallito" >> "$LOG_FILE"
 sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID eglinfo >> "$LOG_FILE" 2>&1 || echo "eglinfo non installato" >> "$LOG_FILE"
 
-# --- 4. VISIONE ORIZZONTALE: CGROUPS, PROCESSI & RETE ---
+# --- 4. VISIONE ORIZZONTALE: CGROUPS, LIMITS & NETWORKING ---
 echo -e "\n\n========================================\n4. HORIZONTAL: CGROUPS, LIMITS & NETWORKING\n========================================" >> "$LOG_FILE"
 echo -e "\n[Systemd Cgroups (Top Resource Allocations)]" >> "$LOG_FILE"
 systemd-cgtop -n 1 -b >> "$LOG_FILE" 2>&1
 echo -e "\n[Active Network Sockets (ss -tulpn)]" >> "$LOG_FILE"
 ss -tulpn >> "$LOG_FILE" 2>&1
+echo -e "\n[Networking Routing & DNS Status]" >> "$LOG_FILE"
+ip route >> "$LOG_FILE" 2>&1
+resolvectl status >> "$LOG_FILE" 2>&1 || cat /etc/resolv.conf >> "$LOG_FILE" 2>&1
 echo -e "\n[Networking & Firewalld (Network Agnostico)]" >> "$LOG_FILE"
 echo "Firewalld State: $(firewall-cmd --state 2>/dev/null || echo 'Not running')" >> "$LOG_FILE"
 echo "NM-wait-online: $(systemctl is-enabled NetworkManager-wait-online.service 2>/dev/null || echo 'Unknown')" >> "$LOG_FILE"
@@ -112,6 +115,8 @@ echo -e "\n[Display Manager Status]" >> "$LOG_FILE"
 systemctl status greetd sddm gdm display-manager --no-pager >> "$LOG_FILE" 2>&1
 echo -e "\n[NVIDIA Powerd / Persistenced]" >> "$LOG_FILE"
 systemctl status nvidia-powerd nvidia-persistenced --no-pager >> "$LOG_FILE" 2>&1
+echo -e "\n[User Systemd Variables (Environment)]" >> "$LOG_FILE"
+sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID systemctl --user show-environment >> "$LOG_FILE" 2>&1
 echo -e "\n[User Systemd Services (Full Tree)]" >> "$LOG_FILE"
 sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID systemctl --user list-dependencies default.target >> "$LOG_FILE" 2>&1
 sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID systemctl --user status niri-session.target ironbar.service swaybg.service pipewire.service wireplumber.service xdg-desktop-portal.service xdg-desktop-portal-gnome.service xdg-desktop-portal-gtk.service xdg-desktop-portal-wlr.service --no-pager >> "$LOG_FILE" 2>&1 || echo "Could not query specific user systemd services" >> "$LOG_FILE"
@@ -128,22 +133,31 @@ echo -e "\n[Niri Geometria Monitor, Finestre e Workspaces]" >> "$LOG_FILE"
 sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID niri msg outputs >> "$LOG_FILE" 2>&1 || echo "niri msg outputs fallito" >> "$LOG_FILE"
 sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID niri msg windows >> "$LOG_FILE" 2>&1 || echo "niri msg windows fallito" >> "$LOG_FILE"
 sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID niri msg workspaces >> "$LOG_FILE" 2>&1 || echo "niri msg workspaces fallito" >> "$LOG_FILE"
+
+echo -e "\n[Validazione Sintattica Configurazioni Utente (Niri & Wayland Bars)]" >> "$LOG_FILE"
+sudo -u $USER_NAME bash -c 'niri validate -c ~/.config/niri/config.kdl' >> "$LOG_FILE" 2>&1 || echo "Niri config validation failed/missing" >> "$LOG_FILE"
+sudo -u $USER_NAME bash -c 'cat ~/.config/ironbar/config.json | jq empty 2>&1 || echo "Ironbar JSON is invalid"' >> "$LOG_FILE" 2>&1 || echo "Ironbar config non testabile" >> "$LOG_FILE"
+
 echo -e "\n[Pipewire & Audio Status (wpctl)]" >> "$LOG_FILE"
 sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID wpctl status >> "$LOG_FILE" 2>&1 || echo "Pipewire wpctl non disponibile" >> "$LOG_FILE"
 echo -e "\n[Flatpak Configs, Portals & Overrides]" >> "$LOG_FILE"
 flatpak list >> "$LOG_FILE" 2>&1 || echo "Nessun pacchetto Flatpak trovato" >> "$LOG_FILE"
 cat /var/lib/flatpak/overrides/global >> "$LOG_FILE" 2>/dev/null || echo "Nessun global override" >> "$LOG_FILE"
 echo -e "\n[GSettings / GTK Theming (Lato Utente)]" >> "$LOG_FILE"
-sudo -u $USER_NAME dbus-launch gsettings get org.gnome.desktop.interface color-scheme >> "$LOG_FILE" 2>&1
-sudo -u $USER_NAME dbus-launch gsettings get org.gnome.desktop.interface gtk-theme >> "$LOG_FILE" 2>&1
+sudo -u $USER_NAME DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$USER_ID/bus" gsettings get org.gnome.desktop.interface color-scheme >> "$LOG_FILE" 2>&1 || echo "GSettings Color Scheme Fallito" >> "$LOG_FILE"
+sudo -u $USER_NAME DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$USER_ID/bus" gsettings get org.gnome.desktop.interface gtk-theme >> "$LOG_FILE" 2>&1 || echo "GSettings GTK Theme Fallito" >> "$LOG_FILE"
 
 # --- 8. SICUREZZA, LOGS & COREDUMPS (SELINUX INCLUDED) ---
 echo -e "\n\n========================================\n8. SECURITY LOGS, SELINUX & COREDUMPS\n========================================" >> "$LOG_FILE"
 echo -e "\n[SELinux Status & AVC Denials]" >> "$LOG_FILE"
 sestatus >> "$LOG_FILE" 2>&1 || echo "SELinux non disponibile" >> "$LOG_FILE"
 ausearch -m AVC,USER_AVC,SELINUX_ERR,MAC_POLICY_LOAD -ts boot >> "$LOG_FILE" 2>&1 || echo "Nessun AVC Denial trovato" >> "$LOG_FILE"
+echo -e "\n[Security Kernel Parameters (sysctl)]" >> "$LOG_FILE"
+sysctl -a 2>/dev/null | grep -iE 'kernel.yama|rp_filter|dmesg_restrict|bpf_jit_enable|kptr_restrict' >> "$LOG_FILE" 2>&1
 echo -e "\n[DMESG - Graphic/Boot/ACPI/NVRM Errors]" >> "$LOG_FILE"
 dmesg | grep -iE 'nvidia|nouveau|secure boot|lockdown|error|fail|drm|wayland|niri|udev|segfault|acpi|efi|nvrm' >> "$LOG_FILE" 2>&1
+echo -e "\n[JOURNALCTL - System Errors (Priority 3)]" >> "$LOG_FILE"
+journalctl -b -p 3 --no-pager >> "$LOG_FILE" 2>&1 || echo "Nessun System Error." >> "$LOG_FILE"
 echo -e "\n[JOURNALCTL - All Wayland/Niri/Portals/DBUS/Greetd Traces]" >> "$LOG_FILE"
 journalctl -b | grep -iE 'niri|wayland|wlroots|pipewire|wireplumber|dbus|polkit|xdg-desktop-portal|greetd|login|ironbar|swaybg' | tail -n 1000 >> "$LOG_FILE" 2>&1
 echo -e "\n[JOURNALCTL - User Errors (Priority 3)]" >> "$LOG_FILE"

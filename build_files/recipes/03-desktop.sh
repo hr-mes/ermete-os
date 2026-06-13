@@ -68,8 +68,11 @@ rm -f Bibata-Modern-Classic.tar.xz
 cd /
 
 # Install Greetd e Tuigreet (Greeter da terminale in Rust)
-dnf -y install --setopt=install_weak_deps=False greetd tuigreet
+dnf -y install --setopt=install_weak_deps=False greetd tuigreet fprintd-pam
 systemctl enable greetd.service
+
+# Abilitazione Globale Audio Pipewire per la sessione utente (Fondamentale per Wayland/Portals)
+systemctl --global enable pipewire.socket pipewire.service wireplumber.service
 
 # 100% Verified Supply Chain per lo Stack Rust (Zero-Trust)
 # Sostituiamo il fetch dinamico da crates.io con release pre-compilate validate

@@ -68,6 +68,14 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
     bash /ctx/recipes/05-cleanup.sh
 
+### ASSETS SICURI E PREPARAZIONE
+# Creazione sicura della directory assets/sfondi per evitare LPE
+RUN mkdir -p /usr/share/backgrounds/ermete \
+    && chown -R 0:0 /usr/share/backgrounds/ermete \
+    && chmod 755 /usr/share/backgrounds/ermete
+# NOTA: Per scompattare eventuali archivi futuri, usare SEMPRE:
+# RUN tar -xzf /path/to/assets.tar.gz -C /usr/share/backgrounds/ermete --no-same-owner
+
 ### LINTING
 ## Sterilizzazione Permessi Configurazione (Policy UNIX)
 RUN chmod 700 /etc/skel \

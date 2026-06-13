@@ -1,0 +1,13 @@
+[Unit]
+Description=Ironbar (Wayland Bar)
+PartOf=niri-session.target
+After=niri-session.target
+
+[Service]
+ExecStart=/usr/bin/ironbar
+Restart=on-failure
+RestartSec=2
+Slice=app-graphical.slice
+
+[Install]
+WantedBy=niri-session.target

@@ -1,0 +1,13 @@
+[Unit]
+Description=Swaybg (Wallpaper)
+PartOf=niri-session.target
+After=niri-session.target
+
+[Service]
+ExecStart=/bin/sh -c 'if [ -f /usr/share/backgrounds/ermete/default.jpg ]; then exec /usr/bin/swaybg -i /usr/share/backgrounds/ermete/default.jpg -m fill; else exec /usr/bin/swaybg -c "#1e1e2e"; fi'
+Restart=on-failure
+RestartSec=2
+Slice=app-graphical.slice
+
+[Install]
+WantedBy=niri-session.target
