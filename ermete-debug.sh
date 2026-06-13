@@ -38,6 +38,8 @@ echo -e "\n[DKMS Status]" >> "$LOG_FILE"
 dkms status >> "$LOG_FILE" 2>&1
 echo -e "\n[Initramfs / Dracut (NVIDIA & SYSUSERS)]" >> "$LOG_FILE"
 lsinitrd | grep -iE 'nvidia|nouveau|group|passwd|sysusers|systemd-udev' >> "$LOG_FILE" 2>&1
+echo -e "\n[Initramfs /etc/group Raw Dump]" >> "$LOG_FILE"
+lsinitrd -f etc/group >> "$LOG_FILE" 2>&1
 
 # --- 3. HARDWARE, GPU, DRM & UDEV ---
 echo -e "\n\n========================================\n3. HARDWARE, GPU, DRM & UDEV\n========================================" >> "$LOG_FILE"
@@ -62,11 +64,19 @@ echo -e "\n[Systemd Sysusers (Log Boot)]" >> "$LOG_FILE"
 journalctl -b -t systemd-sysusers --no-pager >> "$LOG_FILE" 2>&1
 
 # --- 5. SYSTEMD SERVICES ---
-echo -e "\n\n========================================\n5. SYSTEMD SERVICES\n========================================" >> "$LOG_FILE"
+echo -e "\n\n========================================\n5. SYSTEMD SERVICES & PAM\n========================================" >> "$LOG_FILE"
 echo -e "\n[System Default Target]" >> "$LOG_FILE"
 systemctl get-default >> "$LOG_FILE" 2>&1
 echo -e "\n[FAILED SERVICES (System)]" >> "$LOG_FILE"
 systemctl --failed >> "$LOG_FILE" 2>&1
+
+echo -e "\n[FAILED SERVICES (User 1000)]" >> "$LOG_FILE"
+sudo -u ermete XDG_RUNTIME_DIR=/run/user/1000 systemctl --user --failed >> "$LOG_FILE" 2>&1 || echo "Could non query user 1000 services" >> "$LOG_FILE"
+
+echo -e "\n[Authselect / PAM Status]" >> "$LOG_FILE"
+authselect current >> "$LOG_FILE" 2>&1
+authselect check >> "$LOG_FILE" 2>&1
+
 echo -e "\n[Display Manager Status]" >> "$LOG_FILE"
 systemctl status greetd sddm gdm display-manager --no-pager >> "$LOG_FILE" 2>&1
 echo -e "\n[NVIDIA Powerd / Persistenced]" >> "$LOG_FILE"
