@@ -78,10 +78,8 @@ RUN mkdir -p /usr/share/backgrounds/ermete \
 
 ### LINTING
 ## Sterilizzazione Permessi Configurazione (Policy UNIX)
-RUN chmod 700 /etc/skel \
- && chmod 700 /etc/skel/.config \
- && find /etc/skel/.config -type f -exec chmod 600 {} + \
- && find /etc/skel/.config -type d -exec chmod 700 {} +
+RUN find /etc/skel -type d -exec chmod 700 {} + && \
+    find /etc/skel -type f -exec chmod 600 {} +
 
 ## Verify final image and contents are correct.
 # Questo step convaliderà ora correttamente l'assenza di violazioni tmpfiles.d

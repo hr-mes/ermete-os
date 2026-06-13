@@ -44,16 +44,8 @@ dbus-update-activation-environment --systemd XDG_SESSION_TYPE XDG_CURRENT_DESKTO
 # Attesa asincrona per i nodi DRM NVIDIA (tolleranza logind/udev)
 while [ ! -e /dev/dri/renderD128 ]; do sleep 0.5; done
 
-# Mantra Infrangibile: Tolleranza d'errore asincrona (Restart Loop Paranoico)
-while true; do
-  niri
-  EXIT_CODE=$?
-  if [ $EXIT_CODE -eq 0 ]; then
-    break # Uscita pulita, l'utente ha terminato la sessione
-  fi
-  echo "Niri crasciato con codice $EXIT_CODE, riavvio in 2s..."
-  sleep 2
-done
+# Mantra Infrangibile: Avvio supervisionato via systemd-cat e dbus user session
+exec systemd-cat -t niri niri --session
 EOF
 chmod +x /usr/bin/niri-session
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# Ermete OS - Diagnostica Assoluta e Omnicomprensiva (v7.0 - OMNI-VISION MAX)
+# Ermete OS - Diagnostica Assoluta e Omnicomprensiva (v8.0 - OMNI-VISION SUPREME)
 # Visione Completa Verticale (Hardware -> App) e Orizzontale (IPC, Cgroups, Rete).
 # ==============================================================================
 
@@ -14,10 +14,10 @@ USER_ID=1000
 USER_NAME="ermete"
 SESSION_ID=$(loginctl list-sessions | grep $USER_NAME | awk '{print $1}' | head -n 1)
 
-echo "Avvio della diagnostica ESTREMA per Ermete OS (v7.0 OMNI-VISION MAX)..."
-echo "Acquisizione dello Spettro Orizzontale e Verticale del Sistema..."
+echo "Avvio della diagnostica SUPREMA per Ermete OS (v8.0 OMNI-VISION SUPREME)..."
+echo "Acquisizione dello Spettro Orizzontale, Verticale e Strutturale..."
 echo "========================================" > "$LOG_FILE"
-echo " ERMETE OS - OMNI-DIAGNOSTIC LOG v7.0 (OMNI-VISION MAX) " >> "$LOG_FILE"
+echo " ERMETE OS - OMNI-DIAGNOSTIC LOG v8.0 (OMNI-VISION SUPREME) " >> "$LOG_FILE"
 echo " Timestamp: $(date)" >> "$LOG_FILE"
 echo "========================================" >> "$LOG_FILE"
 
@@ -28,10 +28,17 @@ echo -e "\n[CPU, Microcode & Topology]" >> "$LOG_FILE"
 lscpu | grep -iE 'Model name|Architecture|Vulnerability|Microcode|Thread' >> "$LOG_FILE" 2>&1
 echo -e "\n[Firmware Updates (fwupd)]" >> "$LOG_FILE"
 fwupdmgr get-devices --show-all-devices >> "$LOG_FILE" 2>&1 || echo "fwupdmgr non disponibile" >> "$LOG_FILE"
+echo -e "\n[PCI Devices & Kernel Drivers (lspci -nnk)]" >> "$LOG_FILE"
+lspci -nnk >> "$LOG_FILE" 2>&1
+echo -e "\n[USB Topology (lsusb -t)]" >> "$LOG_FILE"
+lsusb -t >> "$LOG_FILE" 2>&1
 echo -e "\n[EFI Boot Manager & Variables]" >> "$LOG_FILE"
 efibootmgr -v >> "$LOG_FILE" 2>&1 || echo "efibootmgr non disponibile" >> "$LOG_FILE"
 echo -e "\n[Block Devices & Filesystems]" >> "$LOG_FILE"
 lsblk -o NAME,FSTYPE,FSVER,LABEL,MOUNTPOINT,SIZE,RO,TYPE,UUID >> "$LOG_FILE" 2>&1
+echo -e "\n[BTRFS Diagnostics & Subvolumes]" >> "$LOG_FILE"
+btrfs filesystem show / >> "$LOG_FILE" 2>&1 || echo "Not BTRFS" >> "$LOG_FILE"
+btrfs subvolume list / >> "$LOG_FILE" 2>&1 || echo "Not BTRFS" >> "$LOG_FILE"
 
 # --- 2. VISIONE VERTICALE: OCI BOOTABLE, ZERO-TRUST & REPOSITORIES ---
 echo -e "\n\n========================================\n2. VERTICAL: OCI BOOTABLE & REPOSITORIES\n========================================" >> "$LOG_FILE"
@@ -70,6 +77,9 @@ echo -e "\n[Vulkan ICD & EGL Hardware Acceleration]" >> "$LOG_FILE"
 ls -la /usr/share/vulkan/icd.d/ /usr/share/glvnd/egl_vendor.d/ >> "$LOG_FILE" 2>&1
 sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID vulkaninfo --summary >> "$LOG_FILE" 2>&1 || echo "vulkaninfo fallito" >> "$LOG_FILE"
 sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID eglinfo >> "$LOG_FILE" 2>&1 || echo "eglinfo non installato" >> "$LOG_FILE"
+echo -e "\n[Video Acceleration API (VA-API / VDPAU)]" >> "$LOG_FILE"
+sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID vainfo >> "$LOG_FILE" 2>&1 || echo "vainfo non installato" >> "$LOG_FILE"
+sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID vdpauinfo >> "$LOG_FILE" 2>&1 || echo "vdpauinfo non installato" >> "$LOG_FILE"
 
 # --- 4. VISIONE ORIZZONTALE: CGROUPS, LIMITS & NETWORKING ---
 echo -e "\n\n========================================\n4. HORIZONTAL: CGROUPS, LIMITS & NETWORKING\n========================================" >> "$LOG_FILE"
@@ -80,6 +90,7 @@ ss -tulpn >> "$LOG_FILE" 2>&1
 echo -e "\n[Networking Routing & DNS Status]" >> "$LOG_FILE"
 ip route >> "$LOG_FILE" 2>&1
 resolvectl status >> "$LOG_FILE" 2>&1 || cat /etc/resolv.conf >> "$LOG_FILE" 2>&1
+nmcli device show >> "$LOG_FILE" 2>&1 || echo "nmcli non disponibile" >> "$LOG_FILE"
 echo -e "\n[Networking & Firewalld (Network Agnostico)]" >> "$LOG_FILE"
 echo "Firewalld State: $(firewall-cmd --state 2>/dev/null || echo 'Not running')" >> "$LOG_FILE"
 echo "NM-wait-online: $(systemctl is-enabled NetworkManager-wait-online.service 2>/dev/null || echo 'Unknown')" >> "$LOG_FILE"
@@ -88,9 +99,10 @@ sudo -u $USER_NAME bash -c "ulimit -a" >> "$LOG_FILE" 2>&1
 
 # --- 5. VISIONE ORIZZONTALE: IPC, DBUS, POLKIT & SEATS ---
 echo -e "\n\n========================================\n5. HORIZONTAL: IPC, DBUS, POLKIT & SEATS\n========================================" >> "$LOG_FILE"
-echo -e "\n[Loginctl Session & Seat Status]" >> "$LOG_FILE"
+echo -e "\n[Loginctl Session, User & Seat Status]" >> "$LOG_FILE"
 loginctl seat-status seat0 >> "$LOG_FILE" 2>&1
 loginctl show-session "$SESSION_ID" >> "$LOG_FILE" 2>&1
+loginctl show-user "$USER_NAME" >> "$LOG_FILE" 2>&1
 echo -e "\n[Input Devices (libinput)]" >> "$LOG_FILE"
 libinput list-devices >> "$LOG_FILE" 2>&1 || echo "libinput tool non installato" >> "$LOG_FILE"
 echo -e "\n[Contenuto /etc/group (Gruppi Vitali)]" >> "$LOG_FILE"
@@ -133,15 +145,25 @@ echo -e "\n[Niri Geometria Monitor, Finestre e Workspaces]" >> "$LOG_FILE"
 sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID niri msg outputs >> "$LOG_FILE" 2>&1 || echo "niri msg outputs fallito" >> "$LOG_FILE"
 sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID niri msg windows >> "$LOG_FILE" 2>&1 || echo "niri msg windows fallito" >> "$LOG_FILE"
 sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID niri msg workspaces >> "$LOG_FILE" 2>&1 || echo "niri msg workspaces fallito" >> "$LOG_FILE"
+echo -e "\n[Wayland Diagnostics (wayland-info & wlr-randr)]" >> "$LOG_FILE"
+sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID wayland-info >> "$LOG_FILE" 2>&1 || echo "wayland-info non installato" >> "$LOG_FILE"
+sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID wlr-randr >> "$LOG_FILE" 2>&1 || echo "wlr-randr non installato" >> "$LOG_FILE"
 
 echo -e "\n[Validazione Sintattica Configurazioni Utente (Niri & Wayland Bars)]" >> "$LOG_FILE"
 sudo -u $USER_NAME bash -c 'niri validate -c ~/.config/niri/config.kdl' >> "$LOG_FILE" 2>&1 || echo "Niri config validation failed/missing" >> "$LOG_FILE"
 sudo -u $USER_NAME bash -c 'cat ~/.config/ironbar/config.json | jq empty 2>&1 || echo "Ironbar JSON is invalid"' >> "$LOG_FILE" 2>&1 || echo "Ironbar config non testabile" >> "$LOG_FILE"
 
+echo -e "\n[Dump delle Configurazioni Critiche Utente]" >> "$LOG_FILE"
+echo "--- Niri Config Snippet ---" >> "$LOG_FILE"
+sudo -u $USER_NAME cat /home/$USER_NAME/.config/niri/config.kdl | head -n 100 >> "$LOG_FILE" 2>&1 || echo "Niri config non leggibile" >> "$LOG_FILE"
+echo "--- Ironbar Config Snippet ---" >> "$LOG_FILE"
+sudo -u $USER_NAME cat /home/$USER_NAME/.config/ironbar/config.json | head -n 100 >> "$LOG_FILE" 2>&1 || echo "Ironbar config non leggibile" >> "$LOG_FILE"
+
 echo -e "\n[Pipewire & Audio Status (wpctl)]" >> "$LOG_FILE"
 sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID wpctl status >> "$LOG_FILE" 2>&1 || echo "Pipewire wpctl non disponibile" >> "$LOG_FILE"
 echo -e "\n[Flatpak Configs, Portals & Overrides]" >> "$LOG_FILE"
 flatpak list >> "$LOG_FILE" 2>&1 || echo "Nessun pacchetto Flatpak trovato" >> "$LOG_FILE"
+sudo -u $USER_NAME flatpak info --show-permissions com.github.tchx84.Flatseal 2>/dev/null >> "$LOG_FILE" 2>&1 || echo "Permessi Flatpak non ispezionabili" >> "$LOG_FILE"
 cat /var/lib/flatpak/overrides/global >> "$LOG_FILE" 2>/dev/null || echo "Nessun global override" >> "$LOG_FILE"
 echo -e "\n[GSettings / GTK Theming (Lato Utente)]" >> "$LOG_FILE"
 sudo -u $USER_NAME DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$USER_ID/bus" gsettings get org.gnome.desktop.interface color-scheme >> "$LOG_FILE" 2>&1 || echo "GSettings Color Scheme Fallito" >> "$LOG_FILE"
@@ -168,10 +190,10 @@ echo -e "\n[BPF Loaded Programs (Zero-Trust Observability)]" >> "$LOG_FILE"
 bpftool prog show >> "$LOG_FILE" 2>&1 || echo "bpftool non installato o non supportato" >> "$LOG_FILE"
 
 echo -e "\n========================================" >> "$LOG_FILE"
-echo " OMNI-DIAGNOSTIC COMPLETE" >> "$LOG_FILE"
+echo " OMNI-DIAGNOSTIC SUPREME COMPLETE" >> "$LOG_FILE"
 echo "========================================" >> "$LOG_FILE"
 
-echo "Scansione OMNI-VISION MAX (Verticale/Orizzontale) completata. Log inviato."
+echo "Scansione OMNI-VISION SUPREME (Verticale/Orizzontale/User) completata. Log inviato."
 echo "------------------------------------------------------"
 
 if ping -q -c 1 -W 1 8.8.8.8 >/dev/null 2>&1; then
