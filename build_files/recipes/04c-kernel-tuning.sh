@@ -39,4 +39,12 @@ EOF
 
 
 
+# Limita la crescita esponenziale dei log di systemd nel lungo periodo (max 100MB)
+mkdir -p /etc/systemd/journald.conf.d/
+cat > /etc/systemd/journald.conf.d/00-journal-size.conf << 'EOF'
+[Journal]
+SystemMaxUse=100M
+SystemMaxFiles=5
+EOF
+
 echo "--- Kernel Optimizations Applied ---"

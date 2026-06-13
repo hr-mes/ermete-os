@@ -7,13 +7,20 @@ mkdir -p /etc/greetd/
 
 
 # Install greetd login manager vincolato alla configurazione restrittiva con tuigreet
-cat > /etc/greetd/config.toml << EOF
+mkdir -p /etc/greetd
+cat > /etc/greetd/config.toml << 'EOF'
 [terminal]
 vt = 1
+
 [default_session]
+command = "tuigreet --cmd /usr/bin/niri-session --asterisks --remember --remember-session --time --theme 'border=magenta;text=cyan;prompt=green;time=red;action=blue;button=yellow;container=black;input=white'"
 user = "greeter"
-command = "tuigreet --time --greeting 'Welcome to Ermete OS - Atomic Wayland' --asterisks --cmd /usr/bin/niri-session"
 EOF
+
+# Garantisce che tuigreet possa scrivere il cache per ricordare l'ultimo utente loggato
+mkdir -p /var/cache/tuigreet
+chown -R greeter:greeter /var/cache/tuigreet
+chmod 755 /var/cache/tuigreet
 
 # Architettura Systemd nativa (Systemd Presets)
 mkdir -p /usr/lib/systemd/system-preset/
@@ -57,6 +64,11 @@ cat > /etc/firewalld/zones/drop.xml << 'EOF'
 </zone>
 EOF
 
+# Implementazione della Direttiva Suprema: Firewalld Agnostico (Drop/Invisibilità)
+echo "--- Hardening Firewalld ---"
+firewall-offline-cmd --set-default-zone=drop
+firewall-offline-cmd --zone=drop --add-service=mdns
+
 # Disabilita i Coredump su disco per privacy totale
 mkdir -p /etc/systemd/coredump.conf.d/
 cat > /etc/systemd/coredump.conf.d/disable.conf << EOF
@@ -92,6 +104,34 @@ mkdir -p /etc/skel/Pictures/Screenshots
 
 # Abilita Starship (Prompt in Rust) globalmente per le shell compatibili
 echo 'eval "$(starship init bash)"' > /etc/profile.d/starship.sh
+
+# Manutenzione Mensile BTRFS per prevenire la frammentazione causata dagli snapshot
+cat > /etc/systemd/system/btrfs-maintenance.service << 'EOF'
+[Unit]
+Description=BTRFS Monthly Maintenance (Balance & Scrub)
+ConditionPathIsMountPoint=/var/home
+
+[Service]
+Type=oneshot
+# Esegue un balance leggero sui blocchi vuoti e uno scrub per la corruzione bit-rot
+ExecStart=/bin/sh -c 'btrfs balance start -dusage=50 -musage=50 / && btrfs scrub start -B /'
+EOF
+
+cat > /etc/systemd/system/btrfs-maintenance.timer << 'EOF'
+[Unit]
+Description=Monthly BTRFS Maintenance Timer
+
+[Timer]
+OnCalendar=monthly
+AccuracySec=1d
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+echo "enable btrfs-maintenance.timer" >> /usr/lib/systemd/system-preset/99-Ermete.preset
+
+echo "--- System Configuration Applied ---"
 
 # Assicura i permessi corretti per lo skeleton directory garantendo la Privacy
 # senza rompere gli script (forzando +x sui file .sh)

@@ -4,7 +4,7 @@ set -ouex pipefail
 echo "--- Applying Private Power-User Optimizations ---"
 
 # 1. Installazione dipendenze
-dnf -y install --setopt=install_weak_deps=False greenboot fwupd
+dnf -y install --setopt=install_weak_deps=False greenboot greenboot-rpm-ostree-grub2 greenboot-default-health-checks fwupd
 
 # 2. Configurazione Greenboot (Auto-Riparazione)
 mkdir -p /etc/greenboot/check/required.d/
