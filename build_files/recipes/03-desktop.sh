@@ -3,6 +3,18 @@ set -ouex pipefail
 
 echo "--- Installing Desktop Environment ---"
 
+# Enforce System-wide Dark Mode & Aesthetics for GTK4/GTK3 native apps
+echo "--- Applicazione Forzata del Tema Globale GTK ---"
+mkdir -p /usr/share/glib-2.0/schemas/
+cat > /usr/share/glib-2.0/schemas/99-ermete.gschema.override << 'EOF'
+[org.gnome.desktop.interface]
+color-scheme='prefer-dark'
+gtk-theme='adw-gtk3-dark'
+icon-theme='Papirus-Dark'
+cursor-theme='Bibata-Modern-Classic'
+EOF
+glib-compile-schemas /usr/share/glib-2.0/schemas/
+
 # Install Niri e dipendenze cursori, temi e font (aggiunto Xwayland per compatibilità assoluta con vecchie app)
 dnf -y install --setopt=install_weak_deps=False niri xorg-x11-server-Xwayland \
     papirus-icon-theme adw-gtk3-theme jetbrains-mono-fonts rsms-inter-fonts fontawesome-fonts-all \

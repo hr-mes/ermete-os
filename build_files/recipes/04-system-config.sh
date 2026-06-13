@@ -112,6 +112,7 @@ if [ ! -d "/var/home" ]; then
 fi
 
 mkdir -p /var/home/.snapshots
+chmod 700 /var/home/.snapshots
 
 TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
 # Se fallisce (es. rootfs non btrfs), esce senza bloccare l'aggiornamento
