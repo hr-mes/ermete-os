@@ -41,7 +41,19 @@ export XDG_SESSION_DESKTOP=niri
 systemctl --user import-environment XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
 dbus-update-activation-environment --systemd XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
 
-exec niri
+# Attesa asincrona per i nodi DRM NVIDIA (tolleranza logind/udev)
+while [ ! -e /dev/dri/renderD128 ]; do sleep 0.5; done
+
+# Mantra Infrangibile: Tolleranza d'errore asincrona (Restart Loop Paranoico)
+while true; do
+  niri
+  EXIT_CODE=$?
+  if [ $EXIT_CODE -eq 0 ]; then
+    break # Uscita pulita, l'utente ha terminato la sessione
+  fi
+  echo "Niri crasciato con codice $EXIT_CODE, riavvio in 2s..."
+  sleep 2
+done
 EOF
 chmod +x /usr/bin/niri-session
 

@@ -69,6 +69,12 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     bash /ctx/recipes/05-cleanup.sh
 
 ### LINTING
+## Sterilizzazione Permessi Configurazione (Policy UNIX)
+RUN chmod 700 /etc/skel \
+ && chmod 700 /etc/skel/.config \
+ && find /etc/skel/.config -type f -exec chmod 600 {} + \
+ && find /etc/skel/.config -type d -exec chmod 700 {} +
+
 ## Verify final image and contents are correct.
 # Questo step convaliderà ora correttamente l'assenza di violazioni tmpfiles.d
 RUN bootc container lint
