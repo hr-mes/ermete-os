@@ -1,9 +1,10 @@
 #!/bin/bash
 # ==============================================================================
-# Ermete OS - Diagnostica Assoluta e Omnicomprensiva (v3.0 - Massimo Teorico)
+# Ermete OS - Diagnostica Assoluta e Omnicomprensiva (v4.0 - Massimo Teorico UX)
 # Raccoglie OGNI POSSIBILE INFORMAZIONE su: Kernel, NVIDIA, Systemd,
 # Wayland, Niri, XDG Portals, DKMS, Pipewire, Udev, Dracut, Coredumps,
 # SELinux, Networking Agnostico, e Supply Chain Repository.
+# [v4.0 Focus]: Estensione massima sul Lato User, UX, Pipewire, Flatpak e Sessione.
 # ==============================================================================
 
 if [ "$EUID" -ne 0 ]; then
@@ -12,11 +13,13 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 LOG_FILE="/tmp/ermete_diagnostic_$(date +%Y%m%d_%H%M%S).txt"
+USER_ID=1000
+USER_NAME="ermete"
 
-echo "Avvio della diagnostica ESTREMA per Ermete OS (v3.0)..."
-echo "Attendere, sto analizzando il tessuto della realtà e le policy di sicurezza..."
+echo "Avvio della diagnostica ESTREMA per Ermete OS (v4.0)..."
+echo "Analisi profonda dell'Infrastruttura (Layer 0) e dell'Esperienza Utente (Layer 1)..."
 echo "========================================" > "$LOG_FILE"
-echo " ERMETE OS - OMNI-DIAGNOSTIC LOG v3.0 " >> "$LOG_FILE"
+echo " ERMETE OS - OMNI-DIAGNOSTIC LOG v4.0 " >> "$LOG_FILE"
 echo " Timestamp: $(date)" >> "$LOG_FILE"
 echo "========================================" >> "$LOG_FILE"
 
@@ -41,8 +44,6 @@ echo -e "\n[DKMS Status]" >> "$LOG_FILE"
 dkms status >> "$LOG_FILE" 2>&1
 echo -e "\n[Initramfs / Dracut (NVIDIA & SYSUSERS)]" >> "$LOG_FILE"
 lsinitrd | grep -iE 'nvidia|nouveau|group|passwd|sysusers|systemd-udev' >> "$LOG_FILE" 2>&1
-echo -e "\n[Initramfs /etc/group Raw Dump]" >> "$LOG_FILE"
-lsinitrd -f etc/group >> "$LOG_FILE" 2>&1
 
 # --- 3. HARDWARE, GPU, DRM & UDEV ---
 echo -e "\n\n========================================\n3. HARDWARE, GPU, DRM & UDEV\n========================================" >> "$LOG_FILE"
@@ -70,12 +71,8 @@ ls -la /etc/skel/ >> "$LOG_FILE" 2>&1
 
 # --- 5. SYSTEMD SERVICES & PAM ---
 echo -e "\n\n========================================\n5. SYSTEMD SERVICES & PAM\n========================================" >> "$LOG_FILE"
-echo -e "\n[System Default Target]" >> "$LOG_FILE"
-systemctl get-default >> "$LOG_FILE" 2>&1
 echo -e "\n[FAILED SERVICES (System)]" >> "$LOG_FILE"
 systemctl --failed >> "$LOG_FILE" 2>&1
-echo -e "\n[FAILED SERVICES (User 1000)]" >> "$LOG_FILE"
-sudo -u ermete XDG_RUNTIME_DIR=/run/user/1000 systemctl --user --failed >> "$LOG_FILE" 2>&1 || echo "Could non query user 1000 services" >> "$LOG_FILE"
 echo -e "\n[Authselect / PAM Status]" >> "$LOG_FILE"
 authselect current >> "$LOG_FILE" 2>&1
 authselect check >> "$LOG_FILE" 2>&1
@@ -106,38 +103,53 @@ ls -la /run/user/*/wayland-* /tmp/.X11-unix/ >> "$LOG_FILE" 2>/dev/null || echo 
 echo -e "\n[Networking & Firewalld (Network Agnostico)]" >> "$LOG_FILE"
 echo "Firewalld State: $(firewall-cmd --state 2>/dev/null || echo 'Not running')" >> "$LOG_FILE"
 echo "NM-wait-online: $(systemctl is-enabled NetworkManager-wait-online.service 2>/dev/null || echo 'Unknown')" >> "$LOG_FILE"
-echo -e "\n[Environment Variables in /etc/profile.d/]" >> "$LOG_FILE"
-grep -r -iE 'wayland|nvidia|gbm|wlr|xdg' /etc/profile.d/ /etc/environment >> "$LOG_FILE" 2>&1
-echo -e "\n[Niri Config Dump (Skel / Users)]" >> "$LOG_FILE"
-cat /etc/skel/.config/niri/config.kdl 2>/dev/null | head -n 100 >> "$LOG_FILE"
 
-# --- 8. SECURITY LOGS & CRASH DUMPS (SELINUX INCLUDED) ---
-echo -e "\n\n========================================\n8. FULL CRITICAL LOGS, SELINUX & COREDUMPS\n========================================" >> "$LOG_FILE"
+# --- 8. LATO USER: UX, FLATPAK, AUDIO & GSETTINGS ---
+echo -e "\n\n========================================\n8. USER EXPERIENCE (UX), AUDIO & FLATPAK\n========================================" >> "$LOG_FILE"
+echo -e "\n[User Systemd Services (Wayland Desktop Components)]" >> "$LOG_FILE"
+sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID systemctl --user status niri-session.target ironbar.service swaybg.service pipewire.service wireplumber.service xdg-desktop-portal.service --no-pager >> "$LOG_FILE" 2>&1 || echo "Could not query user systemd services" >> "$LOG_FILE"
+echo -e "\n[FAILED SERVICES (User)]" >> "$LOG_FILE"
+sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID systemctl --user --failed >> "$LOG_FILE" 2>&1
+
+echo -e "\n[Pipewire & Audio Status (wpctl)]" >> "$LOG_FILE"
+sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID wpctl status >> "$LOG_FILE" 2>&1 || echo "Pipewire wpctl non disponibile" >> "$LOG_FILE"
+
+echo -e "\n[Flatpak Apps & Runtimes]" >> "$LOG_FILE"
+flatpak list >> "$LOG_FILE" 2>&1 || echo "Nessun pacchetto Flatpak trovato" >> "$LOG_FILE"
+
+echo -e "\n[GSettings / GTK Theming (Lato Utente)]" >> "$LOG_FILE"
+sudo -u $USER_NAME dbus-launch gsettings get org.gnome.desktop.interface color-scheme >> "$LOG_FILE" 2>&1
+sudo -u $USER_NAME dbus-launch gsettings get org.gnome.desktop.interface gtk-theme >> "$LOG_FILE" 2>&1
+sudo -u $USER_NAME dbus-launch gsettings get org.gnome.desktop.interface icon-theme >> "$LOG_FILE" 2>&1
+
+echo -e "\n[User Environment Variables (Wayland/DBus/Nvidia)]" >> "$LOG_FILE"
+sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID sh -c 'env | grep -iE "wayland|nvidia|gbm|wlr|xdg|gtk"' >> "$LOG_FILE" 2>&1
+
+echo -e "\n[Niri msg outputs (Geometria Monitor)]" >> "$LOG_FILE"
+sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID niri msg outputs >> "$LOG_FILE" 2>&1 || echo "Niri non accessibile o disattivo" >> "$LOG_FILE"
+
+# --- 9. SECURITY LOGS & CRASH DUMPS (SELINUX INCLUDED) ---
+echo -e "\n\n========================================\n9. FULL CRITICAL LOGS, SELINUX & COREDUMPS\n========================================" >> "$LOG_FILE"
 echo -e "\n[SELinux AVC Denials]" >> "$LOG_FILE"
 ausearch -m AVC,USER_AVC,SELINUX_ERR,MAC_POLICY_LOAD -ts boot >> "$LOG_FILE" 2>&1 || echo "Nessun AVC Denial trovato o ausearch non installato" >> "$LOG_FILE"
 
 echo -e "\n[DMESG - Graphic/Boot Errors]" >> "$LOG_FILE"
 dmesg | grep -iE 'nvidia|nouveau|secure boot|lockdown|error|fail|drm|wayland|niri|udev' >> "$LOG_FILE" 2>&1
 
-echo -e "\n[JOURNALCTL - System Boot Errors (Priority 3)]" >> "$LOG_FILE"
-journalctl -b -p 3 --no-pager >> "$LOG_FILE" 2>&1
-
 echo -e "\n[JOURNALCTL - All Wayland/Niri/Portals/DBUS/Greetd Traces]" >> "$LOG_FILE"
-journalctl -b | grep -iE 'niri|wayland|wlroots|pipewire|wireplumber|dbus|polkit|xdg-desktop-portal|greetd|login' | tail -n 1000 >> "$LOG_FILE" 2>&1
+journalctl -b | grep -iE 'niri|wayland|wlroots|pipewire|wireplumber|dbus|polkit|xdg-desktop-portal|greetd|login|ironbar|swaybg' | tail -n 1000 >> "$LOG_FILE" 2>&1
 
-echo -e "\n[COREDUMPCTL - Recent Crashes (Niri / Wayland)]" >> "$LOG_FILE"
+echo -e "\n[JOURNALCTL - User Errors (Priority 3)]" >> "$LOG_FILE"
+sudo -u $USER_NAME XDG_RUNTIME_DIR=/run/user/$USER_ID journalctl --user -b -p 3 --no-pager >> "$LOG_FILE" 2>&1 || echo "Nessun log d'errore utente." >> "$LOG_FILE"
+
+echo -e "\n[COREDUMPCTL - Recent Crashes]" >> "$LOG_FILE"
 coredumpctl list --no-legend | tail -n 20 >> "$LOG_FILE" 2>&1
-echo -e "\n[COREDUMPCTL - Niri Crash Info]" >> "$LOG_FILE"
-coredumpctl info niri 2>/dev/null | head -n 100 >> "$LOG_FILE" 2>&1
-
-echo -e "\n[JOURNALCTL - NVIDIA DKMS Build Failures]" >> "$LOG_FILE"
-journalctl -b -u dkms | grep -iE 'error|fail|nvidia' >> "$LOG_FILE" 2>&1
 
 echo -e "\n========================================" >> "$LOG_FILE"
 echo " OMNI-DIAGNOSTIC COMPLETE" >> "$LOG_FILE"
 echo "========================================" >> "$LOG_FILE"
 
-echo "Raccolta dati completata! Il log è immenso, preciso e chirurgico."
+echo "Raccolta dati completata! Il log ora abbraccia anche l'Esperienza Utente a 360 gradi."
 echo "------------------------------------------------------"
 
 # Tentativo di esfiltrazione via rete (Pastebin sicuro)
