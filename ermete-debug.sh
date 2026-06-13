@@ -1,8 +1,8 @@
 #!/bin/bash
 # ==============================================================================
-# Ermete OS - Diagnostica Assoluta e Omnicomprensiva
+# Ermete OS - Diagnostica Assoluta e Omnicomprensiva (v2.0 - Massimo Teorico)
 # Raccoglie OGNI POSSIBILE INFORMAZIONE riguardante Kernel, NVIDIA, Systemd,
-# Wayland, Niri, XDG Portals, DKMS e Pipewire.
+# Wayland, Niri, XDG Portals, DKMS, Pipewire, Udev, Dracut e Coredumps.
 # ==============================================================================
 
 if [ "$EUID" -ne 0 ]; then
@@ -12,10 +12,10 @@ fi
 
 LOG_FILE="/tmp/ermete_diagnostic_$(date +%Y%m%d_%H%M%S).txt"
 
-echo "Avvio della diagnostica ESTREMA per Ermete OS..."
-echo "Attendere, sto raccogliendo tutto..."
+echo "Avvio della diagnostica ESTREMA per Ermete OS (v2.0)..."
+echo "Attendere, sto analizzando il tessuto della realtà..."
 echo "========================================" > "$LOG_FILE"
-echo " ERMETE OS - OMNI-DIAGNOSTIC LOG " >> "$LOG_FILE"
+echo " ERMETE OS - OMNI-DIAGNOSTIC LOG v2.0 " >> "$LOG_FILE"
 echo " Timestamp: $(date)" >> "$LOG_FILE"
 echo "========================================" >> "$LOG_FILE"
 
@@ -30,29 +30,39 @@ cat /proc/cmdline >> "$LOG_FILE" 2>&1
 echo -e "\n[Secure Boot & MOK]" >> "$LOG_FILE"
 mokutil --sb-state >> "$LOG_FILE" 2>&1
 
-# --- 2. PACKAGES & DKMS ---
+# --- 2. PACKAGES, KERNEL, DKMS & INITRAMFS ---
 echo -e "\n\n========================================\n2. PACKAGES, KERNEL & DKMS\n========================================" >> "$LOG_FILE"
 echo -e "\n[Installed Kernel, NVIDIA & DKMS packages]" >> "$LOG_FILE"
-rpm -qa | grep -iE 'kernel-cachy|nvidia|dkms|niri|wayland' | sort >> "$LOG_FILE" 2>&1
+rpm -qa | grep -iE 'kernel-cachy|nvidia|dkms|niri|wayland|polkit|greetd|systemd' | sort >> "$LOG_FILE" 2>&1
 echo -e "\n[DKMS Status]" >> "$LOG_FILE"
 dkms status >> "$LOG_FILE" 2>&1
-echo -e "\n[Initramfs / Dracut NVIDIA inclusion]" >> "$LOG_FILE"
-lsinitrd | grep -iE 'nvidia|nouveau' >> "$LOG_FILE" 2>&1
+echo -e "\n[Initramfs / Dracut (NVIDIA & SYSUSERS)]" >> "$LOG_FILE"
+lsinitrd | grep -iE 'nvidia|nouveau|group|passwd|sysusers|systemd-udev' >> "$LOG_FILE" 2>&1
 
-# --- 3. HARDWARE, GPU & DRM ---
-echo -e "\n\n========================================\n3. HARDWARE, GPU & DRM\n========================================" >> "$LOG_FILE"
+# --- 3. HARDWARE, GPU, DRM & UDEV ---
+echo -e "\n\n========================================\n3. HARDWARE, GPU, DRM & UDEV\n========================================" >> "$LOG_FILE"
 lspci -nnk | grep -iA 3 vga >> "$LOG_FILE" 2>&1
 echo -e "\n[Loaded Modules]" >> "$LOG_FILE"
 lsmod | grep -iE 'nvidia|nouveau|video' >> "$LOG_FILE" 2>&1
 echo -e "\n[NVIDIA SMI]" >> "$LOG_FILE"
 nvidia-smi >> "$LOG_FILE" 2>&1
 echo -e "\n[DRM & Modesetting parameters]" >> "$LOG_FILE"
-ls -l /dev/dri >> "$LOG_FILE" 2>&1
+ls -la /dev/dri >> "$LOG_FILE" 2>&1
 echo "nvidia_drm modeset: $(cat /sys/module/nvidia_drm/parameters/modeset 2>/dev/null || echo 'N/A')" >> "$LOG_FILE"
 echo "nvidia_drm fbdev: $(cat /sys/module/nvidia_drm/parameters/fbdev 2>/dev/null || echo 'N/A')" >> "$LOG_FILE"
+echo -e "\n[Udevadm Info per card0 e renderD128]" >> "$LOG_FILE"
+udevadm info -q all -n /dev/dri/card0 2>/dev/null >> "$LOG_FILE" 2>&1
+udevadm info -q all -n /dev/dri/renderD128 2>/dev/null >> "$LOG_FILE" 2>&1
 
-# --- 4. SYSTEMD SERVICES ---
-echo -e "\n\n========================================\n4. SYSTEMD SERVICES\n========================================" >> "$LOG_FILE"
+# --- 4. IDENTITIES & GROUPS ---
+echo -e "\n\n========================================\n4. IDENTITIES & GROUPS\n========================================" >> "$LOG_FILE"
+echo -e "\n[Contenuto /etc/group (Gruppi Vitali)]" >> "$LOG_FILE"
+grep -iE 'video|render|input|tty|audio|disk|kvm|greetd' /etc/group >> "$LOG_FILE" 2>&1
+echo -e "\n[Systemd Sysusers (Log Boot)]" >> "$LOG_FILE"
+journalctl -b -t systemd-sysusers --no-pager >> "$LOG_FILE" 2>&1
+
+# --- 5. SYSTEMD SERVICES ---
+echo -e "\n\n========================================\n5. SYSTEMD SERVICES\n========================================" >> "$LOG_FILE"
 echo -e "\n[System Default Target]" >> "$LOG_FILE"
 systemctl get-default >> "$LOG_FILE" 2>&1
 echo -e "\n[FAILED SERVICES (System)]" >> "$LOG_FILE"
@@ -62,16 +72,16 @@ systemctl status greetd sddm gdm display-manager --no-pager >> "$LOG_FILE" 2>&1
 echo -e "\n[NVIDIA Powerd / Persistenced]" >> "$LOG_FILE"
 systemctl status nvidia-powerd nvidia-persistenced --no-pager >> "$LOG_FILE" 2>&1
 
-# --- 5. LOGINCTL & USER SESSIONS ---
-echo -e "\n\n========================================\n5. LOGINCTL & USER\n========================================" >> "$LOG_FILE"
+# --- 6. LOGINCTL & USER SESSIONS ---
+echo -e "\n\n========================================\n6. LOGINCTL & USER\n========================================" >> "$LOG_FILE"
 loginctl list-sessions >> "$LOG_FILE" 2>&1
 for session in $(loginctl list-sessions --no-legend | awk '{print $1}'); do
     echo "Session $session:" >> "$LOG_FILE"
     loginctl show-session "$session" >> "$LOG_FILE" 2>&1
 done
 
-# --- 6. NIRI & ENVIRONMENT CONFIGURATION ---
-echo -e "\n\n========================================\n6. NIRI & ENV CONFIG\n========================================" >> "$LOG_FILE"
+# --- 7. NIRI & ENVIRONMENT CONFIGURATION ---
+echo -e "\n\n========================================\n7. NIRI & ENV CONFIG\n========================================" >> "$LOG_FILE"
 echo -e "\n[Greetd & Session Wrappers]" >> "$LOG_FILE"
 echo "--- /etc/greetd/config.toml ---" >> "$LOG_FILE"
 cat /etc/greetd/config.toml >> "$LOG_FILE" 2>/dev/null || echo "File not found" >> "$LOG_FILE"
@@ -80,37 +90,44 @@ cat /usr/bin/niri-session >> "$LOG_FILE" 2>/dev/null || echo "File not found" >>
 echo -e "\n[Active Wayland/X11 Sockets]" >> "$LOG_FILE"
 ls -la /run/user/*/wayland-* /tmp/.X11-unix/ >> "$LOG_FILE" 2>/dev/null || echo "No sockets found" >> "$LOG_FILE"
 echo -e "\n[Environment Variables in /etc/profile.d/]" >> "$LOG_FILE"
-grep -r -iE 'wayland|nvidia|gbm|wlr' /etc/profile.d/ /etc/environment >> "$LOG_FILE" 2>&1
+grep -r -iE 'wayland|nvidia|gbm|wlr|xdg' /etc/profile.d/ /etc/environment >> "$LOG_FILE" 2>&1
 echo -e "\n[Niri Config Dump (Skel / Users)]" >> "$LOG_FILE"
 echo "--- /etc/skel/.config/niri/config.kdl ---" >> "$LOG_FILE"
-cat /etc/skel/.config/niri/config.kdl 2>/dev/null | head -n 50 >> "$LOG_FILE"
+cat /etc/skel/.config/niri/config.kdl 2>/dev/null | head -n 100 >> "$LOG_FILE"
 for u in /home/*; do
     if [ -d "$u" ]; then
         echo "--- $u/.config/niri/config.kdl ---" >> "$LOG_FILE"
-        cat "$u/.config/niri/config.kdl" 2>/dev/null | head -n 50 >> "$LOG_FILE"
+        cat "$u/.config/niri/config.kdl" 2>/dev/null | head -n 100 >> "$LOG_FILE"
     fi
 done
 
-# --- 7. COMPLETE LOGS ---
-echo -e "\n\n========================================\n7. FULL CRITICAL LOGS\n========================================" >> "$LOG_FILE"
+# --- 8. COMPLETE LOGS & CRASH DUMPS ---
+echo -e "\n\n========================================\n8. FULL CRITICAL LOGS & COREDUMPS\n========================================" >> "$LOG_FILE"
 echo -e "\n[DMESG - Graphic/Boot Errors]" >> "$LOG_FILE"
-dmesg | grep -iE 'nvidia|nouveau|secure boot|lockdown|error|fail|drm|wayland|niri' >> "$LOG_FILE" 2>&1
+dmesg | grep -iE 'nvidia|nouveau|secure boot|lockdown|error|fail|drm|wayland|niri|udev' >> "$LOG_FILE" 2>&1
 
 echo -e "\n[JOURNALCTL - System Boot Errors (Priority 3)]" >> "$LOG_FILE"
 journalctl -b -p 3 --no-pager >> "$LOG_FILE" 2>&1
 
-echo -e "\n[JOURNALCTL - All Wayland/Niri/Portals/DBUS Traces]" >> "$LOG_FILE"
-# Raccoglie log di Niri, Polkit, Wayland, XDG Portals, Pipewire, sia di sistema che degli utenti
-journalctl -b | grep -iE 'niri|wayland|wlroots|pipewire|wireplumber|dbus|polkit|xdg-desktop-portal|greetd' | tail -n 500 >> "$LOG_FILE" 2>&1
+echo -e "\n[JOURNALCTL - All Wayland/Niri/Portals/DBUS/Greetd Traces]" >> "$LOG_FILE"
+journalctl -b | grep -iE 'niri|wayland|wlroots|pipewire|wireplumber|dbus|polkit|xdg-desktop-portal|greetd|login' | tail -n 1000 >> "$LOG_FILE" 2>&1
 
-echo -e "\n[JOURNALCTL - NVIDIA DKMS Build Failures (se presenti)]" >> "$LOG_FILE"
+echo -e "\n[JOURNALCTL - Full Greetd Service Log]" >> "$LOG_FILE"
+journalctl -b -u greetd.service --no-pager >> "$LOG_FILE" 2>&1
+
+echo -e "\n[COREDUMPCTL - Recent Crashes (Niri / Wayland)]" >> "$LOG_FILE"
+coredumpctl list --no-legend | tail -n 20 >> "$LOG_FILE" 2>&1
+echo -e "\n[COREDUMPCTL - Niri Crash Info]" >> "$LOG_FILE"
+coredumpctl info niri 2>/dev/null | head -n 100 >> "$LOG_FILE" 2>&1
+
+echo -e "\n[JOURNALCTL - NVIDIA DKMS Build Failures]" >> "$LOG_FILE"
 journalctl -b -u dkms | grep -iE 'error|fail|nvidia' >> "$LOG_FILE" 2>&1
 
 echo -e "\n========================================" >> "$LOG_FILE"
 echo " OMNI-DIAGNOSTIC COMPLETE" >> "$LOG_FILE"
 echo "========================================" >> "$LOG_FILE"
 
-echo "Raccolta dati completata! Il log è immenso e perfetto."
+echo "Raccolta dati completata! Il log è immenso, preciso e chirurgico."
 echo "------------------------------------------------------"
 
 # Tentativo di esfiltrazione via rete (Pastebin sicuro)
