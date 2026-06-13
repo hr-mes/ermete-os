@@ -33,9 +33,11 @@ jobs:
             --privileged \
             --security-opt label=type:unconfined_t \
             -v ./output:/output \
+            -v ./disk_config/iso.toml:/config.toml:ro \
             quay.io/centos-bootc/bootc-image-builder:latest \
             build \
-            --type iso \
+            --type anaconda-iso \
+            --config /config.toml \
             ghcr.io/${{ github.repository_owner }}/ermete-os:${{ github.event.inputs.image_tag }}
             
       - name: Rinominazione e Hashing

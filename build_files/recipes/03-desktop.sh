@@ -18,7 +18,7 @@ glib-compile-schemas /usr/share/glib-2.0/schemas/
 # Install Niri e dipendenze cursori, temi e font (aggiunto Xwayland per compatibilità assoluta con vecchie app)
 dnf -y install --setopt=install_weak_deps=False niri xorg-x11-server-Xwayland \
     papirus-icon-theme adw-gtk3-theme jetbrains-mono-fonts rsms-inter-fonts fontawesome-fonts-all \
-    xdg-desktop-portal-gnome xdg-desktop-portal-gtk || true
+    xdg-desktop-portal-gnome xdg-desktop-portal-gtk swaybg || true
 
 # Configurazione Ambiente Wayland/NVIDIA (Miglioramento UX)
 cat >> /etc/environment << 'EOF'
@@ -61,6 +61,10 @@ dnf -y install --setopt=install_weak_deps=False greetd tuigreet
 # 100% Verified Supply Chain per lo Stack Rust (Zero-Trust)
 # Sostituiamo il fetch dinamico da crates.io con release pre-compilate validate
 # o compilazione offline da commit pinnati con hash crittografica garantita.
+
+# Scarica uno sfondo di default (Catppuccin Macchiato Mountain)
+mkdir -p /usr/share/backgrounds/ermete
+curl -sL "https://raw.githubusercontent.com/catppuccin/wallpapers/main/landscapes/forst.jpg" -o /usr/share/backgrounds/ermete/default.jpg || true
 
 cd /tmp
 

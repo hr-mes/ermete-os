@@ -47,4 +47,15 @@ SystemMaxUse=100M
 SystemMaxFiles=5
 EOF
 
+# Abilitazione BPF Scheduler (scx_rustland) per latenza zero
+mkdir -p /etc/default/
+cat > /etc/default/scx << 'EOF'
+SCX_SCHEDULER=scx_rustland
+SCX_FLAGS=""
+EOF
+echo "enable scx.service" >> /usr/lib/systemd/system-preset/99-Ermete.preset
+
+# Abilita auto-renicing intelligente
+echo "enable ananicy-cpp.service" >> /usr/lib/systemd/system-preset/99-Ermete.preset
+
 echo "--- Kernel Optimizations Applied ---"
