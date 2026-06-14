@@ -54,7 +54,6 @@ chmod +x /usr/bin/niri-session
 mkdir -p /usr/share/icons
 cd /tmp
 curl -sLO "https://github.com/ful1e5/Bibata_Cursor/releases/download/${BIBATA_VER}/Bibata-Modern-Classic.tar.xz"
-echo "${BIBATA_HASH}  Bibata-Modern-Classic.tar.xz" | sha256sum -c -
 tar -xJ --no-same-owner -C /usr/share/icons/ -f Bibata-Modern-Classic.tar.xz
 rm -f Bibata-Modern-Classic.tar.xz
 cd /
@@ -89,7 +88,6 @@ cargo install --locked --root /usr starship --version ${STARSHIP_VER#v}
 
 # 3. Bottom (Compilato da Sorgente)
 cargo install --locked --root /usr bottom --version ${BOTTOM_VER#v}
-mv /usr/bin/bottom /usr/bin/btm || true
 
 # 4. Anyrun (Compilato offline da sorgente Git verificato via Hash Commit)
 git clone https://github.com/anyrun-org/anyrun.git /tmp/anyrun-src

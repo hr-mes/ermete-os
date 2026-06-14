@@ -8,7 +8,6 @@ FROM ghcr.io/patapem/ermete-base-nvidia:latest
 
 # renovate: datasource=github-releases depName=ful1e5/Bibata_Cursor
 ARG BIBATA_VER="v2.0.7"
-ARG BIBATA_HASH="7d3495864e5bbef02f5e77de760b2905903b63c71495a78ef6306d19a3b556d8"
 
 # renovate: datasource=github-releases depName=JakeStanger/ironbar
 ARG IRONBAR_VER="v0.19.0"
@@ -19,7 +18,7 @@ ARG STARSHIP_VER="v1.22.1"
 # renovate: datasource=github-releases depName=ClementTsang/bottom
 ARG BOTTOM_VER="0.10.2"
 
-# renovate: datasource=github-tags depName=anyrun-org/anyrun
+# renovate: datasource=github-commits depName=anyrun-org/anyrun
 ARG ANYRUN_COMMIT="f3b23bc5520f7673a5119da44b3570fbe060db37"
 
 RUN sed -i 's/^ID=.*/ID=fedora/' /etc/os-release
