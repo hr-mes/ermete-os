@@ -13,7 +13,7 @@ echo "--- Configuring DNF and installing base system packages ---"
 # Libvirt e virt-manager mantenuti per workflow utente quotidiano
 # Aggiunti greenboot e greenboot-default-health-checks consolidati dagli script deprecati
 
-dnf -y install --setopt=install_weak_deps=False libvirt virt-manager qemu-kvm wlr-randr sysstat lxqt-openssh-askpass lxpolkit parallel just seahorse gnome-keyring network-manager-applet blueman playerctl brightnessctl alacritty nix greenboot greenboot-default-health-checks
+dnf -y install --setopt=install_weak_deps=False libvirt virt-manager qemu-kvm wlr-randr sysstat lxqt-openssh-askpass lxpolkit parallel just seahorse gnome-keyring network-manager-applet blueman playerctl brightnessctl alacritty nix greenboot greenboot-default-health-checks bpftool drm_info nftables wayland-utils
 dnf -y install --setopt=install_weak_deps=False swaylock # Dipendenza critica per il blocco schermo di Niri
 
 # Core Utilities in Rust (Il nuovo stack)

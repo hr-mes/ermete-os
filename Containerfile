@@ -125,9 +125,8 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     bash /ctx/recipes/03-desktop.sh
 
 ### STRUMENTI DIAGNOSTICI OMNI-VISION SUPREME
-# Installazione pacchetti essenziali per il debugging a Raggi-X (Zero-Trust Supply Chain ok via DNF repo locale)
-RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
-    dnf -y install bpftool drm_info nftables wayland-utils
+# Installazione pacchetti essenziali per il debugging a Raggi-X 
+# (Consolidati nel layer 01-system-setup.sh per purezza OCI e riduzione layer bloat)
 
 ### ASSETS SICURI E PREPARAZIONE
 # La directory assets/sfondi è creata nativamente via system_files
