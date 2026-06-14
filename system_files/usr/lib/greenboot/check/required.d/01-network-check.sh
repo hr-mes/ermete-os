@@ -1,4 +1,5 @@
 #!/bin/bash
+set -ouex pipefail
 if systemctl is-active --quiet NetworkManager.service; then
     exit 0
 else
