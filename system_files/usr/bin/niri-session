@@ -8,8 +8,12 @@ export XDG_SESSION_DESKTOP=niri
 systemctl --user import-environment XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
 dbus-update-activation-environment --systemd XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
 
-# Attesa asincrona per i nodi DRM NVIDIA (tolleranza logind/udev)
-while [ ! -e /dev/dri/renderD128 ]; do sleep 0.5; done
+# Attesa asincrona per i nodi DRM NVIDIA (tolleranza logind/udev, max 10 secondi)
+timeout=20
+while [ ! -e /dev/dri/renderD128 ] && [ $timeout -gt 0 ]; do
+    sleep 0.5
+    timeout=$((timeout - 1))
+done
 
 # Mantra Infrangibile: Avvio supervisionato via systemd-cat e dbus user session
 exec systemd-cat -t niri niri --session

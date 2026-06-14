@@ -69,6 +69,13 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry,id=registry-anyrun \
     cp target/release/*.so /out/lib64/anyrun/ 2>/dev/null || true && \
     strip /out/bin/anyrun /out/lib64/anyrun/*.so 2>/dev/null || true
 
+# Builder Bibata Cursor (Zero-Network-Failure OCI layer)
+FROM build-base AS build-bibata
+ARG BIBATA_VER
+RUN mkdir -p /out/icons && \
+    curl -sLO "https://github.com/ful1e5/Bibata_Cursor/releases/download/${BIBATA_VER}/Bibata-Modern-Classic.tar.xz" && \
+    tar -xJ --no-same-owner -C /out/icons -f Bibata-Modern-Classic.tar.xz
+
 # --- IMMAGINE FINALE (PRODUZIONE) ---
 FROM ghcr.io/patapem/ermete-base-nvidia:latest
 ARG BIBATA_VER
@@ -80,6 +87,9 @@ COPY --from=build-ironbar /out/bin/ironbar /usr/bin/
 COPY --from=build-anyrun /out/bin/anyrun /usr/bin/
 COPY --from=build-anyrun /out/lib64/anyrun /usr/lib64/anyrun
 RUN ln -s /usr/lib64/anyrun /usr/lib/anyrun
+
+# Copia asset immutabili
+COPY --from=build-bibata /out/icons/Bibata-Modern-Classic /usr/share/icons/Bibata-Modern-Classic
 
 
 
@@ -134,10 +144,8 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     bash /ctx/recipes/05-cleanup.sh
 
 ### ASSETS SICURI E PREPARAZIONE
-# Creazione sicura della directory assets/sfondi per evitare LPE
-RUN mkdir -p /usr/share/backgrounds/ermete \
-    && chown -R 0:0 /usr/share/backgrounds/ermete \
-    && chmod 755 /usr/share/backgrounds/ermete
+# La directory assets/sfondi è creata nativamente via system_files
+# per evitare LPE e layer bloat imperativo.
 # NOTA: Per scompattare eventuali archivi futuri, usare SEMPRE:
 # RUN tar -xzf /path/to/assets.tar.gz -C /usr/share/backgrounds/ermete --no-same-owner
 

@@ -3,11 +3,7 @@ set -ouex pipefail
 
 echo "--- Configuring system services and user defaults ---"
 
-mkdir -p /etc/greetd/
-
-
 # Install greetd login manager vincolato alla configurazione restrittiva con tuigreet
-mkdir -p /etc/greetd
 # 1. Configurazione Greetd, Firewalld, Coredump, MAC Randomization, DoT
 # Tutte queste configurazioni sono state migrate nativamente su /system_files/etc/
 # garantendo un design architetturale OCI dichiarativo e pulito.

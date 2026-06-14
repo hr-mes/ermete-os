@@ -23,15 +23,10 @@ chmod +x /usr/bin/niri-session
 # del Containerfile, che garantisce caching estremo e purezza del layer.
 
 # Installazione manuale sicura di Bibata Cursor (pinned version)
-mkdir -p /usr/share/icons
-cd /tmp
-curl -sLO "https://github.com/ful1e5/Bibata_Cursor/releases/download/${BIBATA_VER}/Bibata-Modern-Classic.tar.xz"
-tar -xJ --no-same-owner -C /usr/share/icons/ -f Bibata-Modern-Classic.tar.xz
-rm -f Bibata-Modern-Classic.tar.xz
-cd /
+# Ereditata nativamente dal builder multi-stage OCI (Zero-Network-Failure)
 
 # Install Greetd e Tuigreet (Greeter da terminale in Rust)
-dnf -y install --setopt=install_weak_deps=False greetd tuigreet fprintd-pam
+dnf -y install --setopt=install_weak_deps=False greetd tuigreet
 systemctl enable greetd.service
 
 # Abilitazione Globale Audio Pipewire per la sessione utente (Fondamentale per Wayland/Portals)
