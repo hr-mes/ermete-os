@@ -9,4 +9,4 @@ systemctl --user import-environment XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SES
 dbus-update-activation-environment --systemd XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
 
 # Mantra Infrangibile: Avvio supervisionato via systemd-cat e dbus user session
-exec systemd-cat -t niri niri --session
+exec systemd-cat -t niri niri

@@ -36,5 +36,4 @@ echo "--- Applicazione Forzata del Tema Globale GTK ---"
 # Assicura che i nuovi schemi GTK installati dai pacchetti vengano precalcolati nativamente nel layer
 glib-compile-schemas /usr/share/glib-2.0/schemas/
 
-# Pulizia estrema del layer
-dnf5 clean all
+# (Il comando dnf5 clean all è stato rimosso in quanto incompatibile con i cache mounts OCI, che escludono nativamente la cache dal layer preservandola per build futuri)
