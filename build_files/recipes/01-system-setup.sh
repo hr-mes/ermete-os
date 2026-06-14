@@ -11,8 +11,9 @@ echo "--- Configuring DNF and installing base system packages ---"
 # Aggiunti network-manager-applet e blueman per l'usabilità (Wi-Fi e Bluetooth)
 # Aggiunto nix (package manager funzionale immutabile) per sostituire distrobox
 # Libvirt e virt-manager mantenuti per workflow utente quotidiano
+# Aggiunti greenboot e greenboot-default-health-checks consolidati dagli script deprecati
 
-dnf -y install --setopt=install_weak_deps=False libvirt virt-manager qemu-kvm wlr-randr sysstat lxqt-openssh-askpass lxpolkit parallel just seahorse gnome-keyring network-manager-applet blueman playerctl brightnessctl alacritty nix
+dnf -y install --setopt=install_weak_deps=False libvirt virt-manager qemu-kvm wlr-randr sysstat lxqt-openssh-askpass lxpolkit parallel just seahorse gnome-keyring network-manager-applet blueman playerctl brightnessctl alacritty nix greenboot greenboot-default-health-checks
 dnf -y install --setopt=install_weak_deps=False swaylock # Dipendenza critica per il blocco schermo di Niri
 
 # Core Utilities in Rust (Il nuovo stack)

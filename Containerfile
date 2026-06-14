@@ -86,7 +86,6 @@ COPY --from=build-bottom /out/bin/btm /usr/bin/
 COPY --from=build-ironbar /out/bin/ironbar /usr/bin/
 COPY --from=build-anyrun /out/bin/anyrun /usr/bin/
 COPY --from=build-anyrun /out/lib64/anyrun /usr/lib64/anyrun
-RUN ln -s /usr/lib64/anyrun /usr/lib/anyrun
 
 # Copia asset immutabili
 COPY --from=build-bibata /out/icons/Bibata-Modern-Classic /usr/share/icons/Bibata-Modern-Classic
@@ -96,8 +95,9 @@ COPY --from=build-bibata /out/icons/Bibata-Modern-Classic /usr/share/icons/Bibat
 
 # Fase C: Costruzione Link Simbolici (Dichiaratività Systemd)
 FROM build-base AS build-symlinks
-RUN mkdir -p /out/etc/systemd/system && \
-    ln -sf /usr/lib/systemd/system/graphical.target /out/etc/systemd/system/default.target
+RUN mkdir -p /out/etc/systemd/system /out/usr/lib && \
+    ln -sf /usr/lib/systemd/system/graphical.target /out/etc/systemd/system/default.target && \
+    ln -sf /usr/lib64/anyrun /out/usr/lib/anyrun
 
 # Copy Homebrew files from the brew image
 # FIX: Aggiunto --chown=0:0 per coerenza di sicurezza sui binari iniettati
@@ -106,6 +106,7 @@ COPY --from=ghcr.io/ublue-os/brew@sha256:5228826790d13d5e265f1fdbb41b65e3fac2036
 # Iniettiamo la gerarchia nativa OCI delle configurazioni statiche (Zero-Echo) e i symlink precalcolati
 COPY --chown=0:0 system_files /
 COPY --from=build-symlinks /out/etc /etc
+COPY --from=build-symlinks /out/usr/lib/anyrun /usr/lib/anyrun
 
 # I servizi e i timer di Brew sono abilitati nativamente in modo dichiarativo 
 # tramite /system_files/usr/lib/systemd/system-preset/99-Ermete.preset
@@ -123,27 +124,10 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
     bash /ctx/recipes/03-desktop.sh
 
-RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
-    --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
-    bash /ctx/recipes/04-system-config.sh
-
-RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
-    --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
-    bash /ctx/recipes/04b-private-optimizations.sh
-
-RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
-    --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
-    bash /ctx/recipes/04c-kernel-tuning.sh
-
 ### STRUMENTI DIAGNOSTICI OMNI-VISION SUPREME
 # Installazione pacchetti essenziali per il debugging a Raggi-X (Zero-Trust Supply Chain ok via DNF repo locale)
 RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
     dnf -y install bpftool drm_info nftables wayland-utils
-
-
-RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
-    --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
-    bash /ctx/recipes/05-cleanup.sh
 
 ### ASSETS SICURI E PREPARAZIONE
 # La directory assets/sfondi è creata nativamente via system_files
