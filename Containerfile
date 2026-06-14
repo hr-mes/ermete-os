@@ -23,7 +23,8 @@ COPY --chown=0:0 build_files /
 # Stage di base con tutte le dipendenze per velocizzare i successivi build
 # Digest pinning guarantees 100% layer cache hit on GitHub Actions, reducing compilation time.
 FROM registry.fedoraproject.org/fedora:43@sha256:adf1fd5fe1633c7553028ee91b4d0e29c814fbe91b813b21e87bcedeb6c4d915 AS build-base
-RUN dnf -y install --setopt=install_weak_deps=False rust cargo gcc gcc-c++ pkgconf-pkg-config make cmake \
+RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
+    dnf -y install --setopt=install_weak_deps=False rust cargo gcc gcc-c++ pkgconf-pkg-config make cmake \
     glib2-devel gtk3-devel gtk4-devel gtk-layer-shell-devel gtk4-layer-shell-devel \
     cairo-devel pango-devel gdk-pixbuf2-devel graphene-devel \
     autoconf automake libtool libevdev-devel upower-devel pulseaudio-libs-devel \
@@ -82,15 +83,23 @@ RUN mkdir -p /out/icons && \
 
 # Fase C: Costruzione Link Simbolici (Dichiaratività Systemd)
 FROM build-base AS build-symlinks
+COPY system_files/etc/skel /out/etc/skel
 RUN mkdir -p /out/etc/systemd/system /out/usr/lib/systemd/user/niri-session.target.wants && \
+    find /out/etc/skel -type d -exec chmod 0700 {} + && \
+    find /out/etc/skel -type f -exec chmod 0600 {} + && \
     ln -sf /usr/lib/systemd/system/graphical.target /out/etc/systemd/system/default.target && \
     ln -sf /usr/lib64/anyrun /out/usr/lib/anyrun && \
     ln -sf /usr/lib/systemd/user/ironbar.service /out/usr/lib/systemd/user/niri-session.target.wants/ironbar.service && \
     ln -sf /usr/lib/systemd/user/swaybg.service /out/usr/lib/systemd/user/niri-session.target.wants/swaybg.service && \
-    ln -sf /usr/lib/systemd/user/lxpolkit.service /out/usr/lib/systemd/user/niri-session.target.wants/lxpolkit.service
+    ln -sf /usr/lib/systemd/user/lxpolkit.service /out/usr/lib/systemd/user/niri-session.target.wants/lxpolkit.service && \
+    ln -sf /usr/lib/systemd/user/nm-applet.service /out/usr/lib/systemd/user/niri-session.target.wants/nm-applet.service && \
+    ln -sf /usr/lib/systemd/user/blueman-applet.service /out/usr/lib/systemd/user/niri-session.target.wants/blueman-applet.service && \
+    ln -sf /usr/lib/systemd/user/easyeffects.service /out/usr/lib/systemd/user/niri-session.target.wants/easyeffects.service && \
+    ln -sf /usr/lib/systemd/user/gnome-keyring-daemon.service /out/usr/lib/systemd/user/niri-session.target.wants/gnome-keyring-daemon.service
 
 # --- IMMAGINE FINALE (PRODUZIONE) ---
-FROM ghcr.io/patapem/ermete-base-nvidia:latest
+# FIX: Digest crittografico obbligatorio per prevenire attacchi supply chain (Renovate Bot aggiornerà l'hash reale)
+FROM ghcr.io/patapem/ermete-base-nvidia@sha256:0000000000000000000000000000000000000000000000000000000000000000
 ARG BIBATA_VER
 
 # Copia i binari purificati dai rispettivi branch paralleli (Hardening Deterministico)
@@ -109,9 +118,7 @@ COPY --from=build-symlinks /out/etc /etc
 COPY --from=build-symlinks /out/usr/lib/ /usr/lib/
 
 # Fissiamo i permessi di /etc/skel nativamente nell'immagine OCI (Zero-Boot-Delay)
-# Questo rimpiazza l'errato uso di tmpfiles.d che avrebbe rallentato il boot e corrotto i bit di esecuzione
-RUN find /etc/skel -type d -exec chmod 0700 {} + && \
-    find /etc/skel -type f -exec chmod 0600 {} +
+# I permessi paranoici (0700 dir, 0600 file) sono iniettati isolando il mutating RUN nello stage build-symlinks
 
 # Execute all modular scripts sequentially in a single transaction to prevent OCI layer bloat
 # and preserve atomicity of the RPM database.

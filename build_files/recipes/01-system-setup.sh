@@ -29,4 +29,4 @@ dnf5 -y install --setopt=install_weak_deps=False eza bat fd-find ripgrep nushell
 echo "--- Fixing critical UNIX groups for Wayland/udev via sysusers ---"
 
 # Inneschiamo esplicitamente sysusers per assicurarci che anche systemd applichi i suoi default
-systemd-sysusers
+systemd-sysusers || true

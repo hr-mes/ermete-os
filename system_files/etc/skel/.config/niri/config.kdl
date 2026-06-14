@@ -124,19 +124,33 @@ hotkey-overlay {
 
 // La notifica di primo avvio è ora nativamente gestita da systemd user units 
 // (ermete-firstboot-notification.path/service) senza polling imperativo.
-spawn-at-startup "flatpak" "run" "--command=easyeffects" "com.github.wwmm.easyeffects" "--gapplication-service"
-spawn-at-startup "gnome-keyring-daemon" "--start" "--components=secrets"
 spawn-at-startup "dbus-update-activation-environment" "--systemd" "WAYLAND_DISPLAY" "XDG_CURRENT_DESKTOP=niri"
 // Avvia asincronamente i servizi Desktop delegandoli a Systemd (Idempotenza e Asincronia First-Boot)
 spawn-at-startup "systemctl" "--user" "start" "niri-session.target"
-spawn-at-startup "nm-applet"
-spawn-at-startup "blueman-applet"
 
 screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
 
 animations {
-    // off
-    // slowdown 3.0
+    workspace-switch {
+        spring damping-ratio=1.0 stiffness=1000 epsilon=0.0001
+    }
+    window-open {
+        duration-ms 150
+        curve "ease-out-expo"
+    }
+    window-close {
+        duration-ms 150
+        curve "ease-out-quad"
+    }
+    horizontal-view-movement {
+        spring damping-ratio=1.0 stiffness=800 epsilon=0.0001
+    }
+    window-movement {
+        spring damping-ratio=1.0 stiffness=800 epsilon=0.0001
+    }
+    window-resize {
+        spring damping-ratio=1.0 stiffness=800 epsilon=0.0001
+    }
 }
 
 window-rule {

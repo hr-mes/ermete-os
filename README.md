@@ -15,9 +15,8 @@ Ermete OS strictly follows a multi-repository, decoupled architecture for ultima
 ```mermaid
 graph TD
     subgraph Layer0 [Base NVIDIA Repository / Ring 0]
-        A["Fedora Base Atomic"] --> B["Inject CachyOS Kernel"]
-        B --> C["Compile NVIDIA DKMS via ld.bfd"]
-        C --> D["Nightly CI/CD & Cosign Signature"]
+        A["Fedora Base Atomic"] --> B["Inject CachyOS Kernel & NVIDIA DKMS"]
+        B --> D["Trivy Scan & Cosign Signature"]
     end
     subgraph Layer1 [Ermete OS Repository / Ring 3]
         D -- "API Dispatch Trigger" --> E["Containerfile FROM ghcr.io/.../ermete-base-nvidia@sha256"]
@@ -25,6 +24,7 @@ graph TD
         F --> G["Recipe: Rust Transient Build Pipeline"]
         G --> H["Recipe: Firewalld Drop / Privacy Hardening"]
         H --> I["Recipe: Asynchronous Systemd Provisioner"]
+        I --> K["Trivy CVE Scan & Bootc Lint"]
     end
     Layer1 --> J(("Deployable Bootc Image"))
 ```
@@ -33,77 +33,81 @@ graph TD
 
 1. **Zero-Entropy**: The root filesystem is strictly immutable. No system degradation, rot, or state drift over time. Software installation via `dnf` on the live system is mathematically banned.
 2. **Zero-Bloat**: Only CLI tools and core infrastructure exist on the host. Weak dependencies are banned (`install_weak_deps=False`).
-3. **100% Verified Supply Chain**: Dynamic `curl | bash` or blind binary downloads are forbidden. External binaries (Ironbar, Starship, Anyrun) are managed via a centralized `Containerfile ARG` manifest and verified against pinned SHA256 checksums. Furthermore, `tar` extractions are surgically hardened with `--no-same-owner` to prevent Local Privilege Escalation (LPE) via malicious UID injections.
-4. **Autonomous Maintenance (Zero-Touch Rolling Release)**: The OS heals and updates itself. Renovate Bot parses the `Containerfile`, detects new upstream releases, recalculates SHA256 hashes, and pins Docker images to immutable digests. The pipeline triggers automatically, compiling and signing the new immutable deployment via Sigstore/Cosign OIDC without manual intervention.
+3. **100% Verified Supply Chain**: Dynamic `curl | bash` or blind binary downloads are forbidden. External binaries are managed via a centralized `Containerfile ARG` manifest. The entire OS is pinned exclusively to immutable cryptographic digests (`@sha256`), eliminating reliance on mutable tags like `:latest`.
+4. **Autonomous Maintenance**: The OS heals and updates itself via the native `bootc-fetch-apply.timer`. Renovate Bot detects upstream releases, recalculates SHA256 hashes, and pins Docker images. The pipeline compiles, scans with **Trivy** to block CVEs, and signs the deployment via Sigstore/Cosign OIDC without manual intervention.
 
 ---
 
-## 🛡️ Paranoid Privacy & The "Zero Denial of Service" Doctrine
-Ermete OS implements extreme enterprise-grade security defaults, aggressively balanced against usability to ensure workflows are never paralyzed by their own defenses.
+## 🛡️ Paranoid Hardening & "Zero-Trust" Security
 
-- **Network Surveillance vs UX**: DNS-over-TLS (DoT) is enforced but set to `opportunistic`. MAC Address Randomization is `stable`—preventing physical tracking while surviving Captive Portals.
-- **Remote Exploitation vs Discovery**: Neutralized via a Zero-Trust `drop` zone Firewalld policy. `mdns` is surgically whitelisted to guarantee local device discovery (Chromecast, Wireless Printers).
-- **Post-Exploitation Data Leaks**: Systemd coredumps are disabled (`Storage=none`), preventing RAM secrets from bleeding onto the disk upon application crashes.
-- **Zero-Trust UNIX Sandboxing**: Mitigated by aggressive kernel hardening (`kptr_restrict=2`, unprivileged BPF disabled). At the user level, `/etc/skel` permissions are ruthlessly locked down (`chmod 700` for directories), ensuring privacy-by-design for every newly provisioned account.
+Ermete OS implements extreme military-grade security defaults, completely overhauling standard Linux paradigms. It ensures maximum operability while remaining an impenetrable fortress.
+
+### 1. Network Stealth & Isolation
+- **Firewall**: Default zone is strictly `drop`. All unsolicited traffic is annihilated without response. mDNS is surgically permitted for local discovery.
+- **Privacy Enforcement**: NetworkManager enforces MAC Address Randomization (`stable`) and IPv6 Privacy (`ipv6.ip6-privacy=2`).
+- **DNS Protection**: `systemd-resolved` strictly uses `DNSOverTLS=opportunistic` and disables local poisoning via `LLMNR=no`.
+
+### 2. Core & Kernel Defenses
+- **Sysctl Hardening**: Mitigates 0-days with `tcp_syncookies=1`, blocks ICMP redirects to prevent MITM attacks, restricts dmesg (`dmesg_restrict=1`), and shields kernel pointers (`kptr_restrict=2`).
+- **Memory Coredumps Disabled**: `systemd-coredump` is neutralized (`Storage=none`, `ProcessSizeMax=0`) to ensure Wayland crashes never leak RAM secrets or cryptographic keys to the disk.
+- **Anti-DoS Journaling**: `systemd-journald` is capped to `500M` and 1-month retention, preventing malicious processes from exhausting the BTRFS root.
+- **SSHD Zero-Trust**: If enabled, SSH rejects root login and completely disables password authentication, requiring modern Pubkey Authentication (Ed25519).
+
+### 3. Local Authentication Sandbox (PAM)
+- **Brute-Force Defense**: `faillock.conf` locks user and root accounts for 15 minutes after 3 failed login attempts.
+- **Password Quality**: `pwquality.conf` enforces a minimum of 14 characters and 3 class types.
+
+### 4. Self-Healing & Resilience
+- **Greenboot Rollbacks**: If the OS fails to reach the network (checked via a 10s cryptographic curl timeout to 1.1.1.1) or the Wayland UI (`greetd`) fails, the system automatically logs the failure and performs a native OSTree rollback to the previous working layer.
+- **BTRFS Snapshots**: Instead of arbitrary timers, `/var/home` backups (`ermete-home-snapshot.service`) are elegantly tied to `ostree-finalize-staged.service`, capturing the state precisely milliseconds before an OTA update is applied.
 
 ---
 
 ## ⚡ Extreme Performance & Wayland Stack
 - **ZRAM Compressed Memory**: 100% RAM allocation dynamically compressed via **ZSTD** (`vm.swappiness=150`).
-- **Network Latency Minimization**: Kernel TCP congestion control is forced to **BBR** combined with `fq_pie` queuing discipline for maximum throughput and minimum bufferbloat.
-- **OOMD Wayland Protection**: Aggressive memory limits are avoided to prevent "Nuke Traps" where the Wayland cgroup collapses under browser RAM spikes.
+- **Systemd User Orchestration**: The Wayland compositor (Niri) does not spawn processes imperatively. Everything is handled cleanly by `systemd --user` binding to `niri-session.target`, ensuring graceful teardown and infinite idempotency.
 - **The Stack**:
-  - Compositor: **Niri** (Scrollable Tiling). Bootstrapped flawlessly via `niri-session` for perfect DBus and XDG-Desktop-Portal integration.
+  - Compositor: **Niri** (Scrollable Tiling). Hardware accelerated with `GBM_BACKEND=nvidia-drm` and `WLR_NO_HARDWARE_CURSORS=1`.
   - Status Bar: **Ironbar** (Floating, transparent).
   - App Launcher: **Anyrun** (Compiled offline dynamically).
   - Terminal: **Alacritty** (GPU-accelerated).
-  - Environment: Complete Wayland/NVIDIA variable injection (`MOZ_ENABLE_WAYLAND=1`, `LIBVA_DRIVER_NAME=nvidia`).
 
 ---
 
 ## 📦 Segregated Software Management
-Due to root immutability, the traditional `.exe` or `dnf install` paradigm is obliterated. Users must adapt to compartmentalized software deployments:
-1. **Graphical Applications**: Exclusively confined to **Flatpak** (via Flathub).
-2. **CLI Utilities**: Managed via **Nix** or **Homebrew** (Zero-Trust mapped into `/var`).
-3. **Destructive Experiments**: Handled via integrated **Distrobox** containers (e.g., disposable Arch Linux shells).
-
-To preserve host purity, the system employs an asynchronous, non-blocking `oneshot` systemd service (`Ermete-firstboot.service`) to install flatpaks. By decoupling the OS boot from the `NetworkManager-wait-online.service`, Ermete OS boots to the desktop in seconds, while Flatseal and core apps are provisioned silently in the background via infinite-loop idempotency.
-
----
-
-## 🛠️ Modifying the OS (IaC)
-You do not modify this OS from the terminal. You sculpt it from the Cloud.
-To change versions or add packages, edit the `Containerfile` or the bash recipes in `build_files/recipes/` and push to GitHub. 
-
-### Local Testing
-Make sure you have `podman` and `just` installed:
-- `just build`: Builds the container image locally.
-- `just run-vm-qcow2`: Compiles a QCOW2 image and boots it instantly via QEMU for rapid testing.
+Due to root immutability, the traditional `.exe` or `dnf install` paradigm is obliterated:
+1. **Graphical Applications**: Exclusively confined to **Flatpak** (via Flathub). Protected globally by `flatpak override --system --device=dri --socket=wayland` to guarantee NVIDIA GPU acceleration and Wayland IPC sandboxing.
+2. **CLI Utilities**: Managed via **Nix** Package Manager (seamlessly exposed in `/etc/profile.d/nix.sh`).
+3. **Destructive Experiments**: Handled via integrated **Distrobox** containers.
 
 ---
 
 ## 🚀 Deployment (Bare Metal Installation)
-Ermete OS is a bootable OCI container. To install it on physical hardware, use one of the following methods:
 
-### Option 1: In-Place Mutation (Recommended)
-If you are currently running a standard Fedora distribution (like Fedora Workstation or Silverblue), you can atomically mutate your root filesystem into Ermete OS:
-```bash
-sudo bootc switch ghcr.io/patapem/ermete
-```
-*Note: Depending on your exact ghcr.io path, verify the repository name.*
+### Zero-Touch Provisioning (Kickstart)
+The repository includes a ready-to-use `ermete-install.ks` Kickstart file, designed for advanced power-users. It allows you to generate an installer ISO that configures the system automatically:
+- Installs via `ostreecontainer` directly from the GitHub Container Registry.
+- Leaves partitioning up to the user, expecting an encrypted **LUKS2** volume and **BTRFS** layout.
+- Disables root passwords and provisions the `wheel` user solely via SSH Ed25519 public keys.
+- Pre-enables firewalld and sshd.
 
-### Option 2: Generate a Bootable ISO
-You can generate a standard `.iso` installer locally using `bootc-image-builder`:
+To generate the ISO using `bootc-image-builder`:
 ```bash
 sudo podman run \
-    --rm \
-    -it \
-    --privileged \
-    --pull=newer \
+    --rm -it --privileged --pull=newer \
     --security-opt label=type:unconfined_t \
     -v $(pwd)/output:/output \
+    -v $(pwd)/ermete-install.ks:/config.ks \
     quay.io/centos-bootc/bootc-image-builder:latest \
-    --type iso \
-    ghcr.io/patapem/ermete:latest
+    --type iso --kickstart /config.ks \
+    ghcr.io/patapem/ermete-os:latest
 ```
-Burn the resulting ISO in the `output/` folder to a USB drive and install normally.
+
+*Note on Encryption:* Once installed, bind your LUKS2 partition to the TPM2 chip for seamless automatic unlocking tied to Secure Boot:
+`sudo systemd-cryptenroll --wipe-slot=tpm2 --tpm2-device=auto --tpm2-pcrs=0+2+7 /dev/mapper/root`
+
+### In-Place Mutation
+If you are currently running Fedora Workstation or Silverblue, atomically mutate your root filesystem:
+```bash
+sudo bootc switch ghcr.io/patapem/ermete-os
+```

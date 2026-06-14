@@ -1,0 +1,12 @@
+[Unit]
+Description=GNOME Keyring Daemon
+PartOf=niri-session.target
+Before=niri-session.target
+
+[Service]
+ExecStart=/usr/bin/gnome-keyring-daemon --start --components=secrets
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=niri-session.target
