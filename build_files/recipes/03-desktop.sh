@@ -9,7 +9,7 @@ echo "--- Applicazione Forzata del Tema Globale GTK ---"
 # La compilazione degli schemi è demandata alla fine dello script per includere i pacchetti successivi.
 
 # Install Niri e dipendenze cursori, temi e font (aggiunto Xwayland per compatibilità assoluta con vecchie app)
-dnf -y install --setopt=install_weak_deps=False niri xorg-x11-server-Xwayland \
+dnf5 -y install --setopt=install_weak_deps=False niri xorg-x11-server-Xwayland \
     papirus-icon-theme adw-gtk3-theme jetbrains-mono-fonts rsms-inter-fonts fontawesome-fonts-all \
     xdg-desktop-portal-gnome xdg-desktop-portal-gtk swaybg gtk-layer-shell
 
@@ -25,7 +25,7 @@ dnf -y install --setopt=install_weak_deps=False niri xorg-x11-server-Xwayland \
 # Ereditata nativamente dal builder multi-stage OCI (Zero-Network-Failure)
 
 # Install Greetd e Tuigreet (Greeter da terminale in Rust)
-dnf -y install --setopt=install_weak_deps=False greetd tuigreet
+dnf5 -y install --setopt=install_weak_deps=False greetd tuigreet
 # Greetd service è abilitato nativamente via system-preset
 
 # Abilitazione Globale Audio Pipewire per la sessione utente (Fondamentale per Wayland/Portals)
@@ -35,3 +35,6 @@ dnf -y install --setopt=install_weak_deps=False greetd tuigreet
 echo "--- Applicazione Forzata del Tema Globale GTK ---"
 # Assicura che i nuovi schemi GTK installati dai pacchetti vengano precalcolati nativamente nel layer
 glib-compile-schemas /usr/share/glib-2.0/schemas/
+
+# Pulizia estrema del layer
+dnf5 clean all

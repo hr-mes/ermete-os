@@ -32,7 +32,7 @@ RUN dnf -y install --setopt=install_weak_deps=False rust cargo gcc gcc-c++ pkgco
 
 # Variabili d'ambiente per Overclocking Rust
 ENV CARGO_HOME=/usr/local/cargo
-ENV RUSTFLAGS="-C link-arg=-fuse-ld=mold"
+ENV RUSTFLAGS="-C target-cpu=x86-64-v3 -C link-arg=-fuse-ld=mold"
 
 RUN mkdir -p /out/bin /out/lib64/anyrun
 
@@ -73,18 +73,24 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry,id=registry-anyrun \
 # Builder Bibata Cursor (Zero-Network-Failure OCI layer)
 FROM build-base AS build-bibata
 ARG BIBATA_VER
+# SHA256 checksum for v2.0.7
+ARG BIBATA_SHA256="7d3495864e5bbef02f5e77de760b2905903b63c71495a78ef6306d19a3b556d8"
 RUN mkdir -p /out/icons && \
     curl -sLO "https://github.com/ful1e5/Bibata_Cursor/releases/download/${BIBATA_VER}/Bibata-Modern-Classic.tar.xz" && \
+    echo "${BIBATA_SHA256}  Bibata-Modern-Classic.tar.xz" | sha256sum -c - && \
     tar -xJ --no-same-owner -C /out/icons -f Bibata-Modern-Classic.tar.xz
 
 # Fase C: Costruzione Link Simbolici (Dichiaratività Systemd)
 FROM build-base AS build-symlinks
-RUN mkdir -p /out/etc/systemd/system /out/usr/lib && \
+RUN mkdir -p /out/etc/systemd/system /out/usr/lib/systemd/user/niri-session.target.wants && \
     ln -sf /usr/lib/systemd/system/graphical.target /out/etc/systemd/system/default.target && \
-    ln -sf /usr/lib64/anyrun /out/usr/lib/anyrun
+    ln -sf /usr/lib64/anyrun /out/usr/lib/anyrun && \
+    ln -sf /usr/lib/systemd/user/ironbar.service /out/usr/lib/systemd/user/niri-session.target.wants/ironbar.service && \
+    ln -sf /usr/lib/systemd/user/swaybg.service /out/usr/lib/systemd/user/niri-session.target.wants/swaybg.service && \
+    ln -sf /usr/lib/systemd/user/lxpolkit.service /out/usr/lib/systemd/user/niri-session.target.wants/lxpolkit.service
 
 # --- IMMAGINE FINALE (PRODUZIONE) ---
-FROM ghcr.io/patapem/ermete-base-nvidia:latest
+FROM ghcr.io/patapem/ermete-base-nvidia@sha256:95de227f6f78a1561bec35b59e7709bd2c21656778fa47878633f03741bc3fc4
 ARG BIBATA_VER
 
 # Copia i binari purificati dai rispettivi branch paralleli (Hardening Deterministico)
@@ -101,6 +107,11 @@ COPY --from=build-bibata /out/icons/Bibata-Modern-Classic /usr/share/icons/Bibat
 COPY --chown=0:0 system_files /
 COPY --from=build-symlinks /out/etc /etc
 COPY --from=build-symlinks /out/usr/lib/ /usr/lib/
+
+# Fissiamo i permessi di /etc/skel nativamente nell'immagine OCI (Zero-Boot-Delay)
+# Questo rimpiazza l'errato uso di tmpfiles.d che avrebbe rallentato il boot e corrotto i bit di esecuzione
+RUN find /etc/skel -type d -exec chmod 0700 {} + && \
+    find /etc/skel -type f -exec chmod 0600 {} +
 
 # Execute all modular scripts sequentially in a single transaction to prevent OCI layer bloat
 # and preserve atomicity of the RPM database.
@@ -121,9 +132,7 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 # RUN tar -xzf /path/to/assets.tar.gz -C /usr/share/backgrounds/ermete --no-same-owner
 
 ### PRIVACY SANDBOXING (/etc/skel)
-# Imponiamo rigorose policy UNIX per prevenire data leak tra sessioni
-RUN find /etc/skel -type d -exec chmod 700 {} \+ && \
-    find /etc/skel -type f -exec chmod 600 {} \+
+# Le policy UNIX paranoiche sono fissate nativamente nel Containerfile.
 
 ### NIX MOUNTPOINT (Immutability Fix)
 # Creiamo il mountpoint vuoto sul rootfs immutabile per permettere a nix.mount

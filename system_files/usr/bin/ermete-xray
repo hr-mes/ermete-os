@@ -1,8 +1,10 @@
 #!/bin/bash
-# Ermete OS: Supreme Omni-Vision Diagnostic Tool (X-Ray)
+# ==============================================================================
+# ERMETE OS: SUPREME OMNI-VISION DIAGNOSTIC TOOL (X-RAY)
 # Fornisce una scansione a raggi X verticale (dal kernel allo userspace) e orizzontale (isolamento e network)
+# ==============================================================================
 
-set -e
+set -eo pipefail
 LOG_FILE="/var/log/ermete-xray-$(date +%Y%m%d_%H%M%S).log"
 
 # Colori per UX
@@ -10,79 +12,117 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
 NC='\033[0m'
 
 exec > >(tee -a "$LOG_FILE") 2>&1
 
 echo -e "${BLUE}======================================================${NC}"
-echo -e "${BLUE}     Ermete OS - Supreme Omni-Vision Diagnostic       ${NC}"
+echo -e "${BLUE}     🦅 ERMETE OS - SUPREME OMNI-VISION X-RAY         ${NC}"
 echo -e "${BLUE}======================================================${NC}"
-echo "Timestamp: $(date)"
-echo "Kernel: $(uname -r)"
+echo -e "${CYAN}Timestamp:${NC} $(date --rfc-3339=seconds)"
+echo -e "${CYAN}Kernel:${NC} $(uname -r)"
 
-echo -e "\n${YELLOW}--- 1. VERTICAL VISION: OCI/Bootc Lifecycle ---${NC}"
+echo -e "\n${YELLOW}--- 1. VERTICAL VISION: OCI & IMMUTABILITY LIFECYCLE ---${NC}"
 if command -v bootc >/dev/null 2>&1; then
     bootc status || echo -e "${RED}Errore nella lettura dello stato bootc${NC}"
 else
     echo "bootc non installato o non supportato in questo layer."
 fi
+echo -e "\n>>> ${CYAN}OSTree Mutated Configs (/etc Diffing):${NC}"
+ostree admin config-diff || echo -e "${GREEN}Nessuna deviazione in /etc. Il sistema è puro.${NC}"
+echo -e "\n>>> ${CYAN}DNF / RPM Atomic Tree Status:${NC}"
+rpm-ostree status -v || true
+echo -e "\n>>> ${CYAN}GPG Trust Anchors (Local):${NC}"
+ls -lZ /etc/pki/rpm-gpg/ || true
 
-echo -e "\n${YELLOW}--- 2. BOOT PERFORMANCE & SYSTEMD ---${NC}"
+echo -e "\n${YELLOW}--- 2. BOOT PERFORMANCE & SYSTEMD (SYSTEM) ---${NC}"
 systemd-analyze || true
-echo "Top 5 colli di bottiglia all'avvio:"
+echo -e "\n>>> ${CYAN}Top 5 colli di bottiglia all'avvio:${NC}"
 systemd-analyze blame | head -n 5 || true
-echo "Servizi falliti:"
-systemctl --failed || echo "Nessun servizio fallito."
+echo -e "\n>>> ${CYAN}Servizi di Sistema Falliti:${NC}"
+systemctl --failed || echo -e "${GREEN}Nessun servizio di sistema fallito.${NC}"
 
 echo -e "\n${YELLOW}--- 3. ZERO-TRUST & SECURITY (SELinux) ---${NC}"
-sestatus | grep "SELinux status"
-echo "Ultime violazioni SELinux (AVC Denials):"
+sestatus | grep -E "SELinux status|Current mode"
+echo -e "\n>>> ${CYAN}SELinux Booleans Critici:${NC}"
+getsebool -a | grep -E "wayland|nvidia|execmem|mmap_zero" || true
+echo -e "\n>>> ${CYAN}Ultime violazioni SELinux (AVC Denials letali):${NC}"
 if command -v ausearch >/dev/null 2>&1; then
-    ausearch -m AVC,USER_AVC -ts recent --raw | audit2allow || echo "Nessuna violazione recente."
+    ausearch -m AVC,USER_AVC -ts recent --raw | audit2allow || echo -e "${GREEN}Nessun AVC recente.${NC}"
 else
     echo "ausearch non disponibile."
 fi
 
-echo -e "\n${YELLOW}--- 4. HARDWARE & KERNEL (NVIDIA & DRM) ---${NC}"
+echo -e "\n${YELLOW}--- 4. HARDWARE, DRM & NVIDIA GBM ---${NC}"
+echo -e ">>> ${CYAN}Kernel Kargs (Modesetting & IOMMU):${NC}"
+cat /proc/cmdline
+echo -e "\n>>> ${CYAN}NVIDIA DKMS & Moduli:${NC}"
 if lsmod | grep -q nvidia; then
     echo -e "${GREEN}Moduli NVIDIA caricati correttamente.${NC}"
     nvidia-smi --query-gpu=driver_version,name,temperature.gpu --format=csv,noheader || true
 else
     echo -e "${RED}Attenzione: Modulo NVIDIA non caricato.${NC}"
 fi
-echo "Nodi DRM disponibili:"
-ls -l /dev/dri/ || true
+echo -e "\n>>> ${CYAN}Nodi DRM Pipeline disponibili:${NC}"
+ls -lZ /dev/dri/ || true
 
-echo -e "\n${YELLOW}--- 5. SCHEDULING (SCX / BORE) ---${NC}"
+echo -e "\n${YELLOW}--- 5. SCHEDULING & KERNEL TRACING (SCX / eBPF) ---${NC}"
 if systemctl is-active --quiet scx; then
     echo -e "${GREEN}eBPF SCX Scheduler (scx) è ATTIVO.${NC}"
 else
     echo -e "${RED}eBPF SCX Scheduler NON attivo o assente.${NC}"
 fi
-
-echo -e "\n${YELLOW}--- 6. HORIZONTAL VISION: UX & Wayland ---${NC}"
-echo "Wayland Display: ${WAYLAND_DISPLAY:-N/A}"
-if command -v niri >/dev/null 2>&1; then
-    if [ "$EUID" -eq 0 ] && [ -z "$WAYLAND_DISPLAY" ]; then
-        # Risoluzione pulita della sessione attiva (evita IPC drops da root)
-        ACTIVE_USER=$(loginctl list-sessions --no-legend | awk '$3 != "root" {print $3}' | head -n 1)
-        if [ -n "$ACTIVE_USER" ]; then
-            ACTIVE_UID=$(id -u "$ACTIVE_USER")
-            su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID WAYLAND_DISPLAY=wayland-1 niri msg focused-window >/dev/null 2>&1" && echo -e "${GREEN}Niri IPC accessibile (Risolto via XDG_RUNTIME_DIR proxy).${NC}" || echo -e "${RED}Niri IPC irraggiungibile: socket morto.${NC}"
-        else
-            echo "Nessuna sessione Niri attiva rilevata per l'utente."
-        fi
-    else
-        niri msg focused-window >/dev/null 2>&1 && echo -e "${GREEN}Niri IPC accessibile nativamente.${NC}" || echo -e "${RED}Niri IPC non accessibile (socket drop).${NC}"
-    fi
+echo -e "\n>>> ${CYAN}eBPF Loaded Programs (Kernel Tracing):${NC}"
+if command -v bpftool >/dev/null 2>&1; then
+    bpftool prog show || echo -e "${RED}Errore nella lettura eBPF.${NC}"
+else
+    echo -e "${YELLOW}bpftool assente. (Installato in base, non in layer utente?).${NC}"
 fi
 
-echo -e "\n${YELLOW}--- 7. IMMUTABILITY & NAMESPACES (Flatpak / Nix) ---${NC}"
-echo "Flatpak Runtimes Installati:"
+echo -e "\n${YELLOW}--- 6. HORIZONTAL VISION: WAYLAND & SYSTEMD USER ---${NC}"
+echo -e ">>> ${CYAN}Wayland Environment Check:${NC}"
+env | grep -iE "XDG_SESSION_TYPE|WAYLAND_DISPLAY|WLR_NO_HARDWARE_CURSORS|GBM_BACKEND|MOZ_ENABLE_WAYLAND" || true
+
+echo -e "\n>>> ${CYAN}Systemd-User Failed Units (Sessione Utente):${NC}"
+# Usa proxy su loginctl per recuperare l'UID utente se eseguito da root
+ACTIVE_USER=$(loginctl list-sessions --no-legend | awk '$3 != "root" {print $3}' | head -n 1)
+if [ -n "$ACTIVE_USER" ]; then
+    ACTIVE_UID=$(id -u "$ACTIVE_USER")
+    echo -e "Analisi Sessione per utente: $ACTIVE_USER (UID $ACTIVE_UID)"
+    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user --failed" || true
+    
+    echo -e "\n>>> ${CYAN}Target Chiave e DBus Session Tree:${NC}"
+    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user status niri-session.target pipewire.service xdg-desktop-portal.service --no-pager" || true
+    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID busctl --user tree org.freedesktop.portal.Desktop" || echo -e "${RED}XDG Portal non agganciato.${NC}"
+    
+    echo -e "\n>>> ${CYAN}Niri IPC Socket Check:${NC}"
+    if command -v niri >/dev/null 2>&1; then
+        su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID WAYLAND_DISPLAY=wayland-1 niri msg focused-window >/dev/null 2>&1" && echo -e "${GREEN}Niri IPC accessibile nativamente.${NC}" || echo -e "${RED}Niri IPC irraggiungibile: socket drop.${NC}"
+    fi
+else
+    echo -e "${YELLOW}Nessuna sessione utente attiva rilevata (Eseguito in TTY di emergenza?).${NC}"
+fi
+
+echo -e "\n>>> ${CYAN}Polkit Agent Authentication:${NC}"
+pgrep -lfa polkit || echo -e "${RED}ATTENZIONE: Nessun Polkit Agent in esecuzione!${NC}"
+
+echo -e "\n${YELLOW}--- 7. PRIVACY SANDBOXING & IMMUTABILITY (Skel & FS) ---${NC}"
+echo -e ">>> ${CYAN}Skel & Home Directory Permissions (Strict 700/600):${NC}"
+stat -c "%A %U:%G %n" /etc/skel /var/home/$USER ~/.config/niri/config.kdl 2>/dev/null || true
+
+echo -e "\n>>> ${CYAN}Flatpak Runtimes & Nix Daemon:${NC}"
+echo -n "Flatpak Runtimes Installati: "
 flatpak list --runtime --columns=application | wc -l || echo 0
-echo "Stato Nix Daemon:"
+echo -n "Stato Nix Daemon: "
 systemctl is-active nix-daemon.socket || echo "Non attivo"
 
+echo -e "\n${YELLOW}--- 8. ZERO-TRUST NETWORK POSTURE ---${NC}"
+echo -e ">>> ${CYAN}Nftables Pure Ruleset (Silently Dropping):${NC}"
+nft list ruleset || echo "nftables disabilitato o non in uso."
+echo -e "\n>>> ${CYAN}DNS-over-TLS & Link Status:${NC}"
+resolvectl status | grep -E "DNS|Protocols" || true
+
 echo -e "\n${BLUE}======================================================${NC}"
-echo -e "${GREEN}Diagnostica completata. Log salvato in: $LOG_FILE${NC}"
+echo -e "${GREEN}Diagnostica completata. Log protetto salvato in: $LOG_FILE${NC}"
 echo -e "${BLUE}======================================================${NC}"

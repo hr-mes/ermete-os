@@ -7,5 +7,10 @@ ConditionPathExists=/var/home
 Type=oneshot
 ExecStart=/usr/libexec/ermete-snapshot.sh
 
+# Ottimizzazione Prestazionale: Snapshot in Background Assoluto
+IOSchedulingClass=idle
+CPUSchedulingPolicy=idle
+Nice=19
+
 [Install]
 WantedBy=ostree-finalize-staged.service

@@ -13,11 +13,11 @@ echo "--- Configuring DNF and installing base system packages ---"
 # Libvirt e virt-manager mantenuti per workflow utente quotidiano
 # Aggiunti greenboot e greenboot-default-health-checks consolidati dagli script deprecati
 
-dnf -y install --setopt=install_weak_deps=False libvirt virt-manager qemu-kvm wlr-randr sysstat lxqt-openssh-askpass lxpolkit parallel just seahorse gnome-keyring network-manager-applet blueman playerctl brightnessctl alacritty nix greenboot greenboot-default-health-checks bpftool drm_info nftables wayland-utils
-dnf -y install --setopt=install_weak_deps=False swaylock # Dipendenza critica per il blocco schermo di Niri
+dnf5 -y install --setopt=install_weak_deps=False libvirt virt-manager qemu-kvm wlr-randr sysstat lxqt-openssh-askpass lxpolkit parallel just seahorse gnome-keyring network-manager-applet blueman playerctl brightnessctl alacritty nix greenboot greenboot-default-health-checks bpftool drm_info nftables wayland-utils
+dnf5 -y install --setopt=install_weak_deps=False swaylock # Dipendenza critica per il blocco schermo di Niri
 
 # Core Utilities in Rust (Il nuovo stack)
-dnf -y install --setopt=install_weak_deps=False eza bat fd-find ripgrep nushell neovim ananicy-cpp
+dnf5 -y install --setopt=install_weak_deps=False eza bat fd-find ripgrep nushell neovim ananicy-cpp
 
 # Installazione di Starship e Bottom ora delegata al processo nativo Cargo (vedi 03-desktop.sh)
 
@@ -29,4 +29,4 @@ dnf -y install --setopt=install_weak_deps=False eza bat fd-find ripgrep nushell 
 echo "--- Fixing critical UNIX groups for Wayland/udev via sysusers ---"
 
 # Inneschiamo esplicitamente sysusers per assicurarci che anche systemd applichi i suoi default
-systemd-sysusers || true
+systemd-sysusers
