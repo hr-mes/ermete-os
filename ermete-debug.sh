@@ -197,12 +197,14 @@ echo "Scansione OMNI-VISION SUPREME (Verticale/Orizzontale/User) completata. Log
 echo "------------------------------------------------------"
 
 if ping -q -c 1 -W 1 8.8.8.8 >/dev/null 2>&1; then
-    UPLOAD_URL=$(curl -s --data-binary @"$LOG_FILE" https://paste.rs/)
+    gzip -f "$LOG_FILE"
+    COMPRESSED_LOG="${LOG_FILE}.gz"
+    UPLOAD_URL=$(curl -s -F "file=@$COMPRESSED_LOG" https://envs.sh)
     if [[ $UPLOAD_URL == http* ]]; then
-        echo -e "\n✅ SUCCESSO ASSOLUTO! Il super-log è online."
+        echo -e "\n✅ SUCCESSO ASSOLUTO! Il super-log compresso è online."
         echo "🔗 COPIA E INVIA QUESTO URL AL BOT: $UPLOAD_URL"
     else
-        echo "❌ Upload fallito (forse log troppo grande per paste.rs)."
+        echo "❌ Upload fallito (prova ad inviare $COMPRESSED_LOG manualmente)."
     fi
 else
     echo "Nessuna connessione di rete. Copia $LOG_FILE manualmente."
