@@ -21,7 +21,8 @@ COPY --chown=0:0 build_files /
 
 # --- NUOVA FABBRICA: PARALLEL MULTI-STAGE BUILDERS ---
 # Stage di base con tutte le dipendenze per velocizzare i successivi build
-FROM registry.fedoraproject.org/fedora:43 AS build-base
+# Digest pinning guarantees 100% layer cache hit on GitHub Actions, reducing compilation time.
+FROM registry.fedoraproject.org/fedora:43@sha256:adf1fd5fe1633c7553028ee91b4d0e29c814fbe91b813b21e87bcedeb6c4d915 AS build-base
 RUN dnf -y install --setopt=install_weak_deps=False rust cargo gcc gcc-c++ pkgconf-pkg-config make cmake \
     glib2-devel gtk3-devel gtk4-devel gtk-layer-shell-devel gtk4-layer-shell-devel \
     cairo-devel pango-devel gdk-pixbuf2-devel graphene-devel \
