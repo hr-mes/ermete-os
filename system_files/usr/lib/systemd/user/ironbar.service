@@ -1,7 +1,7 @@
 [Unit]
 Description=Ironbar (Wayland Status Bar)
 PartOf=niri-session.target
-After=niri-session.target
+After=graphical-session-pre.target
 
 [Service]
 Type=simple

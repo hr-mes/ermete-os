@@ -1,7 +1,7 @@
 [Unit]
 Description=Blueman Applet
 PartOf=niri-session.target
-After=niri-session.target
+After=graphical-session-pre.target
 
 [Service]
 ExecStart=/usr/bin/blueman-applet
