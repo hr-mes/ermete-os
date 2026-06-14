@@ -90,7 +90,7 @@ RUN mkdir -p /out/etc/systemd/system /out/usr/lib/systemd/user/niri-session.targ
     ln -sf /usr/lib/systemd/user/lxpolkit.service /out/usr/lib/systemd/user/niri-session.target.wants/lxpolkit.service
 
 # --- IMMAGINE FINALE (PRODUZIONE) ---
-FROM ghcr.io/patapem/ermete-base-nvidia@sha256:95de227f6f78a1561bec35b59e7709bd2c21656778fa47878633f03741bc3fc4
+FROM ghcr.io/patapem/ermete-base-nvidia:latest
 ARG BIBATA_VER
 
 # Copia i binari purificati dai rispettivi branch paralleli (Hardening Deterministico)
