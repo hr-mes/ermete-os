@@ -1,0 +1,13 @@
+enable greetd.service
+enable podman.socket
+disable systemd-oomd.service
+enable bootc-fetch-apply.timer
+disable NetworkManager-wait-online.service
+enable firewalld.service
+enable btrfs-maintenance.timer
+enable fstrim.timer
+enable ermete-home-snapshot.service
+enable scx.service
+enable ananicy-cpp.service
+enable fwupd.service
+enable Ermete-firstboot.service

@@ -1,0 +1,11 @@
+[Unit]
+Description=Ermete OS - Auto Btrfs Snapshot for /var/home
+Before=ostree-finalize-staged.service
+ConditionPathExists=/var/home
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/ermete-snapshot.sh
+
+[Install]
+WantedBy=ostree-finalize-staged.service

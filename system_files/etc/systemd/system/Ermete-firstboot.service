@@ -1,0 +1,14 @@
+[Unit]
+Description=Ermete First Boot Setup (Install Flatpaks)
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=!/var/lib/ermete-firstboot-done
+
+[Service]
+Type=simple
+ExecStart=/usr/libexec/ermete-firstboot.sh
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

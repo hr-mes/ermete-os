@@ -1,0 +1,10 @@
+[Unit]
+Description=Monthly BTRFS Maintenance Timer
+
+[Timer]
+OnCalendar=monthly
+AccuracySec=1d
+Persistent=true
+
+[Install]
+WantedBy=timers.target
