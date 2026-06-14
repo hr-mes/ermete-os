@@ -15,15 +15,11 @@ mkdir -p /etc/greetd
 
 systemctl set-default graphical.target
 
-# Copy all dotfiles to skel
-mkdir -p /etc/skel/.config/
-cp -rf /ctx/dot_config/* /etc/skel/.config/
+# Configurazione Starship e Dotfiles utente
+# Sono stati tutti migrati nativamente nella gerarchia OCI /system_files/etc/skel/ e /system_files/etc/profile.d/
 
-# Crea la directory degli screenshot per i nuovi utenti
-mkdir -p /etc/skel/Pictures/Screenshots
-
-# Abilita Starship (Prompt in Rust) globalmente per le shell compatibili
-echo 'eval "$(starship init bash)"' > /etc/profile.d/starship.sh
+# Ripristina permessi di esecuzione per gli script migrati nativamente
+chmod +x /usr/libexec/ermete-snapshot.sh || true
 
 # Manutenzione BTRFS e System Limits delegati a /system_files/
 
