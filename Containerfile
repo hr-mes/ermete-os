@@ -87,27 +87,20 @@ RUN mkdir -p /out/etc/systemd/system /out/usr/lib && \
 FROM ghcr.io/patapem/ermete-base-nvidia:latest
 ARG BIBATA_VER
 
-# Copia i binari purificati dai rispettivi branch paralleli
-COPY --from=build-starship /out/bin/starship /usr/bin/
-COPY --from=build-bottom /out/bin/btm /usr/bin/
-COPY --from=build-ironbar /out/bin/ironbar /usr/bin/
-COPY --from=build-anyrun /out/bin/anyrun /usr/bin/
-COPY --from=build-anyrun /out/lib64/anyrun /usr/lib64/anyrun
+# Copia i binari purificati dai rispettivi branch paralleli (Hardening Deterministico)
+COPY --from=build-starship --chown=0:0 --chmod=755 /out/bin/starship /usr/bin/
+COPY --from=build-bottom --chown=0:0 --chmod=755 /out/bin/btm /usr/bin/
+COPY --from=build-ironbar --chown=0:0 --chmod=755 /out/bin/ironbar /usr/bin/
+COPY --from=build-anyrun --chown=0:0 --chmod=755 /out/bin/anyrun /usr/bin/
+COPY --from=build-anyrun --chown=0:0 --chmod=755 /out/lib64/anyrun /usr/lib64/anyrun
 
 # Copia asset immutabili
 COPY --from=build-bibata /out/icons/Bibata-Modern-Classic /usr/share/icons/Bibata-Modern-Classic
-
-# Copy Homebrew files from the brew image
-# FIX: Aggiunto --chown=0:0 per coerenza di sicurezza sui binari iniettati
-COPY --from=ghcr.io/ublue-os/brew@sha256:5228826790d13d5e265f1fdbb41b65e3fac20361ee0d31b2fd496d81e1db14f6 --chown=0:0 /system_files /
 
 # Iniettiamo la gerarchia nativa OCI delle configurazioni statiche (Zero-Echo) e i symlink precalcolati
 COPY --chown=0:0 system_files /
 COPY --from=build-symlinks /out/etc /etc
 COPY --from=build-symlinks /out/usr/lib/ /usr/lib/
-
-# I servizi e i timer di Brew sono abilitati nativamente in modo dichiarativo 
-# tramite /system_files/usr/lib/systemd/system-preset/99-Ermete.preset
 
 # Execute all modular scripts sequentially in a single transaction to prevent OCI layer bloat
 # and preserve atomicity of the RPM database.
@@ -126,6 +119,16 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 # per evitare LPE e layer bloat imperativo.
 # NOTA: Per scompattare eventuali archivi futuri, usare SEMPRE:
 # RUN tar -xzf /path/to/assets.tar.gz -C /usr/share/backgrounds/ermete --no-same-owner
+
+### PRIVACY SANDBOXING (/etc/skel)
+# Imponiamo rigorose policy UNIX per prevenire data leak tra sessioni
+RUN find /etc/skel -type d -exec chmod 700 {} \+ && \
+    find /etc/skel -type f -exec chmod 600 {} \+
+
+### NIX MOUNTPOINT (Immutability Fix)
+# Creiamo il mountpoint vuoto sul rootfs immutabile per permettere a nix.mount
+# di montare /var/opt/nix al boot. Senza questo, il demone fallirebbe.
+RUN mkdir -p /nix
 
 ### LINTING
 ## Verify final image and contents are correct.

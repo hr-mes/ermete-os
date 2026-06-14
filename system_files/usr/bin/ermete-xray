@@ -63,7 +63,18 @@ fi
 echo -e "\n${YELLOW}--- 6. HORIZONTAL VISION: UX & Wayland ---${NC}"
 echo "Wayland Display: ${WAYLAND_DISPLAY:-N/A}"
 if command -v niri >/dev/null 2>&1; then
-    niri msg focused-window 2>/dev/null || echo "Niri IPC non accessibile (eseguito da tty o root?)"
+    if [ "$EUID" -eq 0 ] && [ -z "$WAYLAND_DISPLAY" ]; then
+        # Risoluzione pulita della sessione attiva (evita IPC drops da root)
+        ACTIVE_USER=$(loginctl list-sessions --no-legend | awk '$3 != "root" {print $3}' | head -n 1)
+        if [ -n "$ACTIVE_USER" ]; then
+            ACTIVE_UID=$(id -u "$ACTIVE_USER")
+            su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID WAYLAND_DISPLAY=wayland-1 niri msg focused-window >/dev/null 2>&1" && echo -e "${GREEN}Niri IPC accessibile (Risolto via XDG_RUNTIME_DIR proxy).${NC}" || echo -e "${RED}Niri IPC irraggiungibile: socket morto.${NC}"
+        else
+            echo "Nessuna sessione Niri attiva rilevata per l'utente."
+        fi
+    else
+        niri msg focused-window >/dev/null 2>&1 && echo -e "${GREEN}Niri IPC accessibile nativamente.${NC}" || echo -e "${RED}Niri IPC non accessibile (socket drop).${NC}"
+    fi
 fi
 
 echo -e "\n${YELLOW}--- 7. IMMUTABILITY & NAMESPACES (Flatpak / Nix) ---${NC}"
