@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# ERMETE OS: SUPREME OMNI-VISION DIAGNOSTIC TOOL (X-RAY)
+# ERMETE OS: SUPREME OMNI-VISION DIAGNOSTIC TOOL (X-RAY) v2.0
 # Fornisce una scansione a raggi X verticale (dal kernel allo userspace) e orizzontale (isolamento e network)
 # ==============================================================================
 
@@ -18,7 +18,7 @@ NC='\033[0m'
 exec > >(tee -a "$LOG_FILE") 2>&1
 
 echo -e "${BLUE}======================================================${NC}"
-echo -e "${BLUE}     🦅 ERMETE OS - SUPREME OMNI-VISION X-RAY         ${NC}"
+echo -e "${BLUE}     🦅 ERMETE OS - SUPREME OMNI-VISION X-RAY v2.0    ${NC}"
 echo -e "${BLUE}======================================================${NC}"
 echo -e "${CYAN}Timestamp:${NC} $(date --rfc-3339=seconds)"
 echo -e "${CYAN}Kernel:${NC} $(uname -r)"
@@ -35,6 +35,8 @@ echo -e "\n>>> ${CYAN}DNF / RPM Atomic Tree Status:${NC}"
 rpm-ostree status -v || true
 echo -e "\n>>> ${CYAN}GPG Trust Anchors (Local):${NC}"
 ls -lZ /etc/pki/rpm-gpg/ || true
+echo -e "\n>>> ${CYAN}Storage & Overlay FS Status:${NC}"
+df -hT / /var /usr /etc || true
 
 echo -e "\n${YELLOW}--- 2. BOOT PERFORMANCE & SYSTEMD (SYSTEM) ---${NC}"
 systemd-analyze || true
@@ -43,7 +45,7 @@ systemd-analyze blame | head -n 5 || true
 echo -e "\n>>> ${CYAN}Servizi di Sistema Falliti:${NC}"
 systemctl --failed || echo -e "${GREEN}Nessun servizio di sistema fallito.${NC}"
 
-echo -e "\n${YELLOW}--- 3. ZERO-TRUST & SECURITY (SELinux) ---${NC}"
+echo -e "\n${YELLOW}--- 3. ZERO-TRUST & SECURITY (SELinux & CoreDumps) ---${NC}"
 sestatus | grep -E "SELinux status|Current mode"
 echo -e "\n>>> ${CYAN}SELinux Booleans Critici:${NC}"
 getsebool -a | grep -E "wayland|nvidia|execmem|mmap_zero" || true
@@ -52,6 +54,10 @@ if command -v ausearch >/dev/null 2>&1; then
     ausearch -m AVC,USER_AVC -ts recent --raw | audit2allow || echo -e "${GREEN}Nessun AVC recente.${NC}"
 else
     echo "ausearch non disponibile."
+fi
+echo -e "\n>>> ${CYAN}Core Dumps Recenti (Segfaults / Crash):${NC}"
+if command -v coredumpctl >/dev/null 2>&1; then
+    coredumpctl list --no-pager | tail -n 10 || echo -e "${GREEN}Nessun coredump registrato. Il sistema non ha crashato.${NC}"
 fi
 
 echo -e "\n${YELLOW}--- 4. HARDWARE, DRM & NVIDIA GBM ---${NC}"
@@ -66,6 +72,8 @@ else
 fi
 echo -e "\n>>> ${CYAN}Nodi DRM Pipeline disponibili:${NC}"
 ls -lZ /dev/dri/ || true
+echo -e "\n>>> ${CYAN}Hardware/Firmware Errors (Dmesg CRIT/ERR):${NC}"
+dmesg -l err,crit,alert,emerg | tail -n 15 || echo -e "${GREEN}Nessun errore critico firmware/hardware.${NC}"
 
 echo -e "\n${YELLOW}--- 5. SCHEDULING & KERNEL TRACING (SCX / eBPF) ---${NC}"
 if systemctl is-active --quiet scx; then
@@ -84,14 +92,19 @@ echo -e "\n${YELLOW}--- 6. HORIZONTAL VISION: WAYLAND & SYSTEMD USER ---${NC}"
 echo -e ">>> ${CYAN}Wayland Environment Check:${NC}"
 env | grep -iE "XDG_SESSION_TYPE|WAYLAND_DISPLAY|WLR_NO_HARDWARE_CURSORS|GBM_BACKEND|MOZ_ENABLE_WAYLAND" || true
 
-echo -e "\n>>> ${CYAN}Systemd-User Failed Units (Sessione Utente):${NC}"
-# Usa proxy su loginctl per recuperare l'UID utente se eseguito da root
 ACTIVE_USER=$(loginctl list-sessions --no-legend | awk '$3 != "root" {print $3}' | head -n 1)
 if [ -n "$ACTIVE_USER" ]; then
     ACTIVE_UID=$(id -u "$ACTIVE_USER")
+    echo -e "\n>>> ${CYAN}Wayland Sockets in /run/user/$ACTIVE_UID:${NC}"
+    ls -l /run/user/$ACTIVE_UID/wayland-* 2>/dev/null || echo -e "${RED}Nessun socket Wayland trovato! Il compositor non sta girando.${NC}"
+
+    echo -e "\n>>> ${CYAN}Systemd-User Failed Units (Sessione Utente):${NC}"
     echo -e "Analisi Sessione per utente: $ACTIVE_USER (UID $ACTIVE_UID)"
     su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user --failed" || true
     
+    echo -e "\n>>> ${CYAN}Systemd-User Journal Errors (Ultimi 15, Priorità 3):${NC}"
+    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID journalctl --user -p 3 -b --no-pager -n 15" || true
+
     echo -e "\n>>> ${CYAN}Target Chiave e DBus Session Tree:${NC}"
     su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user status niri-session.target pipewire.service xdg-desktop-portal.service --no-pager" || true
     su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID busctl --user tree org.freedesktop.portal.Desktop" || echo -e "${RED}XDG Portal non agganciato.${NC}"
@@ -117,7 +130,13 @@ flatpak list --runtime --columns=application | wc -l || echo 0
 echo -n "Stato Nix Daemon: "
 systemctl is-active nix-daemon.socket || echo "Non attivo"
 
-echo -e "\n${YELLOW}--- 8. ZERO-TRUST NETWORK POSTURE ---${NC}"
+echo -e "\n${YELLOW}--- 8. CRITICAL LOGS: SYSTEMD & OOM KILLER ---${NC}"
+echo -e ">>> ${CYAN}System Journal Errors (Ultimi 15, Priorità 3):${NC}"
+journalctl -p 3 -b --no-pager -n 15 || true
+echo -e "\n>>> ${CYAN}OOM Killer Events (Out Of Memory):${NC}"
+dmesg -T | grep -i oom || echo -e "${GREEN}Nessun OOM Kill rilevato.${NC}"
+
+echo -e "\n${YELLOW}--- 9. ZERO-TRUST NETWORK POSTURE ---${NC}"
 echo -e ">>> ${CYAN}Nftables Pure Ruleset (Silently Dropping):${NC}"
 nft list ruleset || echo "nftables disabilitato o non in uso."
 echo -e "\n>>> ${CYAN}DNS-over-TLS & Link Status:${NC}"
