@@ -1,0 +1,10 @@
+[Unit]
+Description=Watch for Ermete OS Firstboot Completion
+ConditionPathExists=!/var/lib/ermete-firstboot-done
+
+[Path]
+PathExists=/var/lib/ermete-firstboot-done
+Unit=ermete-firstboot-notification.service
+
+[Install]
+WantedBy=graphical-session.target

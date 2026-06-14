@@ -122,8 +122,8 @@ hotkey-overlay {
     // skip-at-startup
 }
 
-spawn-at-startup "sh" "-c" "if [ ! -f /var/lib/ermete-firstboot-done ]; then notify-send 'Ermete OS' 'Download app essenziali in background...' -t 15000; fi"
-spawn-at-startup "sh" "-c" "if [ ! -f /var/lib/ermete-firstboot-done ]; then while [ ! -f /var/lib/ermete-firstboot-done ]; do sleep 3; done; notify-send 'Ermete OS' 'Installazione Flatpak completata!' -u normal; fi"
+// La notifica di primo avvio è ora nativamente gestita da systemd user units 
+// (ermete-firstboot-notification.path/service) senza polling imperativo.
 spawn-at-startup "flatpak" "run" "--command=easyeffects" "com.github.wwmm.easyeffects" "--gapplication-service"
 spawn-at-startup "gnome-keyring-daemon" "--start" "--components=secrets"
 spawn-at-startup "dbus-update-activation-environment" "--systemd" "WAYLAND_DISPLAY" "XDG_CURRENT_DESKTOP=niri"

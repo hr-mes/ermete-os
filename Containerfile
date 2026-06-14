@@ -111,17 +111,12 @@ COPY --from=build-symlinks /out/usr/lib/anyrun /usr/lib/anyrun
 # I servizi e i timer di Brew sono abilitati nativamente in modo dichiarativo 
 # tramite /system_files/usr/lib/systemd/system-preset/99-Ermete.preset
 
-# Execute all modular scripts sequentially to preserve OCI caching per-layer
+# Execute all modular scripts sequentially in a single transaction to prevent OCI layer bloat
+# and preserve atomicity of the RPM database.
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
-    bash /ctx/recipes/01-system-setup.sh
-
-RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
-    --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
-    bash /ctx/recipes/02-repos-and-codecs.sh
-
-RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
-    --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
+    bash /ctx/recipes/01-system-setup.sh && \
+    bash /ctx/recipes/02-repos-and-codecs.sh && \
     bash /ctx/recipes/03-desktop.sh
 
 ### STRUMENTI DIAGNOSTICI OMNI-VISION SUPREME
