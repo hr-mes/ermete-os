@@ -18,31 +18,36 @@ ARG BOTTOM_VER="0.10.2"
 # renovate: datasource=github-commits depName=anyrun-org/anyrun
 ARG ANYRUN_COMMIT="f3b23bc5520f7673a5119da44b3570fbe060db37"
 
-# --- NUOVA FABBRICA: MULTI-STAGE BUILDER ---
-FROM registry.fedoraproject.org/fedora:43 AS builder
-ARG IRONBAR_VER
-ARG STARSHIP_VER
-ARG BOTTOM_VER
-ARG ANYRUN_COMMIT
-
-# Installazione dipendenze di build in un unico layer cachato
+# --- NUOVA FABBRICA: PARALLEL MULTI-STAGE BUILDERS ---
+# Stage di base con tutte le dipendenze per velocizzare i successivi build
+FROM registry.fedoraproject.org/fedora:43 AS build-base
 RUN dnf -y install --setopt=install_weak_deps=False rust cargo gcc gcc-c++ pkgconf-pkg-config make cmake \
     glib2-devel gtk3-devel gtk4-devel gtk-layer-shell-devel gtk4-layer-shell-devel \
     cairo-devel pango-devel gdk-pixbuf2-devel graphene-devel \
     autoconf automake libtool libevdev-devel upower-devel pulseaudio-libs-devel \
     libxkbcommon-devel wayland-devel openssl-devel luajit-devel clang \
     libinput-devel wayland-protocols-devel dbus-devel git
-
-# Creazione delle directory di output
 RUN mkdir -p /out/bin /out/lib64/anyrun
 
-# Compilazione indipendente per Caching Granulare
+# Builder Starship
+FROM build-base AS build-starship
+ARG STARSHIP_VER
 RUN cargo install --locked --root /out starship --version ${STARSHIP_VER#v}
+
+# Builder Bottom
+FROM build-base AS build-bottom
+ARG BOTTOM_VER
 RUN cargo install --locked --root /out bottom --version ${BOTTOM_VER#v} && \
     mv /out/bin/bottom /out/bin/btm || true
+
+# Builder Ironbar
+FROM build-base AS build-ironbar
+ARG IRONBAR_VER
 RUN cargo install --locked --root /out ironbar --version ${IRONBAR_VER#v}
 
-# Compilazione Anyrun
+# Builder Anyrun
+FROM build-base AS build-anyrun
+ARG ANYRUN_COMMIT
 RUN git clone https://github.com/anyrun-org/anyrun.git /tmp/anyrun-src && \
     cd /tmp/anyrun-src && git checkout ${ANYRUN_COMMIT} && \
     cargo build --release --locked && \
@@ -54,9 +59,12 @@ RUN git clone https://github.com/anyrun-org/anyrun.git /tmp/anyrun-src && \
 FROM ghcr.io/patapem/ermete-base-nvidia:latest
 ARG BIBATA_VER
 
-# Copia i binari purificati dalla fabbrica
-COPY --from=builder /out/bin/* /usr/bin/
-COPY --from=builder /out/lib64/anyrun /usr/lib64/anyrun
+# Copia i binari purificati dai rispettivi branch paralleli
+COPY --from=build-starship /out/bin/starship /usr/bin/
+COPY --from=build-bottom /out/bin/btm /usr/bin/
+COPY --from=build-ironbar /out/bin/ironbar /usr/bin/
+COPY --from=build-anyrun /out/bin/anyrun /usr/bin/
+COPY --from=build-anyrun /out/lib64/anyrun /usr/lib64/anyrun
 RUN ln -s /usr/lib64/anyrun /usr/lib/anyrun
 
 
