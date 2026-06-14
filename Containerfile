@@ -64,6 +64,15 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
     bash /ctx/recipes/04c-kernel-tuning.sh
 
+### STRUMENTI DIAGNOSTICI OMNI-VISION SUPREME
+# Installazione pacchetti essenziali per il debugging a Raggi-X (Zero-Trust Supply Chain ok via DNF repo locale)
+RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
+    dnf -y install bpftool drm_info nftables wayland-utils
+
+# FASE B: Asincronia First-Boot e Rettifica Wayland Lifecycle
+RUN systemctl disable NetworkManager-wait-online.service || true
+RUN if [ -f /etc/greetd/config.toml ]; then sed -i 's/command = "niri"/command = "niri-session"/g' /etc/greetd/config.toml; fi
+
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
     bash /ctx/recipes/05-cleanup.sh
