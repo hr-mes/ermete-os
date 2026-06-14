@@ -98,8 +98,8 @@ RUN mkdir -p /out/etc/systemd/system /out/usr/lib/systemd/user/niri-session.targ
     ln -sf /usr/lib/systemd/user/gnome-keyring-daemon.service /out/usr/lib/systemd/user/niri-session.target.wants/gnome-keyring-daemon.service
 
 # --- IMMAGINE FINALE (PRODUZIONE) ---
-# FIX: Digest crittografico obbligatorio per prevenire attacchi supply chain (Renovate Bot aggiornerà l'hash reale)
-FROM ghcr.io/patapem/ermete-base-nvidia@sha256:0000000000000000000000000000000000000000000000000000000000000000
+# FIX: Renovate Bot sostituirà automaticamente il tag :latest con il vero digest SHA256 crittografico
+FROM ghcr.io/patapem/ermete-base-nvidia:latest
 ARG BIBATA_VER
 
 # Copia i binari purificati dai rispettivi branch paralleli (Hardening Deterministico)
