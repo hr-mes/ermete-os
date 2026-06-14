@@ -76,6 +76,12 @@ RUN mkdir -p /out/icons && \
     curl -sLO "https://github.com/ful1e5/Bibata_Cursor/releases/download/${BIBATA_VER}/Bibata-Modern-Classic.tar.xz" && \
     tar -xJ --no-same-owner -C /out/icons -f Bibata-Modern-Classic.tar.xz
 
+# Fase C: Costruzione Link Simbolici (Dichiaratività Systemd)
+FROM build-base AS build-symlinks
+RUN mkdir -p /out/etc/systemd/system /out/usr/lib && \
+    ln -sf /usr/lib/systemd/system/graphical.target /out/etc/systemd/system/default.target && \
+    ln -sf /usr/lib64/anyrun /out/usr/lib/anyrun
+
 # --- IMMAGINE FINALE (PRODUZIONE) ---
 FROM ghcr.io/patapem/ermete-base-nvidia:latest
 ARG BIBATA_VER
@@ -89,15 +95,6 @@ COPY --from=build-anyrun /out/lib64/anyrun /usr/lib64/anyrun
 
 # Copia asset immutabili
 COPY --from=build-bibata /out/icons/Bibata-Modern-Classic /usr/share/icons/Bibata-Modern-Classic
-
-
-
-
-# Fase C: Costruzione Link Simbolici (Dichiaratività Systemd)
-FROM build-base AS build-symlinks
-RUN mkdir -p /out/etc/systemd/system /out/usr/lib && \
-    ln -sf /usr/lib/systemd/system/graphical.target /out/etc/systemd/system/default.target && \
-    ln -sf /usr/lib64/anyrun /out/usr/lib/anyrun
 
 # Copy Homebrew files from the brew image
 # FIX: Aggiunto --chown=0:0 per coerenza di sicurezza sui binari iniettati
