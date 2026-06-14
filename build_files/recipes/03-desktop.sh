@@ -67,52 +67,34 @@ systemctl enable greetd.service
 systemctl --global enable pipewire.socket pipewire.service wireplumber.service
 
 # 100% Verified Supply Chain per lo Stack Rust (Zero-Trust)
-# Sostituiamo il fetch dinamico da crates.io con release pre-compilate validate
-# o compilazione offline da commit pinnati con hash crittografica garantita.
-
-# La gestione degli sfondi è delegata agli asset locali montati tramite Containerfile (tar --no-same-owner)
-# o al graceful fallback del demone swaybg.
+# Transizione alla Compilazione Transiente nel Containerfile
 
 cd /tmp
 
-# 1. Ironbar (Pre-compilato v0.19.0)
-curl -sLO "https://github.com/JakeStanger/ironbar/releases/download/${IRONBAR_VER}/ironbar-${IRONBAR_VER}-x86_64.tar.gz"
-echo "${IRONBAR_HASH}  ironbar-${IRONBAR_VER}-x86_64.tar.gz" | sha256sum -c -
-tar -xzf ironbar-${IRONBAR_VER}-x86_64.tar.gz --no-same-owner
-mv ironbar /usr/bin/
-rm -f ironbar-${IRONBAR_VER}-x86_64.tar.gz
-
-# 2. Starship (Pre-compilato v1.22.1)
-curl -sLO "https://github.com/starship/starship/releases/download/${STARSHIP_VER}/starship-x86_64-unknown-linux-gnu.tar.gz"
-echo "${STARSHIP_HASH}  starship-x86_64-unknown-linux-gnu.tar.gz" | sha256sum -c -
-tar -xzf starship-x86_64-unknown-linux-gnu.tar.gz --no-same-owner
-mv starship /usr/bin/
-rm -f starship-x86_64-unknown-linux-gnu.tar.gz
-
-# 3. Bottom (Pre-compilato v0.10.2)
-curl -sLO "https://github.com/ClementTsang/bottom/releases/download/${BOTTOM_VER}/bottom_x86_64-unknown-linux-gnu.tar.gz"
-echo "${BOTTOM_HASH}  bottom_x86_64-unknown-linux-gnu.tar.gz" | sha256sum -c -
-tar -xzf bottom_x86_64-unknown-linux-gnu.tar.gz --no-same-owner
-mv btm /usr/bin/
-rm -f bottom_x86_64-unknown-linux-gnu.tar.gz
-
-# 4. Anyrun (Compilato offline da sorgente verificato)
-# Essendo un componente con profonde radici in GTK Layer Shell, lo compiliamo nativamente.
-# ANYRUN_COMMIT è ora iniettato come ARG dal Containerfile
-curl -sLO "https://github.com/anyrun-org/anyrun/archive/${ANYRUN_COMMIT}.tar.gz"
-echo "${ANYRUN_HASH}  ${ANYRUN_COMMIT}.tar.gz" | sha256sum -c -
-tar -xzf ${ANYRUN_COMMIT}.tar.gz --no-same-owner
-
+# Installazione massiva e unica delle dipendenze di build e toolchain Rust
 dnf -y install --setopt=install_weak_deps=False rust cargo gcc gcc-c++ pkgconf-pkg-config \
     glib2-devel gtk3-devel gtk4-devel gtk-layer-shell-devel gtk4-layer-shell-devel \
     cairo-devel pango-devel gdk-pixbuf2-devel graphene-devel \
     autoconf automake libtool libevdev-devel upower-devel pulseaudio-libs-devel \
     libxkbcommon-devel wayland-devel openssl-devel luajit-devel clang \
-    libinput-devel wayland-protocols-devel dbus-devel
+    libinput-devel wayland-protocols-devel dbus-devel git
 
 export CARGO_HOME=/tmp/cargo
-cd anyrun-${ANYRUN_COMMIT}
-# Compilazione bloccata senza network dynamismo
+
+# 1. Ironbar (Compilato da Sorgente)
+cargo install --locked --root /usr ironbar --version ${IRONBAR_VER#v}
+
+# 2. Starship (Compilato da Sorgente)
+cargo install --locked --root /usr starship --version ${STARSHIP_VER#v}
+
+# 3. Bottom (Compilato da Sorgente)
+cargo install --locked --root /usr bottom --version ${BOTTOM_VER#v}
+mv /usr/bin/bottom /usr/bin/btm || true
+
+# 4. Anyrun (Compilato offline da sorgente Git verificato via Hash Commit)
+git clone https://github.com/anyrun-org/anyrun.git /tmp/anyrun-src
+cd /tmp/anyrun-src
+git checkout ${ANYRUN_COMMIT}
 cargo build --release --locked
 mv target/release/anyrun /usr/bin/
 mkdir -p /usr/lib64/anyrun
@@ -124,12 +106,14 @@ cd /
 # Abilita i servizi Systemd User asincroni per componenti Wayland
 systemctl --global enable ironbar.service swaybg.service || true
 
-# Pulizia chirurgica
+# Pulizia chirurgica e distruzione dell'ambiente di compilazione transiente
 # NOTA: non rimuoviamo gcc, gcc-c++ e openssl-devel poiché sono protetti dal Layer 0 (Base NVIDIA) per DKMS
-dnf -y remove rust cargo \
+dnf -y remove rust cargo git \
     glib2-devel gtk3-devel gtk4-devel gtk-layer-shell-devel gtk4-layer-shell-devel \
     cairo-devel pango-devel gdk-pixbuf2-devel graphene-devel \
     autoconf automake libtool libevdev-devel upower-devel pulseaudio-libs-devel \
     libxkbcommon-devel wayland-devel luajit-devel clang \
     libinput-devel wayland-protocols-devel dbus-devel
-rm -rf /tmp/cargo /tmp/${ANYRUN_COMMIT}.tar.gz /tmp/anyrun-${ANYRUN_COMMIT}
+
+rm -rf /tmp/cargo /tmp/anyrun-src
+

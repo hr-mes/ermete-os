@@ -6,14 +6,31 @@
     "github>whitesource/merge-confidence:beta"
   ],
   "rebaseWhen": "auto",
+  "minimumReleaseAge": "7 days",
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["^Containerfile$"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>[^\\s]+)\\s+ARG [A-Z_]+_VER=\"(?<currentValue>[^\"]+)\""
+      ]
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^Containerfile$"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>[^\\s]+)\\s+ARG [A-Z_]+_COMMIT=\"(?<currentDigest>[a-f0-9]+)\""
+      ]
+    }
+  ],
   "packageRules": [
     {
       "matchManagers": ["github-actions"],
       "pinDigests": true
     },
     {
-      "matchManagers": ["dockerfile"],
-      "matchUpdateTypes": ["minor", "patch"],
+      "matchManagers": ["dockerfile", "custom.regex"],
+      "matchUpdateTypes": ["minor", "patch", "digest"],
       "automerge": true,
       "automergeType": "pr"
     }

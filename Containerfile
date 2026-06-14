@@ -12,19 +12,15 @@ ARG BIBATA_HASH="7d3495864e5bbef02f5e77de760b2905903b63c71495a78ef6306d19a3b556d
 
 # renovate: datasource=github-releases depName=JakeStanger/ironbar
 ARG IRONBAR_VER="v0.19.0"
-ARG IRONBAR_HASH="5efbbfd79c3f97364d254c12abef24618375a2759c25c883812d23c3581081e9"
 
 # renovate: datasource=github-releases depName=starship/starship
 ARG STARSHIP_VER="v1.22.1"
-ARG STARSHIP_HASH="e57db6f6497ee8a426c5e77b4d6f5c50734d3e9cca7a18a8aef46730505a3ae7"
 
 # renovate: datasource=github-releases depName=ClementTsang/bottom
 ARG BOTTOM_VER="0.10.2"
-ARG BOTTOM_HASH="f20211d398b9744545b93ac4af73f3a9f3e67179c385fb0c73d0dd4d84d28a8f"
 
 # renovate: datasource=github-tags depName=anyrun-org/anyrun
 ARG ANYRUN_COMMIT="f3b23bc5520f7673a5119da44b3570fbe060db37"
-ARG ANYRUN_HASH="11ac878a0e67025b4f439f0c14b8d87125c00aa573625fae0a35383fe7c18b95"
 
 RUN sed -i 's/^ID=.*/ID=fedora/' /etc/os-release
 
