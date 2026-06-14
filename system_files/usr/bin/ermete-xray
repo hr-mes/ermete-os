@@ -1,0 +1,77 @@
+#!/bin/bash
+# Ermete OS: Supreme Omni-Vision Diagnostic Tool (X-Ray)
+# Fornisce una scansione a raggi X verticale (dal kernel allo userspace) e orizzontale (isolamento e network)
+
+set -e
+LOG_FILE="/var/log/ermete-xray-$(date +%Y%m%d_%H%M%S).log"
+
+# Colori per UX
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+exec > >(tee -a "$LOG_FILE") 2>&1
+
+echo -e "${BLUE}======================================================${NC}"
+echo -e "${BLUE}     Ermete OS - Supreme Omni-Vision Diagnostic       ${NC}"
+echo -e "${BLUE}======================================================${NC}"
+echo "Timestamp: $(date)"
+echo "Kernel: $(uname -r)"
+
+echo -e "\n${YELLOW}--- 1. VERTICAL VISION: OCI/Bootc Lifecycle ---${NC}"
+if command -v bootc >/dev/null 2>&1; then
+    bootc status || echo -e "${RED}Errore nella lettura dello stato bootc${NC}"
+else
+    echo "bootc non installato o non supportato in questo layer."
+fi
+
+echo -e "\n${YELLOW}--- 2. BOOT PERFORMANCE & SYSTEMD ---${NC}"
+systemd-analyze || true
+echo "Top 5 colli di bottiglia all'avvio:"
+systemd-analyze blame | head -n 5 || true
+echo "Servizi falliti:"
+systemctl --failed || echo "Nessun servizio fallito."
+
+echo -e "\n${YELLOW}--- 3. ZERO-TRUST & SECURITY (SELinux) ---${NC}"
+sestatus | grep "SELinux status"
+echo "Ultime violazioni SELinux (AVC Denials):"
+if command -v ausearch >/dev/null 2>&1; then
+    ausearch -m AVC,USER_AVC -ts recent --raw | audit2allow || echo "Nessuna violazione recente."
+else
+    echo "ausearch non disponibile."
+fi
+
+echo -e "\n${YELLOW}--- 4. HARDWARE & KERNEL (NVIDIA & DRM) ---${NC}"
+if lsmod | grep -q nvidia; then
+    echo -e "${GREEN}Moduli NVIDIA caricati correttamente.${NC}"
+    nvidia-smi --query-gpu=driver_version,name,temperature.gpu --format=csv,noheader || true
+else
+    echo -e "${RED}Attenzione: Modulo NVIDIA non caricato.${NC}"
+fi
+echo "Nodi DRM disponibili:"
+ls -l /dev/dri/ || true
+
+echo -e "\n${YELLOW}--- 5. SCHEDULING (SCX / BORE) ---${NC}"
+if systemctl is-active --quiet scx; then
+    echo -e "${GREEN}eBPF SCX Scheduler (scx) è ATTIVO.${NC}"
+else
+    echo -e "${RED}eBPF SCX Scheduler NON attivo o assente.${NC}"
+fi
+
+echo -e "\n${YELLOW}--- 6. HORIZONTAL VISION: UX & Wayland ---${NC}"
+echo "Wayland Display: ${WAYLAND_DISPLAY:-N/A}"
+if command -v niri >/dev/null 2>&1; then
+    niri msg focused-window 2>/dev/null || echo "Niri IPC non accessibile (eseguito da tty o root?)"
+fi
+
+echo -e "\n${YELLOW}--- 7. IMMUTABILITY & NAMESPACES (Flatpak / Nix) ---${NC}"
+echo "Flatpak Runtimes Installati:"
+flatpak list --runtime --columns=application | wc -l || echo 0
+echo "Stato Nix Daemon:"
+systemctl is-active nix-daemon.socket || echo "Non attivo"
+
+echo -e "\n${BLUE}======================================================${NC}"
+echo -e "${GREEN}Diagnostica completata. Log salvato in: $LOG_FILE${NC}"
+echo -e "${BLUE}======================================================${NC}"
