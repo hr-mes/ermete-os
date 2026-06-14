@@ -5,14 +5,7 @@ echo "--- Installing Desktop Environment ---"
 
 # Enforce System-wide Dark Mode & Aesthetics for GTK4/GTK3 native apps
 echo "--- Applicazione Forzata del Tema Globale GTK ---"
-mkdir -p /usr/share/glib-2.0/schemas/
-cat > /usr/share/glib-2.0/schemas/99-ermete.gschema.override << 'EOF'
-[org.gnome.desktop.interface]
-color-scheme='prefer-dark'
-gtk-theme='adw-gtk3-dark'
-icon-theme='Papirus-Dark'
-cursor-theme='Bibata-Modern-Classic'
-EOF
+# I file .gschema.override sono ereditati staticamente da /system_files/
 glib-compile-schemas /usr/share/glib-2.0/schemas/
 
 # Install Niri e dipendenze cursori, temi e font (aggiunto Xwayland per compatibilità assoluta con vecchie app)
@@ -20,33 +13,8 @@ dnf -y install --setopt=install_weak_deps=False niri xorg-x11-server-Xwayland \
     papirus-icon-theme adw-gtk3-theme jetbrains-mono-fonts rsms-inter-fonts fontawesome-fonts-all \
     xdg-desktop-portal-gnome xdg-desktop-portal-gtk swaybg gtk-layer-shell || true
 
-# Configurazione Ambiente Wayland/NVIDIA (Miglioramento UX)
-cat >> /etc/environment << 'EOF'
-MOZ_ENABLE_WAYLAND=1
-ELECTRON_OZONE_PLATFORM_HINT=wayland
-NVD_BACKEND=direct
-LIBVA_DRIVER_NAME=nvidia
-__GLX_VENDOR_LIBRARY_NAME=nvidia
-EOF
-
-# Creazione del wrapper di sessione obbligatorio per Niri
-cat > /usr/bin/niri-session << 'EOF'
-#!/bin/bash
-# Wrapper di sessione: innesca l'albero DBus, XDG-Desktop-Portal e Pipewire
-export XDG_SESSION_TYPE=wayland
-export XDG_CURRENT_DESKTOP=niri
-export XDG_SESSION_DESKTOP=niri
-
-# Importa le variabili nel manager systemd --user e nell'ambiente DBus
-systemctl --user import-environment XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
-dbus-update-activation-environment --systemd XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
-
-# Attesa asincrona per i nodi DRM NVIDIA (tolleranza logind/udev)
-while [ ! -e /dev/dri/renderD128 ]; do sleep 0.5; done
-
-# Mantra Infrangibile: Avvio supervisionato via systemd-cat e dbus user session
-exec systemd-cat -t niri niri --session
-EOF
+# Configurazione Ambiente Wayland/NVIDIA e wrapper niri-session 
+# sono ereditati nativamente da /system_files/etc/environment e /system_files/usr/bin/niri-session
 chmod +x /usr/bin/niri-session
 
 
