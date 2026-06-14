@@ -11,6 +11,6 @@ dnf -y install --setopt=install_weak_deps=False greenboot greenboot-default-heal
 # garantendo un design architetturale OCI dichiarativo e pulito.
 
 # Ripristina permessi di esecuzione per gli script migrati nativamente
-chmod +x /etc/greenboot/check/required.d/*.sh /usr/libexec/ermete-firstboot.sh || true
+# (Deprecato: I permessi +x sono ereditati nativamente dalle ACL di Git)
 
 echo "--- Private Optimizations Applied ---"

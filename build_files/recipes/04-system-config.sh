@@ -14,7 +14,7 @@ echo "--- Configuring system services and user defaults ---"
 # Sono stati tutti migrati nativamente nella gerarchia OCI /system_files/etc/skel/ e /system_files/etc/profile.d/
 
 # Ripristina permessi di esecuzione per gli script migrati nativamente
-chmod +x /usr/libexec/ermete-snapshot.sh || true
+# (Deprecato: I permessi +x sono ereditati nativamente dalle ACL di Git)
 
 # Manutenzione BTRFS e System Limits delegati a /system_files/
 

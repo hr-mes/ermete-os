@@ -11,3 +11,4 @@ enable scx.service
 enable ananicy-cpp.service
 enable fwupd.service
 enable Ermete-firstboot.service
+enable Ermete-flatpak-update.timer

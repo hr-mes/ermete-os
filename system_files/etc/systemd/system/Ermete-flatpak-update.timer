@@ -1,0 +1,12 @@
+[Unit]
+Description=Timer for Ermete OS Flatpak Auto-Update and Cleanup
+
+[Timer]
+# Esecuzione giornaliera e 15 minuti dopo il boot se saltata
+OnBootSec=15min
+OnUnitActiveSec=1d
+RandomizedDelaySec=10m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

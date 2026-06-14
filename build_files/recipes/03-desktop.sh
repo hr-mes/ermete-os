@@ -15,8 +15,7 @@ dnf -y install --setopt=install_weak_deps=False niri xorg-x11-server-Xwayland \
 
 # Configurazione Ambiente Wayland/NVIDIA e wrapper niri-session 
 # sono ereditati nativamente da /system_files/etc/environment e /system_files/usr/bin/niri-session
-chmod +x /usr/bin/niri-session
-
+# I permessi di esecuzione sono vincolati nativamente nell'albero Git.
 
 # I binari (Ironbar, Starship, Bottom, Anyrun) sono compilati nativamente 
 # ed esportati nel filesystem finale grazie all'architettura Multi-Stage OCI
