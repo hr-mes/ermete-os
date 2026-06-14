@@ -80,10 +80,6 @@ RUN mkdir -p /usr/share/backgrounds/ermete \
 # RUN tar -xzf /path/to/assets.tar.gz -C /usr/share/backgrounds/ermete --no-same-owner
 
 ### LINTING
-## Sterilizzazione Permessi Configurazione (Policy UNIX)
-RUN find /etc/skel -type d -exec chmod 700 {} + && \
-    find /etc/skel -type f -exec chmod 600 {} +
-
 ## Verify final image and contents are correct.
 # Questo step convaliderà ora correttamente l'assenza di violazioni tmpfiles.d
 RUN bootc container lint

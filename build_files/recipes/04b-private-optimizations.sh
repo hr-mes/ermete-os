@@ -34,8 +34,7 @@ fi
 EOF
 chmod +x /etc/greenboot/check/required.d/02-greetd-check.sh
 
-# 3. Manutenzione Automatica (fstrim e fwupd)
-echo "enable fstrim.timer" >> /usr/lib/systemd/system-preset/99-Ermete.preset
+# 3. Manutenzione Automatica (fwupd)
 echo "enable fwupd.service" >> /usr/lib/systemd/system-preset/99-Ermete.preset
 
 # 4. First-boot Service per installare Flatseal e flatpaks essenziali
@@ -68,7 +67,7 @@ Wants=network-online.target
 ConditionPathExists=!/var/lib/ermete-firstboot-done
 
 [Service]
-Type=oneshot
+Type=simple
 ExecStart=/usr/libexec/ermete-firstboot.sh
 Restart=on-failure
 RestartSec=30
