@@ -94,12 +94,18 @@ COPY --from=build-bibata /out/icons/Bibata-Modern-Classic /usr/share/icons/Bibat
 
 
 
+# Fase C: Costruzione Link Simbolici (Dichiaratività Systemd)
+FROM build-base AS build-symlinks
+RUN mkdir -p /out/etc/systemd/system && \
+    ln -sf /usr/lib/systemd/system/graphical.target /out/etc/systemd/system/default.target
+
 # Copy Homebrew files from the brew image
 # FIX: Aggiunto --chown=0:0 per coerenza di sicurezza sui binari iniettati
 COPY --from=ghcr.io/ublue-os/brew@sha256:5228826790d13d5e265f1fdbb41b65e3fac20361ee0d31b2fd496d81e1db14f6 --chown=0:0 /system_files /
 
-# Iniettiamo la gerarchia nativa OCI delle configurazioni statiche (Zero-Echo)
+# Iniettiamo la gerarchia nativa OCI delle configurazioni statiche (Zero-Echo) e i symlink precalcolati
 COPY --chown=0:0 system_files /
+COPY --from=build-symlinks /out/etc /etc
 
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \

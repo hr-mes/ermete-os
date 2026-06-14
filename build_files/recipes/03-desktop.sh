@@ -27,11 +27,8 @@ chmod +x /usr/bin/niri-session
 
 # Install Greetd e Tuigreet (Greeter da terminale in Rust)
 dnf -y install --setopt=install_weak_deps=False greetd tuigreet
-systemctl enable greetd.service
+# Greetd service è abilitato nativamente via system-preset
 
 # Abilitazione Globale Audio Pipewire per la sessione utente (Fondamentale per Wayland/Portals)
-systemctl --global enable pipewire.socket pipewire.service wireplumber.service
-
-# Abilita i servizi Systemd User asincroni per componenti Wayland
-systemctl --global enable ironbar.service swaybg.service || true
-
+# Abilitazione Globale Audio Pipewire e Wayland User Services
+# I servizi sono abilitati nativamente via OCI tramite preset in /usr/lib/systemd/user-preset/

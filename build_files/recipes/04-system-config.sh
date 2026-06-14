@@ -8,8 +8,7 @@ echo "--- Configuring system services and user defaults ---"
 # Tutte queste configurazioni sono state migrate nativamente su /system_files/etc/
 # garantendo un design architetturale OCI dichiarativo e pulito.
 # I system-presets nativi sono definiti in /system_files/usr/lib/systemd/system-preset/99-Ermete.preset
-
-systemctl set-default graphical.target
+# Il target grafico è impostato nativamente tramite symlink OCI in /etc/systemd/system/default.target
 
 # Configurazione Starship e Dotfiles utente
 # Sono stati tutti migrati nativamente nella gerarchia OCI /system_files/etc/skel/ e /system_files/etc/profile.d/
@@ -23,12 +22,9 @@ echo "--- System Configuration Applied ---"
 
 # Assicura i permessi corretti per lo skeleton directory garantendo la Privacy
 # senza rompere gli script (forzando +x sui file .sh)
-chown -R root:root /etc/skel/
+# Il chown 0:0 è nativo del layer OCI COPY.
 find /etc/skel -type d -exec chmod 700 {} \;
 find /etc/skel -type f -exec chmod 600 {} \;
 find /etc/skel -type f -name "*.sh" -exec chmod 700 {} \;
 
 # Btrfs Auto-Snapshot for /var/home delegato a /system_files/
-
-# Remove waybar
-dnf -y remove waybar

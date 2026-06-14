@@ -1,0 +1,5 @@
+enable pipewire.socket
+enable pipewire.service
+enable wireplumber.service
+enable ironbar.service
+enable swaybg.service
