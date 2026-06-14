@@ -27,29 +27,42 @@ RUN dnf -y install --setopt=install_weak_deps=False rust cargo gcc gcc-c++ pkgco
     cairo-devel pango-devel gdk-pixbuf2-devel graphene-devel \
     autoconf automake libtool libevdev-devel upower-devel pulseaudio-libs-devel \
     libxkbcommon-devel wayland-devel openssl-devel luajit-devel clang \
-    libinput-devel wayland-protocols-devel dbus-devel git
+    libinput-devel wayland-protocols-devel dbus-devel git mold
+
+# Variabili d'ambiente per Overclocking Rust
+ENV CARGO_HOME=/usr/local/cargo
+ENV RUSTFLAGS="-C link-arg=-fuse-ld=mold"
+
 RUN mkdir -p /out/bin /out/lib64/anyrun
 
 # Builder Starship
 FROM build-base AS build-starship
 ARG STARSHIP_VER
-RUN cargo install --locked --root /out starship --version ${STARSHIP_VER#v}
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    cargo install --locked --root /out starship --version ${STARSHIP_VER#v}
 
 # Builder Bottom
 FROM build-base AS build-bottom
 ARG BOTTOM_VER
-RUN cargo install --locked --root /out bottom --version ${BOTTOM_VER#v} && \
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    cargo install --locked --root /out bottom --version ${BOTTOM_VER#v} && \
     mv /out/bin/bottom /out/bin/btm || true
 
 # Builder Ironbar
 FROM build-base AS build-ironbar
 ARG IRONBAR_VER
-RUN cargo install --locked --root /out ironbar --version ${IRONBAR_VER#v}
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    cargo install --locked --root /out ironbar --version ${IRONBAR_VER#v}
 
 # Builder Anyrun
 FROM build-base AS build-anyrun
 ARG ANYRUN_COMMIT
-RUN git clone https://github.com/anyrun-org/anyrun.git /tmp/anyrun-src && \
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    git clone https://github.com/anyrun-org/anyrun.git /tmp/anyrun-src && \
     cd /tmp/anyrun-src && git checkout ${ANYRUN_COMMIT} && \
     cargo build --release --locked && \
     mv target/release/anyrun /out/bin/ && \
