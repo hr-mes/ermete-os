@@ -50,7 +50,11 @@ EOF
 chmod +x /usr/bin/niri-session
 
 
-# Installazione manuale sicura di Bibata Cursor (pinned version e checksum)
+# I binari (Ironbar, Starship, Bottom, Anyrun) sono compilati nativamente 
+# ed esportati nel filesystem finale grazie all'architettura Multi-Stage OCI
+# del Containerfile, che garantisce caching estremo e purezza del layer.
+
+# Installazione manuale sicura di Bibata Cursor (pinned version)
 mkdir -p /usr/share/icons
 cd /tmp
 curl -sLO "https://github.com/ful1e5/Bibata_Cursor/releases/download/${BIBATA_VER}/Bibata-Modern-Classic.tar.xz"
@@ -65,53 +69,6 @@ systemctl enable greetd.service
 # Abilitazione Globale Audio Pipewire per la sessione utente (Fondamentale per Wayland/Portals)
 systemctl --global enable pipewire.socket pipewire.service wireplumber.service
 
-# 100% Verified Supply Chain per lo Stack Rust (Zero-Trust)
-# Transizione alla Compilazione Transiente nel Containerfile
-
-cd /tmp
-
-# Installazione massiva e unica delle dipendenze di build e toolchain Rust
-dnf -y install --setopt=install_weak_deps=False rust cargo gcc gcc-c++ pkgconf-pkg-config make cmake \
-    glib2-devel gtk3-devel gtk4-devel gtk-layer-shell-devel gtk4-layer-shell-devel \
-    cairo-devel pango-devel gdk-pixbuf2-devel graphene-devel \
-    autoconf automake libtool libevdev-devel upower-devel pulseaudio-libs-devel \
-    libxkbcommon-devel wayland-devel openssl-devel luajit-devel clang \
-    libinput-devel wayland-protocols-devel dbus-devel git
-
-export CARGO_HOME=/tmp/cargo
-
-# 1. Ironbar (Compilato da Sorgente)
-cargo install --locked --root /usr ironbar --version ${IRONBAR_VER#v}
-
-# 2. Starship (Compilato da Sorgente)
-cargo install --locked --root /usr starship --version ${STARSHIP_VER#v}
-
-# 3. Bottom (Compilato da Sorgente)
-cargo install --locked --root /usr bottom --version ${BOTTOM_VER#v}
-
-# 4. Anyrun (Compilato offline da sorgente Git verificato via Hash Commit)
-git clone https://github.com/anyrun-org/anyrun.git /tmp/anyrun-src
-cd /tmp/anyrun-src
-git checkout ${ANYRUN_COMMIT}
-cargo build --release --locked
-mv target/release/anyrun /usr/bin/
-mkdir -p /usr/lib64/anyrun
-cp target/release/*.so /usr/lib64/anyrun/ 2>/dev/null || true
-strip /usr/bin/anyrun /usr/lib64/anyrun/*.so 2>/dev/null || true
-ln -s /usr/lib64/anyrun /usr/lib/anyrun
-cd /
-
 # Abilita i servizi Systemd User asincroni per componenti Wayland
 systemctl --global enable ironbar.service swaybg.service || true
-
-# Pulizia chirurgica e distruzione dell'ambiente di compilazione transiente
-# NOTA: non rimuoviamo gcc, gcc-c++ e openssl-devel poiché sono protetti dal Layer 0 (Base NVIDIA) per DKMS
-dnf -y remove rust cargo git make cmake \
-    glib2-devel gtk3-devel gtk4-devel gtk-layer-shell-devel gtk4-layer-shell-devel \
-    cairo-devel pango-devel gdk-pixbuf2-devel graphene-devel \
-    autoconf automake libtool libevdev-devel upower-devel pulseaudio-libs-devel \
-    libxkbcommon-devel wayland-devel luajit-devel clang \
-    libinput-devel wayland-protocols-devel dbus-devel
-
-rm -rf /tmp/cargo /tmp/anyrun-src
 

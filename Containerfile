@@ -3,9 +3,6 @@ FROM scratch AS ctx
 # FIX: Applica permessi sicuri già nello stage rootless per evitare LPE nei mount bindati
 COPY --chown=0:0 build_files /
 
-# Base Image
-FROM ghcr.io/patapem/ermete-base-nvidia:latest
-
 # renovate: datasource=github-releases depName=ful1e5/Bibata_Cursor
 ARG BIBATA_VER="v2.0.7"
 
@@ -20,6 +17,50 @@ ARG BOTTOM_VER="0.10.2"
 
 # renovate: datasource=github-commits depName=anyrun-org/anyrun
 ARG ANYRUN_COMMIT="f3b23bc5520f7673a5119da44b3570fbe060db37"
+
+# --- NUOVA FABBRICA: MULTI-STAGE BUILDER ---
+FROM registry.fedoraproject.org/fedora:43 AS builder
+ARG IRONBAR_VER
+ARG STARSHIP_VER
+ARG BOTTOM_VER
+ARG ANYRUN_COMMIT
+
+# Installazione dipendenze di build in un unico layer cachato
+RUN dnf -y install --setopt=install_weak_deps=False rust cargo gcc gcc-c++ pkgconf-pkg-config make cmake \
+    glib2-devel gtk3-devel gtk4-devel gtk-layer-shell-devel gtk4-layer-shell-devel \
+    cairo-devel pango-devel gdk-pixbuf2-devel graphene-devel \
+    autoconf automake libtool libevdev-devel upower-devel pulseaudio-libs-devel \
+    libxkbcommon-devel wayland-devel openssl-devel luajit-devel clang \
+    libinput-devel wayland-protocols-devel dbus-devel git
+
+# Creazione delle directory di output
+RUN mkdir -p /out/bin /out/lib64/anyrun
+
+# Compilazione indipendente per Caching Granulare
+RUN cargo install --locked --root /out starship --version ${STARSHIP_VER#v}
+RUN cargo install --locked --root /out bottom --version ${BOTTOM_VER#v} && \
+    mv /out/bin/bottom /out/bin/btm || true
+RUN cargo install --locked --root /out ironbar --version ${IRONBAR_VER#v}
+
+# Compilazione Anyrun
+RUN git clone https://github.com/anyrun-org/anyrun.git /tmp/anyrun-src && \
+    cd /tmp/anyrun-src && git checkout ${ANYRUN_COMMIT} && \
+    cargo build --release --locked && \
+    mv target/release/anyrun /out/bin/ && \
+    cp target/release/*.so /out/lib64/anyrun/ 2>/dev/null || true && \
+    strip /out/bin/anyrun /out/lib64/anyrun/*.so 2>/dev/null || true
+
+# --- IMMAGINE FINALE (PRODUZIONE) ---
+FROM ghcr.io/patapem/ermete-base-nvidia:latest
+ARG BIBATA_VER
+
+# Copia i binari purificati dalla fabbrica
+COPY --from=builder /out/bin/* /usr/bin/
+COPY --from=builder /out/lib64/anyrun /usr/lib64/anyrun
+RUN ln -s /usr/lib64/anyrun /usr/lib/anyrun
+
+
+
 
 RUN sed -i 's/^ID=.*/ID=fedora/' /etc/os-release
 

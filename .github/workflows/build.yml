@@ -111,6 +111,10 @@ jobs:
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           oci: false
+          extra-args: |
+            --layers=true
+            --cache-from=${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}-cache
+            --cache-to=${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}-cache
 
       - name: Push To GHCR
         uses: redhat-actions/push-to-registry@v2
