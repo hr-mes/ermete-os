@@ -4,12 +4,7 @@ set -ouex pipefail
 echo "--- Configuring DNF and installing base system packages ---"
 
 # Approccio Idempotente e Cloud-Native per configurare DNF
-mkdir -p /etc/dnf/dnf.conf.d/
-cat > /etc/dnf/dnf.conf.d/99-parallel-downloads.conf << EOF
-[main]
-max_parallel_downloads=9
-countme=0
-EOF
+# Ereditato nativamente da /system_files/etc/dnf/dnf.conf.d/99-parallel-downloads.conf
 
 # System apps & Dipendenze Core
 # Rimosso flatpak-builder (spostato in distrobox)
