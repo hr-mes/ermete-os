@@ -103,7 +103,7 @@ COPY --from=ghcr.io/ublue-os/brew@sha256:5228826790d13d5e265f1fdbb41b65e3fac2036
 # Iniettiamo la gerarchia nativa OCI delle configurazioni statiche (Zero-Echo) e i symlink precalcolati
 COPY --chown=0:0 system_files /
 COPY --from=build-symlinks /out/etc /etc
-COPY --from=build-symlinks /out/usr/lib/anyrun /usr/lib/anyrun
+COPY --from=build-symlinks /out/usr/lib/ /usr/lib/
 
 # I servizi e i timer di Brew sono abilitati nativamente in modo dichiarativo 
 # tramite /system_files/usr/lib/systemd/system-preset/99-Ermete.preset
