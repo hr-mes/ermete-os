@@ -8,6 +8,9 @@ on:
 jobs:
   update-binaries:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -16,10 +19,11 @@ jobs:
         id: update
         run: |
           set -eo pipefail
+          UPDATED="false"
           
-          # Function to fetch latest release tag
+          # Function to fetch latest release tag (Auth prevents Rate-Limiting)
           get_latest_release() {
-            curl -sL "https://api.github.com/repos/$1/releases/latest" | jq -r .tag_name
+            curl -sL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/$1/releases/latest" | jq -r .tag_name
           }
           
           # 1. Bibata Cursor
@@ -75,7 +79,7 @@ jobs:
           fi
           
           # 5. Anyrun (Commits instead of releases)
-          LATEST_ANYRUN=$(curl -sL "https://api.github.com/repos/anyrun-org/anyrun/commits/master" | jq -r .sha)
+          LATEST_ANYRUN=$(curl -sL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/anyrun-org/anyrun/commits/master" | jq -r .sha)
           CURRENT_ANYRUN=$(grep 'ARG ANYRUN_COMMIT=' Containerfile | cut -d'"' -f2)
           if [ "$LATEST_ANYRUN" != "null" ] && [ "$LATEST_ANYRUN" != "$CURRENT_ANYRUN" ]; then
             echo "Updating Anyrun to $LATEST_ANYRUN"
