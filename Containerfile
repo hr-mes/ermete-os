@@ -64,8 +64,7 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
     dnf -y install bpftool drm_info nftables wayland-utils
 
-# FASE B: Asincronia First-Boot e Rettifica Wayland Lifecycle
-RUN systemctl disable NetworkManager-wait-online.service || true
+# FASE B: Rettifica Wayland Lifecycle
 RUN if [ -f /etc/greetd/config.toml ]; then sed -i 's/command = "niri"/command = "niri-session"/g' /etc/greetd/config.toml; fi
 
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \

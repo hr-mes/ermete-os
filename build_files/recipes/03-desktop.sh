@@ -71,7 +71,7 @@ systemctl --global enable pipewire.socket pipewire.service wireplumber.service
 cd /tmp
 
 # Installazione massiva e unica delle dipendenze di build e toolchain Rust
-dnf -y install --setopt=install_weak_deps=False rust cargo gcc gcc-c++ pkgconf-pkg-config \
+dnf -y install --setopt=install_weak_deps=False rust cargo gcc gcc-c++ pkgconf-pkg-config make cmake \
     glib2-devel gtk3-devel gtk4-devel gtk-layer-shell-devel gtk4-layer-shell-devel \
     cairo-devel pango-devel gdk-pixbuf2-devel graphene-devel \
     autoconf automake libtool libevdev-devel upower-devel pulseaudio-libs-devel \
@@ -106,7 +106,7 @@ systemctl --global enable ironbar.service swaybg.service || true
 
 # Pulizia chirurgica e distruzione dell'ambiente di compilazione transiente
 # NOTA: non rimuoviamo gcc, gcc-c++ e openssl-devel poiché sono protetti dal Layer 0 (Base NVIDIA) per DKMS
-dnf -y remove rust cargo git \
+dnf -y remove rust cargo git make cmake \
     glib2-devel gtk3-devel gtk4-devel gtk-layer-shell-devel gtk4-layer-shell-devel \
     cairo-devel pango-devel gdk-pixbuf2-devel graphene-devel \
     autoconf automake libtool libevdev-devel upower-devel pulseaudio-libs-devel \
