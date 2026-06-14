@@ -12,3 +12,6 @@ enable ananicy-cpp.service
 enable fwupd.service
 enable Ermete-firstboot.service
 enable Ermete-flatpak-update.timer
+enable brew-setup.service
+enable brew-update.timer
+enable brew-upgrade.timer

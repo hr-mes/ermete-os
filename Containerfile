@@ -107,12 +107,8 @@ COPY --from=ghcr.io/ublue-os/brew@sha256:5228826790d13d5e265f1fdbb41b65e3fac2036
 COPY --chown=0:0 system_files /
 COPY --from=build-symlinks /out/etc /etc
 
-RUN --mount=type=cache,dst=/var/cache \
-    --mount=type=cache,dst=/var/log \
-    --mount=type=tmpfs,dst=/tmp \
-    /usr/bin/systemctl preset brew-setup.service && \
-    /usr/bin/systemctl preset brew-update.timer && \
-    /usr/bin/systemctl preset brew-upgrade.timer
+# I servizi e i timer di Brew sono abilitati nativamente in modo dichiarativo 
+# tramite /system_files/usr/lib/systemd/system-preset/99-Ermete.preset
 
 # Execute all modular scripts sequentially to preserve OCI caching per-layer
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
