@@ -1,8 +1,3 @@
-# Allow build scripts to be referenced without being copied into the final image
-FROM scratch AS ctx
-# FIX: Applica permessi sicuri già nello stage rootless per evitare LPE nei mount bindati
-COPY --chown=0:0 build_files /
-
 # renovate: datasource=github-releases depName=ful1e5/Bibata_Cursor
 ARG BIBATA_VER="v2.0.7"
 
@@ -17,6 +12,12 @@ ARG BOTTOM_VER="0.10.2"
 
 # renovate: datasource=github-commits depName=anyrun-org/anyrun
 ARG ANYRUN_COMMIT="f3b23bc5520f7673a5119da44b3570fbe060db37"
+
+# Allow build scripts to be referenced without being copied into the final image
+FROM scratch AS ctx
+# FIX: Applica permessi sicuri già nello stage rootless per evitare LPE nei mount bindati
+COPY --chown=0:0 build_files /
+
 
 # --- NUOVA FABBRICA: PARALLEL MULTI-STAGE BUILDERS ---
 # Stage di base con tutte le dipendenze per velocizzare i successivi build
