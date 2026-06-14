@@ -26,11 +26,10 @@ dnf -y install --setopt=install_weak_deps=False eza bat fd-find ripgrep nushell 
 
 # Fix Missing UNIX Groups (Wayland/DRM/Audio/Input)
 # In container builds, sometimes standard groups from 'setup' rpm are not fully populated.
-# We explicitly create the critical ones to prevent udev permission failures (schermo nero post-login).
-echo "--- Fixing critical UNIX groups for Wayland/udev ---"
-for g in video render input tty audio kvm disk lp clock sgx kmem tss; do
-    getent group $g >/dev/null || groupadd -r $g || true
-done
+# L'approccio imperativo (groupadd) è stato rimosso per rispettare l'immutabilità OCI.
+# Tutti i gruppi vitali sono ora definiti in modo puramente deterministico 
+# tramite /usr/lib/sysusers.d/10-ermete-hw-groups.conf (ereditato dal Layer 0).
+echo "--- Fixing critical UNIX groups for Wayland/udev via sysusers ---"
 
 # Inneschiamo esplicitamente sysusers per assicurarci che anche systemd applichi i suoi default
 systemd-sysusers || true
