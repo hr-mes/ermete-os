@@ -124,9 +124,8 @@ hotkey-overlay {
 
 // La notifica di primo avvio è ora nativamente gestita da systemd user units 
 // (ermete-firstboot-notification.path/service) senza polling imperativo.
-spawn-at-startup "dbus-update-activation-environment" "--systemd" "WAYLAND_DISPLAY" "XDG_CURRENT_DESKTOP=niri"
-// Avvia asincronamente i servizi Desktop delegandoli a Systemd (Idempotenza e Asincronia First-Boot)
-spawn-at-startup "systemctl" "--user" "start" "niri-session.target"
+// Importa l'ambiente ed avvia asincronamente i servizi Desktop delegandoli a Systemd (Idempotenza e Asincronia First-Boot)
+spawn-at-startup "sh" "-c" "systemctl --user import-environment WAYLAND_DISPLAY NIRI_SOCKET XDG_CURRENT_DESKTOP && dbus-update-activation-environment --systemd WAYLAND_DISPLAY NIRI_SOCKET XDG_CURRENT_DESKTOP && systemctl --user start niri-session.target"
 
 screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
 
