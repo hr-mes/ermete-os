@@ -146,6 +146,11 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 # di montare /var/opt/nix al boot. Senza questo, il demone fallirebbe.
 RUN mkdir -p /nix
 
+# [FASE B: Modifica UX/Security] 
+# Sterilizzazione PAM: Rimozione moduli biometrici per prevenire lock di pam_unix(sudo)
+RUN authselect select sssd with-silent-lastlog without-fingerprint --force && \
+    authselect apply-changes
+
 ### LINTING
 ## Verify final image and contents are correct.
 # Questo step convaliderà ora correttamente l'assenza di violazioni tmpfiles.d
