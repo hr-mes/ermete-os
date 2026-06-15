@@ -148,7 +148,7 @@ RUN mkdir -p /nix
 
 # [FASE B: Modifica UX/Security] 
 # Sterilizzazione PAM: Rimozione moduli biometrici per prevenire lock di pam_unix(sudo)
-RUN authselect select sssd with-silent-lastlog without-fingerprint --force && \
+RUN authselect select sssd with-silent-lastlog --force && \
     authselect apply-changes
 
 ### LINTING
