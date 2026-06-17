@@ -94,12 +94,11 @@ RUN mkdir -p /out/etc/systemd/system /out/usr/lib/systemd/user/niri-session.targ
     ln -sf /usr/lib/systemd/user/lxpolkit.service /out/usr/lib/systemd/user/niri-session.target.wants/lxpolkit.service && \
     ln -sf /usr/lib/systemd/user/nm-applet.service /out/usr/lib/systemd/user/niri-session.target.wants/nm-applet.service && \
     ln -sf /usr/lib/systemd/user/blueman-applet.service /out/usr/lib/systemd/user/niri-session.target.wants/blueman-applet.service && \
-    ln -sf /usr/lib/systemd/user/easyeffects.service /out/usr/lib/systemd/user/niri-session.target.wants/easyeffects.service && \
     ln -sf /usr/lib/systemd/user/gnome-keyring-daemon.service /out/usr/lib/systemd/user/niri-session.target.wants/gnome-keyring-daemon.service
 
 # --- IMMAGINE FINALE (PRODUZIONE) ---
 # FIX: Renovate Bot sostituirà automaticamente il tag :latest con il vero digest SHA256 crittografico
-FROM ghcr.io/patapem/ermete-base-nvidia:latest
+FROM ghcr.io/patapem/ermete-base-nvidia@sha256:f76160a117bfef51847f141efadb082fa73638e817fd58f66d6148c08e53e65f
 ARG BIBATA_VER
 
 # Copia i binari purificati dai rispettivi branch paralleli (Hardening Deterministico)
@@ -147,9 +146,10 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 RUN mkdir -p /nix
 
 # [FASE B: Modifica UX/Security] 
-# Sterilizzazione PAM: Rimozione moduli biometrici per prevenire lock di pam_unix(sudo)
-RUN authselect select sssd with-silent-lastlog --force && \
-    authselect apply-changes
+# Sterilizzazione PAM: La configurazione corretta (local + mdns4 + no fingerprint) è già ereditata
+# nativamente dall'immagine base (ermete-base-nvidia). Sovrascriverla con sssd rompe mDNS e
+# reintroduce moduli biometrici inesistenti (pam_fprintd.so) causando il lockout di sudo/su.
+RUN authselect apply-changes
 
 ### LINTING
 ## Verify final image and contents are correct.

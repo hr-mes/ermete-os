@@ -1,7 +1,5 @@
 enable pipewire.socket
 enable pipewire.service
 enable wireplumber.service
-enable ironbar.service
-enable swaybg.service
 enable ermete-firstboot-started.service
 enable ermete-firstboot-notification.path
