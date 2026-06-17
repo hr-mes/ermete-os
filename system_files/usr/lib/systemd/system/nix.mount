@@ -2,8 +2,8 @@
 Description=Nix Directory Mount
 DefaultDependencies=no
 Conflicts=umount.target
-Before=local-fs.target umount.target
-ConditionPathExists=/var/opt/nix
+After=systemd-tmpfiles-setup.service
+Before=sysinit.target umount.target
 
 [Mount]
 What=/var/opt/nix
@@ -12,4 +12,4 @@ Type=none
 Options=bind
 
 [Install]
-WantedBy=local-fs.target
+WantedBy=sysinit.target

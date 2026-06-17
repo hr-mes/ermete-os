@@ -87,7 +87,9 @@ COPY system_files/etc/skel /out/etc/skel
 RUN mkdir -p /out/etc/systemd/system /out/usr/lib/systemd/user/niri-session.target.wants && \
     find /out/etc/skel -type d -exec chmod 0700 {} + && \
     find /out/etc/skel -type f -exec chmod 0600 {} + && \
+    mkdir -p /out/etc/niri && cp /out/etc/skel/.config/niri/config.kdl /out/etc/niri/config.kdl && \
     ln -sf /usr/lib/systemd/system/graphical.target /out/etc/systemd/system/default.target && \
+    ln -sf /usr/lib/systemd/system/greetd.service /out/etc/systemd/system/display-manager.service && \
     ln -sf /usr/lib64/anyrun /out/usr/lib/anyrun && \
     ln -sf /usr/lib/systemd/user/ironbar.service /out/usr/lib/systemd/user/niri-session.target.wants/ironbar.service && \
     ln -sf /usr/lib/systemd/user/swaybg.service /out/usr/lib/systemd/user/niri-session.target.wants/swaybg.service && \
@@ -113,6 +115,7 @@ COPY --from=build-bibata /out/icons/Bibata-Modern-Classic /usr/share/icons/Bibat
 
 # Iniettiamo la gerarchia nativa OCI delle configurazioni statiche (Zero-Echo) e i symlink precalcolati
 COPY --chown=0:0 system_files /
+RUN chmod 755 /usr/bin/niri-session /usr/bin/ermete-xray /usr/libexec/ermete-firstboot.sh /usr/libexec/ermete-snapshot.sh
 COPY --from=build-symlinks /out/etc /etc
 COPY --from=build-symlinks /out/usr/lib/ /usr/lib/
 
