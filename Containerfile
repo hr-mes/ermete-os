@@ -146,7 +146,7 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 RUN mkdir -p /nix
 
 # [FASE B: Modifica UX/Security] 
-# Sterilizzazione PAM: La configurazione corretta (sssd + mdns4 + no fingerprint) è già ereditata
+# Sterilizzazione PAM: La configurazione corretta (local + mdns4 + no fingerprint) è già ereditata
 # nativamente dall'immagine base (ermete-base-nvidia). Sovrascriverla con sssd rompe mDNS e
 # reintroduce moduli biometrici inesistenti (pam_fprintd.so) causando il lockout di sudo/su.
 RUN authselect apply-changes
