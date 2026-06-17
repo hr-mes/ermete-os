@@ -98,7 +98,7 @@ RUN mkdir -p /out/etc/systemd/system /out/usr/lib/systemd/user/niri-session.targ
 
 # --- IMMAGINE FINALE (PRODUZIONE) ---
 # FIX: Renovate Bot sostituirà automaticamente il tag :latest con il vero digest SHA256 crittografico
-FROM ghcr.io/patapem/ermete-base-nvidia@sha256:f76160a117bfef51847f141efadb082fa73638e817fd58f66d6148c08e53e65f
+FROM ghcr.io/patapem/ermete-base-nvidia@sha256:643f31315e9207152d86ae4c38a30b2ab539362b9620953bdde8cd8e63f5b28c
 ARG BIBATA_VER
 
 # Copia i binari purificati dai rispettivi branch paralleli (Hardening Deterministico)
