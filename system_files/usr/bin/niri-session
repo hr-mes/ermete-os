@@ -4,9 +4,14 @@ export XDG_SESSION_TYPE=wayland
 export XDG_CURRENT_DESKTOP=niri
 export XDG_SESSION_DESKTOP=niri
 
+# Forziamo il rendering software per la compatibilità in QEMU senza KVM/GPU
+export LIBGL_ALWAYS_SOFTWARE=1
+export WLR_RENDERER=pixman
+export NIRI_RENDERER=pixman
+
 # Importa le variabili nel manager systemd --user e nell'ambiente DBus
 systemctl --user import-environment XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
-dbus-update-activation-environment --systemd XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
+dbus-update-activation-environment XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
 
 # Mantra Infrangibile: Avvio supervisionato via systemd-cat e dbus user session
 systemd-cat -t niri niri

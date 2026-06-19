@@ -1,0 +1,1 @@
+dnf install -y libguestfs-tools && export LIBGUESTFS_BACKEND=direct && guestfish -a /output/disk.qcow2 -m /dev/sda4:/:subvol=root sh "echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config"

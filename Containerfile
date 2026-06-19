@@ -57,7 +57,7 @@ FROM build-base AS build-ironbar
 ARG IRONBAR_VER
 RUN --mount=type=cache,target=/usr/local/cargo/registry,id=registry-ironbar \
     --mount=type=cache,target=/usr/local/cargo/git,id=git-ironbar \
-    cargo install --locked --root /out ironbar --version ${IRONBAR_VER#v}
+    cargo install --locked --root /out ironbar --version ${IRONBAR_VER#v} --features workspaces+niri
 
 # Builder Anyrun
 FROM build-base AS build-anyrun
@@ -95,6 +95,7 @@ RUN mkdir -p /out/etc/systemd/system /out/usr/lib/systemd/user/niri-session.targ
     ln -sf /usr/lib/systemd/user/swaybg.service /out/usr/lib/systemd/user/niri-session.target.wants/swaybg.service && \
     ln -sf /usr/lib/systemd/user/lxpolkit.service /out/usr/lib/systemd/user/niri-session.target.wants/lxpolkit.service && \
     ln -sf /usr/lib/systemd/user/nm-applet.service /out/usr/lib/systemd/user/niri-session.target.wants/nm-applet.service && \
+    ln -sf /usr/lib/systemd/user/mako.service /out/usr/lib/systemd/user/niri-session.target.wants/mako.service && \
     ln -sf /usr/lib/systemd/user/blueman-applet.service /out/usr/lib/systemd/user/niri-session.target.wants/blueman-applet.service && \
     ln -sf /usr/lib/systemd/user/gnome-keyring-daemon.service /out/usr/lib/systemd/user/niri-session.target.wants/gnome-keyring-daemon.service
 

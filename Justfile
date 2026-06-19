@@ -121,9 +121,10 @@ _build-bib $target_image $tag $type $config: (_rootful_load_image target_image t
 
     args="--type ${type} "
     args+="--use-librepo=True "
-    args+="--rootfs=btrfs"
+    args+="--rootfs=btrfs "
+    args+="--config /config.toml"
 
-    BUILDTMP=$(mktemp -p "${PWD}" -d -t _build-bib.XXXXXXXXXX)
+    BUILDTMP=$(mktemp -p "$HOME" -d -t _build-bib.XXXXXXXXXX)
 
     sudo podman run \
       --rm \
@@ -132,12 +133,17 @@ _build-bib $target_image $tag $type $config: (_rootful_load_image target_image t
       --pull=newer \
       --net=host \
       --security-opt label=type:unconfined_t \
-      -v $(pwd)/${config}:/config.toml:ro \
+      -v "$(pwd)/${config}:/config.toml:ro" \
       -v $BUILDTMP:/output \
       -v /var/lib/containers/storage:/var/lib/containers/storage \
       "${bib_image}" \
       ${args} \
       "${target_image}:${tag}"
+
+    if [[ "${type}" == "qcow2" ]]; then
+        echo "Converting qcow2 to vhdx safely in native ext4 filesystem..."
+        sudo qemu-img convert -f qcow2 -O vhdx $BUILDTMP/qcow2/disk.qcow2 $BUILDTMP/disk.vhdx
+    fi
 
     mkdir -p output
     sudo mv -f $BUILDTMP/* output/
