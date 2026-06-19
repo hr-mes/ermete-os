@@ -333,6 +333,6 @@ binds {
     Mod+Shift+P { power-off-monitors; }
     Mod+MouseMiddle { close-window; }
 
-    Mod+E { spawn "flatpak" "run" "org.gnome.Nautilus"; }
+    Mod+E { spawn "nautilus"; }
     Mod+Return { spawn "alacritty"; }
 }
