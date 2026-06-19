@@ -32,10 +32,8 @@ dnf5 -y install --setopt=install_weak_deps=False niri xorg-x11-server-Xwayland \
 
 # Install Greetd e Tuigreet (Greeter da terminale in Rust)
 dnf5 -y install --setopt=install_weak_deps=False greetd tuigreet
-# Garantiamo l'esistenza dell'utente greeter prima del boot, nel caso i sysusers DNF non si inneschino
-getent group video >/dev/null || groupadd -r video
-getent group render >/dev/null || groupadd -r render
-getent passwd greeter >/dev/null || useradd -r -g video -G render -d /var/lib/greetd -s /sbin/nologin -c "greetd dummy user" greeter
+# Garantiamo l'esistenza dell'utente greeter prima del boot delegandola a systemd-sysusers.
+# (Vedi system_files/usr/lib/sysusers.d/20-greeter.conf per la dichiarazione)
 # Greetd service è abilitato nativamente via system-preset
 
 # Abilitazione Globale Audio Pipewire per la sessione utente (Fondamentale per Wayland/Portals)
