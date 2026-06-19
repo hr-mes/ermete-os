@@ -1,9 +1,6 @@
 MOZ_ENABLE_WAYLAND=1
 ELECTRON_OZONE_PLATFORM_HINT=wayland
-NVD_BACKEND=direct
-LIBVA_DRIVER_NAME=nvidia
-__GLX_VENDOR_LIBRARY_NAME=nvidia
-GBM_BACKEND=nvidia-drm
+# Environment Variables per abilitare Wayland Nativo nei Toolkit Grafici
 QT_QPA_PLATFORM="wayland;xcb"
 GDK_BACKEND="wayland,x11"
 SDL_VIDEODRIVER="wayland,x11"
