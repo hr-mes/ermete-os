@@ -4,7 +4,7 @@ PartOf=niri-session.target
 Before=niri-session.target
 
 [Service]
-ExecStart=/usr/bin/gnome-keyring-daemon --start --components=secrets
+ExecStart=/usr/bin/gnome-keyring-daemon --foreground --components=secrets
 Restart=on-failure
 RestartSec=2
 

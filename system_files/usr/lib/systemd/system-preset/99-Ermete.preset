@@ -14,3 +14,18 @@ enable Ermete-firstboot.service
 enable Ermete-flatpak-update.timer
 enable nix.mount
 enable nix-daemon.socket
+
+# Disable libvirt/virtualization background daemons for baremetal (Zero-Boot-Delay)
+disable libvirtd.service
+disable virtqemud.service
+disable virtlxcd.service
+disable virtvboxd.service
+disable virtxend.service
+disable virtnodedevd.service
+disable virtstoraged.service
+disable virtnetworkd.service
+disable virtproxyd.service
+disable virtsecretd.service
+disable virtnwfilterd.service
+disable virtinterfaced.service
+disable libvirt-guests.service

@@ -4,3 +4,5 @@ ELECTRON_OZONE_PLATFORM_HINT=wayland
 QT_QPA_PLATFORM="wayland;xcb"
 GDK_BACKEND="wayland,x11"
 SDL_VIDEODRIVER="wayland,x11"
+XCURSOR_THEME="Bibata-Modern-Classic"
+XCURSOR_SIZE="24"
