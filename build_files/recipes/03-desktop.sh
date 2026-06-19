@@ -11,11 +11,12 @@ echo "--- Applicazione Forzata del Tema Globale GTK ---"
 # Install Niri e dipendenze cursori, temi e font (aggiunto Xwayland per compatibilità assoluta con vecchie app)
 dnf5 -y install --setopt=install_weak_deps=False niri xorg-x11-server-Xwayland \
     mesa-dri-drivers mesa-vulkan-drivers alacritty upower \
-    nautilus mpv loupe gnome-calculator gnome-system-monitor \
+    nautilus mpv loupe gnome-calculator gnome-system-monitor seahorse \
     pipewire pipewire-alsa pipewire-pulseaudio wireplumber \
-    playerctl brightnessctl swaylock libnotify \
+    playerctl brightnessctl swaylock libnotify wlr-randr \
     papirus-icon-theme adw-gtk3-theme jetbrains-mono-fonts rsms-inter-fonts fontawesome-fonts-all \
     xdg-desktop-portal-gnome xdg-desktop-portal-gtk swaybg gtk-layer-shell gtk4-layer-shell \
+    qt5-qtwayland qt6-qtwayland xdg-user-dirs xdg-user-dirs-gtk \
     mako lxpolkit network-manager-applet blueman gnome-keyring wl-clipboard
 
 # Configurazione Ambiente Wayland/NVIDIA e wrapper niri-session 

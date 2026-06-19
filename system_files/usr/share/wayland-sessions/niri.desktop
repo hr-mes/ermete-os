@@ -1,7 +1,6 @@
 [Desktop Entry]
-Name=Ermete Niri (Session)
-Comment=A scrollable-tiling Wayland compositor with Systemd bindings
-# REGOLA: Non lanciare mai niri standalone, richiamare sempre il wrapper
-Exec=niri-session
+Name=Ermete OS (Niri)
+Comment=A scrollable-tiling Wayland compositor (Ermete Session)
+Exec=/usr/bin/niri-session
 Type=Application
 DesktopNames=niri
