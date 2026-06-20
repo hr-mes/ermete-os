@@ -118,7 +118,7 @@ COPY --from=build-bibata /out/icons/Bibata-Modern-Classic /usr/share/icons/Bibat
 # Iniettiamo la gerarchia nativa OCI delle configurazioni statiche (Zero-Echo) e i symlink precalcolati
 COPY --chown=0:0 system_files /
 COPY --from=build-symlinks --chown=0:0 /out/etc /etc
-COPY --from=build-symlinks --chown=0:0 /out/usr/lib/ /usr/lib/
+COPY --from=build-symlinks --chown=0:0 /out/usr /usr
 
 # Fissiamo i permessi di /etc/skel nativamente nell'immagine OCI (Zero-Boot-Delay)
 # I permessi paranoici (0700 dir, 0600 file) sono iniettati isolando il mutating RUN nello stage build-symlinks
@@ -127,6 +127,12 @@ COPY --from=build-symlinks --chown=0:0 /out/usr/lib/ /usr/lib/
 # and preserve atomicity of the RPM database.
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
+    find /etc/skel -type d -exec chmod 0700 {} + && \
+    find /etc/skel -type f -exec chmod 0600 {} + && \
+    find /etc/skel -type f -name "*.sh" -exec chmod 0700 {} + && \
+    find /usr/libexec -type f -name "*.sh" -exec chmod +x {} + && \
+    find /usr/bin -type f -name "ermete-*" -exec chmod +x {} + && \
+    chmod +x /usr/bin/niri-session && \
     bash /ctx/recipes/01-system-setup.sh && \
     bash /ctx/recipes/02-repos-and-codecs.sh && \
     bash /ctx/recipes/03-desktop.sh

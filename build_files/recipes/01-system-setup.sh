@@ -13,6 +13,12 @@ echo "--- Configuring DNF and installing base system packages ---"
 
 dnf5 -y install --setopt=install_weak_deps=False libvirt virt-manager qemu-kvm sysstat lxqt-openssh-askpass parallel just nix greenboot greenboot-default-health-checks bpftool drm_info nftables wayland-utils firewalld btrfs-progs
 
+# Implementazione dell'Hack Nix per OSTree (Salvataggio Layer Iniziale)
+# Spostiamo il contenuto di /nix popolato da DNF in una directory statica del rootfs.
+# Al primo avvio, un servizio systemd lo copierà nel mountpoint dinamico (/var/opt/nix).
+mkdir -p /usr/share/nix-initial-state
+mv /nix/* /usr/share/nix-initial-state/ || true
+
 # Core Utilities in Rust (Il nuovo stack)
 dnf5 -y install --setopt=install_weak_deps=False eza bat fd-find ripgrep nushell neovim ananicy-cpp
 
@@ -39,5 +45,4 @@ systemd-sysusers || true
 
 # Applicazione Hardening UNIX su /etc/skel è demandata allo stage build-symlinks nel Containerfile per purezza OCI
 
-echo "--- Enabling nix-daemon ---"
-systemctl enable nix-daemon.service || true
+
