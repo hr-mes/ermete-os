@@ -1,0 +1,67 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+format = """
+[╭─](bold #cdd6f4)\
+$os\
+$username\
+$hostname\
+$directory\
+$git_branch\
+$git_status\
+$c\
+$rust\
+$golang\
+$nodejs\
+$php\
+$java\
+$kotlin\
+$haskell\
+$python\
+$docker_context\
+$nix_shell\
+$conda\
+$memory_usage\
+$cmd_duration\
+$line_break\
+[╰─](bold #cdd6f4)$character"""
+
+# Catppuccin Mocha Color Palette Mapping
+[os]
+disabled = false
+style = "bold #89b4fa"
+
+[username]
+style_user = "bold #89b4fa"
+style_root = "bold #f38ba8"
+format = "[$user]($style) "
+
+[hostname]
+ssh_only = false
+style = "bold #b4befe"
+format = "at [$hostname]($style) in "
+
+[directory]
+style = "bold #a6e3a1"
+read_only = " "
+truncation_length = 4
+truncate_to_repo = true
+format = "[$path]($style)[$read_only]($read_only_style) "
+
+[git_branch]
+style = "bold #f5c2e7"
+symbol = " "
+format = "on [$symbol$branch]($style) "
+
+[git_status]
+style = "bold #f38ba8"
+format = '([\[$all_status$ahead_behind\]]($style) )'
+
+[nix_shell]
+style = "bold #89b4fa"
+symbol = " "
+format = "via [$symbol$state( \\($name\\))]($style) "
+
+[character]
+success_symbol = "[❯](bold #a6e3a1)"
+error_symbol = "[❯](bold #f38ba8)"
+vicmd_symbol = "[❮](bold #94e2d5)"

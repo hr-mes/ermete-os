@@ -1,11 +1,11 @@
 [Unit]
-Description=Mako (Wayland Notification Daemon)
+Description=SwayNC (Wayland Notification Daemon)
 PartOf=niri-session.target
 After=graphical-session-pre.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/mako
+ExecStart=/usr/bin/swaync
 Restart=on-failure
 RestartSec=2
 

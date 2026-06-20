@@ -84,19 +84,20 @@ RUN mkdir -p /out/icons && \
 # Fase C: Costruzione Link Simbolici (Dichiaratività Systemd)
 FROM build-base AS build-symlinks
 COPY system_files/etc/skel /out/etc/skel
-RUN mkdir -p /out/etc/systemd/system /out/usr/lib/systemd/user/niri-session.target.wants && \
+RUN mkdir -p /out/usr/lib/systemd/system /out/usr/lib/systemd/user/niri-session.target.wants && \
     find /out/etc/skel -type d -exec chmod 0700 {} + && \
     find /out/etc/skel -type f -exec chmod 0600 {} + && \
-    mkdir -p /out/etc/niri && cp /out/etc/skel/.config/niri/config.kdl /out/etc/niri/config.kdl && \
-    ln -sf /usr/lib/systemd/system/graphical.target /out/etc/systemd/system/default.target && \
-    ln -sf /usr/lib/systemd/system/greetd.service /out/etc/systemd/system/display-manager.service && \
+    find /out/etc/skel -type f -name "*.sh" -exec chmod 0700 {} + && \
+    ln -sf graphical.target /out/usr/lib/systemd/system/default.target && \
+    ln -sf greetd.service /out/usr/lib/systemd/system/display-manager.service && \
     ln -sf /usr/lib64/anyrun /out/usr/lib/anyrun && \
     ln -sf /usr/lib/systemd/user/ironbar.service /out/usr/lib/systemd/user/niri-session.target.wants/ironbar.service && \
     ln -sf /usr/lib/systemd/user/swaybg.service /out/usr/lib/systemd/user/niri-session.target.wants/swaybg.service && \
     ln -sf /usr/lib/systemd/user/lxpolkit.service /out/usr/lib/systemd/user/niri-session.target.wants/lxpolkit.service && \
     ln -sf /usr/lib/systemd/user/nm-applet.service /out/usr/lib/systemd/user/niri-session.target.wants/nm-applet.service && \
-    ln -sf /usr/lib/systemd/user/mako.service /out/usr/lib/systemd/user/niri-session.target.wants/mako.service && \
+    ln -sf /usr/lib/systemd/user/swaync.service /out/usr/lib/systemd/user/niri-session.target.wants/swaync.service && \
     ln -sf /usr/lib/systemd/user/blueman-applet.service /out/usr/lib/systemd/user/niri-session.target.wants/blueman-applet.service && \
+    ln -sf /usr/lib/systemd/user/easyeffects.service /out/usr/lib/systemd/user/niri-session.target.wants/easyeffects.service && \
     ln -sf /usr/lib/systemd/user/gnome-keyring-daemon.service /out/usr/lib/systemd/user/niri-session.target.wants/gnome-keyring-daemon.service
 
 # --- IMMAGINE FINALE (PRODUZIONE) ---
@@ -116,7 +117,6 @@ COPY --from=build-bibata /out/icons/Bibata-Modern-Classic /usr/share/icons/Bibat
 
 # Iniettiamo la gerarchia nativa OCI delle configurazioni statiche (Zero-Echo) e i symlink precalcolati
 COPY --chown=0:0 system_files /
-RUN chmod 755 /usr/bin/niri-session /usr/bin/ermete-xray /usr/libexec/ermete-firstboot.sh /usr/libexec/ermete-snapshot.sh
 COPY --from=build-symlinks /out/etc /etc
 COPY --from=build-symlinks /out/usr/lib/ /usr/lib/
 
@@ -149,11 +149,7 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 # di montare /var/opt/nix al boot. Senza questo, il demone fallirebbe.
 RUN mkdir -p /nix
 
-# [FASE B: Modifica UX/Security] 
-# Sterilizzazione PAM: La configurazione corretta (local + mdns4 + no fingerprint) è già ereditata
-# nativamente dall'immagine base (ermete-base-nvidia). Sovrascriverla con sssd rompe mDNS e
-# reintroduce moduli biometrici inesistenti (pam_fprintd.so) causando il lockout di sudo/su.
-RUN authselect apply-changes
+
 
 ### LINTING
 ## Verify final image and contents are correct.
