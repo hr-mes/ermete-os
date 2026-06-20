@@ -32,6 +32,8 @@ dnf5 -y install --setopt=install_weak_deps=False niri xorg-x11-server-Xwayland \
 
 # Install Greetd e Tuigreet (Greeter da terminale in Rust)
 dnf5 -y install --setopt=install_weak_deps=False greetd tuigreet
+# Rimuoviamo la config di default del pacchetto per favorire il fallback stateless in /usr/lib/greetd/config.toml
+rm -f /etc/greetd/config.toml
 # Garantiamo l'esistenza dell'utente greeter prima del boot delegandola a systemd-sysusers.
 # (Vedi system_files/usr/lib/sysusers.d/20-greeter.conf per la dichiarazione)
 systemd-sysusers

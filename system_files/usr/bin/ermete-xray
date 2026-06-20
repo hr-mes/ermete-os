@@ -136,7 +136,13 @@ echo -e "\n>>> ${CYAN}Verifica Esistenza Utenti Chiave:${NC}"
 grep -E '^(greeter|nixbld1)' /etc/passwd || echo -e "${RED}Utenti chiave mancanti!${NC}"
 
 echo -e "\n>>> ${CYAN}Greetd Configurazione Attuale:${NC}"
-cat /etc/greetd/config.toml 2>/dev/null || echo -e "${RED}File di configurazione Greetd mancante!${NC}"
+if [ -f /etc/greetd/config.toml ]; then
+    cat /etc/greetd/config.toml
+elif [ -f /usr/lib/greetd/config.toml ]; then
+    cat /usr/lib/greetd/config.toml
+else
+    echo -e "${RED}File di configurazione Greetd mancante!${NC}"
+fi
 
 echo -e "\n>>> ${CYAN}Flatpak Runtimes & Remotes:${NC}"
 flatpak remotes || true

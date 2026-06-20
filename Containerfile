@@ -91,6 +91,10 @@ RUN mkdir -p /out/usr/lib/systemd/system /out/usr/lib/systemd/user/niri-session.
     ln -sf graphical.target /out/usr/lib/systemd/system/default.target && \
     ln -sf greetd.service /out/usr/lib/systemd/system/display-manager.service && \
     ln -sf /usr/lib64/anyrun /out/usr/lib/anyrun && \
+    mkdir -p /out/usr/lib/systemd/system/multi-user.target.wants /out/usr/lib/systemd/system/sockets.target.wants /out/usr/lib/systemd/system/sysinit.target.wants && \
+    ln -sf /usr/lib/systemd/system/nix.mount /out/usr/lib/systemd/system/sysinit.target.wants/nix.mount && \
+    ln -sf /usr/lib/systemd/system/nix-daemon.service /out/usr/lib/systemd/system/multi-user.target.wants/nix-daemon.service && \
+    ln -sf /usr/lib/systemd/system/nix-daemon.socket /out/usr/lib/systemd/system/sockets.target.wants/nix-daemon.socket && \
     ln -sf /usr/lib/systemd/user/ironbar.service /out/usr/lib/systemd/user/niri-session.target.wants/ironbar.service && \
     ln -sf /usr/lib/systemd/user/swaybg.service /out/usr/lib/systemd/user/niri-session.target.wants/swaybg.service && \
     ln -sf /usr/lib/systemd/user/lxpolkit.service /out/usr/lib/systemd/user/niri-session.target.wants/lxpolkit.service && \
