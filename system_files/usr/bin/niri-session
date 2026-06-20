@@ -12,7 +12,7 @@ dbus-update-activation-environment --systemd XDG_SESSION_TYPE XDG_CURRENT_DESKTO
 
 # Mantra Infrangibile: Avvio supervisionato via systemd-cat e dbus user session
 # Rimuoviamo "exec" così il wrapper può sopravvivere al processo di Niri e avviare il teardown!
-niri
+systemd-cat -t niri niri
 
 # Teardown pulito dell'albero delle dipendenze al termine della sessione
 systemctl --user stop graphical-session.target

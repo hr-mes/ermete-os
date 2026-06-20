@@ -7,14 +7,11 @@ echo "--- Configuring DNF and installing base system packages ---"
 # Ereditato nativamente da /system_files/usr/lib/dnf/dnf.conf.d/99-parallel-downloads.conf
 
 # System apps & Dipendenze Core
-# Rimosso flatpak-builder (spostato in distrobox)
-# Aggiunti network-manager-applet e blueman per l'usabilità (Wi-Fi e Bluetooth)
-# Aggiunto nix (package manager funzionale immutabile) per sostituire distrobox
+# Aggiunto nix (package manager funzionale immutabile) per container e dipendenze utente
 # Libvirt e virt-manager mantenuti per workflow utente quotidiano
 # Aggiunti greenboot e greenboot-default-health-checks consolidati dagli script deprecati
 
-dnf5 -y install --setopt=install_weak_deps=False libvirt virt-manager qemu-kvm wlr-randr sysstat lxqt-openssh-askpass lxpolkit parallel just seahorse gnome-keyring gnome-keyring-pam network-manager-applet blueman playerctl brightnessctl alacritty nix greenboot greenboot-default-health-checks bpftool drm_info nftables wayland-utils firewalld btrfs-progs
-dnf5 -y install --setopt=install_weak_deps=False swaylock # Dipendenza critica per il blocco schermo di Niri
+dnf5 -y install --setopt=install_weak_deps=False libvirt virt-manager qemu-kvm sysstat lxqt-openssh-askpass parallel just nix greenboot bpftool drm_info nftables wayland-utils firewalld btrfs-progs
 
 # Core Utilities in Rust (Il nuovo stack)
 dnf5 -y install --setopt=install_weak_deps=False eza bat fd-find ripgrep nushell neovim ananicy-cpp
@@ -22,6 +19,11 @@ dnf5 -y install --setopt=install_weak_deps=False eza bat fd-find ripgrep nushell
 # Hardening Networking (Zero-Trust)
 
 # I servizi firewalld e ananicy-cpp sono abilitati nativamente via system-preset
+
+echo "--- Applicazione Forzata Firewalld Default Zone ---"
+# Applica il drop nativo e idempotente senza sovrascrivere l'intero firewalld.conf
+firewall-offline-cmd --set-default-zone=drop
+firewall-offline-cmd --zone=drop --add-service=mdns
 
 # Installazione di Starship e Bottom ora delegata al processo nativo Cargo (vedi 03-desktop.sh)
 
@@ -33,6 +35,6 @@ dnf5 -y install --setopt=install_weak_deps=False eza bat fd-find ripgrep nushell
 echo "--- Fixing critical UNIX groups for Wayland/udev via sysusers ---"
 
 # Inneschiamo esplicitamente sysusers per assicurarci che anche systemd applichi i suoi default
-systemd-sysusers || true
+systemd-sysusers
 
 # Applicazione Hardening UNIX su /etc/skel è demandata allo stage build-symlinks nel Containerfile per purezza OCI

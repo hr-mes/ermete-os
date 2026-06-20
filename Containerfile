@@ -50,7 +50,7 @@ ARG BOTTOM_VER
 RUN --mount=type=cache,target=/usr/local/cargo/registry,id=registry-bottom \
     --mount=type=cache,target=/usr/local/cargo/git,id=git-bottom \
     cargo install --locked --root /out bottom --version ${BOTTOM_VER#v} && \
-    mv /out/bin/bottom /out/bin/btm || true
+    if [ -f /out/bin/bottom ]; then mv /out/bin/bottom /out/bin/btm; fi
 
 # Builder Ironbar
 FROM build-base AS build-ironbar
@@ -68,8 +68,8 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry,id=registry-anyrun \
     cd /tmp/anyrun-src && git checkout ${ANYRUN_COMMIT} && \
     cargo build --release --locked && \
     mv target/release/anyrun /out/bin/ && \
-    cp target/release/*.so /out/lib64/anyrun/ 2>/dev/null || true && \
-    strip /out/bin/anyrun /out/lib64/anyrun/*.so 2>/dev/null || true
+    find target/release -maxdepth 1 -name '*.so' -exec cp {} /out/lib64/anyrun/ \; && \
+    find /out/bin /out/lib64/anyrun -type f -exec strip {} +
 
 # Builder Bibata Cursor (Zero-Network-Failure OCI layer)
 FROM build-base AS build-bibata

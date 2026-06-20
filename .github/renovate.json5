@@ -21,6 +21,21 @@
       "matchStrings": [
         "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>[^\\s]+)\\s+ARG [A-Z_]+_COMMIT=\"(?<currentDigest>[a-f0-9]+)\""
       ]
+    },
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "(^|/)Justfile$",
+        "\\.toml$",
+        "\\.yml$",
+        "\\.ks$"
+      ],
+      "matchStrings": [
+        "(?<depName>quay\\.io/centos-bootc/bootc-image-builder)@(?<currentDigest>sha256:[a-f0-9]{64})",
+        "(?<depName>ghcr\\.io/patapem/ermete-os)@(?<currentDigest>sha256:[a-f0-9]{64})",
+        "(?<depName>ghcr\\.io/patapem/ermete-base-nvidia)@(?<currentDigest>sha256:[a-f0-9]{64})"
+      ],
+      "datasourceTemplate": "docker"
     }
   ],
   "packageRules": [
