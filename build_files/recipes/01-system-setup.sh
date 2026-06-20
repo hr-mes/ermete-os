@@ -35,6 +35,6 @@ firewall-offline-cmd --zone=drop --add-service=mdns
 echo "--- Fixing critical UNIX groups for Wayland/udev via sysusers ---"
 
 # Inneschiamo esplicitamente sysusers per assicurarci che anche systemd applichi i suoi default
-systemd-sysusers
+systemd-sysusers || true
 
 # Applicazione Hardening UNIX su /etc/skel è demandata allo stage build-symlinks nel Containerfile per purezza OCI
