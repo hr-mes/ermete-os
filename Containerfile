@@ -135,7 +135,8 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     chmod +x /usr/bin/niri-session && \
     bash /ctx/recipes/01-system-setup.sh && \
     bash /ctx/recipes/02-repos-and-codecs.sh && \
-    bash /ctx/recipes/03-desktop.sh
+    bash /ctx/recipes/03-desktop.sh && \
+    setsebool -P allow_execmem 1 || true
 
 ### STRUMENTI DIAGNOSTICI OMNI-VISION SUPREME
 # Installazione pacchetti essenziali per il debugging a Raggi-X 
@@ -153,7 +154,7 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 ### NIX MOUNTPOINT (Immutability Fix)
 # Creiamo il mountpoint vuoto sul rootfs immutabile per permettere a nix.mount
 # di montare /var/opt/nix al boot. Senza questo, il demone fallirebbe.
-RUN mkdir -p /nix
+RUN mkdir -p /nix && ln -s /var/opt/nix/var /nix/var
 
 
 

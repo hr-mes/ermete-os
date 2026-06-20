@@ -1,0 +1,11 @@
+[Unit]
+Description=Nix Daemon
+Requires=nix-daemon.socket
+ConditionPathIsDirectory=/nix/store
+
+[Service]
+ExecStart=/nix/var/nix/profiles/default/bin/nix-daemon
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
