@@ -43,7 +43,13 @@ systemd-sysusers
 # Abilitazione Globale Audio Pipewire e Wayland User Services
 # I servizi sono abilitati nativamente via OCI tramite preset in /usr/lib/systemd/user-preset/
 
-echo "--- Applicazione Forzata del Tema Globale GTK ---"
+echo "--- Creazione Wrapper Flatpak per Firefox ---"
+cat << 'EOF' > /usr/bin/firefox
+#!/bin/bash
+exec flatpak run org.mozilla.firefox "$@"
+EOF
+chmod +x /usr/bin/firefox
+
 # Assicura che i nuovi schemi GTK installati dai pacchetti vengano precalcolati nativamente nel layer
 glib-compile-schemas /usr/share/glib-2.0/schemas/
 

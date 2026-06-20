@@ -38,3 +38,6 @@ echo "--- Fixing critical UNIX groups for Wayland/udev via sysusers ---"
 systemd-sysusers || true
 
 # Applicazione Hardening UNIX su /etc/skel è demandata allo stage build-symlinks nel Containerfile per purezza OCI
+
+echo "--- Enabling nix-daemon ---"
+systemctl enable nix-daemon.service || true
