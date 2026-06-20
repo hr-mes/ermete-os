@@ -1,7 +1,7 @@
 #!/bin/bash
 # ==============================================================================
-# ERMETE OS: SUPREME OMNI-VISION DIAGNOSTIC TOOL (X-RAY) v3.0
-# Fornisce una scansione a raggi X verticale e orizzontale estrema.
+# ERMETE OS: SUPREME OMNI-VISION DIAGNOSTIC TOOL (X-RAY) v4.0
+# La vetta teorica della diagnostica di sistema per ambienti OCI/Wayland/NVIDIA.
 # ==============================================================================
 
 set -eo pipefail
@@ -17,7 +17,7 @@ NC='\033[0m'
 exec > >(tee -a "$LOG_FILE") 2>&1
 
 echo -e "${BLUE}======================================================${NC}"
-echo -e "${BLUE}     🦅 ERMETE OS - SUPREME OMNI-VISION X-RAY v3.0    ${NC}"
+echo -e "${BLUE}     🦅 ERMETE OS - SUPREME OMNI-VISION X-RAY v4.0    ${NC}"
 echo -e "${BLUE}======================================================${NC}"
 echo -e "${CYAN}Timestamp:${NC} $(date --rfc-3339=seconds)"
 echo -e "${CYAN}Kernel:${NC} $(uname -r)"
@@ -32,10 +32,12 @@ echo -e "\n>>> ${CYAN}OSTree Mutated Configs (/etc Diffing):${NC}"
 ostree admin config-diff || echo -e "${GREEN}Nessuna deviazione in /etc. Il sistema è puro.${NC}"
 echo -e "\n>>> ${CYAN}DNF / RPM Atomic Tree Status:${NC}"
 rpm-ostree status -v || true
-echo -e "\n>>> ${CYAN}GPG Trust Anchors (Local):${NC}"
-ls -lZ /etc/pki/rpm-gpg/ || true
-echo -e "\n>>> ${CYAN}Storage & Overlay FS Status:${NC}"
-df -hT / /var /usr /etc || true
+echo -e "\n>>> ${CYAN}Stato Provisioning First-Boot:${NC}"
+if [ -f /var/lib/ermete-firstboot-done ]; then
+    echo -e "${GREEN}Provisioning (ermete-firstboot) completato con successo.${NC}"
+else
+    echo -e "${RED}ATTENZIONE: Provisioning first-boot MANCANTE o FALLITO.${NC}"
+fi
 
 echo -e "\n${YELLOW}--- 2. BOOT PERFORMANCE & SYSTEMD (SYSTEM) ---${NC}"
 systemd-analyze || true
@@ -43,20 +45,14 @@ echo -e "\n>>> ${CYAN}Top 5 colli di bottiglia all'avvio:${NC}"
 systemd-analyze blame | head -n 5 || true
 echo -e "\n>>> ${CYAN}Servizi di Sistema Falliti:${NC}"
 systemctl --failed || echo -e "${GREEN}Nessun servizio di sistema fallito.${NC}"
-echo -e "\n>>> ${CYAN}Stato Servizi Critici (greetd, nix-daemon, dbus):${NC}"
-systemctl status greetd nix-daemon dbus --no-pager || true
+echo -e "\n>>> ${CYAN}Stato Servizi Critici (greetd, nix-daemon, dbus-broker, NetworkManager):${NC}"
+systemctl status greetd nix-daemon dbus-broker NetworkManager --no-pager || true
 
 echo -e "\n${YELLOW}--- 3. ZERO-TRUST & SECURITY (SELinux & CoreDumps) ---${NC}"
 sestatus | grep -E "SELinux status|Current mode"
-echo -e "\n>>> ${CYAN}SELinux Booleans Critici:${NC}"
-getsebool -a | grep -E "wayland|nvidia|execmem|mmap_zero" || true
 echo -e "\n>>> ${CYAN}Ultime violazioni SELinux (AVC Denials letali):${NC}"
 if command -v ausearch >/dev/null 2>&1; then
     ausearch -m AVC,USER_AVC -ts recent -i || echo -e "${GREEN}Nessun AVC recente.${NC}"
-    echo -e "\n>>> ${CYAN}Audit2allow translation:${NC}"
-    ausearch -m AVC,USER_AVC -ts recent --raw | audit2allow || true
-else
-    echo "ausearch non disponibile."
 fi
 echo -e "\n>>> ${CYAN}Core Dumps Recenti (Segfaults / Crash):${NC}"
 if command -v coredumpctl >/dev/null 2>&1; then
@@ -75,6 +71,11 @@ else
 fi
 echo -e "\n>>> ${CYAN}Nodi DRM Pipeline disponibili:${NC}"
 ls -lZ /dev/dri/ || true
+echo -e "\n>>> ${CYAN}Stato flag Kernel NVIDIA_DRM (Modeset & FBDev):${NC}"
+echo -n "nvidia_drm.modeset: " && cat /sys/module/nvidia_drm/parameters/modeset 2>/dev/null || echo "N/A"
+echo -n "nvidia_drm.fbdev: " && cat /sys/module/nvidia_drm/parameters/fbdev 2>/dev/null || echo "N/A"
+echo -e "\n>>> ${CYAN}Integrità EGL/Vulkan ICD (Accelerazione Hardware User-Space):${NC}"
+ls -l /usr/share/vulkan/icd.d/ /usr/share/glvnd/egl_vendor.d/ 2>/dev/null || echo -e "${RED}File ICD mancanti! L'accelerazione HW fallirà.${NC}"
 echo -e "\n>>> ${CYAN}Hardware/Firmware Errors (Dmesg CRIT/ERR):${NC}"
 dmesg -l err,crit,alert,emerg | tail -n 15 || echo -e "${GREEN}Nessun errore critico firmware/hardware.${NC}"
 
@@ -84,38 +85,23 @@ if systemctl is-active --quiet scx; then
 else
     echo -e "${RED}eBPF SCX Scheduler NON attivo o assente.${NC}"
 fi
-echo -e "\n>>> ${CYAN}eBPF Loaded Programs (Kernel Tracing):${NC}"
-if command -v bpftool >/dev/null 2>&1; then
-    bpftool prog show || echo -e "${RED}Errore nella lettura eBPF.${NC}"
-else
-    echo -e "${YELLOW}bpftool assente. (Installato in base, non in layer utente?).${NC}"
-fi
 
 echo -e "\n${YELLOW}--- 6. HORIZONTAL VISION: WAYLAND & SYSTEMD USER ---${NC}"
-echo -e ">>> ${CYAN}Wayland Environment Check:${NC}"
-env | grep -iE "XDG_SESSION_TYPE|WAYLAND_DISPLAY|WLR_NO_HARDWARE_CURSORS|GBM_BACKEND|MOZ_ENABLE_WAYLAND" || true
-
 ACTIVE_USER=$(loginctl list-sessions --no-legend | awk '$3 != "root" {print $3}' | head -n 1)
 if [ -n "$ACTIVE_USER" ]; then
     ACTIVE_UID=$(id -u "$ACTIVE_USER")
-    echo -e "\n>>> ${CYAN}Wayland Sockets in /run/user/$ACTIVE_UID:${NC}"
+    echo -e ">>> ${CYAN}Wayland Sockets in /run/user/$ACTIVE_UID:${NC}"
     ls -l /run/user/$ACTIVE_UID/wayland-* 2>/dev/null || echo -e "${RED}Nessun socket Wayland trovato! Il compositor non sta girando.${NC}"
 
     echo -e "\n>>> ${CYAN}Systemd-User Failed Units (Sessione Utente):${NC}"
-    echo -e "Analisi Sessione per utente: $ACTIVE_USER (UID $ACTIVE_UID)"
     su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user --failed" || true
     
-    echo -e "\n>>> ${CYAN}Systemd-User Journal Errors (Ultimi 25, Priorità 3):${NC}"
-    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID journalctl --user -p 3 -b --no-pager -n 25" || true
+    echo -e "\n>>> ${CYAN}Wayland/Niri/DBus Deep Trace (Tutti i messaggi chiave):${NC}"
+    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID journalctl --user -b 0 --no-pager | grep -iE 'niri|ironbar|wayland|dbus|portal' | tail -n 40" || true
 
     echo -e "\n>>> ${CYAN}Target Chiave e DBus Session Tree:${NC}"
-    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user status niri-session.target pipewire.service xdg-desktop-portal.service ironbar.service swaybg.service --no-pager" || true
+    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user status niri-session.target pipewire.service xdg-desktop-portal.service xdg-desktop-portal-gtk.service ironbar.service swaybg.service --no-pager" || true
     su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID busctl --user tree org.freedesktop.portal.Desktop" || echo -e "${RED}XDG Portal non agganciato.${NC}"
-    
-    echo -e "\n>>> ${CYAN}Niri IPC Socket Check:${NC}"
-    if command -v niri >/dev/null 2>&1; then
-        su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID WAYLAND_DISPLAY=wayland-1 niri msg focused-window >/dev/null 2>&1" && echo -e "${GREEN}Niri IPC accessibile nativamente.${NC}" || echo -e "${RED}Niri IPC irraggiungibile: socket drop.${NC}"
-    fi
 else
     echo -e "${YELLOW}Nessuna sessione utente attiva rilevata (Eseguito in TTY di emergenza?).${NC}"
 fi
@@ -123,33 +109,17 @@ fi
 echo -e "\n>>> ${CYAN}Polkit Agent Authentication:${NC}"
 pgrep -lfa polkit || echo -e "${RED}ATTENZIONE: Nessun Polkit Agent in esecuzione!${NC}"
 
-echo -e "\n${YELLOW}--- 7. PRIVACY SANDBOXING & IMMUTABILITY (Skel & FS) ---${NC}"
+echo -e "\n${YELLOW}--- 7. PRIVACY SANDBOXING, NIX & FLATPAK ---${NC}"
 echo -e ">>> ${CYAN}Skel & Home Directory Permissions (Strict 700/600):${NC}"
 stat -c "%A %U:%G %n" /etc/skel /var/home/$USER ~/.config/niri/config.kdl 2>/dev/null || true
-echo -e "\n>>> ${CYAN}Home Directory Strict Config Perms Check:${NC}"
-if [ -n "$ACTIVE_USER" ]; then
-    su -s /bin/bash - "$ACTIVE_USER" -c "find ~/.config -type d -maxdepth 2 -exec stat -c '%A %U:%G %n' {} +" || true
-    su -s /bin/bash - "$ACTIVE_USER" -c "find ~/.config/ironbar -type f -exec stat -c '%A %U:%G %n' {} +" || true
-fi
-
-echo -e "\n>>> ${CYAN}Verifica Esistenza Utenti Chiave:${NC}"
-grep -E '^(greeter|nixbld1)' /etc/passwd || echo -e "${RED}Utenti chiave mancanti!${NC}"
-
-echo -e "\n>>> ${CYAN}Greetd Configurazione Attuale:${NC}"
-if [ -f /etc/greetd/config.toml ]; then
-    cat /etc/greetd/config.toml
-elif [ -f /usr/lib/greetd/config.toml ]; then
-    cat /usr/lib/greetd/config.toml
-else
-    echo -e "${RED}File di configurazione Greetd mancante!${NC}"
-fi
 
 echo -e "\n>>> ${CYAN}Flatpak Runtimes & Remotes:${NC}"
 flatpak remotes || true
 flatpak list --columns=application,runtime || true
 
-echo -e "\n>>> ${CYAN}Stato Nix Daemon:${NC}"
-systemctl is-active nix-daemon.socket || echo "Non attivo"
+echo -e "\n>>> ${CYAN}Stato Demone Nix e Integrità Store:${NC}"
+systemctl is-active nix-daemon.socket || echo -e "${RED}Demone Nix non attivo${NC}"
+ls -ld /nix/var/nix/profiles/default/ 2>/dev/null || echo -e "${RED}Profilo Nix non montato o corrotto! (Check ermete-nix-restore.service)${NC}"
 
 echo -e "\n${YELLOW}--- 8. CRITICAL LOGS: SYSTEMD & OOM KILLER ---${NC}"
 echo -e ">>> ${CYAN}System Journal Errors (Ultimi 25, Priorità 3):${NC}"
@@ -157,13 +127,14 @@ journalctl -p 3 -b --no-pager -n 25 || true
 echo -e "\n>>> ${CYAN}OOM Killer Events (Out Of Memory):${NC}"
 dmesg -T | grep -i oom || echo -e "${GREEN}Nessun OOM Kill rilevato.${NC}"
 
-echo -e "\n${YELLOW}--- 9. ZERO-TRUST NETWORK POSTURE ---${NC}"
-echo -e ">>> ${CYAN}Nftables Pure Ruleset (Silently Dropping):${NC}"
-nft list ruleset || echo "nftables disabilitato o non in uso."
+echo -e "\n${YELLOW}--- 9. ZERO-TRUST NETWORK POSTURE & CONNECTIVITY ---${NC}"
+echo -e ">>> ${CYAN}Connettività Esterna (Captive Portal Check su Flathub):${NC}"
+curl -s -I --connect-timeout 5 https://dl.flathub.org | head -n 1 || echo -e "${RED}Connessione fallita. Rete isolata o dietro Captive Portal.${NC}"
+echo -e "\n>>> ${CYAN}Nftables Pure Ruleset (Silently Dropping):${NC}"
+nft list ruleset | head -n 20 || echo "nftables disabilitato o non in uso."
 echo -e "\n>>> ${CYAN}DNS-over-TLS & Link Status:${NC}"
 resolvectl status | grep -E "DNS|Protocols" || true
 
 echo -e "\n${BLUE}======================================================${NC}"
 echo -e "${GREEN}Diagnostica completata. Log protetto salvato in: $LOG_FILE${NC}"
 echo -e "${BLUE}======================================================${NC}"
-
