@@ -117,8 +117,8 @@ COPY --from=build-bibata /out/icons/Bibata-Modern-Classic /usr/share/icons/Bibat
 
 # Iniettiamo la gerarchia nativa OCI delle configurazioni statiche (Zero-Echo) e i symlink precalcolati
 COPY --chown=0:0 system_files /
-COPY --from=build-symlinks /out/etc /etc
-COPY --from=build-symlinks /out/usr/lib/ /usr/lib/
+COPY --from=build-symlinks --chown=0:0 /out/etc /etc
+COPY --from=build-symlinks --chown=0:0 /out/usr/lib/ /usr/lib/
 
 # Fissiamo i permessi di /etc/skel nativamente nell'immagine OCI (Zero-Boot-Delay)
 # I permessi paranoici (0700 dir, 0600 file) sono iniettati isolando il mutating RUN nello stage build-symlinks

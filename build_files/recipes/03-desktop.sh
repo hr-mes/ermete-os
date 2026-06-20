@@ -11,7 +11,7 @@ echo "--- Applicazione Forzata del Tema Globale GTK ---"
 # Install Niri e dipendenze cursori, temi e font (aggiunto Xwayland per compatibilità assoluta con vecchie app)
 dnf5 -y install --setopt=install_weak_deps=False niri xorg-x11-server-Xwayland \
     mesa-dri-drivers mesa-vulkan-drivers alacritty upower \
-    nautilus mpv loupe gnome-calculator gnome-system-monitor seahorse \
+    nautilus mpv loupe gnome-calculator gnome-system-monitor seahorse dbus-x11 dbus-tools \
     pipewire pipewire-alsa pipewire-pulseaudio wireplumber \
     playerctl brightnessctl swaylock libnotify wlr-randr \
     papirus-icon-theme adw-gtk3-theme jetbrains-mono-fonts rsms-inter-fonts fontawesome-fonts-all \
@@ -34,6 +34,7 @@ dnf5 -y install --setopt=install_weak_deps=False niri xorg-x11-server-Xwayland \
 dnf5 -y install --setopt=install_weak_deps=False greetd tuigreet
 # Garantiamo l'esistenza dell'utente greeter prima del boot delegandola a systemd-sysusers.
 # (Vedi system_files/usr/lib/sysusers.d/20-greeter.conf per la dichiarazione)
+systemd-sysusers
 # Greetd service è abilitato nativamente via system-preset
 
 # Abilitazione Globale Audio Pipewire per la sessione utente (Fondamentale per Wayland/Portals)

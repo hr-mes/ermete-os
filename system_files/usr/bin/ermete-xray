@@ -1,13 +1,12 @@
 #!/bin/bash
 # ==============================================================================
-# ERMETE OS: SUPREME OMNI-VISION DIAGNOSTIC TOOL (X-RAY) v2.0
-# Fornisce una scansione a raggi X verticale (dal kernel allo userspace) e orizzontale (isolamento e network)
+# ERMETE OS: SUPREME OMNI-VISION DIAGNOSTIC TOOL (X-RAY) v3.0
+# Fornisce una scansione a raggi X verticale e orizzontale estrema.
 # ==============================================================================
 
 set -eo pipefail
 LOG_FILE="/var/log/ermete-xray-$(date +%Y%m%d_%H%M%S).log"
 
-# Colori per UX
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -18,7 +17,7 @@ NC='\033[0m'
 exec > >(tee -a "$LOG_FILE") 2>&1
 
 echo -e "${BLUE}======================================================${NC}"
-echo -e "${BLUE}     🦅 ERMETE OS - SUPREME OMNI-VISION X-RAY v2.0    ${NC}"
+echo -e "${BLUE}     🦅 ERMETE OS - SUPREME OMNI-VISION X-RAY v3.0    ${NC}"
 echo -e "${BLUE}======================================================${NC}"
 echo -e "${CYAN}Timestamp:${NC} $(date --rfc-3339=seconds)"
 echo -e "${CYAN}Kernel:${NC} $(uname -r)"
@@ -44,6 +43,8 @@ echo -e "\n>>> ${CYAN}Top 5 colli di bottiglia all'avvio:${NC}"
 systemd-analyze blame | head -n 5 || true
 echo -e "\n>>> ${CYAN}Servizi di Sistema Falliti:${NC}"
 systemctl --failed || echo -e "${GREEN}Nessun servizio di sistema fallito.${NC}"
+echo -e "\n>>> ${CYAN}Stato Servizi Critici (greetd, nix-daemon, dbus):${NC}"
+systemctl status greetd nix-daemon dbus --no-pager || true
 
 echo -e "\n${YELLOW}--- 3. ZERO-TRUST & SECURITY (SELinux & CoreDumps) ---${NC}"
 sestatus | grep -E "SELinux status|Current mode"
@@ -51,7 +52,9 @@ echo -e "\n>>> ${CYAN}SELinux Booleans Critici:${NC}"
 getsebool -a | grep -E "wayland|nvidia|execmem|mmap_zero" || true
 echo -e "\n>>> ${CYAN}Ultime violazioni SELinux (AVC Denials letali):${NC}"
 if command -v ausearch >/dev/null 2>&1; then
-    ausearch -m AVC,USER_AVC -ts recent --raw | audit2allow || echo -e "${GREEN}Nessun AVC recente.${NC}"
+    ausearch -m AVC,USER_AVC -ts recent -i || echo -e "${GREEN}Nessun AVC recente.${NC}"
+    echo -e "\n>>> ${CYAN}Audit2allow translation:${NC}"
+    ausearch -m AVC,USER_AVC -ts recent --raw | audit2allow || true
 else
     echo "ausearch non disponibile."
 fi
@@ -102,11 +105,11 @@ if [ -n "$ACTIVE_USER" ]; then
     echo -e "Analisi Sessione per utente: $ACTIVE_USER (UID $ACTIVE_UID)"
     su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user --failed" || true
     
-    echo -e "\n>>> ${CYAN}Systemd-User Journal Errors (Ultimi 15, Priorità 3):${NC}"
-    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID journalctl --user -p 3 -b --no-pager -n 15" || true
+    echo -e "\n>>> ${CYAN}Systemd-User Journal Errors (Ultimi 25, Priorità 3):${NC}"
+    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID journalctl --user -p 3 -b --no-pager -n 25" || true
 
     echo -e "\n>>> ${CYAN}Target Chiave e DBus Session Tree:${NC}"
-    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user status niri-session.target pipewire.service xdg-desktop-portal.service --no-pager" || true
+    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user status niri-session.target pipewire.service xdg-desktop-portal.service ironbar.service swaybg.service --no-pager" || true
     su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID busctl --user tree org.freedesktop.portal.Desktop" || echo -e "${RED}XDG Portal non agganciato.${NC}"
     
     echo -e "\n>>> ${CYAN}Niri IPC Socket Check:${NC}"
@@ -123,16 +126,28 @@ pgrep -lfa polkit || echo -e "${RED}ATTENZIONE: Nessun Polkit Agent in esecuzion
 echo -e "\n${YELLOW}--- 7. PRIVACY SANDBOXING & IMMUTABILITY (Skel & FS) ---${NC}"
 echo -e ">>> ${CYAN}Skel & Home Directory Permissions (Strict 700/600):${NC}"
 stat -c "%A %U:%G %n" /etc/skel /var/home/$USER ~/.config/niri/config.kdl 2>/dev/null || true
+echo -e "\n>>> ${CYAN}Home Directory Strict Config Perms Check:${NC}"
+if [ -n "$ACTIVE_USER" ]; then
+    su -s /bin/bash - "$ACTIVE_USER" -c "find ~/.config -type d -maxdepth 2 -exec stat -c '%A %U:%G %n' {} +" || true
+    su -s /bin/bash - "$ACTIVE_USER" -c "find ~/.config/ironbar -type f -exec stat -c '%A %U:%G %n' {} +" || true
+fi
 
-echo -e "\n>>> ${CYAN}Flatpak Runtimes & Nix Daemon:${NC}"
-echo -n "Flatpak Runtimes Installati: "
-flatpak list --runtime --columns=application | wc -l || echo 0
-echo -n "Stato Nix Daemon: "
+echo -e "\n>>> ${CYAN}Verifica Esistenza Utenti Chiave:${NC}"
+grep -E '^(greeter|nixbld1)' /etc/passwd || echo -e "${RED}Utenti chiave mancanti!${NC}"
+
+echo -e "\n>>> ${CYAN}Greetd Configurazione Attuale:${NC}"
+cat /etc/greetd/config.toml 2>/dev/null || echo -e "${RED}File di configurazione Greetd mancante!${NC}"
+
+echo -e "\n>>> ${CYAN}Flatpak Runtimes & Remotes:${NC}"
+flatpak remotes || true
+flatpak list --columns=application,runtime || true
+
+echo -e "\n>>> ${CYAN}Stato Nix Daemon:${NC}"
 systemctl is-active nix-daemon.socket || echo "Non attivo"
 
 echo -e "\n${YELLOW}--- 8. CRITICAL LOGS: SYSTEMD & OOM KILLER ---${NC}"
-echo -e ">>> ${CYAN}System Journal Errors (Ultimi 15, Priorità 3):${NC}"
-journalctl -p 3 -b --no-pager -n 15 || true
+echo -e ">>> ${CYAN}System Journal Errors (Ultimi 25, Priorità 3):${NC}"
+journalctl -p 3 -b --no-pager -n 25 || true
 echo -e "\n>>> ${CYAN}OOM Killer Events (Out Of Memory):${NC}"
 dmesg -T | grep -i oom || echo -e "${GREEN}Nessun OOM Kill rilevato.${NC}"
 
@@ -145,3 +160,4 @@ resolvectl status | grep -E "DNS|Protocols" || true
 echo -e "\n${BLUE}======================================================${NC}"
 echo -e "${GREEN}Diagnostica completata. Log protetto salvato in: $LOG_FILE${NC}"
 echo -e "${BLUE}======================================================${NC}"
+
