@@ -142,7 +142,7 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 # di montare /var/opt/nix al boot. Senza questo, il demone fallirebbe.
 # Il symlink imperativo a /var/opt/nix/var è stato rimosso per prevenire
 # collisioni con systemd-tmpfiles durante il boot.
-RUN mkdir -p /nix
+RUN mkdir -p /nix && rm -rf /nix/var && ln -s /var/opt/nix/var /nix/var
 
 ### DICHIARATIVITÀ ASSOLUTA (SYSTEMD PRESETS)
 # Applichiamo nativamente tutti i file .preset (es. 99-Ermete.preset) 

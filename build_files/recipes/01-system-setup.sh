@@ -19,6 +19,9 @@ dnf5 -y install --setopt=install_weak_deps=False libvirt virt-manager qemu-kvm s
 mkdir -p /usr/share/nix-initial-state
 mv /nix/* /usr/share/nix-initial-state/ || true
 
+# Rimuovi il file tmpfiles.d nativo del demone Nix per evitare conflitti (Read-Only FS)
+rm -f /usr/lib/tmpfiles.d/nix-daemon.conf || true
+
 # Core Utilities in Rust (Il nuovo stack)
 dnf5 -y install --setopt=install_weak_deps=False eza bat fd-find ripgrep nushell neovim ananicy-cpp
 
