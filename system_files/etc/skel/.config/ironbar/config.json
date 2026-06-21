@@ -41,10 +41,6 @@
       "icon_size": 18
     },
     {
-      "type": "upower",
-      "format": "{percentage}% {icon}"
-    },
-    {
       "type": "sys_info",
       "format": [" {cpu_percent}%", " {memory_percent}%"]
     }
