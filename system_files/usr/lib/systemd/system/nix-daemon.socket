@@ -3,7 +3,7 @@ Description=Nix Daemon Socket
 ConditionPathIsDirectory=/nix/store
 
 [Socket]
-ListenStream=/nix/var/nix/daemon-socket/socket
+ListenStream=/run/nix-daemon-socket/socket
 
 [Install]
 WantedBy=sockets.target
