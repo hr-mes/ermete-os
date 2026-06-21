@@ -84,21 +84,8 @@ RUN mkdir -p /out/icons && \
 # Fase C: Costruzione Link Simbolici (Dichiaratività Systemd)
 FROM build-base AS build-symlinks
 COPY system_files/etc/skel /out/etc/skel
-RUN mkdir -p /out/usr/lib/systemd/system /out/usr/lib/systemd/user/niri-session.target.wants && \
-    find /out/etc/skel -type d -exec chmod 0700 {} + && \
-    find /out/etc/skel -type f -exec chmod 0600 {} + && \
-    find /out/etc/skel -type f -name "*.sh" -exec chmod 0700 {} + && \
-    ln -sf graphical.target /out/usr/lib/systemd/system/default.target && \
-    ln -sf greetd.service /out/usr/lib/systemd/system/display-manager.service && \
-    ln -sf /usr/lib64/anyrun /out/usr/lib/anyrun && \
-    mkdir -p /out/usr/lib/systemd/system/multi-user.target.wants /out/usr/lib/systemd/system/sockets.target.wants /out/usr/lib/systemd/system/sysinit.target.wants && \
-    ln -sf /usr/lib/systemd/user/ironbar.service /out/usr/lib/systemd/user/niri-session.target.wants/ironbar.service && \
-    ln -sf /usr/lib/systemd/user/swaybg.service /out/usr/lib/systemd/user/niri-session.target.wants/swaybg.service && \
-    ln -sf /usr/lib/systemd/user/lxpolkit.service /out/usr/lib/systemd/user/niri-session.target.wants/lxpolkit.service && \
-    ln -sf /usr/lib/systemd/user/nm-applet.service /out/usr/lib/systemd/user/niri-session.target.wants/nm-applet.service && \
-    ln -sf /usr/lib/systemd/user/swaync.service /out/usr/lib/systemd/user/niri-session.target.wants/swaync.service && \
-    ln -sf /usr/lib/systemd/user/blueman-applet.service /out/usr/lib/systemd/user/niri-session.target.wants/blueman-applet.service && \
-    ln -sf /usr/lib/systemd/user/easyeffects.service /out/usr/lib/systemd/user/niri-session.target.wants/easyeffects.service
+RUN mkdir -p /out/usr/lib/systemd/system && \
+    ln -sf /usr/lib64/anyrun /out/usr/lib/anyrun
 
 # --- IMMAGINE FINALE (PRODUZIONE) ---
 # FIX: Renovate Bot sostituirà automaticamente il tag :latest con il vero digest SHA256 crittografico
@@ -161,7 +148,7 @@ RUN mkdir -p /nix
 # Applichiamo nativamente tutti i file .preset (es. 99-Ermete.preset) 
 # in modo che nix-daemon.socket e gli altri target vengano registrati
 # all'interno dell'immagine OCI, prima dell'avvio su baremetal.
-RUN systemctl preset-all
+RUN systemctl preset-all && systemctl --global preset-all
 
 
 

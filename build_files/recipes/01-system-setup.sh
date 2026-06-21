@@ -11,7 +11,7 @@ echo "--- Configuring DNF and installing base system packages ---"
 # Libvirt e virt-manager mantenuti per workflow utente quotidiano
 # Aggiunti greenboot e greenboot-default-health-checks consolidati dagli script deprecati
 
-dnf5 -y install --setopt=install_weak_deps=False libvirt virt-manager qemu-kvm sysstat lxqt-openssh-askpass parallel just nix greenboot greenboot-default-health-checks bpftool drm_info nftables wayland-utils firewalld btrfs-progs
+dnf5 -y install --setopt=install_weak_deps=False libvirt virt-manager qemu-kvm sysstat lxqt-openssh-askpass parallel just nix greenboot greenboot-default-health-checks bpftool drm_info nftables wayland-utils firewalld btrfs-progs fprintd-pam
 
 # Implementazione dell'Hack Nix per OSTree (Salvataggio Layer Iniziale)
 # Spostiamo il contenuto di /nix popolato da DNF in una directory statica del rootfs.

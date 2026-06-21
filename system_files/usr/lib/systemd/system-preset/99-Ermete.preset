@@ -30,3 +30,7 @@ disable virtsecretd.service
 disable virtnwfilterd.service
 disable virtinterfaced.service
 disable libvirt-guests.service
+
+# Disable akmods dynamic key generation (Zero-Error Boot on Immutable OS)
+disable akmods-keygen@.service
+disable akmods@.service

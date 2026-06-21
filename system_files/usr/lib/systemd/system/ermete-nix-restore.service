@@ -10,6 +10,7 @@ ConditionPathIsDirectory=/usr/share/nix-initial-state
 Type=oneshot
 # Copy the pre-populated Nix store from the OCI image to the writable stateful mountpoint
 ExecStart=/bin/cp -a /usr/share/nix-initial-state/. /nix/
+ExecStartPost=/usr/sbin/restorecon -Rv /nix
 RemainAfterExit=yes
 
 [Install]
