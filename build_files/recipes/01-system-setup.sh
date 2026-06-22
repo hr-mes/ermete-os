@@ -11,13 +11,13 @@ echo "--- Configuring DNF and installing base system packages ---"
 # Libvirt e virt-manager mantenuti per workflow utente quotidiano
 # Aggiunti greenboot e greenboot-default-health-checks consolidati dagli script deprecati
 
-dnf5 -y install --setopt=install_weak_deps=False libvirt virt-manager qemu-kvm sysstat lxqt-openssh-askpass parallel just nix greenboot greenboot-default-health-checks bpftool drm_info nftables wayland-utils firewalld btrfs-progs fprintd-pam
+dnf5 -y install --setopt=install_weak_deps=False libvirt virt-manager qemu-kvm sysstat lxqt-openssh-askpass parallel just nix greenboot greenboot-default-health-checks bpftool drm_info nftables wayland-utils firewalld btrfs-progs
 
 # Implementazione dell'Hack Nix per OSTree (Salvataggio Layer Iniziale)
-# Spostiamo il contenuto di /nix popolato da DNF in una directory statica del rootfs.
-# Al primo avvio, un servizio systemd lo copierà nel mountpoint dinamico (/var/opt/nix).
+# Spostiamo il contenuto dello stato di Nix (/nix/var) in una directory statica del rootfs.
+# Al primo avvio, un servizio systemd o tmpfiles.d lo copierà nel mountpoint dinamico (/var/opt/nix/var).
 mkdir -p /usr/share/nix-initial-state
-mv /nix/* /usr/share/nix-initial-state/ || true
+mv /nix/var /usr/share/nix-initial-state/ || true
 
 # Rimuovi il file tmpfiles.d nativo del demone Nix per evitare conflitti (Read-Only FS)
 rm -f /usr/lib/tmpfiles.d/nix-daemon.conf || true

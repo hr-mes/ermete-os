@@ -137,11 +137,10 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 ### PRIVACY SANDBOXING (/etc/skel)
 # Le policy UNIX paranoiche sono fissate nativamente nel Containerfile.
 
-### NIX MOUNTPOINT (Immutability Fix)
-# Creiamo il mountpoint vuoto sul rootfs immutabile per permettere a nix.mount
-# di montare /var/opt/nix al boot. Senza questo, il demone fallirebbe.
-# Il symlink imperativo a /var/opt/nix/var è stato rimosso per prevenire
-# collisioni con systemd-tmpfiles durante il boot.
+### NIX STATE (Immutability Fix)
+# Creiamo il symlink immutabile sul rootfs verso il mountpoint effimero in /var.
+# Il restore del database Nix (amnesia-fix) è gestito in modo nativo e dichiarativo
+# da tmpfiles.d (10-ermete-nix.conf) che copia lo stato iniziale al boot.
 RUN mkdir -p /nix && rm -rf /nix/var && ln -s /var/opt/nix/var /nix/var
 
 ### DICHIARATIVITÀ ASSOLUTA (SYSTEMD PRESETS)

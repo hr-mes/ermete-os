@@ -74,6 +74,10 @@ ls -lZ /dev/dri/ || true
 echo -e "\n>>> ${CYAN}Stato flag Kernel NVIDIA_DRM (Modeset & FBDev):${NC}"
 echo -n "nvidia_drm.modeset: " && cat /sys/module/nvidia_drm/parameters/modeset 2>/dev/null || echo "N/A"
 echo -n "nvidia_drm.fbdev: " && cat /sys/module/nvidia_drm/parameters/fbdev 2>/dev/null || echo "N/A"
+
+echo -e "\n>>> ${CYAN}Dmesg DRM/NVIDIA & Wayland Initialization Trace:${NC}"
+dmesg -T | grep -iE 'nvidia|drm|wayland|modeset|nouveau' | tail -n 20 || true
+
 echo -e "\n>>> ${CYAN}Integrità EGL/Vulkan ICD (Accelerazione Hardware User-Space):${NC}"
 ls -l /usr/share/vulkan/icd.d/ /usr/share/glvnd/egl_vendor.d/ 2>/dev/null || echo -e "${RED}File ICD mancanti! L'accelerazione HW fallirà.${NC}"
 echo -e "\n>>> ${CYAN}Hardware/Firmware Errors (Dmesg CRIT/ERR):${NC}"
@@ -119,11 +123,18 @@ flatpak list --columns=application,runtime || true
 
 echo -e "\n>>> ${CYAN}Stato Demone Nix e Integrità Store:${NC}"
 systemctl is-active nix-daemon.socket || echo -e "${RED}Demone Nix non attivo${NC}"
-ls -ld /nix/var/nix/profiles/default/ 2>/dev/null || echo -e "${RED}Profilo Nix non montato o corrotto! (Check ermete-nix-restore.service)${NC}"
+ls -ld /nix/var/nix/profiles/default/ 2>/dev/null || echo -e "${RED}Profilo Nix non montato o corrotto! (Check tmpfiles.d/10-ermete-nix.conf)${NC}"
 
-echo -e "\n${YELLOW}--- 8. CRITICAL LOGS: SYSTEMD & OOM KILLER ---${NC}"
+echo -e "\n${YELLOW}--- 8. CRITICAL LOGS: SYSTEMD, TMPFILES & GREETD ---${NC}"
 echo -e ">>> ${CYAN}System Journal Errors (Ultimi 25, Priorità 3):${NC}"
 journalctl -p 3 -b --no-pager -n 25 || true
+
+echo -e "\n>>> ${CYAN}Tmpfiles Setup Logs (Amnesia & Mountpoint Bugs):${NC}"
+journalctl -u systemd-tmpfiles-setup.service -u systemd-tmpfiles-setup-dev.service -b 0 --no-pager | tail -n 20 || true
+
+echo -e "\n>>> ${CYAN}Greetd & Niri Session Logs (GUI Startup Failures):${NC}"
+journalctl -u greetd.service -b 0 --no-pager | tail -n 50 || true
+
 echo -e "\n>>> ${CYAN}OOM Killer Events (Out Of Memory):${NC}"
 dmesg -T | grep -i oom || echo -e "${GREEN}Nessun OOM Kill rilevato.${NC}"
 

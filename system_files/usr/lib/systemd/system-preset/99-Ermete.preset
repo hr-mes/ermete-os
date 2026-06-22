@@ -9,8 +9,6 @@ enable ananicy-cpp.service
 enable fwupd.service
 enable Ermete-firstboot.service
 enable Ermete-flatpak-update.timer
-enable nix.mount
-enable ermete-nix-restore.service
 enable nix-daemon.socket
 enable nix-daemon.service
 enable greetd.service
@@ -30,7 +28,3 @@ disable virtsecretd.service
 disable virtnwfilterd.service
 disable virtinterfaced.service
 disable libvirt-guests.service
-
-# Disable akmods dynamic key generation (Zero-Error Boot on Immutable OS)
-disable akmods-keygen@.service
-disable akmods@.service
