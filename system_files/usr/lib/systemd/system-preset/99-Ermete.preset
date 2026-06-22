@@ -13,6 +13,7 @@ enable nix-daemon.socket
 enable nix-daemon.service
 enable greetd.service
 enable bluetooth.service
+disable NetworkManager-wait-online.service
 
 # Disable libvirt/virtualization background daemons for baremetal (Zero-Boot-Delay)
 disable libvirtd.service
