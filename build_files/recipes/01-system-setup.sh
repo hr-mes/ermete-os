@@ -20,7 +20,7 @@ mkdir -p /usr/share/nix-initial-state
 mv /nix/var /usr/share/nix-initial-state/ || true
 
 # Rimuovi il file tmpfiles.d nativo del demone Nix per evitare conflitti (Read-Only FS)
-rm -f /usr/lib/tmpfiles.d/nix-daemon.conf || true
+# Gestito nativamente tramite override in /system_files/usr/lib/tmpfiles.d/nix-daemon.conf
 
 # Core Utilities in Rust (Il nuovo stack)
 dnf5 -y install --setopt=install_weak_deps=False eza bat fd-find ripgrep nushell neovim ananicy-cpp
