@@ -24,6 +24,12 @@ mv /nix/var /usr/share/nix-initial-state/ || true
 > /usr/lib/tmpfiles.d/nix-daemon.conf || true
 > /usr/lib/tmpfiles.d/nix.conf || true
 
+# Elimina errori tmpfiles duplicati per Nix in provision.conf
+sed -i '\|d /nix/var|d' /usr/lib/tmpfiles.d/provision.conf || true
+
+# Mask NetworkManager-wait-online.service (Zero-Boot-Delay)
+ln -sf /dev/null /usr/lib/systemd/system/NetworkManager-wait-online.service
+
 # Core Utilities in Rust (Il nuovo stack)
 dnf5 -y install --setopt=install_weak_deps=False eza bat fd-find ripgrep nushell neovim ananicy-cpp
 
