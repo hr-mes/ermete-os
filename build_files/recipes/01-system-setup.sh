@@ -21,6 +21,8 @@ mv /nix/var /usr/share/nix-initial-state/ || true
 
 # Rimuovi il file tmpfiles.d nativo del demone Nix per evitare conflitti (Read-Only FS)
 # Gestito nativamente tramite override in /system_files/usr/lib/tmpfiles.d/nix-daemon.conf
+> /usr/lib/tmpfiles.d/nix-daemon.conf || true
+> /usr/lib/tmpfiles.d/nix.conf || true
 
 # Core Utilities in Rust (Il nuovo stack)
 dnf5 -y install --setopt=install_weak_deps=False eza bat fd-find ripgrep nushell neovim ananicy-cpp
@@ -48,4 +50,6 @@ systemd-sysusers || true
 
 # Applicazione Hardening UNIX su /etc/skel è demandata allo stage build-symlinks nel Containerfile per purezza OCI
 
-
+echo "--- Disabling fingerprint auth to fix missing pam_fprintd.so ---"
+authselect disable-feature with-fingerprint || true
+authselect apply-changes || true
