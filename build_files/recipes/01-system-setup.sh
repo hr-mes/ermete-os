@@ -7,11 +7,14 @@ echo "--- Configuring DNF and installing base system packages ---"
 # Ereditato nativamente da /system_files/usr/lib/dnf/dnf.conf.d/99-parallel-downloads.conf
 
 # System apps & Dipendenze Core
-# Aggiunto nix (package manager funzionale immutabile) per container e dipendenze utente
 # Libvirt e virt-manager mantenuti per workflow utente quotidiano
 # Aggiunti greenboot e greenboot-default-health-checks consolidati dagli script deprecati
 
-dnf5 -y install --setopt=install_weak_deps=False libvirt virt-manager qemu-kvm sysstat lxqt-openssh-askpass parallel just nix greenboot greenboot-default-health-checks bpftool drm_info nftables wayland-utils firewalld btrfs-progs
+# Core Utilities in Rust (Il nuovo stack)
+dnf5 -y install --setopt=install_weak_deps=False eza bat fd-find ripgrep nushell neovim ananicy-cpp
+
+# System tools, hypervisor, firewall
+dnf5 -y install --setopt=install_weak_deps=False libvirt virt-manager qemu-kvm sysstat lxqt-openssh-askpass parallel just greenboot greenboot-default-health-checks bpftool drm_info nftables wayland-utils firewalld btrfs-progs
 
 # Implementazione dell'Hack Nix per OSTree (Salvataggio Layer Iniziale)
 # Spostiamo il contenuto dello stato di Nix (/nix/var) in una directory statica del rootfs.
@@ -32,8 +35,6 @@ ln -sf /dev/null /usr/lib/systemd/system/NetworkManager-wait-online.service
 ln -sf /dev/null /usr/lib/systemd/system/akmods-keygen@.service
 ln -sf /dev/null /usr/lib/systemd/system/akmods-keygen@akmods-keygen.service
 
-# Core Utilities in Rust (Il nuovo stack)
-dnf5 -y install --setopt=install_weak_deps=False eza bat fd-find ripgrep nushell neovim ananicy-cpp
 
 # Hardening Networking (Zero-Trust)
 

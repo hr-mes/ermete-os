@@ -81,6 +81,9 @@ RUN mkdir -p /out/icons && \
     echo "${BIBATA_SHA256}  Bibata-Modern-Classic.tar.xz" | sha256sum -c - && \
     tar -xJ --no-same-owner -C /out/icons -f Bibata-Modern-Classic.tar.xz
 
+# Builder Nix (Zero-Execution State Copy)
+FROM nixos/nix:latest AS build-nix
+
 # Fase C: Costruzione Link Simbolici (Dichiaratività Systemd)
 FROM build-base AS build-symlinks
 COPY system_files/etc/skel /out/etc/skel
@@ -98,6 +101,9 @@ COPY --from=build-bottom --chown=0:0 --chmod=755 /out/bin/btm /usr/bin/
 COPY --from=build-ironbar --chown=0:0 --chmod=755 /out/bin/ironbar /usr/bin/
 COPY --from=build-anyrun --chown=0:0 --chmod=755 /out/bin/anyrun /usr/bin/
 COPY --from=build-anyrun --chown=0:0 --chmod=755 /out/lib64/anyrun /usr/lib64/anyrun
+
+# Nix "Cucinato" fisicamente nell'immagine OCI (Zero-Execution)
+COPY --from=build-nix --chown=0:0 /nix /nix
 
 # Copia asset immutabili
 COPY --from=build-bibata /out/icons/Bibata-Modern-Classic /usr/share/icons/Bibata-Modern-Classic
@@ -120,6 +126,7 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     find /usr/libexec -type f -name "*.sh" -exec chmod +x {} + && \
     find /usr/bin -type f -name "ermete-*" -exec chmod +x {} + && \
     chmod +x /usr/bin/niri-session && \
+    cp -a /nix/var/nix/profiles/default/bin/* /usr/bin/ || true && \
     bash /ctx/recipes/01-system-setup.sh && \
     bash /ctx/recipes/02-repos-and-codecs.sh && \
     bash /ctx/recipes/03-desktop.sh
