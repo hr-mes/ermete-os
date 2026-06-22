@@ -4,7 +4,7 @@ Requires=nix-daemon.socket
 ConditionPathIsDirectory=/nix/store
 
 [Service]
-ExecStart=/var/opt/nix/var/nix/profiles/default/bin/nix-daemon
+ExecStart=/usr/bin/nix-daemon
 KillMode=process
 
 [Install]

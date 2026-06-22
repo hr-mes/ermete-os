@@ -24,11 +24,13 @@ mv /nix/var /usr/share/nix-initial-state/ || true
 > /usr/lib/tmpfiles.d/nix-daemon.conf || true
 > /usr/lib/tmpfiles.d/nix.conf || true
 
-# Elimina errori tmpfiles duplicati per Nix in provision.conf
-sed -i '\|d /nix/var|d' /usr/lib/tmpfiles.d/provision.conf || true
+# Elimina errori tmpfiles duplicati per Nix in TUTTI i file conf
+sed -i '\|d /nix/var|d' /usr/lib/tmpfiles.d/*.conf || true
 
-# Mask NetworkManager-wait-online.service (Zero-Boot-Delay)
+# Mask NetworkManager-wait-online.service (Zero-Boot-Delay) e akmods-keygen
 ln -sf /dev/null /usr/lib/systemd/system/NetworkManager-wait-online.service
+ln -sf /dev/null /usr/lib/systemd/system/akmods-keygen@.service
+ln -sf /dev/null /usr/lib/systemd/system/akmods-keygen@akmods-keygen.service
 
 # Core Utilities in Rust (Il nuovo stack)
 dnf5 -y install --setopt=install_weak_deps=False eza bat fd-find ripgrep nushell neovim ananicy-cpp
@@ -57,5 +59,6 @@ systemd-sysusers || true
 # Applicazione Hardening UNIX su /etc/skel è demandata allo stage build-symlinks nel Containerfile per purezza OCI
 
 echo "--- Disabling fingerprint auth to fix missing pam_fprintd.so ---"
+authselect select sssd --force || true
 authselect disable-feature with-fingerprint || true
 authselect apply-changes || true
