@@ -106,6 +106,15 @@ if [ -n "$ACTIVE_USER" ]; then
     echo -e "\n>>> ${CYAN}Target Chiave e DBus Session Tree:${NC}"
     su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user status niri-session.target pipewire.service xdg-desktop-portal.service xdg-desktop-portal-gtk.service ironbar.service swaybg.service --no-pager" || true
     su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID busctl --user tree org.freedesktop.portal.Desktop" || echo -e "${RED}XDG Portal non agganciato.${NC}"
+
+    echo -e "\n>>> ${CYAN}Niri Session Target Health:${NC}"
+    if su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user is-active niri-session.target" >/dev/null 2>&1; then
+        echo -e "${GREEN}niri-session.target è ATTIVO. Ecosistema desktop caricato.${NC}"
+    else
+        echo -e "${RED}ERRORE LETALE: niri-session.target è INATTIVO!${NC}"
+        echo -e "${YELLOW}Root cause diagnostica: 'spawn-at-startup' in config.kdl fallisce se cerca variabili inesistenti come DISPLAY (xwayland-satellite lazy load).${NC}"
+        echo -e "${YELLOW}I demoni desktop (ironbar, swaybg) resteranno morti finché il compositor non lancia il target systemd.${NC}"
+    fi
 else
     echo -e "${YELLOW}Nessuna sessione utente attiva rilevata (Eseguito in TTY di emergenza?).${NC}"
 fi
