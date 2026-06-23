@@ -162,7 +162,7 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 RUN mkdir -p /usr/share/nix-initial-state/var/nix/profiles && \
     for p in /nix/store/*/bin/nix; do if [ -e "$p" ]; then NIX_BIN_DIR=$(dirname "$p"); break; fi; done && \
     if [ -n "$NIX_BIN_DIR" ]; then ln -sf $(dirname $NIX_BIN_DIR) /usr/share/nix-initial-state/var/nix/profiles/default; fi && \
-    ln -sf /var/opt/nix/var /nix/var
+    mkdir -p /nix/var && chmod 0755 /nix/var
 
 ### DICHIARATIVITÀ ASSOLUTA (SYSTEMD PRESETS)
 # Applichiamo nativamente tutti i file .preset (es. 99-Ermete.preset) 
@@ -174,9 +174,11 @@ RUN systemctl preset-all && systemctl --global preset-all
 # SELinux non conosce la directory /nix, assegnandole default_t, bloccando l'esecuzione del demone.
 # Mappiamo in modo equivalente /nix a /usr per ereditare correttamente le regole bin_t, lib_t, ecc.
 RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf \
-    dnf install -y policycoreutils-python-utils && \
+    dnf install -y policycoreutils-python-utils papirus-icon-theme morewaita-icon-theme && \
     semanage fcontext -a -e /usr /nix && \
     dnf remove -y policycoreutils-python-utils && \
+    rm -f /etc/machine-id && touch /etc/machine-id && chmod 0444 /etc/machine-id && \
+    rm -rf /etc/NetworkManager/system-connections/* && \
     dnf clean all
 
 ### LINTING
