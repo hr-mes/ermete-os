@@ -109,7 +109,6 @@ COPY --from=build-bibata /out/icons/Bibata-Modern-Classic /usr/share/icons/Bibat
 
 # Iniettiamo la gerarchia nativa OCI delle configurazioni statiche (Zero-Echo) e i symlink precalcolati
 COPY --chown=0:0 system_files /
-COPY --from=build-symlinks --chown=0:0 /out/etc /etc
 COPY --from=build-symlinks --chown=0:0 /out/usr /usr
 
 # Fissiamo i permessi di /etc/skel nativamente nell'immagine OCI (Zero-Boot-Delay)
