@@ -14,6 +14,5 @@ Config(
     "libapplications.so",
     "libsymbols.so",
     "libshell.so",
-    "libtranslate.so",
   ],
 )

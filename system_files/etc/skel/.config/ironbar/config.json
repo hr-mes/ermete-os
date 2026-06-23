@@ -13,8 +13,9 @@
       "class": "os-logo",
       "bar": [
         {
-          "type": "label",
-          "label": "🦅"
+          "type": "button",
+          "label": "🦅",
+          "on_click": "!anyrun"
         }
       ]
     },
