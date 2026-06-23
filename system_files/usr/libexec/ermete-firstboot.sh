@@ -1,16 +1,21 @@
 #!/bin/bash
 set -ouex pipefail
 
-# 1. FIX CONFIGURATION PERMISSIONS FOR ALL USERS
-# Independent of network state, we ensure that if /home/*/.config exists,
-# it belongs to the respective user. This is a robust fallback for provisioning bugs.
+# 1. PROVISIONING CONFIGURAZIONI (SKEL) E FIX PERMESSI PER UTENTI ESISTENTI
+# Garantisce che il passaggio da altri ambienti atomic (es. Kinoite) ad Ermete OS 
+# inietti i file di configurazione corretti di Niri senza sovrascrivere file esistenti.
 for user_home in /home/*; do
-  if [ -d "$user_home/.config" ]; then
+  if [ -d "$user_home" ]; then
     user=$(basename "$user_home")
     # Prevent hardcoding UID 1000
     uid=$(stat -c "%u" "$user_home")
     gid=$(stat -c "%g" "$user_home")
-    chown -R "$uid:$gid" "$user_home/.config" || true
+    
+    # Clona i file di skel mancanti (no-clobber)
+    cp -rn /etc/skel/. "$user_home/" || true
+    
+    # Ripristina la proprietà
+    chown -R "$uid:$gid" "$user_home/.config" "$user_home/Pictures" 2>/dev/null || true
   fi
 done
 

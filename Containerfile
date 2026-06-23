@@ -163,7 +163,14 @@ RUN mkdir -p /usr/share/nix-initial-state/var/nix/profiles && \
 # all'interno dell'immagine OCI, prima dell'avvio su baremetal.
 RUN systemctl preset-all && systemctl --global preset-all
 
-
+### FIX SELINUX NIX (Bedrock LPE Mitigation)
+# SELinux non conosce la directory /nix, assegnandole default_t, bloccando l'esecuzione del demone.
+# Mappiamo in modo equivalente /nix a /usr per ereditare correttamente le regole bin_t, lib_t, ecc.
+RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf \
+    dnf install -y policycoreutils-python-utils && \
+    semanage fcontext -a -e /usr /nix && \
+    dnf remove -y policycoreutils-python-utils && \
+    dnf clean all
 
 ### LINTING
 ## Verify final image and contents are correct.
