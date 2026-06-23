@@ -14,3 +14,5 @@ enable nm-applet.service
 enable swaync.service
 enable blueman-applet.service
 enable easyeffects.service
+
+enable ermete-ide-bootstrap.service
