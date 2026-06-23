@@ -162,6 +162,11 @@ window-rule {
 }
 
 window-rule {
+    match app-id=r#"^anyrun$"#
+    open-floating true
+}
+
+window-rule {
     match app-id=r#"(?i)polkit"#
     open-floating true
 }

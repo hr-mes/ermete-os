@@ -81,21 +81,40 @@ Due to root immutability, the traditional `.exe` or `dnf install` paradigm is ob
 
 ---
 
-## 🧬 Layer 1: Bill of Materials (BOM) & Manifesto Compliance
-Every package in Ring 3 is surgically selected to adhere to the "Zero-Bloat" and "Zero-Entropy" manifesto, replacing traditional monolithic Linux tools with hyper-modern, secure, and declarative equivalents.
+## 🧬 Layer 0 & 1: Bill of Materials (BOM) & Architettura Interna
+Essendo Linux estremamente modulare, mostriamo esattamente cosa gira sotto la scocca di Ermete OS e **perché**. Ogni pacchetto è stato scelto o scartato seguendo le regole ferree di Zero-Bloat e Immutabilità.
 
-1. **Rust Core Utilities (`eza`, `bat`, `fd-find`, `ripgrep`, `nushell`)**:
-   - *Justification (Zero-Bloat & Security)*: We mathematically eradicated the legacy GNU coreutils. These memory-safe Rust alternatives are blisteringly fast, natively parallelized, and completely eliminate whole classes of memory vulnerabilities from the Ring 3 base.
-2. **The Terminal IDE (`neovim`, `ananicy-cpp`)**:
-   - *Justification (Strict Segregation)*: Engineered for extreme power users. The IDE is built around Neovim (LazyVim). However, to respect "Zero-Bloat", massive compilers (`gcc`, `make`) are strictly **omitted** from the host OS `dnf` installation. All compilations must happen elegantly inside Nix environments. `ananicy-cpp` autonomously manages process niceness for zero-latency typing.
-3. **Wayland & Compositor Stack (`niri`, `anyrun`, `ironbar`, `alacritty`)**:
-   - *Justification (Dichiaratività Assoluta)*: We reject massive Desktop Environments (like GNOME/KDE) in favor of the Niri scrollable-tiling compositor. To eliminate layer bloat during the OCI build, Rust-based GUI components (`anyrun`, `ironbar`) are compiled asynchronously in isolated multi-stage builders and copied statically (`COPY --from`) into the final image as pure binaries.
-4. **Nix Package Manager (The Bedrock IDE)**:
-   - *Justification (Zero-Entropy & Immutable Development)*: The ultimate realization of the Manifesto. By physically baking Nix into the immutable rootfs (`COPY --from=build-nix /nix /nix`), we enable users to spawn declarative, mathematically reproducible development environments without running heavyweight container daemons. The OS automatically bootstraps the IDE stack (`gcc`, `make`, `lazygit`, `nodejs`) upon the first user login via an asynchronous `systemd --user` service, keeping the OCI payload strictly Zero-Bloat.
-5. **XDG Portals & Pipewire (`xdg-desktop-portal-*`, `wireplumber`)**:
-   - *Justification (Zero-Trust Sandboxing)*: Since graphical applications are strictly confined to Flatpaks, the OS must provide infallible declarative API bridges. Portals guarantee that no Flatpak can access the host filesystem or screen without explicit DBus authorization.
-6. **Omni-Vision Diagnostics (`sysstat`, `bpftool`, `drm_info`, `wayland-utils`)**:
-   - *Justification (Bedrock Analysis)*: Empowers the user to inspect the system from Ring 0 (eBPF traces) up to Ring 3 (Wayland buffers) directly from the terminal, avoiding GUI-based resource monitors that pollute the OS.
+### 🛡️ Layer 0: La Bedrock (Ring 0 / Kernel & Core)
+Questi pacchetti formano l'infrastruttura di base (Bootable OCI), focalizzata su prestazioni estreme e sicurezza crittografica. Nessuna interfaccia grafica è ammessa qui.
+
+1. **Kernel CachyOS (`kernel-cachyos`) & NVIDIA (`dkms`, `akmods`)**:
+   - *Perché*: Il kernel CachyOS fornisce lo scheduler BORE e compilazione x86-64-v3 per massima responsività. I driver NVIDIA sono compilati offline (DKMS) per garantire Zero-Boot-Delay al deploy.
+2. **Schedulazione e-BPF (`scx-scheds`, `scx-tools`)**:
+   - *Perché*: Gestisce il multi-tasking a livello di spazio utente tramite eBPF, surclassando lo scheduler nativo CFS in contesti di heavy-load.
+3. **Firmware & Security (`fwupd`, `mokutil`, `sbsigntools`)**:
+   - *Perché*: `fwupd` garantisce aggiornamenti BIOS/UEFI fluidi. `sbsigntools` e `mokutil` servono alla firma offline del kernel custom (MOK) per mantenere il Secure Boot inespugnabile.
+4. **Filesystem & Crittografia (`btrfs-progs`, `squashfuse`, `libxcrypt-compat`)**:
+   - *Perché*: BTRFS garantisce snapshot atomici sub-millisecondo in sinergia con OSTree.
+5. **Networking (`NetworkManager`, `systemd-resolved`)**:
+   - *Perché*: Gestione delle reti con hardening MAC address randomization e DNS-over-TLS nativo (via `opportunistic` in resolved).
+
+### 🖥️ Layer 1: L'Abitacolo (Ring 3 / Desktop & App)
+Lo stack user-space, costruito senza far uso di pesanti "Desktop Environment" legacy.
+
+1. **Wayland Compositor Stack (`niri`, `xorg-x11-server-Xwayland`)**:
+   - *Perché*: Niri fornisce un'interfaccia scrollable-tiling guidata da tastiera, leggerissima (Rust). XWayland è mantenuto isolato solo per retrocompatibilità con binari legacy.
+2. **Terminal & Core Utils Rust (`alacritty`, `eza`, `bat`, `fd-find`, `ripgrep`, `nushell`)**:
+   - *Perché*: Abbiamo eradicato il vecchio stack GNU coreutils in favore di tool scritti in Rust, sicuri per la memoria, asincroni e parallelizzati, eliminando vulnerabilità zero-day native. Alacritty fornisce rendering su GPU.
+3. **Interfaccia Grafica Modulare (`anyrun`, `ironbar`, `swaybg`, `swaync`)**:
+   - *Perché*: Niente pannelli pesanti. `ironbar` fa da barra di stato nativa Wayland, `anyrun` è un lanciatore velocissimo scritto in Rust, `swaync` gestisce le notifiche tramite `systemd --user`.
+4. **Autenticazione & Polkit (`lxpolkit`, `seahorse`, `greetd`, `tuigreet`)**:
+   - *Perché*: `greetd` con `tuigreet` sostituisce GDM/SDDM fornendo un leggerissimo TUI login manager nel terminale, prima di inizializzare Wayland. `seahorse` e `gnome-keyring` gestiscono le chiavi SSH e Wayland Secret Portal. L'askpass SSH è nativo di GNOME per una pulizia assoluta, eliminando ridondanze.
+5. **XDG Portals & Pipewire (`xdg-desktop-portal-gnome`, `xdg-desktop-portal-gtk`, `wireplumber`)**:
+   - *Perché*: Sandboxing assoluto. I flatpak non possono toccare il filesystem root e devono passare per DBus e Pipewire per screen-sharing e audio, rendendo il desktop immune a software malevolo.
+6. **Diagnostics & Hypervisor (`qemu-kvm`, `libvirt`, `virt-manager`, `bpftool`, `drm_info`, `sysstat`)**:
+   - *Perché*: Permette l'analisi profonda dal Layer 0 (BPF) fino allo strato grafico (DRM). Virtualizzazione nativa KVM esposta out-of-the-box per le pipeline di sviluppo isolato.
+7. **Ottimizzatori (`ananicy-cpp`, `greenboot`, `firewalld`)**:
+   - *Perché*: `ananicy-cpp` regola la "niceness" dei processi automaticamente in C++, garantendo che le build pesanti non facciano laggare la sessione utente. `greenboot` sorveglia l'integrità ad ogni avvio (se la rete è giù e il check fallisce, esegue un rollback OSTree in automatico). `firewalld` è configurato imperativamente con policy `drop`.
 
 ---
 

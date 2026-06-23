@@ -4,11 +4,13 @@ export XDG_SESSION_TYPE=wayland
 export XDG_CURRENT_DESKTOP=niri
 export XDG_SESSION_DESKTOP=niri
 
-# Rimossi i flag di rendering software (Pixman/LLVM) per permettere l'accelerazione hardware NVIDIA nativa.
+# Fix per GTK4 su NVIDIA (Wayland): Forza OpenGL invece di Vulkan per evitare
+# i crash (vkAcquireNextImageKHR VK_ERROR_OUT_OF_DATE_KHR)
+export GSK_RENDERER=gl
 
 # Importa le variabili nel manager systemd --user e nell'ambiente DBus
-systemctl --user import-environment XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
-dbus-update-activation-environment --systemd XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
+systemctl --user import-environment XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP GSK_RENDERER
+dbus-update-activation-environment --systemd XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP GSK_RENDERER
 
 # Delegazione a systemd dell'esecuzione del compositor (Niri 0.1.8+ nativo)
 # Questo fa in modo che `niri.service` venga lanciato correttamente

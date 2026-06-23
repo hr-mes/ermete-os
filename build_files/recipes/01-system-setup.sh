@@ -14,7 +14,7 @@ echo "--- Configuring DNF and installing base system packages ---"
 dnf5 -y install --setopt=install_weak_deps=False eza bat fd-find ripgrep nushell neovim ananicy-cpp
 
 # System tools, hypervisor, firewall
-dnf5 -y install --setopt=install_weak_deps=False libvirt virt-manager qemu-kvm sysstat lxqt-openssh-askpass parallel just greenboot greenboot-default-health-checks bpftool drm_info nftables wayland-utils firewalld btrfs-progs
+dnf5 -y install --setopt=install_weak_deps=False libvirt virt-manager qemu-kvm sysstat parallel just greenboot greenboot-default-health-checks bpftool drm_info nftables wayland-utils firewalld btrfs-progs
 
 # Implementazione dell'Hack Nix per OSTree (Salvataggio Layer Iniziale)
 # Spostiamo il contenuto dello stato di Nix (/nix/var) in una directory statica del rootfs.

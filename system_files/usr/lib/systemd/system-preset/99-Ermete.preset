@@ -10,7 +10,6 @@ enable fwupd.service
 enable Ermete-firstboot.service
 enable Ermete-flatpak-update.timer
 enable nix-daemon.socket
-enable nix-daemon.service
 enable greetd.service
 enable bluetooth.service
 enable nix-store.mount

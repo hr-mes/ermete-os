@@ -11,8 +11,15 @@ fi
 # Aspettiamo che la rete sia disponibile e che Nix sia pronto.
 # Utilizziamo un ping leggero a cache.nixos.org.
 echo "Attesa connettività verso cache.nixos.org..."
+max_retries=12
+retries=0
 until curl -sI https://cache.nixos.org | grep -q "200"; do
     sleep 5
+    retries=$((retries+1))
+    if [ "$retries" -ge "$max_retries" ]; then
+        echo "Timeout di rete superato. Uscita."
+        exit 1
+    fi
 done
 
 echo "Connettività stabilita. Avvio bootstrap IDE tramite Nix..."
