@@ -82,6 +82,24 @@ Due to root immutability, the traditional `.exe` or `dnf install` paradigm is ob
 
 ---
 
+## 🧬 Layer 1: Bill of Materials (BOM) & Manifesto Compliance
+Every package in Ring 3 is surgically selected to adhere to the "Zero-Bloat" and "Zero-Entropy" manifesto, replacing traditional monolithic Linux tools with hyper-modern, secure, and declarative equivalents.
+
+1. **Rust Core Utilities (`eza`, `bat`, `fd-find`, `ripgrep`, `nushell`)**:
+   - *Justification (Zero-Bloat & Security)*: We mathematically eradicated the legacy GNU coreutils. These memory-safe Rust alternatives are blisteringly fast, natively parallelized, and completely eliminate whole classes of memory vulnerabilities from the Ring 3 base.
+2. **The Terminal IDE (`neovim`, `lazygit`, `ananicy-cpp`)**:
+   - *Justification (Strict Segregation)*: Engineered for extreme power users. The IDE is built around Neovim (LazyVim). However, to respect "Zero-Bloat", massive compilers (`gcc`, `make`) are strictly **omitted** from the host OS `dnf` installation. All compilations must happen elegantly inside Nix environments. `lazygit` is retained as a lightweight CLI utility, while `ananicy-cpp` autonomously manages process niceness for zero-latency typing.
+3. **Wayland & Compositor Stack (`niri`, `anyrun`, `ironbar`, `alacritty`)**:
+   - *Justification (Dichiaratività Assoluta)*: We reject massive Desktop Environments (like GNOME/KDE) in favor of the Niri scrollable-tiling compositor. To eliminate layer bloat during the OCI build, Rust-based GUI components (`anyrun`, `ironbar`) are compiled asynchronously in isolated multi-stage builders and copied statically (`COPY --from`) into the final image as pure binaries.
+4. **Nix Package Manager**:
+   - *Justification (Zero-Entropy & Immutable Development)*: The ultimate realization of the Manifesto. By physically baking Nix into the immutable rootfs (`COPY --from=build-nix /nix /nix`), we enable users to spawn declarative, mathematically reproducible development environments (`nix-shell`) without running heavyweight container daemons.
+5. **XDG Portals & Pipewire (`xdg-desktop-portal-*`, `wireplumber`)**:
+   - *Justification (Zero-Trust Sandboxing)*: Since graphical applications are strictly confined to Flatpaks, the OS must provide infallible declarative API bridges. Portals guarantee that no Flatpak can access the host filesystem or screen without explicit DBus authorization.
+6. **Omni-Vision Diagnostics (`sysstat`, `bpftool`, `drm_info`, `wayland-utils`)**:
+   - *Justification (Bedrock Analysis)*: Empowers the user to inspect the system from Ring 0 (eBPF traces) up to Ring 3 (Wayland buffers) directly from the terminal, avoiding GUI-based resource monitors that pollute the OS.
+
+---
+
 ## 🚀 Deployment (Bare Metal Installation)
 
 ### Zero-Touch Provisioning (Kickstart)
