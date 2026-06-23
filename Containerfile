@@ -126,6 +126,7 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     find /usr/bin -type f -name "ermete-*" -exec chmod +x {} + && \
     chmod +x /usr/bin/niri-session && \
     chmod +x /usr/bin/firefox && \
+    chmod +x /usr/bin/tuigreet && \
     cp -a /nix/var/nix/profiles/default/bin/* /usr/bin/ || true && \
     bash /ctx/recipes/01-system-setup.sh && \
     bash /ctx/recipes/02-repos-and-codecs.sh && \
