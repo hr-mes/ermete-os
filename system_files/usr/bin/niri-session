@@ -10,12 +10,7 @@ export XDG_SESSION_DESKTOP=niri
 systemctl --user import-environment XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
 dbus-update-activation-environment --systemd XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
 
-# Esecuzione diretta del compositor per preservare il controllo del TTY (necessario per Wayland/logind)
-# Systemd (greetd) catturerà nativamente l'output nel journal.
-# NOTA: niri-session.target viene innescato dichiarativamente dal config.kdl di Niri,
-# a valle dell'esportazione di WAYLAND_DISPLAY.
-niri
-
-# Teardown pulito dell'albero delle dipendenze al termine della sessione
-systemctl --user stop graphical-session.target
-systemctl --user stop niri-session.target
+# Delegazione a systemd dell'esecuzione del compositor (Niri 0.1.8+ nativo)
+# Questo fa in modo che `niri.service` venga lanciato correttamente
+# agganciando in automatico `niri-session.target` e le dipendenze DBus/graphical.
+exec systemctl --user start --wait niri.service

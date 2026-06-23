@@ -123,7 +123,6 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     find /etc/skel -type f -name "*.sh" -exec chmod 0700 {} + && \
     find /usr/libexec -type f -name "*.sh" -exec chmod +x {} + && \
     find /usr/bin -type f -name "ermete-*" -exec chmod +x {} + && \
-    ln -sf /dev/null /usr/lib/systemd/user/niri.service && \
     ln -sf /dev/null /usr/lib/systemd/system/akmods-keygen@.service && \
     ln -sf /dev/null /usr/lib/systemd/system/akmods@.service && \
     for p in /nix/store/*/bin/nix; do if [ -e "$p" ]; then NIX_BIN_DIR=$(dirname "$p"); break; fi; done && \

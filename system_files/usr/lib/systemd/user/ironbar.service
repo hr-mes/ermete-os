@@ -1,6 +1,6 @@
 [Unit]
 Description=Ironbar (Wayland Status Bar)
-PartOf=niri-session.target
+PartOf=graphical-session.target
 After=graphical-session-pre.target
 
 [Service]
@@ -11,4 +11,4 @@ RestartSec=2
 Environment=GTK_USE_PORTAL=0
 
 [Install]
-WantedBy=niri-session.target
+WantedBy=graphical-session.target

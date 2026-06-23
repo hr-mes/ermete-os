@@ -1,6 +1,6 @@
 [Unit]
 Description=Swaybg (Wallpaper Daemon)
-PartOf=niri-session.target
+PartOf=graphical-session.target
 After=graphical-session-pre.target
 
 [Service]
@@ -10,4 +10,4 @@ Restart=on-failure
 RestartSec=2
 
 [Install]
-WantedBy=niri-session.target
+WantedBy=graphical-session.target

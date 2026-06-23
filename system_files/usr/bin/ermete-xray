@@ -104,15 +104,15 @@ if [ -n "$ACTIVE_USER" ]; then
     su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID journalctl --user -b 0 --no-pager | grep -iE 'niri|ironbar|wayland|dbus|portal' | tail -n 40" || true
 
     echo -e "\n>>> ${CYAN}Target Chiave e DBus Session Tree:${NC}"
-    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user status niri-session.target pipewire.service xdg-desktop-portal.service xdg-desktop-portal-gtk.service ironbar.service swaybg.service --no-pager" || true
+    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user status niri.service pipewire.service xdg-desktop-portal.service xdg-desktop-portal-gtk.service ironbar.service swaybg.service --no-pager" || true
     su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID busctl --user tree org.freedesktop.portal.Desktop" || echo -e "${RED}XDG Portal non agganciato.${NC}"
 
     echo -e "\n>>> ${CYAN}Niri Session Target Health:${NC}"
-    if su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user is-active niri-session.target" >/dev/null 2>&1; then
-        echo -e "${GREEN}niri-session.target è ATTIVO. Ecosistema desktop caricato.${NC}"
+    if su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user is-active niri.service" >/dev/null 2>&1; then
+        echo -e "${GREEN}niri.service è ATTIVO. Ecosistema desktop caricato.${NC}"
     else
-        echo -e "${RED}ERRORE LETALE: niri-session.target è INATTIVO!${NC}"
-        echo -e "${YELLOW}Root cause diagnostica: 'spawn-at-startup' in config.kdl fallisce se cerca variabili inesistenti come DISPLAY (xwayland-satellite lazy load).${NC}"
+        echo -e "${RED}ERRORE LETALE: niri.service è INATTIVO!${NC}"
+        echo -e "${YELLOW}Root cause diagnostica: Il compositor non è stato avviato correttamente da systemd.${NC}"
         echo -e "${YELLOW}I demoni desktop (ironbar, swaybg) resteranno morti finché il compositor non lancia il target systemd.${NC}"
     fi
 else
