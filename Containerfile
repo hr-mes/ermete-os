@@ -67,16 +67,16 @@ FROM build-base AS build-anyrun
 ARG ANYRUN_COMMIT
 RUN --mount=type=cache,target=/usr/local/cargo/registry,id=registry-anyrun \
     --mount=type=cache,target=/usr/local/cargo/git,id=git-anyrun \
-    --mount=type=cache,target=/tmp/anyrun-src/target,id=target-anyrun \
-    --mount=type=cache,target=/tmp/anyrun-provider/target,id=target-anyrun-provider \
+    --mount=type=cache,target=/tmp/target-anyrun,id=target-anyrun \
+    --mount=type=cache,target=/tmp/target-provider,id=target-anyrun-provider \
     git clone https://github.com/anyrun-org/anyrun.git /tmp/anyrun-src && \
     cd /tmp/anyrun-src && git checkout ${ANYRUN_COMMIT} && \
-    cargo build --release --locked && \
-    cp target/release/anyrun /out/bin/ && \
-    find target/release -maxdepth 1 -name '*.so' -exec cp {} /out/lib64/anyrun/ \; && \
+    env CARGO_TARGET_DIR=/tmp/target-anyrun cargo build --release --locked && \
+    cp /tmp/target-anyrun/release/anyrun /out/bin/ && \
+    find /tmp/target-anyrun/release -maxdepth 1 -name '*.so' -exec cp {} /out/lib64/anyrun/ \; && \
     git clone https://github.com/anyrun-org/anyrun-provider.git /tmp/anyrun-provider && \
-    cd /tmp/anyrun-provider && cargo build --release --locked && \
-    cp target/release/anyrun-provider /out/bin/ && \
+    cd /tmp/anyrun-provider && env CARGO_TARGET_DIR=/tmp/target-provider cargo build --release --locked && \
+    cp /tmp/target-provider/release/anyrun-provider /out/bin/ && \
     find /out/bin /out/lib64/anyrun -type f -exec strip {} +
 
 # Builder Bibata Cursor (Zero-Network-Failure OCI layer)
