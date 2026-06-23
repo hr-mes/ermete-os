@@ -67,7 +67,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry,id=registry-anyrun \
     git clone https://github.com/anyrun-org/anyrun.git /tmp/anyrun-src && \
     cd /tmp/anyrun-src && git checkout ${ANYRUN_COMMIT} && \
     cargo build --release --locked && \
-    cp target/release/anyrun* /out/bin/ && \
+    mv target/release/anyrun /out/bin/ && mv target/release/anyrun-provider /out/bin/ && \
     find target/release -maxdepth 1 -name '*.so' -exec cp {} /out/lib64/anyrun/ \; && \
     find /out/bin /out/lib64/anyrun -type f -exec strip {} +
 
