@@ -129,7 +129,7 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     chmod +x /usr/bin/niri-session && \
     chmod +x /usr/bin/firefox && \
     chmod +x /usr/bin/tuigreet && \
-    NIX_BIN_DIR=$(dirname $(find /nix/store -maxdepth 4 -type f -path "*/bin/nix-daemon" | head -n 1)) && \
+    for p in /nix/store/*/bin/nix; do if [ -e "$p" ]; then NIX_BIN_DIR=$(dirname "$p"); break; fi; done && \
     cp -a $NIX_BIN_DIR/* /usr/bin/ || true && \
     bash /ctx/recipes/01-system-setup.sh && \
     bash /ctx/recipes/02-repos-and-codecs.sh && \
@@ -153,7 +153,7 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 # Il restore del database Nix (amnesia-fix) è gestito in modo nativo e dichiarativo
 # da tmpfiles.d (10-ermete-nix.conf) che copia lo stato iniziale al boot.
 RUN mkdir -p /usr/share/nix-initial-state/var/nix/profiles && \
-    NIX_BIN_DIR=$(dirname $(find /nix/store -maxdepth 4 -type f -path "*/bin/nix-daemon" | head -n 1)) && \
+    for p in /nix/store/*/bin/nix; do if [ -e "$p" ]; then NIX_BIN_DIR=$(dirname "$p"); break; fi; done && \
     ln -s $(dirname $NIX_BIN_DIR) /usr/share/nix-initial-state/var/nix/profiles/default && \
     ln -s /var/opt/nix/var /nix/var
 
