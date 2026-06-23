@@ -87,8 +87,8 @@ Every package in Ring 3 is surgically selected to adhere to the "Zero-Bloat" and
 
 1. **Rust Core Utilities (`eza`, `bat`, `fd-find`, `ripgrep`, `nushell`)**:
    - *Justification (Zero-Bloat & Security)*: We mathematically eradicated the legacy GNU coreutils. These memory-safe Rust alternatives are blisteringly fast, natively parallelized, and completely eliminate whole classes of memory vulnerabilities from the Ring 3 base.
-2. **The Terminal IDE (`neovim`, `lazygit`, `ananicy-cpp`)**:
-   - *Justification (Strict Segregation)*: Engineered for extreme power users. The IDE is built around Neovim (LazyVim). However, to respect "Zero-Bloat", massive compilers (`gcc`, `make`) are strictly **omitted** from the host OS `dnf` installation. All compilations must happen elegantly inside Nix environments. `lazygit` is retained as a lightweight CLI utility, while `ananicy-cpp` autonomously manages process niceness for zero-latency typing.
+2. **The Terminal IDE (`neovim`, `ananicy-cpp`)**:
+   - *Justification (Strict Segregation)*: Engineered for extreme power users. The IDE is built around Neovim (LazyVim). However, to respect "Zero-Bloat", massive compilers (`gcc`, `make`) are strictly **omitted** from the host OS `dnf` installation. All compilations must happen elegantly inside Nix environments. `ananicy-cpp` autonomously manages process niceness for zero-latency typing.
 3. **Wayland & Compositor Stack (`niri`, `anyrun`, `ironbar`, `alacritty`)**:
    - *Justification (Dichiaratività Assoluta)*: We reject massive Desktop Environments (like GNOME/KDE) in favor of the Niri scrollable-tiling compositor. To eliminate layer bloat during the OCI build, Rust-based GUI components (`anyrun`, `ironbar`) are compiled asynchronously in isolated multi-stage builders and copied statically (`COPY --from`) into the final image as pure binaries.
 4. **Nix Package Manager**:
