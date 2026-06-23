@@ -5,7 +5,7 @@ After=graphical-session-pre.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/anyrun-provider --socket /run/user/%U/anyrun.sock --config-dir %h/.config/anyrun
+ExecStart=/usr/bin/anyrun-provider --config-dir %h/.config/anyrun --plugins /usr/lib64/anyrun socket /run/user/%U/anyrun.sock
 Restart=on-failure
 RestartSec=2
 

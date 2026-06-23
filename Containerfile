@@ -126,6 +126,8 @@ COPY --from=build-symlinks --chown=0:0 /out/usr /usr
 # and preserve atomicity of the RPM database.
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
+    dnf install -y papirus-icon-theme morewaita-icon-theme && \
+    mkdir -p /etc/systemd && rm -rf /etc/systemd/system.control && ln -s /dev/null /etc/systemd/system.control && \
     find /etc/skel -type d -exec chmod 0700 {} + && \
     find /etc/skel -type f -exec chmod 0600 {} + && \
     find /etc/skel -type f -name "*.sh" -exec chmod 0700 {} + && \
