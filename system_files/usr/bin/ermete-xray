@@ -184,6 +184,17 @@ fi
 echo -e "\n>>> ${CYAN}Anyrun Deep Check:${NC}"
 ls -l /usr/bin/anyrun* /usr/lib64/anyrun/ 2>/dev/null || true
 
+echo -e "\n${YELLOW}--- 11. USER CLI TOOLS & TERMINAL IDE ---${NC}"
+echo -e ">>> ${CYAN}Starship Prompt Status:${NC}"
+starship --version | head -n 1 || echo -e "${RED}Starship mancante o non funzionante!${NC}"
+echo -e "\n>>> ${CYAN}Bottom (System Monitor) Status:${NC}"
+btm --version || echo -e "${RED}Bottom mancante o non funzionante!${NC}"
+echo -e "\n>>> ${CYAN}Terminal IDE Bootstrap Service:${NC}"
+if [ -n "$ACTIVE_USER" ]; then
+    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user status ermete-ide-bootstrap.service --no-pager" || true
+    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID journalctl --user -u ermete-ide-bootstrap.service -b 0 --no-pager | tail -n 20" || true
+fi
+
 echo -e "\n${BLUE}======================================================${NC}"
 echo -e "${GREEN}Diagnostica completata. Log protetto salvato in: $LOG_FILE${NC}"
 echo -e "${BLUE}======================================================${NC}"
