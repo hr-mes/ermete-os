@@ -130,7 +130,7 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     chmod +x /usr/bin/firefox && \
     chmod +x /usr/bin/tuigreet && \
     for p in /nix/store/*/bin/nix; do if [ -e "$p" ]; then NIX_BIN_DIR=$(dirname "$p"); break; fi; done && \
-    cp -a $NIX_BIN_DIR/* /usr/bin/ || true && \
+    if [ -n "$NIX_BIN_DIR" ]; then cp -a $NIX_BIN_DIR/* /usr/bin/ || true; fi && \
     bash /ctx/recipes/01-system-setup.sh && \
     bash /ctx/recipes/02-repos-and-codecs.sh && \
     bash /ctx/recipes/03-desktop.sh
@@ -154,8 +154,8 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 # da tmpfiles.d (10-ermete-nix.conf) che copia lo stato iniziale al boot.
 RUN mkdir -p /usr/share/nix-initial-state/var/nix/profiles && \
     for p in /nix/store/*/bin/nix; do if [ -e "$p" ]; then NIX_BIN_DIR=$(dirname "$p"); break; fi; done && \
-    ln -s $(dirname $NIX_BIN_DIR) /usr/share/nix-initial-state/var/nix/profiles/default && \
-    ln -s /var/opt/nix/var /nix/var
+    if [ -n "$NIX_BIN_DIR" ]; then ln -sf $(dirname $NIX_BIN_DIR) /usr/share/nix-initial-state/var/nix/profiles/default; fi && \
+    ln -sf /var/opt/nix/var /nix/var
 
 ### DICHIARATIVITÀ ASSOLUTA (SYSTEMD PRESETS)
 # Applichiamo nativamente tutti i file .preset (es. 99-Ermete.preset) 
