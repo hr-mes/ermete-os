@@ -174,7 +174,7 @@ RUN systemctl preset-all && systemctl --global preset-all
 # SELinux non conosce la directory /nix, assegnandole default_t, bloccando l'esecuzione del demone.
 # Mappiamo in modo equivalente /nix a /usr per ereditare correttamente le regole bin_t, lib_t, ecc.
 RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf \
-    dnf install -y policycoreutils-python-utils papirus-icon-theme morewaita-icon-theme && \
+    dnf install -y policycoreutils-python-utils || true && \
     semanage fcontext -a -e /usr /nix && \
     dnf remove -y policycoreutils-python-utils && \
     rm -f /etc/machine-id && touch /etc/machine-id && chmod 0444 /etc/machine-id && \
