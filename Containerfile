@@ -126,14 +126,14 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     ln -sf /dev/null /usr/lib/systemd/user/niri.service && \
     ln -sf /dev/null /usr/lib/systemd/system/akmods-keygen@.service && \
     ln -sf /dev/null /usr/lib/systemd/system/akmods@.service && \
-    chmod +x /usr/bin/niri-session && \
-    chmod +x /usr/bin/firefox && \
-    chmod +x /usr/bin/tuigreet && \
     for p in /nix/store/*/bin/nix; do if [ -e "$p" ]; then NIX_BIN_DIR=$(dirname "$p"); break; fi; done && \
     if [ -n "$NIX_BIN_DIR" ]; then cp -a $NIX_BIN_DIR/* /usr/bin/ || true; fi && \
     bash /ctx/recipes/01-system-setup.sh && \
     bash /ctx/recipes/02-repos-and-codecs.sh && \
-    bash /ctx/recipes/03-desktop.sh
+    bash /ctx/recipes/03-desktop.sh && \
+    chmod +x /usr/bin/niri-session && \
+    if [ -f /usr/bin/firefox ]; then chmod +x /usr/bin/firefox; fi && \
+    if [ -f /usr/bin/tuigreet ]; then chmod +x /usr/bin/tuigreet; fi
 
 ### STRUMENTI DIAGNOSTICI OMNI-VISION SUPREME
 # Installazione pacchetti essenziali per il debugging a Raggi-X 
