@@ -42,14 +42,16 @@ FROM build-base AS build-starship
 ARG STARSHIP_VER
 RUN --mount=type=cache,target=/usr/local/cargo/registry,id=registry-starship \
     --mount=type=cache,target=/usr/local/cargo/git,id=git-starship \
-    cargo install --locked --root /out starship --version ${STARSHIP_VER#v}
+    --mount=type=cache,target=/tmp/cargo-target,id=target-starship \
+    env CARGO_TARGET_DIR=/tmp/cargo-target cargo install --locked --root /out starship --version ${STARSHIP_VER#v}
 
 # Builder Bottom
 FROM build-base AS build-bottom
 ARG BOTTOM_VER
 RUN --mount=type=cache,target=/usr/local/cargo/registry,id=registry-bottom \
     --mount=type=cache,target=/usr/local/cargo/git,id=git-bottom \
-    cargo install --locked --root /out bottom --version ${BOTTOM_VER#v} && \
+    --mount=type=cache,target=/tmp/cargo-target,id=target-bottom \
+    env CARGO_TARGET_DIR=/tmp/cargo-target cargo install --locked --root /out bottom --version ${BOTTOM_VER#v} && \
     if [ -f /out/bin/bottom ]; then mv /out/bin/bottom /out/bin/btm; fi
 
 # Builder Ironbar
@@ -57,21 +59,24 @@ FROM build-base AS build-ironbar
 ARG IRONBAR_VER
 RUN --mount=type=cache,target=/usr/local/cargo/registry,id=registry-ironbar \
     --mount=type=cache,target=/usr/local/cargo/git,id=git-ironbar \
-    cargo install --locked --root /out ironbar --version ${IRONBAR_VER#v} --features workspaces+niri
+    --mount=type=cache,target=/tmp/cargo-target,id=target-ironbar \
+    env CARGO_TARGET_DIR=/tmp/cargo-target cargo install --locked --root /out ironbar --version ${IRONBAR_VER#v} --features workspaces+niri
 
 # Builder Anyrun
 FROM build-base AS build-anyrun
 ARG ANYRUN_COMMIT
 RUN --mount=type=cache,target=/usr/local/cargo/registry,id=registry-anyrun \
     --mount=type=cache,target=/usr/local/cargo/git,id=git-anyrun \
+    --mount=type=cache,target=/tmp/anyrun-src/target,id=target-anyrun \
+    --mount=type=cache,target=/tmp/anyrun-provider/target,id=target-anyrun-provider \
     git clone https://github.com/anyrun-org/anyrun.git /tmp/anyrun-src && \
     cd /tmp/anyrun-src && git checkout ${ANYRUN_COMMIT} && \
     cargo build --release --locked && \
-    mv target/release/anyrun /out/bin/ && \
+    cp target/release/anyrun /out/bin/ && \
     find target/release -maxdepth 1 -name '*.so' -exec cp {} /out/lib64/anyrun/ \; && \
     git clone https://github.com/anyrun-org/anyrun-provider.git /tmp/anyrun-provider && \
     cd /tmp/anyrun-provider && cargo build --release --locked && \
-    mv target/release/anyrun-provider /out/bin/ && \
+    cp target/release/anyrun-provider /out/bin/ && \
     find /out/bin /out/lib64/anyrun -type f -exec strip {} +
 
 # Builder Bibata Cursor (Zero-Network-Failure OCI layer)
