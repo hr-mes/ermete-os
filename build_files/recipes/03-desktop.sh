@@ -43,12 +43,7 @@ systemd-sysusers
 # Abilitazione Globale Audio Pipewire e Wayland User Services
 # I servizi sono abilitati nativamente via OCI tramite preset in /usr/lib/systemd/user-preset/
 
-echo "--- Creazione Wrapper Flatpak per Firefox ---"
-cat << 'EOF' > /usr/bin/firefox
-#!/bin/bash
-exec flatpak run org.mozilla.firefox "$@"
-EOF
-chmod +x /usr/bin/firefox
+
 
 # Assicura che i nuovi schemi GTK installati dai pacchetti vengano precalcolati nativamente nel layer
 glib-compile-schemas /usr/share/glib-2.0/schemas/
@@ -56,6 +51,7 @@ glib-compile-schemas /usr/share/glib-2.0/schemas/
 # Sanitizzazione Authselect (Rimozione phantom dependencies come fprintd riattivate da dnf)
 # Forza un profilo locale standard, disabilitando la feature fingerprint se non voluta
 authselect select local with-silent-lastlog with-mdns4 without-nullok --force
+authselect disable-feature with-fingerprint || true
 authselect apply-changes
 
 # (Il comando dnf5 clean all è stato rimosso in quanto incompatibile con i cache mounts OCI)

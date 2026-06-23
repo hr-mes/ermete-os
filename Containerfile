@@ -86,7 +86,6 @@ FROM nixos/nix:latest AS build-nix
 
 # Fase C: Costruzione Link Simbolici (Dichiaratività Systemd)
 FROM build-base AS build-symlinks
-COPY system_files/etc/skel /out/etc/skel
 RUN mkdir -p /out/usr/lib/systemd/system && \
     ln -sf /usr/lib64/anyrun /out/usr/lib/anyrun
 
@@ -114,7 +113,7 @@ COPY --from=build-symlinks --chown=0:0 /out/etc /etc
 COPY --from=build-symlinks --chown=0:0 /out/usr /usr
 
 # Fissiamo i permessi di /etc/skel nativamente nell'immagine OCI (Zero-Boot-Delay)
-# I permessi paranoici (0700 dir, 0600 file) sono iniettati isolando il mutating RUN nello stage build-symlinks
+# I permessi paranoici (0700 dir, 0600 file) sono applicati nel mutating RUN sottostante
 
 # Execute all modular scripts sequentially in a single transaction to prevent OCI layer bloat
 # and preserve atomicity of the RPM database.
@@ -126,6 +125,7 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     find /usr/libexec -type f -name "*.sh" -exec chmod +x {} + && \
     find /usr/bin -type f -name "ermete-*" -exec chmod +x {} + && \
     chmod +x /usr/bin/niri-session && \
+    chmod +x /usr/bin/firefox && \
     cp -a /nix/var/nix/profiles/default/bin/* /usr/bin/ || true && \
     bash /ctx/recipes/01-system-setup.sh && \
     bash /ctx/recipes/02-repos-and-codecs.sh && \

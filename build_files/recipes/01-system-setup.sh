@@ -22,18 +22,6 @@ dnf5 -y install --setopt=install_weak_deps=False libvirt virt-manager qemu-kvm s
 mkdir -p /usr/share/nix-initial-state
 mv /nix/var /usr/share/nix-initial-state/ || true
 
-# Rimuovi il file tmpfiles.d nativo del demone Nix per evitare conflitti (Read-Only FS)
-# Gestito nativamente tramite override in /system_files/usr/lib/tmpfiles.d/nix-daemon.conf
-> /usr/lib/tmpfiles.d/nix-daemon.conf || true
-> /usr/lib/tmpfiles.d/nix.conf || true
-
-# Elimina errori tmpfiles duplicati per Nix in TUTTI i file conf
-sed -i '\|d /nix/var|d' /usr/lib/tmpfiles.d/*.conf || true
-
-# Mask NetworkManager-wait-online.service (Zero-Boot-Delay) e akmods-keygen
-ln -sf /dev/null /usr/lib/systemd/system/NetworkManager-wait-online.service
-ln -sf /dev/null /usr/lib/systemd/system/akmods-keygen@.service
-ln -sf /dev/null /usr/lib/systemd/system/akmods-keygen@akmods-keygen.service
 
 
 # Hardening Networking (Zero-Trust)
@@ -59,7 +47,4 @@ systemd-sysusers || true
 
 # Applicazione Hardening UNIX su /etc/skel è demandata allo stage build-symlinks nel Containerfile per purezza OCI
 
-echo "--- Disabling fingerprint auth to fix missing pam_fprintd.so ---"
-authselect select sssd --force || true
-authselect disable-feature with-fingerprint || true
-authselect apply-changes || true
+
