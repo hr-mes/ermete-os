@@ -19,7 +19,9 @@ echo "Connettività stabilita. Avvio bootstrap IDE tramite Nix..."
 notify-send "Ermete OS" "Download IDE Stack in corso (gcc, make, lazygit)..." -i software-update-available -u normal
 
 # Assicuriamoci che nix sia accessibile per il task asincrono
-source /etc/profile.d/nix.sh || true
+if [ -f /etc/profile.d/nix.sh ]; then
+    source /etc/profile.d/nix.sh
+fi
 
 if nix --extra-experimental-features "nix-command flakes" profile install nixpkgs#gcc nixpkgs#gnumake nixpkgs#lazygit nixpkgs#nodejs_22; then
     mkdir -p "$(dirname "$STATE_FILE")"

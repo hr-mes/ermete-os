@@ -171,9 +171,16 @@ if [ -n "$ACTIVE_USER" ]; then
     su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID WAYLAND_DISPLAY=wayland-1 niri msg windows" || true
 fi
 
-echo -e "\n>>> ${CYAN}GPU Memory & Perf State (NVIDIA XID Errors):${NC}"
-dmesg -T | grep -iE 'NVRM: Xid|GPU has fallen off the bus|gpu lockup|softlockup' || echo -e "${GREEN}Nessun errore critico Xid o lockup della GPU rilevato.${NC}"
+echo -e "\n>>> ${CYAN}GPU Memory & Perf State (NVIDIA XID Errors & Lockups):${NC}"
+dmesg -T | grep -iE 'NVRM: Xid|GPU has fallen off the bus|gpu lockup|softlockup|VK_ERROR_DEVICE_LOST|drm:nv' || echo -e "${GREEN}Nessun errore critico Xid o lockup della GPU rilevato dmesg.${NC}"
 nvidia-smi -q -d MEMORY,PERFORMANCE,UTILIZATION || true
+
+echo -e "\n>>> ${CYAN}DRM State Dump (Analisi Kernel Mode-Setting & Stuck Planes):${NC}"
+if [ -d /sys/kernel/debug/dri/0 ]; then
+    cat /sys/kernel/debug/dri/0/state | grep -iE 'CRTC|plane|fb|commit' | head -n 30 || echo "Impossibile leggere DRM state."
+else
+    echo "DebugFS DRM inaccessibile. (Kernel lockdown?)"
+fi
 
 echo -e "\n>>> ${CYAN}XDG-Desktop-Portal Environment & Config:${NC}"
 cat /usr/share/xdg-desktop-portal/niri-portals.conf 2>/dev/null || echo -e "${RED}niri-portals.conf mancante!${NC}"
@@ -181,8 +188,16 @@ if [ -n "$ACTIVE_USER" ]; then
     su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user show-environment | grep -E 'WAYLAND_DISPLAY|XDG_CURRENT_DESKTOP'" || true
 fi
 
-echo -e "\n>>> ${CYAN}Anyrun Deep Check:${NC}"
-ls -l /usr/bin/anyrun* /usr/lib64/anyrun/ 2>/dev/null || true
+echo -e "\n>>> ${CYAN}Anyrun Deep Check & Crash Trace:${NC}"
+ls -l /usr/bin/anyrun* /usr/lib64/anyrun/ /usr/lib/anyrun 2>/dev/null || true
+if [ -n "$ACTIVE_USER" ]; then
+    echo -e "${YELLOW}>> Esecuzione Anyrun in isolamento con strace e RUST_LOG=trace...${NC}"
+    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID WAYLAND_DISPLAY=wayland-1 RUST_LOG=trace strace -e trace=openat,execve,connect,socket -f anyrun --help 2>&1 | tail -n 30" || true
+fi
+echo -e "\n>>> ${CYAN}Core Dumps Recenti Silenziosi (Anyrun, GTK, Wayland):${NC}"
+if command -v coredumpctl >/dev/null 2>&1; then
+    coredumpctl list anyrun niri ironbar xdg-desktop-portal firefox --no-pager || echo -e "${GREEN}Nessun coredump silente trovato per l'ecosistema UI.${NC}"
+fi
 
 echo -e "\n${YELLOW}--- 11. USER CLI TOOLS & TERMINAL IDE ---${NC}"
 echo -e ">>> ${CYAN}Starship Prompt Status:${NC}"

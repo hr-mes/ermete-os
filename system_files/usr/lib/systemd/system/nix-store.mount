@@ -1,0 +1,15 @@
+[Unit]
+Description=OverlayFS for immutable /nix/store
+DefaultDependencies=no
+After=systemd-tmpfiles-setup.service
+Before=nix-daemon.service
+
+[Mount]
+What=overlay
+Where=/nix/store
+Type=overlay
+Options=lowerdir=/nix/store,upperdir=/var/opt/nix/store,workdir=/var/opt/nix/work
+
+[Install]
+WantedBy=nix-daemon.service
+WantedBy=local-fs.target
