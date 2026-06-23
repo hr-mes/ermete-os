@@ -13,6 +13,7 @@ enable nix-daemon.socket
 enable greetd.service
 enable bluetooth.service
 enable nix-store.mount
+enable nix-var.mount
 
 
 # Disable libvirt/virtualization background daemons for baremetal (Zero-Boot-Delay)

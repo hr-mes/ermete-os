@@ -77,7 +77,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry,id=registry-anyrun \
     git clone https://github.com/anyrun-org/anyrun-provider.git /tmp/anyrun-provider && \
     cd /tmp/anyrun-provider && env CARGO_TARGET_DIR=/tmp/target-provider cargo build --release --locked && \
     cp /tmp/target-provider/release/anyrun-provider /out/bin/ && \
-    find /out/bin /out/lib64/anyrun -type f -exec strip {} +
+    find /out/bin /out/lib64/anyrun -type f -exec strip --strip-unneeded {} +
 
 # Builder Bibata Cursor (Zero-Network-Failure OCI layer)
 FROM build-base AS build-bibata
@@ -161,10 +161,10 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 # Creiamo il symlink immutabile sul rootfs verso il mountpoint effimero in /var.
 # Il restore del database Nix (amnesia-fix) è gestito in modo nativo e dichiarativo
 # da tmpfiles.d (10-ermete-nix.conf) che copia lo stato iniziale al boot.
-RUN mkdir -p /usr/share/nix-initial-state/var/nix/profiles && \
+RUN mkdir -p /usr/share/nix-initial-state && \
+    cp -a /nix/var /usr/share/nix-initial-state/var && \
     for p in /nix/store/*/bin/nix; do if [ -e "$p" ]; then NIX_BIN_DIR=$(dirname "$p"); break; fi; done && \
-    if [ -n "$NIX_BIN_DIR" ]; then ln -sf $(dirname $NIX_BIN_DIR) /usr/share/nix-initial-state/var/nix/profiles/default; fi && \
-    mkdir -p /nix/var && chmod 0755 /nix/var
+    if [ -n "$NIX_BIN_DIR" ]; then ln -sf $(dirname $NIX_BIN_DIR) /usr/share/nix-initial-state/var/nix/profiles/default; fi
 
 ### DICHIARATIVITÀ ASSOLUTA (SYSTEMD PRESETS)
 # Applichiamo nativamente tutti i file .preset (es. 99-Ermete.preset) 
@@ -179,6 +179,7 @@ RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf \
     dnf install -y policycoreutils-python-utils || true && \
     semanage fcontext -a -e /usr /nix && \
     dnf remove -y policycoreutils-python-utils && \
+    authselect select local --force && \
     rm -f /etc/machine-id && touch /etc/machine-id && chmod 0444 /etc/machine-id && \
     rm -rf /etc/NetworkManager/system-connections/* && \
     dnf clean all
