@@ -16,3 +16,4 @@ enable blueman-applet.service
 enable easyeffects.service
 
 enable ermete-ide-bootstrap.service
+enable anyrun-provider.service

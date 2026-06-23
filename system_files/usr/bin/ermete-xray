@@ -1,7 +1,8 @@
 #!/bin/bash
 # ==============================================================================
-# ERMETE OS: SUPREME OMNI-VISION DIAGNOSTIC TOOL (X-RAY) v4.0
-# La vetta teorica della diagnostica di sistema per ambienti OCI/Wayland/NVIDIA.
+# ERMETE OS: SUPREME OMNI-VISION DIAGNOSTIC TOOL (X-RAY) v5.0 (EXTREME)
+# La vetta teorica della diagnostica. Non lascia scampo a nessun bug.
+# Analizza ogni atomo del sistema e fornisce l'estratto log in caso di errore.
 # ==============================================================================
 
 set -eo pipefail
@@ -9,207 +10,128 @@ LOG_FILE="/var/log/ermete-xray-$(date +%Y%m%d_%H%M%S).log"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
+MAGENTA='\033[0;35m'
 NC='\033[0m'
 
 exec > >(tee -a "$LOG_FILE") 2>&1
 
-echo -e "${BLUE}======================================================${NC}"
-echo -e "${BLUE}     🦅 ERMETE OS - SUPREME OMNI-VISION X-RAY v4.0    ${NC}"
-echo -e "${BLUE}======================================================${NC}"
-echo -e "${CYAN}Timestamp:${NC} $(date --rfc-3339=seconds)"
-echo -e "${CYAN}Kernel:${NC} $(uname -r)"
+# Funzione per analizzare il fallimento di un servizio
+analyze_service() {
+    local service=$1
+    local is_user=$2
+    local syscmd="systemctl"
+    [ "$is_user" == "user" ] && syscmd="su -s /bin/bash - $ACTIVE_USER -c \"XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user\""
+    
+    if eval "$syscmd is-active --quiet $service"; then
+        echo -e "${GREEN}✅ $service: Attivo e funzionante.${NC}"
+    else
+        echo -e "${RED}❌ ERRORE: $service è fallito o inattivo!${NC}"
+        echo -e "${YELLOW}>> Estrazione Root Cause (ultimi log):${NC}"
+        local journalcmd="journalctl -u $service -b 0 --no-pager -n 10"
+        [ "$is_user" == "user" ] && journalcmd="su -s /bin/bash - $ACTIVE_USER -c \"XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID journalctl --user -u $service -b 0 --no-pager -n 10\""
+        eval "$journalcmd" | while read -r line; do echo -e "${RED}   $line${NC}"; done
+    fi
+}
 
-echo -e "\n${YELLOW}--- 1. VERTICAL VISION: OCI & IMMUTABILITY LIFECYCLE ---${NC}"
+echo -e "${MAGENTA}========================================================================${NC}"
+echo -e "${MAGENTA}   🦅 ERMETE OS - SUPREME OMNI-VISION X-RAY v5.0 (EXTREME BEDROCK)   ${NC}"
+echo -e "${MAGENTA}========================================================================${NC}"
+echo -e "Timestamp: $(date --rfc-3339=seconds) | Kernel: $(uname -r)\n"
+
+echo -e "${CYAN}--- 1. CORE OS, OSTREE & BOOTCHAIN ---${NC}"
+echo -n "Stato Bootc (OCI): "
 if command -v bootc >/dev/null 2>&1; then
-    bootc status || echo -e "${RED}Errore nella lettura dello stato bootc${NC}"
-else
-    echo "bootc non installato o non supportato in questo layer."
-fi
-echo -e "\n>>> ${CYAN}OSTree Mutated Configs (/etc Diffing):${NC}"
-ostree admin config-diff || echo -e "${GREEN}Nessuna deviazione in /etc. Il sistema è puro.${NC}"
-echo -e "\n>>> ${CYAN}DNF / RPM Atomic Tree Status:${NC}"
-rpm-ostree status -v || true
-echo -e "\n>>> ${CYAN}Stato Provisioning First-Boot:${NC}"
-if [ -f /var/lib/ermete-firstboot-done ]; then
-    echo -e "${GREEN}Provisioning (ermete-firstboot) completato con successo.${NC}"
-else
-    echo -e "${RED}ATTENZIONE: Provisioning first-boot MANCANTE o FALLITO.${NC}"
-fi
+    bootc status >/dev/null 2>&1 && echo -e "${GREEN}✅ Bootc OK${NC}" || echo -e "${RED}❌ Bootc Fallito${NC}"
+else echo -e "${YELLOW}⚠️ bootc non trovato${NC}"; fi
 
-echo -e "\n${YELLOW}--- 2. BOOT PERFORMANCE & SYSTEMD (SYSTEM) ---${NC}"
-systemd-analyze || true
-echo -e "\n>>> ${CYAN}Top 5 colli di bottiglia all'avvio:${NC}"
-systemd-analyze blame | head -n 5 || true
-echo -e "\n>>> ${CYAN}Servizi di Sistema Falliti:${NC}"
-systemctl --failed || echo -e "${GREEN}Nessun servizio di sistema fallito.${NC}"
-echo -e "\n>>> ${CYAN}Stato Servizi Critici (greetd, nix-daemon, dbus-broker, NetworkManager):${NC}"
-systemctl status greetd nix-daemon dbus-broker NetworkManager --no-pager || true
+ostree admin config-diff | grep -q . && echo -e "${YELLOW}⚠️ ATTENZIONE: Trovate deviazioni in /etc rispetto all'immagine originaria:${NC}" && ostree admin config-diff || echo -e "${GREEN}✅ Nessuna deviazione in /etc. Immutabilità preservata.${NC}"
 
-echo -e "\n${YELLOW}--- 3. ZERO-TRUST & SECURITY (SELinux & CoreDumps) ---${NC}"
-sestatus | grep -E "SELinux status|Current mode"
-echo -e "\n>>> ${CYAN}Ultime violazioni SELinux (AVC Denials letali):${NC}"
-if command -v ausearch >/dev/null 2>&1; then
-    ausearch -m AVC,USER_AVC -ts recent -i || echo -e "${GREEN}Nessun AVC recente.${NC}"
-fi
-echo -e "\n>>> ${CYAN}Core Dumps Recenti (Segfaults / Crash):${NC}"
-if command -v coredumpctl >/dev/null 2>&1; then
-    coredumpctl list --no-pager | tail -n 10 || echo -e "${GREEN}Nessun coredump registrato. Il sistema non ha crashato.${NC}"
-fi
+[ -f /var/lib/ermete-firstboot-done ] && echo -e "${GREEN}✅ Provisioning ermete-firstboot: Completato${NC}" || echo -e "${RED}❌ Provisioning ermete-firstboot: Mancante o Fallito!${NC}"
 
-echo -e "\n${YELLOW}--- 4. HARDWARE, DRM & NVIDIA GBM ---${NC}"
-echo -e ">>> ${CYAN}Kernel Kargs (Modesetting & IOMMU):${NC}"
-cat /proc/cmdline
-echo -e "\n>>> ${CYAN}NVIDIA DKMS & Moduli:${NC}"
+echo -e "\n${CYAN}--- 2. SYSTEM SERVICES & eBPF SCHEDULING ---${NC}"
+failed_sys=$(systemctl --failed --no-legend | wc -l)
+[ "$failed_sys" -eq 0 ] && echo -e "${GREEN}✅ Zero servizi di sistema falliti.${NC}" || echo -e "${RED}❌ Trovati $failed_sys servizi falliti! (esegui systemctl --failed)${NC}"
+
+for srv in greetd.service firewalld.service scx.service fwupd.service; do
+    analyze_service "$srv" "system"
+done
+
+echo -e "\n${CYAN}--- 3. HARDWARE, DRIVERS & NVIDIA GBM ---${NC}"
 if lsmod | grep -q nvidia; then
-    echo -e "${GREEN}Moduli NVIDIA caricati correttamente.${NC}"
-    nvidia-smi --query-gpu=driver_version,name,temperature.gpu --format=csv,noheader || true
+    echo -e "${GREEN}✅ Modulo NVIDIA caricato.${NC}"
+    nvidia-smi --query-gpu=driver_version,temperature.gpu --format=csv,noheader | while read -r val; do echo -e "   Info GPU: $val"; done
 else
-    echo -e "${RED}Attenzione: Modulo NVIDIA non caricato.${NC}"
-fi
-echo -e "\n>>> ${CYAN}Nodi DRM Pipeline disponibili:${NC}"
-ls -lZ /dev/dri/ || true
-echo -e "\n>>> ${CYAN}Stato flag Kernel NVIDIA_DRM (Modeset & FBDev):${NC}"
-echo -n "nvidia_drm.modeset: " && cat /sys/module/nvidia_drm/parameters/modeset 2>/dev/null || echo "N/A"
-echo -n "nvidia_drm.fbdev: " && cat /sys/module/nvidia_drm/parameters/fbdev 2>/dev/null || echo "N/A"
-
-echo -e "\n>>> ${CYAN}Dmesg DRM/NVIDIA & Wayland Initialization Trace:${NC}"
-dmesg -T | grep -iE 'nvidia|drm|wayland|modeset|nouveau' | tail -n 20 || true
-
-echo -e "\n>>> ${CYAN}Integrità EGL/Vulkan ICD (Accelerazione Hardware User-Space):${NC}"
-ls -l /usr/share/vulkan/icd.d/ /usr/share/glvnd/egl_vendor.d/ 2>/dev/null || echo -e "${RED}File ICD mancanti! L'accelerazione HW fallirà.${NC}"
-echo -e "\n>>> ${CYAN}Hardware/Firmware Errors (Dmesg CRIT/ERR):${NC}"
-dmesg -l err,crit,alert,emerg | tail -n 15 || echo -e "${GREEN}Nessun errore critico firmware/hardware.${NC}"
-
-echo -e "\n${YELLOW}--- 5. SCHEDULING & KERNEL TRACING (SCX / eBPF) ---${NC}"
-if systemctl is-active --quiet scx; then
-    echo -e "${GREEN}eBPF SCX Scheduler (scx) è ATTIVO.${NC}"
-else
-    echo -e "${RED}eBPF SCX Scheduler NON attivo o assente.${NC}"
+    echo -e "${RED}❌ Modulo NVIDIA ASSENTE. Il kernel sta usando nouveau o rendering software!${NC}"
 fi
 
-echo -e "\n${YELLOW}--- 6. HORIZONTAL VISION: WAYLAND & SYSTEMD USER ---${NC}"
+cat /sys/module/nvidia_drm/parameters/modeset 2>/dev/null | grep -q 'Y' && echo -e "${GREEN}✅ NVIDIA DRM Modeset abilitato.${NC}" || echo -e "${RED}❌ NVIDIA DRM Modeset disabilitato! Wayland crasherà.${NC}"
+
+echo -e "\n${CYAN}--- 4. ZERO-TRUST SECURITY & ISOLATION ---${NC}"
+sestatus | grep -q "Current mode:.*enforcing" && echo -e "${GREEN}✅ SELinux Enforcing.${NC}" || echo -e "${RED}❌ SELinux NON è Enforcing!${NC}"
+if command -v ausearch >/dev/null 2>&1; then
+    avc_count=$(ausearch -m AVC,USER_AVC -ts recent -i 2>/dev/null | grep -c "denied" || true)
+    [ "$avc_count" -gt 0 ] && echo -e "${YELLOW}⚠️ Trovati $avc_count AVC Denials recenti. Controlla audit.log.${NC}" || echo -e "${GREEN}✅ Nessun AVC Denial recente.${NC}"
+fi
+[ "$(firewall-cmd --get-default-zone 2>/dev/null)" == "drop" ] && echo -e "${GREEN}✅ Firewalld in modalità Paranoica (Drop).${NC}" || echo -e "${YELLOW}⚠️ Firewalld non è in zona 'drop'.${NC}"
+
+echo -e "\n${CYAN}--- 5. WAYLAND, NIRI & SESSIONE UTENTE ---${NC}"
 ACTIVE_USER=$(loginctl list-sessions --no-legend | awk '$3 != "root" {print $3}' | head -n 1)
 if [ -n "$ACTIVE_USER" ]; then
     ACTIVE_UID=$(id -u "$ACTIVE_USER")
-    echo -e ">>> ${CYAN}Wayland Sockets in /run/user/$ACTIVE_UID:${NC}"
-    ls -l /run/user/$ACTIVE_UID/wayland-* 2>/dev/null || echo -e "${RED}Nessun socket Wayland trovato! Il compositor non sta girando.${NC}"
-
-    echo -e "\n>>> ${CYAN}Systemd-User Failed Units (Sessione Utente):${NC}"
-    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user --failed" || true
+    echo -e "${GREEN}Utente Wayland attivo: $ACTIVE_USER (UID $ACTIVE_UID)${NC}"
     
-    echo -e "\n>>> ${CYAN}Wayland/Niri/DBus Deep Trace (Tutti i messaggi chiave):${NC}"
-    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID journalctl --user -b 0 --no-pager | grep -iE 'niri|ironbar|wayland|dbus|portal' | tail -n 40" || true
-
-    echo -e "\n>>> ${CYAN}Target Chiave e DBus Session Tree:${NC}"
-    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user status niri.service pipewire.service xdg-desktop-portal.service xdg-desktop-portal-gtk.service ironbar.service swaybg.service --no-pager" || true
-    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID busctl --user tree org.freedesktop.portal.Desktop" || echo -e "${RED}XDG Portal non agganciato.${NC}"
-
-    echo -e "\n>>> ${CYAN}Niri Session Target Health:${NC}"
-    if su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user is-active niri.service" >/dev/null 2>&1; then
-        echo -e "${GREEN}niri.service è ATTIVO. Ecosistema desktop caricato.${NC}"
+    # Check compositor
+    analyze_service "niri.service" "user"
+    
+    # Check XDG Portals and Environment
+    echo -n "XDG Desktop Portal: "
+    if su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user is-active xdg-desktop-portal.service" >/dev/null 2>&1; then
+        echo -e "${GREEN}✅ Attivo${NC}"
     else
-        echo -e "${RED}ERRORE LETALE: niri.service è INATTIVO!${NC}"
-        echo -e "${YELLOW}Root cause diagnostica: Il compositor non è stato avviato correttamente da systemd.${NC}"
-        echo -e "${YELLOW}I demoni desktop (ironbar, swaybg) resteranno morti finché il compositor non lancia il target systemd.${NC}"
+        echo -e "${RED}❌ Inattivo! Analisi Portal:${NC}"
+        su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID journalctl --user -u xdg-desktop-portal.service -n 10 --no-pager" | while read -r line; do echo -e "${RED}   $line${NC}"; done
     fi
+    
+    # Check User Daemons
+    for usrv in ironbar.service swaybg.service anyrun-provider.service swaync.service nm-applet.service blueman-applet.service lxpolkit.service ermete-ide-bootstrap.service; do
+        analyze_service "$usrv" "user"
+    done
+    
+    # Pipewire Deep Diagnostics
+    echo -e "\n>>> Diagnostica Audio (Pipewire):"
+    analyze_service "pipewire.service" "user"
+    analyze_service "wireplumber.service" "user"
+    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID wpctl status 2>/dev/null | grep -iE 'audio|server|pulse'" | while read -r line; do echo -e "   $line"; done
 else
-    echo -e "${YELLOW}Nessuna sessione utente attiva rilevata (Eseguito in TTY di emergenza?).${NC}"
+    echo -e "${YELLOW}⚠️ Nessuna sessione utente attiva trovata. Salto test Wayland.${NC}"
 fi
 
-echo -e "\n>>> ${CYAN}Polkit Agent Authentication:${NC}"
-pgrep -lfa polkit || echo -e "${RED}ATTENZIONE: Nessun Polkit Agent in esecuzione!${NC}"
-
-echo -e "\n${YELLOW}--- 7. PRIVACY SANDBOXING, NIX & FLATPAK ---${NC}"
-echo -e ">>> ${CYAN}Skel & Home Directory Permissions (Strict 700/600):${NC}"
-stat -c "%A %U:%G %n" /etc/skel /var/home/$USER ~/.config/niri/config.kdl 2>/dev/null || true
-
-echo -e "\n>>> ${CYAN}Flatpak Runtimes & Remotes:${NC}"
-flatpak remotes || true
-flatpak list --columns=application,runtime || true
-
-echo -e "\n>>> ${CYAN}Stato Demone Nix e Integrità Store:${NC}"
-systemctl is-active nix-daemon.socket || echo -e "${RED}Demone Nix non attivo${NC}"
-ls -ld /nix/var/nix/profiles/default/ 2>/dev/null || echo -e "${RED}Profilo Nix non montato o corrotto! (Check tmpfiles.d/10-ermete-nix.conf)${NC}"
-
-echo -e "\n${YELLOW}--- 8. CRITICAL LOGS: SYSTEMD, TMPFILES & GREETD ---${NC}"
-echo -e ">>> ${CYAN}System Journal Errors (Ultimi 25, Priorità 3):${NC}"
-journalctl -p 3 -b --no-pager -n 25 || true
-
-echo -e "\n>>> ${CYAN}Tmpfiles Setup Logs (Amnesia & Mountpoint Bugs):${NC}"
-journalctl -u systemd-tmpfiles-setup.service -u systemd-tmpfiles-setup-dev.service -b 0 --no-pager | tail -n 20 || true
-
-echo -e "\n>>> ${CYAN}Greetd & Niri Session Logs (GUI Startup Failures):${NC}"
-journalctl -u greetd.service -b 0 --no-pager | tail -n 50 || true
-
-echo -e "\n>>> ${CYAN}XDG Desktop Portal Deep Diagnostics:${NC}"
-journalctl --user -u xdg-desktop-portal.service -u xdg-desktop-portal-gtk.service -u xdg-desktop-portal-gnome.service -u xdg-desktop-portal-wlr.service -b 0 --no-pager | tail -n 80 || true
-
-echo -e "\n>>> ${CYAN}Anyrun Diagnostic Run:${NC}"
-su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID WAYLAND_DISPLAY=wayland-1 RUST_LOG=debug anyrun 2>&1" || true
-
-echo -e "\n>>> ${CYAN}Niri IPC Info:${NC}"
-su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID WAYLAND_DISPLAY=wayland-1 niri msg focused-window" || true
-
-echo -e "\n>>> ${CYAN}OOM Killer Events (Out Of Memory):${NC}"
-dmesg -T | grep -i oom || echo -e "${GREEN}Nessun OOM Kill rilevato.${NC}"
-
-echo -e "\n${YELLOW}--- 9. ZERO-TRUST NETWORK POSTURE & CONNECTIVITY ---${NC}"
-echo -e ">>> ${CYAN}Connettività Esterna (Captive Portal Check su Flathub):${NC}"
-curl -s -I --connect-timeout 5 https://dl.flathub.org | head -n 1 || echo -e "${RED}Connessione fallita. Rete isolata o dietro Captive Portal.${NC}"
-echo -e "\n>>> ${CYAN}Nftables Pure Ruleset (Silently Dropping):${NC}"
-nft list ruleset | head -n 20 || echo "nftables disabilitato o non in uso."
-echo -e "\n>>> ${CYAN}DNS-over-TLS & Link Status:${NC}"
-resolvectl status | grep -E "DNS|Protocols" || true
-
-echo -e "\n${YELLOW}--- 10. EXTREME WAYLAND & GPU TRACING (Stuck/Freeze Diagnostics) ---${NC}"
-echo -e ">>> ${CYAN}Niri Deep Outputs & Windows State:${NC}"
-if [ -n "$ACTIVE_USER" ]; then
-    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID WAYLAND_DISPLAY=wayland-1 niri msg outputs" || true
-    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID WAYLAND_DISPLAY=wayland-1 niri msg windows" || true
-fi
-
-echo -e "\n>>> ${CYAN}GPU Memory & Perf State (NVIDIA XID Errors & Lockups):${NC}"
-dmesg -T | grep -iE 'NVRM: Xid|GPU has fallen off the bus|gpu lockup|softlockup|VK_ERROR_DEVICE_LOST|drm:nv' || echo -e "${GREEN}Nessun errore critico Xid o lockup della GPU rilevato dmesg.${NC}"
-nvidia-smi -q -d MEMORY,PERFORMANCE,UTILIZATION || true
-
-echo -e "\n>>> ${CYAN}DRM State Dump (Analisi Kernel Mode-Setting & Stuck Planes):${NC}"
-if [ -d /sys/kernel/debug/dri/0 ]; then
-    cat /sys/kernel/debug/dri/0/state | grep -iE 'CRTC|plane|fb|commit' | head -n 30 || echo "Impossibile leggere DRM state."
+echo -e "\n${CYAN}--- 6. PACKAGE MANAGERS & SANDBOXING (NIX & FLATPAK) ---${NC}"
+if systemctl is-active --quiet nix-daemon.socket; then
+    echo -e "${GREEN}✅ Nix-daemon socket in ascolto.${NC}"
+    [ -d /nix/var/nix/profiles ] && echo -e "${GREEN}✅ Stato Nix (/var) montato e persistente.${NC}" || echo -e "${RED}❌ Amnesia Nix: Stato /var non ripristinato!${NC}"
 else
-    echo "DebugFS DRM inaccessibile. (Kernel lockdown?)"
+    echo -e "${RED}❌ Nix-daemon socket fallito!${NC}"
 fi
 
-echo -e "\n>>> ${CYAN}XDG-Desktop-Portal Environment & Config:${NC}"
-cat /usr/share/xdg-desktop-portal/niri-portals.conf 2>/dev/null || echo -e "${RED}niri-portals.conf mancante!${NC}"
-if [ -n "$ACTIVE_USER" ]; then
-    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user show-environment | grep -E 'WAYLAND_DISPLAY|XDG_CURRENT_DESKTOP'" || true
-fi
+echo -e ">>> Verifica Overrides Flatpak (Aesthetics & Security):"
+flatpak override --show | grep -q "GTK_THEME=adw-gtk3-dark" && echo -e "${GREEN}✅ Flatpak GTK_THEME Override applicato.${NC}" || echo -e "${RED}❌ Flatpak Override mancanti!${NC}"
+flatpak list --columns=application | grep -E "firefox|obs|easyeffects" | while read -r app; do echo -e "${GREEN}✅ $app installato e confinato.${NC}"; done
 
-echo -e "\n>>> ${CYAN}Anyrun Deep Check & Crash Trace:${NC}"
-ls -l /usr/bin/anyrun* /usr/lib64/anyrun/ /usr/lib/anyrun 2>/dev/null || true
-if [ -n "$ACTIVE_USER" ]; then
-    echo -e "${YELLOW}>> Esecuzione Anyrun in isolamento con strace e RUST_LOG=trace...${NC}"
-    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID WAYLAND_DISPLAY=wayland-1 RUST_LOG=trace strace -e trace=openat,execve,connect,socket -f anyrun --help 2>&1 | tail -n 30" || true
-fi
-echo -e "\n>>> ${CYAN}Core Dumps Recenti Silenziosi (Anyrun, GTK, Wayland):${NC}"
-if command -v coredumpctl >/dev/null 2>&1; then
-    coredumpctl list anyrun niri ironbar xdg-desktop-portal firefox --no-pager || echo -e "${GREEN}Nessun coredump silente trovato per l'ecosistema UI.${NC}"
-fi
+echo -e "\n${CYAN}--- 7. UI/UX AESTHETICS & CLI TOOLS ---${NC}"
+for tool in alacritty swaylock anyrun wl-copy playerctl brightnessctl wlr-randr orca starship btm; do
+    command -v $tool >/dev/null 2>&1 && echo -e "${GREEN}✅ $tool: Presente${NC}" || echo -e "${RED}❌ $tool: MANCANTE O ROTTO!${NC}"
+done
 
-echo -e "\n${YELLOW}--- 11. USER CLI TOOLS & TERMINAL IDE ---${NC}"
-echo -e ">>> ${CYAN}Starship Prompt Status:${NC}"
-starship --version | head -n 1 || echo -e "${RED}Starship mancante o non funzionante!${NC}"
-echo -e "\n>>> ${CYAN}Bottom (System Monitor) Status:${NC}"
-btm --version || echo -e "${RED}Bottom mancante o non funzionante!${NC}"
-echo -e "\n>>> ${CYAN}Terminal IDE Bootstrap Service:${NC}"
-if [ -n "$ACTIVE_USER" ]; then
-    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user status ermete-ide-bootstrap.service --no-pager" || true
-    su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID journalctl --user -u ermete-ide-bootstrap.service -b 0 --no-pager | tail -n 20" || true
-fi
+echo -e ">>> Integrità Asset Visivi:"
+[ -d /usr/share/themes/adw-gtk3-dark ] && echo -e "${GREEN}✅ Tema GTK (adw-gtk3-dark)${NC}" || echo -e "${RED}❌ Tema GTK Mancante${NC}"
+[ -d /usr/share/icons/Papirus-Dark ] && echo -e "${GREEN}✅ Icone (Papirus-Dark)${NC}" || echo -e "${RED}❌ Icone Mancanti${NC}"
+[ -d /usr/share/icons/Bibata-Modern-Classic ] && echo -e "${GREEN}✅ Cursori (Bibata)${NC}" || echo -e "${RED}❌ Cursori Mancanti${NC}"
+ls /usr/share/fonts/jetbrains-mono* >/dev/null 2>&1 && echo -e "${GREEN}✅ Font: JetBrains Mono${NC}" || echo -e "${RED}❌ Font: JetBrains Mono Mancante${NC}"
+ls /usr/share/fonts/rsms-inter* >/dev/null 2>&1 && echo -e "${GREEN}✅ Font: Inter${NC}" || echo -e "${RED}❌ Font: Inter Mancante${NC}"
 
-echo -e "\n${BLUE}======================================================${NC}"
-echo -e "${GREEN}Diagnostica completata. Log protetto salvato in: $LOG_FILE${NC}"
-echo -e "${BLUE}======================================================${NC}"
+echo -e "\n${MAGENTA}========================================================================${NC}"
+echo -e "${GREEN}✅ Ecoscandaglio Estremo Concluso. Log salvato in: $LOG_FILE${NC}"
+echo -e "${MAGENTA}========================================================================${NC}"

@@ -11,8 +11,8 @@ Config(
   show_results_immediately: false,
   max_entries: None,
   plugins: [
-    "libapplications.so",
-    "libsymbols.so",
-    "libshell.so",
+    "/usr/lib64/anyrun/libapplications.so",
+    "/usr/lib64/anyrun/libsymbols.so",
+    "/usr/lib64/anyrun/libshell.so",
   ],
 )

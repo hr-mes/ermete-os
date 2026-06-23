@@ -1,0 +1,13 @@
+[Unit]
+Description=Anyrun Provider Daemon
+PartOf=graphical-session.target
+After=graphical-session-pre.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/anyrun-provider
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target
