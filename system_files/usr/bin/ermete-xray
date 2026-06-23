@@ -144,6 +144,15 @@ journalctl -u systemd-tmpfiles-setup.service -u systemd-tmpfiles-setup-dev.servi
 echo -e "\n>>> ${CYAN}Greetd & Niri Session Logs (GUI Startup Failures):${NC}"
 journalctl -u greetd.service -b 0 --no-pager | tail -n 50 || true
 
+echo -e "\n>>> ${CYAN}XDG Desktop Portal Deep Diagnostics:${NC}"
+journalctl --user -u xdg-desktop-portal.service -u xdg-desktop-portal-gtk.service -u xdg-desktop-portal-gnome.service -u xdg-desktop-portal-wlr.service -b 0 --no-pager | tail -n 80 || true
+
+echo -e "\n>>> ${CYAN}Anyrun Diagnostic Run:${NC}"
+su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID WAYLAND_DISPLAY=wayland-1 RUST_LOG=debug anyrun 2>&1" || true
+
+echo -e "\n>>> ${CYAN}Niri IPC Info:${NC}"
+su -s /bin/bash - "$ACTIVE_USER" -c "XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID WAYLAND_DISPLAY=wayland-1 niri msg focused-window" || true
+
 echo -e "\n>>> ${CYAN}OOM Killer Events (Out Of Memory):${NC}"
 dmesg -T | grep -i oom || echo -e "${GREEN}Nessun OOM Kill rilevato.${NC}"
 
