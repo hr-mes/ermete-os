@@ -123,6 +123,9 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     find /etc/skel -type f -name "*.sh" -exec chmod 0700 {} + && \
     find /usr/libexec -type f -name "*.sh" -exec chmod +x {} + && \
     find /usr/bin -type f -name "ermete-*" -exec chmod +x {} + && \
+    ln -sf /dev/null /usr/lib/systemd/user/niri.service && \
+    ln -sf /dev/null /usr/lib/systemd/system/akmods-keygen@.service && \
+    ln -sf /dev/null /usr/lib/systemd/system/akmods@.service && \
     chmod +x /usr/bin/niri-session && \
     chmod +x /usr/bin/firefox && \
     chmod +x /usr/bin/tuigreet && \
@@ -148,7 +151,7 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 # Creiamo il symlink immutabile sul rootfs verso il mountpoint effimero in /var.
 # Il restore del database Nix (amnesia-fix) è gestito in modo nativo e dichiarativo
 # da tmpfiles.d (10-ermete-nix.conf) che copia lo stato iniziale al boot.
-RUN mkdir -p /nix && rm -rf /nix/var && ln -s /var/opt/nix/var /nix/var
+RUN mkdir -p /usr/share/nix-initial-state && mv /nix/var /usr/share/nix-initial-state/var && ln -s /var/opt/nix/var /nix/var
 
 ### DICHIARATIVITÀ ASSOLUTA (SYSTEMD PRESETS)
 # Applichiamo nativamente tutti i file .preset (es. 99-Ermete.preset) 
