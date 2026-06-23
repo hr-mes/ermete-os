@@ -67,8 +67,11 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry,id=registry-anyrun \
     git clone https://github.com/anyrun-org/anyrun.git /tmp/anyrun-src && \
     cd /tmp/anyrun-src && git checkout ${ANYRUN_COMMIT} && \
     cargo build --release --locked && \
-    mv target/release/anyrun /out/bin/ && mv target/release/anyrun-provider /out/bin/ && \
+    mv target/release/anyrun /out/bin/ && \
     find target/release -maxdepth 1 -name '*.so' -exec cp {} /out/lib64/anyrun/ \; && \
+    git clone https://github.com/anyrun-org/anyrun-provider.git /tmp/anyrun-provider && \
+    cd /tmp/anyrun-provider && cargo build --release --locked && \
+    mv target/release/anyrun-provider /out/bin/ && \
     find /out/bin /out/lib64/anyrun -type f -exec strip {} +
 
 # Builder Bibata Cursor (Zero-Network-Failure OCI layer)
