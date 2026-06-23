@@ -77,8 +77,7 @@ Ermete OS implements extreme military-grade security defaults, completely overha
 ## 📦 Segregated Software Management
 Due to root immutability, the traditional `.exe` or `dnf install` paradigm is obliterated:
 1. **Graphical Applications**: Exclusively confined to **Flatpak** (via Flathub). Protected globally by `flatpak override --system --device=dri --socket=wayland` to guarantee NVIDIA GPU acceleration and Wayland IPC sandboxing.
-2. **CLI Utilities**: Managed via **Nix** Package Manager (seamlessly exposed in `/etc/profile.d/nix.sh`).
-3. **Destructive Experiments**: Handled via integrated **Distrobox** containers.
+2. **CLI Utilities & Compilers**: Managed dynamically and declaratively via the **Nix** Package Manager (seamlessly exposed in `/etc/profile.d/nix.sh`), without installing any daemons.
 
 ---
 
@@ -91,8 +90,8 @@ Every package in Ring 3 is surgically selected to adhere to the "Zero-Bloat" and
    - *Justification (Strict Segregation)*: Engineered for extreme power users. The IDE is built around Neovim (LazyVim). However, to respect "Zero-Bloat", massive compilers (`gcc`, `make`) are strictly **omitted** from the host OS `dnf` installation. All compilations must happen elegantly inside Nix environments. `ananicy-cpp` autonomously manages process niceness for zero-latency typing.
 3. **Wayland & Compositor Stack (`niri`, `anyrun`, `ironbar`, `alacritty`)**:
    - *Justification (Dichiaratività Assoluta)*: We reject massive Desktop Environments (like GNOME/KDE) in favor of the Niri scrollable-tiling compositor. To eliminate layer bloat during the OCI build, Rust-based GUI components (`anyrun`, `ironbar`) are compiled asynchronously in isolated multi-stage builders and copied statically (`COPY --from`) into the final image as pure binaries.
-4. **Nix Package Manager**:
-   - *Justification (Zero-Entropy & Immutable Development)*: The ultimate realization of the Manifesto. By physically baking Nix into the immutable rootfs (`COPY --from=build-nix /nix /nix`), we enable users to spawn declarative, mathematically reproducible development environments (`nix-shell`) without running heavyweight container daemons.
+4. **Nix Package Manager (The Bedrock IDE)**:
+   - *Justification (Zero-Entropy & Immutable Development)*: The ultimate realization of the Manifesto. By physically baking Nix into the immutable rootfs (`COPY --from=build-nix /nix /nix`), we enable users to spawn declarative, mathematically reproducible development environments without running heavyweight container daemons. The OS automatically bootstraps the IDE stack (`gcc`, `make`, `lazygit`, `nodejs`) upon the first user login via an asynchronous `systemd --user` service, keeping the OCI payload strictly Zero-Bloat.
 5. **XDG Portals & Pipewire (`xdg-desktop-portal-*`, `wireplumber`)**:
    - *Justification (Zero-Trust Sandboxing)*: Since graphical applications are strictly confined to Flatpaks, the OS must provide infallible declarative API bridges. Portals guarantee that no Flatpak can access the host filesystem or screen without explicit DBus authorization.
 6. **Omni-Vision Diagnostics (`sysstat`, `bpftool`, `drm_info`, `wayland-utils`)**:
