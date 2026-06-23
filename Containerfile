@@ -67,7 +67,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry,id=registry-anyrun \
     git clone https://github.com/anyrun-org/anyrun.git /tmp/anyrun-src && \
     cd /tmp/anyrun-src && git checkout ${ANYRUN_COMMIT} && \
     cargo build --release --locked && \
-    mv target/release/anyrun /out/bin/ && \
+    cp target/release/anyrun* /out/bin/ && \
     find target/release -maxdepth 1 -name '*.so' -exec cp {} /out/lib64/anyrun/ \; && \
     find /out/bin /out/lib64/anyrun -type f -exec strip {} +
 
@@ -98,7 +98,7 @@ ARG BIBATA_VER
 COPY --from=build-starship --chown=0:0 --chmod=755 /out/bin/starship /usr/bin/
 COPY --from=build-bottom --chown=0:0 --chmod=755 /out/bin/btm /usr/bin/
 COPY --from=build-ironbar --chown=0:0 --chmod=755 /out/bin/ironbar /usr/bin/
-COPY --from=build-anyrun --chown=0:0 --chmod=755 /out/bin/anyrun /usr/bin/
+COPY --from=build-anyrun --chown=0:0 --chmod=755 /out/bin/anyrun* /usr/bin/
 COPY --from=build-anyrun --chown=0:0 --chmod=755 /out/lib64/anyrun /usr/lib64/anyrun
 
 # Nix "Cucinato" fisicamente nell'immagine OCI (Zero-Execution)

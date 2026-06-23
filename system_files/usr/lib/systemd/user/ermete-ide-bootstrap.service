@@ -1,8 +1,8 @@
 [Unit]
 Description=Ermete OS: Bootstrap Nix IDE Stack (gcc, make, lazygit)
-After=network-online.target niri.service
-Wants=network-online.target
+After=niri.service
 ConditionPathExists=!%h/.local/state/ermete-ide-bootstrapped
+
 
 [Service]
 Type=oneshot

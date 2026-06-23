@@ -1,2 +1,2 @@
 #!/bin/bash
-exec flatpak run org.mozilla.firefox "$@"
+exec env GTK_USE_PORTAL=1 flatpak run org.mozilla.firefox "$@"
