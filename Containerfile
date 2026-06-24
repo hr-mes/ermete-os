@@ -161,10 +161,10 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 # Creiamo il symlink immutabile sul rootfs verso il mountpoint effimero in /var.
 # Il restore del database Nix (amnesia-fix) è gestito in modo nativo e dichiarativo
 # da tmpfiles.d (10-ermete-nix.conf) che copia lo stato iniziale al boot.
-RUN mkdir -p /usr/share/nix-initial-state && \
-    cp -a /nix/var /usr/share/nix-initial-state/var && \
+RUN mkdir -p /usr/share/nix-initial-state/var/nix/profiles && \
     for p in /nix/store/*/bin/nix; do if [ -e "$p" ]; then NIX_BIN_DIR=$(dirname "$p"); break; fi; done && \
-    if [ -n "$NIX_BIN_DIR" ]; then ln -sf $(dirname $NIX_BIN_DIR) /usr/share/nix-initial-state/var/nix/profiles/default; fi
+    if [ -n "$NIX_BIN_DIR" ]; then ln -sf $(dirname $NIX_BIN_DIR) /usr/share/nix-initial-state/var/nix/profiles/default; fi && \
+    mkdir -p /nix/var && chmod 0755 /nix/var
 
 ### DICHIARATIVITÀ ASSOLUTA (SYSTEMD PRESETS)
 # Applichiamo nativamente tutti i file .preset (es. 99-Ermete.preset) 
