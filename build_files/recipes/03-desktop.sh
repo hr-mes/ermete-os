@@ -17,13 +17,13 @@ dnf5 -y install --setopt=install_weak_deps=False niri xorg-x11-server-Xwayland \
     papirus-icon-theme adw-gtk3-theme jetbrains-mono-fonts rsms-inter-fonts fontawesome-fonts-all \
     xdg-desktop-portal-gnome xdg-desktop-portal-gtk swaybg gtk-layer-shell gtk4-layer-shell \
     qt5-qtwayland qt6-qtwayland xdg-user-dirs xdg-user-dirs-gtk \
-    swaync lxpolkit network-manager-applet blueman gnome-keyring gnome-keyring-pam wl-clipboard orca
+    swaync lxpolkit network-manager-applet blueman gnome-keyring gnome-keyring-pam wl-clipboard orca fuzzel
 
 # Configurazione Ambiente Wayland/NVIDIA e wrapper niri-session 
 # sono ereditati nativamente da /system_files/usr/lib/environment.d/99-ermete.conf e /system_files/usr/bin/niri-session
 # I permessi di esecuzione sono vincolati nativamente nell'albero Git.
 
-# I binari (Ironbar, Starship, Bottom, Anyrun) sono compilati nativamente 
+# I binari (Ironbar, Starship, Bottom) sono compilati nativamente 
 # ed esportati nel filesystem finale grazie all'architettura Multi-Stage OCI
 # del Containerfile, che garantisce caching estremo e purezza del layer.
 

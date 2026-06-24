@@ -10,8 +10,6 @@ ARG STARSHIP_VER="v1.22.1"
 # renovate: datasource=github-releases depName=ClementTsang/bottom
 ARG BOTTOM_VER="0.10.2"
 
-# renovate: datasource=github-commits depName=anyrun-org/anyrun
-ARG ANYRUN_COMMIT="f3b23bc5520f7673a5119da44b3570fbe060db37"
 
 # Allow build scripts to be referenced without being copied into the final image
 FROM scratch AS ctx
@@ -35,7 +33,7 @@ RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --moun
 ENV CARGO_HOME=/usr/local/cargo
 ENV RUSTFLAGS="-C target-cpu=x86-64-v3 -C link-arg=-fuse-ld=mold"
 
-RUN mkdir -p /out/bin /out/lib64/anyrun
+RUN mkdir -p /out/bin
 
 # Builder Starship
 FROM build-base AS build-starship
@@ -62,22 +60,6 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry,id=registry-ironbar \
     --mount=type=cache,target=/tmp/cargo-target,id=target-ironbar \
     env CARGO_TARGET_DIR=/tmp/cargo-target cargo install --locked --root /out ironbar --version ${IRONBAR_VER#v} --features workspaces+niri
 
-# Builder Anyrun
-FROM build-base AS build-anyrun
-ARG ANYRUN_COMMIT
-RUN --mount=type=cache,target=/usr/local/cargo/registry,id=registry-anyrun \
-    --mount=type=cache,target=/usr/local/cargo/git,id=git-anyrun \
-    --mount=type=cache,target=/tmp/target-anyrun,id=target-anyrun \
-    --mount=type=cache,target=/tmp/target-provider,id=target-anyrun-provider \
-    git clone https://github.com/anyrun-org/anyrun.git /tmp/anyrun-src && \
-    cd /tmp/anyrun-src && git checkout ${ANYRUN_COMMIT} && \
-    env CARGO_TARGET_DIR=/tmp/target-anyrun cargo build --release --locked && \
-    cp /tmp/target-anyrun/release/anyrun /out/bin/ && \
-    find /tmp/target-anyrun/release -maxdepth 1 -name '*.so' -exec cp {} /out/lib64/anyrun/ \; && \
-    git clone https://github.com/anyrun-org/anyrun-provider.git /tmp/anyrun-provider && \
-    cd /tmp/anyrun-provider && env CARGO_TARGET_DIR=/tmp/target-provider cargo build --release --locked && \
-    cp /tmp/target-provider/release/anyrun-provider /out/bin/ && \
-    find /out/bin -type f -executable -exec strip --strip-unneeded {} + || true
 
 # Builder Bibata Cursor (Zero-Network-Failure OCI layer)
 FROM build-base AS build-bibata
@@ -94,8 +76,7 @@ FROM nixos/nix:latest AS build-nix
 
 # Fase C: Costruzione Link Simbolici (Dichiaratività Systemd)
 FROM build-base AS build-symlinks
-RUN mkdir -p /out/usr/lib/systemd/system && \
-    ln -sf /usr/lib64/anyrun /out/usr/lib/anyrun
+RUN mkdir -p /out/usr/lib/systemd/system
 
 # --- IMMAGINE FINALE (PRODUZIONE) ---
 # FIX: Renovate Bot sostituirà automaticamente il tag :latest con il vero digest SHA256 crittografico
@@ -106,8 +87,7 @@ ARG BIBATA_VER
 COPY --from=build-starship --chown=0:0 --chmod=755 /out/bin/starship /usr/bin/
 COPY --from=build-bottom --chown=0:0 --chmod=755 /out/bin/btm /usr/bin/
 COPY --from=build-ironbar --chown=0:0 --chmod=755 /out/bin/ironbar /usr/bin/
-COPY --from=build-anyrun --chown=0:0 --chmod=755 /out/bin/anyrun* /usr/bin/
-COPY --from=build-anyrun --chown=0:0 --chmod=755 /out/lib64/anyrun /usr/lib64/anyrun
+
 
 # Nix "Cucinato" fisicamente nell'immagine OCI (Zero-Execution)
 COPY --from=build-nix --chown=0:0 /nix /nix

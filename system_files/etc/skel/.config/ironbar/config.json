@@ -15,7 +15,7 @@
         {
           "type": "button",
           "label": "🦅",
-          "on_click": "!anyrun"
+          "on_click": "!fuzzel"
         }
       ]
     },

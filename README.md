@@ -69,7 +69,7 @@ Ermete OS implements extreme military-grade security defaults, completely overha
 - **The Stack**:
   - Compositor: **Niri** (Scrollable Tiling). Hardware accelerated with `GBM_BACKEND=nvidia-drm` and `WLR_NO_HARDWARE_CURSORS=1`.
   - Status Bar: **Ironbar** (Floating, transparent).
-  - App Launcher: **Anyrun** (Compiled offline dynamically).
+  - App Launcher: **Fuzzel** (Wayland native, lightweight application launcher).
   - Terminal: **Foot** (Wayland native, C-based, lightweight).
 
 ---
@@ -105,8 +105,8 @@ Lo stack user-space, costruito senza far uso di pesanti "Desktop Environment" le
    - *Perché*: Niri fornisce un'interfaccia scrollable-tiling guidata da tastiera, leggerissima (Rust). XWayland è mantenuto isolato solo per retrocompatibilità con binari legacy.
 2. **Terminal & Core Utils (`foot`, `eza`, `bat`, `fd-find`, `ripgrep`, `nushell`)**:
    - *Perché*: Abbiamo eradicato il vecchio stack GNU coreutils in favore di tool scritti in Rust, sicuri per la memoria, asincroni e parallelizzati, eliminando vulnerabilità zero-day native. Foot fornisce un terminal emulator iper-ottimizzato nativo Wayland in C.
-3. **Interfaccia Grafica Modulare (`anyrun`, `ironbar`, `swaybg`, `swaync`)**:
-   - *Perché*: Niente pannelli pesanti. `ironbar` fa da barra di stato nativa Wayland, `anyrun` è un lanciatore velocissimo scritto in Rust, `swaync` gestisce le notifiche tramite `systemd --user`.
+3. **Interfaccia Grafica Modulare (`fuzzel`, `ironbar`, `swaybg`, `swaync`)**:
+   - *Perché*: Niente pannelli pesanti. `ironbar` fa da barra di stato nativa Wayland, `fuzzel` è un lanciatore ultra-veloce nativo Wayland, `swaync` gestisce le notifiche tramite `systemd --user`.
 4. **Autenticazione & Polkit (`lxpolkit`, `seahorse`, `greetd`, `tuigreet`)**:
    - *Perché*: `greetd` con `tuigreet` sostituisce GDM/SDDM fornendo un leggerissimo TUI login manager nel terminale, prima di inizializzare Wayland. `seahorse` e `gnome-keyring` gestiscono le chiavi SSH e Wayland Secret Portal. L'askpass SSH è nativo di GNOME per una pulizia assoluta, eliminando ridondanze.
 5. **XDG Portals & Pipewire (`xdg-desktop-portal-gnome`, `xdg-desktop-portal-gtk`, `wireplumber`)**:

@@ -164,7 +164,7 @@ window-rule {
 }
 
 window-rule {
-    match app-id=r#"^anyrun$"#
+    match app-id=r#"^fuzzel$"#
     open-floating true
 }
 
@@ -193,7 +193,7 @@ binds {
     Mod+Shift+Slash { show-hotkey-overlay; }
 
     Mod+T { spawn "foot"; }
-    Mod+D hotkey-overlay-title="Open Launcher: anyrun" { spawn "anyrun"; }
+    Mod+D hotkey-overlay-title="Open Launcher: fuzzel" { spawn "fuzzel"; }
     Super+Alt+L hotkey-overlay-title="Lock the Screen: swaylock" { spawn "swaylock" "-f" "-c" "000000"; }
 
     // FIX: Uso corretto del flag -c con exec per rimpiazzare il processo shell (no zombie PID)
