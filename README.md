@@ -70,7 +70,7 @@ Ermete OS implements extreme military-grade security defaults, completely overha
   - Compositor: **Niri** (Scrollable Tiling). Hardware accelerated with `GBM_BACKEND=nvidia-drm` and `WLR_NO_HARDWARE_CURSORS=1`.
   - Status Bar: **Ironbar** (Floating, transparent).
   - App Launcher: **Anyrun** (Compiled offline dynamically).
-  - Terminal: **Alacritty** (GPU-accelerated).
+  - Terminal: **Foot** (Wayland native, C-based, lightweight).
 
 ---
 
@@ -103,8 +103,8 @@ Lo stack user-space, costruito senza far uso di pesanti "Desktop Environment" le
 
 1. **Wayland Compositor Stack (`niri`, `xorg-x11-server-Xwayland`)**:
    - *Perché*: Niri fornisce un'interfaccia scrollable-tiling guidata da tastiera, leggerissima (Rust). XWayland è mantenuto isolato solo per retrocompatibilità con binari legacy.
-2. **Terminal & Core Utils Rust (`alacritty`, `eza`, `bat`, `fd-find`, `ripgrep`, `nushell`)**:
-   - *Perché*: Abbiamo eradicato il vecchio stack GNU coreutils in favore di tool scritti in Rust, sicuri per la memoria, asincroni e parallelizzati, eliminando vulnerabilità zero-day native. Alacritty fornisce rendering su GPU.
+2. **Terminal & Core Utils (`foot`, `eza`, `bat`, `fd-find`, `ripgrep`, `nushell`)**:
+   - *Perché*: Abbiamo eradicato il vecchio stack GNU coreutils in favore di tool scritti in Rust, sicuri per la memoria, asincroni e parallelizzati, eliminando vulnerabilità zero-day native. Foot fornisce un terminal emulator iper-ottimizzato nativo Wayland in C.
 3. **Interfaccia Grafica Modulare (`anyrun`, `ironbar`, `swaybg`, `swaync`)**:
    - *Perché*: Niente pannelli pesanti. `ironbar` fa da barra di stato nativa Wayland, `anyrun` è un lanciatore velocissimo scritto in Rust, `swaync` gestisce le notifiche tramite `systemd --user`.
 4. **Autenticazione & Polkit (`lxpolkit`, `seahorse`, `greetd`, `tuigreet`)**:
