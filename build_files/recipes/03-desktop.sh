@@ -11,19 +11,19 @@ echo "--- Applicazione Forzata del Tema Globale GTK ---"
 # Install Niri e dipendenze cursori, temi e font (aggiunto Xwayland per compatibilità assoluta con vecchie app)
 dnf5 -y install --setopt=install_weak_deps=False niri xorg-x11-server-Xwayland \
     mesa-dri-drivers mesa-vulkan-drivers foot upower \
-    mpv loupe gnome-calculator gnome-system-monitor seahorse dbus-x11 dbus-tools \
+    mpv loupe dbus-x11 dbus-tools \
     pipewire pipewire-alsa pipewire-pulseaudio wireplumber \
     playerctl brightnessctl swaylock libnotify wlr-randr \
     papirus-icon-theme adw-gtk3-theme jetbrains-mono-fonts rsms-inter-fonts fontawesome-fonts-all \
     xdg-desktop-portal-gnome xdg-desktop-portal-gtk swaybg gtk-layer-shell gtk4-layer-shell \
     qt5-qtwayland qt6-qtwayland xdg-user-dirs xdg-user-dirs-gtk \
-    swaync mate-polkit network-manager-applet blueman gnome-keyring gnome-keyring-pam wl-clipboard orca fuzzel btop waybar
+    swaync mate-polkit network-manager-applet blueman gnome-keyring gnome-keyring-pam wl-clipboard fuzzel btop waybar
 
 # Configurazione Ambiente Wayland/NVIDIA e wrapper niri-session 
 # sono ereditati nativamente da /system_files/usr/lib/environment.d/99-ermete.conf e /system_files/usr/bin/niri-session
 # I permessi di esecuzione sono vincolati nativamente nell'albero Git.
 
-# I binari (Ironbar, Starship, Bottom) sono compilati nativamente 
+# I binari (Starship, Bottom) sono compilati nativamente 
 # ed esportati nel filesystem finale grazie all'architettura Multi-Stage OCI
 # del Containerfile, che garantisce caching estremo e purezza del layer.
 
