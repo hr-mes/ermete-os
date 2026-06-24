@@ -9,7 +9,7 @@ enable ermete-firstboot-notification.path
 # Niri Session Services
 enable ironbar.service
 enable swaybg.service
-enable lxpolkit.service
+enable polkit-gnome.service
 enable nm-applet.service
 enable swaync.service
 enable blueman-applet.service
