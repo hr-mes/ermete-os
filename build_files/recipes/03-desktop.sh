@@ -13,7 +13,7 @@ dnf5 -y install --setopt=install_weak_deps=False niri xorg-x11-server-Xwayland \
     mesa-dri-drivers mesa-vulkan-drivers foot upower \
     mpv imv dbus-x11 dbus-tools \
     pipewire pipewire-alsa pipewire-pulseaudio wireplumber \
-    playerctl brightnessctl hyprlock libnotify wlr-randr \
+    playerctl brightnessctl swaylock libnotify wlr-randr \
     papirus-icon-theme adw-gtk3-theme jetbrains-mono-fonts rsms-inter-fonts fontawesome-fonts-all \
     xdg-desktop-portal-gnome xdg-desktop-portal-gtk swaybg gtk-layer-shell gtk4-layer-shell \
     qt5-qtwayland qt6-qtwayland xdg-user-dirs xdg-user-dirs-gtk \

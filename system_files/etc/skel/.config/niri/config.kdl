@@ -194,7 +194,7 @@ binds {
 
     Mod+T { spawn "foot"; }
     Mod+D hotkey-overlay-title="Open Launcher: fuzzel" { spawn "fuzzel"; }
-    Super+Alt+L hotkey-overlay-title="Lock the Screen: hyprlock" { spawn "hyprlock"; }
+    Super+Alt+L hotkey-overlay-title="Lock the Screen: swaylock" { spawn "swaylock" "-f" "-c" "000000"; }
 
 
     // FIX: Sostituiti tutti gli spawn-sh con esecuzioni dirette sicure
