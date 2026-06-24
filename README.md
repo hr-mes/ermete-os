@@ -107,7 +107,7 @@ Lo stack user-space, costruito senza far uso di pesanti "Desktop Environment" le
    - *Perché*: Abbiamo eradicato il vecchio stack GNU coreutils in favore di tool scritti in Rust, sicuri per la memoria, asincroni e parallelizzati, eliminando vulnerabilità zero-day native. Foot fornisce un terminal emulator iper-ottimizzato nativo Wayland in C.
 3. **Interfaccia Grafica Modulare (`fuzzel`, `ironbar`, `swaybg`, `swaync`)**:
    - *Perché*: Niente pannelli pesanti. `ironbar` fa da barra di stato nativa Wayland, `fuzzel` è un lanciatore ultra-veloce nativo Wayland, `swaync` gestisce le notifiche tramite `systemd --user`.
-4. **Autenticazione & Polkit (`polkit-gnome`, `seahorse`, `greetd`, `tuigreet`)**:
+4. **Autenticazione & Polkit (`mate-polkit`, `seahorse`, `greetd`, `tuigreet`)**:
    - *Perché*: `greetd` con `tuigreet` sostituisce GDM/SDDM fornendo un leggerissimo TUI login manager nel terminale, prima di inizializzare Wayland. `seahorse` e `gnome-keyring` gestiscono le chiavi SSH e Wayland Secret Portal. L'askpass SSH è nativo di GNOME per una pulizia assoluta, eliminando ridondanze.
 5. **XDG Portals & Pipewire (`xdg-desktop-portal-gnome`, `xdg-desktop-portal-gtk`, `wireplumber`)**:
    - *Perché*: Sandboxing assoluto. I flatpak non possono toccare il filesystem root e devono passare per DBus e Pipewire per screen-sharing e audio, rendendo il desktop immune a software malevolo.

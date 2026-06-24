@@ -33,7 +33,7 @@ echo "--- Applicazione Forzata Firewalld Default Zone ---"
 firewall-offline-cmd --set-default-zone=drop
 firewall-offline-cmd --zone=drop --add-service=mdns
 
-# Installazione di Starship e Bottom ora delegata a DNF (vedi 03-desktop.sh)
+# Installazione di Starship via Cargo, Btop via DNF (vedi 03-desktop.sh)
 
 # Fix Missing UNIX Groups (Wayland/DRM/Audio/Input)
 # In container builds, sometimes standard groups from 'setup' rpm are not fully populated.

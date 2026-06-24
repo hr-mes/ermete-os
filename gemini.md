@@ -20,7 +20,7 @@ Non sei autorizzato a modificare Kernel, Initramfs o driver NVIDIA hardware. L'o
 ## 🔒 L'Equilibrio Tra Paranoia e UX (Regole Letali)
 
 La sicurezza esagerata non deve mai collassare in un Denial of Service dell'Operatore Umano.
-1. **Sincronia Niri-Systemd**: Nessuna utility di sessione o daemon background (`swaybg`, `ironbar`, `polkit-gnome.service`) si impone al Wayland Compositor. Al contrario Niri agisce nativamente come portale verso DBus, esportando le proprie coordinate d'ambiente `WAYLAND_DISPLAY`, e lancia la `niri-session.target`. Da quel millisecondo, Systemd-User domina tutto.
+1. **Sincronia Niri-Systemd**: Nessuna utility di sessione o daemon background (`swaybg`, `ironbar`, `mate-polkit.service`) si impone al Wayland Compositor. Al contrario Niri agisce nativamente come portale verso DBus, esportando le proprie coordinate d'ambiente `WAYLAND_DISPLAY`, e lancia la `niri-session.target`. Da quel millisecondo, Systemd-User domina tutto.
 2. **Isolamento Skel (Zero-Trust Privacy)**: `/etc/skel` applica logiche di protezione feudali. Ogni configurazione ereditata al momento della genesi utente è bloccata a livello filemode `0700` per i percorsi dir, isolando la privacy contro ispezioni laterali da terzi. L'esecuzione di script locali viene iniettata a monte con espliciti flag `chmod +x` che bypassano difetti di versioning di repository Host mal configurati.
 3. **Cecità di Rete Controllata (Firewalld & NetworkManager)**:
    * **Firewalld**: Implementa un Drop Network radicale azzerando qualsiasi scoperta portscan locale o esterna. Parallelamente, trapana policy chirurgiche per il layer mDNS `5353/UDP` onde evitare di castrare i servizi Home/Domotica locali.

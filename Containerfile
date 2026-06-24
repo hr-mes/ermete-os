@@ -4,6 +4,9 @@ ARG BIBATA_VER="v2.0.7"
 # renovate: datasource=github-releases depName=JakeStanger/ironbar
 ARG IRONBAR_VER="v0.19.0"
 
+# renovate: datasource=github-releases depName=starship/starship
+ARG STARSHIP_VER="v1.22.1"
+
 
 
 
@@ -32,6 +35,14 @@ ENV RUSTFLAGS="-C target-cpu=x86-64-v3 -C link-arg=-fuse-ld=mold"
 RUN mkdir -p /out/bin
 
 
+
+# Builder Starship
+FROM build-base AS build-starship
+ARG STARSHIP_VER
+RUN --mount=type=cache,target=/usr/local/cargo/registry,id=registry-starship \
+    --mount=type=cache,target=/usr/local/cargo/git,id=git-starship \
+    --mount=type=cache,target=/tmp/cargo-target,id=target-starship \
+    env CARGO_TARGET_DIR=/tmp/cargo-target cargo install --locked --root /out starship --version ${STARSHIP_VER#v}
 
 # Builder Ironbar
 FROM build-base AS build-ironbar
@@ -65,6 +76,7 @@ FROM ghcr.io/patapem/ermete-base-nvidia@sha256:643f31315e9207152d86ae4c38a30b2ab
 ARG BIBATA_VER
 
 # Copia i binari purificati dai rispettivi branch paralleli (Hardening Deterministico)
+COPY --from=build-starship --chown=0:0 --chmod=755 /out/bin/starship /usr/bin/
 COPY --from=build-ironbar --chown=0:0 --chmod=755 /out/bin/ironbar /usr/bin/
 
 

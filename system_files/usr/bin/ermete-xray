@@ -95,7 +95,7 @@ if [ -n "$ACTIVE_USER" ]; then
     fi
     
     # Check User Daemons
-    for usrv in ironbar.service swaybg.service swaync.service nm-applet.service blueman-applet.service polkit-gnome.service ermete-ide-bootstrap.service; do
+    for usrv in ironbar.service swaybg.service swaync.service nm-applet.service blueman-applet.service mate-polkit.service ermete-ide-bootstrap.service; do
         analyze_service "$usrv" "user"
     done
     
@@ -121,7 +121,7 @@ flatpak override --show | grep -q "GTK_THEME=adw-gtk3-dark" && echo -e "${GREEN}
 flatpak list --columns=application | grep -E "firefox|obs|easyeffects" | while read -r app; do echo -e "${GREEN}✅ $app installato e confinato.${NC}"; done
 
 echo -e "\n${CYAN}--- 7. UI/UX AESTHETICS & CLI TOOLS ---${NC}"
-for tool in foot swaylock fuzzel wl-copy playerctl brightnessctl wlr-randr orca starship btm; do
+for tool in foot swaylock fuzzel wl-copy playerctl brightnessctl wlr-randr orca starship btop; do
     command -v $tool >/dev/null 2>&1 && echo -e "${GREEN}✅ $tool: Presente${NC}" || echo -e "${RED}❌ $tool: MANCANTE O ROTTO!${NC}"
 done
 
