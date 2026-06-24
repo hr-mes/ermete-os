@@ -77,7 +77,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry,id=registry-anyrun \
     git clone https://github.com/anyrun-org/anyrun-provider.git /tmp/anyrun-provider && \
     cd /tmp/anyrun-provider && env CARGO_TARGET_DIR=/tmp/target-provider cargo build --release --locked && \
     cp /tmp/target-provider/release/anyrun-provider /out/bin/ && \
-    find /out/bin /out/lib64/anyrun -type f -exec strip --strip-unneeded {} +
+    find /out/bin -type f -executable -exec strip --strip-unneeded {} + || true
 
 # Builder Bibata Cursor (Zero-Network-Failure OCI layer)
 FROM build-base AS build-bibata

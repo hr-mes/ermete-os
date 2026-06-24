@@ -159,7 +159,7 @@ animations {
 }
 
 window-rule {
-    match app-id=r#"^org\.wezfurlong\.wezterm$"#
+    match app-id=r#"^foot$"#
     default-column-width {}
 }
 
@@ -192,7 +192,7 @@ window-rule {
 binds {
     Mod+Shift+Slash { show-hotkey-overlay; }
 
-    Mod+T hotkey-overlay-title="Open a Terminal: foot" { spawn "foot"; }
+    Mod+T { spawn "foot"; }
     Mod+D hotkey-overlay-title="Open Launcher: anyrun" { spawn "anyrun"; }
     Super+Alt+L hotkey-overlay-title="Lock the Screen: swaylock" { spawn "swaylock" "-f" "-c" "000000"; }
 
