@@ -11,13 +11,13 @@ echo "--- Applicazione Forzata del Tema Globale GTK ---"
 # Install Niri e dipendenze cursori, temi e font (aggiunto Xwayland per compatibilità assoluta con vecchie app)
 dnf5 -y install --setopt=install_weak_deps=False niri xorg-x11-server-Xwayland \
     mesa-dri-drivers mesa-vulkan-drivers foot upower \
-    mpv loupe dbus-x11 dbus-tools \
+    mpv imv dbus-x11 dbus-tools \
     pipewire pipewire-alsa pipewire-pulseaudio wireplumber \
-    playerctl brightnessctl swaylock libnotify wlr-randr \
+    playerctl brightnessctl hyprlock libnotify wlr-randr \
     papirus-icon-theme adw-gtk3-theme jetbrains-mono-fonts rsms-inter-fonts fontawesome-fonts-all \
     xdg-desktop-portal-gnome xdg-desktop-portal-gtk swaybg gtk-layer-shell gtk4-layer-shell \
     qt5-qtwayland qt6-qtwayland xdg-user-dirs xdg-user-dirs-gtk \
-    swaync mate-polkit network-manager-applet blueman gnome-keyring gnome-keyring-pam wl-clipboard fuzzel btop waybar
+    mako mate-polkit network-manager-applet blueman gnome-keyring gnome-keyring-pam wl-clipboard fuzzel btop waybar wl-mirror
 
 # Configurazione Ambiente Wayland/NVIDIA e wrapper niri-session 
 # sono ereditati nativamente da /system_files/usr/lib/environment.d/99-ermete.conf e /system_files/usr/bin/niri-session
@@ -55,5 +55,8 @@ glib-compile-schemas /usr/share/glib-2.0/schemas/
 authselect select local with-silent-lastlog with-mdns4 without-nullok --force
 authselect disable-feature with-fingerprint || true
 authselect apply-changes
+
+# Pulizia chirurgica Bloatware ed app GTK ridondanti ereditate dalle build di base
+dnf5 -y remove gnome-calculator gnome-system-monitor seahorse orca || true
 
 # (Il comando dnf5 clean all è stato rimosso in quanto incompatibile con i cache mounts OCI)

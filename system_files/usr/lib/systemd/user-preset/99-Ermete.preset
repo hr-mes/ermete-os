@@ -11,7 +11,7 @@ enable waybar.service
 enable swaybg.service
 enable mate-polkit.service
 enable nm-applet.service
-enable swaync.service
+enable mako.service
 enable blueman-applet.service
 enable easyeffects.service
 

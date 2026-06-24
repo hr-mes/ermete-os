@@ -194,10 +194,8 @@ binds {
 
     Mod+T { spawn "foot"; }
     Mod+D hotkey-overlay-title="Open Launcher: fuzzel" { spawn "fuzzel"; }
-    Super+Alt+L hotkey-overlay-title="Lock the Screen: swaylock" { spawn "swaylock" "-f" "-c" "000000"; }
+    Super+Alt+L hotkey-overlay-title="Lock the Screen: hyprlock" { spawn "hyprlock"; }
 
-    // FIX: Uso corretto del flag -c con exec per rimpiazzare il processo shell (no zombie PID)
-    Super+Alt+S allow-when-locked=true hotkey-overlay-title=null { spawn "sh" "-c" "pkill orca || exec orca"; }
 
     // FIX: Sostituiti tutti gli spawn-sh con esecuzioni dirette sicure
     XF86AudioRaiseVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.1+" "-l" "1.0"; }
@@ -215,6 +213,7 @@ binds {
 
     Mod+W repeat=false { toggle-overview; }
     Mod+Q repeat=false { close-window; }
+    Mod+M hotkey-overlay-title="Toggle Mirror Display" { spawn "sh" "-c" "pkill wl-mirror || wl-mirror"; }
 
     Mod+Left  { focus-column-left; }
     Mod+Right { focus-column-right; }
