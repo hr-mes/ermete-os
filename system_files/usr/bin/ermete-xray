@@ -21,10 +21,10 @@ exec > >(tee -a "$LOG_FILE") 2>&1
 analyze_service() {
     local service=$1
     local is_user=$2
-    local syscmd="systemctl"
-    [ "$is_user" == "user" ] && syscmd="su -s /bin/bash - $ACTIVE_USER -c \"XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user\""
+    local syscmd="systemctl is-active --quiet $service"
+    [ "$is_user" == "user" ] && syscmd="su -s /bin/bash - $ACTIVE_USER -c \"XDG_RUNTIME_DIR=/run/user/$ACTIVE_UID systemctl --user is-active --quiet $service\""
     
-    if eval "$syscmd is-active --quiet $service"; then
+    if eval "$syscmd"; then
         echo -e "${GREEN}✅ $service: Attivo e funzionante.${NC}"
     else
         echo -e "${RED}❌ ERRORE: $service è fallito o inattivo!${NC}"
