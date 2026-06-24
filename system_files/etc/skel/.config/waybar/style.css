@@ -1,0 +1,45 @@
+* {
+    border: none;
+    border-radius: 0;
+    font-family: 'JetBrains Mono', 'Inter', 'Font Awesome 6 Free', sans-serif;
+    font-size: 13px;
+    min-height: 0;
+}
+
+window#waybar {
+    background-color: rgba(30, 30, 46, 0.85); /* Catppuccin Mocha Base with transparency */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cdd6f4; /* Catppuccin Mocha Text */
+}
+
+#workspaces button {
+    padding: 0 5px;
+    background: transparent;
+    color: #a6adc8; /* Subtext0 */
+    border-radius: 8px;
+}
+
+#workspaces button.active {
+    color: #89b4fa; /* Blue */
+}
+
+#clock, #battery, #network, #wireplumber, #tray {
+    padding: 0 10px;
+    margin: 4px 2px;
+    background-color: rgba(49, 50, 68, 0.6); /* Surface0 */
+    border-radius: 8px;
+    color: #cdd6f4;
+}
+
+#battery.charging {
+    color: #a6e3a1; /* Green */
+}
+
+#battery.warning:not(.charging) {
+    color: #f9e2af; /* Yellow */
+}
+
+#battery.critical:not(.charging) {
+    background-color: #f38ba8; /* Red */
+    color: #11111b; /* Crust */
+}

@@ -1,9 +1,6 @@
 # renovate: datasource=github-releases depName=ful1e5/Bibata_Cursor
 ARG BIBATA_VER="v2.0.7"
 
-# renovate: datasource=github-releases depName=JakeStanger/ironbar
-ARG IRONBAR_VER="v0.19.0"
-
 # renovate: datasource=github-releases depName=starship/starship
 ARG STARSHIP_VER="v1.22.1"
 
@@ -44,14 +41,6 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry,id=registry-starship \
     --mount=type=cache,target=/tmp/cargo-target,id=target-starship \
     env CARGO_TARGET_DIR=/tmp/cargo-target cargo install --locked --root /out starship --version ${STARSHIP_VER#v}
 
-# Builder Ironbar
-FROM build-base AS build-ironbar
-ARG IRONBAR_VER
-RUN --mount=type=cache,target=/usr/local/cargo/registry,id=registry-ironbar \
-    --mount=type=cache,target=/usr/local/cargo/git,id=git-ironbar \
-    --mount=type=cache,target=/tmp/cargo-target,id=target-ironbar \
-    env CARGO_TARGET_DIR=/tmp/cargo-target cargo install --locked --root /out ironbar --version ${IRONBAR_VER#v} --features workspaces+niri
-
 
 # Builder Bibata Cursor (Zero-Network-Failure OCI layer)
 FROM build-base AS build-bibata
@@ -77,8 +66,6 @@ ARG BIBATA_VER
 
 # Copia i binari purificati dai rispettivi branch paralleli (Hardening Deterministico)
 COPY --from=build-starship --chown=0:0 --chmod=755 /out/bin/starship /usr/bin/
-COPY --from=build-ironbar --chown=0:0 --chmod=755 /out/bin/ironbar /usr/bin/
-
 
 # Nix "Cucinato" fisicamente nell'immagine OCI (Zero-Execution)
 COPY --from=build-nix --chown=0:0 /nix /nix
