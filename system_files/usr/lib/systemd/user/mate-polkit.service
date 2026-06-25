@@ -1,7 +1,7 @@
 [Unit]
 Description=mate-polkit Authentication Agent
 PartOf=graphical-session.target
-After=graphical-session-pre.target
+After=graphical-session.target
 
 [Service]
 ExecStart=/usr/libexec/polkit-mate-authentication-agent-1
