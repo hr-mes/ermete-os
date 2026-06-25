@@ -8,6 +8,7 @@ Type=simple
 ExecStart=/bin/sh -c "if [ -s /usr/share/backgrounds/ermete/default.jpg ]; then exec swaybg -m fill -i /usr/share/backgrounds/ermete/default.jpg; else exec swaybg -c '#24273A'; fi"
 Restart=on-failure
 RestartSec=2
+Slice=app-graphical.slice
 
 [Install]
 WantedBy=graphical-session.target

@@ -14,3 +14,4 @@ ExecStart=/usr/bin/flatpak uninstall --unused -y --noninteractive
 IOSchedulingClass=idle
 CPUSchedulingPolicy=idle
 Nice=19
+OOMScoreAdjust=500

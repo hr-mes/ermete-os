@@ -8,6 +8,7 @@ After=graphical-session.target pipewire.service wireplumber.service
 ExecStart=/usr/bin/flatpak run --command=easyeffects com.github.wwmm.easyeffects --gapplication-service
 Restart=on-failure
 RestartSec=2
+Slice=session.slice
 
 [Install]
 WantedBy=graphical-session.target

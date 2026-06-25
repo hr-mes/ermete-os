@@ -6,6 +6,9 @@ ConditionPathIsDirectory=/nix/store
 [Service]
 ExecStart=/usr/bin/nix-daemon
 KillMode=process
+LimitNOFILE=1048576
+TasksMax=infinity
+OOMScoreAdjust=500
 
 [Install]
 WantedBy=multi-user.target

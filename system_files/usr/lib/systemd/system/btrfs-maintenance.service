@@ -10,3 +10,4 @@ ExecStart=/bin/sh -c 'btrfs balance start -dusage=50 -musage=50 /sysroot && btrf
 IOSchedulingClass=idle
 CPUSchedulingPolicy=idle
 Nice=19
+OOMScoreAdjust=1000

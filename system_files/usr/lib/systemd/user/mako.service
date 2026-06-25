@@ -8,6 +8,7 @@ Type=simple
 ExecStart=/usr/bin/mako
 Restart=on-failure
 RestartSec=2
+Slice=app-graphical.slice
 
 [Install]
 WantedBy=graphical-session.target

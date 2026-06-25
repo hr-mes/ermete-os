@@ -11,6 +11,7 @@ ExecStart=/usr/libexec/ermete-snapshot.sh
 IOSchedulingClass=idle
 CPUSchedulingPolicy=idle
 Nice=19
+OOMScoreAdjust=1000
 
 [Install]
 WantedBy=ostree-finalize-staged.service
