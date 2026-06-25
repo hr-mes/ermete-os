@@ -7,6 +7,7 @@ enable ermete-firstboot-started.service
 enable ermete-firstboot-notification.path
 
 # Niri Session Services
+enable ermete-wayland-sync.service
 enable waybar.service
 enable swaybg.service
 enable mate-polkit.service

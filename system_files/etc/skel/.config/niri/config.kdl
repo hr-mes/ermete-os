@@ -185,6 +185,11 @@ window-rule {
 }
 
 window-rule {
+    match app-id=r#"^wl-mirror$"#
+    open-fullscreen true
+}
+
+window-rule {
     geometry-corner-radius 12
     clip-to-geometry true
 }

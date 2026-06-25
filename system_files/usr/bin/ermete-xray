@@ -27,6 +27,10 @@ analyze_service() {
     if eval "$syscmd"; then
         echo -e "${GREEN}✅ $service: Attivo e funzionante.${NC}"
     else
+        if [ "$service" == "fwupd.service" ] && ! systemctl is-failed --quiet fwupd.service; then
+            echo -e "${GREEN}✅ $service: Inattivo (Normale per Type=idle/dbus).${NC}"
+            return
+        fi
         echo -e "${RED}❌ ERRORE: $service è fallito o inattivo!${NC}"
         echo -e "${YELLOW}>> Estrazione Root Cause (ultimi log):${NC}"
         local journalcmd="journalctl -u $service -b 0 --no-pager -n 10"
