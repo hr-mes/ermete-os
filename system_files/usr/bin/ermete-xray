@@ -58,7 +58,7 @@ echo -e "\n${CYAN}--- 2. SYSTEM SERVICES & eBPF SCHEDULING ---${NC}"
 failed_sys=$(systemctl --failed --no-legend | wc -l)
 [ "$failed_sys" -eq 0 ] && echo -e "${GREEN}✅ Zero servizi di sistema falliti.${NC}" || echo -e "${RED}❌ Trovati $failed_sys servizi falliti! (esegui systemctl --failed)${NC}"
 
-for srv in greetd.service firewalld.service scx.service fwupd.service; do
+for srv in greetd.service firewalld.service scx_loader.service fwupd.service; do
     analyze_service "$srv" "system"
 done
 

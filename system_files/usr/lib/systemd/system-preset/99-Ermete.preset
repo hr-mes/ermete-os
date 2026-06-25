@@ -7,6 +7,7 @@ enable fstrim.timer
 enable ermete-home-snapshot.service
 enable ananicy-cpp.service
 enable fwupd.service
+enable scx_loader.service
 enable Ermete-firstboot.service
 enable Ermete-flatpak-update.timer
 enable nix-daemon.socket
