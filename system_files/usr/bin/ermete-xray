@@ -134,7 +134,7 @@ flatpak override --show | grep -q "GTK_THEME=adw-gtk3-dark" && echo -e "${GREEN}
 flatpak list --columns=application | grep -E "firefox|obs|easyeffects" | while read -r app; do echo -e "${GREEN}✅ $app installato e confinato.${NC}"; done
 
 echo -e "\n${CYAN}--- 7. UI/UX AESTHETICS & CLI TOOLS ---${NC}"
-for tool in foot swaylock fuzzel wl-copy playerctl brightnessctl wlr-randr starship btop wlogout pavucontrol; do
+for tool in foot swaylock fuzzel wl-copy playerctl brightnessctl wlr-randr starship btop wlogout pavucontrol thunar; do
     command -v $tool >/dev/null 2>&1 && echo -e "${GREEN}✅ $tool: Presente${NC}" || echo -e "${RED}❌ $tool: MANCANTE O ROTTO!${NC}"
 done
 
