@@ -1,22 +1,24 @@
+@import url("colors.css");
+
 * {
     background-image: none;
     box-shadow: none;
 }
 
 window {
-    background-color: rgba(30, 30, 46, 0.90);
+    background-color: @base;
 }
 
 button {
-    border-radius: 20px;
-    border: 2px solid rgba(255, 255, 255, 0.05);
-    color: #cdd6f4;
-    background-color: rgba(49, 50, 68, 0.7);
-    margin: 50px;
+    border-radius: 24px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    color: @text;
+    background-color: @surface;
+    margin: 40px;
     background-repeat: no-repeat;
     background-position: center;
     background-size: 25%;
-    font-size: 22px;
+    font-size: 20px;
     font-weight: bold;
     font-family: "Inter", "JetBrains Mono", sans-serif;
     color: transparent; /* Nascondiamo il testo per evitare sovrapposizioni, l'icona parla da sola */
@@ -24,8 +26,8 @@ button {
 }
 
 button:focus, button:active, button:hover {
-    background-color: rgba(203, 166, 247, 0.8);
-    border: 2px solid #cba6f7;
+    background-color: @primary;
+    border: 2px solid @on_primary;
     outline-style: none;
 }
 

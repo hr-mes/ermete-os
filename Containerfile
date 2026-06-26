@@ -41,6 +41,13 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry,id=registry-starship \
     --mount=type=cache,target=/tmp/cargo-target,id=target-starship \
     env CARGO_TARGET_DIR=/tmp/cargo-target cargo install --locked --root /out starship --version ${STARSHIP_VER#v}
 
+# Builder Matugen
+FROM build-base AS build-matugen
+RUN --mount=type=cache,target=/usr/local/cargo/registry,id=registry-matugen \
+    --mount=type=cache,target=/usr/local/cargo/git,id=git-matugen \
+    --mount=type=cache,target=/tmp/cargo-target,id=target-matugen \
+    env CARGO_TARGET_DIR=/tmp/cargo-target cargo install --locked --root /out matugen
+
 
 # Builder Bibata Cursor (Zero-Network-Failure OCI layer)
 FROM build-base AS build-bibata
@@ -66,6 +73,7 @@ ARG BIBATA_VER
 
 # Copia i binari purificati dai rispettivi branch paralleli (Hardening Deterministico)
 COPY --from=build-starship --chown=0:0 --chmod=755 /out/bin/starship /usr/bin/
+COPY --from=build-matugen --chown=0:0 --chmod=755 /out/bin/matugen /usr/bin/
 
 # Nix "Cucinato" fisicamente nell'immagine OCI (Zero-Execution)
 COPY --from=build-nix --chown=0:0 /nix /nix
