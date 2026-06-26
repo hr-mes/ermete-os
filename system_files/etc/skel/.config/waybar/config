@@ -1,48 +1,102 @@
 {
     "layer": "top",
     "position": "top",
-    "height": 34,
-    "spacing": 4,
-    "modules-left": ["niri/workspaces", "niri/window"],
+    "height": 40,
+    "margin-top": 10,
+    "margin-left": 10,
+    "margin-right": 10,
+    "margin-bottom": 0,
+    "spacing": 5,
+
+    "modules-left": ["custom/launcher", "niri/workspaces", "niri/window"],
     "modules-center": ["clock"],
-    "modules-right": ["tray", "wireplumber", "network", "battery"],
+    "modules-right": ["tray", "wireplumber", "network", "battery", "custom/power"],
+
+    "custom/launcher": {
+        "format": "",
+        "on-click": "fuzzel",
+        "tooltip": false
+    },
+
     "niri/workspaces": {
         "format": "{icon}",
         "format-icons": {
             "active": "",
-            "default": ""
+            "default": "",
+            "urgent": ""
         }
     },
+
+    "niri/window": {
+        "format": "{}",
+        "max-length": 50,
+        "rewrite": {
+            "(.*) - Mozilla Firefox": " $1",
+            "(.*) - Visual Studio Code": "󰨞 $1"
+        }
+    },
+
+    "clock": {
+        "format": " {:%H:%M}",
+        "format-alt": " {:%A, %B %d, %Y}",
+        "tooltip-format": "<tt><small>{calendar}</small></tt>",
+        "calendar": {
+            "mode"          : "year",
+            "mode-mon-col"  : 3,
+            "weeks-pos"     : "right",
+            "on-scroll"     : 1,
+            "format": {
+                "months":     "<span color='#ffead3'><b>{}</b></span>",
+                "days":       "<span color='#ecc6d9'><b>{}</b></span>",
+                "weeks":      "<span color='#99ffdd'><b>W{}</b></span>",
+                "weekdays":   "<span color='#ffcc66'><b>{}</b></span>",
+                "today":      "<span color='#ff6699'><b><u>{}</u></b></span>"
+            }
+        },
+        "actions": {
+            "on-click-right": "mode",
+            "on-scroll-up": "shift_up",
+            "on-scroll-down": "shift_down"
+        }
+    },
+
     "tray": {
+        "icon-size": 18,
         "spacing": 10
     },
-    "clock": {
-        "format": "{:%H:%M}",
-        "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
-        "format-alt": "{:%A, %B %d, %Y}"
-    },
+
     "wireplumber": {
-        "format": "{volume}% {icon}",
-        "format-muted": "",
-        "format-icons": ["", "", ""]
+        "format": "{icon} {volume}%",
+        "format-muted": " Muted",
+        "format-icons": ["", "", ""],
+        "on-click": "pavucontrol"
     },
+
     "network": {
-        "format-wifi": "{essid} ({signalStrength}%) ",
-        "format-ethernet": "{ipaddr}/{cidr} ",
-        "tooltip-format": "{ifname} via {gwaddr} ",
-        "format-linked": "{ifname} (No IP) ",
-        "format-disconnected": "Disconnected ⚠",
+        "format-wifi": " {essid}",
+        "format-ethernet": " {ipaddr}/{cidr}",
+        "tooltip-format": " {ifname} via {gwaddr}",
+        "format-linked": " {ifname} (No IP)",
+        "format-disconnected": "⚠ Disconnected",
         "format-alt": "{ifname}: {ipaddr}/{cidr}"
     },
+
     "battery": {
         "states": {
+            "good": 95,
             "warning": 30,
             "critical": 15
         },
-        "format": "{capacity}% {icon}",
-        "format-charging": "{capacity}% ",
-        "format-plugged": "{capacity}% ",
-        "format-alt": "{time} {icon}",
+        "format": "{icon} {capacity}%",
+        "format-charging": " {capacity}%",
+        "format-plugged": " {capacity}%",
+        "format-alt": "{icon} {time}",
         "format-icons": ["", "", "", "", ""]
+    },
+
+    "custom/power": {
+        "format": "",
+        "on-click": "wlogout",
+        "tooltip": false
     }
 }
