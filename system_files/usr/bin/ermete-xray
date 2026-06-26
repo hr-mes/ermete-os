@@ -72,15 +72,6 @@ fi
 
 cat /sys/module/nvidia_drm/parameters/modeset 2>/dev/null | grep -q 'Y' && echo -e "${GREEN}✅ NVIDIA DRM Modeset abilitato.${NC}" || echo -e "${RED}❌ NVIDIA DRM Modeset disabilitato! Wayland crasherà.${NC}"
 
-echo -e "\n>>> Diagnostica NVIDIA Container Toolkit (CDI):"
-analyze_service "nvidia-cdi-generator.service" "system"
-if [ -f /run/cdi/nvidia.yaml ]; then
-    echo -e "${GREEN}✅ Spec CDI Generata (/run/cdi/nvidia.yaml)${NC}"
-else
-    echo -e "${RED}❌ Spec CDI Mancante! I container GPU potrebbero non funzionare o essere invisibili.${NC}"
-fi
-command -v nvidia-ctk >/dev/null 2>&1 && echo -e "${GREEN}✅ nvidia-ctk: Presente${NC}" || echo -e "${RED}❌ nvidia-ctk: MANCANTE!${NC}"
-
 echo -e "\n${CYAN}--- 4. ZERO-TRUST SECURITY & ISOLATION ---${NC}"
 sestatus | grep -q "Current mode:.*enforcing" && echo -e "${GREEN}✅ SELinux Enforcing.${NC}" || echo -e "${RED}❌ SELinux NON è Enforcing!${NC}"
 if command -v ausearch >/dev/null 2>&1; then
@@ -134,7 +125,7 @@ flatpak override --show | grep -q "GTK_THEME=adw-gtk3-dark" && echo -e "${GREEN}
 flatpak list --columns=application | grep -E "firefox|obs|easyeffects" | while read -r app; do echo -e "${GREEN}✅ $app installato e confinato.${NC}"; done
 
 echo -e "\n${CYAN}--- 7. UI/UX AESTHETICS & CLI TOOLS ---${NC}"
-for tool in foot swaylock fuzzel wl-copy playerctl brightnessctl wlr-randr starship btop wlogout pavucontrol; do
+for tool in foot swaylock fuzzel wl-copy playerctl brightnessctl wlr-randr starship btop; do
     command -v $tool >/dev/null 2>&1 && echo -e "${GREEN}✅ $tool: Presente${NC}" || echo -e "${RED}❌ $tool: MANCANTE O ROTTO!${NC}"
 done
 
