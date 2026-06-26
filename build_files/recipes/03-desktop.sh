@@ -17,7 +17,7 @@ dnf5 -y install --setopt=install_weak_deps=False niri xorg-x11-server-Xwayland \
     papirus-icon-theme adw-gtk3-theme jetbrains-mono-fonts rsms-inter-fonts fontawesome-fonts-all \
     xdg-desktop-portal-gnome xdg-desktop-portal-gtk swaybg gtk-layer-shell gtk4-layer-shell \
     qt5-qtwayland qt6-qtwayland xdg-user-dirs xdg-user-dirs-gtk \
-    mako mate-polkit network-manager-applet blueman gnome-keyring gnome-keyring-pam wl-clipboard fuzzel btop waybar wl-mirror wlogout
+    mako mate-polkit network-manager-applet blueman gnome-keyring gnome-keyring-pam wl-clipboard fuzzel btop waybar wl-mirror wlogout pavucontrol
 
 # Configurazione Ambiente Wayland/NVIDIA e wrapper niri-session 
 # sono ereditati nativamente da /system_files/usr/lib/environment.d/99-ermete.conf e /system_files/usr/bin/niri-session

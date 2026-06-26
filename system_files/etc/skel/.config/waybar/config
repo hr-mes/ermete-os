@@ -13,7 +13,7 @@
     "modules-right": ["tray", "wireplumber", "network", "battery", "custom/power"],
 
     "custom/launcher": {
-        "format": "",
+        "format": "🐦‍⬛",
         "on-click": "fuzzel",
         "tooltip": false
     },
