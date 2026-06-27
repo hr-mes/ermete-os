@@ -40,26 +40,40 @@ tooltip label {
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.3);
 }
 
-#group-sys {
-    padding: 0px 4px;
-}
-
 #wireplumber,
 #network,
 #battery {
-    background-color: transparent;
-    padding: 0px 10px;
-    margin: 0px;
-    border: none;
-    box-shadow: none;
+    background-color: alpha(@base, 0.85);
+    margin: 4px 0px;
+    padding: 2px 10px;
+    border-top: 1px solid alpha(@surface1, 0.5);
+    border-bottom: 1px solid alpha(@surface1, 0.5);
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.3);
     transition: all 0.2s ease-in-out;
+}
+
+#wireplumber {
+    border-radius: 20px 0px 0px 20px;
+    border-left: 1px solid alpha(@surface1, 0.5);
+    padding-left: 14px;
+}
+
+#network {
+    border-radius: 0;
+    border-left: 1px solid alpha(@surface1, 0.2);
+    border-right: 1px solid alpha(@surface1, 0.2);
+}
+
+#battery {
+    border-radius: 0px 20px 20px 0px;
+    border-right: 1px solid alpha(@surface1, 0.5);
+    padding-right: 14px;
 }
 
 #wireplumber:hover,
 #network:hover,
 #battery:hover {
-    background-color: alpha(@surface0, 0.6);
-    border-radius: 14px;
+    background-color: alpha(@surface0, 0.95);
 }
 
 /* Specific module colors and states */

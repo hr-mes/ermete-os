@@ -10,7 +10,7 @@
 
     "modules-left": ["custom/launcher", "niri/workspaces", "niri/window"],
     "modules-center": ["clock"],
-    "modules-right": ["tray", "group/sys", "custom/power"],
+    "modules-right": ["tray", "wireplumber", "network", "battery", "custom/power"],
 
     "custom/launcher": {
         "format": "🐦‍⬛",
@@ -42,7 +42,9 @@
             "active": "",
             "default": "",
             "urgent": ""
-        }
+        },
+        "on-scroll-up": "niri msg action focus-workspace-up",
+        "on-scroll-down": "niri msg action focus-workspace-down"
     },
 
     "niri/window": {
@@ -51,7 +53,10 @@
         "rewrite": {
             "(.*) - Mozilla Firefox": " $1",
             "(.*) - Visual Studio Code": "󰨞 $1"
-        }
+        },
+        "on-scroll-up": "niri msg action focus-column-left",
+        "on-scroll-down": "niri msg action focus-column-right",
+        "on-click-middle": "niri msg action close-window"
     },
 
     "clock": {
@@ -76,15 +81,6 @@
             "on-scroll-up": "shift_up",
             "on-scroll-down": "shift_down"
         }
-    },
-
-    "group/sys": {
-        "orientation": "horizontal",
-        "modules": [
-            "wireplumber",
-            "network",
-            "battery"
-        ]
     },
 
     "tray": {
