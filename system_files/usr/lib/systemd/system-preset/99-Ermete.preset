@@ -1,6 +1,6 @@
 enable podman.socket
 disable systemd-oomd.service
-enable bootc-fetch-apply.timer
+enable bootc-fetch-apply-updates.timer
 enable firewalld.service
 enable btrfs-maintenance.timer
 enable fstrim.timer
