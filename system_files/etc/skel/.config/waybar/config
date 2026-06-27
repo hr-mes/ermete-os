@@ -88,46 +88,46 @@
         "spacing": 10
     },
 
-    "wireplumber": {
-        "format": "{icon} {volume}%",
-        "format-muted": " Muted",
-        "format-icons": ["", "", ""],
-        "on-click": "pavucontrol"
-    },
-
     "mpris": {
-        "format": "🎵 {artist} - {title}",
-        "format-paused": "⏸ {artist} - {title}",
+        "format": "  {artist} - {title}",
+        "format-paused": "  {artist} - {title}",
         "max-length": 40,
         "on-click": "playerctl play-pause",
         "on-click-right": "playerctl next"
     },
 
     "cpu": {
-        "format": " {usage}%",
+        "format": "  {usage}%",
         "tooltip": false,
         "interval": 2
     },
 
     "memory": {
-        "format": " {percentage}%",
+        "format": "  {percentage}%",
         "interval": 2
     },
 
     "idle_inhibitor": {
         "format": "{icon}",
         "format-icons": {
-            "activated": "☕",
-            "deactivated": "💤"
+            "activated": "",
+            "deactivated": ""
         },
         "tooltip": true
     },
 
     "custom/notification": {
         "tooltip": false,
-        "format": "",
+        "format": " ",
         "on-click": "makoctl dismiss -a",
         "on-click-right": "makoctl restore"
+    },
+
+    "wireplumber": {
+        "format": "{icon}  {volume}%",
+        "format-muted": "  Muted",
+        "format-icons": ["", "", ""],
+        "on-click": "pavucontrol"
     },
 
     "network": {

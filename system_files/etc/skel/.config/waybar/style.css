@@ -10,9 +10,10 @@
 }
 
 window#waybar {
-    background-color: alpha(@base, 0.7);
-    border-bottom: 1px solid alpha(@surface1, 0.5);
+    background-color: alpha(@base, 0.75);
+    border-bottom: 1px solid alpha(@surface1, 0.3);
     border-radius: 0;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.5);
 }
 
 tooltip {
@@ -121,43 +122,44 @@ tooltip label {
 }
 
 #window {
-    color: @lavender;
+    color: @text;
 }
 
 #clock {
-    color: @mauve;
+    color: @text;
+    font-weight: 800;
 }
 
 #mpris {
-    color: @lavender;
+    color: @text;
 }
 
 #custom-notification {
-    color: @sapphire;
+    color: @text;
 }
 
 #cpu {
-    color: @red;
+    color: @text;
 }
 
 #memory {
-    color: @peach;
+    color: @text;
 }
 
 #idle_inhibitor {
-    color: @yellow;
+    color: @text;
 }
 
 #battery {
-    color: @green;
+    color: @subtext0;
 }
 
 #battery.charging {
-    color: @teal;
+    color: @green;
 }
 
 #battery.warning:not(.charging) {
-    color: @yellow;
+    color: @peach;
 }
 
 #battery.critical:not(.charging) {
@@ -171,11 +173,11 @@ tooltip label {
 }
 
 #network {
-    color: @sapphire;
+    color: @text;
 }
 
 #wireplumber {
-    color: @pink;
+    color: @text;
 }
 
 #custom-power {
