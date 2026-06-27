@@ -10,7 +10,7 @@
 
     "modules-left": ["custom/launcher", "niri/workspaces", "niri/window"],
     "modules-center": ["clock"],
-    "modules-right": ["tray", "wireplumber", "network", "battery", "custom/power"],
+    "modules-right": ["tray", "group/sys", "custom/power"],
 
     "custom/launcher": {
         "format": "🐦‍⬛",
@@ -81,6 +81,15 @@
             "on-scroll-up": "shift_up",
             "on-scroll-down": "shift_down"
         }
+    },
+
+    "group/sys": {
+        "orientation": "horizontal",
+        "modules": [
+            "wireplumber",
+            "network",
+            "battery"
+        ]
     },
 
     "tray": {
