@@ -27,6 +27,7 @@ tooltip label {
 #custom-launcher,
 #workspaces,
 #window,
+#mpris,
 #clock,
 #tray,
 #group-sys,
@@ -40,6 +41,10 @@ tooltip label {
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.3);
 }
 
+#custom-notification,
+#cpu,
+#memory,
+#idle_inhibitor,
 #wireplumber,
 #network,
 #battery {
@@ -52,12 +57,16 @@ tooltip label {
     transition: all 0.2s ease-in-out;
 }
 
-#wireplumber {
+#custom-notification {
     border-radius: 20px 0px 0px 20px;
     border-left: 1px solid alpha(@surface1, 0.5);
     padding-left: 14px;
 }
 
+#cpu,
+#memory,
+#idle_inhibitor,
+#wireplumber,
 #network {
     border-radius: 0;
     border-left: 1px solid alpha(@surface1, 0.2);
@@ -70,6 +79,10 @@ tooltip label {
     padding-right: 14px;
 }
 
+#custom-notification:hover,
+#cpu:hover,
+#memory:hover,
+#idle_inhibitor:hover,
 #wireplumber:hover,
 #network:hover,
 #battery:hover {
@@ -113,6 +126,26 @@ tooltip label {
 
 #clock {
     color: @mauve;
+}
+
+#mpris {
+    color: @lavender;
+}
+
+#custom-notification {
+    color: @sapphire;
+}
+
+#cpu {
+    color: @red;
+}
+
+#memory {
+    color: @peach;
+}
+
+#idle_inhibitor {
+    color: @yellow;
 }
 
 #battery {
