@@ -84,6 +84,12 @@ COPY --from=build-bibata /out/icons/Bibata-Modern-Classic /usr/share/icons/Bibat
 # Fissiamo i permessi di /etc/skel nativamente nell'immagine OCI (Zero-Boot-Delay)
 # I permessi paranoici (0700 dir, 0600 file) sono applicati nel mutating RUN sottostante
 
+# FIX BEDROCK: Copiamo selettivamente SOLO i file vitali per sysusers e la privacy sandbox (skel)
+# PRIMA degli script di build, in modo che il RUN successivo possa applicare i permessi corretti (chmod)
+# e creare gli utenti (greeter, nixbld) senza sovrascrivere prematuramente DNF.
+COPY --chown=0:0 system_files/usr/lib/sysusers.d /usr/lib/sysusers.d
+COPY --chown=0:0 system_files/etc/skel /etc/skel
+
 # Execute all modular scripts sequentially in a single transaction to prevent OCI layer bloat
 # and preserve atomicity of the RPM database.
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
@@ -106,9 +112,10 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     if [ -f /usr/bin/firefox ]; then chmod +x /usr/bin/firefox; fi && \
     if [ -f /usr/bin/tuigreet ]; then chmod +x /usr/bin/tuigreet; fi
 
-# Iniettiamo la gerarchia nativa OCI delle configurazioni statiche (Zero-Echo) e i symlink precalcolati
-# SPOSTATO DOPO I RUN per evitare Layer Bloat e invalidazione Cache OCI ad ogni modifica UI
+# Iniettiamo la gerarchia nativa OCI delle configurazioni statiche (Zero-Echo)
+# ALLA FINE per evitare Layer Bloat, invalidazione Cache OCI e garantire la precedenza sulle policy OS-level.
 COPY --chown=0:0 system_files /
+# I symlink precalcolati
 COPY --from=build-symlinks --chown=0:0 /out/usr /usr
 
 ### STRUMENTI DIAGNOSTICI OMNI-VISION SUPREME

@@ -12,7 +12,8 @@ export GSK_RENDERER=gl
 systemctl --user import-environment XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP GSK_RENDERER
 dbus-update-activation-environment --systemd XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP GSK_RENDERER
 
-# Delegazione a systemd dell'esecuzione del compositor (Niri 0.1.8+ nativo)
-# Questo fa in modo che `niri.service` venga lanciato correttamente
-# agganciando in automatico `niri-session.target` e le dipendenze DBus/graphical.
-exec systemctl --user start --wait niri.service
+# Delegazione dell'esecuzione a Niri stesso.
+# NON lanciare come servizio systemd --user, altrimenti Niri esce dalla sessione logind
+# e perde l'accesso diretto ai dispositivi DRM (errore: Invalid argument (os error 22)).
+# Niri 0.1.8+ integra già nativamente l'esportazione delle variabili e l'avvio di niri-session.target.
+exec niri
