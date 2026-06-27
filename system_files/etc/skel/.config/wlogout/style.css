@@ -2,18 +2,16 @@
 
 * {
     background-image: none;
-    box-shadow: none;
 }
 
 window {
-    background-color: @base;
+    background-color: alpha(@base, 0.7);
 }
 
 button {
     border-radius: 24px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    color: @text;
-    background-color: @surface;
+    border: 2px solid alpha(@text, 0.1);
+    background-color: alpha(@surface, 0.8);
     margin: 40px;
     background-repeat: no-repeat;
     background-position: center;
@@ -22,13 +20,15 @@ button {
     font-weight: bold;
     font-family: "Inter", "JetBrains Mono", sans-serif;
     color: transparent; /* Nascondiamo il testo per evitare sovrapposizioni, l'icona parla da sola */
-    transition: background-color 0.3s, border-color 0.3s;
+    transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 button:focus, button:active, button:hover {
-    background-color: @primary;
+    background-color: alpha(@primary, 0.9);
     border: 2px solid @on_primary;
     outline-style: none;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
 }
 
 #lock { background-image: image(url("/usr/share/wlogout/icons/lock.png")); }
