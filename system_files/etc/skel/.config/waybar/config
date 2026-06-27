@@ -42,9 +42,7 @@
             "active": "",
             "default": "",
             "urgent": ""
-        },
-        "on-scroll-up": "niri msg action focus-workspace-up",
-        "on-scroll-down": "niri msg action focus-workspace-down"
+        }
     },
 
     "niri/window": {
@@ -53,10 +51,7 @@
         "rewrite": {
             "(.*) - Mozilla Firefox": " $1",
             "(.*) - Visual Studio Code": "󰨞 $1"
-        },
-        "on-scroll-up": "niri msg action focus-column-left",
-        "on-scroll-down": "niri msg action focus-column-right",
-        "on-click-middle": "niri msg action close-window"
+        }
     },
 
     "clock": {
