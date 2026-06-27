@@ -14,5 +14,5 @@ case "$CHOICE" in
     *"Reboot") systemctl reboot ;;
     *"Logout") niri msg action quit ;;
     *"Lock") swaylock -c 000000 ;;
-    *"Suspend") swaylock -c 000000 & sleep 1 && systemctl suspend ;;
+    *"Suspend") swaylock -f -c 000000 && systemctl suspend ;;
 esac
