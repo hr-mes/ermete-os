@@ -40,6 +40,12 @@
   ],
   "packageRules": [
     {
+      "matchPackagePatterns": ["^ghcr\\.io/patapem/"],
+      "minimumReleaseAge": "0 days",
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
       "matchManagers": ["github-actions"],
       "pinDigests": true
     },

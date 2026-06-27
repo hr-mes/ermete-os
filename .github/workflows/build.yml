@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-24.04
 
     permissions:
-      contents: read
+      contents: write
       packages: write
       id-token: write # FONDAMENTALE: Requisito per OIDC / Cosign Keyless
 
@@ -45,6 +45,32 @@ jobs:
       # These stage versions are pinned by https://github.com/renovatebot/renovate
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🦅 Bedrock Auto-Update Base Image Digest
+        if: github.event_name == 'repository_dispatch'
+        run: |
+          echo "Fetching latest digest for ermete-base-nvidia..."
+          NEW_DIGEST=$(skopeo inspect docker://ghcr.io/patapem/ermete-base-nvidia:latest | jq -r '.Digest')
+          if [ -n "$NEW_DIGEST" ] && [ "$NEW_DIGEST" != "null" ]; then
+            echo "New digest: $NEW_DIGEST"
+            sed -i "s/ghcr.io\/patapem\/ermete-base-nvidia@sha256:[a-f0-9]\{64\}/ghcr.io\/patapem\/ermete-base-nvidia@${NEW_DIGEST}/g" Containerfile
+            
+            if ! git diff --exit-code Containerfile > /dev/null; then
+              echo "Digest changed, committing to Bedrock..."
+              git config --global user.name "github-actions[bot]"
+              git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+              git add Containerfile
+              git commit -m "chore(bedrock): auto-update base image digest to ${NEW_DIGEST} [skip ci]"
+              git push
+            else
+              echo "Digest is already up to date. No commit needed."
+            fi
+          else
+            echo "Failed to fetch digest!"
+            exit 1
+          fi
 
       # This is optional, but if you see that your builds are way too big for the runners, you can enable this by uncommenting the following lines:
       - name: Maximize build space

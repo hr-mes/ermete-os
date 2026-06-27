@@ -68,7 +68,7 @@ RUN mkdir -p /out/usr/lib/systemd/system
 
 # --- IMMAGINE FINALE (PRODUZIONE) ---
 # FIX: Renovate Bot sostituirà automaticamente il tag :latest con il vero digest SHA256 crittografico
-FROM ghcr.io/patapem/ermete-base-nvidia@sha256:643f31315e9207152d86ae4c38a30b2ab539362b9620953bdde8cd8e63f5b28c
+FROM ghcr.io/patapem/ermete-base-nvidia@sha256:eda71922ad62fb785ee7d366e31594f317417d72950d935f4192919cf8d704ee
 ARG BIBATA_VER
 
 # Copia i binari purificati dai rispettivi branch paralleli (Hardening Deterministico)
@@ -80,10 +80,6 @@ COPY --from=build-nix --chown=0:0 /nix /nix
 
 # Copia asset immutabili
 COPY --from=build-bibata /out/icons/Bibata-Modern-Classic /usr/share/icons/Bibata-Modern-Classic
-
-# Iniettiamo la gerarchia nativa OCI delle configurazioni statiche (Zero-Echo) e i symlink precalcolati
-COPY --chown=0:0 system_files /
-COPY --from=build-symlinks --chown=0:0 /out/usr /usr
 
 # Fissiamo i permessi di /etc/skel nativamente nell'immagine OCI (Zero-Boot-Delay)
 # I permessi paranoici (0700 dir, 0600 file) sono applicati nel mutating RUN sottostante
@@ -109,6 +105,11 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     chmod +x /usr/bin/niri-session && \
     if [ -f /usr/bin/firefox ]; then chmod +x /usr/bin/firefox; fi && \
     if [ -f /usr/bin/tuigreet ]; then chmod +x /usr/bin/tuigreet; fi
+
+# Iniettiamo la gerarchia nativa OCI delle configurazioni statiche (Zero-Echo) e i symlink precalcolati
+# SPOSTATO DOPO I RUN per evitare Layer Bloat e invalidazione Cache OCI ad ogni modifica UI
+COPY --chown=0:0 system_files /
+COPY --from=build-symlinks --chown=0:0 /out/usr /usr
 
 ### STRUMENTI DIAGNOSTICI OMNI-VISION SUPREME
 # Installazione pacchetti essenziali per il debugging a Raggi-X 
