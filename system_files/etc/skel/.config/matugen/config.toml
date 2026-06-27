@@ -24,3 +24,7 @@ output_path = "~/.config/fuzzel/colors.ini"
 [templates.mako]
 input_path = "~/.config/matugen/templates/mako.conf"
 output_path = "~/.config/mako/config"
+
+[templates.swaylock]
+input_path = "~/.config/matugen/templates/swaylock.conf"
+output_path = "~/.config/swaylock/config"
