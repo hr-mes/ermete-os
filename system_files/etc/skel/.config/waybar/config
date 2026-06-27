@@ -152,8 +152,8 @@
     },
 
     "custom/power": {
-        "format": "",
-        "on-click": "wlogout",
+        "format": "⏻",
+        "on-click": "~/.config/waybar/powermenu.sh",
         "tooltip": false
     }
 }
