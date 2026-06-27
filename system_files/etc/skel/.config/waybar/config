@@ -8,9 +8,9 @@
     "margin-bottom": 0,
     "spacing": 0,
 
-    "modules-left": ["custom/launcher", "niri/window"],
-    "modules-center": ["niri/workspaces"],
-    "modules-right": ["mpris", "tray", "idle_inhibitor", "cpu", "memory", "wireplumber", "network", "battery", "custom/notification", "clock", "custom/power"],
+    "modules-left": ["custom/launcher", "niri/workspaces", "niri/window"],
+    "modules-center": ["clock"],
+    "modules-right": ["mpris", "tray", "custom/notification", "idle_inhibitor", "cpu", "memory", "wireplumber", "network", "battery", "custom/power"],
 
     "custom/launcher": {
         "format": "🐦‍⬛",
@@ -103,7 +103,7 @@
     },
 
     "memory": {
-        "format": "  {percentage}%",
+        "format": "  {percentage}%",
         "interval": 2
     },
 
