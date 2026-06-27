@@ -8,7 +8,7 @@
     "margin-bottom": 0,
     "spacing": 5,
 
-    "modules-left": ["custom/launcher", "niri/workspaces", "niri/window"],
+    "modules-left": ["custom/launcher", "custom/left", "custom/right", "custom/close", "niri/workspaces", "niri/window"],
     "modules-center": ["clock"],
     "modules-right": ["tray", "wireplumber", "network", "battery", "custom/power"],
 
@@ -18,13 +18,33 @@
         "tooltip": false
     },
 
+    "custom/left": {
+        "format": "",
+        "on-click": "niri msg action focus-column-left",
+        "tooltip": false
+    },
+
+    "custom/right": {
+        "format": "",
+        "on-click": "niri msg action focus-column-right",
+        "tooltip": false
+    },
+
+    "custom/close": {
+        "format": "",
+        "on-click": "niri msg action close-window",
+        "tooltip": false
+    },
+
     "niri/workspaces": {
         "format": "{icon}",
         "format-icons": {
             "active": "",
             "default": "",
             "urgent": ""
-        }
+        },
+        "on-scroll-up": "niri msg action focus-workspace-up",
+        "on-scroll-down": "niri msg action focus-workspace-down"
     },
 
     "niri/window": {
@@ -33,7 +53,9 @@
         "rewrite": {
             "(.*) - Mozilla Firefox": " $1",
             "(.*) - Visual Studio Code": "󰨞 $1"
-        }
+        },
+        "on-scroll-up": "niri msg action focus-column-left",
+        "on-scroll-down": "niri msg action focus-column-right"
     },
 
     "clock": {
