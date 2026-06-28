@@ -1,0 +1,71 @@
+// Stile per le Notifiche (Sostituto di Mako)
+
+.notification-popups {
+    // Invisibile di base, serve solo a posizionare i pop-up
+    background-color: transparent;
+}
+
+.notification {
+    background-color: $bg-color;
+    border: 1px solid $border-color;
+    border-radius: 16px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    transition: all $transition-duration $transition-curve;
+    min-width: 320px;
+    max-width: 360px;
+    
+    &:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    &.critical {
+        border-color: rgba(255, 50, 50, 0.8);
+        box-shadow: 0 8px 24px rgba(255, 50, 50, 0.3);
+    }
+}
+
+.notif-content {
+    padding: 16px;
+}
+
+.notif-icon {
+    font-size: 32px;
+    min-width: 48px;
+    min-height: 48px;
+    
+    &.image {
+        border-radius: 8px;
+        background-size: cover;
+        background-position: center;
+    }
+}
+
+.notif-title {
+    font-weight: 800;
+    font-size: 1.05em;
+    color: $fg-color;
+}
+
+.notif-body {
+    font-size: 0.9em;
+    color: rgba(255, 255, 255, 0.7);
+    margin-top: 4px;
+}
+
+.notif-actions {
+    margin-top: 12px;
+
+    .notif-action-btn {
+        background-color: rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 6px;
+        font-size: 0.9em;
+        font-weight: 700;
+        transition: all $transition-duration $transition-curve;
+
+        &:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: $accent-color;
+        }
+    }
+}
