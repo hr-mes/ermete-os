@@ -164,23 +164,7 @@ window-rule {
     default-column-width {}
 }
 
-window-rule {
-    match app-id=r#"^fuzzel$"#
-    open-floating true
-}
-
-window-rule {
-    match app-id=r#"^org\.pulseaudio\.pavucontrol$"#
-    open-floating true
-    default-floating-position x=20 y=8 relative-to="top-right"
-    default-column-width { fixed 400; }
-    default-window-height { fixed 500; }
-}
-
-window-rule {
-    match app-id=r#"(?i)polkit"#
-    open-floating true
-}
+// Rimossi window-rule per fuzzel, pavucontrol e polkit (ora gestiti nativamente come LayerShell da AGS)
 
 window-rule {
     match app-id=r#"firefox$"# title="^Picture-in-Picture$"
@@ -207,7 +191,7 @@ binds {
     Mod+Shift+Slash { show-hotkey-overlay; }
 
     Mod+T { spawn "foot"; }
-    Mod+D hotkey-overlay-title="Open Launcher: fuzzel" { spawn "fuzzel"; }
+    Mod+D hotkey-overlay-title="Open App Launcher" { spawn "ags" "-t" "applauncher"; }
     Super+Alt+L hotkey-overlay-title="Lock the Screen: swaylock" { spawn "swaylock" "-f" "-c" "000000"; }
 
 
@@ -351,8 +335,8 @@ binds {
 
     Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
 
-    Mod+Shift+E { quit; }
-    Ctrl+Alt+Delete { quit; }
+    Mod+Shift+E hotkey-overlay-title="Power Menu" { spawn "ags" "-t" "powermenu"; }
+    Ctrl+Alt+Delete { spawn "ags" "-t" "powermenu"; }
 
     Mod+Shift+P { power-off-monitors; }
     Mod+MouseMiddle { close-window; }

@@ -8,6 +8,9 @@ echo "--- Applicazione Forzata del Tema Globale GTK ---"
 # I file .gschema.override sono ereditati staticamente da /system_files/
 # La compilazione degli schemi è demandata alla fine dello script per includere i pacchetti successivi.
 
+# Abilita Copr per Aylur's Gtk Shell (AGS)
+dnf5 -y copr enable aylur/ags
+
 # Install Niri e dipendenze cursori, temi e font (aggiunto Xwayland per compatibilità assoluta con vecchie app)
 dnf5 -y install --setopt=install_weak_deps=False niri xorg-x11-server-Xwayland \
     mesa-dri-drivers mesa-vulkan-drivers foot upower \
@@ -17,7 +20,7 @@ dnf5 -y install --setopt=install_weak_deps=False niri xorg-x11-server-Xwayland \
     papirus-icon-theme adw-gtk3-theme jetbrains-mono-fonts rsms-inter-fonts fontawesome-fonts-all \
     xdg-desktop-portal-gnome xdg-desktop-portal-gtk swaybg gtk-layer-shell gtk4-layer-shell \
     qt5-qtwayland qt6-qtwayland xdg-user-dirs xdg-user-dirs-gtk \
-    mako mate-polkit network-manager-applet blueman gnome-keyring gnome-keyring-pam wl-clipboard fuzzel btop waybar wl-mirror wlogout pavucontrol \
+    gnome-keyring gnome-keyring-pam wl-clipboard btop wl-mirror aylurs-gtk-shell nodejs npm dart-sass \
     thunar thunar-archive-plugin thunar-volman gvfs file-roller
 
 # Configurazione Ambiente Wayland/NVIDIA e wrapper niri-session 

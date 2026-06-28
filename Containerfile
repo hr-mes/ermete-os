@@ -1,8 +1,5 @@
-# renovate: datasource=github-releases depName=ful1e5/Bibata_Cursor
-ARG BIBATA_VER="v2.0.7"
-
-# renovate: datasource=github-releases depName=starship/starship
-ARG STARSHIP_VER="v1.22.1"
+# I target delle versioni non sono più tracciati qui.
+# Sono gestiti in completa autonomia dall'AI Bot di Ermete Forge.
 
 
 
@@ -33,31 +30,8 @@ RUN mkdir -p /out/bin
 
 
 
-# Builder Starship
-FROM build-base AS build-starship
-ARG STARSHIP_VER
-RUN --mount=type=cache,target=/usr/local/cargo/registry,id=registry-starship \
-    --mount=type=cache,target=/usr/local/cargo/git,id=git-starship \
-    --mount=type=cache,target=/tmp/cargo-target,id=target-starship \
-    env CARGO_TARGET_DIR=/tmp/cargo-target cargo install --locked --root /out starship --version ${STARSHIP_VER#v}
-
-# Builder Matugen
-FROM build-base AS build-matugen
-RUN --mount=type=cache,target=/usr/local/cargo/registry,id=registry-matugen \
-    --mount=type=cache,target=/usr/local/cargo/git,id=git-matugen \
-    --mount=type=cache,target=/tmp/cargo-target,id=target-matugen \
-    env CARGO_TARGET_DIR=/tmp/cargo-target cargo install --locked --root /out matugen
-
-
-# Builder Bibata Cursor (Zero-Network-Failure OCI layer)
-FROM build-base AS build-bibata
-ARG BIBATA_VER
-# SHA256 checksum for v2.0.7
-ARG BIBATA_SHA256="7d3495864e5bbef02f5e77de760b2905903b63c71495a78ef6306d19a3b556d8"
-RUN mkdir -p /out/icons && \
-    curl -sLO "https://github.com/ful1e5/Bibata_Cursor/releases/download/${BIBATA_VER}/Bibata-Modern-Classic.tar.xz" && \
-    echo "${BIBATA_SHA256}  Bibata-Modern-Classic.tar.xz" | sha256sum -c - && \
-    tar -xJ --no-same-owner -C /out/icons -f Bibata-Modern-Classic.tar.xz
+# Gli stage build-starship, build-matugen e build-bibata sono stati amputati.
+# La compilazione è interamente delegata alla Forge esterna.
 
 # Builder Nix (Zero-Execution State Copy)
 FROM nixos/nix:latest AS build-nix
@@ -68,18 +42,15 @@ RUN mkdir -p /out/usr/lib/systemd/system
 
 # --- IMMAGINE FINALE (PRODUZIONE) ---
 # FIX: Renovate Bot sostituirà automaticamente il tag :latest con il vero digest SHA256 crittografico
-FROM ghcr.io/patapem/ermete-base-nvidia@sha256:a04f94c352ca2f93b350405631e95532791040de397f1775d4361f6390e8077b
-ARG BIBATA_VER
-
-# Copia i binari purificati dai rispettivi branch paralleli (Hardening Deterministico)
-COPY --from=build-starship --chown=0:0 --chmod=755 /out/bin/starship /usr/bin/
-COPY --from=build-matugen --chown=0:0 --chmod=755 /out/bin/matugen /usr/bin/
+FROM ghcr.io/patapem/ermete-base-nvidia:latest
+# Estrazione pacchetti RPM puri dai Micro-Container OCI di Ermete Forge (Isolamento totale)
+COPY --from=ghcr.io/patapem/ermete-forge-starship:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge-matugen:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge-bibata:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge-ags:latest / /tmp/forge-rpms/
 
 # Nix "Cucinato" fisicamente nell'immagine OCI (Zero-Execution)
 COPY --from=build-nix --chown=0:0 /nix /nix
-
-# Copia asset immutabili
-COPY --from=build-bibata /out/icons/Bibata-Modern-Classic /usr/share/icons/Bibata-Modern-Classic
 
 # Fissiamo i permessi di /etc/skel nativamente nell'immagine OCI (Zero-Boot-Delay)
 # I permessi paranoici (0700 dir, 0600 file) sono applicati nel mutating RUN sottostante
@@ -94,6 +65,7 @@ COPY --chown=0:0 system_files/etc/skel /etc/skel
 # and preserve atomicity of the RPM database.
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
+    dnf5 install -y /tmp/forge-rpms/*.rpm && rm -rf /tmp/forge-rpms && \
     mkdir -p /etc/systemd && rm -rf /etc/systemd/system.control && ln -s /dev/null /etc/systemd/system.control && \
     find /etc/skel -type d -exec chmod 0700 {} + && \
     find /etc/skel -type f -exec chmod 0600 {} + && \

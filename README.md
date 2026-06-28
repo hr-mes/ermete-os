@@ -67,9 +67,8 @@ Ermete OS implements extreme military-grade security defaults, completely overha
 - **ZRAM Compressed Memory**: 100% RAM allocation dynamically compressed via **ZSTD** (`vm.swappiness=150`).
 - **Systemd User Orchestration**: The Wayland compositor (Niri) does not spawn processes imperatively. Everything is handled cleanly by `systemd --user` binding to `niri-session.target`, ensuring graceful teardown and infinite idempotency.
 - **The Stack**:
-  - Compositor: **Niri** (Scrollable Tiling). Hardware accelerated with `GBM_BACKEND=nvidia-drm` and `WLR_NO_HARDWARE_CURSORS=1`.
-  - Status Bar: **Waybar** (Floating, transparent).
-  - App Launcher: **Fuzzel** (Wayland native, lightweight application launcher).
+  - Compositor: **Niri** (Scrollable Tiling). Hardware accelerated con `GBM_BACKEND=nvidia-drm`.
+  - UI Framework: **AGS (Aylur's Gtk Shell)**. Un'unica applicazione TypeScript/GJS che fornisce una UX "Super Premium" fluida a 360Hz per Barra Superiore, Control Center, App Launcher, Notifiche, Power Menu e OSD.
   - Terminal: **Foot** (Wayland native, C-based, lightweight).
 
 ---
@@ -105,10 +104,10 @@ Lo stack user-space, costruito senza far uso di pesanti "Desktop Environment" le
    - *Perché*: Niri fornisce un'interfaccia scrollable-tiling guidata da tastiera, leggerissima (Rust). XWayland è mantenuto isolato solo per retrocompatibilità con binari legacy.
 2. **Terminal & Core Utils (`foot`, `eza`, `bat`, `fd-find`, `ripgrep`, `nushell`)**:
    - *Perché*: Abbiamo eradicato il vecchio stack GNU coreutils in favore di tool scritti in Rust, sicuri per la memoria, asincroni e parallelizzati, eliminando vulnerabilità zero-day native. Foot fornisce un terminal emulator iper-ottimizzato nativo Wayland in C.
-3. **Interfaccia Grafica Modulare (`fuzzel`, `waybar`, `swaybg`, `mako`)**:
-   - *Perché*: Niente pannelli pesanti. `waybar` fa da barra di stato nativa Wayland, `fuzzel` è un lanciatore ultra-veloce nativo Wayland, `mako` gestisce le notifiche tramite `systemd --user` a bassissimo impatto.
-4. **Autenticazione & Polkit (`mate-polkit`, `greetd`, `tuigreet`)**:
-   - *Perché*: `greetd` con `tuigreet` sostituisce GDM/SDDM fornendo un leggerissimo TUI login manager nel terminale, prima di inizializzare Wayland. L'askpass SSH è nativo di GNOME e `gnome-keyring` gestisce i segreti in background per una pulizia assoluta, eliminando ridondanze.
+3. **Interfaccia Grafica Unificata (AGS - Aylur's Gtk Shell)**:
+   - *Perché*: Invece di avere 7 demoni frammentati in linguaggi diversi, AGS fornisce una "Super Premium UX" gestita interamente in TypeScript/GJS. AGS rimpiazza Fuzzel (Launcher), Waybar (Barra), Mako (Notifiche), Wlogout (Power Menu) e Pavucontrol/NM-Applet (Control Center), garantendo uno stato condiviso, design macOS-like, glassmorphism e animazioni perfette a 360Hz.
+4. **Autenticazione (`greetd`, `tuigreet`)**:
+   - *Perché*: `greetd` con `tuigreet` sostituisce GDM/SDDM fornendo un leggerissimo TUI login manager nel terminale, prima di inizializzare Wayland. `gnome-keyring` gestisce i segreti in background per una pulizia assoluta.
 5. **XDG Portals & Pipewire (`xdg-desktop-portal-gnome`, `xdg-desktop-portal-gtk`, `wireplumber`)**:
    - *Perché*: Sandboxing assoluto. I flatpak non possono toccare il filesystem root e devono passare per DBus e Pipewire per screen-sharing e audio, rendendo il desktop immune a software malevolo.
 6. **Diagnostics & Hypervisor (`qemu-kvm`, `libvirt`, `virt-manager`, `bpftool`, `drm_info`, `sysstat`)**:

@@ -1,0 +1,54 @@
+// Stile per il Power Menu (Sostituto di wlogout)
+
+.powermenu-window {
+    background-color: rgba(0, 0, 0, 0.6); // Sfondo drammatico molto scuro
+}
+
+.powermenu-container {
+    background-color: rgba(20, 20, 25, 0.9);
+    border: 1px solid $border-color;
+    border-radius: 24px;
+    padding: 48px;
+    box-shadow: 0 32px 64px rgba(0, 0, 0, 0.8);
+}
+
+.powermenu-title {
+    font-size: 1.5em;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.power-btn {
+    min-width: 140px;
+    min-height: 140px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 24px;
+    transition: all $transition-duration $transition-curve;
+    border: 2px solid transparent;
+
+    &:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.3);
+        transform: scale(1.05); // Effetto ingrandimento su hover (stupendo a 360Hz)
+        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    &.power-danger:hover {
+        background-color: rgba(255, 50, 50, 0.2);
+        border-color: rgba(255, 50, 50, 0.5);
+        color: #ff8888;
+        
+        .power-icon { color: #ff8888; }
+    }
+}
+
+.power-icon {
+    font-size: 48px;
+}
+
+.power-label {
+    font-weight: 800;
+    font-size: 1.2em;
+}

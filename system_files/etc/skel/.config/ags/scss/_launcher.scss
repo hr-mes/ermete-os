@@ -1,0 +1,69 @@
+// Stile per l'App Launcher (Sostituto di Fuzzel)
+
+.launcher-window {
+    // Crea un effetto di sfondo semi-scuro e blur quando il launcher è aperto
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+.launcher-container {
+    background-color: $bg-color;
+    border: 1px solid $border-color;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.6);
+    
+    // Dimensioni fisse per un look da Spotlight
+    min-width: 500px;
+    max-width: 500px;
+}
+
+.search-box {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid $border-color;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 1.3em;
+    color: $fg-color;
+    margin-bottom: 16px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+
+    &:focus {
+        border-color: $accent-color;
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+}
+
+.app-scrollable {
+    // Limita l'altezza per evitare che prenda tutto lo schermo se hai troppe app
+    min-height: 400px;
+    max-height: 400px;
+}
+
+.app-item {
+    background-color: transparent;
+    border-radius: 12px;
+    padding: 8px 12px;
+    transition: all $transition-duration $transition-curve;
+    border: 1px solid transparent;
+
+    &:hover, &:focus {
+        background-color: $hover-color;
+        border-color: rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .app-text-box {
+        margin-left: 16px;
+    }
+
+    .title {
+        font-weight: 700;
+        font-size: 1.1em;
+    }
+
+    .description {
+        font-size: 0.85em;
+        color: rgba(255, 255, 255, 0.5);
+        margin-top: 2px;
+    }
+}

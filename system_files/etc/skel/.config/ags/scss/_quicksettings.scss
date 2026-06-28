@@ -1,0 +1,99 @@
+// Stile per il Control Center (La plancia di comando Premium)
+
+.control-center-container {
+    background-color: $bg-color;
+    border: 1px solid $border-color;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.6);
+    
+    // Larghezza fissa per coerenza visiva
+    min-width: 360px;
+}
+
+// Stile per i Bottoni Giganti (Wi-Fi, Bluetooth)
+.qs-button {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid $border-color;
+    border-radius: 14px;
+    padding: 12px;
+    transition: all $transition-duration $transition-curve;
+
+    &:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    &:active {
+        background-color: $accent-color;
+        color: #000;
+        .qs-subtitle { color: rgba(0, 0, 0, 0.7); }
+    }
+
+    .qs-button-content {
+        spacing: 12px;
+    }
+
+    .qs-icon {
+        font-size: 1.8em;
+    }
+
+    .qs-title {
+        font-weight: 800;
+        font-size: 1em;
+    }
+
+    .qs-subtitle {
+        font-size: 0.8em;
+        color: rgba(255, 255, 255, 0.5);
+    }
+}
+
+// Sezione Audio e Slider
+.section-title {
+    font-weight: 800;
+    font-size: 0.9em;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.slider-box {
+    spacing: 12px;
+
+    button {
+        border-radius: 50%;
+        min-width: 36px;
+        min-height: 36px;
+        background-color: rgba(255, 255, 255, 0.05);
+        transition: all $transition-duration $transition-curve;
+
+        &:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: $accent-color;
+        }
+    }
+
+    scale {
+        // Personalizzazione del Widget Slider di GTK
+        trough {
+            min-height: 8px;
+            border-radius: 999px;
+            background-color: rgba(255, 255, 255, 0.1);
+
+            highlight {
+                background-color: $accent-color;
+                border-radius: 999px;
+            }
+        }
+
+        slider {
+            min-width: 16px;
+            min-height: 16px;
+            background-color: #fff;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+    }
+}
