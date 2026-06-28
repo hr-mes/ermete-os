@@ -36,7 +36,4 @@ pkill -SIGUSR2 waybar || true
 # 5. Reload foot terminals
 pkill -SIGUSR1 foot || true
 
-# 6. Reload mako (if used)
-makoctl reload || true
-
 echo "Theme successfully synced!"

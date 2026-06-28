@@ -99,7 +99,7 @@ if [ -n "$ACTIVE_USER" ]; then
     fi
     
     # Check User Daemons
-    for usrv in waybar.service swaybg.service mako.service nm-applet.service blueman-applet.service mate-polkit.service ermete-ide-bootstrap.service; do
+    for usrv in ermete-ide-bootstrap.service; do
         analyze_service "$usrv" "user"
     done
     
