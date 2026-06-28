@@ -48,6 +48,7 @@ COPY --from=ghcr.io/patapem/ermete-forge-starship:latest / /tmp/forge-rpms/
 COPY --from=ghcr.io/patapem/ermete-forge-matugen:latest / /tmp/forge-rpms/
 COPY --from=ghcr.io/patapem/ermete-forge-bibata:latest / /tmp/forge-rpms/
 COPY --from=ghcr.io/patapem/ermete-forge-ags:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge-ananicy:latest / /tmp/forge-rpms/
 COPY --from=ghcr.io/patapem/ermete-forge-ags:latest /dart-sass /usr/bin/sass
 RUN chmod +x /usr/bin/sass
 
