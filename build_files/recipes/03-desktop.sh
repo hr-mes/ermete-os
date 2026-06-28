@@ -20,9 +20,6 @@ dnf5 -y install --setopt=install_weak_deps=False niri xorg-x11-server-Xwayland \
     gnome-keyring gnome-keyring-pam wl-clipboard btop wl-mirror nodejs npm \
     thunar thunar-archive-plugin thunar-volman gvfs file-roller
 
-# Install standalone SASS via npm (since native dart-sass is missing in F43 repos)
-npm install -g sass
-
 # Configurazione Ambiente Wayland/NVIDIA e wrapper niri-session 
 # sono ereditati nativamente da /system_files/usr/lib/environment.d/99-ermete.conf e /system_files/usr/bin/niri-session
 # I permessi di esecuzione sono vincolati nativamente nell'albero Git.
