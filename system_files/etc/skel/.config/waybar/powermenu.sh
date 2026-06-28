@@ -3,7 +3,7 @@
 CHOICE=$(echo -e "  Shutdown\n  Reboot\n  Logout\n  Lock\n⏾  Suspend" | fuzzel --dmenu \
     --anchor=top-right \
     --x-margin=10 \
-    --y-margin=45 \
+    --y-margin=8 \
     --lines=5 \
     --width=15 \
     --no-icons \

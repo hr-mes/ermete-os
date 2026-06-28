@@ -94,7 +94,6 @@ COPY --chown=0:0 system_files/etc/skel /etc/skel
 # and preserve atomicity of the RPM database.
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
-    dnf install -y papirus-icon-theme && \
     mkdir -p /etc/systemd && rm -rf /etc/systemd/system.control && ln -s /dev/null /etc/systemd/system.control && \
     find /etc/skel -type d -exec chmod 0700 {} + && \
     find /etc/skel -type f -exec chmod 0600 {} + && \
@@ -151,9 +150,13 @@ RUN systemctl preset-all && systemctl --global preset-all
 # Mappiamo in modo equivalente /nix a /usr per ereditare correttamente le regole bin_t, lib_t, ecc.
 RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf \
     dnf install -y policycoreutils-python-utils || true && \
+    mv /etc/selinux /etc/selinux.bak && cp -a /etc/selinux.bak /etc/selinux && \
+    mv /var/lib/selinux /var/lib/selinux.bak && cp -a /var/lib/selinux.bak /var/lib/selinux && \
     semanage fcontext -a -e /usr /nix && \
+    semanage permissive -a greetd_t || true && \
+    rm -rf /etc/selinux.bak /var/lib/selinux.bak && \
     dnf remove -y policycoreutils-python-utils && \
-    authselect select local --force && \
+    authselect select local with-silent-lastlog with-mdns4 without-nullok --force && \
     rm -f /etc/machine-id && touch /etc/machine-id && chmod 0444 /etc/machine-id && \
     rm -rf /etc/NetworkManager/system-connections/* && \
     dnf clean all

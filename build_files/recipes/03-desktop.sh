@@ -39,8 +39,7 @@ rm -rf /etc/greetd/config.toml
 # (Vedi system_files/usr/lib/sysusers.d/20-greeter.conf per la dichiarazione)
 systemd-sysusers
 # Greetd service è abilitato nativamente via system-preset
-# Applica SELinux permissive a greetd per evitare blocchi AVC su tuigreet (Fix EACCES panic)
-semanage permissive -a greetd_t || true
+# SELinux permissive per greetd è gestito nativamente dal Containerfile tramite policycoreutils temporaneo.
 
 # Abilitazione Globale Audio Pipewire per la sessione utente (Fondamentale per Wayland/Portals)
 # Abilitazione Globale Audio Pipewire e Wayland User Services

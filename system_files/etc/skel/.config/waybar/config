@@ -14,7 +14,7 @@
 
     "custom/launcher": {
         "format": "🐦‍⬛",
-        "on-click": "fuzzel",
+        "on-click": "pkill fuzzel || fuzzel -a top-left --x-margin=8 --y-margin=8",
         "tooltip": false
     },
 
@@ -127,7 +127,7 @@
         "format": "{icon}  {volume}%",
         "format-muted": "  Muted",
         "format-icons": ["", "", ""],
-        "on-click": "pavucontrol"
+        "on-click": "pkill pavucontrol || pavucontrol -t 3"
     },
 
     "network": {
