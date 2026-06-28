@@ -65,7 +65,6 @@ COPY --chown=0:0 system_files/etc/skel /etc/skel
 # and preserve atomicity of the RPM database.
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
-    dnf5 copr enable -y solopasha/hyprland && \
     dnf5 install -y /tmp/forge-rpms/*.rpm && rm -rf /tmp/forge-rpms && \
     mkdir -p /etc/systemd && rm -rf /etc/systemd/system.control && ln -s /dev/null /etc/systemd/system.control && \
     find /etc/skel -type d -exec chmod 0700 {} + && \
