@@ -2,6 +2,7 @@
 Description=Ermete OS: Bootstrap Nix IDE Stack (gcc, make, lazygit)
 After=niri.service
 ConditionPathExists=!%h/.local/state/ermete-ide-bootstrapped
+ConditionUser=!greeter
 
 
 [Service]
