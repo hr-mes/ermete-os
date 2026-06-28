@@ -5,7 +5,7 @@ enable firewalld.service
 enable btrfs-maintenance.timer
 enable fstrim.timer
 enable ermete-home-snapshot.service
-
+enable ananicy-cpp.service
 enable fwupd.service
 enable scx_loader.service
 enable Ermete-firstboot.service
