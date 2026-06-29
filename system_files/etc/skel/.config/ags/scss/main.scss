@@ -25,9 +25,9 @@ $transition-curve: cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 // Qui importeremo i file specifici dei widget quando li scriveremo
-@import '../widget/bar/bar';
-@import '../widget/launcher/launcher';
-@import '../widget/quicksettings/quicksettings';
-@import '../widget/notifications/notifications';
-@import '../widget/powermenu/powermenu';
-@import '../widget/osd/osd';
+@import 'bar';
+@import 'launcher';
+@import 'quicksettings';
+@import 'notifications';
+@import 'powermenu';
+@import 'osd';

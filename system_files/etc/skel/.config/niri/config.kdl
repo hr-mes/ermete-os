@@ -191,7 +191,7 @@ binds {
     Mod+Shift+Slash { show-hotkey-overlay; }
 
     Mod+T { spawn "foot"; }
-    Mod+D hotkey-overlay-title="Open App Launcher" { spawn "ags" "-t" "applauncher"; }
+    Mod+D hotkey-overlay-title="Open App Launcher" { spawn "ags" "toggle" "applauncher"; }
     Super+Alt+L hotkey-overlay-title="Lock the Screen: swaylock" { spawn "swaylock" "-f" "-c" "000000"; }
 
 
@@ -335,8 +335,8 @@ binds {
 
     Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
 
-    Mod+Shift+E hotkey-overlay-title="Power Menu" { spawn "ags" "-t" "powermenu"; }
-    Ctrl+Alt+Delete { spawn "ags" "-t" "powermenu"; }
+    Mod+Shift+E hotkey-overlay-title="Power Menu" { spawn "ags" "toggle" "powermenu"; }
+    Ctrl+Alt+Delete { spawn "ags" "toggle" "powermenu"; }
 
     Mod+Shift+P { power-off-monitors; }
     Mod+MouseMiddle { close-window; }
