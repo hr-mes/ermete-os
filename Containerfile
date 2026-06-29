@@ -51,8 +51,8 @@ COPY --from=ghcr.io/patapem/ermete-forge-matugen:latest / /tmp/forge-rpms/
 COPY --from=ghcr.io/patapem/ermete-forge-bibata:latest / /tmp/forge-rpms/
 COPY --from=ghcr.io/patapem/ermete-forge-ags:latest / /tmp/forge-rpms/
 COPY --from=ghcr.io/patapem/ermete-forge-ananicy:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-ags:latest /dart-sass /usr/bin/sass
-RUN chmod +x /usr/bin/sass
+COPY --from=ghcr.io/patapem/ermete-forge-ags:latest /dart-sass /usr/lib64/dart-sass
+RUN ln -sf /usr/lib64/dart-sass/sass /usr/bin/sass && chmod +x /usr/lib64/dart-sass/sass /usr/lib64/dart-sass/src/dart
 
 # Nix "Cucinato" fisicamente nell'immagine OCI (Zero-Execution)
 COPY --from=build-nix --chown=0:0 /nix /nix
