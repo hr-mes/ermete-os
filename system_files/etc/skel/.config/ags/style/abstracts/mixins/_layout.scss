@@ -1,0 +1,95 @@
+@use "sass:color";
+@use "../variables" as *;
+@use "../theme_variables_matugen" as *;
+@use "base" as *;
+@use "effects" as *;
+
+// Window container base
+@mixin window {
+  @include window-rounding;
+  @include window-shadow;
+  background: $bg;
+  margin: 5px 10px 15px;
+  padding: $spacing-sm;
+}
+
+@mixin window-box {
+  @include rounding;
+  @include inset-shadow;
+  background: $surface;
+  margin: $spacing-sm;
+  padding: $spacing-sm;
+}
+
+@mixin widget-container {
+  @include window;
+  @include light-mode-shadow;
+  @include border;
+  border-radius: calc(#{$round} * 3);
+  padding: $spacing-md;
+  margin: $spacing-md;
+}
+
+@mixin widget-header {
+  margin: 0 $spacing-sm;
+
+  image {
+    color: $fg;
+    margin-right: $spacing-sm;
+  }
+
+  .header-title {
+    margin-top: $spacing-md;
+    font-size: $font;
+    font-weight: 700;
+    color: $fg;
+  }
+}
+
+@mixin separator($alpha: -0.85, $margin: $spacing-sm 0) {
+  background-color: color.adjust($fg, $alpha: $alpha);
+  margin: $margin;
+  min-height: 1px;
+}
+
+@mixin scrollbar($orientation: vertical) {
+  scrollbar {
+    background: color.adjust($barBg, $lightness: if($darkmode, -2%, 2%));
+    border-radius: calc(#{$round} * 1);
+
+    @if $orientation == vertical {
+      &.vertical {
+        margin-left: 4px;
+      }
+    }
+
+    trough {
+      background: color.adjust($fg, $alpha: -0.9);
+      border-radius: calc(#{$round} * 1);
+      min-width: 8px;
+    }
+
+    slider {
+      background: color.adjust($fg, $alpha: -0.6);
+      border-radius: calc(#{$round} * 1);
+      min-width: 8px;
+      transition: all 100ms ease;
+
+      @if not $darkmode {
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+      }
+
+      &:hover {
+        background: color.adjust($primary, $alpha: -0.3);
+
+        @if not $darkmode {
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+      }
+
+      &:active {
+        background: $primary;
+      }
+    }
+  }
+}
