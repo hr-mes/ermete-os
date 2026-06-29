@@ -1,0 +1,79 @@
+// Stile per la Barra Superiore (Premium UX)
+
+.bar {
+    // La barra in sé è invisibile, funge solo da contenitore
+    background-color: transparent;
+    padding: 8px 12px;
+}
+
+// Classe applicata a tutti i "moduli" pillola
+.module {
+    background-color: $bg-color;
+    border: 1px solid $border-color;
+    border-radius: 999px; // Stile Pillola super arrotondata
+    padding: 2px 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    transition: all $transition-duration $transition-curve;
+}
+
+.workspaces {
+    padding: 2px 4px;
+    
+    .workspace-btn {
+        min-width: 28px;
+        min-height: 28px;
+        border-radius: 50%;
+        margin: 2px 4px;
+        font-weight: 800;
+        color: rgba(255, 255, 255, 0.5);
+        transition: all $transition-duration $transition-curve;
+
+        &:hover {
+            background-color: $hover-color;
+            color: $fg-color;
+        }
+
+        &.active {
+            background-color: $accent-color;
+            color: #000;
+            box-shadow: 0 0 8px rgba($accent-color, 0.5);
+        }
+    }
+}
+
+.clock {
+    font-weight: 700;
+    
+    .date {
+        color: rgba(255, 255, 255, 0.7);
+        margin-right: 12px;
+        font-size: 0.9em;
+    }
+    
+    .time {
+        color: $accent-color;
+        font-size: 1.1em;
+    }
+}
+
+.systray {
+    button {
+        padding: 4px 8px;
+        border-radius: 999px;
+        &:hover {
+            background-color: $hover-color;
+        }
+    }
+}
+
+.control-center-toggle {
+    min-width: 32px;
+    min-height: 32px;
+    border-radius: 50%; // Cerchio perfetto
+    padding: 0;
+    
+    &:hover {
+        background-color: $hover-color;
+        color: $accent-color;
+    }
+}
