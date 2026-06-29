@@ -44,6 +44,8 @@ RUN mkdir -p /out/usr/lib/systemd/system
 # FIX: Renovate Bot sostituirà automaticamente il tag :latest con il vero digest SHA256 crittografico
 FROM ghcr.io/patapem/ermete-base-nvidia:latest
 # Estrazione pacchetti RPM puri dai Micro-Container OCI di Ermete Forge (Isolamento totale)
+COPY --from=ghcr.io/patapem/ermete-forge-kernel:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge-nvidia:latest / /tmp/forge-rpms/
 COPY --from=ghcr.io/patapem/ermete-forge-starship:latest / /tmp/forge-rpms/
 COPY --from=ghcr.io/patapem/ermete-forge-matugen:latest / /tmp/forge-rpms/
 COPY --from=ghcr.io/patapem/ermete-forge-bibata:latest / /tmp/forge-rpms/
