@@ -9,10 +9,11 @@ echo "--- Applicazione Forzata del Tema Globale GTK ---"
 # La compilazione degli schemi è demandata alla fine dello script per includere i pacchetti successivi.
 
 # Install Niri e dipendenze cursori, temi e font (aggiunto Xwayland per compatibilità assoluta con vecchie app)
-dnf5 -y install --setopt=install_weak_deps=False niri xorg-x11-server-Xwayland \
+# niri e pipewire rimossi da dnf5 perché forniti nativamente da ermete forge rolling
+dnf5 -y install --setopt=install_weak_deps=False xorg-x11-server-Xwayland \
     mesa-dri-drivers mesa-vulkan-drivers foot upower \
     mpv imv dbus-x11 dbus-tools \
-    pipewire pipewire-alsa pipewire-pulseaudio wireplumber \
+    wireplumber \
     playerctl brightnessctl swaylock libnotify wlr-randr \
     papirus-icon-theme adw-gtk3-theme jetbrains-mono-fonts rsms-inter-fonts fontawesome-fonts-all \
     xdg-desktop-portal-gnome xdg-desktop-portal-gtk swaybg gtk-layer-shell gtk4-layer-shell \

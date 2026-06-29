@@ -51,6 +51,16 @@ COPY --from=ghcr.io/patapem/ermete-forge-matugen:latest / /tmp/forge-rpms/
 COPY --from=ghcr.io/patapem/ermete-forge-bibata:latest / /tmp/forge-rpms/
 COPY --from=ghcr.io/patapem/ermete-forge-ags:latest / /tmp/forge-rpms/
 COPY --from=ghcr.io/patapem/ermete-forge-ananicy:latest / /tmp/forge-rpms/
+# --- PACCHETTI ROLLING (Bedrock) ---
+COPY --from=ghcr.io/patapem/ermete-forge-rolling-eza:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge-rolling-bat:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge-rolling-fd-find:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge-rolling-ripgrep:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge-rolling-nushell:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge-rolling-libvirt:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge-rolling-niri:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge-rolling-pipewire:latest / /tmp/forge-rpms/
+
 COPY --from=ghcr.io/patapem/ermete-forge-ags:latest /dart-sass /usr/lib64/dart-sass
 RUN ln -sf /usr/lib64/dart-sass/sass /usr/bin/sass && chmod +x /usr/lib64/dart-sass/sass /usr/lib64/dart-sass/src/dart
 

@@ -10,11 +10,13 @@ echo "--- Configuring DNF and installing base system packages ---"
 # Libvirt e virt-manager mantenuti per workflow utente quotidiano
 # Aggiunti greenboot e greenboot-default-health-checks consolidati dagli script deprecati
 
-# Core Utilities in Rust (Il nuovo stack)
-dnf5 -y install --setopt=install_weak_deps=False eza bat fd-find ripgrep nushell
+# Core Utilities in Rust (Il nuovo stack) - ORA FORNITI DA ERMETE FORGE ROLLING
+# eza bat fd-find ripgrep nushell rimosse da dnf5 perché installate nativamente
+# neovim rimosso completamente come da richiesta
 
 # System tools, hypervisor, firewall
-dnf5 -y install --setopt=install_weak_deps=False libvirt virt-manager qemu-kvm sysstat parallel just greenboot greenboot-default-health-checks bpftool drm_info nftables wayland-utils firewalld btrfs-progs
+# libvirt rimosso da dnf5 perché fornito da ermete forge rolling
+dnf5 -y install --setopt=install_weak_deps=False virt-manager qemu-kvm sysstat parallel just greenboot greenboot-default-health-checks bpftool drm_info nftables wayland-utils firewalld btrfs-progs
 
 # Implementazione dell'Hack Nix per OSTree (Salvataggio Layer Iniziale)
 # Spostiamo il contenuto dello stato di Nix (/nix/var) in una directory statica del rootfs.
