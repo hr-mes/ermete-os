@@ -11,7 +11,7 @@ echo "--- Configuring DNF and installing base system packages ---"
 # Aggiunti greenboot e greenboot-default-health-checks consolidati dagli script deprecati
 
 # Core Utilities in Rust (Il nuovo stack)
-dnf5 -y install --setopt=install_weak_deps=False eza bat fd-find ripgrep nushell neovim
+dnf5 -y install --setopt=install_weak_deps=False eza bat fd-find ripgrep nushell
 
 # System tools, hypervisor, firewall
 dnf5 -y install --setopt=install_weak_deps=False libvirt virt-manager qemu-kvm sysstat parallel just greenboot greenboot-default-health-checks bpftool drm_info nftables wayland-utils firewalld btrfs-progs
