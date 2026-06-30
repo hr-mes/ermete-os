@@ -1,6 +1,0 @@
-[Desktop Entry]
-Name=Ermete OS (Niri)
-Comment=A scrollable-tiling Wayland compositor (Ermete Session)
-Exec=/usr/bin/niri-session
-Type=Application
-DesktopNames=niri

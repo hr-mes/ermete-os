@@ -31,10 +31,10 @@ RUN mkdir -p /out/bin
 
 
 # Gli stage build-starship, build-matugen e build-bibata sono stati amputati.
-# La compilazione è interamente delegata alla Forge esterna.
-
-# Builder Nix (Zero-Execution State Copy)
-FROM nixos/nix:latest AS build-nix
+# =========================================================================
+# FASE 2: NIX BUILDER (Per pacchetti specifici Nix se necessari)
+# =========================================================================
+FROM docker.io/nixos/nix:latest AS build-nix
 
 # Fase C: Costruzione Link Simbolici (Dichiaratività Systemd)
 FROM build-base AS build-symlinks
@@ -44,86 +44,101 @@ RUN mkdir -p /out/usr/lib/systemd/system
 # FIX: Renovate Bot sostituirà automaticamente il tag :latest con il vero digest SHA256 crittografico
 FROM ghcr.io/patapem/ermete-base-nvidia:latest
 # Estrazione pacchetti RPM puri dai Micro-Container OCI di Ermete Forge (Isolamento totale)
-COPY --from=ghcr.io/patapem/ermete-forge-kernel:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/ermete-kernel:latest / /tmp/forge-rpms/
 COPY --from=ghcr.io/patapem/ermete-forge-nvidia:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-starship:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-matugen:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-bibata:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-ags:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-ananicy:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/ermete-starship:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/ermete-matugen:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/ermete-bibata:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/appmenu-glib-translator:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/astal-io:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/astal:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/astal-libs:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/astal-gjs:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/astal-gtk4:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/astal-lua:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/aylurs-gtk-shell:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/aylurs-gtk-shell2:latest / /tmp/forge-rpms/
+
+COPY --from=ghcr.io/patapem/ermete-forge/hyprpanel:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/ananicy-cpp:latest / /tmp/forge-rpms/
+
+COPY --from=ghcr.io/patapem/ermete-forge/ermete-ags-config:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/ermete-niri-session:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/ermete-ide-bootstrap:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/ermete-system-services:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/ermete-nix-support:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/ermete-system-config:latest / /tmp/forge-rpms/
 # --- INIZIO PACCHETTI ROLLING (Bedrock Auto-Generato) ---
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-eza:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-bat:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-fd-find:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-ripgrep:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-nushell:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-libvirt:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-niri:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-pipewire:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-adw-gtk3-theme:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-bpftool:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-brightnessctl:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-btop:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-btrfs-progs:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-dbus-tools:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-dbus-x11:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-drm_info:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-ffmpeg:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-file-roller:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-firewalld:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-fontawesome-fonts-all:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-foot:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-gnome-keyring:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-gnome-keyring-pam:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-greenboot:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-greenboot-default-health-checks:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-greetd:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-gtk4-layer-shell:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-gtk-layer-shell:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-gvfs:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-imv:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-jetbrains-mono-fonts:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-just:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-libnotify:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-libva-nvidia-driver:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-libva-utils:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-mesa-dri-drivers:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-mesa-vulkan-drivers:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-mpv:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-nftables:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-nodejs:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-npm:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-papirus-icon-theme:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-parallel:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-playerctl:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-qemu-kvm:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-qt5-qtwayland:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-qt6-qtwayland:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-rsms-inter-fonts:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-swaybg:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-swaylock:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-sysstat:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-thunar:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-thunar-archive-plugin:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-thunar-volman:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-tuigreet:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-upower:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-virt-manager:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-wayland-utils:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-wireplumber:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-wl-clipboard:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-wl-mirror:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-wlr-randr:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-x264-libs:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-xdg-desktop-portal-gnome:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-xdg-desktop-portal-gtk:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-xdg-user-dirs:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-xdg-user-dirs-gtk:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-xorg-x11-server-Xwayland:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-eza:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-bat:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-fd-find:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-ripgrep:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-nushell:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-libvirt:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-niri:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-pipewire:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-adw-gtk3-theme:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-bpftool:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-brightnessctl:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-btop:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-btrfs-progs:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-dbus-tools:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-dbus-x11:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-drm_info:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-ffmpeg:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-file-roller:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-firewalld:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-fontawesome-fonts-all:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-foot:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-gnome-keyring:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-gnome-keyring-pam:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-greenboot:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-greenboot-default-health-checks:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-greetd:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-gtk4-layer-shell:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-gtk-layer-shell:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-gvfs:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-imv:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-jetbrains-mono-fonts:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-just:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-libnotify:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-libva-nvidia-driver:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-libva-utils:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-mesa-dri-drivers:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-mesa-vulkan-drivers:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-mpv:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-nftables:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-nodejs:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-npm:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-papirus-icon-theme:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-parallel:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-playerctl:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-qemu-kvm:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-qt5-qtwayland:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-qt6-qtwayland:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-rsms-inter-fonts:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-swaybg:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-swaylock:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-sysstat:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-thunar:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-thunar-archive-plugin:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-thunar-volman:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-tuigreet:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-upower:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-virt-manager:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-wayland-utils:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-wireplumber:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-wl-clipboard:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-wl-mirror:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-wlr-randr:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-xdg-desktop-portal-gnome:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-xdg-desktop-portal-gtk:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-xdg-user-dirs:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-xdg-user-dirs-gtk:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/rolling-xorg-x11-server-xwayland:latest / /tmp/forge-rpms/
 # --- FINE PACCHETTI ROLLING ---
 
-COPY --from=ghcr.io/patapem/ermete-forge-ags:latest /dart-sass /usr/lib64/dart-sass
-RUN ln -sf /usr/lib64/dart-sass/sass /usr/bin/sass && chmod +x /usr/lib64/dart-sass/sass /usr/lib64/dart-sass/src/dart
+# (dart-sass rimosso, se necessario andrà creato un micro-container spec dedicato)
 
 # Nix "Cucinato" fisicamente nell'immagine OCI (Zero-Execution)
 COPY --from=build-nix --chown=0:0 /nix /nix
@@ -131,17 +146,23 @@ COPY --from=build-nix --chown=0:0 /nix /nix
 # Fissiamo i permessi di /etc/skel nativamente nell'immagine OCI (Zero-Boot-Delay)
 # I permessi paranoici (0700 dir, 0600 file) sono applicati nel mutating RUN sottostante
 
-# FIX BEDROCK: Copiamo selettivamente SOLO i file vitali per sysusers e la privacy sandbox (skel)
-# PRIMA degli script di build, in modo che il RUN successivo possa applicare i permessi corretti (chmod)
-# e creare gli utenti (greeter, nixbld) senza sovrascrivere prematuramente DNF.
-COPY --chown=0:0 system_files/usr/lib/sysusers.d /usr/lib/sysusers.d
-COPY --chown=0:0 system_files/etc/skel /etc/skel
+# FIX BEDROCK: I file per sysusers e la privacy sandbox (skel) non vengono più
+# iniettati crudi, ma sono nativamente pacchettizzati negli RPM (ermete-system-config, ecc.)
+# Il RUN successivo li installerà atomicamente via dnf5 e applicherà i permessi.
 
 # Execute all modular scripts sequentially in a single transaction to prevent OCI layer bloat
 # and preserve atomicity of the RPM database.
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
-    dnf5 install -y /tmp/forge-rpms/*.rpm && rm -rf /tmp/forge-rpms && \
+    mkdir -p /tmp/override-rpms && \
+    mv /tmp/forge-rpms/aylurs-gtk-shell2*.rpm /tmp/override-rpms/ || true && \
+    mv /tmp/forge-rpms/hyprpanel*.rpm /tmp/override-rpms/ || true && \
+    mv /tmp/forge-rpms/ermete-system-config*.rpm /tmp/override-rpms/ || true && \
+    mv /tmp/forge-rpms/ermete-niri-session*.rpm /tmp/override-rpms/ || true && \
+    dnf5 install -y --allowerasing /tmp/forge-rpms/*.x86_64.rpm /tmp/forge-rpms/*.noarch.rpm && \
+    rpm -Uvh --replacefiles --force --nodeps /tmp/override-rpms/*.rpm && \
+    rm -rf /tmp/forge-rpms /tmp/override-rpms && \
+    rm -rf /usr/lib/modules/6.* && \
     mkdir -p /etc/systemd && rm -rf /etc/systemd/system.control && ln -s /dev/null /etc/systemd/system.control && \
     find /etc/skel -type d -exec chmod 0700 {} + && \
     find /etc/skel -type f -exec chmod 0600 {} + && \
@@ -159,9 +180,7 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     if [ -f /usr/bin/firefox ]; then chmod +x /usr/bin/firefox; fi && \
     if [ -f /usr/bin/tuigreet ]; then chmod +x /usr/bin/tuigreet; fi
 
-# Iniettiamo la gerarchia nativa OCI delle configurazioni statiche (Zero-Echo)
-# ALLA FINE per evitare Layer Bloat, invalidazione Cache OCI e garantire la precedenza sulle policy OS-level.
-COPY --chown=0:0 system_files /
+# (Nessun system_files iniettato. L'architettura Bedrock usa il 100% di astrazione via RPM OCI).
 # I symlink precalcolati
 COPY --from=build-symlinks --chown=0:0 /out/usr /usr
 

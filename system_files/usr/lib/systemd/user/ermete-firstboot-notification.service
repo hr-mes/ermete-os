@@ -1,7 +1,0 @@
-[Unit]
-Description=Ermete OS Firstboot Done Notification
-ConditionPathExists=/var/lib/ermete-firstboot-done
-
-[Service]
-Type=oneshot
-ExecStart=/usr/bin/notify-send "Ermete OS" "Installazione Flatpak completata!" -u normal

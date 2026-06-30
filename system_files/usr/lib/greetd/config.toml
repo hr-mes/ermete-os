@@ -1,6 +1,0 @@
-[terminal]
-vt = "next"
-
-[default_session]
-command = "/usr/bin/tuigreet --cmd /usr/bin/niri-session --asterisks --remember --remember-session --time --theme 'border=magenta;text=cyan;prompt=green;time=red;action=blue;button=yellow;container=black;input=white'"
-user = "greeter"
