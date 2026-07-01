@@ -45,7 +45,8 @@ RUN mkdir -p /out/usr/lib/systemd/system
 FROM ghcr.io/patapem/ermete-base-nvidia:latest
 # Estrazione pacchetti RPM puri dai Micro-Container OCI di Ermete Forge (Isolamento totale)
 COPY --from=ghcr.io/patapem/ermete-forge/ermete-kernel:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-forge-nvidia:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/ermete-nvidia:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/ermete-selinux:latest / /tmp/forge-rpms/
 COPY --from=ghcr.io/patapem/ermete-forge/ermete-starship:latest / /tmp/forge-rpms/
 COPY --from=ghcr.io/patapem/ermete-forge/ermete-matugen:latest / /tmp/forge-rpms/
 COPY --from=ghcr.io/patapem/ermete-forge/ermete-bibata:latest / /tmp/forge-rpms/
@@ -68,7 +69,7 @@ COPY --from=ghcr.io/patapem/ermete-forge/ermete-ide-bootstrap:latest / /tmp/forg
 COPY --from=ghcr.io/patapem/ermete-forge/ermete-system-services:latest / /tmp/forge-rpms/
 COPY --from=ghcr.io/patapem/ermete-forge/ermete-nix-support:latest / /tmp/forge-rpms/
 COPY --from=ghcr.io/patapem/ermete-forge/ermete-system-config:latest / /tmp/forge-rpms/
-COPY --from=ghcr.io/patapem/ermete-system-tweaks:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-forge/ermete-system-tweaks:latest / /tmp/forge-rpms/
 # --- INIZIO PACCHETTI ROLLING (Bedrock Auto-Generato) ---
 COPY --from=ghcr.io/patapem/ermete-forge/rolling-eza:latest / /tmp/forge-rpms/
 COPY --from=ghcr.io/patapem/ermete-forge/rolling-bat:latest / /tmp/forge-rpms/
