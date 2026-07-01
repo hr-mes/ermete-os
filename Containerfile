@@ -4,9 +4,6 @@
 
 
 
-# Allow build scripts to be referenced without being copied into the final image
-FROM scratch AS ctx
-
 
 # --- NUOVA FABBRICA: PARALLEL MULTI-STAGE BUILDERS ---
 # Stage di base con tutte le dipendenze per velocizzare i successivi build
@@ -143,25 +140,14 @@ COPY --from=ghcr.io/patapem/ermete-forge-rolling-xorg-x11-server-xwayland:latest
 # Nix "Cucinato" fisicamente nell'immagine OCI (Zero-Execution)
 COPY --from=build-nix --chown=0:0 /nix /nix
 
-# Fissiamo i permessi di /etc/skel nativamente nell'immagine OCI (Zero-Boot-Delay)
-# I permessi paranoici (0700 dir, 0600 file) sono applicati nel mutating RUN sottostante
-
 # FIX BEDROCK: I file per sysusers e la privacy sandbox (skel) non vengono più
 # iniettati crudi, ma sono nativamente pacchettizzati negli RPM (ermete-system-config, ecc.)
-# Il RUN successivo li installerà atomicamente via dnf5 e applicherà i permessi.
 
 # Execute all modular scripts sequentially in a single transaction to prevent OCI layer bloat
 # and preserve atomicity of the RPM database.
-RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
-    --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
-    mkdir -p /tmp/override-rpms && \
-    mv /tmp/forge-rpms/aylurs-gtk-shell2*.rpm /tmp/override-rpms/ || true && \
-    mv /tmp/forge-rpms/hyprpanel*.rpm /tmp/override-rpms/ || true && \
-    mv /tmp/forge-rpms/ermete-system-config*.rpm /tmp/override-rpms/ || true && \
-    mv /tmp/forge-rpms/ermete-niri-session*.rpm /tmp/override-rpms/ || true && \
-    mv /tmp/forge-rpms/ermete-system-tweaks*.rpm /tmp/override-rpms/ || true && \
-    dnf5 install -y --allowerasing /tmp/forge-rpms/*.x86_64.rpm /tmp/forge-rpms/*.noarch.rpm /tmp/override-rpms/*.rpm && \
-    rm -rf /tmp/forge-rpms /tmp/override-rpms && \
+RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
+    dnf5 install -y --allowerasing /tmp/forge-rpms/*.rpm && \
+    rm -rf /tmp/forge-rpms && \
     rm -rf /usr/lib/modules/6.* && \
     mkdir -p /etc/systemd && rm -rf /etc/systemd/system.control && ln -s /dev/null /etc/systemd/system.control && \
     ln -sf /dev/null /usr/lib/systemd/system/akmods-keygen@.service && \
