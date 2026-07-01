@@ -150,30 +150,14 @@ RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --moun
     rm -rf /tmp/forge-rpms && \
     rm -rf /usr/lib/modules/6.* && \
     mkdir -p /etc/systemd && rm -rf /etc/systemd/system.control && ln -s /dev/null /etc/systemd/system.control && \
-    ln -sf /dev/null /usr/lib/systemd/system/akmods-keygen@.service && \
-    ln -sf /dev/null /usr/lib/systemd/system/akmods@.service && \
     for p in /nix/store/*/bin/nix; do if [ -e "$p" ]; then NIX_BIN_DIR=$(dirname "$p"); break; fi; done && \
-    if [ -n "$NIX_BIN_DIR" ]; then cp -a $NIX_BIN_DIR/* /usr/bin/ || true; fi && \
-    chmod +x /usr/bin/niri-session && \
-    if [ -f /usr/bin/firefox ]; then chmod +x /usr/bin/firefox; fi && \
-    if [ -f /usr/bin/tuigreet ]; then chmod +x /usr/bin/tuigreet; fi
+    if [ -n "$NIX_BIN_DIR" ]; then cp -a $NIX_BIN_DIR/* /usr/bin/ || true; fi
 
 # (Nessun system_files iniettato. L'architettura Bedrock usa il 100% di astrazione via RPM OCI).
 # I symlink precalcolati
 COPY --from=build-symlinks --chown=0:0 /out/usr /usr
 
-### STRUMENTI DIAGNOSTICI OMNI-VISION SUPREME
-# Installazione pacchetti essenziali per il debugging a Raggi-X 
-# (Consolidati nel layer 01-system-setup.sh per purezza OCI e riduzione layer bloat)
 
-### ASSETS SICURI E PREPARAZIONE
-# La directory assets/sfondi è creata nativamente via system_files
-# per evitare LPE e layer bloat imperativo.
-# NOTA: Per scompattare eventuali archivi futuri, usare SEMPRE:
-# RUN tar -xzf /path/to/assets.tar.gz -C /usr/share/backgrounds/ermete --no-same-owner
-
-### PRIVACY SANDBOXING (/etc/skel)
-# Le policy UNIX paranoiche sono fissate nativamente nel Containerfile.
 
 ### NIX STATE (Immutability Fix)
 # Creiamo il symlink immutabile sul rootfs verso il mountpoint effimero in /var.
@@ -190,9 +174,7 @@ RUN mkdir -p /usr/share/nix-initial-state/var/nix/profiles && \
 # all'interno dell'immagine OCI, prima dell'avvio su baremetal.
 RUN systemctl preset-all && systemctl --global preset-all
 
-### FIX SELINUX NIX (Bedrock LPE Mitigation)
-# SELinux non conosce la directory /nix, assegnandole default_t, bloccando l'esecuzione del demone.
-# Mappiamo in modo equivalente /nix a /usr per ereditare correttamente le regole bin_t, lib_t, ecc.
+
 RUN authselect select local with-silent-lastlog with-mdns4 without-nullok --force && \
     rm -f /etc/machine-id && touch /etc/machine-id && chmod 0444 /etc/machine-id && \
     rm -rf /etc/NetworkManager/system-connections/* && \
