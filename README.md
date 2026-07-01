@@ -35,6 +35,7 @@ graph TD
 2. **Zero-Bloat**: Only CLI tools and core infrastructure exist on the host. Weak dependencies are banned (`install_weak_deps=False`).
 3. **100% Verified Supply Chain**: Dynamic `curl | bash` or blind binary downloads are forbidden. External binaries are managed via a centralized `Containerfile ARG` manifest. The entire OS is pinned exclusively to immutable cryptographic digests (`@sha256`), eliminating reliance on mutable tags like `:latest`.
 4. **Autonomous Maintenance**: The OS heals and updates itself via the native `bootc-fetch-apply.timer`. Renovate Bot detects upstream releases, recalculates SHA256 hashes, and pins Docker images. The pipeline compiles, scans with **Trivy** to block CVEs, and signs the deployment via Sigstore/Cosign OIDC without manual intervention.
+5. **Absolute RPM Encapsulation (Bedrock Forge)**: All system configurations (e.g. PAM, NetworkManager, UI config, shell scripts) are natively built and packaged into RPMs inside the private CI/CD Forge (`ermete-forge`). Ermete OS consumes these RPMs during the OCI build. There are absolutely zero "raw" files manually copied into the system (`COPY system_files /`).
 
 ---
 
@@ -80,8 +81,19 @@ Due to root immutability, the traditional `.exe` or `dnf install` paradigm is ob
 
 ---
 
-## 🧬 Layer 0 & 1: Bill of Materials (BOM) & Architettura Interna
-Essendo Linux estremamente modulare, mostriamo esattamente cosa gira sotto la scocca di Ermete OS e **perché**. Ogni pacchetto è stato scelto o scartato seguendo le regole ferree di Zero-Bloat e Immutabilità.
+## 🏗️ Architettura: L'Ecosistema Bedrock Forge
+
+In base ai dettami estremi di **"Absolute RPM Encapsulation"**, Ermete OS **non contiene file sparsi o raw scripts** (es. nulla in `system_files/`). L'intero OS è concepito come un layer puramente dichiarativo che unisce componenti pre-forgiate.
+
+L'architettura "Vista da Corvo" segue un flusso a cascata preciso:
+1. **Layer 0 (Base NVIDIA)**: Derivazione formale da `ghcr.io/patapem/ermete-base-nvidia:latest` (Layer minimo essenziale Fedora + kmod di fallback).
+2. **Layer 1 (Trismegistus Kernel)**: L'OS ignora il kernel stock ed estrae il titanico demone 7.1.2 massimizzato tramite **PGO (Profile-Guided Optimization)** e tuning a livello Bedrock dalla Forgia OCI, sostituendo brutalmente il kernel esistente per far passare i controlli di `bootc`.
+3. **Layer 2 (User Interface & AGS)**: Estrazione chirurgica del Grafo Topologico da GHCR. Tutti i componenti (Astal, Hyprpanel, AGS v1 e v2, Starship, Matugen, Niri config, script di sistema) provengono da micro-container *scratch* incapsulati in RPM.
+4. **Cottura Finale**: I conflitti DNF per sovrascrittura di pacchetti core (es. `niri-session`, configs) e doppie versioni di UI (AGS v1 vs AGS v2) vengono distrutti via `rpm --replacefiles`, assicurando il puro stato imposto dalla Forgia.
+
+Tutti i pacchetti custom sono manutenuti indipendentemente e forgiati nel repository `ermete-forge` adiacente.
+
+## 🛠️ Build e Installazione
 
 ### 🛡️ Layer 0: La Bedrock (Ring 0 / Kernel & Core)
 Questi pacchetti formano l'infrastruttura di base (Bootable OCI), focalizzata su prestazioni estreme e sicurezza crittografica. Nessuna interfaccia grafica è ammessa qui.
