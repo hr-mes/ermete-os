@@ -68,6 +68,7 @@ COPY --from=ghcr.io/patapem/ermete-forge/ermete-ide-bootstrap:latest / /tmp/forg
 COPY --from=ghcr.io/patapem/ermete-forge/ermete-system-services:latest / /tmp/forge-rpms/
 COPY --from=ghcr.io/patapem/ermete-forge/ermete-nix-support:latest / /tmp/forge-rpms/
 COPY --from=ghcr.io/patapem/ermete-forge/ermete-system-config:latest / /tmp/forge-rpms/
+COPY --from=ghcr.io/patapem/ermete-system-tweaks:latest / /tmp/forge-rpms/
 # --- INIZIO PACCHETTI ROLLING (Bedrock Auto-Generato) ---
 COPY --from=ghcr.io/patapem/ermete-forge/rolling-eza:latest / /tmp/forge-rpms/
 COPY --from=ghcr.io/patapem/ermete-forge/rolling-bat:latest / /tmp/forge-rpms/
@@ -159,6 +160,7 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     mv /tmp/forge-rpms/hyprpanel*.rpm /tmp/override-rpms/ || true && \
     mv /tmp/forge-rpms/ermete-system-config*.rpm /tmp/override-rpms/ || true && \
     mv /tmp/forge-rpms/ermete-niri-session*.rpm /tmp/override-rpms/ || true && \
+    mv /tmp/forge-rpms/ermete-system-tweaks*.rpm /tmp/override-rpms/ || true && \
     dnf5 install -y --allowerasing /tmp/forge-rpms/*.x86_64.rpm /tmp/forge-rpms/*.noarch.rpm && \
     rpm -Uvh --replacefiles --force --nodeps /tmp/override-rpms/*.rpm && \
     rm -rf /tmp/forge-rpms /tmp/override-rpms && \
