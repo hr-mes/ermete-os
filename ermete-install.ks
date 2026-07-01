@@ -10,7 +10,7 @@ timezone Europe/Rome --isUtc
 # di definire manualmente la Root BTRFS e il volume LUKS2 come richiesto dai Power User.
 
 # OCI Image Provisioning
-ostreecontainer --url=ghcr.io/patapem/ermete-os@sha256:f2659796d9835c83434adb904027e8f5bca84193563f54bf12b2a26de9cffa92 --transport=registry
+ostreecontainer --url=ghcr.io/patapem/ermete-os:latest --transport=registry
 
 # Security Hardening: No cleartext root password, strictly SSH Keys
 rootpw --lock

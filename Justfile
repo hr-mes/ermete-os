@@ -48,25 +48,9 @@ clean:
 [group('Utility')]
 [private]
 sudo-clean:
-    just sudoif just clean
+    sudo just clean
 
-# sudoif bash function
-[group('Utility')]
-[private]
-sudoif command *args:
-    #!/usr/bin/env bash
-    function sudoif(){
-        if [[ "${UID}" -eq 0 ]]; then
-            "$@"
-        elif [[ "$(command -v sudo)" && -n "${SSH_ASKPASS:-}" ]] && [[ -n "${DISPLAY:-}" || -n "${WAYLAND_DISPLAY:-}" ]]; then
-            /usr/bin/sudo --askpass "$@" || exit 1
-        elif [[ "$(command -v sudo)" ]]; then
-            /usr/bin/sudo "$@" || exit 1
-        else
-            exit 1
-        fi
-    }
-    sudoif {{ command }} {{ args }}
+
 
 # Build the image using the specified parameters
 build $target_image=image_name $tag=default_tag:
@@ -103,16 +87,16 @@ _rootful_load_image $target_image=image_name $tag=default_tag:
 
     if [[ $return_code -eq 0 ]]; then
         # If the image is found, load it into rootful podman
-        ID=$(just sudoif podman images --filter reference="${target_image}:${tag}" --format "'{{ '{{.ID}}' }}'")
+        ID=$(sudo podman images --filter reference="${target_image}:${tag}" --format "'{{ '{{.ID}}' }}'")
         if [[ "$ID" != "$USER_IMG_ID" ]]; then
             # If the image ID is not found or different from user, copy the image from user podman to root podman
             COPYTMP=$(mktemp -p "${PWD}" -d -t _build_podman_scp.XXXXXXXXXX)
-            just sudoif TMPDIR=${COPYTMP} podman image scp ${UID}@localhost::"${target_image}:${tag}" root@localhost::"${target_image}:${tag}"
+            sudo TMPDIR=${COPYTMP} podman image scp ${UID}@localhost::"${target_image}:${tag}" root@localhost::"${target_image}:${tag}"
             rm -rf "${COPYTMP}"
         fi
     else
         # If the image is not found, pull it from the repository
-        just sudoif podman pull "${target_image}:${tag}"
+        sudo podman pull "${target_image}:${tag}"
     fi
 
 _build-bib $target_image $tag $type $config: (_rootful_load_image target_image tag)

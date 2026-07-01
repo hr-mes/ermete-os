@@ -6,8 +6,6 @@
 
 # Allow build scripts to be referenced without being copied into the final image
 FROM scratch AS ctx
-# FIX: Applica permessi sicuri già nello stage rootless per evitare LPE nei mount bindati
-COPY --chown=0:0 build_files /
 
 
 # --- NUOVA FABBRICA: PARALLEL MULTI-STAGE BUILDERS ---
@@ -162,23 +160,14 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     mv /tmp/forge-rpms/ermete-system-config*.rpm /tmp/override-rpms/ || true && \
     mv /tmp/forge-rpms/ermete-niri-session*.rpm /tmp/override-rpms/ || true && \
     mv /tmp/forge-rpms/ermete-system-tweaks*.rpm /tmp/override-rpms/ || true && \
-    dnf5 install -y --allowerasing /tmp/forge-rpms/*.x86_64.rpm /tmp/forge-rpms/*.noarch.rpm && \
-    rpm -Uvh --replacefiles --force --nodeps /tmp/override-rpms/*.rpm && \
+    dnf5 install -y --allowerasing /tmp/forge-rpms/*.x86_64.rpm /tmp/forge-rpms/*.noarch.rpm /tmp/override-rpms/*.rpm && \
     rm -rf /tmp/forge-rpms /tmp/override-rpms && \
     rm -rf /usr/lib/modules/6.* && \
     mkdir -p /etc/systemd && rm -rf /etc/systemd/system.control && ln -s /dev/null /etc/systemd/system.control && \
-    find /etc/skel -type d -exec chmod 0700 {} + && \
-    find /etc/skel -type f -exec chmod 0600 {} + && \
-    find /etc/skel -type f -name "*.sh" -exec chmod 0700 {} + && \
-    find /usr/libexec -type f -name "*.sh" -exec chmod +x {} + && \
-    find /usr/bin -type f -name "ermete-*" -exec chmod +x {} + && \
     ln -sf /dev/null /usr/lib/systemd/system/akmods-keygen@.service && \
     ln -sf /dev/null /usr/lib/systemd/system/akmods@.service && \
     for p in /nix/store/*/bin/nix; do if [ -e "$p" ]; then NIX_BIN_DIR=$(dirname "$p"); break; fi; done && \
     if [ -n "$NIX_BIN_DIR" ]; then cp -a $NIX_BIN_DIR/* /usr/bin/ || true; fi && \
-    bash /ctx/recipes/01-system-setup.sh && \
-    bash /ctx/recipes/02-repos-and-codecs.sh && \
-    bash /ctx/recipes/03-desktop.sh && \
     chmod +x /usr/bin/niri-session && \
     if [ -f /usr/bin/firefox ]; then chmod +x /usr/bin/firefox; fi && \
     if [ -f /usr/bin/tuigreet ]; then chmod +x /usr/bin/tuigreet; fi
@@ -218,15 +207,7 @@ RUN systemctl preset-all && systemctl --global preset-all
 ### FIX SELINUX NIX (Bedrock LPE Mitigation)
 # SELinux non conosce la directory /nix, assegnandole default_t, bloccando l'esecuzione del demone.
 # Mappiamo in modo equivalente /nix a /usr per ereditare correttamente le regole bin_t, lib_t, ecc.
-RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf \
-    dnf install -y policycoreutils-python-utils || true && \
-    mv /etc/selinux /etc/selinux.bak && cp -a /etc/selinux.bak /etc/selinux && \
-    mv /var/lib/selinux /var/lib/selinux.bak && cp -a /var/lib/selinux.bak /var/lib/selinux && \
-    semanage fcontext -a -e /usr /nix && \
-    semanage permissive -a greetd_t || true && \
-    rm -rf /etc/selinux.bak /var/lib/selinux.bak && \
-    dnf remove -y policycoreutils-python-utils && \
-    authselect select local with-silent-lastlog with-mdns4 without-nullok --force && \
+RUN authselect select local with-silent-lastlog with-mdns4 without-nullok --force && \
     rm -f /etc/machine-id && touch /etc/machine-id && chmod 0444 /etc/machine-id && \
     rm -rf /etc/NetworkManager/system-connections/* && \
     dnf clean all
