@@ -34,7 +34,7 @@ jobs:
             --security-opt label=type:unconfined_t \
             -v ./output:/output \
             -v ./disk_config/iso.toml:/config.toml:ro \
-            quay.io/centos-bootc/bootc-image-builder@sha256:0000000000000000000000000000000000000000000000000000000000000000 \
+            quay.io/centos-bootc/bootc-image-builder:latest \
             build \
             --type anaconda-iso \
             --config /config.toml \

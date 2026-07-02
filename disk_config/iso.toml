@@ -2,7 +2,7 @@
 contents = """
 %post
 # renovate: datasource=docker depName=ghcr.io/patapem/ermete-os
-bootc switch --mutate-in-place --transport registry ghcr.io/patapem/ermete-os@sha256:0000000000000000000000000000000000000000000000000000000000000000
+bootc switch --mutate-in-place --transport registry ghcr.io/patapem/ermete-os:latest
 %end
 """
 

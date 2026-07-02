@@ -14,8 +14,8 @@ ostreecontainer --url=ghcr.io/patapem/ermete-os:latest --transport=registry
 
 # Security Hardening: No cleartext root password, strictly SSH Keys
 rootpw --lock
-user --name=wheel --groups=wheel --password=$6$dummyhash --iscrypted
-sshkey --username wheel "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI_DUMMY_KEY_HERE_"
+user --name=hermes --groups=wheel --password=$6$dummyhash --iscrypted
+sshkey --username hermes "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI_DUMMY_KEY_HERE_"
 sshkey --username root "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI_DUMMY_KEY_HERE_"
 
 firewall --enabled --default=drop
