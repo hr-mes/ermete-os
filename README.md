@@ -1,143 +1,68 @@
 <div align="center">
   <h1>🦅 Ermete OS (Layer 1: Ring 3)</h1>
-  <p><b>An uncompromising, cloud-native, atomic Linux distribution engineered for power-users.</b></p>
+  <p><b>The Golden Standard of Linux. An extreme, cloud-native, Zero-Maintenance Rolling Release desktop OS.</b></p>
 </div>
 
 ---
 
-**Ermete OS** is a hyper-optimized, immutable operating system built upon Fedora and Universal Blue (`bootc`) technologies. It discards monolithic desktop environments, replacing them with a surgically thin, keyboard-driven Wayland experience written almost entirely in Rust.
+**Ermete OS** is a hyper-modern, immutable Operating System distributed as a Bootable OCI Container.
+It merges the absolute performance of CachyOS with the bulletproof atomicity of Fedora OSTree, wrapping everything in a stunning, macOS-grade UI orchestrated by AGS and Niri.
 
-Driven by an absolute **Infrastructure-as-Code (IaC)** philosophy, Ermete OS is defined entirely by OCI container recipes. It guarantees unbreakable atomic updates, zero system entropy, and uncompromising privacy.
+## 🏗️ The Bedrock Forge Ecosystem (Absolute RPM Encapsulation)
 
-## 🏗️ Multi-Layer OCI Architecture
-Ermete OS strictly follows a multi-repository, decoupled architecture for ultimate determinism.
+In strict adherence to the **"Absolute RPM Encapsulation"** dogma, Ermete OS **contains zero raw scripts or scattered files** (the `system_files/` pattern has been eradicated). The entire OS is conceived as a pure declarative OCI layer that mathematically merges pre-forged components.
 
-```mermaid
-graph TD
-    subgraph Layer0 [Base NVIDIA Repository / Ring 0]
-        A["Fedora Base Atomic"] --> B["Inject CachyOS Kernel & NVIDIA DKMS"]
-        B --> D["Trivy Scan & Cosign Signature"]
-    end
-    subgraph Layer1 [Ermete OS Repository / Ring 3]
-        D -- "API Dispatch Trigger" --> E["Containerfile FROM ghcr.io/.../ermete-base-nvidia@sha256"]
-        E --> F["Inject Renovate ARGs (IaC Single Source of Truth)"]
-        F --> G["Recipe: Rust Transient Build Pipeline"]
-        G --> H["Recipe: Firewalld Drop / Privacy Hardening"]
-        H --> I["Recipe: Asynchronous Systemd Provisioner"]
-        I --> K["Trivy CVE Scan & Bootc Lint"]
-    end
-    Layer1 --> J(("Deployable Bootc Image"))
-```
+The "Raven's View" architecture follows a flawless OCI waterfall:
+1. **Layer 0 (Base NVIDIA)**: Formal derivation from `ghcr.io/patapem/ermete-base-nvidia:latest`. It provides the Fedora 43 base, the PGO-optimized Trismegistus Kernel, and NVIDIA DKMS drivers, chronologically synced for perfect KMS early-boot initialization.
+2. **Layer 1 (The UI Graveyard)**: The OS extracts the topological graph from GHCR. All components (Astal, Hyprpanel, AGS v1/v2, Starship, Matugen, Niri config, system scripts) originate strictly from micro-containers (`ghcr.io/patapem/ermete-forge-*`) compiled in the private Forge.
+3. **Layer 2 (Upstream Injection)**: Modern tools (`eza`, `bat`, `nushell`, `ripgrep`) are fetched from the Forge's rolling-upstream pipeline, compiled aggressively with GCC 15 `x86-64-v3` and `-O3`.
+4. **The Final Bake (Zero-Bloat)**: DNF5 resolves the dependency graph (`dnf5 install --allowerasing`), overriding older Fedora packages with the extreme Forge RPMs, producing a slim, immaculate filesystem with zero ghost layers.
 
-## 🌟 The Enterprise Manifesto
-
-1. **Zero-Entropy**: The root filesystem is strictly immutable. No system degradation, rot, or state drift over time. Software installation via `dnf` on the live system is mathematically banned.
-2. **Zero-Bloat**: Only CLI tools and core infrastructure exist on the host. Weak dependencies are banned (`install_weak_deps=False`).
-3. **100% Verified Supply Chain**: Dynamic `curl | bash` or blind binary downloads are forbidden. External binaries are managed via a centralized `Containerfile ARG` manifest. The entire OS is pinned exclusively to immutable cryptographic digests (`@sha256`), eliminating reliance on mutable tags like `:latest`.
-4. **Autonomous Maintenance**: The OS heals and updates itself via the native `bootc-fetch-apply.timer`. Renovate Bot detects upstream releases, recalculates SHA256 hashes, and pins Docker images. The pipeline compiles, scans with **Trivy** to block CVEs, and signs the deployment via Sigstore/Cosign OIDC without manual intervention.
-5. **Absolute RPM Encapsulation (Bedrock Forge)**: All system configurations (e.g. PAM, NetworkManager, UI config, shell scripts) are natively built and packaged into RPMs inside the private CI/CD Forge (`ermete-forge`). Ermete OS consumes these RPMs during the OCI build. There are absolutely zero "raw" files manually copied into the system (`COPY system_files /`).
-
----
-
-## 🛡️ Paranoid Hardening & "Zero-Trust" Security
-
-Ermete OS implements extreme military-grade security defaults, completely overhauling standard Linux paradigms. It ensures maximum operability while remaining an impenetrable fortress.
-
-### 1. Network Stealth & Isolation
-- **Firewall**: Default zone is strictly `drop`. All unsolicited traffic is annihilated without response. mDNS is surgically permitted for local discovery.
-- **Privacy Enforcement**: NetworkManager enforces MAC Address Randomization (`stable`) and IPv6 Privacy (`ipv6.ip6-privacy=2`).
-- **DNS Protection**: `systemd-resolved` strictly uses `DNSOverTLS=opportunistic` and disables local poisoning via `LLMNR=no`.
-
-### 2. Core & Kernel Defenses
-- **Sysctl Hardening**: Mitigates 0-days with `tcp_syncookies=1`, blocks ICMP redirects to prevent MITM attacks, restricts dmesg (`dmesg_restrict=1`), and shields kernel pointers (`kptr_restrict=2`).
-- **Memory Coredumps Disabled**: `systemd-coredump` is neutralized (`Storage=none`, `ProcessSizeMax=0`) to ensure Wayland crashes never leak RAM secrets or cryptographic keys to the disk.
-- **Anti-DoS Journaling**: `systemd-journald` is capped to `500M` and 1-month retention, preventing malicious processes from exhausting the BTRFS root.
-- **SSHD Zero-Trust**: If enabled, SSH rejects root login and completely disables password authentication, requiring modern Pubkey Authentication (Ed25519).
-
-### 3. Local Authentication Sandbox (PAM)
-- **Brute-Force Defense**: `faillock.conf` locks user and root accounts for 15 minutes after 3 failed login attempts.
-- **Password Quality**: `pwquality.conf` enforces a minimum of 14 characters and 3 class types.
-
-### 4. Self-Healing & Resilience
-- **Greenboot Rollbacks**: If the OS fails to reach the network (checked via a 10s cryptographic curl timeout to 1.1.1.1) or the Wayland UI (`greetd`) fails, the system automatically logs the failure and performs a native OSTree rollback to the previous working layer.
-- **BTRFS Snapshots**: Instead of arbitrary timers, `/var/home` backups (`ermete-home-snapshot.service`) are elegantly tied to `ostree-finalize-staged.service`, capturing the state precisely milliseconds before an OTA update is applied.
-
----
+All custom packages are autonomously built, linted, and cryptographically signed in the adjacent [Ermete Forge](https://github.com/patapem/ermete-forge) repository.
 
 ## ⚡ Extreme Performance & Wayland Stack
 - **ZRAM Compressed Memory**: 100% RAM allocation dynamically compressed via **ZSTD** (`vm.swappiness=150`).
 - **Systemd User Orchestration**: The Wayland compositor (Niri) does not spawn processes imperatively. Everything is handled cleanly by `systemd --user` binding to `niri-session.target`, ensuring graceful teardown and infinite idempotency.
 - **The Stack**:
-  - Compositor: **Niri** (Scrollable Tiling). Hardware accelerated con `GBM_BACKEND=nvidia-drm`.
-  - UI Framework: **AGS (Aylur's Gtk Shell)**. Un'unica applicazione TypeScript/GJS che fornisce una UX "Super Premium" fluida a 360Hz per Barra Superiore, Control Center, App Launcher, Notifiche, Power Menu e OSD.
+  - Compositor: **Niri** (Scrollable Tiling). Hardware accelerated with `GBM_BACKEND=nvidia-drm`.
+  - UI Framework: **AGS (Aylur's Gtk Shell)**. A unified TypeScript/GJS ecosystem providing a 360Hz "Super Premium UX" for Top Bar, Control Center, App Launcher, Notifications, and Power Menu.
   - Terminal: **Foot** (Wayland native, C-based, lightweight).
 
----
+## ⚖️ Le Leggi del Ring 3 (Project Rules)
+Queste direttive generali assicurano la coerenza architetturale, garantendo che lo strato utente rimanga robusto e isolato dal core del sistema.
+
+### 🟢 COSA DEVE ESSERE FATTO (The "Musts")
+- **PIPELINE:** Ereditare in modo immutabile l'infrastruttura sottostante di Base NVIDIA, agendo esclusivamente come aggregatore di livello superiore.
+- **PIPELINE:** Gestire le sovrascritture di configurazione in modo formale e dichiarativo, permettendo ai pacchetti custom di sostituire le logiche legacy in fase di assemblaggio.
+- **USERSPACE:** Mantenere il root filesystem pristino e intoccato a runtime. App e framework devono girare in sandboxing (Flatpak) o in ambienti dinamicamente isolati (Nix).
+
+### 🔴 COSA NON DEVE ESSERE MAI FATTO (The "Never Do's")
+- **PIPELINE:** Utilizzare comandi shell distruttivi all'interno del processo di generazione dell'immagine (es. sed, cp, rm) per manipolare configurazioni di sistema; queste devono derivare da pacchetti strutturati.
+- **PIPELINE:** Alterare o ricostruire componenti del Ring 0 in questo livello (la gestione hardware e boot appartiene esplicitamente al layer Base).
+- **USERSPACE:** Effettuare modifiche dirette ai file globali post-installazione, aggirando il flusso di forgiatura. Ogni evoluzione del sistema deve nascere come modifica del codice sorgente.
 
 ## 📦 Segregated Software Management
-Due to root immutability, the traditional `.exe` or `dnf install` paradigm is obliterated:
+Due to root immutability, the traditional `dnf install` paradigm is obliterated in user-space:
 1. **Graphical Applications**: Exclusively confined to **Flatpak** (via Flathub). Protected globally by `flatpak override --system --device=dri --socket=wayland` to guarantee NVIDIA GPU acceleration and Wayland IPC sandboxing.
-2. **CLI Utilities & Compilers**: Managed dynamically and declaratively via the **Nix** Package Manager (seamlessly exposed in `/etc/profile.d/nix.sh`), without installing any daemons.
+2. **CLI Utilities & Compilers**: Managed dynamically and declaratively via the **Nix** Package Manager (seamlessly exposed in `/etc/profile.d/nix.sh`), with an ephemeral state rigorously managed by systemd tmpfiles.
 
----
-
-## 🏗️ Architettura: L'Ecosistema Bedrock Forge
-
-In base ai dettami estremi di **"Absolute RPM Encapsulation"**, Ermete OS **non contiene file sparsi o raw scripts** (es. nulla in `system_files/`). L'intero OS è concepito come un layer puramente dichiarativo che unisce componenti pre-forgiate.
-
-L'architettura "Vista da Corvo" segue un flusso a cascata preciso:
-1. **Layer 0 (Base NVIDIA)**: Derivazione formale da `ghcr.io/patapem/ermete-base-nvidia:latest` (Layer minimo essenziale Fedora + kmod di fallback).
-2. **Layer 1 (Trismegistus Kernel)**: L'OS ignora il kernel stock ed estrae il titanico demone 7.1.2 massimizzato tramite **PGO (Profile-Guided Optimization)** e tuning a livello Bedrock dalla Forgia OCI, sostituendo brutalmente il kernel esistente per far passare i controlli di `bootc`.
-3. **Layer 2 (User Interface & AGS)**: Estrazione chirurgica del Grafo Topologico da GHCR. Tutti i componenti (Astal, Hyprpanel, AGS v1 e v2, Starship, Matugen, Niri config, script di sistema) provengono da micro-container *scratch* incapsulati in RPM.
-4. **Cottura Finale**: I conflitti DNF per sovrascrittura di pacchetti core (es. `niri-session`, configs) e doppie versioni di UI (AGS v1 vs AGS v2) vengono distrutti via `rpm --replacefiles`, assicurando il puro stato imposto dalla Forgia.
-
-Tutti i pacchetti custom sono manutenuti indipendentemente e forgiati nel repository `ermete-forge` adiacente.
-
-## 🛠️ Build e Installazione
-
-### 🛡️ Layer 0: La Bedrock (Ring 0 / Kernel & Core)
-Questi pacchetti formano l'infrastruttura di base (Bootable OCI), focalizzata su prestazioni estreme e sicurezza crittografica. Nessuna interfaccia grafica è ammessa qui.
-
-1. **Kernel CachyOS (`kernel-cachyos`) & NVIDIA (`dkms`, `akmods`)**:
-   - *Perché*: Il kernel CachyOS fornisce lo scheduler BORE e compilazione x86-64-v3 per massima responsività. I driver NVIDIA sono compilati offline (DKMS) per garantire Zero-Boot-Delay al deploy.
-2. **Schedulazione e-BPF (`scx-scheds`, `scx-tools`)**:
-   - *Perché*: Gestisce il multi-tasking a livello di spazio utente tramite eBPF, surclassando lo scheduler nativo CFS in contesti di heavy-load.
-3. **Firmware & Security (`fwupd`, `mokutil`, `sbsigntools`)**:
-   - *Perché*: `fwupd` garantisce aggiornamenti BIOS/UEFI fluidi. `sbsigntools` e `mokutil` servono alla firma offline del kernel custom (MOK) per mantenere il Secure Boot inespugnabile.
-4. **Filesystem & Crittografia (`btrfs-progs`, `squashfuse`, `libxcrypt-compat`)**:
-   - *Perché*: BTRFS garantisce snapshot atomici sub-millisecondo in sinergia con OSTree.
-5. **Networking (`NetworkManager`, `systemd-resolved`)**:
-   - *Perché*: Gestione delle reti con hardening MAC address randomization e DNS-over-TLS nativo (via `opportunistic` in resolved).
-
-### 🖥️ Layer 1: L'Abitacolo (Ring 3 / Desktop & App)
-Lo stack user-space, costruito senza far uso di pesanti "Desktop Environment" legacy.
-
-1. **Wayland Compositor Stack (`niri`, `xorg-x11-server-Xwayland`)**:
-   - *Perché*: Niri fornisce un'interfaccia scrollable-tiling guidata da tastiera, leggerissima (Rust). XWayland è mantenuto isolato solo per retrocompatibilità con binari legacy.
-2. **Terminal & Core Utils (`foot`, `eza`, `bat`, `fd-find`, `ripgrep`, `nushell`)**:
-   - *Perché*: Abbiamo eradicato il vecchio stack GNU coreutils in favore di tool scritti in Rust, sicuri per la memoria, asincroni e parallelizzati, eliminando vulnerabilità zero-day native. Foot fornisce un terminal emulator iper-ottimizzato nativo Wayland in C.
-3. **Interfaccia Grafica Unificata (AGS - Aylur's Gtk Shell)**:
-   - *Perché*: Invece di avere 7 demoni frammentati in linguaggi diversi, AGS fornisce una "Super Premium UX" gestita interamente in TypeScript/GJS. AGS rimpiazza Fuzzel (Launcher), Waybar (Barra), Mako (Notifiche), Wlogout (Power Menu) e Pavucontrol/NM-Applet (Control Center), garantendo uno stato condiviso, design macOS-like, glassmorphism e animazioni perfette a 360Hz.
-4. **Autenticazione (`greetd`, `tuigreet`)**:
-   - *Perché*: `greetd` con `tuigreet` sostituisce GDM/SDDM fornendo un leggerissimo TUI login manager nel terminale, prima di inizializzare Wayland. `gnome-keyring` gestisce i segreti in background per una pulizia assoluta.
-5. **XDG Portals & Pipewire (`xdg-desktop-portal-gnome`, `xdg-desktop-portal-gtk`, `wireplumber`)**:
-   - *Perché*: Sandboxing assoluto. I flatpak non possono toccare il filesystem root e devono passare per DBus e Pipewire per screen-sharing e audio, rendendo il desktop immune a software malevolo.
-6. **Diagnostics & Hypervisor (`qemu-kvm`, `libvirt`, `virt-manager`, `bpftool`, `drm_info`, `sysstat`)**:
-   - *Perché*: Permette l'analisi profonda dal Layer 0 (BPF) fino allo strato grafico (DRM). Virtualizzazione nativa KVM esposta out-of-the-box per le pipeline di sviluppo isolato.
-7. **Ottimizzatori (`ananicy-cpp`, `greenboot`, `firewalld`)**:
-   - *Perché*: `ananicy-cpp` regola la "niceness" dei processi automaticamente in C++, garantendo che le build pesanti non facciano laggare la sessione utente. `greenboot` sorveglia l'integrità ad ogni avvio (se la rete è giù e il check fallisce, esegue un rollback OSTree in automatico). `firewalld` è configurato imperativamente con policy `drop`.
-
----
+## 🔄 Zero-Maintenance Rolling Release
+Ermete OS is an autonomous living organism:
+1. **Upstream Monitoring**: Ermete Forge continuously monitors Fedora and GitHub for updates.
+2. **Horizontal Triggering**: When the Forge recompiles a package (e.g. Kernel or AGS), it fires a `repository_dispatch` API call.
+3. **Automated Rebuild**: Base-NVIDIA and Ermete OS rebuild themselves automatically based on the dependency chain, using immutable digests (`skopeo` inspection).
+4. **OTA Updates**: Your PC downloads the cryptographically verified (Cosign) image in the background and applies it atomically on the next reboot. You do absolutely nothing.
 
 ## 🚀 Deployment (Bare Metal Installation)
 
-### Zero-Touch Provisioning (Kickstart)
-The repository includes a ready-to-use `ermete-install.ks` Kickstart file, designed for advanced power-users. It allows you to generate an installer ISO that configures the system automatically:
-- Installs via `ostreecontainer` directly from the GitHub Container Registry.
-- Leaves partitioning up to the user, expecting an encrypted **LUKS2** volume and **BTRFS** layout.
-- Disables root passwords and provisions the `wheel` user solely via SSH Ed25519 public keys.
-- Pre-enables firewalld and sshd.
+### In-Place Mutation
+If you are currently running Fedora Workstation or Silverblue, atomically mutate your root filesystem:
+```bash
+sudo bootc switch ghcr.io/patapem/ermete-os
+```
 
+### Zero-Touch Provisioning (Kickstart)
+The repository includes a ready-to-use `ermete-install.ks` Kickstart file, designed for advanced power-users.
 To generate the ISO using `bootc-image-builder`:
 ```bash
 sudo podman run \
@@ -148,13 +73,4 @@ sudo podman run \
     quay.io/centos-bootc/bootc-image-builder:latest \
     --type iso --kickstart /config.ks \
     ghcr.io/patapem/ermete-os:latest
-```
-
-*Note on Encryption:* Once installed, bind your LUKS2 partition to the TPM2 chip for seamless automatic unlocking tied to Secure Boot:
-`sudo systemd-cryptenroll --wipe-slot=tpm2 --tpm2-device=auto --tpm2-pcrs=0+2+7 /dev/mapper/root`
-
-### In-Place Mutation
-If you are currently running Fedora Workstation or Silverblue, atomically mutate your root filesystem:
-```bash
-sudo bootc switch ghcr.io/patapem/ermete-os
 ```

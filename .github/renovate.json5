@@ -19,7 +19,7 @@
       "customType": "regex",
       "fileMatch": ["^Containerfile$"],
       "matchStrings": [
-        "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>[^\\s]+)\\s+ARG [A-Z_]+_COMMIT=\"(?<currentDigest>[a-f0-9]+)\""
+        "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>[^\\s]+)\\s+ARG [A-Z_]+_COMMIT=\"(?<currentDigest>[^\"]+)\""
       ]
     },
     {

@@ -2,7 +2,7 @@
 name: Build container image
 on:
   repository_dispatch:
-    types: [base-image-updated]
+    types: [base-image-updated, forge-updated]
   pull_request:
     branches:
       - main
@@ -22,7 +22,7 @@ env:
   DEFAULT_TAG: "latest"
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}-${{ inputs.brand_name}}-${{ inputs.stream_name }}
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
@@ -55,7 +55,7 @@ jobs:
           NEW_DIGEST=$(skopeo inspect docker://ghcr.io/patapem/ermete-base-nvidia:latest | jq -r '.Digest')
           if [ -n "$NEW_DIGEST" ] && [ "$NEW_DIGEST" != "null" ]; then
             echo "New digest: $NEW_DIGEST"
-            sed -i "s/ghcr.io\/patapem\/ermete-base-nvidia@sha256:[a-f0-9]\{64\}/ghcr.io\/patapem\/ermete-base-nvidia@${NEW_DIGEST}/g" Containerfile
+            sed -i "s/ghcr.io\/patapem\/ermete-base-nvidia\(:latest\|@sha256:[a-f0-9]\{64\}\)/ghcr.io\/patapem\/ermete-base-nvidia@${NEW_DIGEST}/g" Containerfile
             
             if ! git diff --exit-code Containerfile > /dev/null; then
               echo "Digest changed, committing to Bedrock..."
@@ -102,13 +102,13 @@ jobs:
             type=sha,enable=${{ github.event_name == 'pull_request' }}
             type=ref,event=pr
           labels: |
-            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/${{ github.sha }}/README.md
+            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/README.md
             org.opencontainers.image.created=${{ steps.date.outputs.date }}
             org.opencontainers.image.description=${{ env.IMAGE_DESC }}
-            org.opencontainers.image.documentation=https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/${{ github.sha }}/README.md
-            org.opencontainers.image.source=https://github.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/blob/${{ github.sha }}/Containerfile
+            org.opencontainers.image.documentation=https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/README.md
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}/blob/${{ github.sha }}/Containerfile
             org.opencontainers.image.title=${{ env.IMAGE_NAME }}
-            org.opencontainers.image.url=https://github.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/tree/${{ github.sha }}
+            org.opencontainers.image.url=https://github.com/${{ github.repository }}/tree/${{ github.sha }}
             org.opencontainers.image.vendor=${{ github.repository_owner }}
             org.opencontainers.image.version=${{ env.DEFAULT_TAG }}.{{date 'YYYYMMDD'}}
             io.artifacthub.package.deprecated=false
