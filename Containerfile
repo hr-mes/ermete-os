@@ -27,15 +27,22 @@ COPY --from=ghcr.io/patapem/ermete-forge-repo:latest / /tmp/forge-repo
 
 # Execute all modular scripts sequentially in a single transaction to prevent OCI layer bloat
 # and preserve atomicity of the RPM database.
+# FIX BEDROCK: Install core Ermete Forge configurations (ermete-*.rpm) first via rpm -Uvh so that
+# repository definitions (/etc/yum.repos.d/rpmfusion.repo, gpg keys, etc.) are injected into the rootfs.
+# This allows DNF5 to properly resolve external dependencies (e.g. nvidia-kmod-common, ffmpeg-libs) during package install.
 RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
     rm -f /tmp/forge-repo/libav*-free-*.rpm /tmp/forge-repo/libsw*-free-*.rpm /tmp/forge-repo/libpostproc-free-*.rpm /tmp/forge-repo/ffmpeg-free-*.rpm /tmp/forge-repo/nodejs20-devel-*.rpm /tmp/forge-repo/v8-11.3-devel-*.rpm && \
-    mkdir -p /tmp/forge-custom && mv /tmp/forge-repo/ermete-*.rpm /tmp/forge-custom/ 2>/dev/null || true && \
     for name in $(rpm -qp --queryformat '%{NAME}\n' /tmp/forge-repo/*.rpm | sort | uniq); do \
         ls -1v /tmp/forge-repo/$name-[0-9]*.rpm 2>/dev/null | head -n -1 | xargs -r rm -f || true; \
     done && \
-    dnf5 install -y --allowerasing /tmp/forge-repo/*.rpm && \
-    if ls /tmp/forge-custom/*.rpm 1> /dev/null 2>&1; then rpm -Uvh --replacefiles --replacepkgs --nodeps /tmp/forge-custom/*.rpm; fi && \
-    rm -rf /tmp/forge-repo /tmp/forge-custom
+    if ls /tmp/forge-repo/ermete-*.rpm 1> /dev/null 2>&1; then \
+        echo "Installing core Ermete Forge configurations and repository definitions..." && \
+        rpm -Uvh --replacefiles --replacepkgs --nodeps /tmp/forge-repo/ermete-*.rpm && \
+        rm -f /tmp/forge-repo/ermete-*.rpm; \
+    fi && \
+    echo "Installing all remaining packages with full repository dependency resolution..." && \
+    dnf5 install -y --allowerasing --setopt=install_weak_deps=False /tmp/forge-repo/*.rpm && \
+    rm -rf /tmp/forge-repo
 
 ### DICHIARATIVITÀ ASSOLUTA (SYSTEMD PRESETS & SYSUSERS)
 # Applichiamo nativamente tutti i file .preset e i gruppi utente in modo che i target
