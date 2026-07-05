@@ -65,7 +65,7 @@ RUN systemd-sysusers && systemctl preset-all && systemctl --global preset-all
 # Creiamo preventivamente /var/roothome per risolvere il symlink /root durante il parsing di passwd
 RUN QUALIFIED_KERNEL="" && \
     for k in /lib/modules/*; do \
-        if [ -f "$k/vmlinuz" ]; then \
+        if [ -e "$k/vmlinuz" ] || [ -L "$k/vmlinuz" ]; then \
             QUALIFIED_KERNEL=$(basename "$k") && break; \
         fi; \
     done && \
