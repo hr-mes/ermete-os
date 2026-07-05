@@ -11,7 +11,7 @@
 # FIX: Renovate Bot sostituirà automaticamente il tag :latest con il vero digest SHA256 crittografico
 FROM ghcr.io/patapem/ermete-base-nvidia@sha256:c29fe8c3610d7d27659cf431f254a731ccbde30d88c35642b04e03ec343c6d19
 # Estrazione pacchetti RPM puri dai Micro-Container OCI di Ermete Forge (Isolamento totale)
-COPY --from=ghcr.io/patapem/ermete-forge-repo:latest /repo /tmp/forge-repo
+COPY --from=ghcr.io/patapem/ermete-forge-repo:latest / /tmp/forge-repo
 
 # (dart-sass rimosso, se necessario andrà creato un micro-container spec dedicato)
 
@@ -46,7 +46,9 @@ RUN systemctl preset-all && systemctl --global preset-all
 
 RUN rm -f /etc/machine-id && touch /etc/machine-id && chmod 0444 /etc/machine-id && \
     rm -rf /etc/NetworkManager/system-connections/* && \
-    dnf clean all
+    dnf clean all && \
+    find /etc/tmpfiles.d -type l -lname '/dev/null' -exec sh -c 'rm -f "$1"; touch "$1"' _ {} \; && \
+    find /run /tmp /var/log -mindepth 1 -delete || true
 
 ### LINTING
 ## Verify final image and contents are correct.
