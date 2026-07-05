@@ -38,7 +38,7 @@ RUN for kdir in /usr/lib/modules/*; do \
             kver=$(basename $kdir); \
             echo "Found custom kernel $kver, generating initramfs..."; \
             depmod -a $kver; \
-            dracut --no-hostonly --kver $kver $kdir/initramfs.img; \
+            dracut --force --no-hostonly --kver $kver $kdir/initramfs.img; \
         else \
             echo "Removing stale kernel directory $kdir..."; \
             rm -rf $kdir; \
