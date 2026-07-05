@@ -9,7 +9,7 @@
 
 # --- IMMAGINE FINALE (PRODUZIONE) ---
 # FIX: Renovate Bot sostituirà automaticamente il tag :latest con il vero digest SHA256 crittografico
-FROM ghcr.io/patapem/ermete-base-nvidia@sha256:c6fe2a22af407deb055c67b5764e5b57e2886b003d757ca907e5aba306d513dd
+FROM ghcr.io/patapem/ermete-base-nvidia@sha256:c29fe8c3610d7d27659cf431f254a731ccbde30d88c35642b04e03ec343c6d19
 # Estrazione pacchetti RPM puri dai Micro-Container OCI di Ermete Forge (Isolamento totale)
 COPY --from=ghcr.io/patapem/ermete-forge-repo:latest /repo /tmp/forge-repo
 
