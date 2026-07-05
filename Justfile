@@ -1,10 +1,6 @@
-export image_name := env("IMAGE_NAME", "Ermete") 
+export image_name := env("IMAGE_NAME", "Ermete")
 export default_tag := env("DEFAULT_TAG", "latest")
 export bib_image := env("BIB_IMAGE", "quay.io/centos-bootc/bootc-image-builder@sha256:0000000000000000000000000000000000000000000000000000000000000000")
-
-alias build-vm := build-qcow2
-alias rebuild-vm := rebuild-qcow2
-alias run-vm := run-vm-qcow2
 
 [private]
 default:
@@ -13,24 +9,12 @@ default:
 # Check Just Syntax
 [group('Just')]
 check:
-    #!/usr/bin/env bash
-    find . -type f -name "*.just" | while read -r file; do
-    	echo "Checking syntax: $file"
-    	just --unstable --fmt --check -f $file
-    done
-    echo "Checking syntax: Justfile"
     just --unstable --fmt --check -f Justfile
 
 # Fix Just Syntax
 [group('Just')]
 fix:
-    #!/usr/bin/env bash
-    find . -type f -name "*.just" | while read -r file; do
-    	echo "Checking syntax: $file"
-    	just --unstable --fmt -f $file
-    done
-    echo "Checking syntax: Justfile"
-    just --unstable --fmt -f Justfile || { exit 1; }
+    just --unstable --fmt -f Justfile
 
 # Clean Repo
 [group('Utility')]
@@ -49,8 +33,6 @@ clean:
 [private]
 sudo-clean:
     sudo just clean
-
-
 
 # Build the image using the specified parameters
 build $target_image=image_name $tag=default_tag:
@@ -99,9 +81,14 @@ _rootful_load_image $target_image=image_name $tag=default_tag:
         sudo podman pull "${target_image}:${tag}"
     fi
 
-_build-bib $target_image $tag $type $config: (_rootful_load_image target_image tag)
+_build-bib $target_image $tag $type: (_rootful_load_image target_image tag)
     #!/usr/bin/env bash
     set -euo pipefail
+
+    config="disk_config/disk.toml"
+    if [[ "${type}" == "iso" ]]; then
+        config="disk_config/iso.toml"
+    fi
 
     args="--type ${type} "
     args+="--use-librepo=True "
@@ -134,33 +121,17 @@ _build-bib $target_image $tag $type $config: (_rootful_load_image target_image t
     sudo rmdir $BUILDTMP
     sudo chown -R $USER:$USER output/
 
-_rebuild-bib $target_image $tag $type $config: (build target_image tag) && (_build-bib target_image tag type config)
+_rebuild-bib $target_image $tag $type: (build target_image tag) && (_build-bib target_image tag type)
 
-# Build a QCOW2 virtual machine image
-[group('Build Virtal Machine Image')]
-build-qcow2 $target_image=("localhost/" + image_name) $tag=default_tag: && (_build-bib target_image tag "qcow2" "disk_config/disk.toml")
+# Build a virtual machine image
+[group('Build Virtual Machine Image')]
+build-vm type="qcow2" target_image=("localhost/" + image_name) tag=default_tag: && (_build-bib target_image tag type)
 
-# Build a RAW virtual machine image
-[group('Build Virtal Machine Image')]
-build-raw $target_image=("localhost/" + image_name) $tag=default_tag: && (_build-bib target_image tag "raw" "disk_config/disk.toml")
+# Rebuild a virtual machine image
+[group('Build Virtual Machine Image')]
+rebuild-vm type="qcow2" target_image=("localhost/" + image_name) tag=default_tag: && (_rebuild-bib target_image tag type)
 
-# Build an ISO virtual machine image
-[group('Build Virtal Machine Image')]
-build-iso $target_image=("localhost/" + image_name) $tag=default_tag: && (_build-bib target_image tag "iso" "disk_config/iso.toml")
-
-# Rebuild a QCOW2 virtual machine image
-[group('Build Virtal Machine Image')]
-rebuild-qcow2 $target_image=("localhost/" + image_name) $tag=default_tag: && (_rebuild-bib target_image tag "qcow2" "disk_config/disk.toml")
-
-# Rebuild a RAW virtual machine image
-[group('Build Virtal Machine Image')]
-rebuild-raw $target_image=("localhost/" + image_name) $tag=default_tag: && (_rebuild-bib target_image tag "raw" "disk_config/disk.toml")
-
-# Rebuild an ISO virtual machine image
-[group('Build Virtal Machine Image')]
-rebuild-iso $target_image=("localhost/" + image_name) $tag=default_tag: && (_rebuild-bib target_image tag "iso" "disk_config/iso.toml")
-
-_run-vm $target_image $tag $type $config:
+_run-vm $target_image $tag $type:
     #!/usr/bin/env bash
     set -eoux pipefail
 
@@ -201,17 +172,9 @@ _run-vm $target_image $tag $type $config:
     (sleep 30 && xdg-open http://localhost:"$port") &
     podman run "${run_args[@]}"
 
-# Run a virtual machine from a QCOW2 image
-[group('Run Virtal Machine')]
-run-vm-qcow2 $target_image=("localhost/" + image_name) $tag=default_tag: && (_run-vm target_image tag "qcow2" "disk_config/disk.toml")
-
-# Run a virtual machine from a RAW image
-[group('Run Virtal Machine')]
-run-vm-raw $target_image=("localhost/" + image_name) $tag=default_tag: && (_run-vm target_image tag "raw" "disk_config/disk.toml")
-
-# Run a virtual machine from an ISO
-[group('Run Virtal Machine')]
-run-vm-iso $target_image=("localhost/" + image_name) $tag=default_tag: && (_run-vm target_image tag "iso" "disk_config/iso.toml")
+# Run a virtual machine
+[group('Run Virtual Machine')]
+run-vm type="qcow2" target_image=("localhost/" + image_name) tag=default_tag: && (_run-vm target_image tag type)
 
 # Run a virtual machine using systemd-vmspawn
 [group('Run Virtal Machine')]
@@ -230,7 +193,6 @@ spawn-vm rebuild="0" type="qcow2" ram="6G":
       --network-user-mode \
       --vsock=false --pass-ssh-key=false \
       -i ./output/**/*.{{ type }}
-
 
 # Runs shell check on all Bash scripts
 lint:

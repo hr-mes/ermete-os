@@ -32,6 +32,19 @@ RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --moun
     if ls /tmp/forge-custom/*.rpm 1> /dev/null 2>&1; then rpm -Uvh --replacefiles --replacepkgs --nodeps /tmp/forge-custom/*.rpm; fi && \
     rm -rf /tmp/forge-repo /tmp/forge-custom
 
+# Fix initramfs for custom Ermete Forge kernel and remove stale Fedora kernels
+RUN for kdir in /usr/lib/modules/*; do \
+        if [ -f "$kdir/vmlinuz" ]; then \
+            kver=$(basename $kdir); \
+            echo "Found custom kernel $kver, generating initramfs..."; \
+            depmod -a $kver; \
+            dracut --no-hostonly --kver $kver $kdir/initramfs.img; \
+        else \
+            echo "Removing stale kernel directory $kdir..."; \
+            rm -rf $kdir; \
+        fi; \
+    done
+
 # (Nessun system_files iniettato. L'architettura Bedrock usa il 100% di astrazione via RPM OCI).
 # Symlinks managed by system-config RPM
 

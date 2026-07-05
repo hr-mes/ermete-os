@@ -1,0 +1,5 @@
+title Ermete OS 43 (ostree:0)
+version 1
+options root=UUID=aa91809f-d683-4798-af6d-b45ce8540863 rw nvidia-drm.modeset=1 nvidia-drm.fbdev=1 nvidia.NVreg_PreserveVideoMemoryAllocations=1 ostree=/ostree/boot.1/default/2239b4d3fd7c0967740e6eabed56269dcf4e93074678128ffe00dfe9966a89e7/0
+linux /boot/ostree/default-2239b4d3fd7c0967740e6eabed56269dcf4e93074678128ffe00dfe9966a89e7/vmlinuz-6.18.38
+initrd /boot/ostree/default-2239b4d3fd7c0967740e6eabed56269dcf4e93074678128ffe00dfe9966a89e7/initramfs-6.18.38.img
