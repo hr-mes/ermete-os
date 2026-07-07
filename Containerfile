@@ -59,10 +59,9 @@ RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --moun
 # (es. nix-daemon, udevd con utenti e gruppi) vengano registrati nell'immagine OCI.
 RUN systemd-sysusers && systemctl preset-all && systemctl --global preset-all
 
-### BEDROCK KERNEL & INITRAMFS GENERATION (Ring 0 -> Ring 3 Integration)
-# Forziamo l'inclusione dei moduli NVIDIA perché le scriptlets DNF sono disabilitate o noscripts
-# Inglobiamo i db utente per consentire a udevd di risolvere i gruppi 'video' e 'render'
-# Creiamo preventivamente /var/roothome per risolvere il symlink /root durante il parsing di passwd
+### BEDROCK KERNEL & INITRAMFS GENERATION (Zero-Compute Pre-Forgiato)
+# Il kernel e l'initramfs sono già generati ed incapsulati nei micro-container OCI della Forgia (ermete-initramfs).
+# Ci limitiamo ad aggiornare ldconfig per sicurezza.
 RUN QUALIFIED_KERNEL="" && \
     for k in /lib/modules/*; do \
         if [ -e "$k/vmlinuz" ] || [ -L "$k/vmlinuz" ]; then \
@@ -70,14 +69,8 @@ RUN QUALIFIED_KERNEL="" && \
         fi; \
     done && \
     if [ -z "$QUALIFIED_KERNEL" ]; then echo "ERRORE: Nessun vmlinuz trovato in /lib/modules! Build abortita." && exit 1; fi && \
-    echo "Found Chimera Kernel: ${QUALIFIED_KERNEL}, generating initramfs..." && \
+    echo "Found Chimera Kernel: ${QUALIFIED_KERNEL}" && \
     depmod "${QUALIFIED_KERNEL}" && \
-    mkdir -p /var/roothome && \
-    /usr/bin/dracut --no-hostonly --kver "${QUALIFIED_KERNEL}" --reproducible --zstd -v \
-        --add ostree --add fido2 --force-drivers "nvidia nvidia_modeset nvidia_uvm nvidia_drm" \
-        --install "/etc/group /etc/passwd" \
-        -f "/usr/lib/modules/${QUALIFIED_KERNEL}/initramfs.img" && \
-    chmod 0600 /usr/lib/modules/"${QUALIFIED_KERNEL}"/initramfs.img && \
     ldconfig
 
 ### NIX STATE (Immutability Fix)
