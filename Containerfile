@@ -81,11 +81,10 @@ RUN QUALIFIED_KERNEL="" && \
 
 ### HARDENING & OSTREE LINTING FIXES
 RUN authselect select sssd with-silent-lastlog without-nullok --force || authselect select local with-silent-lastlog without-nullok --force || true
-RUN rm -f /etc/machine-id && touch /etc/machine-id && chmod 0444 /etc/machine-id && \
+RUN rm -f /etc/machine-id && touch /etc/machine-id && \
     rm -rf /etc/NetworkManager/system-connections/* && \
     dnf clean all && \
     rm -rf /boot/* && \
-    find /etc/tmpfiles.d /usr/lib/tmpfiles.d -type l -lname '/dev/null' -exec sh -c 'rm -f "$1"; touch "$1"' _ {} \; && \
     find /run /tmp /var/log -mindepth 1 -delete || true
 
 ### LINTING
