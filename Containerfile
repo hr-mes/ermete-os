@@ -43,15 +43,9 @@ RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --moun
         rpm -Uvh --replacefiles --replacepkgs --nodeps /tmp/forge-repo/ermete-base-config*.rpm && \
         rm -f /tmp/forge-repo/ermete-base-config*.rpm; \
     fi && \
-    echo "Step 2: Isolating remaining custom Ermete OS packages to prevent upstream file conflicts..." && \
-    mkdir -p /tmp/forge-custom && mv /tmp/forge-repo/ermete-*.rpm /tmp/forge-custom/ 2>/dev/null || true && \
-    echo "Step 3: Installing all upstream packages and drivers with full repository dependency resolution..." && \
+    echo "Step 2: Installing all packages and drivers with full repository dependency resolution..." && \
     dnf5 install -y --allowerasing --setopt=install_weak_deps=False /tmp/forge-repo/*.rpm && \
-    echo "Step 4: Applying custom Ermete OS aesthetic, configurations, and overrides..." && \
-    if ls /tmp/forge-custom/*.rpm 1> /dev/null 2>&1; then \
-        rpm -Uvh --replacefiles --replacepkgs --nodeps /tmp/forge-custom/*.rpm; \
-    fi && \
-    rm -rf /tmp/forge-repo /tmp/forge-custom
+    rm -rf /tmp/forge-repo
 
 ### DICHIARATIVITÀ ASSOLUTA (SYSTEMD PRESETS & SYSUSERS)
 # Applichiamo nativamente tutti i file .preset e i gruppi utente in modo che i target
