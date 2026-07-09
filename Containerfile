@@ -14,8 +14,7 @@ RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --moun
     dnf upgrade -y --setopt=install_weak_deps=False
 
 # Epurazione Totale (Bedrock) del kernel Fedora upstream per impedire a dracut o dnf di intercettare versioni fantasma
-RUN dnf5 -y remove --no-autoremove kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-tools kernel-tools-libs zram-generator-defaults && \
-    rm -rf /lib/modules/* /usr/lib/modules/*
+RUN dnf5 -y remove --no-autoremove kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-tools kernel-tools-libs zram-generator-defaults
 
 # Estrazione pacchetti RPM puri dai Micro-Container OCI di Ermete Forge (Isolamento totale)
 COPY --from=ghcr.io/patapem/ermete-forge-repo:latest / /tmp/forge-repo
@@ -50,7 +49,7 @@ RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --moun
     dnf5 install -y --allowerasing --setopt=install_weak_deps=False /tmp/forge-repo/*.rpm && \
     echo "Step 4: Applying custom Ermete OS aesthetic, configurations, and overrides..." && \
     if ls /tmp/forge-custom/*.rpm 1> /dev/null 2>&1; then \
-        rpm -Uvh --replacefiles --replacepkgs --nodeps /tmp/forge-custom/*.rpm; \
+        rpm -Uvh --replacefiles --replacepkgs /tmp/forge-custom/*.rpm; \
     fi && \
     rm -rf /tmp/forge-repo /tmp/forge-custom
 
