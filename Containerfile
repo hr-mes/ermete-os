@@ -47,6 +47,14 @@ RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --moun
     dnf5 install -y --allowerasing --setopt=install_weak_deps=False /tmp/forge-repo/*.rpm && \
     rm -rf /tmp/forge-repo
 
+### BEDROCK SELINUX (Declarative Compilation)
+# We compile the policies here in the Containerfile so they are atomic with the OCI image.
+# We DO NOT use allow_execmem 1 to preserve enterprise security (W^X).
+RUN semodule -i /usr/share/selinux/packages/bootupd_lsblk.pp && \
+    semodule -i /usr/share/selinux/packages/ermete_scx.pp && \
+    setsebool -P daemons_enable_cluster_mode 1 && \
+    setsebool -P xserver_execmem 1
+
 ### DICHIARATIVITÀ ASSOLUTA (SYSTEMD PRESETS & SYSUSERS)
 # Applichiamo nativamente tutti i file .preset e i gruppi utente in modo che i target
 # (es. nix-daemon, udevd con utenti e gruppi) vengano registrati nell'immagine OCI.
