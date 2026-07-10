@@ -44,8 +44,37 @@ RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --moun
         rm -f /tmp/forge-repo/ermete-base-config*.rpm; \
     fi && \
     echo "Step 2: Installing all packages and drivers with full repository dependency resolution..." && \
+    dnf5 install -y squashfs-tools && \
     dnf5 install -y --allowerasing --setopt=install_weak_deps=False /tmp/forge-repo/*.rpm && \
-    rm -rf /tmp/forge-repo
+    rm -rf /tmp/forge-repo && \
+    echo "Step 3: Extracting Ring 3 (UI) into a systemd-sysext squashfs..." && \
+    mkdir -p /tmp/sysext_root/usr/lib/extension-release.d && \
+    echo -e "ID=fedora\nVERSION_ID=${FEDORA_VERSION}" > /tmp/sysext_root/usr/lib/extension-release.d/extension-release.ermete-ring3 && \
+    for pkg in ermete-shell-rs; do \
+        for file in $(rpm -ql $pkg); do \
+            if [ -f "$file" ] && [[ "$file" == /usr/* ]]; then \
+                mkdir -p "/tmp/sysext_root$(dirname $file)" && \
+                mv "$file" "/tmp/sysext_root$file"; \
+            fi; \
+        done; \
+    done && \
+    mkdir -p /usr/share/ermete-seed && \
+    mksquashfs /tmp/sysext_root/usr /usr/share/ermete-seed/ermete-ring3.raw -noappend -comp zstd -b 1048576 && \
+    rm -rf /tmp/sysext_root && \
+    echo "[Unit]" > /usr/lib/systemd/system/ermete-sysext-seed.service && \
+    echo "Description=Ermete Ring 3 Sysext Seed" >> /usr/lib/systemd/system/ermete-sysext-seed.service && \
+    echo "DefaultDependencies=no" >> /usr/lib/systemd/system/ermete-sysext-seed.service && \
+    echo "After=local-fs.target" >> /usr/lib/systemd/system/ermete-sysext-seed.service && \
+    echo "Before=systemd-sysext.service" >> /usr/lib/systemd/system/ermete-sysext-seed.service && \
+    echo "ConditionPathExists=!/var/lib/extensions/ermete-ring3.raw" >> /usr/lib/systemd/system/ermete-sysext-seed.service && \
+    echo "[Service]" >> /usr/lib/systemd/system/ermete-sysext-seed.service && \
+    echo "Type=oneshot" >> /usr/lib/systemd/system/ermete-sysext-seed.service && \
+    echo "ExecStartPre=/bin/mkdir -p /var/lib/extensions" >> /usr/lib/systemd/system/ermete-sysext-seed.service && \
+    echo "ExecStart=/bin/cp /usr/share/ermete-seed/ermete-ring3.raw /var/lib/extensions/ermete-ring3.raw" >> /usr/lib/systemd/system/ermete-sysext-seed.service && \
+    echo "RemainAfterExit=yes" >> /usr/lib/systemd/system/ermete-sysext-seed.service && \
+    echo "[Install]" >> /usr/lib/systemd/system/ermete-sysext-seed.service && \
+    echo "WantedBy=sysinit.target" >> /usr/lib/systemd/system/ermete-sysext-seed.service && \
+    systemctl enable ermete-sysext-seed.service
 
 ### BEDROCK SELINUX (Declarative Compilation)
 # We compile the policies here in the Containerfile so they are atomic with the OCI image.
@@ -58,7 +87,7 @@ RUN semodule -i /usr/share/selinux/packages/bootupd_lsblk.pp && \
 ### DICHIARATIVITÀ ASSOLUTA (SYSTEMD PRESETS & SYSUSERS)
 # Applichiamo nativamente tutti i file .preset e i gruppi utente in modo che i target
 # (es. nix-daemon, udevd con utenti e gruppi) vengano registrati nell'immagine OCI.
-RUN systemd-sysusers && systemctl preset-all && systemctl --global preset-all
+RUN systemctl enable systemd-sysext.service && systemd-sysusers && systemctl preset-all && systemctl --global preset-all
 
 ### BEDROCK KERNEL & INITRAMFS GENERATION (Zero-Compute Pre-Forgiato)
 # Il kernel e l'initramfs sono già generati ed incapsulati nei micro-container OCI della Forgia (ermete-initramfs).
