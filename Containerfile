@@ -77,11 +77,9 @@ RUN authselect select sssd with-silent-lastlog without-nullok --force || authsel
 RUN rm -f /etc/machine-id && touch /etc/machine-id && \
     rm -rf /etc/NetworkManager/system-connections/* && \
     dnf clean all && \
-    rm -rf /boot/* && \
-    find /run /tmp /var/log -mindepth 1 -delete || true
-
-### DEBUG LINTING
-RUN find /var -type l -lname '/*' -ls || true
+    find /boot -mindepth 1 -delete || true && \
+    find /run /tmp /var/log -mindepth 1 -delete || true && \
+    find /var -type l -lname '/*' -delete || true
 
 ### LINTING
 ## Verify final image and contents are correct.
