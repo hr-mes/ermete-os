@@ -6,40 +6,41 @@
 ---
 
 **Ermete OS** is a hyper-modern, immutable Operating System distributed as a Bootable OCI Container.
-It merges the absolute performance of CachyOS with the bulletproof atomicity of Fedora OSTree, wrapping everything in a stunning, macOS-grade UI orchestrated by AGS and Niri.
+It merges the absolute performance of an agnostically clean LLVM/Clang Kernel with the bulletproof atomicity of Fedora OSTree, wrapping everything in a stunning, macOS-grade UI orchestrated natively in Rust (ermete-shell-rs) and Niri.
 
 ## 🏗️ The Bedrock Forge Ecosystem (Absolute RPM Encapsulation)
 
 In strict adherence to the **"Absolute RPM Encapsulation"** dogma, Ermete OS **contains zero raw scripts or scattered files** (the `system_files/` pattern has been eradicated). The entire OS is conceived as a pure declarative OCI layer that mathematically merges pre-forged components.
 
 The "Raven's View" architecture follows a flawless OCI waterfall:
-1. **Layer 0 (Base NVIDIA)**: Formal derivation from `ghcr.io/patapem/ermete-base-nvidia:latest`. It provides the Fedora 43 base, the PGO-optimized Trismegistus Kernel, and NVIDIA DKMS drivers, chronologically synced for perfect KMS early-boot initialization.
-2. **Layer 1 (The UI Graveyard)**: The OS extracts the topological graph from GHCR. All components (Astal, Hyprpanel, AGS v1/v2, Starship, Matugen, Niri config, system scripts) originate strictly from micro-containers (`ghcr.io/patapem/ermete-forge-*`) compiled in the private Forge.
-3. **Layer 2 (Upstream Injection)**: Modern tools (`eza`, `bat`, `nushell`, `ripgrep`) are fetched from the Forge's rolling-upstream pipeline, compiled aggressively with GCC 15 `x86-64-v3` and `-O3`.
-4. **The Final Bake (Zero-Bloat)**: DNF5 resolves the dependency graph (`dnf5 install --allowerasing`), overriding older Fedora packages with the extreme Forge RPMs, producing a slim, immaculate filesystem with zero ghost layers.
+1. **Layer 0 (Base NVIDIA)**: Formal derivation from `ghcr.io/patapem/ermete-base-nvidia:latest`. It provides the Fedora 43 base, the LLVM/Clang Trismegistus Kernel, and NVIDIA DKMS drivers, chronologically synced for perfect KMS early-boot initialization.
+2. **Layer 1 (The UI Graveyard)**: The OS extracts the topological graph from GHCR. All components (ermete-shell-rs, Niri config, system scripts) originate strictly from micro-containers (`ghcr.io/patapem/ermete-forge-*`) compiled in the private Forge. JavaScript-based monoliths (AGS) have been totally eradicated.
+3. **Layer 2 (Upstream Injection)**: Modern tools (`eza`, `bat`, `nushell`, `ripgrep`) are fetched from the Forge's rolling-upstream pipeline, compiled aggressively with `-O3` and ThinLTO.
+4. **The Final Bake (Zero-Bloat & Zero-Dracut)**: DNF5 resolves the dependency graph (`dnf5 install --allowerasing`), overriding older Fedora packages with the extreme Forge RPMs, producing a slim, immaculate filesystem with zero ghost layers. The kernel and initramfs are pre-forged; `dracut` is never run inside the OS build.
 
 All custom packages are autonomously built, linted, and cryptographically signed in the adjacent [Ermete Forge](https://github.com/patapem/ermete-forge) repository.
 
 ## ⚡ Extreme Performance & Wayland Stack
 - **ZRAM Compressed Memory**: 100% RAM allocation dynamically compressed via **ZSTD** (`vm.swappiness=150`).
+- **Zero-Dracut Boot**: Kernel and initramfs are pre-packaged via `ermete-initramfs`. The OS build phase only triggers `depmod` and `ldconfig`.
 - **Systemd User Orchestration**: The Wayland compositor (Niri) does not spawn processes imperatively. Everything is handled cleanly by `systemd --user` binding to `niri-session.target`, ensuring graceful teardown and infinite idempotency.
-- **The Stack**:
+- **The Dualism Stack (Native Frontend vs Systemd Backend)**:
   - Compositor: **Niri** (Scrollable Tiling). Hardware accelerated with `GBM_BACKEND=nvidia-drm`.
-  - UI Framework: **AGS (Aylur's Gtk Shell)**. A unified TypeScript/GJS ecosystem providing a 360Hz "Super Premium UX" for Top Bar, Control Center, App Launcher, Notifications, and Power Menu.
-  - Terminal: **Foot** (Wayland native, C-based, lightweight).
+  - UI Frontend: **ermete-shell-rs**. A pure Rust native GTK4 Layer Shell application that replaces JavaScript monoliths, achieving zero GC overhead and micro-second responsiveness.
+  - Backend: **Systemd**. Manages only headless core daemons, while `ermete-shell-rs` handles the interactive UI.
 
-## ⚖️ Le Leggi del Ring 3 (Project Rules)
+## ⚖️ Le Leggi del Ring 3 (Project Rules per i Manutentori)
 Queste direttive generali assicurano la coerenza architetturale, garantendo che lo strato utente rimanga robusto e isolato dal core del sistema.
 
 ### 🟢 COSA DEVE ESSERE FATTO (The "Musts")
-- **PIPELINE:** Ereditare in modo immutabile l'infrastruttura sottostante di Base NVIDIA, agendo esclusivamente come aggregatore di livello superiore.
-- **PIPELINE:** Gestire le sovrascritture di configurazione in modo formale e dichiarativo, permettendo ai pacchetti custom di sostituire le logiche legacy in fase di assemblaggio.
-- **USERSPACE:** Mantenere il root filesystem pristino e intoccato a runtime. App e framework devono girare in sandboxing (Flatpak) o in ambienti dinamicamente isolati (Nix).
+- **PIPELINE:** L'OS non costruisce nulla. L'OS si limita a risolvere e assemblare RPM (in `/tmp/forge-repo`) costruiti esclusivamente in `ermete-forge`.
+- **KERNEL/BOOT:** Mantenere il "Zero-Dracut" approach. Non lanciare mai `dracut` nel Containerfile.
+- **DESKTOP ARCHITECTURE (La Morte di JavaScript):** Il Backend resta C/Rust gestito da Systemd. Il Frontend è esclusivamente **ermete-shell-rs** in puro Rust/GTK4. Mai introdurre framework UI basati su JavaScript o NodeJS. Qualsiasi nuovo demone grafico o applet DEVE essere inglobato nativamente nell'ecosistema Rust.
 
 ### 🔴 COSA NON DEVE ESSERE MAI FATTO (The "Never Do's")
 - **PIPELINE:** Utilizzare comandi shell distruttivi all'interno del processo di generazione dell'immagine (es. sed, cp, rm) per manipolare configurazioni di sistema; queste devono derivare da pacchetti strutturati.
 - **PIPELINE:** Alterare o ricostruire componenti del Ring 0 in questo livello (la gestione hardware e boot appartiene esplicitamente al layer Base).
-- **USERSPACE:** Effettuare modifiche dirette ai file globali post-installazione, aggirando il flusso di forgiatura. Ogni evoluzione del sistema deve nascere come modifica del codice sorgente.
+- **USERSPACE / TWEAKING:** Mai lanciare demoni grafici (es. `swaybg`, `dunst`) affiancati a `ermete-shell-rs`. L'ecosistema Rust assorbe tutto. Se la shell UI crasha, Systemd la riavvia nativamente.
 
 ## 📦 Segregated Software Management
 Due to root immutability, the traditional `dnf install` paradigm is obliterated in user-space:
