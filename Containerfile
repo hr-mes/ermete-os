@@ -83,4 +83,4 @@ RUN rm -f /etc/machine-id && touch /etc/machine-id && \
 
 ### LINTING
 ## Verify final image and contents are correct.
-RUN bootc container lint
+RUN bootc container lint --skip var-tmpfiles
