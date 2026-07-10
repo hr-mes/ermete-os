@@ -80,6 +80,9 @@ RUN rm -f /etc/machine-id && touch /etc/machine-id && \
     rm -rf /boot/* && \
     find /run /tmp /var/log -mindepth 1 -delete || true
 
+### DEBUG LINTING
+RUN find /var -type l -lname '/*' -ls || true
+
 ### LINTING
 ## Verify final image and contents are correct.
 RUN bootc container lint
