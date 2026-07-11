@@ -54,7 +54,7 @@ RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --moun
         for file in $(rpm -ql $pkg); do \
             if [ -f "$file" ] && [[ "$file" == /usr/* ]]; then \
                 mkdir -p "/tmp/sysext_root$(dirname $file)" && \
-                mv "$file" "/tmp/sysext_root$file"; \
+                cp -a "$file" "/tmp/sysext_root$file"; \
             fi; \
         done; \
     done && \
