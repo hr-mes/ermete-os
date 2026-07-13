@@ -33,48 +33,45 @@ COPY --from=ghcr.io/patapem/ermete-forge-repo:latest / /tmp/forge-repo
 #    like /etc/greetd/config.toml) to /tmp/forge-custom so they do not conflict with upstream DNF installations.
 # 3) We run dnf5 install to download and resolve all upstream packages and external dependencies.
 # 4) Finally, we install the custom ermete-*.rpm packages via rpm -Uvh --replacefiles --replacepkgs to apply our OS aesthetic and hardening.
+# TIER 0: BEDROCK HARDWARE & KERNEL FOUNDATION (~4.4 GB - Static Cache)
 RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
     rm -f /tmp/forge-repo/libav*-free-*.rpm /tmp/forge-repo/libsw*-free-*.rpm /tmp/forge-repo/libpostproc-free-*.rpm /tmp/forge-repo/ffmpeg-free-*.rpm /tmp/forge-repo/nodejs20-devel-*.rpm /tmp/forge-repo/v8-11.3-devel-*.rpm && \
     for name in $(rpm -qp --queryformat '%{NAME}\n' /tmp/forge-repo/*.rpm | sort | uniq); do \
         ls -1v /tmp/forge-repo/$name-[0-9]*.rpm 2>/dev/null | head -n -1 | xargs -r rm -f || true; \
     done && \
     if ls /tmp/forge-repo/ermete-base-config*.rpm 1> /dev/null 2>&1; then \
-        echo "Step 1: Installing core Ermete Forge base configuration and repository definitions..." && \
+        echo "Tier 0: Installing core Ermete Forge base configuration and repository definitions..." && \
         rpm -Uvh --replacefiles --replacepkgs --nodeps /tmp/forge-repo/ermete-base-config*.rpm && \
         rm -f /tmp/forge-repo/ermete-base-config*.rpm; \
     fi && \
-    echo "Step 2: Installing all packages and drivers with full repository dependency resolution..." && \
-    dnf5 install -y squashfs-tools && \
+    mkdir -p /tmp/tier1 /tmp/tier2 /tmp/tier3 && \
+    mv /tmp/forge-repo/ermete-shell-rs*.rpm /tmp/forge-repo/ermete-settings-rs*.rpm /tmp/forge-repo/ermete-daemon-rs*.rpm /tmp/forge-repo/ermete-store-rs*.rpm /tmp/forge-repo/ermete-doctor*.rpm /tmp/tier3/ 2>/dev/null || true && \
+    mv /tmp/forge-repo/bibata-cursor*.rpm /tmp/forge-repo/matugen*.rpm /tmp/tier2/ 2>/dev/null || true && \
+    mv /tmp/forge-repo/ermete-greeter*.rpm /tmp/forge-repo/ermete-system-config*.rpm /tmp/tier1/ 2>/dev/null || true && \
+    echo "Tier 0: Installing Bedrock hardware, kernel Chimera & NVIDIA dependencies..." && \
     dnf5 install -y --allowerasing --setopt=install_weak_deps=False /tmp/forge-repo/*.rpm && \
-    rm -rf /tmp/forge-repo && \
-    echo "Step 3: Extracting Ring 3 (UI) into a systemd-sysext squashfs..." && \
-    mkdir -p /tmp/sysext_root/usr/lib/extension-release.d && \
-    echo -e "ID=fedora\nVERSION_ID=${FEDORA_VERSION}" > /tmp/sysext_root/usr/lib/extension-release.d/extension-release.ermete-ring3 && \
-    for pkg in ermete-shell-rs; do \
-        for file in $(rpm -ql $pkg); do \
-            if [ -f "$file" ] && [[ "$file" == /usr/* ]]; then \
-                mkdir -p "/tmp/sysext_root$(dirname $file)" && \
-                cp -a "$file" "/tmp/sysext_root$file"; \
-            fi; \
-        done; \
-    done && \
-    mkdir -p /usr/share/ermete-seed && \
-    mksquashfs /tmp/sysext_root/usr /usr/share/ermete-seed/ermete-ring3.raw -noappend -comp zstd -b 1048576 && \
-    rm -rf /tmp/sysext_root && \
-    echo "[Unit]" > /usr/lib/systemd/system/ermete-sysext-seed.service && \
-    echo "Description=Ermete Ring 3 Sysext Seed" >> /usr/lib/systemd/system/ermete-sysext-seed.service && \
-    echo "DefaultDependencies=no" >> /usr/lib/systemd/system/ermete-sysext-seed.service && \
-    echo "After=local-fs.target" >> /usr/lib/systemd/system/ermete-sysext-seed.service && \
-    echo "Before=systemd-sysext.service" >> /usr/lib/systemd/system/ermete-sysext-seed.service && \
-    echo "ConditionPathExists=!/var/lib/extensions/ermete-ring3.raw" >> /usr/lib/systemd/system/ermete-sysext-seed.service && \
-    echo "[Service]" >> /usr/lib/systemd/system/ermete-sysext-seed.service && \
-    echo "Type=oneshot" >> /usr/lib/systemd/system/ermete-sysext-seed.service && \
-    echo "ExecStartPre=/bin/mkdir -p /var/lib/extensions" >> /usr/lib/systemd/system/ermete-sysext-seed.service && \
-    echo "ExecStart=/bin/cp /usr/share/ermete-seed/ermete-ring3.raw /var/lib/extensions/ermete-ring3.raw" >> /usr/lib/systemd/system/ermete-sysext-seed.service && \
-    echo "RemainAfterExit=yes" >> /usr/lib/systemd/system/ermete-sysext-seed.service && \
-    echo "[Install]" >> /usr/lib/systemd/system/ermete-sysext-seed.service && \
-    echo "WantedBy=sysinit.target" >> /usr/lib/systemd/system/ermete-sysext-seed.service && \
-    systemctl enable ermete-sysext-seed.service
+    rm -rf /tmp/forge-repo
+
+# TIER 1: DISPLAY SERVER & CORE USERSPACE SERVICES (~34 MB)
+RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
+    if ls /tmp/tier1/*.rpm 1> /dev/null 2>&1; then \
+        echo "Tier 1: Installing Display Server & Core Userspace Services..." && \
+        dnf5 install -y --setopt=install_weak_deps=False /tmp/tier1/*.rpm; \
+    fi && rm -rf /tmp/tier1
+
+# TIER 2: DESIGN SYSTEM & STATIC ASSETS (~18 MB)
+RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
+    if ls /tmp/tier2/*.rpm 1> /dev/null 2>&1; then \
+        echo "Tier 2: Installing Design System & Static Assets..." && \
+        dnf5 install -y --setopt=install_weak_deps=False /tmp/tier2/*.rpm; \
+    fi && rm -rf /tmp/tier2
+
+# TIER 3: AGILE RUST SHELL & APPS (~8 MB - Instant Live Swap)
+RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
+    if ls /tmp/tier3/*.rpm 1> /dev/null 2>&1; then \
+        echo "Tier 3: Installing Agile Rust Shell & Apps..." && \
+        dnf5 install -y --setopt=install_weak_deps=False /tmp/tier3/*.rpm; \
+    fi && rm -rf /tmp/tier3
 
 ### BEDROCK SELINUX (Declarative Compilation)
 # We compile the policies here in the Containerfile so they are atomic with the OCI image.
