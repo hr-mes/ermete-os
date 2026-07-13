@@ -110,7 +110,9 @@ RUN QUALIFIED_KERNEL="" && \
 RUN authselect select sssd with-silent-lastlog without-nullok --force || authselect select local with-silent-lastlog without-nullok --force || true
 RUN rm -f /etc/machine-id && touch /etc/machine-id && \
     rm -rf /etc/NetworkManager/system-connections/* && \
+    rm -rf /usr/lib/firmware/mellanox /usr/lib/firmware/qlogic /usr/lib/firmware/netronome /usr/lib/firmware/liquidio || true && \
     dnf clean all && \
+    rm -rf /var/cache/dnf/* /var/lib/dnf/* && \
     find /boot -mindepth 1 -delete || true && \
     find /run /tmp /var/log -mindepth 1 -delete || true && \
     find /var -type l -lname '/*' -delete || true
