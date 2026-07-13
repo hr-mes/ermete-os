@@ -45,9 +45,9 @@ RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --moun
         rm -f /tmp/forge-repo/ermete-base-config*.rpm; \
     fi && \
     mkdir -p /tmp/tier1 /tmp/tier2 /tmp/tier3 && \
-    mv /tmp/forge-repo/ermete-shell-rs*.rpm /tmp/forge-repo/ermete-settings-rs*.rpm /tmp/forge-repo/ermete-daemon-rs*.rpm /tmp/forge-repo/ermete-store-rs*.rpm /tmp/forge-repo/ermete-doctor*.rpm /tmp/tier3/ 2>/dev/null || true && \
-    mv /tmp/forge-repo/bibata-cursor*.rpm /tmp/forge-repo/matugen*.rpm /tmp/tier2/ 2>/dev/null || true && \
-    mv /tmp/forge-repo/ermete-greeter*.rpm /tmp/forge-repo/ermete-system-config*.rpm /tmp/tier1/ 2>/dev/null || true && \
+    mv /tmp/forge-repo/ermete-shell-rs*.rpm /tmp/forge-repo/ermete-settings-rs*.rpm /tmp/forge-repo/ermete-daemon-rs*.rpm /tmp/forge-repo/ermete-store-rs*.rpm /tmp/forge-repo/ermete-doctor*.rpm /tmp/forge-repo/ermete-system-services*.rpm /tmp/forge-repo/ermete-desktop-ui*.rpm /tmp/tier3/ 2>/dev/null || true && \
+    mv /tmp/forge-repo/*bibata*.rpm /tmp/forge-repo/*matugen*.rpm /tmp/forge-repo/*dart-sass*.rpm /tmp/tier2/ 2>/dev/null || true && \
+    mv /tmp/forge-repo/*greeter*.rpm /tmp/forge-repo/*system-config*.rpm /tmp/forge-repo/*system-tweaks*.rpm /tmp/forge-repo/*starship*.rpm /tmp/forge-repo/*bat*.rpm /tmp/forge-repo/*ananicy*.rpm /tmp/forge-repo/*cliphist*.rpm /tmp/forge-repo/*ide-bootstrap*.rpm /tmp/tier1/ 2>/dev/null || true && \
     echo "Tier 0: Installing Bedrock hardware, kernel Chimera & NVIDIA dependencies..." && \
     dnf5 install -y --allowerasing --setopt=install_weak_deps=False /tmp/forge-repo/*.rpm && \
     rm -rf /tmp/forge-repo
