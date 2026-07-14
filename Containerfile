@@ -45,6 +45,16 @@ RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --moun
     fi && \
     echo "Tier 0: Installing Bedrock hardware, kernel Chimera & NVIDIA dependencies..." && \
     dnf5 install -y --allowerasing --setopt=install_weak_deps=False /tmp/tier0-repo/*.rpm && \
+    echo "Tier 0: Applying Bedrock Diet & Extreme Pruning (-3.4 GB fat inside same OCI layer)..." && \
+    dnf5 remove -y --no-autoremove \
+        gcc gcc-c++ make kernel-devel kernel-headers \
+        llvm-static rust-std-static mesa-dxil-devel \
+        edk2-aarch64 qemu-user qemu-user-static \
+        distribution-gpg-keys-copr nodejs-docs glibc-all-langpacks \
+        python3-botocore || true && \
+    rm -rf /usr/lib/firmware/mellanox /usr/lib/firmware/qlogic /usr/lib/firmware/netronome /usr/lib/firmware/liquidio || true && \
+    dnf5 clean all && \
+    rm -rf /var/cache/dnf/* /var/lib/dnf/* /var/cache/libdnf5/* && \
     rm -rf /tmp/tier0-repo
 
 # TIER 1: DISPLAY SERVER & CORE USERSPACE SERVICES (~34 MB)
@@ -106,11 +116,15 @@ RUN QUALIFIED_KERNEL="" && \
 
 ### HARDENING & OSTREE LINTING FIXES
 RUN authselect select sssd with-silent-lastlog without-nullok --force || authselect select local with-silent-lastlog without-nullok --force || true
-RUN rm -f /etc/machine-id && touch /etc/machine-id && \
+RUN dnf5 remove -y --no-autoremove \
+        gcc make kernel-devel llvm-static rust-std-static mesa-dxil-devel \
+        edk2-aarch64 qemu-user qemu-user-static distribution-gpg-keys-copr \
+        nodejs-docs glibc-all-langpacks python3-botocore || true && \
+    rm -f /etc/machine-id && touch /etc/machine-id && \
     rm -rf /etc/NetworkManager/system-connections/* && \
     rm -rf /usr/lib/firmware/mellanox /usr/lib/firmware/qlogic /usr/lib/firmware/netronome /usr/lib/firmware/liquidio || true && \
-    dnf clean all && \
-    rm -rf /var/cache/dnf/* /var/lib/dnf/* && \
+    dnf5 clean all && \
+    rm -rf /var/cache/dnf/* /var/lib/dnf/* /var/cache/libdnf5/* && \
     find /boot -mindepth 1 -delete || true && \
     find /run /tmp /var/log -mindepth 1 -delete || true && \
     find /var -type l -lname '/*' -delete || true
