@@ -16,8 +16,8 @@ RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --moun
 # Epurazione Totale (Bedrock) del kernel Fedora upstream per impedire a dracut o dnf di intercettare versioni fantasma
 RUN dnf5 -y remove --no-autoremove kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-tools kernel-tools-libs zram-generator-defaults
 
-# Estrazione pacchetti RPM puri dai Micro-Container OCI di Ermete Forge (Isolamento totale)
-COPY --from=ghcr.io/patapem/ermete-forge-repo:latest / /tmp/forge-repo
+# Estrazione pacchetti RPM dai Micro-Container OCI di Ermete Forge (Isolamento Totale per Tier)
+# I pacchetti vengono copiati chirurgicamente nei singoli Tier prima dell'installazione per evitare il cache-busting OCI.
 
 # (dart-sass rimosso, se necessario andrà creato un micro-container spec dedicato)
 # Nix is now fetched from ghcr.io/patapem/ermete-forge-nix-support
@@ -29,49 +29,71 @@ COPY --from=ghcr.io/patapem/ermete-forge-repo:latest / /tmp/forge-repo
 # FIX BEDROCK (Universal Package Resolution & Zero-Conflict Ordering):
 # 1) We install ONLY ermete-base-config first via rpm -Uvh so that repository definitions
 #    (/etc/yum.repos.d/rpmfusion.repo, gpg keys, etc.) are injected into the rootfs.
-# 2) We move all remaining custom ermete-*.rpm packages (which overwrite upstream config files
-#    like /etc/greetd/config.toml) to /tmp/forge-custom so they do not conflict with upstream DNF installations.
-# 3) We run dnf5 install to download and resolve all upstream packages and external dependencies.
-# 4) Finally, we install the custom ermete-*.rpm packages via rpm -Uvh --replacefiles --replacepkgs to apply our OS aesthetic and hardening.
-# TIER 0: BEDROCK HARDWARE & KERNEL FOUNDATION (~4.4 GB - Static Cache)
+# 2) We run dnf5 install to download and resolve all upstream packages and external dependencies.
+
+# TIER 0: BEDROCK HARDWARE & KERNEL FOUNDATION (~3.3 GB - Static Cache - Reboot Required)
+COPY --from=ghcr.io/patapem/ermete-forge-kernel:latest / /tmp/tier0-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-nvidia:latest / /tmp/tier0-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-initramfs:latest / /tmp/tier0-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-rolling-core:latest / /tmp/tier0-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-rolling-media:latest / /tmp/tier0-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-ermete-base-config:latest / /tmp/tier0-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-selinux:latest / /tmp/tier0-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-nix-support:latest / /tmp/tier0-repo/
 RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
-    rm -f /tmp/forge-repo/libav*-free-*.rpm /tmp/forge-repo/libsw*-free-*.rpm /tmp/forge-repo/libpostproc-free-*.rpm /tmp/forge-repo/ffmpeg-free-*.rpm /tmp/forge-repo/nodejs20-devel-*.rpm /tmp/forge-repo/v8-11.3-devel-*.rpm && \
-    for name in $(rpm -qp --queryformat '%{NAME}\n' /tmp/forge-repo/*.rpm | sort | uniq); do \
-        ls -1v /tmp/forge-repo/$name-[0-9]*.rpm 2>/dev/null | head -n -1 | xargs -r rm -f || true; \
+    rm -f /tmp/tier0-repo/libav*-free-*.rpm /tmp/tier0-repo/libsw*-free-*.rpm /tmp/tier0-repo/libpostproc-free-*.rpm /tmp/tier0-repo/ffmpeg-free-*.rpm /tmp/tier0-repo/nodejs20-devel-*.rpm /tmp/tier0-repo/v8-11.3-devel-*.rpm && \
+    for name in $(rpm -qp --queryformat '%{NAME}\n' /tmp/tier0-repo/*.rpm | sort | uniq); do \
+        ls -1v /tmp/tier0-repo/$name-[0-9]*.rpm 2>/dev/null | head -n -1 | xargs -r rm -f || true; \
     done && \
-    if ls /tmp/forge-repo/ermete-base-config*.rpm 1> /dev/null 2>&1; then \
+    if ls /tmp/tier0-repo/ermete-base-config*.rpm 1> /dev/null 2>&1; then \
         echo "Tier 0: Installing core Ermete Forge base configuration and repository definitions..." && \
-        rpm -Uvh --replacefiles --replacepkgs --nodeps /tmp/forge-repo/ermete-base-config*.rpm && \
-        rm -f /tmp/forge-repo/ermete-base-config*.rpm; \
+        rpm -Uvh --replacefiles --replacepkgs --nodeps /tmp/tier0-repo/ermete-base-config*.rpm && \
+        rm -f /tmp/tier0-repo/ermete-base-config*.rpm; \
     fi && \
-    mkdir -p /tmp/tier1 /tmp/tier2 /tmp/tier3 && \
-    mv /tmp/forge-repo/ermete-shell-rs*.rpm /tmp/forge-repo/ermete-settings-rs*.rpm /tmp/forge-repo/ermete-daemon-rs*.rpm /tmp/forge-repo/ermete-store-rs*.rpm /tmp/forge-repo/ermete-doctor*.rpm /tmp/forge-repo/ermete-system-services*.rpm /tmp/forge-repo/ermete-desktop-ui*.rpm /tmp/forge-repo/*system-config*.rpm /tmp/forge-repo/*greeter*.rpm /tmp/tier3/ 2>/dev/null || true && \
-    mv /tmp/forge-repo/*bibata*.rpm /tmp/forge-repo/*matugen*.rpm /tmp/forge-repo/*dart-sass*.rpm /tmp/tier2/ 2>/dev/null || true && \
-    mv /tmp/forge-repo/*system-tweaks*.rpm /tmp/forge-repo/*starship*.rpm /tmp/forge-repo/*bat*.rpm /tmp/forge-repo/*ananicy*.rpm /tmp/forge-repo/*cliphist*.rpm /tmp/forge-repo/*ide-bootstrap*.rpm /tmp/tier1/ 2>/dev/null || true && \
     echo "Tier 0: Installing Bedrock hardware, kernel Chimera & NVIDIA dependencies..." && \
-    dnf5 install -y --allowerasing --setopt=install_weak_deps=False /tmp/forge-repo/*.rpm && \
-    rm -rf /tmp/forge-repo
+    dnf5 install -y --allowerasing --setopt=install_weak_deps=False /tmp/tier0-repo/*.rpm && \
+    rm -rf /tmp/tier0-repo
 
 # TIER 1: DISPLAY SERVER & CORE USERSPACE SERVICES (~34 MB)
+COPY --from=ghcr.io/patapem/ermete-forge-rolling-desktop:latest / /tmp/tier1-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-rolling-cli:latest / /tmp/tier1-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-system-tweaks:latest / /tmp/tier1-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-starship:latest / /tmp/tier1-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-bat:latest / /tmp/tier1-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-ananicy:latest / /tmp/tier1-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-cliphist:latest / /tmp/tier1-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-ide-bootstrap:latest / /tmp/tier1-repo/
 RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
-    if ls /tmp/tier1/*.rpm 1> /dev/null 2>&1; then \
+    if ls /tmp/tier1-repo/*.rpm 1> /dev/null 2>&1; then \
         echo "Tier 1: Installing Display Server & Core Userspace Services..." && \
-        dnf5 install -y --setopt=install_weak_deps=False /tmp/tier1/*.rpm; \
-    fi && rm -rf /tmp/tier1
+        dnf5 install -y --setopt=install_weak_deps=False /tmp/tier1-repo/*.rpm; \
+    fi && rm -rf /tmp/tier1-repo
 
 # TIER 2: DESIGN SYSTEM & STATIC ASSETS (~18 MB)
+COPY --from=ghcr.io/patapem/ermete-forge-bibata:latest / /tmp/tier2-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-matugen:latest / /tmp/tier2-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-dart-sass:latest / /tmp/tier2-repo/
 RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
-    if ls /tmp/tier2/*.rpm 1> /dev/null 2>&1; then \
+    if ls /tmp/tier2-repo/*.rpm 1> /dev/null 2>&1; then \
         echo "Tier 2: Installing Design System & Static Assets..." && \
-        dnf5 install -y --setopt=install_weak_deps=False /tmp/tier2/*.rpm; \
-    fi && rm -rf /tmp/tier2
+        dnf5 install -y --setopt=install_weak_deps=False /tmp/tier2-repo/*.rpm; \
+    fi && rm -rf /tmp/tier2-repo
 
-# TIER 3: AGILE RUST SHELL & APPS (~8 MB - Instant Live Swap)
+# TIER 3: AGILE RUST SHELL & APPS (~8 MB - Instant Live Swap Layer)
+COPY --from=ghcr.io/patapem/ermete-forge-shell-rs:latest / /tmp/tier3-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-settings-rs:latest / /tmp/tier3-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-daemon-rs:latest / /tmp/tier3-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-store-rs:latest / /tmp/tier3-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-doctor:latest / /tmp/tier3-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-system-services:latest / /tmp/tier3-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-desktop-ui:latest / /tmp/tier3-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-system-config:latest / /tmp/tier3-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-greeter:latest / /tmp/tier3-repo/
 RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
-    if ls /tmp/tier3/*.rpm 1> /dev/null 2>&1; then \
+    if ls /tmp/tier3-repo/*.rpm 1> /dev/null 2>&1; then \
         echo "Tier 3: Installing Agile Rust Shell & Apps..." && \
-        dnf5 install -y --setopt=install_weak_deps=False /tmp/tier3/*.rpm; \
-    fi && rm -rf /tmp/tier3
+        dnf5 install -y --setopt=install_weak_deps=False /tmp/tier3-repo/*.rpm; \
+    fi && rm -rf /tmp/tier3-repo
 
 ### BEDROCK SELINUX (Declarative Compilation)
 # We compile the policies here in the Containerfile so they are atomic with the OCI image.
