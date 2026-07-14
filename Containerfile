@@ -32,14 +32,7 @@ RUN dnf5 -y remove --no-autoremove kernel kernel-core kernel-modules kernel-modu
 # 2) We run dnf5 install to download and resolve all upstream packages and external dependencies.
 
 # TIER 0: BEDROCK HARDWARE & KERNEL FOUNDATION (~3.3 GB - Static Cache - Reboot Required)
-COPY --from=ghcr.io/patapem/ermete-forge-kernel:latest / /tmp/tier0-repo/
-COPY --from=ghcr.io/patapem/ermete-forge-nvidia:latest / /tmp/tier0-repo/
-COPY --from=ghcr.io/patapem/ermete-forge-initramfs:latest / /tmp/tier0-repo/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-core:latest / /tmp/tier0-repo/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-media:latest / /tmp/tier0-repo/
-COPY --from=ghcr.io/patapem/ermete-forge-ermete-base-config:latest / /tmp/tier0-repo/
-COPY --from=ghcr.io/patapem/ermete-forge-selinux:latest / /tmp/tier0-repo/
-COPY --from=ghcr.io/patapem/ermete-forge-nix-support:latest / /tmp/tier0-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-tier0-repo:latest / /tmp/tier0-repo/
 RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
     rm -f /tmp/tier0-repo/libav*-free-*.rpm /tmp/tier0-repo/libsw*-free-*.rpm /tmp/tier0-repo/libpostproc-free-*.rpm /tmp/tier0-repo/ffmpeg-free-*.rpm /tmp/tier0-repo/nodejs20-devel-*.rpm /tmp/tier0-repo/v8-11.3-devel-*.rpm && \
     for name in $(rpm -qp --queryformat '%{NAME}\n' /tmp/tier0-repo/*.rpm | sort | uniq); do \
@@ -55,14 +48,7 @@ RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --moun
     rm -rf /tmp/tier0-repo
 
 # TIER 1: DISPLAY SERVER & CORE USERSPACE SERVICES (~34 MB)
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-desktop:latest / /tmp/tier1-repo/
-COPY --from=ghcr.io/patapem/ermete-forge-rolling-cli:latest / /tmp/tier1-repo/
-COPY --from=ghcr.io/patapem/ermete-forge-system-tweaks:latest / /tmp/tier1-repo/
-COPY --from=ghcr.io/patapem/ermete-forge-starship:latest / /tmp/tier1-repo/
-COPY --from=ghcr.io/patapem/ermete-forge-bat:latest / /tmp/tier1-repo/
-COPY --from=ghcr.io/patapem/ermete-forge-ananicy:latest / /tmp/tier1-repo/
-COPY --from=ghcr.io/patapem/ermete-forge-cliphist:latest / /tmp/tier1-repo/
-COPY --from=ghcr.io/patapem/ermete-forge-ide-bootstrap:latest / /tmp/tier1-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-tier1-repo:latest / /tmp/tier1-repo/
 RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
     if ls /tmp/tier1-repo/*.rpm 1> /dev/null 2>&1; then \
         echo "Tier 1: Installing Display Server & Core Userspace Services..." && \
@@ -70,9 +56,7 @@ RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --moun
     fi && rm -rf /tmp/tier1-repo
 
 # TIER 2: DESIGN SYSTEM & STATIC ASSETS (~18 MB)
-COPY --from=ghcr.io/patapem/ermete-forge-bibata:latest / /tmp/tier2-repo/
-COPY --from=ghcr.io/patapem/ermete-forge-matugen:latest / /tmp/tier2-repo/
-COPY --from=ghcr.io/patapem/ermete-forge-dart-sass:latest / /tmp/tier2-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-tier2-repo:latest / /tmp/tier2-repo/
 RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
     if ls /tmp/tier2-repo/*.rpm 1> /dev/null 2>&1; then \
         echo "Tier 2: Installing Design System & Static Assets..." && \
@@ -80,15 +64,7 @@ RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --moun
     fi && rm -rf /tmp/tier2-repo
 
 # TIER 3: AGILE RUST SHELL & APPS (~8 MB - Instant Live Swap Layer)
-COPY --from=ghcr.io/patapem/ermete-forge-shell-rs:latest / /tmp/tier3-repo/
-COPY --from=ghcr.io/patapem/ermete-forge-settings-rs:latest / /tmp/tier3-repo/
-COPY --from=ghcr.io/patapem/ermete-forge-daemon-rs:latest / /tmp/tier3-repo/
-COPY --from=ghcr.io/patapem/ermete-forge-store-rs:latest / /tmp/tier3-repo/
-COPY --from=ghcr.io/patapem/ermete-forge-doctor:latest / /tmp/tier3-repo/
-COPY --from=ghcr.io/patapem/ermete-forge-system-services:latest / /tmp/tier3-repo/
-COPY --from=ghcr.io/patapem/ermete-forge-desktop-ui:latest / /tmp/tier3-repo/
-COPY --from=ghcr.io/patapem/ermete-forge-system-config:latest / /tmp/tier3-repo/
-COPY --from=ghcr.io/patapem/ermete-forge-greeter:latest / /tmp/tier3-repo/
+COPY --from=ghcr.io/patapem/ermete-forge-tier3-repo:latest / /tmp/tier3-repo/
 RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
     if ls /tmp/tier3-repo/*.rpm 1> /dev/null 2>&1; then \
         echo "Tier 3: Installing Agile Rust Shell & Apps..." && \
