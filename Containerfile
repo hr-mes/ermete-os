@@ -44,7 +44,7 @@ RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --moun
         rm -f /tmp/tier0-repo/ermete-base-config*.rpm; \
     fi && \
     echo "Tier 0: Installing Bedrock hardware, kernel Chimera & NVIDIA dependencies..." && \
-    dnf5 install -y --allowerasing --setopt=install_weak_deps=False /tmp/tier0-repo/*.rpm && \
+    dnf5 install -y --allowerasing --setopt=install_weak_deps=False --disablerepo="fedora-nvidia" /tmp/tier0-repo/*.rpm && \
     echo "Tier 0: Applying Bedrock Diet & Extreme Pruning (-3.4 GB fat inside same OCI layer)..." && \
     dnf5 remove -y --no-autoremove \
         gcc gcc-c++ make kernel-devel kernel-headers \
