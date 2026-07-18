@@ -34,17 +34,7 @@ RUN dnf5 -y remove --no-autoremove kernel kernel-core kernel-modules kernel-modu
 # TIER 0: BEDROCK HARDWARE & KERNEL FOUNDATION (~3.3 GB - Static Cache - Reboot Required)
 COPY --from=ghcr.io/patapem/ermete-forge-tier0-repo:latest / /tmp/tier0-repo/
 RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
-    echo "Tier 0: Dynamic Conflict Resolution (Purging redundant variants)..." && \
-    for free_pkg in /tmp/tier0-repo/*-free-*.rpm /tmp/tier0-repo/*-standalone-*.rpm; do \
-        [ -f "$free_pkg" ] || continue; \
-        base_name=$(basename "$free_pkg" | sed -E 's/-(free|standalone)-[0-9].*//'); \
-        if ls /tmp/tier0-repo/$base_name-[0-9]*.rpm 1> /dev/null 2>&1; then \
-            echo "Dynamically removing conflicting package: $free_pkg (in favor of $base_name)"; \
-            rm -f "$free_pkg"; \
-        fi; \
-    done && \
-    # Remove nodejs/v8 devel packages which cause massive debug conflicts
-    rm -f /tmp/tier0-repo/nodejs20-devel-*.rpm /tmp/tier0-repo/v8-11.3-devel-*.rpm && \
+    rm -f /tmp/tier0-repo/libav*-free-*.rpm /tmp/tier0-repo/libsw*-free-*.rpm /tmp/tier0-repo/libpostproc-free-*.rpm /tmp/tier0-repo/ffmpeg-free-*.rpm /tmp/tier0-repo/nodejs20-devel-*.rpm /tmp/tier0-repo/v8-11.3-devel-*.rpm /tmp/tier0-repo/systemd-standalone-sysusers-*.rpm /tmp/tier0-repo/glibc32-*.rpm && \
     for name in $(rpm -qp --queryformat '%{NAME}\n' /tmp/tier0-repo/*.rpm | sort | uniq); do \
         ls -1v /tmp/tier0-repo/$name-[0-9]*.rpm 2>/dev/null | head -n -1 | xargs -r rm -f || true; \
     done && \
