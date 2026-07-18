@@ -94,9 +94,9 @@ RUN semodule -i /usr/share/selinux/packages/bootupd_lsblk.pp && \
 # (es. nix-daemon, udevd con utenti e gruppi) vengano registrati nell'immagine OCI.
 RUN systemctl enable systemd-sysext.service && systemd-sysusers && systemctl preset-all && systemctl --global preset-all
 
-### BEDROCK KERNEL & INITRAMFS GENERATION (Zero-Compute Pre-Forgiato)
-# Il kernel e l'initramfs sono già generati ed incapsulati nei micro-container OCI della Forgia (ermete-initramfs).
-# Ci limitiamo ad aggiornare ldconfig per sicurezza.
+### BEDROCK KERNEL & INITRAMFS GENERATION
+# L'initramfs dinamico viene rigenerato per sincronizzare i moduli kernel e NVIDIA
+# ed evitare API mismatch con l'ecosistema userspace.
 RUN QUALIFIED_KERNEL="" && \
     for k in /lib/modules/*; do \
         if [ -e "$k/vmlinuz" ] || [ -L "$k/vmlinuz" ]; then \
@@ -106,6 +106,12 @@ RUN QUALIFIED_KERNEL="" && \
     if [ -z "$QUALIFIED_KERNEL" ]; then echo "ERRORE: Nessun vmlinuz trovato in /lib/modules! Build abortita." && exit 1; fi && \
     echo "Found Chimera Kernel: ${QUALIFIED_KERNEL}" && \
     depmod "${QUALIFIED_KERNEL}" && \
+    echo "Generazione Dinamica Initramfs per ${QUALIFIED_KERNEL}..." && \
+    dracut --no-hostonly --kver "${QUALIFIED_KERNEL}" --reproducible --zstd -v \
+        --add ostree --add fido2 --force-drivers "nvidia nvidia_modeset nvidia_uvm nvidia_drm" \
+        --install "/etc/group /etc/passwd" \
+        -f /usr/lib/modules/${QUALIFIED_KERNEL}/initramfs.img && \
+    chmod 0600 /usr/lib/modules/${QUALIFIED_KERNEL}/initramfs.img && \
     ldconfig
 
 ### NIX STATE (Immutability Fix)
