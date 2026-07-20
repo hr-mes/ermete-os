@@ -44,8 +44,12 @@ while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
     # Controlla se la stringa "ccflags-remove-y" è presente in Makefile o in Kbuild.
     # Se la cartella NON HA NÉ Makefile NÉ Kbuild, è una cartella ponte: la attraversiamo e continuiamo a risalire.
     # Se la cartella ha un Makefile che ha GIA' ricevuto l'infezione, risale.
-    while { [ ! -f "$BAD_DIR/Makefile" ] && [ ! -f "$BAD_DIR/Kbuild" ]; } || grep -q "ccflags-remove-y" "$BAD_DIR/Makefile" 2>/dev/null || grep -q "ccflags-remove-y" "$BAD_DIR/Kbuild" 2>/dev/null; do
-        echo ">>> [AUTO-DMZ] La cartella $BAD_DIR è già schermata. L'infezione è radicata nel modulo padre."
+    while { [ ! -f "$BAD_DIR/Makefile" ] && [ ! -f "$BAD_DIR/Kbuild" ]; } || { [ -f "$BAD_DIR/Makefile" ] && grep -q "ccflags-remove-y" "$BAD_DIR/Makefile" 2>/dev/null; } || { [ -f "$BAD_DIR/Kbuild" ] && grep -q "ccflags-remove-y" "$BAD_DIR/Kbuild" 2>/dev/null; }; do
+        if [ ! -f "$BAD_DIR/Makefile" ] && [ ! -f "$BAD_DIR/Kbuild" ]; then
+            echo ">>> [AUTO-DMZ] Cartella ponte, risalgo al livello superiore: $BAD_DIR"
+        else
+            echo ">>> [AUTO-DMZ] La cartella $BAD_DIR è già schermata. L'infezione è radicata nel modulo padre."
+        fi
         BAD_DIR=$(dirname "$BAD_DIR")
         if [ "$BAD_DIR" == "." ] || [ "$BAD_DIR" == "drivers" ] || [ "$BAD_DIR" == "/" ]; then
             echo ">>> [AUTO-DMZ] Radice raggiunta. Errore insormontabile. Aborto Fuzzer."

@@ -3,8 +3,6 @@ set -euo pipefail
 # Bedrock Pure Bash Idempotency Checker
 # Replaces python3 idempotency_checker.py with native system tools (find, sha256sum, skopeo)
 
-set -e
-
 PACKAGE=""
 REGISTRY=""
 OWNER=""
@@ -54,10 +52,11 @@ else
     UPSTREAM_VER=""
   fi
   
+  VERSION=${UPSTREAM_VER:-unknown}
   if [[ -n "$UPSTREAM_VER" ]]; then
     CONTENT_HASH=$(echo -n "${PACKAGE}-${UPSTREAM_VER}" | sha256sum | awk '{print $1}')
   else
-    CONTENT_HASH=$(echo -n "${PACKAGE}upstream-cache-v1" | sha256sum | awk '{print $1}')
+    CONTENT_HASH=$(echo -n "${PACKAGE}-${VERSION}-upstream-v1" | sha256sum | awk '{print $1}')
   fi
 fi
 

@@ -1,3 +1,4 @@
+# TODO: Pin to SHA256 digest when available
 FROM registry.fedoraproject.org/fedora:43
 
 # Copy the custom RPMFusion repository configurations pointing to stable release paths

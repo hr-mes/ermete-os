@@ -4,6 +4,8 @@ set -euo pipefail
 
 # --- BEDROCK MANIFEST (PINNED COMMITS) ---
 # Matrice Dominante Pura: CachyOS (Scheduler BORE) + ClearLinux (Math/CPU/Memory).
+# WARNING: HEAD is unpinned — should be pinned to a specific commit hash
+# Current: CACHYOS_COMMIT="HEAD"
 CACHYOS_COMMIT="HEAD"
 # -----------------------------------------
 
@@ -54,6 +56,7 @@ git clone --depth 1000 https://github.com/clearlinux-pkgs/linux.git /tmp/clearli
 
 echo ">>> [BEDROCK SECURE] Calcolo dinamico dello Scudo NVIDIA (Dynamic Ceiling)..."
 curl -sLo /etc/yum.repos.d/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo || true
+# TODO: Add SHA256 checksum verification for fedora-nvidia.repo
 NVIDIA_VER=$(dnf repoquery --qf '%{VERSION}\n' akmod-nvidia 2>/dev/null | sort -V | tail -n 1 | awk -F. '{print $1}' || true)
 MAX_KERNEL="6.18" # Default
 if [[ -n "$NVIDIA_VER" ]]; then
