@@ -35,6 +35,12 @@ ConditionPathExists=/etc/keys/ermete-secure-boot.key
 Type=oneshot
 ExecStart=%{_libexecdir}/ermete-secure-boot-measure.sh
 RemainAfterExit=yes
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+RestrictAddressFamilies=AF_UNIX
+ReadWritePaths=/etc/keys
 
 [Install]
 WantedBy=multi-user.target
