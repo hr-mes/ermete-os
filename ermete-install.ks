@@ -13,10 +13,12 @@ timezone Europe/Rome --isUtc
 ostreecontainer --url=ghcr.io/patapem/ermete-os:latest --transport=registry
 
 # Security Hardening: No cleartext root password, strictly SSH Keys
+# WARNING: Replace ALL placeholder values below before production deployment
 rootpw --lock
-user --name=hermes --groups=wheel --password=$6$dummyhash --iscrypted
-sshkey --username hermes "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI_DUMMY_KEY_HERE_"
-sshkey --username root "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI_DUMMY_KEY_HERE_"
+user --name=hermes --groups=wheel --password=$6$REPLACE_WITH_SECURE_HASH --iscrypted
+# TODO: Replace with actual SSH public keys
+sshkey --username hermes "ssh-ed25519 REPLACE_WITH_ACTUAL_SSH_PUBLIC_KEY"
+sshkey --username root "ssh-ed25519 REPLACE_WITH_ACTUAL_SSH_PUBLIC_KEY"
 
 firewall --enabled --default=drop
 services --enabled=sshd
