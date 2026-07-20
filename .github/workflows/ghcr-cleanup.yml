@@ -15,7 +15,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ORG="patapem"
+          ORG="${{ github.repository_owner }}"
           
           echo "Fetching container packages for $ORG..."
           PACKAGES=$(gh api --paginate /users/$ORG/packages?package_type=container | jq -r '.[].name' 2>/dev/null || echo "")
