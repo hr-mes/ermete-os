@@ -60,6 +60,8 @@ fn default_config() -> DesktopConfig {
                 x: 80.0,
                 y: 80.0,
                 settings: None,
+                custom_css: None,
+                plugin_path: None,
             },
             WidgetConfig {
                 id: "main_system".to_string(),
@@ -67,6 +69,8 @@ fn default_config() -> DesktopConfig {
                 x: 80.0,
                 y: 250.0,
                 settings: None,
+                custom_css: None,
+                plugin_path: None,
             }
         ],
     }
