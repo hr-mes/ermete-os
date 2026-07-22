@@ -33,7 +33,7 @@ mkdir -p %{buildroot}%{_unitdir}
 cat <<EOF > %{buildroot}%{_unitdir}/%{name}.service
 [Unit]
 Description=Ermete OS Continuity Daemon
-After=network-online.target dbus.service
+After=network-online.target dbus.service graphical.target
 Requires=dbus.service
 
 [Service]
@@ -41,9 +41,14 @@ Type=dbus
 BusName=os.ermete.Cloud
 ExecStart=%{_bindir}/%{name}
 Restart=always
+RestartSec=5s
+DynamicUser=yes
+ProtectSystem=strict
+ProtectHome=read-only
+NoNewPrivileges=true
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=graphical.target
 EOF
 
 %files

@@ -33,7 +33,7 @@ mkdir -p %{buildroot}%{_unitdir}
 cat <<EOF > %{buildroot}%{_unitdir}/%{name}.service
 [Unit]
 Description=Ermete OS Telemetry Daemon
-After=network-online.target dbus.service
+After=network-online.target dbus.service graphical.target
 Requires=dbus.service
 
 [Service]
@@ -43,7 +43,7 @@ ExecStart=%{_bindir}/%{name}
 Restart=always
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=graphical.target
 EOF
 
 %files
