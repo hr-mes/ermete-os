@@ -308,21 +308,26 @@ fn build_ui(app: &Application) {
             dlg.close();
             if response == gtk4::ResponseType::Yes {
                 println!("[Recovery] Executing rollback to Bedrock Stable Commit: {}", BEDROCK_STABLE_COMMIT);
-                match Command::new("rpm-ostree")
-                    .arg("rollback")
-                    .output()
-                {
-                    Ok(out) if out.status.success() => {
-                        println!("[Recovery] Rollback complete, rebooting...");
-                        let _ = Command::new("systemctl").arg("reboot").spawn();
-                    }
-                    Ok(out) => {
-                        eprintln!("[Recovery] Rollback failed: {}", String::from_utf8_lossy(&out.stderr));
-                    }
-                    Err(e) => {
-                        eprintln!("[Recovery] Failed to run rpm-ostree: {}", e);
-                    }
-                }
+                std::thread::spawn(move || {
+                    let result = Command::new("rpm-ostree")
+                        .arg("rollback")
+                        .output();
+                    
+                    gtk4::glib::idle_add_once(move || {
+                        match result {
+                            Ok(out) if out.status.success() => {
+                                println!("[Recovery] Rollback complete, rebooting...");
+                                let _ = Command::new("systemctl").arg("reboot").spawn();
+                            }
+                            Ok(out) => {
+                                eprintln!("[Recovery] Rollback failed: {}", String::from_utf8_lossy(&out.stderr));
+                            }
+                            Err(e) => {
+                                eprintln!("[Recovery] Failed to run rpm-ostree: {}", e);
+                            }
+                        }
+                    });
+                });
             }
         });
         dialog.present();
@@ -345,21 +350,26 @@ fn build_ui(app: &Application) {
             dlg.close();
             if response == gtk4::ResponseType::Yes {
                 println!("[Recovery] Executing rpm-ostree rollback and reboot...");
-                match Command::new("rpm-ostree")
-                    .arg("rollback")
-                    .output()
-                {
-                    Ok(out) if out.status.success() => {
-                        println!("[Recovery] Rollback complete, rebooting...");
-                        let _ = Command::new("systemctl").arg("reboot").spawn();
-                    }
-                    Ok(out) => {
-                        eprintln!("[Recovery] Rollback failed: {}", String::from_utf8_lossy(&out.stderr));
-                    }
-                    Err(e) => {
-                        eprintln!("[Recovery] Failed to run rpm-ostree: {}", e);
-                    }
-                }
+                std::thread::spawn(move || {
+                    let result = Command::new("rpm-ostree")
+                        .arg("rollback")
+                        .output();
+                    
+                    gtk4::glib::idle_add_once(move || {
+                        match result {
+                            Ok(out) if out.status.success() => {
+                                println!("[Recovery] Rollback complete, rebooting...");
+                                let _ = Command::new("systemctl").arg("reboot").spawn();
+                            }
+                            Ok(out) => {
+                                eprintln!("[Recovery] Rollback failed: {}", String::from_utf8_lossy(&out.stderr));
+                            }
+                            Err(e) => {
+                                eprintln!("[Recovery] Failed to run rpm-ostree: {}", e);
+                            }
+                        }
+                    });
+                });
             }
         });
         dialog.present();
