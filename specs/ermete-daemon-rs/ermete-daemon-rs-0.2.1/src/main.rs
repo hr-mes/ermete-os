@@ -12,6 +12,7 @@ pub mod ai;
 pub mod gaze;
 pub mod audio_spatial;
 pub mod continuity;
+mod power;
 
 use std::error::Error;
 use zbus::connection::Builder;
@@ -24,11 +25,16 @@ use portal_screencast::{PortalScreenCastService, PortalRemoteDesktopService};
 use secret_enroller::SecretEnrollerService;
 use voiceover::VoiceOverService;
 use ai::AiCore;
+use power::PowerManager;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     println!("Connecting to system D-Bus for NetworkManager & BlueZ integration...");
     let sys_conn = zbus::Connection::system().await?;
+
+    println!("Starting PowerManager...");
+    let power_manager = PowerManager::new();
+    power_manager.start_monitoring(sys_conn.clone()).await;
 
     println!("Starting Gatekeeper Listener...");
     let _ = gatekeeper_listener::start_gatekeeper_listener(sys_conn.clone()).await;
@@ -46,7 +52,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     audio_spatial::start_audio_raytracing().await;
 
     println!("Starting Continuity & Handoff daemon...");
-    let continuity_srv = continuity::ContinuityService::new();
+    let continuity_srv = continuity::ContinuityService::new(power_manager.on_battery.clone());
     continuity_srv.start_background_sync().await;
 
     println!("Initializing ACID Settings Engine and XDG Desktop Portal backend...");
