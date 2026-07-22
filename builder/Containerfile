@@ -24,7 +24,6 @@ RUN dnf install -y \
     mold \
     clang \
     clang-devel \
-    sccache \
     ccache \
     systemd-devel \
     nlohmann-json-devel \
