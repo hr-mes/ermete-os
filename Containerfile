@@ -124,7 +124,8 @@ RUN authselect select sssd with-silent-lastlog without-nullok --force || authsel
         nodejs-docs glibc-all-langpacks python3-botocore || true && \
     rm -f /etc/machine-id && touch /etc/machine-id && \
     rm -rf /etc/NetworkManager/system-connections/* && \
-    rm -rf /usr/lib/firmware/mellanox /usr/lib/firmware/qlogic /usr/lib/firmware/netronome /usr/lib/firmware/liquidio || true && \
+    rm -rf /usr/lib/firmware/mellanox /usr/lib/firmware/qlogic /usr/lib/firmware/netronome /usr/lib/firmware/liquidio /usr/lib/firmware/cxgb4 /usr/lib/firmware/bnx2x /usr/lib/firmware/cavium /usr/lib/firmware/dpaa2 || true && \
+    rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/info/* /usr/share/gtk-doc/* /usr/share/help/* || true && \
     dnf5 clean all && \
     rm -rf /var/cache/dnf/* /var/lib/dnf/* /var/cache/libdnf5/* && \
     find /boot -mindepth 1 -delete || true && \
