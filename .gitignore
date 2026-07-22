@@ -11,3 +11,4 @@ qemu-test/
 test_*/
 ctr_id
 output/
+.worktrees/

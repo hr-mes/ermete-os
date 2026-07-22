@@ -1,0 +1,216 @@
+# Ermete Agent Ecosystem — Orchestrator Workflow
+# 3 flows: daily build, failure diagnosis, release pipeline
+
+export const meta = {
+  name: 'ermete-ecosystem',
+  description: 'Main orchestrator for Ermete agent ecosystem — coordinates 21 specialist agents across forge, os, and shared domains',
+  phases: [
+    { title: 'Pre-Flight', detail: 'Dependency and upstream checks' },
+    { title: 'Forge Build', detail: 'Package compilation and OCI publishing' },
+    { title: 'OS Assembly', detail: 'Container image build and signing' },
+    { title: 'Validation', detail: 'Testing and verification' },
+    { title: 'Report', detail: 'Health and status report' },
+  ],
+}
+
+// Flow selection via args: { flow: 'daily' | 'diagnose' | 'release' }
+const flow = args?.flow || 'daily'
+
+// ─── FLOW 1: DAILY BUILD ───────────────────────────────────────────
+if (flow === 'daily') {
+
+  phase('Pre-Flight')
+  const preflight = await parallel([
+    () => agent('Analyze Fedora Rawhide for breaking changes affecting ermete packages. Check soname bumps, removed packages, dependency changes.', {
+      label: 'forge-dep-watchdog',
+      phase: 'Pre-Flight',
+    }),
+    () => agent('Scan upstream releases for all 129+ packages in ermete-forge. Report available updates with risk assessment.', {
+      label: 'forge-upstream-spy',
+      phase: 'Pre-Flight',
+    }),
+    () => agent('Analyze cache hit/miss patterns for ermete-forge builds. Identify unnecessary rebuilds and suggest optimizations.', {
+      label: 'forge-cache-optimizer',
+      phase: 'Pre-Flight',
+    }),
+  ])
+
+  phase('Forge Build')
+  const forge = await pipeline(
+    ['custom', 'upstream-core', 'upstream-desktop', 'upstream-media', 'upstream-cli'],
+    async (category) => agent(`Build ermete-forge ${category} packages. Use idempotency checks, two-phase builds, and OCI publishing.`, {
+      label: `forge-build-${category}`,
+      phase: 'Forge Build',
+    }),
+    async (result) => agent(`Scan built RPMs from ${result.category} for CVE vulnerabilities. Generate SBOM.`, {
+      label: 'forge-vuln-scanner',
+      phase: 'Forge Build',
+    })
+  )
+
+  phase('OS Assembly')
+  const os = await pipeline(
+    [1],
+    async () => agent('Validate ermete os Containerfile: tier ordering, Bedrock Diet, bootc lint, security anti-patterns.', {
+      label: 'os-containerfile-lint',
+      phase: 'OS Assembly',
+    }),
+    async () => agent('Build ermete os OCI image from validated Containerfile. Pull tier repos from GHCR, assemble 4-tier pyramid.', {
+      label: 'ermete-os-build',
+      phase: 'OS Assembly',
+    }),
+    async () => agent('Sign built OCI image with Cosign OIDC keyless signing. Verify signature.', {
+      label: 'os-cosign-guard',
+      phase: 'OS Assembly',
+    }),
+    async () => agent('Verify supply chain: check container digests, Renovate/Dependabot PRs, base image pinning.', {
+      label: 'os-supply-chain',
+      phase: 'OS Assembly',
+    })
+  )
+
+  phase('Validation')
+  const validation = await parallel([
+    () => agent('Boot test ermete os in QEMU VM. Validate network, display, services. Detect regressions.', {
+      label: 'os-vm-tester',
+      phase: 'Validation',
+    }),
+    () => agent('Benchmark BORE scheduler, BTRFS compression, boot time. Compare against baseline.', {
+      label: 'os-perf-benchmark',
+      phase: 'Validation',
+    }),
+    () => agent('Test first-boot services: Nix restore, Flatpak provisioning, captive portal handling.', {
+      label: 'os-firstboot-doctor',
+      phase: 'Validation',
+    }),
+    () => agent('Sync documentation: README, gemini.md, PROJECT.md, architecture docs.', {
+      label: 'shared-docs-sync',
+      phase: 'Validation',
+    }),
+  ])
+
+  phase('Report')
+  const report = await agent('Generate CI/CD health report: workflow success rates, build times, runner status, flakiness.', {
+    label: 'shared-ci-doctor',
+    phase: 'Report',
+  })
+
+  return { flow: 'daily', preflight, forge, os, validation, report }
+}
+
+// ─── FLOW 2: FAILURE DIAGNOSIS ─────────────────────────────────────
+if (flow === 'diagnose') {
+
+  phase('Analysis')
+  const analysis = await parallel([
+    () => agent(`Analyze build failure logs. Identify root cause, failing files, and suggest fixes. Context: ${args?.error_log || 'No error log provided'}`, {
+      label: 'forge-build-analyst',
+      phase: 'Analysis',
+    }),
+    () => agent(`Verify kernel patch compatibility. Check CachyOS/ClearLinux patches for conflicts. Context: ${args?.kernel_version || 'Latest'}`, {
+      label: 'forge-patch-compat',
+      phase: 'Analysis',
+    }),
+    () => agent(`Check NVIDIA driver/kernel compatibility. Verify version constraints. Context: ${args?.nvidia_version || 'Latest'}`, {
+      label: 'forge-nvidia-watch',
+      phase: 'Analysis',
+    }),
+  ])
+
+  phase('Fix Proposal')
+  const fix = await agent(`Based on analysis results, propose specific fixes. Read the relevant spec files and suggest exact changes.`, {
+    label: 'ermete-forge-fix',
+    phase: 'Fix Proposal',
+  })
+
+  phase('Rebuild & Verify')
+  const verify = await pipeline(
+    [1],
+    async () => agent('Rebuild affected package with proposed fix. Verify build succeeds.', {
+      label: 'forge-rebuild',
+      phase: 'Rebuild & Verify',
+    }),
+    async () => agent('Boot test rebuilt package in QEMU VM. Verify functionality.', {
+      label: 'os-vm-tester',
+      phase: 'Rebuild & Verify',
+    })
+  )
+
+  return { flow: 'diagnose', analysis, fix, verify }
+}
+
+// ─── FLOW 3: RELEASE PIPELINE ──────────────────────────────────────
+if (flow === 'release') {
+
+  phase('Pre-Release Audit')
+  const audit = await parallel([
+    () => agent('Scan all built RPMs for CVE vulnerabilities. Must have zero CRITICAL findings for release.', {
+      label: 'forge-vuln-scanner-release',
+      phase: 'Pre-Release Audit',
+    }),
+    () => agent('Audit SELinux policies for denials. Ensure all custom .pp modules are loaded and functional.', {
+      label: 'os-selinux-craft',
+      phase: 'Pre-Release Audit',
+    }),
+    () => agent('Audit firewalld rules. Verify DROP policy, mDNS exceptions, DNS-over-TLS configuration.', {
+      label: 'os-firewall-guard',
+      phase: 'Pre-Release Audit',
+    }),
+    () => agent('Verify GPG keys for RPM signing are valid and not expired.', {
+      label: 'forge-sign-guard',
+      phase: 'Pre-Release Audit',
+    }),
+    () => agent('Verify Cosign OIDC certificates are valid for image signing.', {
+      label: 'os-cosign-guard',
+      phase: 'Pre-Release Audit',
+    }),
+  ])
+
+  phase('Full Build')
+  // Reuse daily build flow
+  const build = await workflow('ermete-ecosystem', { flow: 'daily' })
+
+  phase('Validation Gate')
+  const gate = await parallel([
+    () => agent('Boot test ermete os in QEMU VM. MUST pass for release.', {
+      label: 'os-vm-tester-release',
+      phase: 'Validation Gate',
+    }),
+    () => agent('Benchmark performance. MUST show no regressions vs baseline.', {
+      label: 'os-perf-benchmark-release',
+      phase: 'Validation Gate',
+    }),
+    () => agent('Build qcow2 and ISO disk images for release.', {
+      label: 'os-disk-builder-release',
+      phase: 'Validation Gate',
+    }),
+    () => agent('Test first-boot services. MUST pass idempotency checks.', {
+      label: 'os-firstboot-doctor-release',
+      phase: 'Validation Gate',
+    }),
+  ])
+
+  phase('Publish')
+  const publish = await parallel([
+    () => agent('Sign release image with Cosign OIDC. Verify signature.', {
+      label: 'os-cosign-guard-release',
+      phase: 'Publish',
+    }),
+    () => agent('Final supply chain audit. Verify all containers, digests, and provenance.', {
+      label: 'os-supply-chain-release',
+      phase: 'Publish',
+    }),
+    () => agent('Update documentation for release version. Update README, changelogs, architecture docs.', {
+      label: 'shared-docs-sync-release',
+      phase: 'Publish',
+    }),
+  ])
+
+  phase('Notify')
+  const notify = await agent('Trigger downstream ermete os repository build. Send forge-updated event.', {
+    label: 'trigger-downstream',
+    phase: 'Notify',
+  })
+
+  return { flow: 'release', audit, build, gate, publish, notify }
+}
