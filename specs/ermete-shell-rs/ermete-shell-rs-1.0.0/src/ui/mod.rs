@@ -13,6 +13,6 @@ pub mod mission_control;
 pub mod a11y;
 pub mod generative;
 pub mod spring;
-pub mod control_center_relm4;
+
 pub mod desktop_widgets;
 pub mod store;
