@@ -34,24 +34,22 @@ fn create_app_row(app: &backend::AppInfo) -> Box {
     install_btn.set_valign(gtk4::Align::Center);
     
     let app_id = app.id.clone();
-    let btn_clone = install_btn.clone();
-    install_btn.connect_clicked(move |_| {
+    install_btn.connect_clicked(glib::clone!(@weak install_btn => move |_| {
         let app_id_clone = app_id.clone();
-        let btn = btn_clone.clone();
-        btn.set_sensitive(false);
-        btn.set_label("Installando...");
-        glib::spawn_future_local(async move {
+        install_btn.set_sensitive(false);
+        install_btn.set_label("Installando...");
+        glib::spawn_future_local(glib::clone!(@weak install_btn => async move {
             match backend::install_app(&app_id_clone).await {
                 Ok(_) => {
-                    btn.set_label("Fatto");
+                    install_btn.set_label("Fatto");
                 }
                 Err(_) => {
-                    btn.set_label("Errore");
-                    btn.set_sensitive(true);
+                    install_btn.set_label("Errore");
+                    install_btn.set_sensitive(true);
                 }
             }
-        });
-    });
+        }));
+    }));
 
     row_box.append(&text_box);
     row_box.append(&install_btn);
@@ -109,22 +107,20 @@ pub fn build_ui(app: &Application) {
     featured_scroll.set_child(Some(&featured_box));
     stack.add_titled(&featured_scroll, Some("featured"), "Primo Piano");
 
-    let featured_list_clone = featured_list.clone();
-    
-    glib::spawn_future_local(async move {
+    glib::spawn_future_local(glib::clone!(@weak featured_list => async move {
         match backend::get_featured_apps().await {
             Ok(apps) if !apps.is_empty() => {
                 for app in apps {
                     let row = create_app_row(&app);
-                    featured_list_clone.append(&row);
+                    featured_list.append(&row);
                 }
             }
             _ => {
                 let error_label = Label::new(Some("Nessun risultato"));
-                featured_list_clone.append(&error_label);
+                featured_list.append(&error_label);
             }
         }
-    });
+    }));
 
     // Categories
     let categories_box = Box::new(Orientation::Vertical, 12);
@@ -161,33 +157,30 @@ pub fn build_ui(app: &Application) {
     for (label_str, query_str) in cats {
         let btn = Button::with_label(label_str);
         let query = query_str.to_string();
-        let cat_list = categories_list.clone();
-        
-        btn.connect_clicked(move |_| {
+        btn.connect_clicked(glib::clone!(@weak categories_list => move |_| {
             let q = query.clone();
-            let lst = cat_list.clone();
-            glib::spawn_future_local(async move {
-                while let Some(child) = lst.first_child() {
-                    lst.remove(&child);
+            glib::spawn_future_local(glib::clone!(@weak categories_list => async move {
+                while let Some(child) = categories_list.first_child() {
+                    categories_list.remove(&child);
                 }
                 let loading = Label::new(Some("Caricamento..."));
-                lst.append(&loading);
+                categories_list.append(&loading);
                 
                 if let Ok(apps) = backend::search_apps(&q).await {
-                    lst.remove(&loading);
+                    categories_list.remove(&loading);
                     if apps.is_empty() {
-                        lst.append(&Label::new(Some("Nessun risultato")));
+                        categories_list.append(&Label::new(Some("Nessun risultato")));
                     } else {
                         for app in apps {
-                            lst.append(&create_app_row(&app));
+                            categories_list.append(&create_app_row(&app));
                         }
                     }
                 } else {
-                    lst.remove(&loading);
-                    lst.append(&Label::new(Some("Errore di ricerca")));
+                    categories_list.remove(&loading);
+                    categories_list.append(&Label::new(Some("Errore di ricerca")));
                 }
-            });
-        });
+            }));
+        }));
         categories_btn_box.append(&btn);
     }
 
@@ -212,11 +205,9 @@ pub fn build_ui(app: &Application) {
     
     stack.add_titled(&search_box, Some("categories"), "Cerca");
 
-    let search_list_clone = search_list.clone();
     let search_generation = Rc::new(Cell::new(0u32));
-    search_entry.connect_search_changed(move |entry| {
+    search_entry.connect_search_changed(glib::clone!(@weak search_list => move |entry| {
         let query = entry.text().to_string();
-        let search_list = search_list_clone.clone();
         
         let current_gen = search_generation.get() + 1;
         search_generation.set(current_gen);
@@ -224,7 +215,7 @@ pub fn build_ui(app: &Application) {
 
         if query.len() < 3 { return; }
         
-        glib::spawn_future_local(async move {
+        glib::spawn_future_local(glib::clone!(@weak search_list => async move {
             if let Ok(apps) = backend::search_apps(&query).await {
                 if gen_clone.get() != current_gen {
                     return;
@@ -243,8 +234,8 @@ pub fn build_ui(app: &Application) {
                     }
                 }
             }
-        });
-    });
+        }));
+    }));
 
     // Updates
     let updates_box = Box::new(Orientation::Vertical, 12);
@@ -279,39 +270,31 @@ pub fn build_ui(app: &Application) {
     updates_box.append(&sys_update_btn);
     updates_box.append(&update_status);
     
-    let status_clone1 = update_status.clone();
-    let app_update_btn_clone = app_update_btn.clone();
-    app_update_btn.connect_clicked(move |_| {
-        let status = status_clone1.clone();
-        let btn = app_update_btn_clone.clone();
-        btn.set_sensitive(false);
-        status.set_label("Aggiornamento app in corso...");
+    app_update_btn.connect_clicked(glib::clone!(@weak app_update_btn, @weak update_status => move |_| {
+        app_update_btn.set_sensitive(false);
+        update_status.set_label("Aggiornamento app in corso...");
         
-        glib::spawn_future_local(async move {
+        glib::spawn_future_local(glib::clone!(@weak app_update_btn, @weak update_status => async move {
             match backend::update_apps().await {
-                Ok(out) => status.set_label(&format!("Aggiornamento app completato:\n{}", out)),
-                Err(e) => status.set_label(&format!("Errore durante l'aggiornamento app:\n{}", e)),
+                Ok(out) => update_status.set_label(&format!("Aggiornamento app completato:\n{}", out)),
+                Err(e) => update_status.set_label(&format!("Errore durante l'aggiornamento app:\n{}", e)),
             }
-            btn.set_sensitive(true);
-        });
-    });
+            app_update_btn.set_sensitive(true);
+        }));
+    }));
 
-    let status_clone2 = update_status.clone();
-    let sys_update_btn_clone = sys_update_btn.clone();
-    sys_update_btn.connect_clicked(move |_| {
-        let status = status_clone2.clone();
-        let btn = sys_update_btn_clone.clone();
-        btn.set_sensitive(false);
-        status.set_label("Aggiornamento sistema in corso. L'operazione potrebbe richiedere alcuni minuti...");
+    sys_update_btn.connect_clicked(glib::clone!(@weak sys_update_btn, @weak update_status => move |_| {
+        sys_update_btn.set_sensitive(false);
+        update_status.set_label("Aggiornamento sistema in corso. L'operazione potrebbe richiedere alcuni minuti...");
         
-        glib::spawn_future_local(async move {
+        glib::spawn_future_local(glib::clone!(@weak sys_update_btn, @weak update_status => async move {
             match backend::update_system().await {
-                Ok(out) => status.set_label(&format!("Aggiornamento completato:\n{}", out)),
-                Err(e) => status.set_label(&format!("Errore durante l'aggiornamento:\n{}", e)),
+                Ok(out) => update_status.set_label(&format!("Aggiornamento completato:\n{}", out)),
+                Err(e) => update_status.set_label(&format!("Errore durante l'aggiornamento:\n{}", e)),
             }
-            btn.set_sensitive(true);
-        });
-    });
+            sys_update_btn.set_sensitive(true);
+        }));
+    }));
     
     let updates_scroll = ScrolledWindow::new();
     updates_scroll.set_child(Some(&updates_box));
