@@ -139,7 +139,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let mounts = ["/var/home", "/tmp", "/var/tmp", "/opt"];
     for mount in mounts.iter() {
-        let path = std::ffi::CString::new(*mount).unwrap();
+        let path = match std::ffi::CString::new(*mount) {
+            Ok(p) => p,
+            Err(e) => {
+                eprintln!("Invalid mount path {}: {}", mount, e);
+                continue;
+            }
+        };
         let ret = unsafe {
             libc::fanotify_mark(
                 fanotify_fd,

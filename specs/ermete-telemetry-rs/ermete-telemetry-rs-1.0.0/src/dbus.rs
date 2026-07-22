@@ -14,7 +14,10 @@ impl TelemetryIface {
     ) -> std::result::Result<String, zbus::fdo::Error> {
         info!("Received D-Bus request to submit crash: {}", crash_id);
 
-        let reporter = GitHubReporter::new();
+        let reporter = match GitHubReporter::new() {
+            Ok(r) => r,
+            Err(e) => return Ok(format!("Failed to initialize reporter: {}", e)),
+        };
 
         // Fetch the crash dump using `coredumpctl info <crash_id>`.
         // NOTE: The raw output may contain sensitive data (env vars, memory maps, etc.).

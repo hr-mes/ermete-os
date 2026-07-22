@@ -9,13 +9,11 @@ pub struct GitHubReporter {
 }
 
 impl GitHubReporter {
-    pub fn new() -> Self {
-        Self {
-            client: Client::builder()
-                .user_agent("Ermete-Telemetry-Daemon")
-                .build()
-                .expect("Failed to build HTTP client — this should never fail"),
-        }
+    pub fn new() -> Result<Self> {
+        let client = Client::builder()
+            .user_agent("Ermete-Telemetry-Daemon")
+            .build()?;
+        Ok(Self { client })
     }
 
     /// Extract only safe metadata from crash data for the issue body.
