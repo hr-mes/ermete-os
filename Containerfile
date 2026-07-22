@@ -48,7 +48,9 @@ RUN --mount=type=bind,from=ghcr.io/patapem/ermete-forge-tier0-repo:latest,source
         rm -f /tmp/tier0-repo/ermete-base-config*.rpm; \
     fi && \
     echo "Tier 0: Installing Bedrock hardware, kernel Chimera & NVIDIA dependencies..." && \
-    dnf5 install -y --allowerasing --setopt=install_weak_deps=False /tmp/tier0-repo/*.rpm && \
+    dnf5 install -y --allowerasing --setopt=install_weak_deps=False --setopt=tsflags=nodocs /tmp/tier0-repo/*.rpm && \
+    rm -rf /usr/lib/firmware/mellanox /usr/lib/firmware/qlogic /usr/lib/firmware/netronome /usr/lib/firmware/liquidio /usr/lib/firmware/cxgb4 /usr/lib/firmware/bnx2x /usr/lib/firmware/cavium /usr/lib/firmware/dpaa2 || true && \
+    rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/info/* /usr/share/gtk-doc/* /usr/share/help/* || true && \
     rm -rf /tmp/tier0-repo
 
 ### BEDROCK KERNEL & INITRAMFS GENERATION (Moved up for cache optimization)
@@ -76,7 +78,7 @@ RUN --mount=type=bind,from=ghcr.io/patapem/ermete-forge-tier1-repo:latest,source
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
     if ls /mnt/tier1-repo/*.rpm 1> /dev/null 2>&1; then \
         echo "Tier 1: Installing Display Server & Core Userspace Services..." && \
-        dnf5 install -y --setopt=install_weak_deps=False /mnt/tier1-repo/*.rpm; \
+        dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs /mnt/tier1-repo/*.rpm; \
     fi
 
 # TIER 2: DESIGN SYSTEM & STATIC ASSETS (~18 MB)
@@ -84,7 +86,7 @@ RUN --mount=type=bind,from=ghcr.io/patapem/ermete-forge-tier2-repo:latest,source
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
     if ls /mnt/tier2-repo/*.rpm 1> /dev/null 2>&1; then \
         echo "Tier 2: Installing Design System & Static Assets..." && \
-        dnf5 install -y --setopt=install_weak_deps=False /mnt/tier2-repo/*.rpm; \
+        dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs /mnt/tier2-repo/*.rpm; \
     fi
 
 # TIER 3: AGILE RUST SHELL & APPS (~8 MB - Instant Live Swap Layer)
@@ -92,7 +94,7 @@ RUN --mount=type=bind,from=ghcr.io/patapem/ermete-forge-tier3-repo:latest,source
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
     if ls /mnt/tier3-repo/*.rpm 1> /dev/null 2>&1; then \
         echo "Tier 3: Installing Agile Rust Shell & Apps..." && \
-        dnf5 install -y --setopt=install_weak_deps=False /mnt/tier3-repo/*.rpm; \
+        dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs /mnt/tier3-repo/*.rpm; \
     fi
 
 ### BEDROCK SELINUX (Declarative Compilation)
@@ -124,8 +126,6 @@ RUN authselect select sssd with-silent-lastlog without-nullok --force || authsel
         nodejs-docs glibc-all-langpacks python3-botocore || true && \
     rm -f /etc/machine-id && touch /etc/machine-id && \
     rm -rf /etc/NetworkManager/system-connections/* && \
-    rm -rf /usr/lib/firmware/mellanox /usr/lib/firmware/qlogic /usr/lib/firmware/netronome /usr/lib/firmware/liquidio /usr/lib/firmware/cxgb4 /usr/lib/firmware/bnx2x /usr/lib/firmware/cavium /usr/lib/firmware/dpaa2 || true && \
-    rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/info/* /usr/share/gtk-doc/* /usr/share/help/* || true && \
     dnf5 clean all && \
     rm -rf /var/cache/dnf/* /var/lib/dnf/* /var/cache/libdnf5/* && \
     find /boot -mindepth 1 -delete || true && \
