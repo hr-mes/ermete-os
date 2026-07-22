@@ -34,10 +34,7 @@ fi
 if [[ -n "$DIR" && -d "$DIR" ]]; then
   # Hash SHA-256 deterministico dei path relativi e dei contenuti
   CONTENT_HASH=$({
-    find "$DIR" -type f | sort | while read -r f; do
-      echo -n "${f#$DIR/}"
-      cat "$f"
-    done
+    find "$DIR" -type f -print0 | sort -z | xargs -0 sha256sum
     if [[ -f "config/rpmmacros" ]]; then
       echo -n "config/rpmmacros"
       cat "config/rpmmacros"

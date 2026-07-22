@@ -56,6 +56,10 @@ git clone --depth 1000 https://github.com/clearlinux-pkgs/linux.git /tmp/clearli
 
 echo ">>> [BEDROCK SECURE] Calcolo dinamico dello Scudo NVIDIA (Dynamic Ceiling)..."
 curl -sLo /etc/yum.repos.d/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo || true
+EXPECTED_SHA="9126880310a20437de6ba1a83d299ee9a2119f8a1ef1e40de601676054320fc5"
+if [ -f /etc/yum.repos.d/fedora-nvidia.repo ]; then
+    echo "$EXPECTED_SHA  /etc/yum.repos.d/fedora-nvidia.repo" | sha256sum -c - || { echo "FATAL: Checksum mismatch per fedora-nvidia.repo"; exit 1; }
+fi
 # TODO: Add SHA256 checksum verification for fedora-nvidia.repo
 NVIDIA_VER=$(dnf repoquery --qf '%{VERSION}\n' akmod-nvidia 2>/dev/null | sort -V | tail -n 1 | awk -F. '{print $1}' || true)
 MAX_KERNEL="6.18" # Default

@@ -42,6 +42,11 @@ Type=dbus
 BusName=os.ermete.Lvfs
 ExecStart=%{_bindir}/%{name}
 Restart=always
+RestartSec=5s
+DynamicUser=yes
+ProtectSystem=strict
+ProtectHome=read-only
+NoNewPrivileges=true
 
 [Install]
 WantedBy=multi-user.target
