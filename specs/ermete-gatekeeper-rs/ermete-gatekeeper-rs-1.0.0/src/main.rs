@@ -23,7 +23,25 @@ struct GatekeeperManager {
 
 #[interface(name = "os.ermete.Gatekeeper")]
 impl GatekeeperManager {
-    async fn approve_execution(&self, fd_id: u64) -> zbus::fdo::Result<()> {
+    async fn approve_execution(
+        &self,
+        fd_id: u64,
+        #[zbus(header)] hdr: zbus::MessageHeader<'_>,
+        #[zbus(connection)] _conn: &zbus::Connection,
+    ) -> zbus::fdo::Result<()> {
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::Failed("No sender".into()))?;
+        let status = std::process::Command::new("pkcheck")
+            .arg("--system-bus-name")
+            .arg(sender.as_str())
+            .arg("--action-id")
+            .arg("os.ermete.gatekeeper.approve")
+            .status()
+            .map_err(|e| zbus::fdo::Error::Failed(format!("pkcheck failed: {}", e)))?;
+            
+        if !status.success() {
+            return Err(zbus::fdo::Error::Failed("Polkit authorization failed".into()));
+        }
+
         let mut pending = self.pending_events.lock().await;
         if let Some(event_fd) = pending.remove(&fd_id) {
             let fd_path = format!("/proc/self/fd/{}", event_fd);

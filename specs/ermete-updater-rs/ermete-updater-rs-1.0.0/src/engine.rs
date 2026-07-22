@@ -87,8 +87,8 @@ impl UpdateEngine {
                 }
             }
         } else {
-            // Fallback: assume safe to try apply-live if JSON parse fails, it will error out if kernel changed anyway
-            warn!("Failed to parse JSON, falling back to heuristic.");
+            warn!("Failed to parse JSON, defaulting to Reboot Required for safety.");
+            layer0_touched = true;
         }
 
         if layer0_touched {

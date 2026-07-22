@@ -6,5 +6,4 @@ require {
 }
 
 #============= kernel_t ==============
-# Abilita il JIT eBPF per lo scheduler SCX/BORE superando il blocco W^X
-allow kernel_t self:process execmem;
+# W^X protection enforced - eBPF JIT without execmem or disabled
