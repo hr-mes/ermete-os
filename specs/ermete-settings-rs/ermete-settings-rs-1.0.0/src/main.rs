@@ -314,6 +314,26 @@ fn build_ui(app: &Application) {
         .subtitle { font-size: 16px; color: #a6adc8; }
         .heading { font-size: 14px; font-weight: bold; color: #cdd6f4; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
         
+        /* Seelen UI Global Variables */
+        @define-color spacing_2xs 4px;
+        @define-color spacing_xs 8px;
+        @define-color spacing_s 12px;
+        @define-color spacing_m 16px;
+        @define-color spacing_l 20px;
+        @define-color spacing_xl 24px;
+        @define-color spacing_2xl 32px;
+
+        @define-color border_radius 10px;
+        @define-color border_width 3px;
+
+        @define-color shadow_color rgba(0, 0, 0, 1.0);
+        @define-color shadow_s rgba(0, 0, 0, 0.08);
+        @define-color shadow_m rgba(0, 0, 0, 0.16);
+        @define-color shadow_l rgba(0, 0, 0, 0.24);
+
+        @define-color color_white rgb(255, 255, 255);
+        @define-color color_black rgb(0, 0, 0);
+
         window { background-color: rgba(24, 24, 37, 0.85); color: #cdd6f4; }
         
         /* Sidebar Glassmorphism */

@@ -70,6 +70,26 @@ fn load_css() {
         @define-color shell_border rgba(255, 255, 255, 0.08);
         @define-color shell_hover rgba(255, 255, 255, 0.1);
         @define-color shell_primary #ffffff;
+        
+        /* Seelen UI Global Variables */
+        @define-color spacing_2xs 4px;
+        @define-color spacing_xs 8px;
+        @define-color spacing_s 12px;
+        @define-color spacing_m 16px;
+        @define-color spacing_l 20px;
+        @define-color spacing_xl 24px;
+        @define-color spacing_2xl 32px;
+
+        @define-color border_radius 10px;
+        @define-color border_width 3px;
+
+        @define-color shadow_color rgba(0, 0, 0, 1.0);
+        @define-color shadow_s rgba(0, 0, 0, 0.08);
+        @define-color shadow_m rgba(0, 0, 0, 0.16);
+        @define-color shadow_l rgba(0, 0, 0, 0.24);
+
+        @define-color color_white rgb(255, 255, 255);
+        @define-color color_black rgb(0, 0, 0);
         "#
     } else {
         ""

@@ -561,6 +561,7 @@ dependencies = [
  "greetd_ipc",
  "gtk4",
  "gtk4-layer-shell",
+ "libc",
  "meval",
  "notify",
  "relm4",

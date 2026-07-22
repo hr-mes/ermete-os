@@ -45,8 +45,16 @@ struct Args {
 const APP_ID: &str = "os.ermete.Shell";
 
 fn main() -> glib::ExitCode {
-    // Workaround for Vulkan swapchain resizing panic (VK_ERROR_OUT_OF_DATE_KHR) on Wayland
-    std::env::set_var("GSK_RENDERER", "ngl");
+    // SAFETY: Called at the very start of main(), before user Rust threads are created.
+    // Uses C-level setenv to avoid UB concerns with Rust's set_var in multithreaded contexts.
+    // Workaround for Vulkan swapchain resizing panic (VK_ERROR_OUT_OF_DATE_KHR) on Wayland.
+    unsafe {
+        libc::setenv(
+            b"GSK_RENDERER\0".as_ptr() as *const libc::c_char,
+            b"ngl\0".as_ptr() as *const libc::c_char,
+            1,
+        );
+    }
 
     let args = Args::parse();
     crate::core::system_proxies::init_system_controller();

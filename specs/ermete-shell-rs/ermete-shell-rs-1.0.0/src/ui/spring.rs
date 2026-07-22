@@ -10,8 +10,8 @@ impl Default for SpringConfig {
         // Sensible defaults for UI animations
         Self {
             mass: 1.0,
-            stiffness: 150.0,
-            damping: 15.0,
+            stiffness: 180.0,
+            damping: 26.6,
         }
     }
 }

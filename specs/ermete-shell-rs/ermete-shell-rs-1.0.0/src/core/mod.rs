@@ -8,6 +8,7 @@ pub mod live_state;
 pub mod niri_client;
 pub mod spring;
 pub mod system_proxies;
+pub mod battery;
 use gtk4::CssProvider;
 use chrono::Local;
 use serde::Deserialize;

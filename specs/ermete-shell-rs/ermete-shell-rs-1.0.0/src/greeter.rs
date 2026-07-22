@@ -602,6 +602,7 @@ pub fn build_ui(app: &Application, is_lockscreen: bool) {
         status_clear.set_visible(false);
     });
 
+    let app_ref = app.clone();
     let submit_login = std::rc::Rc::new({
         let entry = password_entry.clone();
         let err_label = error_label.clone();
@@ -625,10 +626,12 @@ pub fn build_ui(app: &Application, is_lockscreen: bool) {
             let err_clone = err_label.clone();
             let status_clone = status_label.clone();
             let submit_clone = submit_btn.clone();
+            let app_quit = app_ref.clone();
             receiver.attach(None, move |res| {
                 match res {
                     Ok(_) => {
-                        std::process::exit(0);
+                        std::process::exit_code(0);
+                        app_quit.quit();
                     }
                     Err(e) => {
                         status_clone.set_visible(false);

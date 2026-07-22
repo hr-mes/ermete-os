@@ -13,8 +13,8 @@ pub struct SpringConfig {
 impl Default for SpringConfig {
     fn default() -> Self {
         Self {
-            damping_ratio: 0.88,
-            stiffness: 400.0,
+            damping_ratio: 0.9,
+            stiffness: 180.0,
             mass: 1.0,
             epsilon: 0.1,
         }

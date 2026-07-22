@@ -81,8 +81,10 @@ pub fn build_ui(app: &Application, request_info: &str) {
         .css_classes(["privacy-btn"])
         .build();
         
-    btn_cancel.connect_clicked(move |_| {
-        std::process::exit(1);
+    let app_cancel = app.clone();
+    btn_cancel.connect_clicked(move |_btn| {
+        std::process::exit_code(1);
+        app_cancel.quit();
     });
 
     let btn_approve = Button::builder()
@@ -90,8 +92,10 @@ pub fn build_ui(app: &Application, request_info: &str) {
         .css_classes(["suggested-action", "privacy-btn"])
         .build();
 
-    btn_approve.connect_clicked(move |_| {
-        std::process::exit(0);
+    let app_approve = app.clone();
+    btn_approve.connect_clicked(move |_btn| {
+        std::process::exit_code(0);
+        app_approve.quit();
     });
 
     hbox.append(&btn_cancel);

@@ -1,14 +1,14 @@
 %global debug_package %{nil}
 Name:           ermete-shell-rs
 Version:        1.0.0
-Release:        20%{?dist}
+Release:        21%{?dist}
 Summary:        Ermete OS Native Rust GTK4 Shell
 
 License:        MIT
 Source0:        ermete-shell-rs-%{version}.tar.gz
 
-BuildRequires:  rust cargo gcc gcc-c++ gtk4-devel glib2-devel pkgconf-pkg-config gtk4-layer-shell-devel clang-devel speech-dispatcher-devel
-Requires:       gtk4 gtk4-layer-shell glib2 cage
+BuildRequires:  rust cargo gcc gcc-c++ gtk4-devel glib2-devel pkgconf-pkg-config gtk4-layer-shell-devel clang-devel speech-dispatcher-devel upower-devel
+Requires:       gtk4 gtk4-layer-shell glib2 cage upower
 
 %description
 Pure Rust native shell for Ermete OS, replacing AGS/GJS.
@@ -27,6 +27,9 @@ install -m 0755 target/release/ermete-shell-rs %{buildroot}%{_bindir}/ermete-she
 %{_bindir}/ermete-shell-rs
 
 %changelog
+* Wed Jul 22 2026 Ermete Forge <forge@ermete.os> - 1.0.0-21
+- Added upower and upower-devel dependencies for Battery Monitor D-Bus integration.
+
 * Sun Jul 19 2026 Ermete Forge <forge@ermete.os> - 1.0.0-20
 - Added Generative UI Engine foundation, Spotlight Premium (Glassmorphism + Web Search), and native interactive Desktop Widgets (Clock, CPU/RAM).
 

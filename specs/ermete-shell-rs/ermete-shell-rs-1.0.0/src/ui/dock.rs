@@ -110,26 +110,16 @@ thread_local! {
     static DOCK_INSTANCES: RefCell<Vec<DockMonitorInstance>> = RefCell::new(Vec::new());
 }
 
-fn animate_dock_visibility(container: &GtkBox, spring: &crate::core::spring::SpringAnimator, hide: bool) {
-    let cont_weak = container.downgrade();
-    let target = if hide { 1.0 } else { 0.0 };
-    spring.animate_to(target, move |p| {
-        if let Some(cont) = cont_weak.upgrade() {
-            let opacity = (1.0 - p).clamp(0.0, 1.0);
-            cont.set_opacity(opacity);
-            let offset = -(p * 120.0) as i32;
-            cont.set_margin_bottom(offset);
-            if p >= 0.98 && hide {
-                if !cont.has_css_class("dock-hidden") {
-                    cont.add_css_class("dock-hidden");
-                }
-            } else if p < 0.98 && !hide {
-                if cont.has_css_class("dock-hidden") {
-                    cont.remove_css_class("dock-hidden");
-                }
-            }
+fn animate_dock_visibility(container: &GtkBox, _spring: &crate::core::spring::SpringAnimator, hide: bool) {
+    if hide {
+        if !container.has_css_class("dock-hidden") {
+            container.add_css_class("dock-hidden");
         }
-    });
+    } else {
+        if container.has_css_class("dock-hidden") {
+            container.remove_css_class("dock-hidden");
+        }
+    }
 }
 
 fn should_autohide_for_monitor(state: &DockState, monitor_connector: &str, screen_height: i32) -> bool {
@@ -156,8 +146,10 @@ fn should_autohide_for_monitor(state: &DockState, monitor_connector: &str, scree
             return false;
         }
         if let Some(layout) = &w.layout {
-            if let (Some((_x, y)), Some((_w, h))) = (layout.tile_pos_in_workspace_view, layout.window_size) {
-                return (y + h) >= overlap_threshold;
+            let y = layout.tile_pos_in_workspace_view.map(|p| p.1).unwrap_or(0.0);
+            let h = layout.window_size.map(|s| s.1 as f64).unwrap_or(0.0);
+            if (y + h) >= overlap_threshold {
+                return true;
             }
         }
         w.is_focused
