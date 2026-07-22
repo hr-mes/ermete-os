@@ -87,6 +87,18 @@ window.dock-window {
     background-color: rgba(0, 0, 0, 0.01);
     min-height: 6px;
 }
+
+.dock-instance-badge {
+    background-color: @shell_primary;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: bold;
+    border-radius: 99px;
+    padding: 0 5px;
+    min-width: 16px;
+    min-height: 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
 "#;
 
 struct DockState {
@@ -464,7 +476,21 @@ fn refresh_monitor_instance(inst: &mut DockMonitorInstance) {
 
         let icon = Image::from_icon_name(&item.icon_name);
         icon.set_pixel_size(44);
-        box_inner.append(&icon);
+        
+        let overlay = gtk4::Overlay::new();
+        overlay.set_child(Some(&icon));
+        if item.window_ids.len() > 1 {
+            let badge = gtk4::Label::builder()
+                .label(item.window_ids.len().to_string())
+                .css_classes(["dock-instance-badge"])
+                .halign(Align::End)
+                .valign(Align::Start)
+                .margin_top(0)
+                .margin_end(0)
+                .build();
+            overlay.add_overlay(&badge);
+        }
+        box_inner.append(&overlay);
 
         let indicator = GtkBox::new(Orientation::Horizontal, 0);
         indicator.set_halign(Align::Center);
@@ -507,6 +533,14 @@ fn refresh_monitor_instance(inst: &mut DockMonitorInstance) {
             show_dock_context_menu(&btn_clone2, &item_clone2);
         });
         btn.add_controller(gesture_right);
+
+        let gesture_middle = GestureClick::new();
+        gesture_middle.set_button(2);
+        let key_id_mid = item.key_id.clone();
+        gesture_middle.connect_released(move |_, _, _, _| {
+            let _ = Command::new("gtk-launch").arg(&key_id_mid).spawn();
+        });
+        btn.add_controller(gesture_middle);
 
         let scroll_ctrl = EventControllerScroll::new(EventControllerScrollFlags::VERTICAL);
         let win_ids = item.window_ids.clone();
@@ -612,6 +646,33 @@ fn show_dock_context_menu(anchor: &Button, item: &DockItem) {
         });
         box_inner.append(&btn_close);
     }
+
+    let sep1 = gtk4::Separator::new(Orientation::Horizontal);
+    sep1.set_margin_top(4);
+    sep1.set_margin_bottom(4);
+    box_inner.append(&sep1);
+
+    let btn_settings = Button::builder()
+        .label("Impostazioni")
+        .css_classes(["dock-popover-btn"])
+        .build();
+    let pop_close_s = popover.clone();
+    btn_settings.connect_clicked(move |_| {
+        let _ = Command::new("gtk-launch").arg("os.ermete.Settings.desktop").spawn();
+        pop_close_s.popdown();
+    });
+    box_inner.append(&btn_settings);
+
+    let btn_sysmon = Button::builder()
+        .label("Monitor di Sistema")
+        .css_classes(["dock-popover-btn"])
+        .build();
+    let pop_close_sm = popover.clone();
+    btn_sysmon.connect_clicked(move |_| {
+        let _ = Command::new("gtk-launch").arg("missioncenter.desktop").spawn();
+        pop_close_sm.popdown();
+    });
+    box_inner.append(&btn_sysmon);
 
     popover.set_child(Some(&box_inner));
     popover.popup();
