@@ -7,106 +7,135 @@ use greetd_ipc::{Request, Response};
 
 const GREETER_CSS: &str = r#"
 window.background {
-    background-color: rgba(10, 12, 18, 0.72);
+    background-color: transparent;
 }
 
 .greeter-backdrop {
-    background-color: rgba(10, 12, 18, 0.65);
+    background-color: rgba(10, 12, 18, 0.45);
 }
 
 .greeter-topbar-title {
-    font-size: 13px;
+    font-family: 'Inter', 'SF Pro Display', sans-serif;
+    font-size: 14px;
     font-weight: 800;
-    letter-spacing: 3px;
-    color: rgba(255, 255, 255, 0.80);
+    letter-spacing: 4px;
+    color: rgba(255, 255, 255, 0.90);
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
 }
 
 .greeter-status-pill {
-    font-size: 12px;
+    font-family: 'Inter', 'SF Pro Text', sans-serif;
+    font-size: 13px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.90);
-    background-color: rgba(255, 255, 255, 0.12);
-    padding: 6px 14px;
+    color: rgba(255, 255, 255, 0.95);
+    background-color: rgba(255, 255, 255, 0.15);
+    padding: 8px 16px;
     border-radius: 999px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transition: background-color 0.3s ease;
+}
+
+.greeter-status-pill:hover {
+    background-color: rgba(255, 255, 255, 0.25);
 }
 
 .greeter-clock-time {
-    font-size: 72px;
-    font-weight: 200;
+    font-family: 'Inter', 'SF Pro Display', sans-serif;
+    font-size: 84px;
+    font-weight: 300;
     color: #ffffff;
-    letter-spacing: -2px;
+    letter-spacing: -3px;
+    text-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    margin-bottom: -10px;
 }
 
 .greeter-clock-date {
-    font-size: 18px;
+    font-family: 'Inter', 'SF Pro Text', sans-serif;
+    font-size: 20px;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.85);
-    margin-bottom: 16px;
+    color: rgba(255, 255, 255, 0.90);
+    margin-bottom: 24px;
+    text-shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
 
 .greeter-card {
-    background-color: rgba(24, 27, 36, 0.82);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: 32px;
-    padding: 38px 48px;
-    min-width: 380px;
-    box-shadow: 0 28px 70px rgba(0, 0, 0, 0.75);
+    background-color: rgba(24, 27, 36, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 36px;
+    padding: 42px 52px;
+    min-width: 400px;
+    box-shadow: 0 32px 84px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .greeter-avatar-frame {
-    border: 2px solid rgba(255, 255, 255, 0.28);
+    border: 2px solid rgba(255, 255, 255, 0.4);
     border-radius: 999px;
-    min-width: 88px;
-    min-height: 88px;
-    background-color: rgba(255, 255, 255, 0.14);
-    font-size: 36px;
+    min-width: 96px;
+    min-height: 96px;
+    background-color: rgba(255, 255, 255, 0.15);
+    font-size: 40px;
     color: #ffffff;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+    transition: all 0.3s ease;
 }
 
 .greeter-user-name {
-    font-size: 24px;
+    font-family: 'Inter', 'SF Pro Display', sans-serif;
+    font-size: 26px;
     font-weight: 700;
     color: #ffffff;
-    margin-top: 14px;
+    margin-top: 18px;
+    text-shadow: 0 4px 16px rgba(0,0,0,0.5);
 }
 
 .greeter-badge {
-    font-size: 11px;
+    font-family: 'Inter', 'SF Pro Text', sans-serif;
+    font-size: 12px;
     font-weight: 700;
     letter-spacing: 2px;
-    color: rgba(255, 255, 255, 0.55);
-    margin-top: 4px;
-    margin-bottom: 18px;
+    color: rgba(255, 255, 255, 0.70);
+    margin-top: 6px;
+    margin-bottom: 22px;
+}
+
+.greeter-caps-pill, .greeter-biometric-pill {
+    font-family: 'Inter', 'SF Pro Text', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 6px 14px;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
 }
 
 .greeter-caps-pill {
-    font-size: 11px;
-    font-weight: 700;
     color: #ffd166;
-    background-color: rgba(255, 209, 102, 0.16);
-    border: 1px solid rgba(255, 209, 102, 0.35);
-    border-radius: 999px;
-    padding: 4px 12px;
-    margin-bottom: 10px;
+    background-color: rgba(255, 209, 102, 0.20);
+    border: 1px solid rgba(255, 209, 102, 0.40);
 }
 
 .greeter-biometric-pill {
-    font-size: 11px;
-    font-weight: 700;
     color: #38bdf8;
-    background-color: rgba(56, 189, 248, 0.16);
-    border: 1px solid rgba(56, 189, 248, 0.35);
-    border-radius: 999px;
-    padding: 4px 12px;
-    margin-bottom: 10px;
-    letter-spacing: 1px;
+    background-color: rgba(56, 189, 248, 0.20);
+    border: 1px solid rgba(56, 189, 248, 0.40);
 }
 
 .greeter-entry-box {
-    background-color: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 16px;
-    padding: 4px 8px;
+    background-color: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 20px;
+    padding: 6px 10px;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+}
+
+.greeter-entry-box:focus-within {
+    border-color: rgba(255, 255, 255, 0.6);
+    background-color: rgba(0, 0, 0, 0.35);
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.4), 0 0 12px rgba(255,255,255,0.2);
 }
 
 .greeter-entry {
@@ -114,50 +143,63 @@ window.background {
     border: none;
     color: #ffffff;
     caret-color: #6ea8fe;
-    font-size: 15px;
-    min-height: 40px;
+    font-family: 'Inter', 'SF Pro Text', sans-serif;
+    font-size: 16px;
+    min-height: 44px;
+    box-shadow: none;
 }
 
 .greeter-icon-btn {
     background: transparent;
     border: none;
-    color: rgba(255, 255, 255, 0.70);
-    font-size: 16px;
-    padding: 6px 10px;
-    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 18px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    box-shadow: none;
 }
 
 .greeter-icon-btn:hover {
-    background-color: rgba(255, 255, 255, 0.14);
+    background-color: rgba(255, 255, 255, 0.15);
     color: #ffffff;
 }
 
 .greeter-error {
     color: #ff6b6b;
-    font-size: 13px;
+    font-family: 'Inter', 'SF Pro Text', sans-serif;
+    font-size: 14px;
     font-weight: 600;
-    margin-top: 10px;
+    margin-top: 12px;
+    transition: opacity 0.3s ease;
 }
 
 .greeter-status-msg {
     color: #6ea8fe;
-    font-size: 13px;
+    font-family: 'Inter', 'SF Pro Text', sans-serif;
+    font-size: 14px;
     font-weight: 600;
-    margin-top: 10px;
+    margin-top: 12px;
+    transition: opacity 0.3s ease;
 }
 
 .greeter-power-btn {
-    background-color: rgba(255, 255, 255, 0.10);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background-color: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 999px;
     color: #ffffff;
-    font-size: 13px;
+    font-family: 'Inter', 'SF Pro Text', sans-serif;
+    font-size: 14px;
     font-weight: 600;
-    padding: 10px 22px;
+    padding: 12px 24px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .greeter-power-btn:hover {
-    background-color: rgba(255, 255, 255, 0.20);
+    background-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
 }
 "#;
 
