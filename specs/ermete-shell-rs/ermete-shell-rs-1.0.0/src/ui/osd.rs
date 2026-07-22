@@ -73,13 +73,18 @@ pub fn spawn_osd(app: &Application) {
             window_rc.set_visible(true);
             
             let win_clone = window_rc.clone();
+            let hide_timeout_clone = hide_timeout_id.clone();
             let mut timeout_guard = hide_timeout_id.borrow_mut();
             if let Some(id) = timeout_guard.take() {
-                id.remove();
+                // Ignore errors if the source was already removed (but it shouldn't be since we clear it on fire)
+                let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    id.remove(); // Safely remove to cancel the timeout
+                }));
             }
             
             *timeout_guard = Some(glib::timeout_add_local_once(Duration::from_secs(2), move || {
                 win_clone.set_visible(false);
+                *hide_timeout_clone.borrow_mut() = None;
             }));
             
             *last = current_state;

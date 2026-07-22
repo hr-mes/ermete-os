@@ -109,9 +109,9 @@ window.spotlight-window {
 
 .spotlight-card {
     background: rgba(30, 30, 32, 0.75);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid alpha(white, 0.08);
     border-radius: 16px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 10px 40px alpha(black, 0.6);
     animation: pop-in-fade 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
@@ -169,11 +169,11 @@ window.popup-window {
 
 .cc-card {
     background: rgba(30, 30, 32, 0.75);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid alpha(white, 0.08);
     border-radius: 16px;
     padding: 14px;
     color: #f8fafc;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 10px 40px alpha(black, 0.6);
     animation: slide-down-fade 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
@@ -421,16 +421,16 @@ fn load_css() {
     // In caso il file di matugen non definisca nulla o sia vuoto, diamo dei fallback di sicurezza.
     let fallback = if colors_css.is_empty() {
         r#"
-        @define-color shell_bg rgba(28, 28, 30, 0.65);
+        @define-color shell_bg alpha(#1c1c1e, 0.65);
         @define-color shell_fg #f5f5f7;
-        @define-color shell_border rgba(255, 255, 255, 0.08);
-        @define-color shell_hover rgba(255, 255, 255, 0.1);
+        @define-color shell_border alpha(white, 0.08);
+        @define-color shell_hover alpha(white, 0.1);
         @define-color shell_primary #ffffff;
-        @define-color popup_bg rgba(30, 30, 32, 0.75);
-        @define-color popup_border rgba(255, 255, 255, 0.08);
-        @define-color btn_bg rgba(255, 255, 255, 0.05);
+        @define-color popup_bg alpha(#1e1e20, 0.75);
+        @define-color popup_border alpha(white, 0.08);
+        @define-color btn_bg alpha(white, 0.05);
         @define-color btn_fg #ffffff;
-        @define-color btn_hover rgba(255, 255, 255, 0.1);
+        @define-color btn_hover alpha(white, 0.1);
         "#
     } else {
         ""

@@ -18,11 +18,11 @@ window.dock-window {
 }
 
 .dock-container {
-    background: @shell_bg;
-    border: 1px solid @shell_border;
+    background: alpha(#1e1e20, 0.85);
+    border: 1px solid alpha(white, 0.15);
     border-radius: 24px;
     padding: 6px 12px;
-    box-shadow: 0 14px 38px rgba(0, 0, 0, 0.65);
+    box-shadow: 0px 16px 48px alpha(black, 0.60);
     transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
@@ -40,7 +40,7 @@ window.dock-window {
 }
 
 .dock-item-btn:hover {
-    background: rgba(255, 255, 255, 0.12);
+    background: alpha(white, 0.12);
     transform: scale(1.12) translateY(-4px);
 }
 
@@ -52,7 +52,7 @@ window.dock-window {
     min-height: 4px;
     min-width: 4px;
     border-radius: 99px;
-    background-color: rgba(255, 255, 255, 0.5);
+    background-color: alpha(white, 0.5);
     margin-top: 2px;
 }
 
@@ -65,8 +65,8 @@ window.dock-window {
 }
 
 .dock-popover {
-    background: rgba(26, 27, 38, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: alpha(#1a1b26, 0.95);
+    border: 1px solid alpha(white, 0.12);
     border-radius: 12px;
     padding: 6px;
 }
@@ -80,11 +80,11 @@ window.dock-window {
 }
 
 .dock-popover-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: alpha(white, 0.1);
 }
 
 .dock-trigger-area {
-    background-color: rgba(0, 0, 0, 0.01);
+    background-color: alpha(black, 0.01);
     min-height: 6px;
 }
 
@@ -97,7 +97,7 @@ window.dock-window {
     padding: 0 5px;
     min-width: 16px;
     min-height: 16px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    box-shadow: 0px 2px 4px alpha(black, 0.4);
 }
 "#;
 
@@ -176,10 +176,10 @@ pub fn build_ui(app: &Application) -> ApplicationWindow {
     let colors_path = format!("{}/.config/ermete-shell/colors.css", home);
     let colors_css = std::fs::read_to_string(&colors_path).unwrap_or_else(|_| "".to_string());
     let fallback = r#"
-        @define-color shell_bg rgba(30, 30, 32, 0.85);
+        @define-color shell_bg alpha(#1e1e20, 0.85);
         @define-color shell_fg #f8fafc;
         @define-color shell_primary #0a84ff;
-        @define-color shell_border rgba(255, 255, 255, 0.1);
+        @define-color shell_border alpha(white, 0.1);
     "#;
     let full_css = format!("{}\n{}\n{}", colors_css, fallback, DOCK_CSS);
     provider.load_from_data(&full_css);
