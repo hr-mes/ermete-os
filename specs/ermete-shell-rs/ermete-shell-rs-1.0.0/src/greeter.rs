@@ -630,7 +630,7 @@ pub fn build_ui(app: &Application, is_lockscreen: bool) {
             receiver.attach(None, move |res| {
                 match res {
                     Ok(_) => {
-                        std::process::exit_code(0);
+                        std::process::exit(0);
                         app_quit.quit();
                     }
                     Err(e) => {

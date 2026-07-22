@@ -83,7 +83,7 @@ pub fn build_ui(app: &Application, request_info: &str) {
         
     let app_cancel = app.clone();
     btn_cancel.connect_clicked(move |_btn| {
-        std::process::exit_code(1);
+        std::process::exit(1);
         app_cancel.quit();
     });
 
@@ -94,7 +94,7 @@ pub fn build_ui(app: &Application, request_info: &str) {
 
     let app_approve = app.clone();
     btn_approve.connect_clicked(move |_btn| {
-        std::process::exit_code(0);
+        std::process::exit(0);
         app_approve.quit();
     });
 
