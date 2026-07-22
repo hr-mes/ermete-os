@@ -16,6 +16,8 @@ RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --moun
 # Epurazione Totale (Bedrock) del kernel Fedora upstream per impedire a dracut o dnf di intercettare versioni fantasma
 RUN dnf5 -y remove --no-autoremove kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-tools kernel-tools-libs zram-generator-defaults
 
+# SECURITY: ermete-install.ks contains placeholder SSH keys that MUST be replaced before production
+
 # Estrazione pacchetti RPM dai Micro-Container OCI di Ermete Forge (Isolamento Totale per Tier)
 # I pacchetti vengono copiati chirurgicamente nei singoli Tier prima dell'installazione per evitare il cache-busting OCI.
 
@@ -34,7 +36,7 @@ RUN dnf5 -y remove --no-autoremove kernel kernel-core kernel-modules kernel-modu
 # TIER 0: BEDROCK HARDWARE & KERNEL FOUNDATION (~3.3 GB - Static Cache - Reboot Required)
 COPY --from=ghcr.io/patapem/ermete-forge-tier0-repo:latest / /tmp/tier0-repo/
 RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
-    rm -f /tmp/tier0-repo/libav*-free-*.rpm /tmp/tier0-repo/libsw*-free-*.rpm /tmp/tier0-repo/libpostproc-free-*.rpm /tmp/tier0-repo/ffmpeg-free-*.rpm /tmp/tier0-repo/nodejs20-devel-*.rpm /tmp/tier0-repo/v8-11.3-devel-*.rpm && \
+    rm -f /tmp/tier0-repo/libav*-free-*.rpm /tmp/tier0-repo/libsw*-free-*.rpm /tmp/tier0-repo/libpostproc-free-*.rpm /tmp/tier0-repo/ffmpeg-free-*.rpm /tmp/tier0-repo/nodejs20-devel-*.rpm /tmp/tier0-repo/v8-11.3-devel-*.rpm /tmp/tier0-repo/systemd-standalone-sysusers-*.rpm && \
     for name in $(rpm -qp --queryformat '%{NAME}\n' /tmp/tier0-repo/*.rpm | sort | uniq); do \
         ls -1v /tmp/tier0-repo/$name-[0-9]*.rpm 2>/dev/null | head -n -1 | xargs -r rm -f || true; \
     done && \
@@ -45,16 +47,6 @@ RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --moun
     fi && \
     echo "Tier 0: Installing Bedrock hardware, kernel Chimera & NVIDIA dependencies..." && \
     dnf5 install -y --allowerasing --setopt=install_weak_deps=False /tmp/tier0-repo/*.rpm && \
-    echo "Tier 0: Applying Bedrock Diet & Extreme Pruning (-3.4 GB fat inside same OCI layer)..." && \
-    dnf5 remove -y --no-autoremove \
-        gcc gcc-c++ make kernel-devel kernel-headers \
-        llvm-static rust-std-static mesa-dxil-devel \
-        edk2-aarch64 qemu-user qemu-user-static \
-        distribution-gpg-keys-copr nodejs-docs glibc-all-langpacks \
-        python3-botocore || true && \
-    rm -rf /usr/lib/firmware/mellanox /usr/lib/firmware/qlogic /usr/lib/firmware/netronome /usr/lib/firmware/liquidio || true && \
-    dnf5 clean all && \
-    rm -rf /var/cache/dnf/* /var/lib/dnf/* /var/cache/libdnf5/* && \
     rm -rf /tmp/tier0-repo
 
 # TIER 1: DISPLAY SERVER & CORE USERSPACE SERVICES (~34 MB)
@@ -115,8 +107,8 @@ RUN QUALIFIED_KERNEL="" && \
 # Initial state for Nix is now managed by ermete-forge-nix-support RPM
 
 ### HARDENING & OSTREE LINTING FIXES
-RUN authselect select sssd with-silent-lastlog without-nullok --force || authselect select local with-silent-lastlog without-nullok --force || true
-RUN dnf5 remove -y --no-autoremove \
+RUN authselect select sssd with-silent-lastlog without-nullok --force || authselect select local with-silent-lastlog without-nullok --force || true && \
+    dnf5 remove -y --no-autoremove \
         gcc make kernel-devel llvm-static rust-std-static mesa-dxil-devel \
         edk2-aarch64 qemu-user qemu-user-static distribution-gpg-keys-copr \
         nodejs-docs glibc-all-langpacks python3-botocore || true && \

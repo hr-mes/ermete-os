@@ -1,5 +1,0 @@
-totale 156768
-drwxr-xr-x. 2 root root        58  5 lug 16.02 .
-drwxr-xr-x. 3 root root        86  5 lug 16.02 ..
--rw-------. 3 root root 144727060  1 gen  1970 initramfs-6.18.38.img
--rw-r--r--. 3 root root  15799296  1 gen  1970 vmlinuz-6.18.38

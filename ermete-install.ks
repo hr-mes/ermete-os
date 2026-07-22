@@ -2,6 +2,7 @@
 lang en_US.UTF-8
 keyboard it
 timezone Europe/Rome --isUtc
+bootloader --append="quiet splash fastboot"
 
 # Zero-Touch Partitioning (BTRFS + LUKS2)
 # [ATTENZIONE]: Direttive distruttive come "zerombr" e "clearpart --all" sono state rimosse
