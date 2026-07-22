@@ -1,7 +1,0 @@
-﻿2026-07-17T18:15:29.6572203Z Stop and remove container: 6164ed9dccc9418da7851a28cbda9a4e_ghcriopatapemermetebuilderlatest_bdafb5
-2026-07-17T18:15:29.6576736Z ##[command]/var/home/ermete/.local/bin/docker rm --force 8044bf7a930a7efa99cd2a9da31fde8ec98bae049eda7396b2231aaa52976933
-2026-07-17T18:15:39.6938031Z time="2026-07-17T20:15:39+02:00" level=warning msg="StopSignal SIGTERM failed to stop container 6164ed9dccc9418da7851a28cbda9a4e_ghcriopatapemermetebuilderlatest_bdafb5 in 10 seconds, resorting to SIGKILL"
-2026-07-17T18:15:40.3448806Z 8044bf7a930a7efa99cd2a9da31fde8ec98bae049eda7396b2231aaa52976933
-2026-07-17T18:15:40.3490211Z Remove container network: github_network_cd51aad8a1f94b648528f3f38754ed91
-2026-07-17T18:15:40.3493837Z ##[command]/var/home/ermete/.local/bin/docker network rm github_network_cd51aad8a1f94b648528f3f38754ed91
-2026-07-17T18:15:40.3721037Z github_network_cd51aad8a1f94b648528f3f38754ed91

@@ -1,7 +1,0 @@
-2026-07-17T12:24:57.4400000Z Job is about to start running on the runner: Ermete-Local-Forge-V2
-2026-07-17T12:24:57.4280000Z Evaluating build-nvidia.if
-2026-07-17T12:24:57.4280000Z Evaluating: success()
-2026-07-17T12:24:57.4280000Z Result: true
-2026-07-17T12:24:57.4300000Z Requested labels: self-hosted
-2026-07-17T12:24:57.4300000Z Job defined at: patapem/ermete-forge/.github/workflows/ermete-forge-orchestrator.yml@refs/heads/main
-2026-07-17T12:24:57.4300000Z Waiting for a runner to pick up this job...

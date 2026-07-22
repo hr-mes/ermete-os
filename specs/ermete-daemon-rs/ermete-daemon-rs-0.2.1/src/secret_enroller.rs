@@ -1,7 +1,17 @@
+use chacha20poly1305::{
+    aead::{Aead, KeyInit, OsRng},
+    ChaCha20Poly1305, Nonce,
+};
+use hkdf::Hkdf;
+use rand::RngCore;
 use serde::{Deserialize, Serialize};
+use sha2::Sha256;
 use std::os::unix::net::UnixStream;
 use std::path::PathBuf;
 use zbus::{fdo, interface};
+
+const SEAL_VERSION: &str = "3.0";
+const NONCE_LEN: usize = 12;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct SealedData {
@@ -77,41 +87,81 @@ impl SecretEnrollerService {
         "ermete-bedrock-tpm2-default-binding".to_string()
     }
 
-    fn seal_payload(password: &str, binding: &str) -> String {
-        let key_bytes = binding.as_bytes();
-        let pwd_bytes = password.as_bytes();
-        let mut xored = Vec::with_capacity(pwd_bytes.len());
-        for (i, b) in pwd_bytes.iter().enumerate() {
-            let k = key_bytes[i % key_bytes.len()];
-            xored.push(b ^ k);
-        }
-        // Encode as hex
-        let mut s = String::with_capacity(xored.len() * 2);
-        for b in xored {
-            s.push_str(&format!("{:02x}", b));
-        }
-        s
+    /// Derive a 256-bit key from the machine binding using HKDF-SHA256.
+    fn derive_key(binding: &str) -> [u8; 32] {
+        let hk = Hkdf::<Sha256>::new(Some(b"ermete-secret-enroller-v3"), binding.as_bytes());
+        let mut key = [0u8; 32];
+        hk.expand(b"chacha20poly1305-key", &mut key)
+            .expect("HKDF expand should never fail for 32 bytes");
+        key
     }
 
-    fn unseal_payload(sealed_hex: &str, binding: &str) -> Option<String> {
-        let key_bytes = binding.as_bytes();
-        let mut bytes = Vec::new();
-        let mut chars = sealed_hex.chars();
-        while let (Some(c1), Some(c2)) = (chars.next(), chars.next()) {
-            let byte_str = format!("{}{}", c1, c2);
-            if let Ok(b) = u8::from_str_radix(&byte_str, 16) {
-                bytes.push(b);
-            } else {
-                return None;
-            }
+    /// Encrypt the password using ChaCha20-Poly1305.
+    /// Output format: hex(nonce[12]) + hex(ciphertext_with_tag)
+    fn seal_payload(password: &str, binding: &str) -> String {
+        let key = Self::derive_key(binding);
+        let cipher = ChaCha20Poly1305::new(&key.into());
+
+        let mut nonce_bytes = [0u8; NONCE_LEN];
+        OsRng.fill_bytes(&mut nonce_bytes);
+        let nonce = Nonce::from_slice(&nonce_bytes);
+
+        let ciphertext = cipher
+            .encrypt(nonce, password.as_bytes())
+            .expect("ChaCha20-Poly1305 encryption should not fail");
+
+        let mut output = String::with_capacity((NONCE_LEN + ciphertext.len()) * 2);
+        for b in &nonce_bytes {
+            output.push_str(&format!("{:02x}", b));
         }
-        let mut unxored = Vec::with_capacity(bytes.len());
-        for (i, b) in bytes.iter().enumerate() {
-            let k = key_bytes[i % key_bytes.len()];
-            unxored.push(b ^ k);
+        for b in &ciphertext {
+            output.push_str(&format!("{:02x}", b));
         }
-        String::from_utf8(unxored).ok()
+        output
     }
+
+    /// Decrypt a payload sealed by `seal_payload`.
+    /// Returns None if decryption or authentication fails.
+    fn unseal_payload(sealed_hex: &str, binding: &str) -> Option<String> {
+        let bytes = hex_decode(sealed_hex)?;
+        if bytes.len() < NONCE_LEN {
+            return None;
+        }
+
+        let key = Self::derive_key(binding);
+        let cipher = ChaCha20Poly1305::new(&key.into());
+        let nonce = Nonce::from_slice(&bytes[..NONCE_LEN]);
+        let ciphertext = &bytes[NONCE_LEN..];
+
+        let plaintext = cipher.decrypt(nonce, ciphertext).ok()?;
+        String::from_utf8(plaintext).ok()
+    }
+}
+
+/// Decode a hex string into bytes. Returns None on invalid input.
+fn hex_decode(hex: &str) -> Option<Vec<u8>> {
+    if hex.len() % 2 != 0 {
+        return None;
+    }
+    let mut bytes = Vec::with_capacity(hex.len() / 2);
+    let mut chars = hex.chars();
+    while let (Some(c1), Some(c2)) = (chars.next(), chars.next()) {
+        let byte_str = format!("{}{}", c1, c2);
+        bytes.push(u8::from_str_radix(&byte_str, 16).ok()?);
+    }
+    Some(bytes)
+}
+
+/// Legacy v2.0 XOR decryption for migration. Only used to read old sealed files.
+fn legacy_unseal_payload(sealed_hex: &str, binding: &str) -> Option<String> {
+    let key_bytes = binding.as_bytes();
+    let bytes = hex_decode(sealed_hex)?;
+    let mut unxored = Vec::with_capacity(bytes.len());
+    for (i, b) in bytes.iter().enumerate() {
+        let k = key_bytes[i % key_bytes.len()];
+        unxored.push(b ^ k);
+    }
+    String::from_utf8(unxored).ok()
 }
 
 #[interface(name = "os.ermete.Bedrock.SecretEnroller")]
@@ -130,7 +180,7 @@ impl SecretEnrollerService {
         let binding = Self::get_machine_binding();
         let sealed_payload = Self::seal_payload(&password, &binding);
         let token = SealedData {
-            version: "2.0".to_string(),
+            version: SEAL_VERSION.to_string(),
             username: username.clone(),
             machine_binding: binding,
             sealed_payload,
@@ -170,10 +220,17 @@ impl SecretEnrollerService {
             return Err(fdo::Error::Failed("TPM 2.0 machine binding verification failed".to_string()));
         }
 
-        if let Some(password) = Self::unseal_payload(&token.sealed_payload, &binding) {
-            Ok(password)
-        } else {
-            Err(fdo::Error::Failed("Failed to unseal or verify TPM 2.0 token payload".to_string()))
+        match token.version.as_str() {
+            "3.0" => {
+                Self::unseal_payload(&token.sealed_payload, &binding)
+                    .ok_or_else(|| fdo::Error::Failed("Failed to unseal v3.0 payload".into()))
+            }
+            "2.0" => {
+                tracing::warn!("Reading legacy v2.0 XOR-encrypted secret for user {}. Will re-encrypt on next enrollment.", username);
+                legacy_unseal_payload(&token.sealed_payload, &binding)
+                    .ok_or_else(|| fdo::Error::Failed("Failed to unseal legacy v2.0 payload".into()))
+            }
+            _ => Err(fdo::Error::Failed(format!("Unknown seal version: {}", token.version)))
         }
     }
 
@@ -251,5 +308,34 @@ mod tests {
         let res = service.unlock_keyring("testuser".to_string(), "secret123".to_string()).await;
         assert!(res.is_ok(), "unlock_keyring should succeed");
         assert_eq!(res.unwrap(), true);
+    }
+
+    #[test]
+    fn test_seal_unseal_roundtrip() {
+        let binding = "test-machine-id-12345";
+        let password = "my-super-secret-password";
+        let sealed = SecretEnrollerService::seal_payload(password, binding);
+        let decrypted = SecretEnrollerService::unseal_payload(&sealed, binding);
+        assert_eq!(decrypted.as_deref(), Some(password));
+    }
+
+    #[test]
+    fn test_seal_wrong_binding_fails() {
+        let binding = "correct-machine-id";
+        let sealed = SecretEnrollerService::seal_payload("secret", binding);
+        let result = SecretEnrollerService::unseal_payload(&sealed, "wrong-machine-id");
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_seal_tampered_ciphertext_fails() {
+        let binding = "test-machine-id";
+        let sealed = SecretEnrollerService::seal_payload("secret", binding);
+        let mut chars: Vec<char> = sealed.chars().collect();
+        let last = chars.len() - 1;
+        chars[last] = if chars[last] == 'a' { 'b' } else { 'a' };
+        let tampered: String = chars.into_iter().collect();
+        let result = SecretEnrollerService::unseal_payload(&tampered, binding);
+        assert!(result.is_none());
     }
 }

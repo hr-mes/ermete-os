@@ -1,7 +1,0 @@
-﻿2026-07-17T18:12:04.4039544Z ##[group]Run cp builder/rpmfusion-custom.repo /etc/yum.repos.d/ 2>/dev/null || true
-2026-07-17T18:12:04.4040279Z [36;1mcp builder/rpmfusion-custom.repo /etc/yum.repos.d/ 2>/dev/null || true[0m
-2026-07-17T18:12:04.4043855Z shell: sh -e {0}
-2026-07-17T18:12:04.4044099Z env:
-2026-07-17T18:12:04.4044297Z   REGISTRY: ghcr.io
-2026-07-17T18:12:04.4044513Z   FEDORA_VERSION: 43
-2026-07-17T18:12:04.4044721Z ##[endgroup]

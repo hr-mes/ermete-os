@@ -1,8 +1,0 @@
-2026-07-17T17:05:32.5530000Z Evaluating trigger.if
-2026-07-17T17:05:32.5530000Z Evaluating: (success() && (contains(fromJson('["success", "failure"]'), github.event.workflow_run.conclusion)))
-2026-07-17T17:05:32.5530000Z Expanded: (true && contains(Array, 'failure'))
-2026-07-17T17:05:32.5530000Z Result: true
-2026-07-17T17:05:32.5520000Z Requested labels: self-hosted
-2026-07-17T17:05:32.5520000Z Job defined at: patapem/ermete-forge/.github/workflows/trigger-ermete-os.yml@refs/heads/main
-2026-07-17T17:05:32.5520000Z Waiting for a runner to pick up this job...
-2026-07-17T17:05:32.7710000Z Job is about to start running on the runner: Ermete-Local-Titan

@@ -1,9 +1,0 @@
-﻿2026-07-17T17:05:37.9594514Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
-2026-07-17T17:05:37.9603990Z ##[group]Run actions/create-github-app-token@v1
-2026-07-17T17:05:37.9605613Z with:
-2026-07-17T17:05:37.9606946Z   app-id: ***
-2026-07-17T17:05:37.9628098Z   private-key: ***
-2026-07-17T17:05:37.9629286Z   owner: patapem
-2026-07-17T17:05:37.9630433Z   github-api-url: https://api.github.com
-2026-07-17T17:05:37.9632126Z ##[endgroup]
-2026-07-17T17:05:38.0552311Z repositories not set, creating token for all repositories for given owner "patapem"

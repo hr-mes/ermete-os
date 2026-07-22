@@ -1,7 +1,0 @@
-﻿2026-07-17T17:05:38.7226711Z ##[group]Run curl -f -s -S -X POST https://api.github.com/repos/patapem/ermete/dispatches \
-2026-07-17T17:05:38.7229660Z [36;1mcurl -f -s -S -X POST https://api.github.com/repos/patapem/ermete/dispatches \[0m
-2026-07-17T17:05:38.7231766Z [36;1m-H "Accept: application/vnd.github.v3+json" \[0m
-2026-07-17T17:05:38.7234091Z [36;1m-H "Authorization: ***" \[0m
-2026-07-17T17:05:38.7235716Z [36;1m-d '{"event_type": "forge-updated"}'[0m
-2026-07-17T17:05:38.7252911Z shell: /usr/sbin/bash -e {0}
-2026-07-17T17:05:38.7254245Z ##[endgroup]

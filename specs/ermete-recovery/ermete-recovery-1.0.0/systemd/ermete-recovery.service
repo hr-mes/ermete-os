@@ -7,14 +7,30 @@ Conflicts=getty@tty9.service
 [Service]
 Type=simple
 ExecStart=/usr/bin/cage -s -m last -- /usr/bin/ermete-recovery-ui
-Restart=always
-RestartSec=2
-User=root
+Restart=on-failure
+RestartSec=5
+User=ermete-recovery
+Group=ermete-recovery
+SupplementaryGroups=video input
 TTYPath=/dev/tty9
 StandardInput=tty
 StandardOutput=tty
 StandardError=journal
-SupplementaryGroups=video input
+
+# systemd hardening
+NoNewPrivileges=no
+ProtectSystem=strict
+ReadWritePaths=/etc /var /boot
+ProtectHome=read-only
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictNamespaces=yes
+MemoryDenyWriteExecute=yes
+LockPersonality=yes
+SystemCallFilter=@system-service @mount
 
 [Install]
 WantedBy=ermete-recovery.target

@@ -1,3 +1,0 @@
-﻿2026-07-17T17:30:54.6212310Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
-2026-07-17T17:30:54.6213439Z Post job cleanup.
-2026-07-17T17:30:54.6219793Z ##[command]/var/home/ermete/.local/bin/docker exec  d9528e8b31c09ebecc4a0ff7a65774e916667b7fa2f60b0035a3e294f825842a sh -c "cat /etc/*release | grep ^ID"

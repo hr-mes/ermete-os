@@ -1,7 +1,0 @@
-2026-07-17T16:55:22.0540000Z Requested labels: self-hosted
-2026-07-17T16:55:22.0540000Z Job defined at: patapem/ermete-forge/.github/workflows/ermete-forge-orchestrator.yml@refs/heads/main
-2026-07-17T16:55:22.0540000Z Waiting for a runner to pick up this job...
-2026-07-17T16:55:22.0520000Z Evaluating build-kernel.if
-2026-07-17T16:55:22.0520000Z Evaluating: success()
-2026-07-17T16:55:22.0520000Z Result: true
-2026-07-17T16:55:22.4840000Z Job is about to start running on the runner: Ermete-Local-Forge-Wkr-2

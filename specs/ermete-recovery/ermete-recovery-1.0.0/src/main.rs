@@ -1,4 +1,3 @@
-use glib::clone;
 use gtk4::prelude::*;
 use gtk4::{
     Align, Application, ApplicationWindow, Box as GtkBox, Button, CssProvider, Label,
@@ -292,32 +291,78 @@ fn build_ui(app: &Application) {
         .margin_top(16)
         .build();
 
-    let term_btn = Button::builder()
-        .label(" Terminale Emergenza")
-        .css_classes(["btn-secondary"])
-        .build();
-    term_btn.connect_clicked(|_| {
-        let _ = Command::new("foot").spawn().or_else(|_| Command::new("xterm").spawn());
-    });
-
     let bedrock_btn = Button::builder()
         .label("🛡️ Ripristina Bedrock Commit (8aa3fd4)")
         .css_classes(["btn-danger"])
         .build();
-    bedrock_btn.connect_clicked(|_| {
-        println!("[Recovery] Executing reset to Bedrock Stable Commit: {}", BEDROCK_STABLE_COMMIT);
-        let _ = Command::new("rpm-ostree").args(["reset"]).spawn();
-        let _ = Command::new("systemctl").arg("reboot").spawn();
+    bedrock_btn.connect_clicked(move |_| {
+        let dialog = gtk4::MessageDialog::builder()
+            .message_type(gtk4::MessageType::Warning)
+            .text("Conferma ripristino Bedrock")
+            .secondary_text("Questo ripristinerà il sistema all'ultimo commit stabile. Continuare?")
+            .buttons(gtk4::ButtonsType::YesNo)
+            .modal(true)
+            .build();
+
+        dialog.connect_response(move |dlg, response| {
+            dlg.close();
+            if response == gtk4::ResponseType::Yes {
+                println!("[Recovery] Executing rollback to Bedrock Stable Commit: {}", BEDROCK_STABLE_COMMIT);
+                match Command::new("rpm-ostree")
+                    .arg("rollback")
+                    .output()
+                {
+                    Ok(out) if out.status.success() => {
+                        println!("[Recovery] Rollback complete, rebooting...");
+                        let _ = Command::new("systemctl").arg("reboot").spawn();
+                    }
+                    Ok(out) => {
+                        eprintln!("[Recovery] Rollback failed: {}", String::from_utf8_lossy(&out.stderr));
+                    }
+                    Err(e) => {
+                        eprintln!("[Recovery] Failed to run rpm-ostree: {}", e);
+                    }
+                }
+            }
+        });
+        dialog.present();
     });
 
     let rollback_btn = Button::builder()
         .label("󰜉 Rollback Automatico & Riavvia")
         .css_classes(["btn-action"])
         .build();
-    rollback_btn.connect_clicked(|_| {
-        println!("[Recovery] Executing rpm-ostree rollback and reboot...");
-        let _ = Command::new("rpm-ostree").arg("rollback").output();
-        let _ = Command::new("systemctl").arg("reboot").spawn();
+    rollback_btn.connect_clicked(move |_| {
+        let dialog = gtk4::MessageDialog::builder()
+            .message_type(gtk4::MessageType::Warning)
+            .text("Conferma Rollback Automatico")
+            .secondary_text("Questo eseguirà un rollback all'ultima versione disponibile e riavvierà il sistema. Continuare?")
+            .buttons(gtk4::ButtonsType::YesNo)
+            .modal(true)
+            .build();
+
+        dialog.connect_response(move |dlg, response| {
+            dlg.close();
+            if response == gtk4::ResponseType::Yes {
+                println!("[Recovery] Executing rpm-ostree rollback and reboot...");
+                match Command::new("rpm-ostree")
+                    .arg("rollback")
+                    .output()
+                {
+                    Ok(out) if out.status.success() => {
+                        println!("[Recovery] Rollback complete, rebooting...");
+                        let _ = Command::new("systemctl").arg("reboot").spawn();
+                    }
+                    Ok(out) => {
+                        eprintln!("[Recovery] Rollback failed: {}", String::from_utf8_lossy(&out.stderr));
+                    }
+                    Err(e) => {
+                        eprintln!("[Recovery] Failed to run rpm-ostree: {}", e);
+                    }
+                }
+            }
+        });
+        dialog.present();
     });
 
     let reboot_btn = Button::builder()
@@ -328,7 +373,6 @@ fn build_ui(app: &Application) {
         let _ = Command::new("systemctl").arg("reboot").spawn();
     });
 
-    actions_box.append(&term_btn);
     actions_box.append(&reboot_btn);
     actions_box.append(&bedrock_btn);
     actions_box.append(&rollback_btn);

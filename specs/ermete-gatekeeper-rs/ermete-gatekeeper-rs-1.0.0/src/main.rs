@@ -26,49 +26,46 @@ impl GatekeeperManager {
     async fn approve_execution(&self, fd_id: u64) -> zbus::fdo::Result<()> {
         let mut pending = self.pending_events.lock().await;
         if let Some(event_fd) = pending.remove(&fd_id) {
-            let path = format!("/proc/self/fd/{}", event_fd);
-            let target_path = std::fs::read_link(&path).unwrap_or_else(|_| Default::default());
-            
-            if target_path.exists() {
-                // Remove the quarantine xattr so it's not repeatedly trapped
-                let _ = xattr::remove(&target_path, "user.ermete.quarantine");
+            let fd_path = format!("/proc/self/fd/{}", event_fd);
+            let target_path = std::fs::read_link(&fd_path)
+                .map_err(|e| zbus::fdo::Error::Failed(format!("Failed to resolve fd: {}", e)))?;
 
-                // TODO(feat/sandbox): Implement Bubblewrap (bwrap) Zero-Trust Enforcement.
-                // fanotify does not allow mutating the exec() context or environment.
-                // To sandbox the execution, we must DENY the original direct execution request
-                // and instead manually spawn the application wrapped inside `bwrap`.
-                /*
-                std::process::Command::new("bwrap")
-                    .arg("--unshare-all")
-                    .arg("--share-net")
-                    .arg("--ro-bind").arg("/usr").arg("/usr")
-                    .arg("--ro-bind").arg("/lib").arg("/lib")
-                    .arg("--ro-bind").arg("/lib64").arg("/lib64")
-                    .arg("--proc").arg("/proc")
-                    .arg("--dev").arg("/dev")
-                    .arg("--dir").arg("/tmp")
-                    // Mount the application itself
-                    .arg("--ro-bind").arg(&target_path).arg(&target_path)
-                    .arg("--")
-                    .arg(&target_path)
-                    .spawn()
-                    .expect("Failed to spawn sandboxed application");
-                */
-            }
-            
-            // For now, we still allow the original execution (or if we fully implemented bwrap above, we would DENY here)
-            // If bwrap is spawned above, change FAN_ALLOW to FAN_DENY.
-            let mut response = fanotify_response {
-                fd: event_fd,
-                response: FAN_ALLOW, // change to FAN_DENY when bwrap spawn is fully active
-            };
-            unsafe {
-                libc::write(
-                    self.fanotify_fd,
-                    &mut response as *mut _ as *const c_void,
-                    std::mem::size_of::<fanotify_response>(),
-                );
-                libc::close(event_fd);
+            // Remove quarantine xattr via stable /proc/self/fd path (TOCTOU-safe)
+            let _ = xattr::remove(&fd_path, "user.ermete.quarantine");
+
+            // Spawn inside Bubblewrap sandbox, then DENY original unsandboxed execution
+            let target_str = target_path.to_string_lossy().to_string();
+            let sandbox_result = std::process::Command::new("bwrap")
+                .arg("--unshare-all")
+                .arg("--share-net")
+                .arg("--ro-bind").arg("/usr").arg("/usr")
+                .arg("--ro-bind").arg("/lib").arg("/lib")
+                .arg("--ro-bind").arg("/lib64").arg("/lib64")
+                .arg("--ro-bind").arg("/etc").arg("/etc")
+                .arg("--proc").arg("/proc")
+                .arg("--dev").arg("/dev")
+                .arg("--dir").arg("/tmp")
+                .arg("--ro-bind").arg(&target_path).arg(&target_path)
+                .arg("--").arg(&target_path)
+                .spawn();
+
+            match sandbox_result {
+                Ok(_child) => {
+                    // Sandbox spawned — DENY original unsandboxed execution
+                    let mut response = fanotify_response { fd: event_fd, response: FAN_DENY };
+                    unsafe {
+                        libc::write(self.fanotify_fd, &mut response as *mut _ as *const c_void, std::mem::size_of::<fanotify_response>());
+                        libc::close(event_fd);
+                    }
+                }
+                Err(e) => {
+                    eprintln!("bwrap failed for {}: {}. Denying.", target_str, e);
+                    let mut response = fanotify_response { fd: event_fd, response: FAN_DENY };
+                    unsafe {
+                        libc::write(self.fanotify_fd, &mut response as *mut _ as *const c_void, std::mem::size_of::<fanotify_response>());
+                        libc::close(event_fd);
+                    }
+                }
             }
             Ok(())
         } else {
@@ -122,7 +119,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     println!("fanotify initialized. Marking mounts...");
 
-    let mounts = ["/var/home", "/tmp"];
+    let mounts = ["/var/home", "/tmp", "/var/tmp", "/opt"];
     for mount in mounts.iter() {
         let path = std::ffi::CString::new(*mount).unwrap();
         let ret = unsafe {
@@ -203,8 +200,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     let target_path = std::fs::read_link(&path).unwrap_or_default();
                     let target_path_str = target_path.to_string_lossy().to_string();
 
-                    // Check for quarantine attribute
-                    if let Ok(Some(_)) = xattr::get(&target_path, "user.ermete.quarantine") {
+                    // Check for quarantine attribute via stable /proc/self/fd path (TOCTOU-safe)
+                    if let Ok(Some(_)) = xattr::get(&path, "user.ermete.quarantine") {
                         is_quarantined = true;
                     }
 

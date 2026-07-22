@@ -1,6 +1,0 @@
-﻿2026-07-17T17:15:13.9400657Z Stop and remove container: 3fb9a404eb344a8d87efeab833984679_fedora43_fab6c2
-2026-07-17T17:15:13.9406911Z ##[command]/usr/bin/docker rm --force cc901dbd48ecccdfa9bc6122c8914aa1af263d03bc9e871e9d7ec6be39789f5b
-2026-07-17T17:15:14.0669706Z cc901dbd48ecccdfa9bc6122c8914aa1af263d03bc9e871e9d7ec6be39789f5b
-2026-07-17T17:15:14.0702839Z Remove container network: github_network_e4cb30b2ec514b48a8ca81e7ba597d10
-2026-07-17T17:15:14.0707781Z ##[command]/usr/bin/docker network rm github_network_e4cb30b2ec514b48a8ca81e7ba597d10
-2026-07-17T17:15:14.1771465Z github_network_e4cb30b2ec514b48a8ca81e7ba597d10
