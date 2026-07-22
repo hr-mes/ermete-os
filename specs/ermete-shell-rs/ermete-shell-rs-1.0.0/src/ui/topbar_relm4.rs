@@ -188,9 +188,12 @@ impl SimpleComponent for TopbarModel {
     type Init = gtk::Application;
 
     view! {
-        gtk::Window {
+        gtk::ApplicationWindow {
             set_title: Some("Ermete Shell - Topbar (Relm4)"),
             add_css_class: "topbar-window",
+            set_visible: true,
+
+
             
             gtk::Box {
                 set_orientation: gtk::Orientation::Horizontal,

@@ -146,7 +146,7 @@ fn main() -> glib::ExitCode {
             let ctrl = ui::topbar_relm4::TopbarModel::builder()
                 .launch(app.clone());
             
-            ctrl.detach();
+            Box::leak(Box::new(ctrl));
                 
             crate::ui::osd::spawn_osd(app);
             crate::ui::desktop_widgets::build_desktop_widgets(app);
