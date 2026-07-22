@@ -78,7 +78,7 @@ fn switch_to_page(page_id: &str) {
     }
 }
 
-pub struct AppModel {
+struct AppModel {
     page_to_open: Option<String>,
 }
 
