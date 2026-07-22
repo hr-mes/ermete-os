@@ -1,5 +1,5 @@
 # TODO: Pin to SHA256 digest when available
-FROM registry.fedoraproject.org/fedora:43
+FROM registry.fedoraproject.org/fedora:41
 
 # Copy the custom RPMFusion repository configurations pointing to stable release paths
 COPY rpmfusion-custom.repo /etc/yum.repos.d/rpmfusion-custom.repo
