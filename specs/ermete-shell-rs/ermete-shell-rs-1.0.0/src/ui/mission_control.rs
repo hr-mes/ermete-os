@@ -56,10 +56,34 @@ pub fn build_ui(app: &Application) {
         .build();
 
     for ws in &workspaces {
-        let ws_btn = Button::builder()
-            .label(&ws.name.clone().unwrap_or_else(|| format!("Desktop {}", ws.idx)))
-            .css_classes(if ws.is_active { vec!["mc-ws-btn", "active"] } else { vec!["mc-ws-btn"] })
+        let ws_container = GtkBox::builder()
+            .orientation(Orientation::Vertical)
+            .spacing(4)
             .build();
+            
+        let ws_name = ws.name.clone().unwrap_or_else(|| format!("Desktop {}", ws.idx));
+        
+        let ws_btn = Button::builder()
+            .label(&ws_name)
+            .css_classes(if ws.is_active { vec!["mc-workspace-btn", "active"] } else { vec!["mc-workspace-btn"] })
+            .build();
+            
+        let controls_box = GtkBox::builder()
+            .orientation(Orientation::Horizontal)
+            .spacing(4)
+            .halign(Align::Center)
+            .build();
+            
+        let rename_btn = Button::builder().label("Rename").css_classes(["mc-workspace-action"]).build();
+        let wallpaper_btn = Button::builder().label("Wallpaper").css_classes(["mc-workspace-action"]).build();
+        let rules_btn = Button::builder().label("Rules").css_classes(["mc-workspace-action"]).build();
+        
+        controls_box.append(&rename_btn);
+        controls_box.append(&wallpaper_btn);
+        controls_box.append(&rules_btn);
+        
+        ws_container.append(&ws_btn);
+        ws_container.append(&controls_box);
         
         let ws_id = ws.id;
         let win_clone = window.clone();
@@ -73,7 +97,7 @@ pub fn build_ui(app: &Application) {
                 .spawn();
             win_clone.close();
         });
-        ws_box.append(&ws_btn);
+        ws_box.append(&ws_container);
     }
     main_box.append(&ws_box);
 

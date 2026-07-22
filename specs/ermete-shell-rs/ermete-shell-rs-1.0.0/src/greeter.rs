@@ -434,14 +434,26 @@ pub fn build_ui(app: &Application, is_lockscreen: bool) {
         .hexpand(true)
         .build();
 
+    let theme_toggle = Button::builder()
+        .label("🎨 Theme")
+        .css_classes(["greeter-status-pill"])
+        .build();
+
     let status_pill = Label::builder()
         .label("󰤨   󰁹   IT")
         .css_classes(["greeter-status-pill"])
         .build();
 
+    let right_box = Box::builder()
+        .orientation(Orientation::Horizontal)
+        .spacing(8)
+        .build();
+    right_box.append(&theme_toggle);
+    right_box.append(&status_pill);
+
     topbar.append(&os_title);
     topbar.append(&spacer);
-    topbar.append(&status_pill);
+    topbar.append(&right_box);
 
     // Zone 2: Center Clock + Card
     let center_box = Box::builder()

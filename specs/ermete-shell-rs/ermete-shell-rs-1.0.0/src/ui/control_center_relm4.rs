@@ -9,6 +9,7 @@ pub struct ControlCenterModel {
     pub is_wifi_enabled: bool,
     pub is_bluetooth_enabled: bool,
     pub is_do_not_disturb: bool,
+    pub is_dark_mode: bool,
 }
 
 #[derive(Debug)]
@@ -16,6 +17,7 @@ pub enum ControlCenterInput {
     ToggleWifi,
     ToggleBluetooth,
     ToggleDoNotDisturb,
+    ToggleDarkMode,
     SetVolume(f64),
     SetBrightness(f64),
 }
@@ -53,6 +55,12 @@ impl SimpleComponent for ControlCenterModel {
                         set_label: "Bluetooth",
                         set_active: model.is_bluetooth_enabled,
                         connect_toggled => ControlCenterInput::ToggleBluetooth,
+                    },
+                    
+                    gtk::ToggleButton {
+                        set_label: "Dark Mode",
+                        set_active: model.is_dark_mode,
+                        connect_toggled => ControlCenterInput::ToggleDarkMode,
                     },
                 },
                 
@@ -103,6 +111,7 @@ impl SimpleComponent for ControlCenterModel {
             is_wifi_enabled: true,
             is_bluetooth_enabled: false,
             is_do_not_disturb: false,
+            is_dark_mode: true,
         };
 
         let widgets = view_output!();
@@ -120,6 +129,9 @@ impl SimpleComponent for ControlCenterModel {
             }
             ControlCenterInput::ToggleDoNotDisturb => {
                 self.is_do_not_disturb = !self.is_do_not_disturb;
+            }
+            ControlCenterInput::ToggleDarkMode => {
+                self.is_dark_mode = !self.is_dark_mode;
             }
             ControlCenterInput::SetVolume(val) => {
                 self.volume = val;

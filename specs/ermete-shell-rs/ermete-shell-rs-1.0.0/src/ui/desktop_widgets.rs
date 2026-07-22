@@ -17,6 +17,8 @@ pub struct WidgetConfig {
     pub x: f64,
     pub y: f64,
     pub settings: Option<serde_json::Value>,
+    pub custom_css: Option<String>,
+    pub plugin_path: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

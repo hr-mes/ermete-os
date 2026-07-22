@@ -274,6 +274,18 @@ impl SimpleComponent for TopbarModel {
                         },
                         
                         gtk::Button {
+                            set_label: "🧩",
+                            add_css_class: "macos-status-item",
+                            set_tooltip_text: Some("Desktop Widgets"),
+                        },
+                        
+                        gtk::Button {
+                            set_label: "🎨",
+                            add_css_class: "macos-status-item",
+                            set_tooltip_text: Some("Live Theming & Dynamic Accent"),
+                        },
+                        
+                        gtk::Button {
                             set_label: "󰂚",
                             add_css_class: "macos-status-item",
                             connect_clicked => TopbarInput::ToggleNotifications,
