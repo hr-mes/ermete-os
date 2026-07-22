@@ -95,30 +95,7 @@ fn load_css() {
         ""
     };
 
-    // Preleviamo il CSS originale da topbar
-    let topbar_css = r#"
-    window.topbar-window { background-color: transparent; }
-    .topbar-container {
-        background: @shell_bg;
-        border-bottom: 1px solid @shell_border;
-        color: @shell_fg;
-        font-family: 'Inter', 'SF Pro Text', 'Roboto', sans-serif;
-        font-size: 13px; font-weight: 500; padding: 0 10px;
-    }
-    .macos-menu-item {
-        background: transparent; border: none; border-radius: 5px; padding: 4px 12px;
-        color: @shell_fg; font-weight: 500; transition: all 0.25s;
-    }
-    .macos-menu-item:hover { background: @shell_hover; color: @shell_primary; }
-    .workspace-focused { color: #0a84ff; font-weight: 900; }
-    .workspace-active { color: #f5f5f7; font-weight: 700; }
-    .macos-status-item {
-        background: transparent; border: none; border-radius: 5px; padding: 4px 12px;
-        color: @shell_fg; font-size: 14px; transition: all 0.25s;
-    }
-    .macos-status-item:hover { background: @shell_hover; color: @shell_primary; }
-    .macos-clock { font-weight: 700; }
-    "#;
+    let topbar_css = crate::ui::topbar::TOPBAR_CSS;
 
     let full_css = format!("{}\n{}\n{}", colors_css, fallback, topbar_css);
 
@@ -179,6 +156,8 @@ pub enum TopbarInput {
     ToggleCalendar,
     ToggleWifi,
     ToggleNotifications,
+    ToggleDesktopWidgets,
+    ToggleLiveTheming,
 }
 
 #[relm4::component(pub)]
@@ -277,12 +256,14 @@ impl SimpleComponent for TopbarModel {
                             set_label: "🧩",
                             add_css_class: "macos-status-item",
                             set_tooltip_text: Some("Desktop Widgets"),
+                            connect_clicked => TopbarInput::ToggleDesktopWidgets,
                         },
                         
                         gtk::Button {
                             set_label: "🎨",
                             add_css_class: "macos-status-item",
                             set_tooltip_text: Some("Live Theming & Dynamic Accent"),
+                            connect_clicked => TopbarInput::ToggleLiveTheming,
                         },
                         
                         gtk::Button {
@@ -425,6 +406,12 @@ impl SimpleComponent for TopbarModel {
             }
             TopbarInput::ToggleNotifications => {
                 crate::ui::topbar::toggle_or_open_popup("notifications", || crate::ui::notifications::show_notification_center(&self.app));
+            }
+            TopbarInput::ToggleDesktopWidgets => {
+                let _ = std::process::Command::new("ermete-settings-rs").arg("--page").arg("desktop").spawn();
+            }
+            TopbarInput::ToggleLiveTheming => {
+                let _ = std::process::Command::new("ermete-settings-rs").arg("--page").arg("appearance").spawn();
             }
         }
     }

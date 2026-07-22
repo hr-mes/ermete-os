@@ -5,15 +5,7 @@ use glib::clone;
 use zbus::proxy;
 use futures_util::StreamExt;
 
-#[proxy(
-    interface = "os.ermete.Bedrock",
-    default_service = "os.ermete.Bedrock",
-    default_path = "/os/ermete/Bedrock"
-)]
-trait Bedrock {
-    #[zbus(property)]
-    fn volume(&self) -> zbus::Result<f64>;
-}
+
 
 use gtk4::prelude::*;
 use gtk4::{
@@ -1453,25 +1445,6 @@ pub fn show_control_center_popover(app: &Application) {
     let wifi_btn_clone = wifi_btn.clone();
     let bt_btn_clone = bt_btn.clone();
     
-    let audio_slider_dbus = audio_slider.clone();
-    glib::MainContext::default().spawn_local(async move {
-        if let Ok(connection) = zbus::Connection::session().await {
-            if let Ok(proxy) = BedrockProxy::new(&connection).await {
-                if let Ok(v) = proxy.volume().await {
-                    audio_slider_dbus.set_value(v * 100.0);
-                }
-                let mut stream = proxy.receive_volume_changed().await;
-                    while let Some(changed) = stream.next().await {
-                        if let Ok(v) = changed.get().await {
-                            if (audio_slider_dbus.value() - (v * 100.0)).abs() > 1.5 {
-                                audio_slider_dbus.set_value(v * 100.0);
-                            }
-                        }
-                    }
-                
-            }
-        }
-    });
 
     glib::timeout_add_local(std::time::Duration::from_millis(1000), clone!(@weak pop => @default-return glib::ControlFlow::Break, move || {
         let live = crate::core::live_state::get_live_state();

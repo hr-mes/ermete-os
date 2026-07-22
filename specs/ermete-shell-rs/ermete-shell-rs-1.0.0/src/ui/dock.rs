@@ -172,7 +172,17 @@ fn should_autohide_for_monitor(state: &DockState, monitor_connector: &str, scree
 pub fn build_ui(app: &Application) -> ApplicationWindow {
     let display = gtk4::gdk::Display::default().expect("Display default");
     let provider = CssProvider::new();
-    provider.load_from_data(DOCK_CSS);
+    let home = std::env::var("HOME").unwrap_or_else(|_| "/root".to_string());
+    let colors_path = format!("{}/.config/ermete-shell/colors.css", home);
+    let colors_css = std::fs::read_to_string(&colors_path).unwrap_or_else(|_| "".to_string());
+    let fallback = r#"
+        @define-color shell_bg rgba(30, 30, 32, 0.85);
+        @define-color shell_fg #f8fafc;
+        @define-color shell_primary #0a84ff;
+        @define-color shell_border rgba(255, 255, 255, 0.1);
+    "#;
+    let full_css = format!("{}\n{}\n{}", colors_css, fallback, DOCK_CSS);
+    provider.load_from_data(&full_css);
     gtk4::style_context_add_provider_for_display(
         &display,
         &provider,

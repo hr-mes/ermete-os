@@ -303,8 +303,8 @@ pub fn show_spotlight_modal(app: &Application) {
             background-color: transparent;
         }
         .spotlight-card {
-            background-color: rgba(20, 20, 20, 0.55);
-            border-radius: 24px;
+            background-color: rgba(30, 30, 32, 0.90);
+            border-radius: 16px;
             border: 1px solid rgba(255, 255, 255, 0.15);
             box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
             padding: 12px;

@@ -11,7 +11,7 @@ use gtk4::{
 };
 use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
 
-const TOPBAR_CSS: &str = r#"
+pub const TOPBAR_CSS: &str = r#"
 window.topbar-window {
     background-color: transparent;
 }
