@@ -21,13 +21,15 @@ window.bg-overlay-window {
 }
 
 .topbar-container {
-    background: @shell_bg;
-    border-bottom: 1px solid @shell_border;
+    background: rgba(28, 28, 30, 0.45);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     color: @shell_fg;
     font-family: 'Inter', 'SF Pro Text', 'Roboto', sans-serif;
     font-size: 13px;
     font-weight: 500;
     padding: 0 10px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
 }
 
 .macos-menu-item {
@@ -108,11 +110,12 @@ window.spotlight-window {
 }
 
 .spotlight-card {
-    background: rgba(30, 30, 32, 0.75);
-    border: 1px solid alpha(white, 0.08);
-    border-radius: 16px;
-    box-shadow: 0 10px 40px alpha(black, 0.6);
-    animation: pop-in-fade 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    background: rgba(28, 28, 30, 0.45);
+    backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+    animation: pop-in-fade 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .spotlight-input {
@@ -168,13 +171,14 @@ window.popup-window {
 }
 
 .cc-card {
-    background: rgba(30, 30, 32, 0.75);
-    border: 1px solid alpha(white, 0.08);
-    border-radius: 16px;
-    padding: 14px;
+    background: rgba(28, 28, 30, 0.45);
+    backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    padding: 16px;
     color: #f8fafc;
-    box-shadow: 0 10px 40px alpha(black, 0.6);
-    animation: slide-down-fade 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+    animation: slide-down-fade 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .cc-tile {
@@ -186,8 +190,9 @@ window.popup-window {
 }
 
 .cc-tile:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.12);
     transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .cc-tile:active {

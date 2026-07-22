@@ -272,7 +272,7 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
                         let _ = app_info.launch(&[], gtk4::gio::AppLaunchContext::NONE);
                     }
                     SpotlightAction::OpenSettingsPage(page) => {
-                        let _ = std::process::Command::new("ermete-settings-rs").arg("--page").arg(page).spawn();
+                        let _ = gtk4::glib::spawn_command_line_async(format!("ermete-settings-rs --page {}", page));
                     }
                 }
                 pop_clone.close();

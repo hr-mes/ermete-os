@@ -721,9 +721,7 @@ pub fn show_wifi_popover(app: &Application) {
     let pop_wifi_s = pop.clone();
     settings_wifi_btn.connect_clicked(move |_| {
         pop_wifi_s.close();
-        let _ = Command::new("ermete-settings-rs")
-            .args(["--page", "wifi"])
-            .spawn();
+        let _ = gtk4::glib::spawn_command_line_async(format!("ermete-settings-rs --page {}", "wifi"));
     });
     footer_box.append(&settings_wifi_btn);
     footer_box.append(&close_btn);
@@ -856,9 +854,7 @@ pub fn show_bluetooth_popover(app: &Application) {
     let pop_bt_s = pop.clone();
     settings_bt_btn.connect_clicked(move |_| {
         pop_bt_s.close();
-        let _ = Command::new("ermete-settings-rs")
-            .args(["--page", "bluetooth"])
-            .spawn();
+        let _ = gtk4::glib::spawn_command_line_async(format!("ermete-settings-rs --page {}", "bluetooth"));
     });
     footer_box.append(&settings_bt_btn);
     footer_box.append(&close_btn);
@@ -997,9 +993,7 @@ pub fn show_audio_mixer_popover(app: &Application) {
     let pop_audio_s = pop.clone();
     settings_audio_btn.connect_clicked(move |_| {
         pop_audio_s.close();
-        let _ = Command::new("ermete-settings-rs")
-            .args(["--page", "audio"])
-            .spawn();
+        let _ = gtk4::glib::spawn_command_line_async(format!("ermete-settings-rs --page {}", "audio"));
     });
     footer_box.append(&settings_audio_btn);
     footer_box.append(&close_btn);
@@ -1059,7 +1053,7 @@ pub fn show_control_center_popover(app: &Application) {
     let pop_settings = pop.clone();
     settings_btn.connect_clicked(move |_| {
         pop_settings.close();
-        let _ = Command::new("ermete-settings-rs").spawn();
+        let _ = gtk4::glib::spawn_command_line_async("ermete-settings-rs");
     });
     header_box.append(&cc_title_lbl);
     header_box.append(&settings_btn);
@@ -1104,9 +1098,7 @@ pub fn show_control_center_popover(app: &Application) {
     let pop_wifi_s = pop.clone();
     wifi_settings_btn.connect_clicked(move |_| {
         pop_wifi_s.close();
-        let _ = Command::new("ermete-settings-rs")
-            .args(["--page", "wifi"])
-            .spawn();
+        let _ = gtk4::glib::spawn_command_line_async(format!("ermete-settings-rs --page {}", "wifi"));
     });
     wifi_row_box.append(&wifi_btn);
     wifi_row_box.append(&wifi_settings_btn);
@@ -1141,9 +1133,7 @@ pub fn show_control_center_popover(app: &Application) {
     let pop_bt_s = pop.clone();
     bt_settings_btn.connect_clicked(move |_| {
         pop_bt_s.close();
-        let _ = Command::new("ermete-settings-rs")
-            .args(["--page", "bluetooth"])
-            .spawn();
+        let _ = gtk4::glib::spawn_command_line_async(format!("ermete-settings-rs --page {}", "bluetooth"));
     });
     bt_row_box.append(&bt_btn);
     bt_row_box.append(&bt_settings_btn);
@@ -1222,9 +1212,7 @@ pub fn show_control_center_popover(app: &Application) {
     let pop_disp_s = pop.clone();
     disp_settings_btn.connect_clicked(move |_| {
         pop_disp_s.close();
-        let _ = Command::new("ermete-settings-rs")
-            .args(["--page", "displays"])
-            .spawn();
+        let _ = gtk4::glib::spawn_command_line_async(format!("ermete-settings-rs --page {}", "displays"));
     });
 
     let tt_btn = Button::builder()
@@ -1320,9 +1308,7 @@ pub fn show_control_center_popover(app: &Application) {
     let pop_audio_s = pop.clone();
     audio_settings_btn.connect_clicked(move |_| {
         pop_audio_s.close();
-        let _ = Command::new("ermete-settings-rs")
-            .args(["--page", "audio"])
-            .spawn();
+        let _ = gtk4::glib::spawn_command_line_async(format!("ermete-settings-rs --page {}", "audio"));
     });
     audio_card.append(&audio_settings_btn);
 

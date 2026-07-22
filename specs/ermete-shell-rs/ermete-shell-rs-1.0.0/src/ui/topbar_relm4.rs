@@ -408,10 +408,10 @@ impl SimpleComponent for TopbarModel {
                 crate::ui::topbar::toggle_or_open_popup("notifications", || crate::ui::notifications::show_notification_center(&self.app));
             }
             TopbarInput::ToggleDesktopWidgets => {
-                let _ = std::process::Command::new("ermete-settings-rs").arg("--page").arg("desktop").spawn();
+                let _ = gtk4::glib::spawn_command_line_async("ermete-settings-rs --page desktop");
             }
             TopbarInput::ToggleLiveTheming => {
-                let _ = std::process::Command::new("ermete-settings-rs").arg("--page").arg("appearance").spawn();
+                let _ = gtk4::glib::spawn_command_line_async("ermete-settings-rs --page appearance");
             }
         }
     }
