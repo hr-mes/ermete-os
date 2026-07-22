@@ -1,5 +1,5 @@
 # TODO: Pin to SHA256 digest when available
-FROM registry.fedoraproject.org/fedora:41
+FROM registry.fedoraproject.org/fedora:43
 
 # Copy the custom RPMFusion repository configurations pointing to stable release paths
 COPY rpmfusion-custom.repo /etc/yum.repos.d/rpmfusion-custom.repo
@@ -24,6 +24,7 @@ RUN dnf install -y \
     mold \
     clang \
     clang-devel \
+    sccache \
     ccache \
     systemd-devel \
     nlohmann-json-devel \
