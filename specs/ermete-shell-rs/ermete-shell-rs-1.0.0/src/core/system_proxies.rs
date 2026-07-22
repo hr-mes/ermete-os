@@ -258,7 +258,7 @@ impl SystemController {
     pub async fn toggle_wifi(&self) -> zbus::Result<bool> {
         match &self.backend {
             ControllerBackend::Dbus { system, .. } => {
-                if let Ok(proxy) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await.map_err(|_| zbus::Error::Failure("timeout".into()))?? {
+                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
                     let current = proxy.wireless_enabled().await.unwrap_or(true);
                     let new_state = !current;
                     proxy.set_wireless_enabled(new_state).await?;
@@ -277,7 +277,7 @@ impl SystemController {
     pub async fn toggle_bluetooth(&self) -> zbus::Result<bool> {
         match &self.backend {
             ControllerBackend::Dbus { system, .. } => {
-                if let Ok(proxy) = tokio::time::timeout(std::time::Duration::from_secs(5), BlueZProxy::new(system)).await.map_err(|_| zbus::Error::Failure("timeout".into()))?? {
+                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BlueZProxy::new(system)).await {
                     let current = proxy.powered().await.unwrap_or(false);
                     let new_state = !current;
                     proxy.set_powered(new_state).await?;
@@ -296,7 +296,7 @@ impl SystemController {
     pub async fn toggle_mute(&self) -> zbus::Result<bool> {
         match &self.backend {
             ControllerBackend::Dbus { session, .. } => {
-                if let Ok(proxy) = tokio::time::timeout(std::time::Duration::from_secs(5), BedrockAudioProxy::new(session)).await.map_err(|_| zbus::Error::Failure("timeout".into()))?? {
+                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BedrockAudioProxy::new(session)).await {
                     let current = proxy.muted().await.unwrap_or(false);
                     let new_state = !current;
                     proxy.set_muted(new_state).await?;
@@ -315,7 +315,7 @@ impl SystemController {
     pub async fn toggle_source_mute(&self) -> zbus::Result<bool> {
         match &self.backend {
             ControllerBackend::Dbus { session, .. } => {
-                if let Ok(proxy) = tokio::time::timeout(std::time::Duration::from_secs(5), BedrockAudioProxy::new(session)).await.map_err(|_| zbus::Error::Failure("timeout".into()))?? {
+                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BedrockAudioProxy::new(session)).await {
                     let current = proxy.source_muted().await.unwrap_or(false);
                     let new_state = !current;
                     proxy.set_source_muted(new_state).await?;
@@ -334,7 +334,7 @@ impl SystemController {
     pub async fn set_volume(&self, volume: f64) -> zbus::Result<()> {
         match &self.backend {
             ControllerBackend::Dbus { session, .. } => {
-                if let Ok(proxy) = tokio::time::timeout(std::time::Duration::from_secs(5), BedrockAudioProxy::new(session)).await.map_err(|_| zbus::Error::Failure("timeout".into()))?? {
+                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BedrockAudioProxy::new(session)).await {
                     proxy.set_volume(volume).await?;
                     if let Ok(mut c) = self.cached_volume.lock() {
                         *c = volume;
@@ -356,7 +356,7 @@ impl SystemController {
     pub async fn set_source_volume(&self, volume: f64) -> zbus::Result<()> {
         match &self.backend {
             ControllerBackend::Dbus { session, .. } => {
-                if let Ok(proxy) = tokio::time::timeout(std::time::Duration::from_secs(5), BedrockAudioProxy::new(session)).await.map_err(|_| zbus::Error::Failure("timeout".into()))?? {
+                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BedrockAudioProxy::new(session)).await {
                     proxy.set_source_volume(volume).await?;
                 }
                 Ok(())
@@ -373,7 +373,7 @@ impl SystemController {
         match &self.backend {
             ControllerBackend::Dbus { system, .. } => {
                 let val = (brightness * 100.0) as u32;
-                if let Ok(proxy) = tokio::time::timeout(std::time::Duration::from_secs(5), LogindSessionProxy::new(system)).await.map_err(|_| zbus::Error::Failure("timeout".into()))?? {
+                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), LogindSessionProxy::new(system)).await {
                     proxy.set_brightness("backlight", "intel_backlight", val).await?;
                 } else if let Ok(entries) = std::fs::read_dir("/sys/class/backlight") {
                     for entry in entries.flatten() {
@@ -436,7 +436,7 @@ impl SystemController {
     pub async fn is_wifi_enabled(&self) -> zbus::Result<bool> {
         match &self.backend {
             ControllerBackend::Dbus { system, .. } => {
-                if let Ok(proxy) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await.map_err(|_| zbus::Error::Failure("timeout".into()))?? {
+                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
                     return Ok(proxy.wireless_enabled().await.unwrap_or(true));
                 }
                 Ok(true)
@@ -448,7 +448,7 @@ impl SystemController {
     pub async fn is_bluetooth_enabled(&self) -> zbus::Result<bool> {
         match &self.backend {
             ControllerBackend::Dbus { system, .. } => {
-                if let Ok(proxy) = tokio::time::timeout(std::time::Duration::from_secs(5), BlueZProxy::new(system)).await.map_err(|_| zbus::Error::Failure("timeout".into()))?? {
+                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BlueZProxy::new(system)).await {
                     return Ok(proxy.powered().await.unwrap_or(true));
                 }
                 Ok(true)
@@ -460,7 +460,7 @@ impl SystemController {
     pub async fn get_volume(&self) -> zbus::Result<f64> {
         match &self.backend {
             ControllerBackend::Dbus { session, .. } => {
-                if let Ok(proxy) = tokio::time::timeout(std::time::Duration::from_secs(5), BedrockAudioProxy::new(session)).await.map_err(|_| zbus::Error::Failure("timeout".into()))?? {
+                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BedrockAudioProxy::new(session)).await {
                     if let Ok(vol) = proxy.volume().await {
                         if let Ok(mut c) = self.cached_volume.lock() {
                             *c = vol;
@@ -494,7 +494,7 @@ impl SystemController {
     pub async fn lock_screen(&self) -> zbus::Result<()> {
         match &self.backend {
             ControllerBackend::Dbus { system, .. } => {
-                if let Ok(proxy) = tokio::time::timeout(std::time::Duration::from_secs(5), LogindProxy::new(system)).await.map_err(|_| zbus::Error::Failure("timeout".into()))?? {
+                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), LogindProxy::new(system)).await {
                     let _ = proxy.lock_sessions().await;
                 }
                 Ok(())
@@ -506,7 +506,7 @@ impl SystemController {
     pub async fn power_off(&self) -> zbus::Result<()> {
         match &self.backend {
             ControllerBackend::Dbus { system, .. } => {
-                if let Ok(proxy) = tokio::time::timeout(std::time::Duration::from_secs(5), LogindProxy::new(system)).await.map_err(|_| zbus::Error::Failure("timeout".into()))?? {
+                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), LogindProxy::new(system)).await {
                     let _ = proxy.power_off(true).await;
                 }
                 Ok(())
@@ -518,7 +518,7 @@ impl SystemController {
     pub async fn reboot(&self) -> zbus::Result<()> {
         match &self.backend {
             ControllerBackend::Dbus { system, .. } => {
-                if let Ok(proxy) = tokio::time::timeout(std::time::Duration::from_secs(5), LogindProxy::new(system)).await.map_err(|_| zbus::Error::Failure("timeout".into()))?? {
+                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), LogindProxy::new(system)).await {
                     let _ = proxy.reboot(true).await;
                 }
                 Ok(())
@@ -530,7 +530,7 @@ impl SystemController {
     pub async fn suspend(&self) -> zbus::Result<()> {
         match &self.backend {
             ControllerBackend::Dbus { system, .. } => {
-                if let Ok(proxy) = tokio::time::timeout(std::time::Duration::from_secs(5), LogindProxy::new(system)).await.map_err(|_| zbus::Error::Failure("timeout".into()))?? {
+                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), LogindProxy::new(system)).await {
                     let _ = proxy.suspend(true).await;
                 }
                 Ok(())
@@ -542,7 +542,7 @@ impl SystemController {
     pub async fn set_wifi_powered(&self, powered: bool) -> zbus::Result<()> {
         match &self.backend {
             ControllerBackend::Dbus { system, .. } => {
-                if let Ok(proxy) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await.map_err(|_| zbus::Error::Failure("timeout".into()))?? {
+                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
                     proxy.set_wireless_enabled(powered).await?;
                 }
                 Ok(())
@@ -557,7 +557,7 @@ impl SystemController {
     pub async fn set_bluetooth_powered(&self, powered: bool) -> zbus::Result<()> {
         match &self.backend {
             ControllerBackend::Dbus { system, .. } => {
-                if let Ok(proxy) = tokio::time::timeout(std::time::Duration::from_secs(5), BlueZProxy::new(system)).await.map_err(|_| zbus::Error::Failure("timeout".into()))?? {
+                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BlueZProxy::new(system)).await {
                     proxy.set_powered(powered).await?;
                 }
                 Ok(())
@@ -573,7 +573,7 @@ impl SystemController {
         match &self.backend {
             ControllerBackend::Dbus { system, .. } => {
                 let mut results = Vec::new();
-                if let Ok(nm_proxy) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await.map_err(|_| zbus::Error::Failure("timeout".into()))?? {
+                if let Ok(Ok(nm_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
                     if let Ok(devices) = nm_proxy.get_devices().await {
                         for dev_path in devices {
                             if let Ok(dev_proxy) = NmDeviceProxy::builder(system).path(dev_path.clone())?.build().await {
@@ -658,7 +658,7 @@ impl SystemController {
     pub async fn connect_wifi(&self, ssid: &str, _password: &str) -> zbus::Result<()> {
         match &self.backend {
             ControllerBackend::Dbus { system, .. } => {
-                if let Ok(settings_proxy) = tokio::time::timeout(std::time::Duration::from_secs(5), NmSettingsProxy::new(system)).await.map_err(|_| zbus::Error::Failure("timeout".into()))?? {
+                if let Ok(Ok(settings_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NmSettingsProxy::new(system)).await {
                     if let Ok(conns) = settings_proxy.list_connections().await {
                         for conn_path in conns {
                             if let Ok(conn_proxy) = NmSettingsConnectionProxy::builder(system).path(conn_path.clone())?.build().await {
@@ -667,7 +667,7 @@ impl SystemController {
                                         if let Some(ssid_val) = wifi_sec.get("ssid") {
                                             if let Some(s) = Self::extract_ssid(ssid_val) {
                                                 if s == ssid {
-                                                    if let Ok(nm_proxy) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await.map_err(|_| zbus::Error::Failure("timeout".into()))?? {
+                                                    if let Ok(Ok(nm_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
                                                         let _ = nm_proxy.activate_connection(&conn_path, &zbus::zvariant::ObjectPath::from_str_unchecked("/"), &zbus::zvariant::ObjectPath::from_str_unchecked("/")).await?;
                                                         if let Ok(mut l) = self.active_wifi_ssid.lock() {
                                                             *l = Some(ssid.to_string());
@@ -698,7 +698,7 @@ impl SystemController {
     pub async fn disconnect_wifi(&self, ssid: &str) -> zbus::Result<()> {
         match &self.backend {
             ControllerBackend::Dbus { system, .. } => {
-                if let Ok(nm_proxy) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await.map_err(|_| zbus::Error::Failure("timeout".into()))?? {
+                if let Ok(Ok(nm_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
                     if let Ok(active_conns) = nm_proxy.active_connections().await {
                         for path in active_conns {
                             if let Ok(ac_proxy) = NmActiveConnectionProxy::builder(system).path(path.clone())?.build().await {
@@ -732,7 +732,7 @@ impl SystemController {
     pub async fn delete_wifi(&self, ssid: &str) -> zbus::Result<()> {
         match &self.backend {
             ControllerBackend::Dbus { system, .. } => {
-                if let Ok(settings_proxy) = tokio::time::timeout(std::time::Duration::from_secs(5), NmSettingsProxy::new(system)).await.map_err(|_| zbus::Error::Failure("timeout".into()))?? {
+                if let Ok(Ok(settings_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NmSettingsProxy::new(system)).await {
                     if let Ok(conns) = settings_proxy.list_connections().await {
                         for conn_path in conns {
                             if let Ok(conn_proxy) = NmSettingsConnectionProxy::builder(system).path(conn_path)?.build().await {
@@ -877,7 +877,7 @@ impl SystemController {
     pub async fn refresh_network_status(&self) -> zbus::Result<()> {
         match &self.backend {
             ControllerBackend::Dbus { system, .. } => {
-                if let Ok(nm_proxy) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await.map_err(|_| zbus::Error::Failure("timeout".into()))?? {
+                if let Ok(Ok(nm_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
                     if let Ok(active_conns) = nm_proxy.active_connections().await {
                         for path in active_conns {
                             if let Ok(ac_proxy) = NmActiveConnectionProxy::builder(system).path(path)?.build().await {
