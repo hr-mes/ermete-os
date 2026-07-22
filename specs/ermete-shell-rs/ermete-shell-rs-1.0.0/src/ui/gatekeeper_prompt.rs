@@ -78,7 +78,7 @@ pub fn build_ui(app: &Application, app_path: &str) {
     let app_cancel = app.clone();
     btn_cancel.connect_clicked(move |_btn| {
         // Exit with code 1 to deny
-        std::process::exit_code(1);
+        std::process::exit(1);
         app_cancel.quit();
     });
 
@@ -91,7 +91,7 @@ pub fn build_ui(app: &Application, app_path: &str) {
     btn_approve.connect_clicked(move |_btn| {
         // Future: PAM Authentication here!
         // For now, exit 0 to approve
-        std::process::exit_code(0);
+        std::process::exit(0);
         app_approve.quit();
     });
 
