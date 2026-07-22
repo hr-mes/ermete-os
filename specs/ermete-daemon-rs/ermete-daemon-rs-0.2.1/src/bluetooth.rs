@@ -15,10 +15,23 @@ impl Bluetooth {
 impl Bluetooth {
     #[zbus(property)]
     async fn power(&self) -> bool {
-        if let Ok(proxy) = fdo::PropertiesProxy::builder(&self.sys_conn)
-            .destination("org.bluez").unwrap()
-            .path("/org/bluez/hci0").unwrap()
-            .build().await
+        let proxy_builder = fdo::PropertiesProxy::builder(&self.sys_conn)
+            .destination("org.bluez");
+        let proxy_builder = match proxy_builder {
+            Ok(b) => b,
+            Err(e) => {
+                eprintln!("Error setting destination: {}", e);
+                return false;
+            }
+        };
+        let proxy_builder = match proxy_builder.path("/org/bluez/hci0") {
+            Ok(b) => b,
+            Err(e) => {
+                eprintln!("Error setting path: {}", e);
+                return false;
+            }
+        };
+        if let Ok(proxy) = proxy_builder.build().await
         {
             if let Ok(iface) = InterfaceName::try_from("org.bluez.Adapter1") {
                 if let Ok(val) = proxy.get(iface, "Powered").await {
@@ -34,8 +47,10 @@ impl Bluetooth {
     #[zbus(property)]
     async fn set_power(&self, val: bool) -> fdo::Result<()> {
         let proxy = fdo::PropertiesProxy::builder(&self.sys_conn)
-            .destination("org.bluez").unwrap()
-            .path("/org/bluez/hci0").unwrap()
+            .destination("org.bluez")
+            .map_err(|e| fdo::Error::Failed(format!("Invalid destination: {}", e)))?
+            .path("/org/bluez/hci0")
+            .map_err(|e| fdo::Error::Failed(format!("Invalid path: {}", e)))?
             .build().await
             .map_err(|e| fdo::Error::Failed(format!("Failed to connect to BlueZ DBus: {}", e)))?;
 
@@ -50,8 +65,10 @@ impl Bluetooth {
 
     async fn get_devices(&self) -> fdo::Result<Vec<(String, String)>> {
         let obj_mgr = fdo::ObjectManagerProxy::builder(&self.sys_conn)
-            .destination("org.bluez").unwrap()
-            .path("/").unwrap()
+            .destination("org.bluez")
+            .map_err(|e| fdo::Error::Failed(format!("Invalid destination: {}", e)))?
+            .path("/")
+            .map_err(|e| fdo::Error::Failed(format!("Invalid path: {}", e)))?
             .build().await
             .map_err(|e| fdo::Error::Failed(format!("Failed to connect to BlueZ ObjectManager: {}", e)))?;
 
