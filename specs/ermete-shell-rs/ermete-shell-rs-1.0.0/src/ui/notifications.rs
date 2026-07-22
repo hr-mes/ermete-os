@@ -25,7 +25,7 @@ pub fn send_action_invoked(id: u32, action_key: &str) {
 pub fn show_toast_popup(app: &Application, notif: &NotificationData) {
     let toast = ApplicationWindow::builder()
         .application(app)
-        .css_classes(["popup-window"])
+        .css_classes(["transparent-window"])
         .build();
 
     toast.init_layer_shell();
@@ -39,7 +39,7 @@ pub fn show_toast_popup(app: &Application, notif: &NotificationData) {
     let vbox = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(6)
-        .css_classes(["cc-card"])
+        .css_classes(["cc-card", "premium-notification", "toast-slide-in"])
         .build();
     
     let title = Label::builder().label(&notif.summary).css_classes(["cc-title"]).halign(Align::Start).build();
@@ -95,14 +95,65 @@ pub fn show_toast_popup(app: &Application, notif: &NotificationData) {
     toast.present();
 
     let has_reply = notif.has_inline_reply;
-    let timeout_secs = if has_reply { 12 } else { 5 };
-    glib::timeout_add_seconds_local(timeout_secs, clone!(@weak toast => @default-return glib::ControlFlow::Break, move || {
+    let slide_out_ms = if has_reply { 11600 } else { 4600 };
+    let vbox_clone = vbox.clone();
+    glib::timeout_add_local(std::time::Duration::from_millis(slide_out_ms), move || {
+        vbox_clone.add_css_class("toast-slide-out");
+        glib::ControlFlow::Break
+    });
+
+    let close_ms = if has_reply { 12000 } else { 5000 };
+    glib::timeout_add_local(std::time::Duration::from_millis(close_ms), clone!(@weak toast => @default-return glib::ControlFlow::Break, move || {
         toast.close();
         glib::ControlFlow::Break
     }));
 }
 
 pub fn spawn_notification_daemon(app: &Application) {
+    let provider = gtk4::CssProvider::new();
+    provider.load_from_data(r#"
+        .premium-notification {
+            background-color: rgba(30, 30, 30, 0.65);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .toast-slide-in {
+            animation: slide-in-toast 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .toast-slide-out {
+            animation: slide-out-toast 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+        @keyframes slide-in-toast {
+            0% { transform: translateX(100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slide-out-toast {
+            0% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(100%); opacity: 0; }
+        }
+        
+        .notification-center-window {
+            background-color: rgba(30, 30, 30, 0.65);
+            border-radius: 20px;
+            box-shadow: -5px 0 30px rgba(0, 0, 0, 0.5);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            animation: slide-in-nc 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        @keyframes slide-in-nc {
+            0% { transform: translateX(100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        .transparent-window {
+            background-color: transparent;
+        }
+    "#);
+    gtk4::style_context_add_provider_for_display(
+        &gtk4::gdk::Display::default().unwrap(),
+        &provider,
+        gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
+    );
+
     load_notification_history();
     let (sender, receiver) = glib::MainContext::channel::<NotificationData>(glib::Priority::DEFAULT);
     
@@ -161,7 +212,7 @@ pub fn spawn_notification_daemon(app: &Application) {
 pub fn show_notification_center(app: &Application) {
     let sidebar = ApplicationWindow::builder()
         .application(app)
-        .css_classes(["popup-window"])
+        .css_classes(["notification-center-window"])
         .build();
 
     sidebar.init_layer_shell();

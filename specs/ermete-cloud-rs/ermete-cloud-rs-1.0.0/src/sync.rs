@@ -72,14 +72,18 @@ impl SyncEngine {
                             }
                             info!("Received Universal Clipboard from peer! ({} bytes)", content.len());
                             // Apply to local clipboard using wl-copy
-                            if let Ok(mut child) = tokio::process::Command::new("wl-copy")
-                                .stdin(std::process::Stdio::piped())
-                                .spawn() 
-                            {
-                                if let Some(mut stdin) = child.stdin.take() {
-                                    let _ = stdin.write_all(content.as_bytes()).await;
+                            tokio::spawn(async move {
+                                if let Ok(mut child) = tokio::process::Command::new("wl-copy")
+                                    .stdin(std::process::Stdio::piped())
+                                    .spawn() 
+                                {
+                                    if let Some(mut stdin) = child.stdin.take() {
+                                        let _ = stdin.write_all(content.as_bytes()).await;
+                                        drop(stdin);
+                                    }
+                                    let _ = child.wait().await;
                                 }
-                            }
+                            });
                         }
                     });
                 }
