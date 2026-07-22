@@ -577,7 +577,10 @@ fn show_window_picker_popover(anchor: &Button, item: &DockItem) {
         .css_classes(["dock-popover"])
         .build();
     popover.set_parent(anchor);
-    popover.connect_closed(|p| p.unparent());
+    popover.connect_closed(|p| {
+        p.set_child(None::<&gtk4::Widget>);
+        p.unparent();
+    });
 
     let box_inner = GtkBox::new(Orientation::Vertical, 4);
     for (i, title) in item.window_titles.iter().enumerate() {
@@ -603,7 +606,10 @@ fn show_dock_context_menu(anchor: &Button, item: &DockItem) {
         .css_classes(["dock-popover"])
         .build();
     popover.set_parent(anchor);
-    popover.connect_closed(|p| p.unparent());
+    popover.connect_closed(|p| {
+        p.set_child(None::<&gtk4::Widget>);
+        p.unparent();
+    });
 
     let box_inner = GtkBox::new(Orientation::Vertical, 4);
 

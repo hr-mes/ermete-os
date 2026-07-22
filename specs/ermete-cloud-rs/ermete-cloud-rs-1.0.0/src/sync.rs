@@ -4,18 +4,19 @@ use tokio::net::{UdpSocket, TcpListener, TcpStream};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use std::collections::HashSet;
+use std::collections::HashMap;
 use std::net::SocketAddr;
+use tokio::time::{Instant, Duration};
 use zbus::Connection;
 
 pub struct SyncEngine {
-    known_peers: Arc<Mutex<HashSet<String>>>,
+    known_peers: Arc<Mutex<HashMap<String, Instant>>>,
 }
 
 impl SyncEngine {
     pub fn new() -> Self {
         Self {
-            known_peers: Arc::new(Mutex::new(HashSet::new())),
+            known_peers: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
@@ -36,7 +37,9 @@ impl SyncEngine {
                     if msg.starts_with("ERMETE_HELLO") {
                         let ip = addr.ip().to_string();
                         let mut p = peers.lock().await;
-                        if p.insert(ip.clone()) {
+                        let is_new = !p.contains_key(&ip);
+                        p.insert(ip.clone(), Instant::now());
+                        if is_new {
                             info!("Discovered new Ermete peer for Continuity: {}", ip);
                         }
                     }
@@ -87,7 +90,10 @@ impl SyncEngine {
     }
     
     pub async fn send_clipboard(&self, content: &str) -> Result<()> {
-        let peers = self.known_peers.lock().await.clone();
+        let mut p = self.known_peers.lock().await;
+        p.retain(|_, time| time.elapsed() < Duration::from_secs(60));
+        let peers: Vec<String> = p.keys().cloned().collect();
+        drop(p);
         
         if peers.is_empty() {
             warn!("No Ermete peers found on the local network for Continuity sync.");
