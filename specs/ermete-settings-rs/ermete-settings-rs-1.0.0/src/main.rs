@@ -91,8 +91,8 @@ impl relm4::SimpleComponent for AppModel {
     view! {
         gtk4::ApplicationWindow {
             set_title: Some("Impostazioni di Sistema"),
-            set_default_width: 960,
-            set_default_height: 700,
+            set_default_width: 1024,
+            set_default_height: 768,
             
             #[name="main_box"]
             gtk4::Box {
