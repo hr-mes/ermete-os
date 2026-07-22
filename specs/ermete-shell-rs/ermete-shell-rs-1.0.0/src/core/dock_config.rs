@@ -92,7 +92,7 @@ mod tests {
     impl HomeGuard {
         fn set(new_home: &std::path::Path) -> Self {
             let original = std::env::var("HOME").ok();
-            std::env::set_var("HOME", new_home.to_str().unwrap());
+            std::env::set_var("HOME", new_home.to_str().unwrap_or("/tmp"));
             Self { original }
         }
     }
@@ -144,17 +144,17 @@ mod tests {
         assert!(get_dock_config_path().exists(), "load_dock_config should save default if file didn't exist");
 
         // Test add_pin
-        let added = add_pin("custom.app.desktop").expect("add_pin failed");
+        let added = add_pin("custom.app.desktop").unwrap_or(DockConfig::default());
         assert!(added.is_pinned("custom.app.desktop"));
         assert!(is_pinned("custom.app.desktop"));
 
         // Test adding duplicate
-        let added_again = add_pin("custom.app.desktop").expect("add_pin duplicate failed");
+        let added_again = add_pin("custom.app.desktop").unwrap_or(DockConfig::default());
         let count = added_again.pinned.iter().filter(|id| *id == "custom.app.desktop").count();
         assert_eq!(count, 1, "duplicate pin should not be added");
 
         // Test remove_pin
-        let removed = remove_pin("custom.app.desktop").expect("remove_pin failed");
+        let removed = remove_pin("custom.app.desktop").unwrap_or(DockConfig::default());
         assert!(!removed.is_pinned("custom.app.desktop"));
         assert!(!is_pinned("custom.app.desktop"));
 

@@ -38,15 +38,12 @@ pub struct BatteryState {
 }
 
 pub async fn get_battery_state() -> zbus::Result<Option<BatteryState>> {
-    let system_bus = Connection::system().await?;
-    let upower = UPowerProxy::new(&system_bus).await?;
+    let system_bus = tokio::time::timeout(std::time::Duration::from_secs(5), Connection::system()).await.map_err(|_| zbus::Error::Failure("timeout".into()))??;
+    let upower = tokio::time::timeout(std::time::Duration::from_secs(5), UPowerProxy::new(&system_bus)).await.map_err(|_| zbus::Error::Failure("timeout".into()))??;
     
-    let devices = upower.enumerate_devices().await?;
+    let devices = tokio::time::timeout(std::time::Duration::from_secs(5), upower.enumerate_devices()).await.map_err(|_| zbus::Error::Failure("timeout".into()))??;
     for dev_path in devices {
-        let device = UPowerDeviceProxy::builder(&system_bus)
-            .path(dev_path)?
-            .build()
-            .await?;
+        let device = tokio::time::timeout(std::time::Duration::from_secs(5), UPowerDeviceProxy::builder(&system_bus).path(dev_path)?.build()).await.map_err(|_| zbus::Error::Failure("timeout".into()))??;
             
         // Type 2 is Battery
         if let Ok(dev_type) = device.type_().await {

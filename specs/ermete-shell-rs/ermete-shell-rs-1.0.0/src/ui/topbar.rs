@@ -414,7 +414,7 @@ progressbar.cc-progress-indigo progress {
 "#;
 
 fn load_css() {
-    let home = std::env::var("HOME").unwrap();
+    let home = std::env::var("HOME").unwrap_or_else(|_| "/root".to_string());
     let colors_path = format!("{}/.config/ermete-shell/colors.css", home);
     let colors_css = std::fs::read_to_string(&colors_path).unwrap_or_default();
     
@@ -440,7 +440,7 @@ fn load_css() {
 
     CSS_PROVIDER.with(|p| {
         let mut provider_opt = p.borrow_mut();
-        let display = gtk4::gdk::Display::default().unwrap();
+        let display = gtk4::gdk::Display::default().unwrap_or_else(|| panic!("No display available"));
         
         if let Some(old_provider) = provider_opt.as_ref() {
             gtk4::style_context_remove_provider_for_display(&display, old_provider);
@@ -462,8 +462,8 @@ fn spawn_css_watcher() {
     
     std::thread::spawn(move || {
         let (tx, rx) = std::sync::mpsc::channel();
-        let mut watcher = notify::recommended_watcher(tx).unwrap();
-        let path = std::path::PathBuf::from(std::env::var("HOME").unwrap()).join(".config/ermete-shell");
+        let mut watcher = match notify::recommended_watcher(tx) { Ok(w) => w, Err(e) => { eprintln!("Watcher error: {}", e); return; } };
+        let path = std::path::PathBuf::from(std::env::var("HOME").unwrap_or_else(|_| "/root".to_string())).join(".config/ermete-shell");
         let _ = watcher.watch(&path, RecursiveMode::NonRecursive);
         
         while let Ok(event) = rx.recv() {
