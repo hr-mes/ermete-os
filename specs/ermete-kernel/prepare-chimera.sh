@@ -355,6 +355,15 @@ CONFIG_HZ=1000
 # CONFIG_HZ_250 is not set
 # CONFIG_HZ_100 is not set
 
+# Full Preemption for lowest latency
+CONFIG_PREEMPT=y
+CONFIG_PREEMPT_BUILD=y
+# CONFIG_PREEMPT_VOLUNTARY is not set
+# CONFIG_PREEMPT_NONE is not set
+
+# Eliminate Debug Overhead
+# CONFIG_DEBUG_KERNEL is not set
+
 CONFIG_DEFAULT_BBR=y
 CONFIG_TCP_CONG_BBR=y
 # CONFIG_DEFAULT_CUBIC is not set
