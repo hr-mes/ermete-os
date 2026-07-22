@@ -34,8 +34,10 @@ RUN dnf5 -y remove --no-autoremove kernel kernel-core kernel-modules kernel-modu
 # 2) We run dnf5 install to download and resolve all upstream packages and external dependencies.
 
 # TIER 0: BEDROCK HARDWARE & KERNEL FOUNDATION (~3.3 GB - Static Cache - Reboot Required)
-COPY --from=ghcr.io/patapem/ermete-forge-tier0-repo:latest / /tmp/tier0-repo/
-RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
+RUN --mount=type=bind,from=ghcr.io/patapem/ermete-forge-tier0-repo:latest,source=/,target=/mnt/tier0-repo \
+    --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
+    mkdir -p /tmp/tier0-repo && \
+    cp -r /mnt/tier0-repo/*.rpm /tmp/tier0-repo/ && \
     rm -f /tmp/tier0-repo/libav*-free-*.rpm /tmp/tier0-repo/libsw*-free-*.rpm /tmp/tier0-repo/libpostproc-free-*.rpm /tmp/tier0-repo/ffmpeg-free-*.rpm /tmp/tier0-repo/nodejs20-devel-*.rpm /tmp/tier0-repo/v8-11.3-devel-*.rpm /tmp/tier0-repo/systemd-standalone-sysusers-*.rpm /tmp/tier0-repo/glibc32-*.rpm && \
     for name in $(rpm -qp --queryformat '%{NAME}\n' /tmp/tier0-repo/*.rpm | sort | uniq); do \
         ls -1v /tmp/tier0-repo/$name-[0-9]*.rpm 2>/dev/null | head -n -1 | xargs -r rm -f || true; \
@@ -49,44 +51,7 @@ RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --moun
     dnf5 install -y --allowerasing --setopt=install_weak_deps=False /tmp/tier0-repo/*.rpm && \
     rm -rf /tmp/tier0-repo
 
-# TIER 1: DISPLAY SERVER & CORE USERSPACE SERVICES (~34 MB)
-COPY --from=ghcr.io/patapem/ermete-forge-tier1-repo:latest / /tmp/tier1-repo/
-RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
-    if ls /tmp/tier1-repo/*.rpm 1> /dev/null 2>&1; then \
-        echo "Tier 1: Installing Display Server & Core Userspace Services..." && \
-        dnf5 install -y --setopt=install_weak_deps=False /tmp/tier1-repo/*.rpm; \
-    fi && rm -rf /tmp/tier1-repo
-
-# TIER 2: DESIGN SYSTEM & STATIC ASSETS (~18 MB)
-COPY --from=ghcr.io/patapem/ermete-forge-tier2-repo:latest / /tmp/tier2-repo/
-RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
-    if ls /tmp/tier2-repo/*.rpm 1> /dev/null 2>&1; then \
-        echo "Tier 2: Installing Design System & Static Assets..." && \
-        dnf5 install -y --setopt=install_weak_deps=False /tmp/tier2-repo/*.rpm; \
-    fi && rm -rf /tmp/tier2-repo
-
-# TIER 3: AGILE RUST SHELL & APPS (~8 MB - Instant Live Swap Layer)
-COPY --from=ghcr.io/patapem/ermete-forge-tier3-repo:latest / /tmp/tier3-repo/
-RUN --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
-    if ls /tmp/tier3-repo/*.rpm 1> /dev/null 2>&1; then \
-        echo "Tier 3: Installing Agile Rust Shell & Apps..." && \
-        dnf5 install -y --setopt=install_weak_deps=False /tmp/tier3-repo/*.rpm; \
-    fi && rm -rf /tmp/tier3-repo
-
-### BEDROCK SELINUX (Declarative Compilation)
-# We compile the policies here in the Containerfile so they are atomic with the OCI image.
-# We DO NOT use allow_execmem 1 to preserve enterprise security (W^X).
-RUN semodule -i /usr/share/selinux/packages/bootupd_lsblk.pp && \
-    semodule -i /usr/share/selinux/packages/ermete_scx.pp && \
-    setsebool -P daemons_enable_cluster_mode 1 && \
-    setsebool -P xserver_execmem 1
-
-### DICHIARATIVITÀ ASSOLUTA (SYSTEMD PRESETS & SYSUSERS)
-# Applichiamo nativamente tutti i file .preset e i gruppi utente in modo che i target
-# (es. nix-daemon, udevd con utenti e gruppi) vengano registrati nell'immagine OCI.
-RUN systemctl enable systemd-sysext.service && systemd-sysusers && systemctl preset-all && systemctl --global preset-all
-
-### BEDROCK KERNEL & INITRAMFS GENERATION
+### BEDROCK KERNEL & INITRAMFS GENERATION (Moved up for cache optimization)
 # L'initramfs dinamico viene rigenerato per sincronizzare i moduli kernel e NVIDIA
 # ed evitare API mismatch con l'ecosistema userspace.
 RUN QUALIFIED_KERNEL="" && \
@@ -105,6 +70,45 @@ RUN QUALIFIED_KERNEL="" && \
         -f /usr/lib/modules/${QUALIFIED_KERNEL}/initramfs.img && \
     chmod 0600 /usr/lib/modules/${QUALIFIED_KERNEL}/initramfs.img && \
     ldconfig
+
+# TIER 1: DISPLAY SERVER & CORE USERSPACE SERVICES (~34 MB)
+RUN --mount=type=bind,from=ghcr.io/patapem/ermete-forge-tier1-repo:latest,source=/,target=/mnt/tier1-repo \
+    --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
+    if ls /mnt/tier1-repo/*.rpm 1> /dev/null 2>&1; then \
+        echo "Tier 1: Installing Display Server & Core Userspace Services..." && \
+        dnf5 install -y --setopt=install_weak_deps=False /mnt/tier1-repo/*.rpm; \
+    fi
+
+# TIER 2: DESIGN SYSTEM & STATIC ASSETS (~18 MB)
+RUN --mount=type=bind,from=ghcr.io/patapem/ermete-forge-tier2-repo:latest,source=/,target=/mnt/tier2-repo \
+    --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
+    if ls /mnt/tier2-repo/*.rpm 1> /dev/null 2>&1; then \
+        echo "Tier 2: Installing Design System & Static Assets..." && \
+        dnf5 install -y --setopt=install_weak_deps=False /mnt/tier2-repo/*.rpm; \
+    fi
+
+# TIER 3: AGILE RUST SHELL & APPS (~8 MB - Instant Live Swap Layer)
+RUN --mount=type=bind,from=ghcr.io/patapem/ermete-forge-tier3-repo:latest,source=/,target=/mnt/tier3-repo \
+    --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
+    if ls /mnt/tier3-repo/*.rpm 1> /dev/null 2>&1; then \
+        echo "Tier 3: Installing Agile Rust Shell & Apps..." && \
+        dnf5 install -y --setopt=install_weak_deps=False /mnt/tier3-repo/*.rpm; \
+    fi
+
+### BEDROCK SELINUX (Declarative Compilation)
+# We compile the policies here in the Containerfile so they are atomic with the OCI image.
+# We DO NOT use allow_execmem 1 to preserve enterprise security (W^X).
+RUN semodule -i /usr/share/selinux/packages/bootupd_lsblk.pp && \
+    semodule -i /usr/share/selinux/packages/ermete_scx.pp && \
+    setsebool -P daemons_enable_cluster_mode 1 && \
+    setsebool -P xserver_execmem 1
+
+### DICHIARATIVITÀ ASSOLUTA (SYSTEMD PRESETS & SYSUSERS)
+# Applichiamo nativamente tutti i file .preset e i gruppi utente in modo che i target
+# (es. nix-daemon, udevd con utenti e gruppi) vengano registrati nell'immagine OCI.
+RUN systemctl enable systemd-sysext.service && systemd-sysusers && systemctl preset-all && systemctl --global preset-all
+
+
 
 ### NIX STATE (Immutability Fix)
 # Creiamo il symlink immutabile sul rootfs verso il mountpoint effimero in /var.
