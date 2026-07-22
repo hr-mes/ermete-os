@@ -148,7 +148,7 @@ fn main() -> glib::ExitCode {
             
             // Salviamo il controller globalmente per non far spegnere la runtime
             thread_local! {
-                static TOPBAR_CTRL: std::cell::RefCell<Option<relm4::Connector<ui::topbar_relm4::TopbarModel>>> = std::cell::RefCell::new(None);
+                static TOPBAR_CTRL: std::cell::RefCell<Option<relm4::Controller<ui::topbar_relm4::TopbarModel>>> = std::cell::RefCell::new(None);
             }
             TOPBAR_CTRL.with(|c| *c.borrow_mut() = Some(ctrl));
                 
