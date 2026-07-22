@@ -13,3 +13,4 @@ serde_json = "1.0.150"
 zbus = "3.14"
 tokio = { version = "1.28", features = ["rt-multi-thread", "macros"] }
 libc = "0.2.186"
+relm4 = "0.7"
