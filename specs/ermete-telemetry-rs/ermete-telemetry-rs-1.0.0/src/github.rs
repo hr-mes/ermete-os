@@ -50,11 +50,10 @@ impl GitHubReporter {
     pub async fn report_crash(&self, crash_data: &str) -> Result<()> {
         info!("Preparing crash report to GitHub Issues...");
 
-        let token_path = "/home/ermete/.github_token";
-        let token = match fs::read_to_string(token_path) {
+        let token = match std::env::var("GITHUB_TOKEN").or_else(|_| fs::read_to_string("/etc/ermete/telemetry.conf")) {
             Ok(t) => t.trim().to_string(),
             Err(_) => {
-                warn!("No GitHub token at {}. Crash report aborted.", token_path);
+                warn!("No GitHub token configured. Crash report aborted.");
                 return Err(anyhow::anyhow!("Opt-in GitHub token missing."));
             }
         };

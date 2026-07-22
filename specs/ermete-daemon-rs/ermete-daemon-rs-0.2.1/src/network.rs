@@ -149,14 +149,13 @@ impl Network {
         &self,
         ssid: String,
         identity: String,
-        password: String,
         eap_method: String,
         ca_cert_path: String,
     ) -> fdo::Result<String> {
         println!("[Bedrock Network] Enterprise Wi-Fi requested for SSID={}, identity={}, method={}", ssid, identity, eap_method);
         let nm_settings = NmSettingsProxy::new(&self.sys_conn).await
             .map_err(|e| fdo::Error::Failed(format!("Failed to connect to NetworkManager Settings DBus: {}", e)))?;
-        let dict = Self::build_enterprise_wifi_dict(&ssid, &identity, &password, &eap_method, &ca_cert_path);
+        let dict = Self::build_enterprise_wifi_dict(&ssid, &identity, &eap_method, &ca_cert_path);
         let path = nm_settings.add_connection(dict).await
             .map_err(|e| fdo::Error::Failed(format!("Failed to add connection: {}", e)))?;
         Ok(path.to_string())
@@ -164,6 +163,15 @@ impl Network {
 
     /// Add WireGuard or OpenVPN tunnel from config file
     async fn add_vpn_tunnel(&self, name: String, vpn_type: String, config_path: String) -> fdo::Result<String> {
+        if config_path.contains("..") || (!config_path.starts_with("/etc/") && !config_path.starts_with("/var/home/")) {
+            return Err(fdo::Error::InvalidArgs("Invalid config path for VPN".to_string()));
+        }
+        
+        // Sanitize vpn_type to avoid shell injections or invalid types
+        if !vpn_type.chars().all(|c| c.is_alphanumeric() || c == '.' || c == '-') {
+            return Err(fdo::Error::InvalidArgs("Invalid VPN type".to_string()));
+        }
+
         println!("[Bedrock Network] Staging VPN Tunnel: name={}, type={}, path={}", name, vpn_type, config_path);
         let nm_settings = NmSettingsProxy::new(&self.sys_conn).await
             .map_err(|e| fdo::Error::Failed(format!("Failed to connect to NetworkManager Settings DBus: {}", e)))?;
@@ -178,7 +186,6 @@ impl Network {
     pub fn build_enterprise_wifi_dict(
         ssid: &str,
         identity: &str,
-        password: &str,
         eap_method: &str,
         ca_cert_path: &str,
     ) -> HashMap<&'static str, HashMap<&'static str, zbus::zvariant::Value<'static>>> {
@@ -201,7 +208,8 @@ impl Network {
         let mut eap = HashMap::new();
         eap.insert("eap", zbus::zvariant::Value::from(vec![eap_method.to_string()]));
         eap.insert("identity", zbus::zvariant::Value::from(identity.to_string()));
-        eap.insert("password", zbus::zvariant::Value::from(password.to_string()));
+        // 1 = NM_SETTING_SECRET_FLAG_AGENT_OWNED
+        eap.insert("password-flags", zbus::zvariant::Value::from(1u32));
         eap.insert("ca-cert", zbus::zvariant::Value::from(ca_cert_path.as_bytes().to_vec()));
         dict.insert("802-1x", eap);
 
@@ -270,7 +278,6 @@ mod tests {
         let dict = Network::build_enterprise_wifi_dict(
             "Corporate-SSID",
             "user@ermete.os",
-            "secretpass",
             "peap",
             "/etc/ssl/certs/ca.pem",
         );
@@ -289,7 +296,7 @@ mod tests {
         let eap = dict.get("802-1x").expect("missing '802-1x' setting");
         assert_eq!(eap.get("eap").unwrap(), &Value::from(vec!["peap".to_string()]));
         assert_eq!(eap.get("identity").unwrap(), &Value::from("user@ermete.os"));
-        assert_eq!(eap.get("password").unwrap(), &Value::from("secretpass"));
+        assert_eq!(eap.get("password-flags").unwrap(), &Value::from(1u32));
         assert_eq!(eap.get("ca-cert").unwrap(), &Value::from("/etc/ssl/certs/ca.pem".as_bytes().to_vec()));
 
         let ipv4 = dict.get("ipv4").expect("missing 'ipv4' setting");

@@ -87,9 +87,24 @@ impl SecretEnrollerService {
         "ermete-bedrock-tpm2-default-binding".to_string()
     }
 
+    fn get_salt() -> Vec<u8> {
+        let path = "/etc/ermete/secret_salt";
+        if let Ok(salt) = std::fs::read(path) {
+            return salt;
+        }
+        let mut salt = [0u8; 32];
+        OsRng.fill_bytes(&mut salt);
+        if let Some(parent) = std::path::Path::new(path).parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        let _ = std::fs::write(path, &salt);
+        salt.to_vec()
+    }
+
     /// Derive a 256-bit key from the machine binding using HKDF-SHA256.
     fn derive_key(binding: &str) -> [u8; 32] {
-        let hk = Hkdf::<Sha256>::new(Some(b"ermete-secret-enroller-v3"), binding.as_bytes());
+        let salt = Self::get_salt();
+        let hk = Hkdf::<Sha256>::new(Some(&salt), binding.as_bytes());
         let mut key = [0u8; 32];
         hk.expand(b"chacha20poly1305-key", &mut key)
             .expect("HKDF expand should never fail for 32 bytes");

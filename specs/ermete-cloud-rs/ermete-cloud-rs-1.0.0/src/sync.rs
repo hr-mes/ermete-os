@@ -62,7 +62,11 @@ impl SyncEngine {
                 if let Ok((mut stream, _addr)) = listener.accept().await {
                     tokio::spawn(async move {
                         let mut content = String::new();
-                        if stream.read_to_string(&mut content).await.is_ok() {
+                        if stream.take(1024 * 1024).read_to_string(&mut content).await.is_ok() {
+                            if content.is_empty() || content.contains('\0') {
+                                warn!("Invalid clipboard payload");
+                                return;
+                            }
                             info!("Received Universal Clipboard from peer! ({} bytes)", content.len());
                             // Apply to local clipboard using wl-copy
                             if let Ok(mut child) = tokio::process::Command::new("wl-copy")
