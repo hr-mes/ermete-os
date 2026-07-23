@@ -942,6 +942,15 @@ jobs:
           git config --global --add safe.directory /github/home/pages_repo
           git checkout -b gh-pages
           
+          echo "🧹 Rimozione file > 95MB per rispettare i limiti di GitHub Pages..."
+          find /github/home/pages_repo -type f -name "*.rpm" -size +95M -exec rm -v {} \;
+          
+          echo "🔄 Rigenerazione metadata DNF per GitHub Pages..."
+          for tier_dir in /github/home/pages_repo/tier*; do
+            if [ -d "$tier_dir" ]; then
+              createrepo_c "$tier_dir"
+            fi
+          done
 
           git add .
           git commit -m "🚀 Deploy DNF repositories for Ermete OS Rolling Release"
