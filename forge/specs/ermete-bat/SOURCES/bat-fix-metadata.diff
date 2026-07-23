@@ -1,0 +1,50 @@
+--- bat-0.26.1/Cargo.toml	1970-01-01T00:00:01+00:00
++++ bat-0.26.1/Cargo.toml	2026-03-22T21:37:51.283237+00:00
+@@ -29,7 +29,7 @@
+ homepage = "https://github.com/sharkdp/bat"
+ readme = "README.md"
+ categories = ["command-line-utilities"]
+-license = "MIT OR Apache-2.0"
++license = "(MIT OR Apache-2.0) AND Apache-2.0 AND BSD-2-Clause AND BSD-2-Clause-Views AND BSD-3-Clause AND CC-BY-SA-3.0 AND MIT AND Unlicense AND WTFPL"
+ repository = "https://github.com/sharkdp/bat"
+ 
+ [features]
+@@ -49,7 +49,6 @@
+     "git",
+ ]
+ git = ["git2"]
+-lessopen = ["execute"]
+ minimal-application = [
+     "clap",
+     "etcetera",
+@@ -64,7 +63,6 @@
+ ]
+ regex-fancy = ["syntect/regex-fancy"]
+ regex-onig = ["syntect/regex-onig"]
+-vendored-libgit2 = ["git2/vendored-libgit2"]
+ 
+ [lib]
+ name = "bat"
+@@ -168,10 +166,6 @@
+ version = "0.11.0"
+ optional = true
+ 
+-[dependencies.execute]
+-version = "0.2.13"
+-optional = true
+-
+ [dependencies.flate2]
+ version = "1.1"
+ 
+@@ -204,9 +198,8 @@
+ [dependencies.once_cell]
+ version = "1.20"
+ 
+-[dependencies.path_abs]
+-version = "0.5"
+-default-features = false
++[dependencies.path-absolutize]
++version = "3"
+ 
+ [dependencies.regex]
+ version = "1.12.2"

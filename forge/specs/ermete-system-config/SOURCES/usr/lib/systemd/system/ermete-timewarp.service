@@ -1,0 +1,8 @@
+[Unit]
+Description=Ermete Btrfs Time-Warp Snapshot Trigger
+Documentation=man:btrfs(8)
+ConditionPathExists=/usr/libexec/ermete-snapshot-trigger.sh
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/ermete-snapshot-trigger.sh

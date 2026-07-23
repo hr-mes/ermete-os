@@ -1,0 +1,6 @@
+[terminal]
+vt = 1
+
+[default_session]
+command = "sh -c 'export XDG_RUNTIME_DIR=/run/user/$(id -u); exec cage -s -m last -- /usr/bin/ermete-shell-rs --greeter'"
+user = "greeter"

@@ -1,0 +1,7 @@
+[package]
+name = "ermete-doctor"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+glib = "0.22.8"

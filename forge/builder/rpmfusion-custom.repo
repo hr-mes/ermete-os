@@ -1,0 +1,31 @@
+[rpmfusion-free]
+name=RPM Fusion for Fedora 43 - Free
+baseurl=http://mirror.math.princeton.edu/pub/rpmfusion/free/fedora/releases/$releasever/Everything/$basearch/os/
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora-43
+skip_if_unavailable=1
+
+[rpmfusion-nonfree]
+name=RPM Fusion for Fedora 43 - Nonfree
+baseurl=http://mirror.math.princeton.edu/pub/rpmfusion/nonfree/fedora/releases/$releasever/Everything/$basearch/os/
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora-43
+skip_if_unavailable=1
+
+[rpmfusion-free-source]
+name=RPM Fusion for Fedora 43 - Free - Source
+baseurl=http://mirror.math.princeton.edu/pub/rpmfusion/free/fedora/releases/$releasever/Everything/source/tree/
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora-43
+skip_if_unavailable=1
+
+[rpmfusion-nonfree-source]
+name=RPM Fusion for Fedora 43 - Nonfree - Source
+baseurl=http://mirror.math.princeton.edu/pub/rpmfusion/nonfree/fedora/releases/$releasever/Everything/source/tree/
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora-43
+skip_if_unavailable=1

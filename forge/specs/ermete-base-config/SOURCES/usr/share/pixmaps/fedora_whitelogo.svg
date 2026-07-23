@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="250" viewBox="0 0 800 250">
+  <defs>
+    <!-- Geometric low-poly Crow -->
+    <g id="crow" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="1" stroke-linejoin="round">
+      <!-- Upper beak -->
+      <polygon points="100,50 150,55 95,65"/>
+      <!-- Lower beak -->
+      <polygon points="150,55 95,65 110,75"/>
+      <!-- Crown/Top of head -->
+      <polygon points="35,15 80,10 100,50"/>
+      <!-- Side head -->
+      <polygon points="35,15 100,50 70,70"/>
+      <!-- Cheek -->
+      <polygon points="70,70 100,50 95,65"/>
+      <!-- Neck back -->
+      <polygon points="35,15 70,70 10,85"/>
+      <!-- Throat -->
+      <polygon points="70,70 95,65 85,100"/>
+      <!-- Lower neck -->
+      <polygon points="70,70 85,100 10,85"/>
+      <!-- Chest -->
+      <polygon points="10,85 85,100 60,130"/>
+    </g>
+  </defs>
+
+  <!-- Draw Crow -->
+  <use href="#crow" x="30" y="30" transform="scale(1.5)" />
+  
+  <!-- Draw Eye (Negative space) -->
+  <circle cx="150" cy="90" r="5" fill="#000000" />
+
+  <!-- Draw Text -->
+  <text x="280" y="160" font-family="'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="900" font-size="90" fill="#FFFFFF" letter-spacing="4">ERMETE OS</text>
+  <text x="285" y="210" font-family="'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="400" font-size="28" fill="#AAAAAA" letter-spacing="12">ZERO BLOAT</text>
+</svg>

@@ -1,0 +1,17 @@
+From: Ermete Forge <forge@ermete.os>
+Subject: [PATCH] Iniezione modulo Ermete Floating-First
+
+Questo e' un placeholder strutturale. Questa patch modifica il file main.rs o layout.rs
+originale di niri per invocare le funzioni di ermete_ext senza alterare il resto.
+
+--- a/src/main.rs
++++ b/src/main.rs
+@@ -10,6 +10,8 @@
+ // Esempio di hook architetturale minimo:
++mod ermete_ext;
+ 
+ fn main() {
+     // Avvio originale di Niri
++    ermete_ext::init_floating_engine();
+     run_niri();
+ }

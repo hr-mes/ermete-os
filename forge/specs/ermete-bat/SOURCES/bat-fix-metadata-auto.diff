@@ -1,0 +1,17 @@
+--- bat-0.26.1/Cargo.toml	1970-01-01T00:00:01+00:00
++++ bat-0.26.1/Cargo.toml	2026-03-22T21:36:46.105370+00:00
+@@ -331,9 +331,6 @@
+ [build-dependencies.walkdir]
+ version = "2.5"
+ 
+-[target.'cfg(target_os = "macos")'.dependencies.plist]
+-version = "1.7.0"
+-
+ [target."cfg(unix)".dev-dependencies.nix]
+ version = "0.30"
+ features = ["term"]
+@@ -343,3 +340,4 @@
+ lto = true
+ codegen-units = 1
+ strip = true
++

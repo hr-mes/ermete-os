@@ -1,0 +1,15 @@
+[config]
+image_mode = "crop"
+reload_apps = true
+
+[templates.gtk4]
+input_path = "/usr/share/ermete/matugen/gtk4.css.template"
+output_path = "~/.config/gtk-4.0/colors.css"
+
+[templates.niri]
+input_path = "/usr/share/ermete/matugen/niri.kdl.template"
+output_path = "~/.config/niri/colors.kdl"
+
+[templates.shell]
+input_path = "/usr/share/ermete/matugen/shell.css.template"
+output_path = "~/.config/ermete-shell/colors.css"

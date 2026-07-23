@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=org.ermete.Settings
+Exec=/usr/bin/ermete-daemon-rs

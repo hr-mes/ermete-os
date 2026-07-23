@@ -1,0 +1,20 @@
+[ermete-tier1]
+name=Ermete Forge Tier 1 (CLI & Base Desktop)
+baseurl=https://patapem.github.io/ermete-forge/tier1
+enabled=1
+gpgcheck=1
+gpgkey=https://patapem.github.io/ermete-forge/RPM-GPG-KEY-ermete
+
+[ermete-tier2]
+name=Ermete Forge Tier 2 (Assets)
+baseurl=https://patapem.github.io/ermete-forge/tier2
+enabled=1
+gpgcheck=1
+gpgkey=https://patapem.github.io/ermete-forge/RPM-GPG-KEY-ermete
+
+[ermete-tier3]
+name=Ermete Forge Tier 3 (Rolling Userspace)
+baseurl=https://patapem.github.io/ermete-forge/tier3
+enabled=1
+gpgcheck=1
+gpgkey=https://patapem.github.io/ermete-forge/RPM-GPG-KEY-ermete

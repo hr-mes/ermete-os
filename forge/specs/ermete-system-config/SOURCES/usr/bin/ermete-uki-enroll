@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -e
+
+echo "Enrolling LUKS2 volume to TPM2..."
+# Bind LUKS2 to TPM2 PCRs 7 and 11
+# Usage: ermete-uki-enroll <luks-device>
+if [ -z "$1" ]; then
+    echo "Usage: $0 <luks-device>"
+    exit 1
+fi
+
+systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=7+11 "$1"
+echo "Enrollment complete."

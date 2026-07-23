@@ -1,0 +1,18 @@
+[package]
+name = "ermete-recovery"
+version = "1.0.0"
+edition = "2021"
+authors = ["Ermete Forge <forge@ermete.os>"]
+description = "Pre-Boot GUI Recovery Kiosk & Rollback Manager for Ermete OS"
+license = "MIT"
+
+[[bin]]
+name = "ermete-recovery-ui"
+path = "src/main.rs"
+
+[dependencies]
+gtk4 = "0.7"
+glib = "0.18"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = "0.4"

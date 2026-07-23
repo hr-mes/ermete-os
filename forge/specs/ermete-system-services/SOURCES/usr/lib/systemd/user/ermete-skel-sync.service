@@ -1,0 +1,13 @@
+[Unit]
+Description=Ermete OS User Skeleton Sync
+Documentation=https://github.com/patapem/ermete-forge
+Before=ermete-shell.service ermete-wallpaper.service niri-session.target
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/bash -c 'cp -n -R /etc/skel/. "$HOME/" 2>/dev/null || true'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=niri-session.target graphical-session.target

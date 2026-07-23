@@ -1,0 +1,36 @@
+[Unit]
+Description=Ermete OS Pre-Boot GUI Recovery Kiosk
+Documentation=https://github.com/patapem/ermete-forge
+After=systemd-user-sessions.service plymouth-quit-wait.service
+Conflicts=getty@tty9.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/cage -s -m last -- /usr/bin/ermete-recovery-ui
+Restart=on-failure
+RestartSec=5
+User=ermete-recovery
+Group=ermete-recovery
+SupplementaryGroups=video input
+TTYPath=/dev/tty9
+StandardInput=tty
+StandardOutput=tty
+StandardError=journal
+
+# systemd hardening
+NoNewPrivileges=no
+ProtectSystem=strict
+ReadWritePaths=/etc /var
+ProtectHome=read-only
+PrivateTmp=yes
+PrivateDevices=no
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictNamespaces=yes
+MemoryDenyWriteExecute=yes
+LockPersonality=yes
+SystemCallFilter=@system-service @mount
+
+[Install]
+WantedBy=ermete-recovery.target

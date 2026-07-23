@@ -1,0 +1,57 @@
+name: Auto-Update Specs
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # Run at 2 AM UTC, an hour before build-forge
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-specs:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+      - name: Check and Update Specs
+        run: |
+          UPDATED=0
+          
+          function update_spec() {
+            local repo=$1
+            local spec_file=$2
+            
+            # Fetch latest release tag (remove 'v' prefix if present)
+            local latest_tag=$(curl -sL -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${repo}/releases/latest | jq -r .tag_name | sed 's/^v//')
+            if [ -z "$latest_tag" ] || [ "$latest_tag" == "null" ]; then
+              echo "Could not fetch release for $repo"
+              return
+            fi
+            
+            # Get current version from spec
+            local current_ver=$(grep -E '^Version:' "$spec_file" | awk '{print $2}')
+            
+            if [ "$latest_tag" != "$current_ver" ]; then
+              echo "Updating $spec_file from $current_ver to $latest_tag"
+              sed -i "s/^Version:.*$/Version:        $latest_tag/" "$spec_file"
+              UPDATED=1
+            else
+              echo "$spec_file is up to date ($current_ver)"
+            fi
+          }
+          
+          update_spec "starship/starship" "specs/ermete-starship/ermete-starship.spec"
+          update_spec "InioX/matugen" "specs/ermete-matugen/ermete-matugen.spec"
+          update_spec "ful1e5/Bibata_Cursor" "specs/ermete-bibata/ermete-bibata.spec"
+          update_spec "Aylur/astal" "specs/ermete-astal/aylurs-gtk-shell2/aylurs-gtk-shell2.spec"
+          
+          if [ "$UPDATED" -eq 1 ]; then
+            git config --global user.name "Ermete Forge Bot"
+            git config --global user.email "bot@ermete.forge"
+            git commit -am "chore(deps): auto-update spec versions to latest upstream"
+            git push
+          else
+            echo "No updates needed."
+          fi

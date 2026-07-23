@@ -1,0 +1,10 @@
+[Unit]
+Description=Ermete Generative UI Agent
+PartOf=graphical-session.target
+
+[Service]
+ExecStart=/usr/libexec/ermete-ui-agent/agent.py
+Restart=always
+
+[Install]
+WantedBy=default.target

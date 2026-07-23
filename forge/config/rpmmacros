@@ -1,0 +1,58 @@
+# =========================================================================
+# ERMETE FORGE - BEDROCK COMPILER MACROS
+# Holy Grail Optimizations: Clear Linux + CachyOS + Gentoo LTO
+# =========================================================================
+
+# Ignora i file decompressi ma non pacchettizzati (necessario per Ponytail Ultra che rimuove %doc)
+%_unpackaged_files_terminate_build 0
+
+# Clear Linux & CachyOS C/C++ Flags
+# -O3: Maximum optimization (Gentoo/CachyOS)
+# -march=x86-64-v3: AVX2, BMI1/2, FMA (CachyOS baseline)
+# -mtune=generic: Evita drop di performance sui GH runners (non native)
+# -flto=auto: Link Time Optimization (Gentoo/CachyOS)
+# -fno-semantic-interposition: Velocizza le chiamate dinamiche (Clear Linux)
+# -falign-functions=32: Allineamento cache istruzioni (Clear Linux)
+# -mprefer-vector-width=256: Ottimizza i registri AVX (Clear Linux)
+# -fno-math-errno -fno-trapping-math: Math iper-veloce (Clear Linux)
+# -pipe: Minore latenza I/O durante la compilazione
+
+%_optflags -O3 -march=x86-64-v3 -mtune=generic -pipe -fno-semantic-interposition -falign-functions=32 -fno-math-errno -fno-trapping-math -mprefer-vector-width=256 -fPIC -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer
+
+# LTO CFlags (fat-lto-objects to prevent cross-language link issues in Rust/C like niri libspa)
+%_lto_cflags -flto=auto -ffat-lto-objects -fno-semantic-interposition
+
+# CachyOS Linker Flags
+# -Wl,-O2: Ottimizzazione interna del linker (non del compilatore)
+# -Wl,--as-needed: Droppa le librerie non realmente utilizzate
+# -Wl,--sort-common: Ottimizza il layout della memoria
+# -fuse-ld=mold: Linker di nuova generazione (MOLD), iper-parallelo
+%_ldflags -Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro -Wl,--icf=all -Wl,--gc-sections -fuse-ld=mold
+
+# Sovrascrive le direttive globali Fedora appendendo l'LTO solo se abilitato
+%__global_compiler_flags %{_optflags} %{?_lto_cflags}
+%__global_ldflags %{_ldflags} %{?_lto_cflags}
+
+# =========================================================================
+# RUST & CARGO EXTREME MACROS
+# =========================================================================
+# opt-level=3: Ottimizzazione aggressiva massima
+# lto=thin: ThinLTO per bilanciare tempi di link e performance
+# codegen-units=1: Piattaforma singola per max LTO puro (lento ma potente)
+# link-arg=-fuse-ld=mold: Linker mold anche su Rust
+%rustflags -C target-cpu=x86-64-v3 -C opt-level=3 -C codegen-units=1 -C link-arg=-fuse-ld=mold
+
+# =========================================================================
+# MULTITHREADING
+# =========================================================================
+%_smp_mflags -j%{_smp_build_ncpus}
+
+# =========================================================================
+# BEDROCK LTO INJECTION (Protezione Globale Rust)
+# =========================================================================
+# Inietta LTO nativo di Cargo su ogni singolo pacchetto Rust upstream,
+# evitando il crash globale sulle macro procedurali che avremmo con RUSTFLAGS.
+%__spec_build_pre %{___build_pre}\
+  export RUSTFLAGS="%{rustflags}"\
+  export CARGO_PROFILE_RELEASE_LTO="thin"\
+  export RUSTC_WRAPPER=sccache

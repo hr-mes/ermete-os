@@ -1,0 +1,17 @@
+[Unit]
+Description=Ermete OS Desktop Panel (Pure Rust Native Shell)
+Documentation=https://github.com/patapem/ermete-forge
+BindsTo=graphical-session.target
+After=graphical-session.target ermete-skel-sync.service
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+Slice=session.slice
+ExecStart=/usr/bin/ermete-shell-rs
+Restart=on-failure
+RestartSec=2s
+
+[Install]
+WantedBy=graphical-session.target
+Alias=ermete-ags.service

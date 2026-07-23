@@ -1,0 +1,2 @@
+# Assegna tag uaccess e seat all'hardware DRM NVIDIA per Wayland
+ACTION=="add|change", SUBSYSTEM=="drm", KERNEL=="renderD*|card*", DRIVERS=="nvidia", TAG+="uaccess", TAG+="seat"

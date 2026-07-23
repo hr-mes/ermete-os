@@ -1,0 +1,66 @@
+name: OpenWiki Update
+
+on:
+  workflow_dispatch:
+  schedule:
+    # GitHub schedules use UTC; 03:00 UTC di ogni giorno
+    - cron: "0 3 * * *"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  openwiki:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install OpenWiki
+        run: npm install --global openwiki
+
+      - name: Run OpenWiki (Auto Init or Update)
+        run: |
+          if [ -d "openwiki" ]; then
+            echo "Directing OpenWiki to update existing documentation..."
+            openwiki --update --print
+          else
+            echo "Directing OpenWiki to initialize repository documentation..."
+            openwiki --init --print
+          fi
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENWIKI_MODEL_ID: z-ai/glm-5.2
+          LANGSMITH_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
+          LANGCHAIN_PROJECT: openwiki
+          LANGCHAIN_TRACING_V2: "true"
+
+      - name: Create OpenWiki update pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          add-paths: |
+            openwiki
+            AGENTS.md
+            CLAUDE.md
+          branch: openwiki/update
+          commit-message: "docs: automated OpenWiki documentation sync"
+          title: "docs(openwiki): automated OpenWiki documentation sync"
+          body: |
+            ## Automated OpenWiki Documentation Sync
+
+            Questa Pull Request è stata generata automaticamente dal workflow **OpenWiki** di Ermete Forge.
+
+            ### Modifiche apportate
+            - Aggiornamento / inizializzazione della documentazione in `/openwiki/`
+            - Allineamento delle sezioni di riferimento nei file di istruzione agentica (`AGENTS.md` / `CLAUDE.md`)
+
+            ---
+            *Ingegneria Sistemica Estrema - Vista da Corvo fino alla Bedrock*

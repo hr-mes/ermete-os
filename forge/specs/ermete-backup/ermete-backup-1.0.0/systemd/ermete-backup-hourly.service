@@ -1,0 +1,7 @@
+[Unit]
+Description=Ermete OS Hourly Btrfs Home Snapshot Trigger
+Documentation=https://github.com/patapem/ermete-forge
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/dbus-send --session --dest=org.ermete.Backup1 --type=method_call /org/ermete/Backup1 org.ermete.Backup1.CreateSnapshot string:"Istantanea oraria automatica"

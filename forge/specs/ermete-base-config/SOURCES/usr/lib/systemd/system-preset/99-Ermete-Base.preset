@@ -1,0 +1,8 @@
+enable nvidia-powerd.service
+enable nvidia-persistenced.service
+
+disable NetworkManager-wait-online.service
+disable systemd-networkd-wait-online.service
+disable plymouth-quit-wait.service
+disable systemd-udev-settle.service
+disable systemd-remount-fs.service

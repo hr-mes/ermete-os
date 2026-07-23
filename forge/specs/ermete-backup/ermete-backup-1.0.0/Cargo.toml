@@ -1,0 +1,24 @@
+[package]
+name = "ermete-backup"
+version = "1.0.0"
+edition = "2021"
+authors = ["Ermete Forge <forge@ermete.os>"]
+description = "Instant Btrfs Home Snapshot Manager & Time Machine GUI for Ermete OS"
+license = "MIT"
+
+[[bin]]
+name = "ermete-backup-daemon"
+path = "src/daemon.rs"
+
+[[bin]]
+name = "ermete-backup-ui"
+path = "src/ui.rs"
+
+[dependencies]
+gtk4 = "0.7"
+glib = "0.18"
+zbus = { version = "4.0", default-features = false, features = ["tokio"] }
+tokio = { version = "1.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = "0.4"

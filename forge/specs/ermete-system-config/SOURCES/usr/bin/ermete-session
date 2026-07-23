@@ -1,0 +1,8 @@
+#!/usr/bin/sh
+# ermete-session - Session wrapper for Ermete OS (`greetd` -> `niri`)
+# Arresta eventuali sessioni o servizi Niri precedenti dell'utente per evitare che niri-session esca con exit 1
+
+systemctl --user stop niri.service niri-shutdown.target 2>/dev/null || true
+systemctl --user reset-failed 2>/dev/null || true
+
+exec /usr/bin/niri-session "$@"

@@ -1,0 +1,5 @@
+RPMS_OUT/
+.ccache_local/
+target/
+**/target/
+.worktrees

@@ -1,0 +1,9 @@
+module ermete_scx 1.0;
+
+require {
+        type kernel_t;
+        class process execmem;
+}
+
+#============= kernel_t ==============
+# W^X protection enforced - eBPF JIT without execmem or disabled

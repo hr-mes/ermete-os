@@ -1,0 +1,19 @@
+module bootupd_lsblk 1.0;
+require {
+    type bootupd_t; type passwd_file_t; type systemd_userdbd_runtime_t; type proc_t; type mount_var_run_t;
+    type systemd_homed_t; type systemd_machined_t; type systemd_userdbd_t;
+    class file { read open getattr }; class dir { search read open getattr }; class sock_file { write }; class unix_stream_socket { connectto };
+    class lnk_file { read };
+}
+allow bootupd_t passwd_file_t:file { read open getattr };
+allow bootupd_t systemd_userdbd_runtime_t:dir { search read open getattr };
+allow bootupd_t proc_t:file { read open getattr };
+allow bootupd_t mount_var_run_t:dir { search };
+
+# [FIX] Autorizza bootupd_t a risolvere utenti in systemd-userdbd (Cluster Mode) mitigando AVC Denial
+allow bootupd_t systemd_homed_t:unix_stream_socket connectto;
+allow bootupd_t systemd_machined_t:unix_stream_socket connectto;
+allow bootupd_t systemd_userdbd_runtime_t:lnk_file read;
+allow bootupd_t systemd_userdbd_runtime_t:sock_file write;
+allow bootupd_t systemd_userdbd_t:unix_stream_socket connectto;
+

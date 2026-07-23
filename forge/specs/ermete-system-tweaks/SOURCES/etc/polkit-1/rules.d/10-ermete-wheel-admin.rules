@@ -1,0 +1,15 @@
+/* Ermete OS Bedrock: Only allow wheel group to become admin */
+polkit.addAdminRule(function(action, subject) {
+    return ["unix-group:wheel"];
+});
+
+/* Lock down specific actions if needed */
+polkit.addRule(function(action, subject) {
+    if (action.id.indexOf("org.freedesktop.udisks2.") == 0) {
+        if (subject.isInGroup("wheel")) {
+            return polkit.Result.YES;
+        } else {
+            return polkit.Result.AUTH_ADMIN;
+        }
+    }
+});

@@ -1,0 +1,16 @@
+[Unit]
+Description=Ermete OS Glassmorphic Dock (Pure Rust Native UI)
+Documentation=https://github.com/patapem/ermete-forge
+BindsTo=graphical-session.target
+After=graphical-session.target ermete-shell.service
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+Slice=session.slice
+ExecStart=/usr/bin/ermete-shell-rs --dock
+Restart=on-failure
+RestartSec=2s
+
+[Install]
+WantedBy=graphical-session.target

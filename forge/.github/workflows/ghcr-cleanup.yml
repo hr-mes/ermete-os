@@ -1,0 +1,58 @@
+name: GHCR Garbage Collection
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Delete old and untagged GHCR images
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ORG="${{ github.repository_owner }}"
+          
+          echo "Fetching container packages for $ORG..."
+          PACKAGES=$(gh api --paginate /users/$ORG/packages?package_type=container | jq -r '.[].name' 2>/dev/null || echo "")
+          
+          if [ -z "$PACKAGES" ]; then
+            echo "No container packages found or error fetching."
+            exit 0
+          fi
+          
+          for PACKAGE in $PACKAGES; do
+            echo "----------------------------------------"
+            echo "Processing package: $PACKAGE"
+            
+            # URL-encode the package name
+            ENC_PACKAGE=$(jq -rn --arg x "$PACKAGE" '$x|@uri')
+            
+            echo "Fetching versions..."
+            VERSIONS_JSON=$(gh api --paginate /users/$ORG/packages/container/$ENC_PACKAGE/versions 2>/dev/null || echo "[]")
+            
+            # Identify the IDs of the latest 2 tagged versions
+            KEEP_IDS=$(echo "$VERSIONS_JSON" | jq -r '[.[] | select(.metadata.container.tags | length > 0)] | sort_by(.created_at) | reverse | .[0:2] | .[].id')
+            
+            echo "$VERSIONS_JSON" | jq -c '.[]' | while read -r version; do
+              VERSION_ID=$(echo "$version" | jq -r '.id')
+              TAG_COUNT=$(echo "$version" | jq -r '.metadata.container.tags | length')
+              
+              if [[ "$TAG_COUNT" -eq 0 ]]; then
+                echo "Deleting untagged version $VERSION_ID..."
+                gh api -X DELETE /users/$ORG/packages/container/$ENC_PACKAGE/versions/$VERSION_ID || echo "Warning: Failed to delete $VERSION_ID"
+              else
+                if echo "$KEEP_IDS" | grep -q "^$VERSION_ID$"; then
+                  echo "Keeping tagged version $VERSION_ID (one of the latest 2)."
+                else
+                  echo "Deleting old tagged version $VERSION_ID..."
+                  gh api -X DELETE /users/$ORG/packages/container/$ENC_PACKAGE/versions/$VERSION_ID || echo "Warning: Failed to delete $VERSION_ID"
+                fi
+              fi
+            done
+          done
+          echo "Cleanup complete!"
