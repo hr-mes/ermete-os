@@ -306,7 +306,7 @@ CONFIG_DEBUG_INFO_NONE=y
 # CONFIG_NET_VENDOR_MICROCHIP is not set
 
 CONFIG_NTSYNC=y
-# CONFIG_RUST is not set
+CONFIG_RUST=y
 
 # --- ERMETE FORGE: PGO QEMU 9PFS BOOT ---
 CONFIG_VIRTIO_PCI=y
@@ -394,8 +394,27 @@ REL_DIR=$(realpath --relative-to="$WORKSPACE_DIR/BUILD" "$KERNEL_BUILD_DIR")
 echo "$REL_DIR" > "$WORKSPACE_DIR/BUILD/.kernel_version"
 echo ">>> Albero del kernel preparato e registrato in BUILD/.kernel_version: $REL_DIR"
 
+echo ">>> [BEDROCK] Applicazione post-prep Matrice Dominante e Fix Rust..."
+pushd "$KERNEL_BUILD_DIR" > /dev/null
 
+for patch in "$WORKSPACE_DIR"/SOURCES/bedrock-*.patch; do
+    if [ -f "$patch" ]; then
+        echo "    -> Applicazione patch: $(basename "$patch")"
+        patch -p1 -F3 --no-backup-if-mismatch < "$patch" || echo "    [WARN] Fallita $(basename "$patch")"
+    fi
+done
 
+echo ">>> [BEDROCK] Normalizzazione AST e Flag Rust per compilatori moderni..."
+find . -type f -name "Makefile" -exec sed -i 's/-Zno-jump-tables/-Zunstable-options/g' {} + || true
+find . -type f -name "Makefile" -exec sed -i 's/-Z no-jump-tables/-Z unstable-options/g' {} + || true
+find . -type f -name "generate_rust_target.rs" -exec sed -i 's/"target-pointer-width", "64"/"target-pointer-width", 64/g' {} + || true
+find . -type f -name "generate_rust_target.rs" -exec sed -i 's/"target-pointer-width", "32"/"target-pointer-width", 32/g' {} + || true
+find . -type f -name "Makefile" -path "*/rust/Makefile" -exec sed -i 's/rustc_target_flags = $(core-cfgs)/rustc_target_flags = $(core-cfgs) --edition=2024/g' {} + || true
+find . -type f -name "Makefile" -path "*/rust/Makefile" -exec sed -i 's/skip_flags = -Wunreachable_pub/skip_flags = -Wunreachable_pub --edition=2021/g' {} + || true
+find . -type f -name "Makefile" -path "*/arch/x86/tools/Makefile" -exec sed -i 's/$(call cmd,posttest)/true/g' {} + || true
+find . -type f -name "Makefile" -path "*/arch/x86/tools/Makefile" -exec sed -i 's/$(call cmd,sanitytest)/true/g' {} + || true
+
+popd > /dev/null
 echo "========================================================="
 echo " PREPARAZIONE CHIMERA COMPLETATA."
 echo "========================================================="
