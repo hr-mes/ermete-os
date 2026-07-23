@@ -350,6 +350,7 @@ cat << 'EOF' >> ~/.rpmmacros
 %_with_vanilla 1
 %buildid .chimera
 %toolchain clang
+%__make /usr/bin/make LLVM=1 LLVM_IAS=1
 %__cc clang
 %__cxx clang++
 %_build_cc clang

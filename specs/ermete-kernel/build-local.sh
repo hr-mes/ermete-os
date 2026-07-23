@@ -49,6 +49,7 @@ docker run --rm -i \
     cat << 'MACRO' >> ~/.rpmmacros
 %_smp_mflags -j$(nproc)
 %toolchain clang
+%__make /usr/bin/make LLVM=1 LLVM_IAS=1
 %__cc clang
 %__cxx clang++
 %_build_cc clang
