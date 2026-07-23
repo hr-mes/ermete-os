@@ -30,7 +30,7 @@ process_array() {
     pkg="${pkg//,/}"
     [[ -z "$pkg" ]] && continue
     
-    local image_name="ermete-forge-${prefix}${pkg}"
+    local image_name="ermete-os-forge-${prefix}${pkg}"
     local out
     out=$(bash scripts/check_idempotency.sh --package "$pkg" --registry "$REGISTRY" --owner "$OWNER" --image-name "$image_name" 2>/dev/null)
     

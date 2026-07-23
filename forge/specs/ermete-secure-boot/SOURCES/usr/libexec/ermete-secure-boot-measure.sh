@@ -2,7 +2,7 @@
 set -eo pipefail
 
 # Ermete OS - Measured Boot & UKI Signer Script
-# This script is meant to be run inside the `ermete-builder` during the kernel build phase
+# This script is meant to be run inside the `ermete-os-builder` during the kernel build phase
 # or via a systemd service if signing updates locally.
 
 echo ">>> Initiating Ermete OS Measured Boot Sequence..."

@@ -19,7 +19,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$IMAGE_NAME" ]]; then
-  IMAGE_NAME="ermete-forge-${PACKAGE}"
+  IMAGE_NAME="ermete-os-forge-${PACKAGE}"
 fi
 
 # Determina directory o seed per il calcolo dell'hash

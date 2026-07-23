@@ -13,8 +13,8 @@ WORKDIR=$(mktemp -d)
 trap 'rm -rf "$WORKDIR"' EXIT
 cd "$WORKDIR"
 
-echo "📥 Scaricamento del micro-container OCI ghcr.io/patapem/ermete-forge-$PACKAGE:latest..."
-skopeo copy docker://ghcr.io/patapem/ermete-forge-$PACKAGE:latest dir:.
+echo "📥 Scaricamento del micro-container OCI ghcr.io/patapem/ermete-os-forge-$PACKAGE:latest..."
+skopeo copy docker://ghcr.io/patapem/ermete-os-forge-$PACKAGE:latest dir:.
 
 echo "📦 Estrazione RPM dall'immagine..."
 mkdir -p extract
