@@ -230,8 +230,10 @@ for patch_name in \
     fi
 done
 
-echo ">>> Normalizzazione kernel.spec con %make_build LLVM=1 LLVM_IAS=1..."
+echo ">>> Normalizzazione kernel.spec con LLVM=1 LLVM_IAS=1..."
 sed -i 's/%make_build/%make_build LLVM=1 LLVM_IAS=1/g' SPECS/kernel.spec
+sed -i 's/make -s/make -s LLVM=1 LLVM_IAS=1/g' SPECS/kernel.spec
+sed -i 's/\(.*\)make ARCH/\1make LLVM=1 LLVM_IAS=1 ARCH/g' SPECS/kernel.spec
 
 echo "========================================================="
 echo " FASE 3: TUNING KCONFIG (Bedrock Kbuild Merge_Config)"
@@ -348,6 +350,12 @@ cat << 'EOF' >> ~/.rpmmacros
 %_with_vanilla 1
 %buildid .chimera
 %toolchain clang
+%__cc clang
+%__cxx clang++
+%_build_cc clang
+%_build_cxx clang++
+%_host_cc clang
+%_host_cxx clang++
 %_ld ld.lld
 %_ldflags -Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro
 %optflags %{__global_compiler_flags} -O3 -march=x86-64-v3 -pipe -Wno-error -Wno-unknown-warning-option

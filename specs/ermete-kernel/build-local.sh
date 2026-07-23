@@ -49,6 +49,12 @@ docker run --rm -i \
     cat << 'MACRO' >> ~/.rpmmacros
 %_smp_mflags -j$(nproc)
 %toolchain clang
+%__cc clang
+%__cxx clang++
+%_build_cc clang
+%_build_cxx clang++
+%_host_cc clang
+%_host_cxx clang++
 %_ld ld.lld
 %_ldflags -Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro -fuse-ld=lld
 %optflags %{__global_compiler_flags} -march=x86-64-v3 -pipe -Wno-error
