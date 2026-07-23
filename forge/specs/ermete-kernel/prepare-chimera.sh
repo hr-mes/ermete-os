@@ -198,7 +198,12 @@ route_patch() {
 echo ">>> Scansione e smistamento delle patch in SOURCES/ con Matrice Dominante..."
 if [ -d "$CACHY_PATCH_DIR" ]; then
     find "$CACHY_PATCH_DIR" -type f -name "*.patch" | while read -r patch; do
-        cp "$patch" "SOURCES/$(route_patch "$(basename "$patch")" "cachyos")"
+        patch_name=$(basename "$patch")
+        # Esclusione nativa di scheduler mutualmente esclusivi (prjc, rt) e patch cumulative
+        if [[ "$patch_name" == *"prjc"* || "$patch_name" == *"rt-i915"* || "$patch_name" == *"hardened"* || "$patch_name" == *"cachyos-base-all"* ]]; then
+            continue
+        fi
+        cp "$patch" "SOURCES/$(route_patch "$patch_name" "cachyos")"
     done
 fi
 
@@ -400,8 +405,8 @@ pushd "$KERNEL_BUILD_DIR" > /dev/null
 for patch in "$WORKSPACE_DIR"/SOURCES/bedrock-*.patch; do
     if [ -f "$patch" ]; then
         echo "    -> Applicazione patch: $(basename "$patch")"
-        if patch -p1 -F1 --dry-run --silent < "$patch"; then
-            patch -p1 -F1 --no-backup-if-mismatch < "$patch"
+        if patch -p1 -F2 --dry-run --silent < "$patch"; then
+            patch -p1 -F2 --no-backup-if-mismatch < "$patch"
         else
             echo "    [WARN] Conflitto strutturale saltato: $(basename "$patch")"
         fi
