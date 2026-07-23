@@ -42,6 +42,10 @@ Type=dbus
 BusName=os.ermete.Telemetry
 ExecStart=%{_bindir}/%{name}
 Restart=always
+RestartSec=5s
+ProtectSystem=strict
+MemoryDenyWriteExecute=true
+NoNewPrivileges=true
 
 [Install]
 WantedBy=graphical.target

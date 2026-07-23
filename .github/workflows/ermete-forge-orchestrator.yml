@@ -148,13 +148,14 @@ jobs:
         if: steps.check.outputs.skip != 'true'
         run: |
           dnf install -y buildah
-          export STORAGE_DRIVER=vfs
+          export STORAGE_DRIVER=overlay
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
           buildah copy $ctr /github/home/RPMS/*.rpm /
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-forge-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
-          buildah commit $ctr $IMAGE_LOWER:latest
+          buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
+          buildah commit --omit-timestamp $ctr $IMAGE_LOWER:latest
           buildah tag $IMAGE_LOWER:latest $IMAGE_LOWER:${{ steps.check.outputs.hash }}
           buildah push $IMAGE_LOWER:latest
           buildah push $IMAGE_LOWER:${{ steps.check.outputs.hash }}
@@ -250,19 +251,15 @@ jobs:
           echo "Avvio build nativa RPMBuild (Saltando %prep validato)..."
           cd ~/rpmbuild/SPECS
           
-          echo ">>> [BEDROCK] Iniezione forza bruta -O3 nel kernel.spec..."
-          sed -i '/^%build/a export KCFLAGS="-O3 -march=x86-64-v3"\nexport CFLAGS_KERNEL="-O3 -march=x86-64-v3"' kernel.spec
-          
           rpmbuild -bb --noprep kernel.spec \
-            --target x86_64 \
-            --define "__make /usr/local/bin/auto-dmz-fuzzer.sh LLVM=1 LLVM_IAS=1 HOSTCC=clang HOSTCXX=clang++" </dev/null
+            --target x86_64 </dev/null
           ccache -s
           
       - name: Publish Micro-Container OCI
         if: steps.idempotency.outputs.skip_build != 'true'
         run: |
           dnf install -y buildah
-          export STORAGE_DRIVER=vfs
+          export STORAGE_DRIVER=overlay
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
@@ -271,7 +268,9 @@ jobs:
           IMAGE_LATEST=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-forge-kernel:latest" | tr '[:upper:]' '[:lower:]')
           IMAGE_FINGERPRINT=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-forge-kernel:${{ env.FINGERPRINT }}" | tr '[:upper:]' '[:lower:]')
           
-          buildah commit $ctr $IMAGE_LATEST
+          buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
+          
+          buildah commit --omit-timestamp $ctr $IMAGE_LATEST
           buildah tag $IMAGE_LATEST $IMAGE_FINGERPRINT
           
           buildah push $IMAGE_LATEST
@@ -314,7 +313,7 @@ jobs:
         run: |
           curl -Lo /etc/yum.repos.d/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo
           dnf install -y buildah
-          export STORAGE_DRIVER=vfs
+          export STORAGE_DRIVER=overlay
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
           ctr=$(buildah from ghcr.io/${{ github.repository_owner }}/ermete-forge-kernel:latest)
@@ -425,13 +424,14 @@ jobs:
         if: steps.cache.outputs['cache-hit'] != 'true'
         run: |
           dnf install -y buildah
-          export STORAGE_DRIVER=vfs
+          export STORAGE_DRIVER=overlay
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
           buildah copy $ctr /var/cache/akmods/nvidia/*.rpm /
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-forge-nvidia:latest" | tr '[:upper:]' '[:lower:]')
-          buildah commit $ctr $IMAGE_LOWER
+          buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
+          buildah commit --omit-timestamp $ctr $IMAGE_LOWER
           buildah push $IMAGE_LOWER
 
       - name: Install Cosign
@@ -536,13 +536,14 @@ jobs:
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
           dnf install -y buildah
-          export STORAGE_DRIVER=vfs
+          export STORAGE_DRIVER=overlay
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
           buildah copy $ctr /github/home/RPMS/*.rpm /
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-forge-rolling-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
-          buildah commit $ctr $IMAGE_LOWER:latest
+          buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
+          buildah commit --omit-timestamp $ctr $IMAGE_LOWER:latest
           buildah tag $IMAGE_LOWER:latest $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
           buildah push $IMAGE_LOWER:latest
           buildah push $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
@@ -634,13 +635,14 @@ jobs:
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
           dnf install -y buildah
-          export STORAGE_DRIVER=vfs
+          export STORAGE_DRIVER=overlay
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
           buildah copy $ctr /github/home/RPMS/*.rpm /
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-forge-rolling-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
-          buildah commit $ctr $IMAGE_LOWER:latest
+          buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
+          buildah commit --omit-timestamp $ctr $IMAGE_LOWER:latest
           buildah tag $IMAGE_LOWER:latest $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
           buildah push $IMAGE_LOWER:latest
           buildah push $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
@@ -732,13 +734,14 @@ jobs:
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
           dnf install -y buildah
-          export STORAGE_DRIVER=vfs
+          export STORAGE_DRIVER=overlay
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
           buildah copy $ctr /github/home/RPMS/*.rpm /
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-forge-rolling-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
-          buildah commit $ctr $IMAGE_LOWER:latest
+          buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
+          buildah commit --omit-timestamp $ctr $IMAGE_LOWER:latest
           buildah tag $IMAGE_LOWER:latest $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
           buildah push $IMAGE_LOWER:latest
           buildah push $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
@@ -831,13 +834,14 @@ jobs:
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
           dnf install -y buildah
-          export STORAGE_DRIVER=vfs
+          export STORAGE_DRIVER=overlay
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
           buildah copy $ctr /github/home/RPMS/*.rpm /
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-forge-rolling-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
-          buildah commit $ctr $IMAGE_LOWER:latest
+          buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
+          buildah commit --omit-timestamp $ctr $IMAGE_LOWER:latest
           buildah tag $IMAGE_LOWER:latest $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
           buildah push $IMAGE_LOWER:latest
           buildah push $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
@@ -874,7 +878,7 @@ jobs:
           echo "${{ secrets.GITHUB_TOKEN }}" | buildah login ghcr.io -u ${{ github.actor }} --password-stdin
           bash scripts/fetch_repo_rpms.sh ${{ github.repository_owner }}
           
-          export STORAGE_DRIVER=vfs
+          export STORAGE_DRIVER=overlay
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
           
@@ -911,7 +915,8 @@ jobs:
             ctr=$(buildah from scratch)
             buildah copy $ctr "$dir" /
             buildah config --label tier.content.sha256="$NEW_HASH" $ctr
-            buildah commit $ctr "$IMAGE_LOWER"
+            buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
+            buildah commit --omit-timestamp $ctr "$IMAGE_LOWER"
             buildah push "$IMAGE_LOWER"
             buildah rm "$ctr"
           done

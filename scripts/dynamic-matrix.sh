@@ -27,7 +27,7 @@ process_array() {
   local active_pkgs=()
   
   for pkg in "${pkgs[@]}"; do
-    pkg=$(echo "$pkg" | tr -d ',')
+    pkg="${pkg//,/}"
     [[ -z "$pkg" ]] && continue
     
     local image_name="ermete-forge-${prefix}${pkg}"
@@ -35,15 +35,14 @@ process_array() {
     out=$(bash scripts/check_idempotency.sh --package "$pkg" --registry "$REGISTRY" --owner "$OWNER" --image-name "$image_name" 2>/dev/null)
     
     if echo "$out" | grep -q "CACHE_HIT=false"; then
-      active_pkgs+=("\"$pkg\"")
+      active_pkgs+=("$pkg")
       echo "  -> MISS (will build: $pkg)" >&2
     else
       echo "  -> HIT (skip: $pkg)" >&2
     fi
   done
   
-  local json="[$(IFS=,; echo "${active_pkgs[*]}")]"
-  echo "$json"
+  jq -c -n '$ARGS.positional' --args "${active_pkgs[@]}"
 }
 
 echo "Evaluating custom_packages..." >&2

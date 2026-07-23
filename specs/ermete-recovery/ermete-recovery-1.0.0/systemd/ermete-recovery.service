@@ -20,10 +20,10 @@ StandardError=journal
 # systemd hardening
 NoNewPrivileges=no
 ProtectSystem=strict
-ReadWritePaths=/etc /var /boot
+ReadWritePaths=/etc /var
 ProtectHome=read-only
 PrivateTmp=yes
-PrivateDevices=yes
+PrivateDevices=no
 ProtectKernelTunables=yes
 ProtectKernelModules=yes
 ProtectControlGroups=yes

@@ -32,11 +32,7 @@ mkdir -p %{buildroot}/usr/share/ermete-system-config
 mv %{buildroot}/etc/usbguard/usbguard-daemon.conf %{buildroot}/usr/share/ermete-system-config/usbguard-daemon.conf
 
 %post
-mkdir -p /etc/greetd
-ln -sf /usr/share/ermete-system-config/greetd.toml /etc/greetd/config.toml 2>/dev/null || true
-
-# Overwrite usbguard-daemon.conf without claiming RPM file ownership
-cp -f /usr/share/ermete-system-config/usbguard-daemon.conf /etc/usbguard/usbguard-daemon.conf 2>/dev/null || true
+# Configurations are now managed declaratively via tmpfiles.d (10-ermete-greetd.conf)
 
 %files
 %dir /usr/share/ermete-system-config

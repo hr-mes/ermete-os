@@ -40,7 +40,7 @@ PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
 RestrictAddressFamilies=AF_UNIX
-ReadWritePaths=/etc/keys
+ReadWritePaths=/etc/keys /boot/efi /etc/systemd
 
 [Install]
 WantedBy=multi-user.target

@@ -76,17 +76,17 @@ echo ">>> Verifica esistenza su GHCR: ${IMAGE_URL_LOWER}..." >&2
 # Verifica con skopeo (se skopeo non è installato, tenta di installarlo o usa fallback)
 if ! command -v skopeo >/dev/null 2>&1; then
   if command -v dnf >/dev/null 2>&1; then
-    sudo dnf install -y skopeo >&2 || dnf install -y skopeo >&2 || true
+    sudo dnf install -y skopeo >&2 || dnf install -y skopeo >&2 || :
   fi
 fi
 
 CACHE_HIT="false"
 if command -v skopeo >/dev/null 2>&1; then
-  INSPECT_CMD="skopeo inspect --no-tags"
+  INSPECT_ARGS=("--no-tags")
   if [[ -n "${GITHUB_TOKEN:-}" ]]; then
-    INSPECT_CMD="skopeo inspect --creds ${OWNER}:${GITHUB_TOKEN} --no-tags"
+    INSPECT_ARGS+=("--creds" "${OWNER}:${GITHUB_TOKEN}")
   fi
-  if $INSPECT_CMD "${IMAGE_URL_LOWER}" >/dev/null 2>&1; then
+  if skopeo inspect "${INSPECT_ARGS[@]}" "${IMAGE_URL_LOWER}" >/dev/null 2>&1; then
     CACHE_HIT="true"
   fi
 fi

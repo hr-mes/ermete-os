@@ -7,8 +7,11 @@ mkdir -p /github/home/repo \
          /github/home/repo-tier2 \
          /github/home/repo-tier3
 
-export STORAGE_DRIVER=vfs
+export STORAGE_DRIVER=overlay
 export BUILDAH_ISOLATION=chroot
+
+TMP_DIR=$(mktemp -d)
+trap "rm -rf $TMP_DIR" EXIT
 
 OWNER="${1:-patapem}"
 
@@ -86,12 +89,12 @@ pull_and_extract() {
 
   if [ -n "$old_digest" ] && [ -n "$new_digest" ] && [ "$old_digest" = "$new_digest" ]; then
     echo "    [CACHE HIT] $img hasn't changed. Skipping pull."
-    echo "$new_digest" > "/tmp/digest_$img"
+    echo "$new_digest" > "$TMP_DIR/digest_$img"
     return 0
   fi
   
   echo "    [CACHE MISS] Pulling $img (old: $old_digest, new: $new_digest)"
-  echo "$new_digest" > "/tmp/digest_$img"
+  echo "$new_digest" > "$TMP_DIR/digest_$img"
 
   local ctr
   ctr=$(buildah from "$IMAGE_LOWER" || true)
@@ -105,12 +108,18 @@ pull_and_extract() {
         local pkg_name
         pkg_name=$(rpm -qp --queryformat '%{NAME}' "$new_rpm" 2>/dev/null || true)
         if [ -n "$pkg_name" ]; then
-          rm -f "$target_dir/${pkg_name}"-[0-9]*.rpm 2>/dev/null || true
+          (
+            flock 200
+            rm -f "$target_dir/${pkg_name}"-[0-9]*.rpm 2>/dev/null || true
+          ) 200>"$target_dir/.lock"
         fi
       fi
     done
 
-    cp -a "$mnt"/*.rpm "$target_dir/" 2>/dev/null || true
+    (
+      flock 200
+      cp -a "$mnt"/*.rpm "$target_dir/" 2>/dev/null || true
+    ) 200>"$target_dir/.lock"
     buildah umount "$ctr"
     buildah rm "$ctr"
   else
@@ -174,8 +183,8 @@ cp -a /github/home/repo-tier2/*.rpm /github/home/repo/ 2>/dev/null || true
 cp -a /github/home/repo-tier3/*.rpm /github/home/repo/ 2>/dev/null || true
 
 for img in "${TIER0_IMAGES[@]}" "${TIER1_IMAGES[@]}" "${TIER2_IMAGES[@]}" "${TIER3_IMAGES[@]}"; do
-  if [ -f "/tmp/digest_$img" ]; then
-    NEW_DIGESTS["$img"]=$(cat "/tmp/digest_$img")
+  if [ -f "$TMP_DIR/digest_$img" ]; then
+    NEW_DIGESTS["$img"]=$(cat "$TMP_DIR/digest_$img")
   fi
 done
 

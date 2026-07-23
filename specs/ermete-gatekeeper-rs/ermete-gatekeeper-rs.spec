@@ -38,7 +38,10 @@ After=network.target
 Type=simple
 ExecStart=%{_bindir}/%{name}
 Restart=on-failure
-RestartSec=5
+RestartSec=5s
+ProtectSystem=strict
+MemoryDenyWriteExecute=true
+NoNewPrivileges=true
 
 [Install]
 WantedBy=multi-user.target

@@ -60,8 +60,7 @@ MACRO
     # Usando --noprep diciamo a rpmbuild di saltare il download tarball e la piallatura del codice.
     # Userà l'albero del sorgente chirurgicamente modificato da prepare-chimera.sh (Zero overhead e sicurezza totale)
     rpmbuild -bb --noprep kernel.spec \
-        --target x86_64 \
-        --define "__make /usr/local/bin/auto-dmz-fuzzer.sh LLVM=1 LLVM_IAS=1 HOSTCC=clang HOSTCXX=clang++" </dev/null
+        --target x86_64 </dev/null
     ccache -s
     
     echo '========================================================='
