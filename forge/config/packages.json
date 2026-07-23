@@ -62,7 +62,9 @@
     "squashfuse",
     "sysstat",
     "upower",
-    "virt-manager"
+    "virt-manager",
+    "systemd",
+    "wayland"
   ],
   "upstream_desktop": [
     "cage",
