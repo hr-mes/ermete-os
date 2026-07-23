@@ -24,53 +24,53 @@ readarray -t UPSTREAM_CLI < <(jq -r '.upstream_cli[]' config/packages.json)
 # Define per-Tier micro-container images
 TIER0_IMAGES=(
   "ermete-kernel-source"
-  "ermete-forge-nvidia"
-  "ermete-forge-base-config"
-  "ermete-forge-selinux"
-  "ermete-forge-nix-support"
-  "ermete-forge-recovery"
-  "ermete-forge-secure-boot"
+  "ermete-os-forge-nvidia"
+  "ermete-os-forge-base-config"
+  "ermete-os-forge-selinux"
+  "ermete-os-forge-nix-support"
+  "ermete-os-forge-recovery"
+  "ermete-os-forge-secure-boot"
 )
 for pkg in "${UPSTREAM_CORE[@]}" "${UPSTREAM_MEDIA[@]}"; do
-  [[ -n "$pkg" ]] && TIER0_IMAGES+=("ermete-forge-rolling-$pkg")
+  [[ -n "$pkg" ]] && TIER0_IMAGES+=("ermete-os-forge-rolling-$pkg")
 done
 
 TIER1_IMAGES=(
-  "ermete-forge-starship"
-  "ermete-forge-bat"
-  "ermete-forge-ananicy"
-  "ermete-forge-cliphist"
-  "ermete-forge-ide-bootstrap"
-  "ermete-forge-system-tweaks"
+  "ermete-os-forge-starship"
+  "ermete-os-forge-bat"
+  "ermete-os-forge-ananicy"
+  "ermete-os-forge-cliphist"
+  "ermete-os-forge-ide-bootstrap"
+  "ermete-os-forge-system-tweaks"
 )
 for pkg in "${UPSTREAM_DESKTOP[@]}" "${UPSTREAM_CLI[@]}"; do
-  [[ -n "$pkg" ]] && TIER1_IMAGES+=("ermete-forge-rolling-$pkg")
+  [[ -n "$pkg" ]] && TIER1_IMAGES+=("ermete-os-forge-rolling-$pkg")
 done
 
 TIER2_IMAGES=(
-  "ermete-forge-bibata"
-  "ermete-forge-matugen"
-  "ermete-forge-dart-sass"
+  "ermete-os-forge-bibata"
+  "ermete-os-forge-matugen"
+  "ermete-os-forge-dart-sass"
 )
 
 TIER3_IMAGES=(
-  "ermete-forge-shell-rs"
-  "ermete-forge-settings-rs"
-  "ermete-forge-daemon-rs"
-  "ermete-forge-store-rs"
-  "ermete-forge-doctor"
-  "ermete-forge-system-services"
-  "ermete-forge-desktop-ui"
-  "ermete-forge-system-config"
-  "ermete-forge-backup"
-  "ermete-forge-gatekeeper-rs"
-  "ermete-forge-telemetry-rs"
-  "ermete-forge-cloud-rs"
-  "ermete-forge-mdm-rs"
-  "ermete-forge-updater-rs"
-  "ermete-forge-xdg-desktop-portal-ermete"
-  "ermete-forge-lvfs-rs"
-  "ermete-forge-ui-agent"
+  "ermete-os-forge-shell-rs"
+  "ermete-os-forge-settings-rs"
+  "ermete-os-forge-daemon-rs"
+  "ermete-os-forge-store-rs"
+  "ermete-os-forge-doctor"
+  "ermete-os-forge-system-services"
+  "ermete-os-forge-desktop-ui"
+  "ermete-os-forge-system-config"
+  "ermete-os-forge-backup"
+  "ermete-os-forge-gatekeeper-rs"
+  "ermete-os-forge-telemetry-rs"
+  "ermete-os-forge-cloud-rs"
+  "ermete-os-forge-mdm-rs"
+  "ermete-os-forge-updater-rs"
+  "ermete-os-forge-xdg-desktop-portal-ermete"
+  "ermete-os-forge-lvfs-rs"
+  "ermete-os-forge-ui-agent"
 )
 
 declare -A OLD_DIGESTS
@@ -129,7 +129,7 @@ pull_and_extract() {
 
 echo "=== Restoring Aggregate Tier Repos (Caching) ==="
 for tier in tier0 tier1 tier2 tier3; do
-  img="ermete-forge-${tier}-repo:latest"
+  img="ermete-os-forge-${tier}-repo:latest"
   IMAGE_LOWER=$(echo "ghcr.io/$OWNER/$img" | tr '[:upper:]' '[:lower:]')
   echo "    Pulling previous $IMAGE_LOWER..."
   ctr=$(buildah from "$IMAGE_LOWER" 2>/dev/null || true)
