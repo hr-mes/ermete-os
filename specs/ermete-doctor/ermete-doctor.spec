@@ -17,7 +17,8 @@ Diagnostic CLI tool for verifying Ermete OS system health and hardware configura
 %autosetup
 
 %build
-cargo build --release --locked
+%set_build_flags
+%cargo_build --locked
 
 %install
 mkdir -p %{buildroot}%{_bindir}

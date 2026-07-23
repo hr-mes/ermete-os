@@ -106,13 +106,11 @@ pull_and_extract() {
         pkg_name=$(rpm -qp --queryformat '%{NAME}' "$new_rpm" 2>/dev/null || true)
         if [ -n "$pkg_name" ]; then
           rm -f "$target_dir/${pkg_name}"-[0-9]*.rpm 2>/dev/null || true
-          rm -f "/github/home/repo/${pkg_name}"-[0-9]*.rpm 2>/dev/null || true
         fi
       fi
     done
 
     cp -a "$mnt"/*.rpm "$target_dir/" 2>/dev/null || true
-    cp -a "$mnt"/*.rpm "/github/home/repo/" 2>/dev/null || true
     buildah umount "$ctr"
     buildah rm "$ctr"
   else
@@ -165,7 +163,15 @@ for img in "${TIER3_IMAGES[@]}"; do
   pull_and_extract "$img" "/github/home/repo-tier3" &
 done
 
-wait
+for pid in $(jobs -p); do
+  wait $pid || { echo "FATAL: Un job in parallelo è fallito"; exit 1; }
+done
+
+echo "=== Syncing tiered RPMs to aggregate repo ==="
+cp -a /github/home/repo-tier0/*.rpm /github/home/repo/ 2>/dev/null || true
+cp -a /github/home/repo-tier1/*.rpm /github/home/repo/ 2>/dev/null || true
+cp -a /github/home/repo-tier2/*.rpm /github/home/repo/ 2>/dev/null || true
+cp -a /github/home/repo-tier3/*.rpm /github/home/repo/ 2>/dev/null || true
 
 for img in "${TIER0_IMAGES[@]}" "${TIER1_IMAGES[@]}" "${TIER2_IMAGES[@]}" "${TIER3_IMAGES[@]}"; do
   if [ -f "/tmp/digest_$img" ]; then
@@ -177,7 +183,7 @@ echo "=== Saving New Manifests ==="
 for tier in tier0 tier1 tier2 tier3; do
   # We construct the manifest for the tier
   echo "{}" > "/github/home/repo-${tier}/manifest.json"
-  eval "TIER_ARRAY=(\"\${TIER${tier#tier}_IMAGES[@]}\")"
+  declare -n TIER_ARRAY="TIER${tier#tier}_IMAGES"
   for img in "${TIER_ARRAY[@]}"; do
     digest="${NEW_DIGESTS[$img]:-}"
     if [ -n "$digest" ]; then

@@ -89,6 +89,9 @@ impl BackupServer {
     }
 
     async fn delete_snapshot(&self, id: &str) -> bool {
+        if id.contains('/') || id.contains('.') || id.contains('\\') {
+            return false;
+        }
         let mut target_dir = self.snapshot_dir.clone();
         target_dir.push(id);
 
@@ -106,6 +109,9 @@ impl BackupServer {
     }
 
     async fn restore_snapshot(&self, id: &str) -> bool {
+        if id.contains('/') || id.contains('.') || id.contains('\\') {
+            return false;
+        }
         println!("[BackupDaemon] Restoring home directory from snapshot ID: {}", id);
         let manifest_path = self.get_manifest_path(id);
         let mut target_dir = self.snapshot_dir.clone();
@@ -126,16 +132,8 @@ impl BackupServer {
             .status();
 
         if status.is_err() || !status.as_ref().unwrap().success() {
-            println!("[BackupDaemon] Btrfs subvolume restore failed or unsupported. Using rsync fallback.");
-            let _ = Command::new("rsync")
-                .args([
-                    "-a",
-                    "--delete",
-                    "--exclude=.snapshots",
-                    &format!("{}/", target_dir.to_string_lossy()),
-                    &format!("{}/", home),
-                ])
-                .status();
+            println!("[BackupDaemon] Btrfs subvolume restore failed.");
+            return false;
         }
 
         true

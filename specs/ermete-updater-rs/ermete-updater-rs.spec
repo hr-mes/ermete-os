@@ -17,7 +17,8 @@ Ermete OS Over-The-Air Update Daemon for Dual-Layer OTA updates (bootc and rpm-o
 %autosetup
 
 %build
-cargo build --release --locked
+%set_build_flags
+%cargo_build --locked
 
 %install
 install -D -m 0755 target/release/%{name} %{buildroot}%{_bindir}/%{name}

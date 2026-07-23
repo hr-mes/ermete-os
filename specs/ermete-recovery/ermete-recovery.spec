@@ -18,7 +18,8 @@ Provides 1-click OSTree/bootc visual rollback and automatic failover when `greet
 %autosetup
 
 %build
-cargo build --release --locked
+%set_build_flags
+%cargo_build --locked
 
 %install
 mkdir -p %{buildroot}%{_bindir}

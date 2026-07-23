@@ -37,7 +37,8 @@ retaining full upstream compatibility.
 tar -xzf %{SOURCE1} -C src/
 
 %build
-cargo build --release --locked
+%set_build_flags
+%cargo_build --locked
 
 %install
 mkdir -p %{buildroot}%{_bindir}

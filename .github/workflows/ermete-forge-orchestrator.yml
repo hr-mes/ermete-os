@@ -942,9 +942,7 @@ jobs:
           git config --global --add safe.directory /github/home/pages_repo
           git checkout -b gh-pages
           
-          # Rimuovi file troppo grandi prima del push su GitHub Pages per evitare l'errore "GH001: Large files detected" (limite 100MB)
-          find . -type f -size +95M -exec rm -f {} +
-          
+
           git add .
           git commit -m "🚀 Deploy DNF repositories for Ermete OS Rolling Release"
           git push -f "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" gh-pages

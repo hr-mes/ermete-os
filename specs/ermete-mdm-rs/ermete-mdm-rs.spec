@@ -17,7 +17,8 @@ Ermete OS MDM Daemon for Anti-Theft tracking and cryptographic Remote Wipe.
 %autosetup
 
 %build
-cargo build --release --locked
+%set_build_flags
+%cargo_build --locked
 
 %install
 install -D -m 0755 target/release/%{name} %{buildroot}%{_bindir}/%{name}

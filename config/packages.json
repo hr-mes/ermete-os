@@ -1,5 +1,6 @@
 {
   "custom_packages": [
+    "niri",
     "starship",
     "bat",
     "selinux",
@@ -65,7 +66,6 @@
   ],
   "upstream_desktop": [
     "cage",
-    "niri",
     "adw-gtk3-theme",
     "fontawesome-fonts-all",
     "foot",

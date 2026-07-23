@@ -32,7 +32,8 @@ export CFLAGS="$(echo $CFLAGS | sed 's/-flto=auto//g')"
 export CXXFLAGS="$(echo $CXXFLAGS | sed 's/-flto=auto//g')"
 export LDFLAGS="$(echo $LDFLAGS | sed 's/-flto=auto//g')"
 # The global rpmmacros will inject -C target-cpu=x86-64-v3 and mold linker
-cargo build --release
+%set_build_flags
+%cargo_build
 
 %install
 rm -rf %{buildroot}

@@ -19,7 +19,8 @@ Ermete OS Zero-Trust binary execution gatekeeper using fanotify.
 %setup -q
 
 %build
-cargo build --release
+%set_build_flags
+%cargo_build
 
 %install
 rm -rf %{buildroot}
@@ -27,12 +28,11 @@ mkdir -p %{buildroot}%{_bindir}
 install -m 755 target/release/%{name} %{buildroot}%{_bindir}/%{name}
 
 # systemd service
-mkdir -p %{buildroot}%{_userunitdir}
-cat > %{buildroot}%{_userunitdir}/%{name}.service <<EOF
+mkdir -p %{buildroot}%{_unitdir}
+cat > %{buildroot}%{_unitdir}/%{name}.service <<EOF
 [Unit]
 Description=Ermete OS Zero-Trust Gatekeeper
-PartOf=graphical-session.target
-After=graphical-session.target
+After=network.target
 
 [Service]
 Type=simple
@@ -41,18 +41,18 @@ Restart=on-failure
 RestartSec=5
 
 [Install]
-WantedBy=graphical-session.target
+WantedBy=multi-user.target
 EOF
 
 %post
-%systemd_user_post %{name}.service
+%systemd_post %{name}.service
 
 %preun
-%systemd_user_preun %{name}.service
+%systemd_preun %{name}.service
 
 %files
 %{_bindir}/%{name}
-%{_userunitdir}/%{name}.service
+%{_unitdir}/%{name}.service
 
 %changelog
 * Wed Jul 15 2026 Ermete Forge <forge@ermete.os> - 1.0.0-1

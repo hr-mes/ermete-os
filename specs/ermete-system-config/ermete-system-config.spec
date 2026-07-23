@@ -25,7 +25,7 @@ Provides ermete-system-config for Ermete OS.
 
 %install
 mkdir -p %{buildroot}
-cp -a %{_sourcedir}/usr %{buildroot}/
+cp -a %{_sourcedir}/usr %{buildroot}/ 2>/dev/null || true
 cp -a %{_sourcedir}/etc %{buildroot}/ 2>/dev/null || true
 
 mkdir -p %{buildroot}/usr/share/ermete-system-config

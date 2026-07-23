@@ -13,6 +13,7 @@ echo "========================================"
 echo "=== INIZIALIZZAZIONE AMBIENTE BEDROCK =="
 echo "========================================"
 sudo dnf install -y rpm-build dnf-plugins-core rpmdevtools
+rm -rf ~/rpmbuild
 cp config/rpmmacros ~/.rpmmacros
 rpmdev-setuptree
 
@@ -43,7 +44,6 @@ for spec in ~/rpmbuild/SPECS/*.spec; do
   if ! grep -q "debug_package %{nil}" "$spec"; then
     awk '/^Name:/ { print "%global debug_package %{nil}"; print $0; next } 1' "$spec" > "$spec.tmp" && mv "$spec.tmp" "$spec"
   fi
-  awk '!/^[[:space:]]*%doc/ && !/%{_mandir}/' "$spec" > "$spec.tmp" && mv "$spec.tmp" "$spec"
 done
 
 echo "========================================"

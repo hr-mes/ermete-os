@@ -18,7 +18,8 @@ Ermete Settings is the native control panel for Ermete OS, written in pure Rust 
 %autosetup
 
 %build
-cargo build --release
+%set_build_flags
+%cargo_build
 
 %install
 rm -rf $RPM_BUILD_ROOT

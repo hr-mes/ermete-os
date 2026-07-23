@@ -26,7 +26,7 @@ case "$1" in
     is-suspend-then-hibernate-supported)
         # suspend-then-hibernate only works correctly if $SYSTEMD_SLEEP_ACTION
         # is supported, which was added in systemd 248.
-        systemd_version=$(systemctl --version | head -n1 | cut -d' ' -f2)
+        systemd_version=$(systemctl --version | head -n1 | cut -d' ' -f2 | cut -d'.' -f1)
         if [ "$systemd_version" -gt 247 ]; then
             exit 0
         fi

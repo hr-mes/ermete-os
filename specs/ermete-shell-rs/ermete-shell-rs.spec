@@ -17,7 +17,8 @@ Pure Rust native shell for Ermete OS, replacing AGS/GJS.
 %autosetup
 
 %build
-cargo build --release --locked
+%set_build_flags
+%cargo_build --locked
 
 %install
 mkdir -p %{buildroot}%{_bindir}

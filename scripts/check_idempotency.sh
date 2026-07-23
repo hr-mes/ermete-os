@@ -39,6 +39,14 @@ if [[ -n "$DIR" && -d "$DIR" ]]; then
       echo -n "config/rpmmacros"
       cat "config/rpmmacros"
     fi
+    if [[ -f "builder/Containerfile" ]]; then
+      echo -n "builder/Containerfile"
+      cat "builder/Containerfile"
+    fi
+    if [[ -f "config/packages.json" ]]; then
+      echo -n "config/packages.json"
+      cat "config/packages.json"
+    fi
   } | sha256sum | awk '{print $1}')
 else
   # Pacchetti upstream senza spec locale

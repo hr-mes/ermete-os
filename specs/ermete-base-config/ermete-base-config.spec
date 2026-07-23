@@ -23,7 +23,7 @@ Systemd presets, custom Plymouth/GDM branding, Polkit rules, and GPG keys.
 
 %install
 mkdir -p %{buildroot}
-cp -a %{_sourcedir}/* %{buildroot}/
+find %{_sourcedir} -mindepth 1 -maxdepth 1 ! -name "*.spec" -exec cp -a {} %{buildroot}/ \;
 
 %files
 /etc/pki/rpm-gpg/*

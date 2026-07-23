@@ -6,7 +6,7 @@ set -euo pipefail
 # Matrice Dominante Pura: CachyOS (Scheduler BORE) + ClearLinux (Math/CPU/Memory).
 # WARNING: HEAD is unpinned — should be pinned to a specific commit hash
 # Current: CACHYOS_COMMIT="HEAD"
-CACHYOS_COMMIT="HEAD"
+CACHYOS_COMMIT="ea739d734ec179864b21446856315bc49f7c52fa"
 # -----------------------------------------
 
 MODE="full"
