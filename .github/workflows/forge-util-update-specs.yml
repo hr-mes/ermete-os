@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
 
+defaults:
+  run:
+    working-directory: forge
+
 jobs:
   update-specs:
     runs-on: self-hosted

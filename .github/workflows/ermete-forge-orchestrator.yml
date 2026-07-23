@@ -11,6 +11,10 @@ env:
   REGISTRY: ghcr.io
   FEDORA_VERSION: 43
 
+defaults:
+  run:
+    working-directory: forge
+
 jobs:
   orchestrator-brain:
     name: 🧠 Orchestrator Brain
