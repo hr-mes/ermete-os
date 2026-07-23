@@ -41,7 +41,7 @@ output "HDMI-A-1" {
 }
 
 layout {
-    gaps 12
+    gaps 10
     center-focused-column "on-overflow"
     
     preset-column-widths {
@@ -61,8 +61,8 @@ layout {
 
     shadow {
         on
-        softness 30
-        spread 2
+        softness 32
+        spread 0
         offset x=0 y=4
         color "#00000070"
     }
@@ -117,7 +117,7 @@ animations {
 
 // --- WINDOW RULES (ROUNDED CORNERS & OPACITY & WIDTHS) ---
 window-rule {
-    geometry-corner-radius 14
+    geometry-corner-radius 10
     clip-to-geometry true
 }
 
@@ -165,11 +165,11 @@ layer-rule {
     match namespace="^osd$"
     match namespace="^notifications$"
     
-    geometry-corner-radius 14
+    geometry-corner-radius 10
     shadow {
         on
-        softness 30
-        spread 2
+        softness 32
+        spread 0
         offset x=0 y=4
         color "#00000070"
     }

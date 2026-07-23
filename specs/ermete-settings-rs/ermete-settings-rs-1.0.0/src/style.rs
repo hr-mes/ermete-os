@@ -82,5 +82,18 @@ pub fn load_global_css() {
             &provider,
             gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
         );
+        
+        // Dynamically load Matugen colors if available
+        let home = std::env::var("HOME").unwrap_or_else(|_| "/".to_string());
+        let mat_path = format!("{}/.config/gtk-4.0/colors.css", home);
+        if std::path::Path::new(&mat_path).exists() {
+            let mat_provider = CssProvider::new();
+            mat_provider.load_from_path(&mat_path);
+            gtk4::style_context_add_provider_for_display(
+                &display,
+                &mat_provider,
+                gtk4::STYLE_PROVIDER_PRIORITY_THEME,
+            );
+        }
     }
 }

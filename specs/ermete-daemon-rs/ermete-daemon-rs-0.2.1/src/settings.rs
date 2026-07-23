@@ -122,6 +122,12 @@ impl SettingsService {
             .args(["color", "hex", &val])
             .output()
             .await;
+            
+        let _ = tokio::process::Command::new("niri")
+            .args(["msg", "action", "do-screen-transition"])
+            .output()
+            .await;
+            
         Ok(())
     }
 

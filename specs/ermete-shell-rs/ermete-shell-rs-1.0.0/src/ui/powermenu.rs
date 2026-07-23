@@ -13,9 +13,10 @@ window.powermenu-window {
 }
 
 .powermenu-card {
-    background: rgba(26, 27, 38, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 20px;
+    background: radial-gradient(circle, alpha(@surface_darker, 0.9), alpha(@surface_dim, 0.9));
+    border-radius: 12px;
+    box-shadow: inset 1px 2px 2px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(0,0,0,0.5);
+    margin: 10px;
     padding: 32px;
 }
 

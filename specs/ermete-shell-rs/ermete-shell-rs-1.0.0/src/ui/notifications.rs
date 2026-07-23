@@ -113,9 +113,10 @@ pub fn spawn_notification_daemon(app: &Application) {
     let provider = gtk4::CssProvider::new();
     provider.load_from_data(r#"
         .premium-notification {
-            background-color: rgba(30, 30, 30, 0.65);
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            background: radial-gradient(circle, alpha(@surface_darker, 0.9), alpha(@surface_dim, 0.9));
+            border-radius: 12px;
+            box-shadow: inset 1px 2px 2px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(0,0,0,0.5);
+            margin: 10px;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .toast-slide-in {
