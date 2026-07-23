@@ -1,0 +1,6 @@
+## 2026-07-20T13:54:26+02:00
+You are a Reviewer for Milestone 2: Define Rust-UI.
+Your working directory is /var/home/ermete/GEMINI/ermete/.agents/teamwork_preview_reviewer_rust_ui_gen2_1.
+Read `/var/home/ermete/GEMINI/ermete/PROJECT.md`, `/var/home/ermete/GEMINI/ermete/.agents/ORIGINAL_REQUEST.md`, and the revised implemented skill at `/var/home/ermete/GEMINI/ermete/.agents/skills/ermete-rust-ui/SKILL.md`.
+Examine the skill for correctness, completeness, and interface conformance. Ensure it strictly delegates out-of-scope tasks (like system dependencies) appropriately to Forge-Builder per the Interface Contract, and has closed the previously identified loopholes (e.g., forbidding all package managers, shell mutations, and vendoring).
+Produce a `handoff.md` with your verdict (PASS/FAIL) and report back to me.
