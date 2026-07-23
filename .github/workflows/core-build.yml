@@ -1,0 +1,31 @@
+---
+name: Build container image
+on:
+  workflow_run:
+    workflows: ["🌋 Ermete Forge Orchestrator"]
+    types: [completed]
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+    paths:
+      - core/**
+      - .github/workflows/core-build.yml
+      - '**/README.md'
+  workflow_dispatch:
+
+env:
+  IMAGE_DESC: "Ermete OS - Immutable Cloud-Native System"
+  IMAGE_KEYWORDS: "bootc,fedora,Ermete,immutable"
+  IMAGE_LOGO_URL: ""  # Lasciato vuoto o inserisci l'URL del tuo futuro logo
+  IMAGE_NAME: "ermete-os"
+  IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}"  # do not edit
+  DEFAULT_TAG: "latest"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
