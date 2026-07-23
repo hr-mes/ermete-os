@@ -50,7 +50,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          bash scripts/check_idempotency.sh --package builder --registry ghcr.io --owner ${{ github.repository_owner }} --image-name ermete-builder > idemp.out
+          bash scripts/check_idempotency.sh --package builder --registry ghcr.io --owner ${{ github.repository_owner }} --image-name ermete-os-builder > idemp.out
           source ./idemp.out
           if [ "$CACHE_HIT" = "true" ]; then
             echo "cache_hit=true" >> $GITHUB_OUTPUT
@@ -63,7 +63,7 @@ jobs:
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          IMAGE_LOWER=$(echo "ghcr.io/${{ github.repository_owner }}/ermete-builder" | tr '[:upper:]' '[:lower:]')
+          IMAGE_LOWER=$(echo "ghcr.io/${{ github.repository_owner }}/ermete-os-builder" | tr '[:upper:]' '[:lower:]')
           docker build -t $IMAGE_LOWER:latest -f builder/Containerfile builder/
           docker tag $IMAGE_LOWER:latest $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
           docker push $IMAGE_LOWER:latest
@@ -83,7 +83,7 @@ jobs:
       packages: write
       id-token: write
     container:
-      image: ghcr.io/${{ github.repository_owner }}/ermete-builder:latest
+      image: ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest
       options: --privileged
     steps:
       - uses: actions/checkout@v4
@@ -92,7 +92,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-forge-${{ matrix.package }} > idemp.out
+          bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-${{ matrix.package }} > idemp.out
           source ./idemp.out
           echo "hash=$CONTENT_HASH" >> $GITHUB_OUTPUT
           if [ "$CACHE_HIT" = "true" ]; then echo "skip=true" >> $GITHUB_OUTPUT; else echo "skip=false" >> $GITHUB_OUTPUT; fi
@@ -157,7 +157,7 @@ jobs:
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
           buildah copy $ctr /github/home/RPMS/*.rpm /
-          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-forge-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
           buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
           buildah commit --omit-timestamp $ctr $IMAGE_LOWER:latest
           buildah tag $IMAGE_LOWER:latest $IMAGE_LOWER:${{ steps.check.outputs.hash }}
@@ -176,7 +176,7 @@ jobs:
       packages: write
       id-token: write
     container:
-      image: ghcr.io/${{ github.repository_owner }}/ermete-builder:latest
+      image: ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest
       options: --privileged
     steps:
       - uses: actions/checkout@v4
@@ -301,7 +301,7 @@ jobs:
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
           buildah copy $ctr /var/cache/akmods/nvidia/*.rpm /
-          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-forge-nvidia:latest" | tr '[:upper:]' '[:lower:]')
+          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-nvidia:latest" | tr '[:upper:]' '[:lower:]')
           buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
           buildah commit --omit-timestamp $ctr $IMAGE_LOWER
           buildah push $IMAGE_LOWER
@@ -316,7 +316,7 @@ jobs:
           COSIGN_EXPERIMENTAL: false
         run: |
           cosign login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-forge-nvidia:latest" | tr '[:upper:]' '[:lower:]')
+          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-nvidia:latest" | tr '[:upper:]' '[:lower:]')
           cosign sign --yes $IMAGE_LOWER
 
 
@@ -340,7 +340,7 @@ jobs:
       REGISTRY: ghcr.io
       FEDORA_VERSION: 43
     container:
-      image: ghcr.io/${{ github.repository_owner }}/ermete-builder:latest
+      image: ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest
       options: --privileged
     steps:
       - uses: actions/checkout@v4
@@ -355,7 +355,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-forge-rolling-${{ matrix.package }} > idemp.out
+          bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
           source ./idemp.out
           if [ "$CACHE_HIT" = "true" ]; then
             echo "cache_hit=true" >> $GITHUB_OUTPUT
@@ -413,7 +413,7 @@ jobs:
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
           buildah copy $ctr /github/home/RPMS/*.rpm /
-          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-forge-rolling-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-rolling-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
           buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
           buildah commit --omit-timestamp $ctr $IMAGE_LOWER:latest
           buildah tag $IMAGE_LOWER:latest $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
@@ -439,7 +439,7 @@ jobs:
       REGISTRY: ghcr.io
       FEDORA_VERSION: 43
     container:
-      image: ghcr.io/${{ github.repository_owner }}/ermete-builder:latest
+      image: ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest
       options: --privileged
     steps:
       - uses: actions/checkout@v4
@@ -454,7 +454,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-forge-rolling-${{ matrix.package }} > idemp.out
+          bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
           source ./idemp.out
           if [ "$CACHE_HIT" = "true" ]; then
             echo "cache_hit=true" >> $GITHUB_OUTPUT
@@ -512,7 +512,7 @@ jobs:
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
           buildah copy $ctr /github/home/RPMS/*.rpm /
-          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-forge-rolling-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-rolling-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
           buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
           buildah commit --omit-timestamp $ctr $IMAGE_LOWER:latest
           buildah tag $IMAGE_LOWER:latest $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
@@ -538,7 +538,7 @@ jobs:
       REGISTRY: ghcr.io
       FEDORA_VERSION: 43
     container:
-      image: ghcr.io/${{ github.repository_owner }}/ermete-builder:latest
+      image: ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest
       options: --privileged
     steps:
       - uses: actions/checkout@v4
@@ -553,7 +553,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-forge-rolling-${{ matrix.package }} > idemp.out
+          bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
           source ./idemp.out
           if [ "$CACHE_HIT" = "true" ]; then
             echo "cache_hit=true" >> $GITHUB_OUTPUT
@@ -611,7 +611,7 @@ jobs:
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
           buildah copy $ctr /github/home/RPMS/*.rpm /
-          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-forge-rolling-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-rolling-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
           buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
           buildah commit --omit-timestamp $ctr $IMAGE_LOWER:latest
           buildah tag $IMAGE_LOWER:latest $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
@@ -638,7 +638,7 @@ jobs:
       REGISTRY: ghcr.io
       FEDORA_VERSION: 43
     container:
-      image: ghcr.io/${{ github.repository_owner }}/ermete-builder:latest
+      image: ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest
       options: --privileged
     steps:
       - uses: actions/checkout@v4
@@ -653,7 +653,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-forge-rolling-${{ matrix.package }} > idemp.out
+          bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
           source ./idemp.out
           if [ "$CACHE_HIT" = "true" ]; then
             echo "cache_hit=true" >> $GITHUB_OUTPUT
@@ -711,7 +711,7 @@ jobs:
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
           buildah copy $ctr /github/home/RPMS/*.rpm /
-          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-forge-rolling-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-rolling-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
           buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
           buildah commit --omit-timestamp $ctr $IMAGE_LOWER:latest
           buildah tag $IMAGE_LOWER:latest $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
@@ -728,7 +728,7 @@ jobs:
       packages: write
       id-token: write
     container:
-      image: ghcr.io/${{ github.repository_owner }}/ermete-builder:latest
+      image: ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest
       options: --privileged
     steps:
       - uses: actions/checkout@v4
@@ -758,10 +758,10 @@ jobs:
           for tier in tier0 tier1 tier2 tier3 ""; do
             if [ -n "$tier" ]; then
               dir="/github/home/repo-${tier}"
-              img_name="ermete-forge-${tier}-repo:latest"
+              img_name="ermete-os-forge-${tier}-repo:latest"
             else
               dir="/github/home/repo"
-              img_name="ermete-forge-repo:latest"
+              img_name="ermete-os-forge-repo:latest"
             fi
             
             IMAGE_LOWER=$(echo "ghcr.io/${{ github.repository_owner }}/$img_name" | tr '[:upper:]' '[:lower:]')
