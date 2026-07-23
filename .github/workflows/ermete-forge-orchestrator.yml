@@ -203,13 +203,7 @@ jobs:
         with:
           path: /var/cache/akmods/nvidia/
           key: rpm-nvidia-bedrock3-${{ steps.kernel.outputs.kernel_ver }}-${{ steps.kernel.outputs.nvidia_ver }}
-      - name: Cache Compiler Objects (ccache)
-        uses: actions/cache@v4
-        with:
-          path: /var/cache/ccache
-          key: nvidia-ccache-${{ github.sha }}
-          restore-keys: |
-            nvidia-ccache-
+
       - name: Install Dependencies and Build
         if: steps.cache.outputs['cache-hit'] != 'true'
         run: |
@@ -253,21 +247,11 @@ jobs:
             export KCFLAGS="-Wno-error -fno-lto"\
             export CFLAGS="-Wno-error -fno-lto"\
             export LLVM=1\
-            export LLVM_IAS=1\
-            export PATH="/usr/lib64/ccache:/usr/lib/ccache:$PATH"\
-            export CCACHE_DIR=/var/cache/ccache
-
+            export LLVM_IAS=1
           MACRO
-
-          export PATH="/usr/lib64/ccache:/usr/lib/ccache:$PATH"
-          export CCACHE_DIR=/var/cache/ccache
-          mkdir -p /var/cache/ccache
-          chmod 777 -R /var/cache/ccache
-          ccache -z
 
           akmods --force --kernels $REAL_KERNEL_VER
           cat /var/cache/akmods/nvidia/*.failed.log || true
-          ccache -s
           
           # [BEDROCK UNIFICATION] Download userspace NVIDIA drivers, Wayland EGL, persistenced, and container toolkit
           # into the micro-container so they are encapsulated natively without remote DNF calls during OSTree build.
