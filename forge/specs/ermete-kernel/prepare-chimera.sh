@@ -409,6 +409,7 @@ for patch in "$WORKSPACE_DIR"/SOURCES/bedrock-*.patch; do
 done
 
 echo ">>> [BEDROCK] Normalizzazione AST e Flag Rust per compilatori moderni..."
+find . -type f \( -name "Makefile*" -o -name "Kbuild*" \) -exec sed -i 's/-Wrestrict//g; s/-Wpacked-not-aligned//g; s/-Wstringop-truncation//g; s/-Wmaybe-uninitialized//g; s/-Werror=unknown-warning-option/-Wno-unknown-warning-option/g' {} + || true
 find . -type f -name "Makefile" -exec sed -i 's/-Zno-jump-tables/-Zunstable-options/g' {} + || true
 find . -type f -name "Makefile" -exec sed -i 's/-Z no-jump-tables/-Z unstable-options/g' {} + || true
 find . -type f -name "generate_rust_target.rs" -exec sed -i 's/"target-pointer-width", "64"/"target-pointer-width", 64/g' {} + || true
