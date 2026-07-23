@@ -1,0 +1,14 @@
+cosign.key
+_build_*
+output
+_build-*/**
+logs_*
+disk.raw
+*.log
+gitlog.txt
+mnt_*/
+qemu-test/
+test_*/
+ctr_id
+output/
+.worktrees/

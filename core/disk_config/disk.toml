@@ -1,0 +1,9 @@
+[[customizations.filesystem]]
+mountpoint = "/"
+minsize = "20 GiB"
+
+# WARNING: Replace password hash below with actual secure hash before production
+[[customizations.user]]
+name = "hermes"
+password = "$6$REPLACE_WITH_SECURE_HASH"
+groups = ["wheel"]
