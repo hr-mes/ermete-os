@@ -23,7 +23,7 @@ readarray -t UPSTREAM_CLI < <(jq -r '.upstream_cli[]' config/packages.json)
 
 # Define per-Tier micro-container images
 TIER0_IMAGES=(
-  "ermete-forge-kernel"
+  "ermete-kernel-source"
   "ermete-forge-nvidia"
   "ermete-forge-base-config"
   "ermete-forge-selinux"

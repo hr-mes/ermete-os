@@ -11,10 +11,6 @@ env:
   REGISTRY: ghcr.io
   FEDORA_VERSION: 43
 
-defaults:
-  run:
-    working-directory: forge
-
 jobs:
   orchestrator-brain:
     name: 🧠 Orchestrator Brain
@@ -164,147 +160,8 @@ jobs:
           buildah push $IMAGE_LOWER:latest
           buildah push $IMAGE_LOWER:${{ steps.check.outputs.hash }}
 
-  build-kernel:
-    needs: build-builder
-    name: 🧠 Build Chimera Kernel (CachyOS + Clear)
-    outputs:
-      rebuilt: ${{ steps.idempotency.outputs.rebuilt }}
-    runs-on: self-hosted
-    timeout-minutes: 360
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-    container:
-      image: ghcr.io/${{ github.repository_owner }}/ermete-builder:latest
-      options: --cap-add SYS_ADMIN --security-opt label=disable
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Build Dependencies
-        run: |
-          echo "zchunk=False" >> /etc/dnf/dnf.conf
-          echo "fastestmirror=True" >> /etc/dnf/dnf.conf
-          echo "install_weak_deps=False" >> /etc/dnf/dnf.conf
-          dnf clean all
-          sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
-          dnf install -y rpm-build rpmdevtools gcc gcc-c++ make cmake flex bison ncurses-devel elfutils-libelf-devel openssl-devel bc rsync tar wget curl cpio perl zstd git llvm clang lld ccache jq gnupg2 hostname elfutils-devel dwarves openssl rust cargo rustfmt bindgen which autoconf automake libtool iproute fio
-
-      - name: Bedrock Idempotency Check
-        id: idempotency
-        run: |
-          dnf install -y skopeo
-          bash specs/ermete-kernel/prepare-chimera.sh --meta > meta_output.txt
-          
-          # Hashing of exactly the kernel script, the macros, and the dynamic resolved versions/commits
-          FINGERPRINT=$( (cat meta_output.txt | grep "^META_" ; sha256sum specs/ermete-kernel/prepare-chimera.sh ; sha256sum config/rpmmacros) | sort | sha256sum | awk '{print $1}')
-          echo "FINGERPRINT=$FINGERPRINT" >> $GITHUB_ENV
-          
-          IMAGE="${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-forge-kernel:$FINGERPRINT"
-          IMAGE_LOWER=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')
-          
-          echo "Verifico se il kernel con fingerprint $FINGERPRINT esiste già..."
-          if skopeo inspect --creds ${{ github.actor }}:${{ secrets.GITHUB_TOKEN }} docker://$IMAGE_LOWER > /dev/null 2>&1; then
-            echo "Il Kernel è identico a una build esistente. Salto la compilazione!"
-            echo "skip_build=true" >> $GITHUB_OUTPUT
-            echo "rebuilt=false" >> $GITHUB_OUTPUT
-          else
-            echo "Nuovo fingerprint rilevato. Procedo alla compilazione."
-            echo "skip_build=false" >> $GITHUB_OUTPUT
-            echo "rebuilt=true" >> $GITHUB_OUTPUT
-          fi
-
-
-
-      - name: Cache Compiler Objects (ccache)
-        if: steps.idempotency.outputs.skip_build != 'true'
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ccache
-          key: kernel-ccache-${{ github.sha }}
-          restore-keys: |
-            kernel-ccache-
-
-      - name: Fase 2 - RPMBuild ThinLTO Puro (--noprep)
-        if: steps.idempotency.outputs.skip_build != 'true'
-        run: |
-          echo "Avvio Fase 1 - Universal Domain Router (Download & Patching)..."
-          bash specs/ermete-kernel/prepare-chimera.sh
-          
-          cat << 'MACRO' >> ~/.rpmmacros
-          %toolchain clang
-          %__make /usr/bin/make LLVM=1 LLVM_IAS=1
-          %__cc clang
-          %__cxx clang++
-          %_build_cc clang
-          %_build_cxx clang++
-          %_host_cc clang
-          %_host_cxx clang++
-          %_ld ld.lld
-          %_ldflags -Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro
-          %optflags %{__global_compiler_flags} -O3 -march=x86-64-v3 -pipe -Wno-error
-          %kcflags -O3 -march=x86-64-v3 -pipe -Wno-error
-          MACRO
-          
-          KERNEL_DIR=~/rpmbuild/BUILD/$(cat ~/rpmbuild/BUILD/.kernel_version)
-          cd $KERNEL_DIR
-          rm -rf ~/rpmbuild/RPMS/*/*.rpm || true
-          
-          
-          
-          export PATH="/usr/lib64/ccache:/usr/lib/ccache:$PATH"
-          export CCACHE_DIR=~/.cache/ccache
-          export CCACHE_COMPRESS=1
-          export CCACHE_MAXSIZE=10G
-          mkdir -p ~/.cache/ccache
-          ccache -z
-          
-          echo "Avvio build nativa RPMBuild (Saltando %prep validato)..."
-          cd ~/rpmbuild/SPECS
-          
-          rpmbuild -bb --noprep kernel.spec \
-            --target x86_64 </dev/null
-          ccache -s
-          
-      - name: Publish Micro-Container OCI
-        if: steps.idempotency.outputs.skip_build != 'true'
-        run: |
-          dnf install -y buildah
-          export STORAGE_DRIVER=overlay
-          export BUILDAH_ISOLATION=chroot
-          buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
-          ctr=$(buildah from scratch)
-          buildah copy $ctr ~/rpmbuild/RPMS/*/*.rpm /
-          
-          IMAGE_LATEST=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-forge-kernel:latest" | tr '[:upper:]' '[:lower:]')
-          IMAGE_FINGERPRINT=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-forge-kernel:${{ env.FINGERPRINT }}" | tr '[:upper:]' '[:lower:]')
-          
-          buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
-          
-          buildah commit --omit-timestamp $ctr $IMAGE_LATEST
-          buildah tag $IMAGE_LATEST $IMAGE_FINGERPRINT
-          
-          buildah push $IMAGE_LATEST
-          buildah push $IMAGE_FINGERPRINT
-
-      - name: Install Cosign
-        if: steps.idempotency.outputs.skip_build != 'true'
-        uses: sigstore/cosign-installer@v3
-
-      - name: Sign Kernel Micro-Container
-        if: steps.idempotency.outputs.skip_build != 'true'
-        env:
-          COSIGN_EXPERIMENTAL: false
-        run: |
-          cosign login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-          IMAGE_LATEST=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-forge-kernel:latest" | tr '[:upper:]' '[:lower:]')
-          IMAGE_FINGERPRINT=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-forge-kernel:${{ env.FINGERPRINT }}" | tr '[:upper:]' '[:lower:]')
-          cosign sign --yes $IMAGE_LATEST
-          cosign sign --yes $IMAGE_FINGERPRINT
-
-
   build-nvidia:
-    needs: [build-builder, build-kernel]
+    needs: [build-builder]
     name: 🎮 Build NVIDIA KMOD
     outputs:
       rebuilt: ${{ steps.cache.outputs['cache-hit'] != 'true' }}
@@ -327,7 +184,7 @@ jobs:
           export STORAGE_DRIVER=overlay
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
-          ctr=$(buildah from ghcr.io/${{ github.repository_owner }}/ermete-forge-kernel:latest)
+          ctr=$(buildah from ghcr.io/${{ github.repository_owner }}/ermete-kernel-source:latest)
           buildah mount $ctr
           mnt=$(buildah mount $ctr)
           rpm -Uvh --oldpackage --replacepkgs --force $mnt/*.rpm
@@ -860,7 +717,7 @@ jobs:
   build-repo:
     name: 📦 Build Repository
     if: ${{ always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
-    needs: [orchestrator-brain, custom-packages, build-kernel, build-nvidia, upstream-core, upstream-desktop, upstream-media, upstream-cli]
+    needs: [orchestrator-brain, custom-packages, build-nvidia, upstream-core, upstream-desktop, upstream-media, upstream-cli]
     runs-on: ubuntu-latest
     permissions:
       contents: write
