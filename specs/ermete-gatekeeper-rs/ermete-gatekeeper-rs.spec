@@ -20,7 +20,7 @@ Ermete OS Zero-Trust binary execution gatekeeper using fanotify.
 
 %build
 %set_build_flags
-%cargo_build
+cargo build --release
 
 %install
 rm -rf %{buildroot}

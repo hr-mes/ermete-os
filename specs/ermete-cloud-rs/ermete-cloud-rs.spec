@@ -18,7 +18,7 @@ Ermete OS Cloud Daemon for Universal Clipboard and Local P2P synchronization.
 
 %build
 %set_build_flags
-%cargo_build --locked
+cargo build --release --locked
 
 %install
 install -D -m 0755 target/release/%{name} %{buildroot}%{_bindir}/%{name}

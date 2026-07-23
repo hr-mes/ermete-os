@@ -18,7 +18,7 @@ Ermete OS implementation of the XDG Desktop Portal for native Wayland/Niri integ
 
 %build
 %set_build_flags
-%cargo_build --locked
+cargo build --release --locked
 
 %install
 install -D -m 0755 target/release/%{name} %{buildroot}%{_libexecdir}/%{name}

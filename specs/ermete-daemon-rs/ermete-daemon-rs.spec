@@ -18,7 +18,7 @@ Pure Rust native D-Bus IPC service for Ermete OS audio, system bedrock managemen
 
 %build
 %set_build_flags
-%cargo_build
+cargo build --release
 
 %install
 mkdir -p %{buildroot}%{_bindir}

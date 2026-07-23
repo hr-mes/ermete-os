@@ -38,7 +38,7 @@ tar -xzf %{SOURCE1} -C src/
 
 %build
 %set_build_flags
-%cargo_build --locked
+cargo build --release --locked
 
 %install
 mkdir -p %{buildroot}%{_bindir}

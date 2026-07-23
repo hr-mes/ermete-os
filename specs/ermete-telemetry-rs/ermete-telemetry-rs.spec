@@ -18,7 +18,7 @@ Ermete OS Telemetry Daemon for opt-in kernel panic and coredump reporting to Git
 
 %build
 %set_build_flags
-%cargo_build --locked
+cargo build --release --locked
 
 %install
 install -D -m 0755 target/release/%{name} %{buildroot}%{_bindir}/%{name}
