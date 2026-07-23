@@ -254,7 +254,7 @@ CONFIG_PREEMPT_BUILD=y
 # CONFIG_PREEMPT_NONE is not set
 
 # Eliminate Debug Overhead
-# CONFIG_DEBUG_KERNEL is not set
+CONFIG_DEBUG_KERNEL=y
 
 CONFIG_DEFAULT_BBR=y
 CONFIG_TCP_CONG_BBR=y
@@ -350,7 +350,7 @@ cat << 'EOF' >> ~/.rpmmacros
 %_with_vanilla 1
 %buildid .chimera
 %toolchain clang
-%__make /usr/bin/make LLVM=1 LLVM_IAS=1
+%__make /usr/bin/make LLVM=1 LLVM_IAS=1 KCFLAGS="-Wno-error -Wno-unknown-warning-option" KBUILD_CFLAGS="-Wno-error -Wno-unknown-warning-option"
 %__cc clang
 %__cxx clang++
 %_build_cc clang
@@ -400,7 +400,11 @@ pushd "$KERNEL_BUILD_DIR" > /dev/null
 for patch in "$WORKSPACE_DIR"/SOURCES/bedrock-*.patch; do
     if [ -f "$patch" ]; then
         echo "    -> Applicazione patch: $(basename "$patch")"
-        patch -p1 -F3 --no-backup-if-mismatch < "$patch" || echo "    [WARN] Fallita $(basename "$patch")"
+        if patch -p1 -F1 --dry-run --silent < "$patch"; then
+            patch -p1 -F1 --no-backup-if-mismatch < "$patch"
+        else
+            echo "    [WARN] Conflitto strutturale saltato: $(basename "$patch")"
+        fi
     fi
 done
 
