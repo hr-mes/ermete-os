@@ -17,6 +17,8 @@ BuildRequires:  mesa-libgbm-devel
 BuildRequires:  libxkbcommon-devel
 BuildRequires:  cairo-devel
 BuildRequires:  pango-devel
+BuildRequires:  libseat-devel
+BuildRequires:  libinput-devel
 
 # Evita conflitti con il niri vanilla di Fedora
 Conflicts:      niri
