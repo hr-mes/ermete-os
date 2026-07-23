@@ -169,7 +169,7 @@ _run-vm $target_image $tag $type:
     run_args+=(docker.io/qemux/qemu)
 
     # Run the VM and open the browser to connect
-    (sleep 30 && xdg-open http://localhost:"$port") &
+    (until curl -s http://localhost:"$port" >/dev/null; do sleep 1; done && xdg-open http://localhost:"$port") &
     podman run "${run_args[@]}"
 
 # Run a virtual machine
@@ -204,7 +204,7 @@ lint:
         exit 1
     fi
     # Run shellcheck on all Bash scripts
-    /usr/bin/find . -iname "*.sh" -type f -exec shellcheck "{}" ';'
+    /usr/bin/find . -iname "*.sh" -type f -exec shellcheck "{}" +
 
 # Runs shfmt on all Bash scripts
 format:
@@ -216,4 +216,4 @@ format:
         exit 1
     fi
     # Run shfmt on all Bash scripts
-    /usr/bin/find . -iname "*.sh" -type f -exec shfmt --write "{}" ';'
+    /usr/bin/find . -iname "*.sh" -type f -exec shfmt --write "{}" +

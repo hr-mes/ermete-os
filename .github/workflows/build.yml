@@ -144,4 +144,4 @@ jobs:
           cosign sign -y "${IMAGE_FULL}@${TAGS}"
         env:
           TAGS: ${{ steps.build_push.outputs.digest }}
-          COSIGN_EXPERIMENTAL: false
+          COSIGN_EXPERIMENTAL: 1

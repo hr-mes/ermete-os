@@ -9,21 +9,22 @@ fi
 
 echo "🚀 Fast-Tracking $PACKAGE dalla Forgia al Sistema Live..."
 
-mkdir -p /tmp/fast-track
-cd /tmp/fast-track
-rm -rf *
+WORKDIR=$(mktemp -d)
+trap 'rm -rf "$WORKDIR"' EXIT
+cd "$WORKDIR"
 
 echo "📥 Scaricamento del micro-container OCI ghcr.io/patapem/ermete-forge-$PACKAGE:latest..."
 skopeo copy docker://ghcr.io/patapem/ermete-forge-$PACKAGE:latest dir:.
 
 echo "📦 Estrazione RPM dall'immagine..."
+mkdir -p extract
 for file in *; do
-  if file "$file" | grep -qi "gzip compressed data"; then
-    tar -xzf "$file"
+  if [ -f "$file" ] && file "$file" | grep -qi "gzip compressed data"; then
+    tar -xzf "$file" -C extract/
   fi
 done
 
-RPM_FILE=$(ls *.rpm 2>/dev/null | head -n 1 || true)
+RPM_FILE=$(find extract/ -name "*.rpm" -print -quit || true)
 
 if [ -z "$RPM_FILE" ]; then
     echo "❌ Nessun RPM trovato nel micro-container! Assicurati che la Forgia abbia finito di compilarlo."
@@ -32,12 +33,12 @@ fi
 
 echo "⚡ Integrazione nativa OSTree in corso su $RPM_FILE..."
 # Se il pacchetto è già installato nel base system, usiamo override replace. Altrimenti lo installiamo come layer addizionale.
-if rpm -q "ermete-$PACKAGE" >/dev/null 2>&1 || rpm -qa | grep -q "ermete-$PACKAGE"; then
+if rpm -q "ermete-$PACKAGE" >/dev/null 2>&1; then
     echo "🔄 Il pacchetto esiste già. Eseguo l'override replace live..."
-    sudo rpm-ostree override replace "./$RPM_FILE" --apply-live --allow-replacement
+    sudo rpm-ostree override replace "$RPM_FILE" --apply-live --allow-replacement
 else
     echo "➕ Pacchetto nuovo. Eseguo l'install live..."
-    sudo rpm-ostree install "./$RPM_FILE" --apply-live
+    sudo rpm-ostree install "$RPM_FILE" --apply-live
 fi
 
 echo "✅ Fast-Track Completato! Il pacchetto è fuso nell'OSTree e persisterà ai riavvii."

@@ -21,7 +21,7 @@ user --name=hermes --groups=wheel --password=$6$REPLACE_WITH_SECURE_HASH --iscry
 sshkey --username hermes "ssh-ed25519 REPLACE_WITH_ACTUAL_SSH_PUBLIC_KEY"
 sshkey --username root "ssh-ed25519 REPLACE_WITH_ACTUAL_SSH_PUBLIC_KEY"
 
-firewall --enabled --default=drop
+firewall --enabled --default=drop --service=ssh
 services --enabled=sshd
 
 reboot
