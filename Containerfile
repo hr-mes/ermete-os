@@ -5,6 +5,7 @@
 # --- IMMAGINE FINALE (PRODUZIONE AUTARCHICA ATOMICA) ---
 # FIX: Renovate Bot sostituirà automaticamente il tag con il vero digest SHA256 crittografico
 FROM ghcr.io/patapem/ermete-base-nvidia:latest
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG FEDORA_VERSION=43
 ENV FEDORA_VERSION=$FEDORA_VERSION
 
@@ -40,9 +41,11 @@ RUN --mount=type=bind,from=ghcr.io/patapem/ermete-forge-tier0-repo:latest,source
         rpm -Uvh --replacefiles --replacepkgs --nodeps /mnt/tier0-repo/ermete-base-config*.rpm; \
     fi && \
     echo "Tier 0: Installing Bedrock hardware, kernel Chimera & NVIDIA dependencies..." && \
-    dnf5 install -y --skip-broken --allowerasing --setopt=install_weak_deps=False --setopt=tsflags=nodocs /mnt/tier0-repo/*.rpm && \
-    (rm -rf /usr/lib/firmware/mellanox /usr/lib/firmware/qlogic /usr/lib/firmware/netronome /usr/lib/firmware/liquidio /usr/lib/firmware/cxgb4 /usr/lib/firmware/bnx2x /usr/lib/firmware/cavium /usr/lib/firmware/dpaa2 || true) && \
-    (rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/info/* /usr/share/gtk-doc/* /usr/share/help/* || true)
+    dnf5 install -y --allowerasing --setopt=install_weak_deps=False --setopt=tsflags=nodocs /mnt/tier0-repo/*.rpm && \
+    rm -rf /usr/lib/firmware/{mellanox,qlogic,netronome,liquidio,cxgb4,bnx2x,cavium,dpaa2,amdgpu,radeon,nouveau,intel} && \
+    shopt -s nullglob && \
+    docs=(/usr/share/doc/* /usr/share/man/* /usr/share/info/* /usr/share/gtk-doc/* /usr/share/help/*) && \
+    if [ ${#docs[@]} -gt 0 ]; then rm -rf "${docs[@]}"; fi
 
 ### BEDROCK KERNEL & INITRAMFS GENERATION (Moved up for cache optimization)
 # L'initramfs dinamico viene rigenerato per sincronizzare i moduli kernel e NVIDIA
@@ -57,7 +60,8 @@ RUN QUALIFIED_KERNEL="" && \
     echo "Found Chimera Kernel: ${QUALIFIED_KERNEL}" && \
     depmod "${QUALIFIED_KERNEL}" && \
     echo "Generazione Dinamica Initramfs per ${QUALIFIED_KERNEL}..." && \
-    dracut --no-hostonly --kver "${QUALIFIED_KERNEL}" --reproducible --compress "zstd -T0 -1" -v \
+    dracut --no-hostonly --kver "${QUALIFIED_KERNEL}" --reproducible --compress "zstd -T0 -19 --long=27" -v \
+        --strip --omit "network bluetooth plymouth iscsi cifs nfs floppy pcsc" --omit-drivers "amdgpu radeon nouveau" \
         --add ostree --add fido2 --force-drivers "nvidia nvidia_modeset nvidia_uvm nvidia_drm" \
         --install "/etc/group" --install "/etc/passwd" \
         -f /usr/lib/modules/${QUALIFIED_KERNEL}/initramfs.img && \
@@ -69,7 +73,7 @@ RUN --mount=type=bind,from=ghcr.io/patapem/ermete-forge-tier1-repo:latest,source
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
     if ls /mnt/tier1-repo/*.rpm 1> /dev/null 2>&1; then \
         echo "Tier 1: Installing Display Server & Core Userspace Services..." && \
-        dnf5 install -y --skip-broken --setopt=install_weak_deps=False --setopt=tsflags=nodocs /mnt/tier1-repo/*.rpm; \
+        dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs /mnt/tier1-repo/*.rpm; \
     fi
 
 # TIER 2: DESIGN SYSTEM & STATIC ASSETS (~18 MB)
@@ -77,7 +81,7 @@ RUN --mount=type=bind,from=ghcr.io/patapem/ermete-forge-tier2-repo:latest,source
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
     if ls /mnt/tier2-repo/*.rpm 1> /dev/null 2>&1; then \
         echo "Tier 2: Installing Design System & Static Assets..." && \
-        dnf5 install -y --skip-broken --setopt=install_weak_deps=False --setopt=tsflags=nodocs /mnt/tier2-repo/*.rpm; \
+        dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs /mnt/tier2-repo/*.rpm; \
     fi
 
 # TIER 3: AGILE RUST SHELL & APPS (~8 MB - Instant Live Swap Layer)
@@ -85,15 +89,12 @@ RUN --mount=type=bind,from=ghcr.io/patapem/ermete-forge-tier3-repo:latest,source
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
     if ls /mnt/tier3-repo/*.rpm 1> /dev/null 2>&1; then \
         echo "Tier 3: Installing Agile Rust Shell & Apps..." && \
-        dnf5 install -y --skip-broken --setopt=install_weak_deps=False --setopt=tsflags=nodocs /mnt/tier3-repo/*.rpm; \
+        dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs /mnt/tier3-repo/*.rpm; \
     fi
 
 ### BEDROCK SELINUX (Declarative Compilation)
-# We compile the policies here in the Containerfile so they are atomic with the OCI image.
 # We DO NOT use allow_execmem 1 to preserve enterprise security (W^X).
-RUN semodule -i /usr/share/selinux/packages/bootupd_lsblk.pp && \
-    semodule -i /usr/share/selinux/packages/ermete_scx.pp && \
-    setsebool -P daemons_enable_cluster_mode 1
+# SELinux policies are managed declaratively via /etc/selinux/targeted.
 
 ### DICHIARATIVITÀ ASSOLUTA (SYSTEMD PRESETS & SYSUSERS)
 # Applichiamo nativamente tutti i file .preset e i gruppi utente in modo che i target
@@ -109,17 +110,22 @@ RUN systemctl enable systemd-sysext.service && systemd-sysusers && systemctl pre
 # Initial state for Nix is now managed by ermete-forge-nix-support RPM
 
 ### HARDENING & OSTREE LINTING FIXES
-RUN authselect select sssd with-silent-lastlog without-nullok --force || authselect select local with-silent-lastlog without-nullok --force || true && \
+RUN (authselect select sssd with-silent-lastlog without-nullok --force || authselect select local with-silent-lastlog without-nullok --force) && \
     dnf5 remove -y --no-autoremove \
         gcc make kernel-devel llvm-static rust-std-static mesa-dxil-devel \
         edk2-aarch64 qemu-user qemu-user-static distribution-gpg-keys-copr \
-        nodejs-docs glibc-all-langpacks python3-botocore || true && \
+        nodejs-docs glibc-all-langpacks python3-botocore && \
     rm -f /etc/machine-id && touch /etc/machine-id && \
-    rm -rf /etc/NetworkManager/system-connections/* && \
     dnf5 clean all && \
-    rm -rf /var/cache/dnf/* /var/lib/dnf/* /var/cache/libdnf5/* && \
-    find /boot -mindepth 1 -delete || true && \
-    find /run /tmp /var/log -mindepth 1 -delete || true
+    shopt -s nullglob && \
+    conns=(/etc/NetworkManager/system-connections/*) && \
+    if [ ${#conns[@]} -gt 0 ]; then rm -rf "${conns[@]}"; fi && \
+    caches=(/var/cache/dnf/* /var/lib/dnf/* /var/cache/libdnf5/*) && \
+    if [ ${#caches[@]} -gt 0 ]; then rm -rf "${caches[@]}"; fi && \
+    boot_files=(/boot/*) && \
+    if [ ${#boot_files[@]} -gt 0 ]; then rm -rf "${boot_files[@]}"; fi && \
+    tmp_files=(/run/* /tmp/* /var/log/*) && \
+    if [ ${#tmp_files[@]} -gt 0 ]; then rm -rf "${tmp_files[@]}"; fi
 
 ### LINTING
 ## Verify final image and contents are correct.
