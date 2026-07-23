@@ -34,7 +34,7 @@ jobs:
         run: cp builder/rpmfusion-custom.repo /etc/yum.repos.d/ 2>/dev/null || true
       - name: Compute Dynamic Matrix
         id: brain
-        run: ./forge/scripts/dynamic-matrix.sh
+        run: ./scripts/dynamic-matrix.sh
 
   build-builder:
     name: 🏗️ Build Base Builder
@@ -50,7 +50,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          bash forge/scripts/check_idempotency.sh --package builder --registry ghcr.io --owner ${{ github.repository_owner }} --image-name ermete-os-builder > idemp.out
+          bash scripts/check_idempotency.sh --package builder --registry ghcr.io --owner ${{ github.repository_owner }} --image-name ermete-os-builder > idemp.out
           source ./idemp.out
           if [ "$CACHE_HIT" = "true" ]; then
             echo "cache_hit=true" >> $GITHUB_OUTPUT
@@ -92,7 +92,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          bash forge/scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-${{ matrix.package }} > idemp.out
+          bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-${{ matrix.package }} > idemp.out
           source ./idemp.out
           echo "hash=$CONTENT_HASH" >> $GITHUB_OUTPUT
           if [ "$CACHE_HIT" = "true" ]; then echo "skip=true" >> $GITHUB_OUTPUT; else echo "skip=false" >> $GITHUB_OUTPUT; fi
@@ -109,27 +109,27 @@ jobs:
         run: |
           sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
           dnf install -y rpm-build rpmdevtools gcc gcc-c++ cargo rust cmake mold tar xz curl pkgconf-pkg-config zlib-devel openssl-devel checkpolicy policycoreutils spdlog-devel systemd-devel nlohmann-json-devel fmt-devel which autoconf automake libtool cargo-rpm-macros clang clang-devel speech-dispatcher-devel
-          cp forge/config/rpmmacros ~/.rpmmacros
+          cp config/rpmmacros ~/.rpmmacros
           rpmdev-setuptree
           
-          if [ -d "forge/specs/ermete-${{ matrix.package }}/SOURCES" ]; then 
-            cp -a forge/specs/ermete-${{ matrix.package }}/SOURCES/* ~/rpmbuild/SOURCES/ || true
+          if [ -d "specs/ermete-${{ matrix.package }}/SOURCES" ]; then 
+            cp -a specs/ermete-${{ matrix.package }}/SOURCES/* ~/rpmbuild/SOURCES/ || true
           fi
           
           # Auto-pack any source directory into tarball for RPM Source0
-          for dir in forge/specs/ermete-${{ matrix.package }}/*-*/ ; do
+          for dir in specs/ermete-${{ matrix.package }}/*-*/ ; do
             if [ -d "$dir" ]; then
               pkg_dir=$(basename "$dir")
               echo "Packing $pkg_dir into ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz..."
-              tar -czf ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz -C "forge/specs/ermete-${{ matrix.package }}" "$pkg_dir"
+              tar -czf ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz -C "specs/ermete-${{ matrix.package }}" "$pkg_dir"
             fi
           done
           
-          dnf builddep -y forge/specs/ermete-${{ matrix.package }}/*.spec || true
-          spectool -g -R forge/specs/ermete-${{ matrix.package }}/*.spec || true
+          dnf builddep -y specs/ermete-${{ matrix.package }}/*.spec || true
+          spectool -g -R specs/ermete-${{ matrix.package }}/*.spec || true
           
           # First attempt (generates buildreqs.nosrc.rpm for Rust packages)
-          rpmbuild -bb --nocheck forge/specs/ermete-${{ matrix.package }}/*.spec || true
+          rpmbuild -bb --nocheck specs/ermete-${{ matrix.package }}/*.spec || true
           
           # Install dynamic dependencies if generated
           if ls ~/rpmbuild/SRPMS/*.nosrc.rpm 1> /dev/null 2>&1; then
@@ -144,7 +144,7 @@ jobs:
           fi
           
           # Second attempt (actual build)
-          rpmbuild -bb --nocheck forge/specs/ermete-${{ matrix.package }}/*.spec
+          rpmbuild -bb --nocheck specs/ermete-${{ matrix.package }}/*.spec
           
           mkdir -p /github/home/RPMS
           cp ~/rpmbuild/RPMS/*/*.rpm /github/home/RPMS/
@@ -228,7 +228,7 @@ jobs:
           echo "${{ secrets.MOK_PRIVATE_KEY }}" | base64 -d > /etc/pki/akmods/private/private_key.priv
           echo "::add-mask::${{ secrets.MOK_PUBLIC_DER }}"
           echo "${{ secrets.MOK_PUBLIC_DER }}" | base64 -d > /etc/pki/akmods/certs/public_key.der
-          cp forge/config/rpmmacros /etc/rpm/macros.98-config
+          cp config/rpmmacros /etc/rpm/macros.98-config
           chmod 600 /etc/pki/akmods/private/private_key.priv
 
           # [BEDROCK UNIFICATION] The kernel is built with Clang and LLD.
@@ -333,7 +333,7 @@ jobs:
       
       - name: Calculate Hash
         id: hash
-        run: echo "hash=${{ hashFiles('forge/config/rpmmacros') }}" >> $GITHUB_OUTPUT
+        run: echo "hash=${{ hashFiles('config/rpmmacros') }}" >> $GITHUB_OUTPUT
         
 
       - name: Check Idempotency (Content Hash)
@@ -341,7 +341,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          bash forge/scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
+          bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
           source ./idemp.out
           if [ "$CACHE_HIT" = "true" ]; then
             echo "cache_hit=true" >> $GITHUB_OUTPUT
@@ -355,7 +355,7 @@ jobs:
         run: |
           sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
           dnf install -y rpm-build dnf-plugins-core rpmdevtools mold gcc-c++ which autoconf automake libtool
-          cp forge/config/rpmmacros ~/.rpmmacros
+          cp config/rpmmacros ~/.rpmmacros
           rpmdev-setuptree
           cd ~/rpmbuild/SRPMS
           
@@ -432,7 +432,7 @@ jobs:
       
       - name: Calculate Hash
         id: hash
-        run: echo "hash=${{ hashFiles('forge/config/rpmmacros') }}" >> $GITHUB_OUTPUT
+        run: echo "hash=${{ hashFiles('config/rpmmacros') }}" >> $GITHUB_OUTPUT
         
 
       - name: Check Idempotency (Content Hash)
@@ -440,7 +440,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          bash forge/scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
+          bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
           source ./idemp.out
           if [ "$CACHE_HIT" = "true" ]; then
             echo "cache_hit=true" >> $GITHUB_OUTPUT
@@ -454,7 +454,7 @@ jobs:
         run: |
           sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
           dnf install -y rpm-build dnf-plugins-core rpmdevtools mold gcc-c++ which autoconf automake libtool
-          cp forge/config/rpmmacros ~/.rpmmacros
+          cp config/rpmmacros ~/.rpmmacros
           rpmdev-setuptree
           cd ~/rpmbuild/SRPMS
           
@@ -531,7 +531,7 @@ jobs:
       
       - name: Calculate Hash
         id: hash
-        run: echo "hash=${{ hashFiles('forge/config/rpmmacros') }}" >> $GITHUB_OUTPUT
+        run: echo "hash=${{ hashFiles('config/rpmmacros') }}" >> $GITHUB_OUTPUT
         
 
       - name: Check Idempotency (Content Hash)
@@ -539,7 +539,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          bash forge/scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
+          bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
           source ./idemp.out
           if [ "$CACHE_HIT" = "true" ]; then
             echo "cache_hit=true" >> $GITHUB_OUTPUT
@@ -553,7 +553,7 @@ jobs:
         run: |
           sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
           dnf install -y rpm-build dnf-plugins-core rpmdevtools mold gcc-c++ which autoconf automake libtool
-          cp forge/config/rpmmacros ~/.rpmmacros
+          cp config/rpmmacros ~/.rpmmacros
           rpmdev-setuptree
           cd ~/rpmbuild/SRPMS
           
@@ -631,7 +631,7 @@ jobs:
       
       - name: Calculate Hash
         id: hash
-        run: echo "hash=${{ hashFiles('forge/config/rpmmacros') }}" >> $GITHUB_OUTPUT
+        run: echo "hash=${{ hashFiles('config/rpmmacros') }}" >> $GITHUB_OUTPUT
         
 
       - name: Check Idempotency (Content Hash)
@@ -639,7 +639,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          bash forge/scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
+          bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
           source ./idemp.out
           if [ "$CACHE_HIT" = "true" ]; then
             echo "cache_hit=true" >> $GITHUB_OUTPUT
@@ -653,7 +653,7 @@ jobs:
         run: |
           sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
           dnf install -y rpm-build dnf-plugins-core rpmdevtools mold gcc-c++ which autoconf automake libtool
-          cp forge/config/rpmmacros ~/.rpmmacros
+          cp config/rpmmacros ~/.rpmmacros
           rpmdev-setuptree
           cd ~/rpmbuild/SRPMS
           
@@ -734,7 +734,7 @@ jobs:
           
           # Fetch RPMs dynamically from micro-containers and organize by Tier
           echo "${{ secrets.GITHUB_TOKEN }}" | buildah login ghcr.io -u ${{ github.actor }} --password-stdin
-          bash forge/scripts/fetch_repo_rpms.sh ${{ github.repository_owner }}
+          bash scripts/fetch_repo_rpms.sh ${{ github.repository_owner }}
           
           export STORAGE_DRIVER=overlay
           export BUILDAH_ISOLATION=chroot
