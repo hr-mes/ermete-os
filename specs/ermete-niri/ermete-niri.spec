@@ -7,11 +7,7 @@ License:        GPL-3.0-or-later
 # Usa i sorgenti originali (Vanilla)
 Source0:        https://github.com/YaLTeR/niri/archive/refs/tags/v%{version}.tar.gz
 
-# Inietta il tuo codice Rust esterno (Ermete Extension)
-Source1:        ermete_ext.tar.gz
 
-# La patch che aggancia il tuo codice al main.rs originale
-Patch0:         0001-ermete-floating-first-UX.patch
 
 BuildRequires:  rust
 BuildRequires:  cargo
@@ -32,9 +28,7 @@ Features the Ermete 'Floating-First' UX injected at build time via spec patching
 retaining full upstream compatibility.
 
 %prep
-%autosetup -n niri-%{version} -p1
-# Estrai i tuoi moduli custom nella root del progetto niri
-tar -xzf %{SOURCE1} -C src/
+%autosetup -n niri-%{version}
 
 %build
 %set_build_flags

@@ -51,7 +51,6 @@ cp -f /usr/share/ermete-system-config/usbguard-daemon.conf /etc/usbguard/usbguar
 /usr/share/ermete-system-config/usbguard-daemon.conf
 %config(noreplace) /etc/yum.repos.d/ermete-forge.repo
 %attr(0755,root,root) /etc/greenboot/check/required.d/10-greetd-running.sh
-%attr(0755,root,root) /etc/greenboot/check/required.d/20-niri-running.sh
 %config(noreplace) /etc/security/limits.d/99-ermete-realtime.conf
 
 %changelog
