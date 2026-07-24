@@ -11,7 +11,7 @@ RPMBUILD_DIR="$WORKSPACE_DIR/rpmbuild_out"
 echo ">>> Preparazione ambiente rpmbuild isolato..."
 mkdir -p "$RPMBUILD_DIR"/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
 
-cd "$WORKSPACE_DIR"
+cd "$WORKSPACE_DIR/kernel"
 
 echo ">>> Download del Kernel CachyOS (Sorgente Pura)..."
 git clone --depth 1 https://github.com/CachyOS/linux.git cachyos-tree

@@ -139,7 +139,7 @@ jobs:
           
           # Install dynamic dependencies if generated
           if ls ~/rpmbuild/SRPMS/*.nosrc.rpm 1> /dev/null 2>&1; then
-              sed -i 's/pkgconfig(openh264)/openh264-devel/g' /github/home/rpmbuild/SPECS/*.spec && dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SRPMS/*.nosrc.rpm || true
+              sed -i -e 's/pkgconfig(openh264)/openh264-devel/g' -e 's/noopenh264-devel/openh264-devel/g' -e 's/noopenh264/openh264/g' /github/home/rpmbuild/SPECS/*.spec && dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SRPMS/*.nosrc.rpm || true
           fi
           
           # Workaround for Fedora 43 rust-sysinfo bug
@@ -367,7 +367,7 @@ jobs:
           rpm -ivh *.src.rpm
           
           echo "--- Patching ffmpeg spec per rimuovere noopenh264 ---"
-          sed -i 's/pkgconfig(openh264)/openh264-devel/g' /github/home/rpmbuild/SPECS/*.spec
+          sed -i -e 's/pkgconfig(openh264)/openh264-devel/g' -e 's/noopenh264-devel/openh264-devel/g' -e 's/noopenh264/openh264/g' /github/home/rpmbuild/SPECS/*.spec
           
           echo "--- Risoluzione Dipendenze Estrema (su SPEC) ---"
           dnf builddep -y --allowerasing /github/home/rpmbuild/SPECS/*.spec
@@ -469,7 +469,7 @@ jobs:
           rpm -ivh *.src.rpm
           
           echo "--- Risoluzione Dipendenze Estrema (su SPEC) ---"
-          sed -i 's/pkgconfig(openh264)/openh264-devel/g' /github/home/rpmbuild/SPECS/*.spec && dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SPECS/*.spec
+          sed -i -e 's/pkgconfig(openh264)/openh264-devel/g' -e 's/noopenh264-devel/openh264-devel/g' -e 's/noopenh264/openh264/g' /github/home/rpmbuild/SPECS/*.spec && dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SPECS/*.spec
           
           echo "--- Iniezione Dinamica Ponytail Ultra ---"
           for spec in ~/rpmbuild/SPECS/*.spec; do
@@ -568,7 +568,7 @@ jobs:
           rpm -ivh *.src.rpm
           
           echo "--- Risoluzione Dipendenze Estrema (su SPEC) ---"
-          sed -i 's/pkgconfig(openh264)/openh264-devel/g' /github/home/rpmbuild/SPECS/*.spec && dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SPECS/*.spec
+          sed -i -e 's/pkgconfig(openh264)/openh264-devel/g' -e 's/noopenh264-devel/openh264-devel/g' -e 's/noopenh264/openh264/g' /github/home/rpmbuild/SPECS/*.spec && dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SPECS/*.spec
           
           echo "--- Iniezione Dinamica Ponytail Ultra ---"
           for spec in ~/rpmbuild/SPECS/*.spec; do
@@ -668,7 +668,7 @@ jobs:
           rpm -ivh *.src.rpm
           
           echo "--- Risoluzione Dipendenze Estrema (su SPEC) ---"
-          sed -i 's/pkgconfig(openh264)/openh264-devel/g' /github/home/rpmbuild/SPECS/*.spec && dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SPECS/*.spec
+          sed -i -e 's/pkgconfig(openh264)/openh264-devel/g' -e 's/noopenh264-devel/openh264-devel/g' -e 's/noopenh264/openh264/g' /github/home/rpmbuild/SPECS/*.spec && dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SPECS/*.spec
           
           echo "--- Iniezione Dinamica Ponytail Ultra ---"
           for spec in ~/rpmbuild/SPECS/*.spec; do

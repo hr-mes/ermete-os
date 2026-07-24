@@ -39,20 +39,20 @@ jobs:
           chown -R builder:builder /workspace /home/builder
           
           # Avvio della compilazione
-          sudo -H -E -u builder bash -c \"export CC='ccache clang' && export CXX='ccache clang++' && ./build-kernel-rpm.sh\"
+          sudo -H -E -u builder bash -c \"export CC='ccache clang' && export CXX='ccache clang++' && cd kernel && ./build-kernel-rpm.sh\"
           "
           
     - name: Upload Binary RPMs
       uses: actions/upload-artifact@v4
       with:
         name: ermete-chimera-kernel-rpms
-        path: rpmbuild_out/RPMS/x86_64/*.rpm
+        path: kernel/rpmbuild_out/RPMS/x86_64/*.rpm
         
     - name: Upload Source RPM
       uses: actions/upload-artifact@v4
       with:
         name: ermete-chimera-kernel-srpm
-        path: rpmbuild_out/SRPMS/*.src.rpm
+        path: kernel/rpmbuild_out/SRPMS/*.src.rpm
     - name: Publish Kernel Micro-Container OCI
       run: |
         sudo dnf install -y buildah
