@@ -235,16 +235,15 @@ jobs:
           %_ldflags -Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro
           %optflags %{__global_compiler_flags} -O3 -march=x86-64-v3 -pipe -Wno-error
           %kcflags -O3 -march=x86-64-v3 -pipe -Wno-error
-          
-          %__spec_build_pre %{___build_pre}\
-            export IGNORE_CC_MISMATCH=1\
-            export KCFLAGS="-Wno-error -fno-lto"\
-            export CFLAGS="-Wno-error -fno-lto"\
-            export LLVM=1\
-            export LLVM_IAS=1
           MACRO
 
-          if ! akmods --force --kernels $REAL_KERNEL_VER < /dev/null; then
+          echo "--- Patching nvidia-kmod spec per forzare LLVM=1 ---"
+          rpm -ivh /usr/src/akmods/nvidia-kmod.latest.src.rpm
+          sed -i 's/make %{?_smp_mflags}/export IGNORE_CC_MISMATCH=1 LLVM=1 LLVM_IAS=1 KCFLAGS="-Wno-error -fno-lto"; make %{?_smp_mflags}/g' ~/rpmbuild/SPECS/nvidia-kmod.spec
+          rpmbuild -bs ~/rpmbuild/SPECS/nvidia-kmod.spec
+          cp ~/rpmbuild/SRPMS/nvidia-kmod-*.src.rpm /usr/src/akmods/
+
+          if ! akmods --force --kernels $REAL_KERNEL_VER; then
             cat /var/cache/akmods/nvidia/*.log || true
             exit 1
           fi
@@ -360,9 +359,11 @@ jobs:
           echo "--- Estrazione SRPM per applicare Ponytail Ultra ---"
           rpm -ivh *.src.rpm
           
+          echo "--- Patching ffmpeg spec per rimuovere noopenh264 ---"
+          sed -i 's/noopenh264-devel/openh264-devel/g' ~/rpmbuild/SPECS/*.spec
+          
           echo "--- Risoluzione Dipendenze Estrema (su SPEC) ---"
-          rpm -e --nodeps openh264 openh264-devel mozilla-openh264 gstreamer1-plugin-openh264 || true
-          dnf builddep -y --allowerasing --disablerepo="*cisco*" ~/rpmbuild/SPECS/*.spec
+          dnf builddep -y --allowerasing ~/rpmbuild/SPECS/*.spec
           
           echo "--- Iniezione Dinamica Ponytail Ultra ---"
           for spec in ~/rpmbuild/SPECS/*.spec; do
