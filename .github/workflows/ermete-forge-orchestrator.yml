@@ -157,7 +157,7 @@ jobs:
           
             mkdir -p /workspace/forge/RPMS
             cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
-            EOF
+          EOF
       - name: Publish Micro-Container OCI
         if: steps.check.outputs.skip != 'true'
         run: |
@@ -211,7 +211,7 @@ jobs:
               QUALIFIED_NVIDIA=$(dnf repoquery --qf "%{VERSION}-%{RELEASE}\n" akmod-nvidia 2>/dev/null | sort -V | tail -n 1)
               echo "QUALIFIED_KERNEL=$QUALIFIED_KERNEL" > /workspace/kernel_info
               echo "QUALIFIED_NVIDIA=$QUALIFIED_NVIDIA" >> /workspace/kernel_info
-            EOF
+          EOF
           echo "kernel_ver=$(grep QUALIFIED_KERNEL kernel_info | cut -d= -f2)" >> $GITHUB_OUTPUT
           echo "nvidia_ver=$(grep QUALIFIED_NVIDIA kernel_info | cut -d= -f2)" >> $GITHUB_OUTPUT
 
@@ -293,7 +293,7 @@ jobs:
                 rm -rf /var/cache/akmods/nvidia/*; 
                 exit 1; 
               }
-            EOF
+          EOF
       - name: Publish Micro-Container OCI
         if: steps.cache.outputs['cache-hit'] != 'true'
         run: |
@@ -411,7 +411,7 @@ jobs:
           
             mkdir -p /workspace/forge/RPMS
             cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
-            EOF
+          EOF
       - name: Publish Micro-Container OCI
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
@@ -514,7 +514,7 @@ jobs:
           
             mkdir -p /workspace/forge/RPMS
             cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
-            EOF
+          EOF
       - name: Publish Micro-Container OCI
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
@@ -617,7 +617,7 @@ jobs:
           
             mkdir -p /workspace/forge/RPMS
             cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
-            EOF
+          EOF
       - name: Publish Micro-Container OCI
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
@@ -721,7 +721,7 @@ jobs:
           
             mkdir -p /workspace/forge/RPMS
             cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
-            EOF
+          EOF
       - name: Publish Micro-Container OCI
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
