@@ -12,7 +12,7 @@ on:
       - main
     paths:
       - 'system/**'
-      - '.github/workflows/core-build.yml'
+      - '.github/workflows/system-build.yml'
   workflow_dispatch:
 
 env:

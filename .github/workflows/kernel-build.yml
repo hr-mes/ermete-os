@@ -55,7 +55,6 @@ jobs:
         path: kernel/rpmbuild_out/SRPMS/*.src.rpm
     - name: Publish Kernel Micro-Container OCI
       run: |
-        sudo dnf install -y buildah
         export STORAGE_DRIVER=overlay
         export BUILDAH_ISOLATION=chroot
         buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
