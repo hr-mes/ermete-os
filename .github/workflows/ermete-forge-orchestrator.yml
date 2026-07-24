@@ -111,11 +111,11 @@ jobs:
         if: steps.check.outputs.skip != 'true'
         run: |
           mkdir -p RPMS
-          podman run --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace/forge \
             ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
-            bash -c '
+            bash <<'EOF'
             sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
             dnf install -y rpm-build rpmdevtools gcc gcc-c++ cargo rust cmake mold tar xz curl pkgconf-pkg-config zlib-devel openssl-devel checkpolicy policycoreutils spdlog-devel systemd-devel nlohmann-json-devel fmt-devel which autoconf automake libtool cargo-rpm-macros clang clang-devel speech-dispatcher-devel
             cp config/rpmmacros ~/.rpmmacros
@@ -157,7 +157,7 @@ jobs:
           
             mkdir -p /workspace/forge/RPMS
             cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
-          '
+            EOF
       - name: Publish Micro-Container OCI
         if: steps.check.outputs.skip != 'true'
         run: |
@@ -190,11 +190,11 @@ jobs:
       - name: Resolve Kernel Version and Install Chimera Headers
         id: kernel
         run: |
-          podman run --rm --security-opt label=disable --security-opt seccomp=unconfined \
+          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
             ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
-            bash -c '
+            bash <<'EOF'
               curl -Lo /etc/yum.repos.d/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo
               dnf install -y buildah jq
               export STORAGE_DRIVER=overlay
@@ -211,7 +211,7 @@ jobs:
               QUALIFIED_NVIDIA=$(dnf repoquery --qf "%{VERSION}-%{RELEASE}\n" akmod-nvidia 2>/dev/null | sort -V | tail -n 1)
               echo "QUALIFIED_KERNEL=$QUALIFIED_KERNEL" > /workspace/kernel_info
               echo "QUALIFIED_NVIDIA=$QUALIFIED_NVIDIA" >> /workspace/kernel_info
-            '
+            EOF
           echo "kernel_ver=$(grep QUALIFIED_KERNEL kernel_info | cut -d= -f2)" >> $GITHUB_OUTPUT
           echo "nvidia_ver=$(grep QUALIFIED_NVIDIA kernel_info | cut -d= -f2)" >> $GITHUB_OUTPUT
 
@@ -226,14 +226,14 @@ jobs:
         if: steps.cache.outputs['cache-hit'] != 'true'
         run: |
           mkdir -p ${{ github.workspace }}/nvidia_cache
-          podman run --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -v ${{ github.workspace }}/nvidia_cache:/var/cache/akmods/nvidia \
             -w /workspace \
             -e MOK_PRIVATE_KEY="${{ secrets.MOK_PRIVATE_KEY }}" \
             -e MOK_PUBLIC_DER="${{ secrets.MOK_PUBLIC_DER }}" \
             ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
-            bash -c '
+            bash <<'EOF'
               # Setup repo again
               curl -Lo /etc/yum.repos.d/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo
               # Extract kernel headers again (since this is a new container)
@@ -293,7 +293,7 @@ jobs:
                 rm -rf /var/cache/akmods/nvidia/*; 
                 exit 1; 
               }
-            '          
+            EOF
       - name: Publish Micro-Container OCI
         if: steps.cache.outputs['cache-hit'] != 'true'
         run: |
@@ -366,11 +366,11 @@ jobs:
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
           mkdir -p RPMS
-          podman run --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace/forge \
             ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
-            bash -c '
+            bash <<'EOF'
             sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
             dnf install -y rpm-build dnf-plugins-core rpmdevtools mold gcc-c++ which autoconf automake libtool
             cp config/rpmmacros ~/.rpmmacros
@@ -411,7 +411,7 @@ jobs:
           
             mkdir -p /workspace/forge/RPMS
             cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
-          '
+            EOF
       - name: Publish Micro-Container OCI
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
@@ -472,11 +472,11 @@ jobs:
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
           mkdir -p RPMS
-          podman run --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace/forge \
             ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
-            bash -c '
+            bash <<'EOF'
             sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
             dnf install -y rpm-build dnf-plugins-core rpmdevtools mold gcc-c++ which autoconf automake libtool
             cp config/rpmmacros ~/.rpmmacros
@@ -514,7 +514,7 @@ jobs:
           
             mkdir -p /workspace/forge/RPMS
             cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
-          '
+            EOF
       - name: Publish Micro-Container OCI
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
@@ -575,11 +575,11 @@ jobs:
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
           mkdir -p RPMS
-          podman run --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace/forge \
             ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
-            bash -c '
+            bash <<'EOF'
             sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
             dnf install -y rpm-build dnf-plugins-core rpmdevtools mold gcc-c++ which autoconf automake libtool
             cp config/rpmmacros ~/.rpmmacros
@@ -617,7 +617,7 @@ jobs:
           
             mkdir -p /workspace/forge/RPMS
             cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
-          '
+            EOF
       - name: Publish Micro-Container OCI
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
@@ -679,11 +679,11 @@ jobs:
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
           mkdir -p RPMS
-          podman run --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace/forge \
             ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
-            bash -c '
+            bash <<'EOF'
             sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
             dnf install -y rpm-build dnf-plugins-core rpmdevtools mold gcc-c++ which autoconf automake libtool
             cp config/rpmmacros ~/.rpmmacros
@@ -721,7 +721,7 @@ jobs:
           
             mkdir -p /workspace/forge/RPMS
             cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
-          '
+            EOF
       - name: Publish Micro-Container OCI
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
