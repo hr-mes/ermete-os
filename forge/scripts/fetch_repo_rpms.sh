@@ -1,11 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 
-mkdir -p /github/home/repo \
-         /github/home/repo-tier0 \
-         /github/home/repo-tier1 \
-         /github/home/repo-tier2 \
-         /github/home/repo-tier3
+mkdir -p repo-cache/repo \
+         repo-cache/repo-tier0 \
+         repo-cache/repo-tier1 \
+         repo-cache/repo-tier2 \
+         repo-cache/repo-tier3
 
 export STORAGE_DRIVER=overlay
 export BUILDAH_ISOLATION=chroot
@@ -135,41 +135,41 @@ for tier in tier0 tier1 tier2 tier3; do
   ctr=$(buildah from "$IMAGE_LOWER" 2>/dev/null || true)
   if [ -n "$ctr" ]; then
     mnt=$(buildah mount "$ctr")
-    cp -a "$mnt"/*.rpm "/github/home/repo-${tier}/" 2>/dev/null || true
-    cp -a "$mnt"/*.rpm "/github/home/repo/" 2>/dev/null || true
+    cp -a "$mnt"/*.rpm "repo-cache/repo-${tier}/" 2>/dev/null || true
+    cp -a "$mnt"/*.rpm "repo-cache/repo/" 2>/dev/null || true
     if [ -f "$mnt/manifest.json" ]; then
-      cp -a "$mnt/manifest.json" "/github/home/repo-${tier}/" 2>/dev/null || true
+      cp -a "$mnt/manifest.json" "repo-cache/repo-${tier}/" 2>/dev/null || true
     fi
     buildah umount "$ctr"
     buildah rm "$ctr"
   fi
   
   # Load old digests
-  if [ -f "/github/home/repo-${tier}/manifest.json" ]; then
+  if [ -f "repo-cache/repo-${tier}/manifest.json" ]; then
     while read -r k v; do
       OLD_DIGESTS["$k"]="$v"
-    done < <(jq -r 'to_entries[] | "\(.key) \(.value)"' "/github/home/repo-${tier}/manifest.json")
+    done < <(jq -r 'to_entries[] | "\(.key) \(.value)"' "repo-cache/repo-${tier}/manifest.json")
   fi
 done
 
 echo "=== Extracting Tier 0 RPMs ==="
 for img in "${TIER0_IMAGES[@]}"; do
-  pull_and_extract "$img" "/github/home/repo-tier0" &
+  pull_and_extract "$img" "repo-cache/repo-tier0" &
 done
 
 echo "=== Extracting Tier 1 RPMs ==="
 for img in "${TIER1_IMAGES[@]}"; do
-  pull_and_extract "$img" "/github/home/repo-tier1" &
+  pull_and_extract "$img" "repo-cache/repo-tier1" &
 done
 
 echo "=== Extracting Tier 2 RPMs ==="
 for img in "${TIER2_IMAGES[@]}"; do
-  pull_and_extract "$img" "/github/home/repo-tier2" &
+  pull_and_extract "$img" "repo-cache/repo-tier2" &
 done
 
 echo "=== Extracting Tier 3 RPMs ==="
 for img in "${TIER3_IMAGES[@]}"; do
-  pull_and_extract "$img" "/github/home/repo-tier3" &
+  pull_and_extract "$img" "repo-cache/repo-tier3" &
 done
 
 for pid in $(jobs -p); do
@@ -177,10 +177,10 @@ for pid in $(jobs -p); do
 done
 
 echo "=== Syncing tiered RPMs to aggregate repo ==="
-cp -a /github/home/repo-tier0/*.rpm /github/home/repo/ 2>/dev/null || true
-cp -a /github/home/repo-tier1/*.rpm /github/home/repo/ 2>/dev/null || true
-cp -a /github/home/repo-tier2/*.rpm /github/home/repo/ 2>/dev/null || true
-cp -a /github/home/repo-tier3/*.rpm /github/home/repo/ 2>/dev/null || true
+cp -a repo-cache/repo-tier0/*.rpm repo-cache/repo/ 2>/dev/null || true
+cp -a repo-cache/repo-tier1/*.rpm repo-cache/repo/ 2>/dev/null || true
+cp -a repo-cache/repo-tier2/*.rpm repo-cache/repo/ 2>/dev/null || true
+cp -a repo-cache/repo-tier3/*.rpm repo-cache/repo/ 2>/dev/null || true
 
 for img in "${TIER0_IMAGES[@]}" "${TIER1_IMAGES[@]}" "${TIER2_IMAGES[@]}" "${TIER3_IMAGES[@]}"; do
   if [ -f "$TMP_DIR/digest_$img" ]; then
@@ -191,20 +191,20 @@ done
 echo "=== Saving New Manifests ==="
 for tier in tier0 tier1 tier2 tier3; do
   # We construct the manifest for the tier
-  echo "{}" > "/github/home/repo-${tier}/manifest.json"
+  echo "{}" > "repo-cache/repo-${tier}/manifest.json"
   declare -n TIER_ARRAY="TIER${tier#tier}_IMAGES"
   for img in "${TIER_ARRAY[@]}"; do
     digest="${NEW_DIGESTS[$img]:-}"
     if [ -n "$digest" ]; then
-      jq --arg k "$img" --arg v "$digest" '.[$k] = $v' "/github/home/repo-${tier}/manifest.json" > tmp.json && mv tmp.json "/github/home/repo-${tier}/manifest.json"
+      jq --arg k "$img" --arg v "$digest" '.[$k] = $v' "repo-cache/repo-${tier}/manifest.json" > tmp.json && mv tmp.json "repo-cache/repo-${tier}/manifest.json"
     fi
   done
-  cp "/github/home/repo-${tier}/manifest.json" "/github/home/repo/manifest_${tier}.json" 2>/dev/null || true
+  cp "repo-cache/repo-${tier}/manifest.json" "repo-cache/repo/manifest_${tier}.json" 2>/dev/null || true
 done
 
 echo "--- Extracted RPMs Summary ---"
-echo "Tier 0 count: $(ls -1 /github/home/repo-tier0/*.rpm 2>/dev/null | wc -l || echo 0)"
-echo "Tier 1 count: $(ls -1 /github/home/repo-tier1/*.rpm 2>/dev/null | wc -l || echo 0)"
-echo "Tier 2 count: $(ls -1 /github/home/repo-tier2/*.rpm 2>/dev/null | wc -l || echo 0)"
-echo "Tier 3 count: $(ls -1 /github/home/repo-tier3/*.rpm 2>/dev/null | wc -l || echo 0)"
-echo "Total repo count: $(ls -1 /github/home/repo/*.rpm 2>/dev/null | wc -l || echo 0)"
+echo "Tier 0 count: $(ls -1 repo-cache/repo-tier0/*.rpm 2>/dev/null | wc -l || echo 0)"
+echo "Tier 1 count: $(ls -1 repo-cache/repo-tier1/*.rpm 2>/dev/null | wc -l || echo 0)"
+echo "Tier 2 count: $(ls -1 repo-cache/repo-tier2/*.rpm 2>/dev/null | wc -l || echo 0)"
+echo "Tier 3 count: $(ls -1 repo-cache/repo-tier3/*.rpm 2>/dev/null | wc -l || echo 0)"
+echo "Total repo count: $(ls -1 repo-cache/repo/*.rpm 2>/dev/null | wc -l || echo 0)"

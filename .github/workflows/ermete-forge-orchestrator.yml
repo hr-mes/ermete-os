@@ -26,8 +26,6 @@ jobs:
     name: 🧠 Orchestrator Brain
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
-    container:
-      image: fedora:43
     outputs:
       custom_packages: ${{ steps.brain.outputs.custom_packages }}
       upstream_core: ${{ steps.brain.outputs.upstream_core }}
@@ -90,9 +88,6 @@ jobs:
       contents: read
       packages: write
       id-token: write
-    container:
-      image: ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest
-      options: --privileged
     steps:
       - uses: actions/checkout@v4
       - name: Check Idempotency (Content Hash)
@@ -115,47 +110,54 @@ jobs:
       - name: Install Dependencies and Build
         if: steps.check.outputs.skip != 'true'
         run: |
-          sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
-          dnf install -y rpm-build rpmdevtools gcc gcc-c++ cargo rust cmake mold tar xz curl pkgconf-pkg-config zlib-devel openssl-devel checkpolicy policycoreutils spdlog-devel systemd-devel nlohmann-json-devel fmt-devel which autoconf automake libtool cargo-rpm-macros clang clang-devel speech-dispatcher-devel
-          cp config/rpmmacros ~/.rpmmacros
-          rpmdev-setuptree
+          mkdir -p RPMS
+          podman run --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace/forge \
+            ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
+            bash -c '
+            sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
+            dnf install -y rpm-build rpmdevtools gcc gcc-c++ cargo rust cmake mold tar xz curl pkgconf-pkg-config zlib-devel openssl-devel checkpolicy policycoreutils spdlog-devel systemd-devel nlohmann-json-devel fmt-devel which autoconf automake libtool cargo-rpm-macros clang clang-devel speech-dispatcher-devel
+            cp config/rpmmacros ~/.rpmmacros
+            rpmdev-setuptree
           
-          if [ -d "specs/ermete-${{ matrix.package }}/SOURCES" ]; then 
-            cp -a specs/ermete-${{ matrix.package }}/SOURCES/* ~/rpmbuild/SOURCES/ || true
-          fi
-          
-          # Auto-pack any source directory into tarball for RPM Source0
-          for dir in specs/ermete-${{ matrix.package }}/*-*/ ; do
-            if [ -d "$dir" ]; then
-              pkg_dir=$(basename "$dir")
-              echo "Packing $pkg_dir into ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz..."
-              tar -czf ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz -C "specs/ermete-${{ matrix.package }}" "$pkg_dir"
+            if [ -d "specs/ermete-${{ matrix.package }}/SOURCES" ]; then 
+              cp -a specs/ermete-${{ matrix.package }}/SOURCES/* ~/rpmbuild/SOURCES/ || true
             fi
-          done
           
-          dnf builddep -y specs/ermete-${{ matrix.package }}/*.spec || true
-          spectool -g -R specs/ermete-${{ matrix.package }}/*.spec || true
+            # Auto-pack any source directory into tarball for RPM Source0
+            for dir in specs/ermete-${{ matrix.package }}/*-*/ ; do
+              if [ -d "$dir" ]; then
+                pkg_dir=$(basename "$dir")
+                echo "Packing $pkg_dir into ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz..."
+                tar -czf ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz -C "specs/ermete-${{ matrix.package }}" "$pkg_dir"
+              fi
+            done
           
-          # First attempt (generates buildreqs.nosrc.rpm for Rust packages)
-          rpmbuild -bb --nocheck specs/ermete-${{ matrix.package }}/*.spec || true
+            dnf builddep -y specs/ermete-${{ matrix.package }}/*.spec || true
+            spectool -g -R specs/ermete-${{ matrix.package }}/*.spec || true
           
-          # Install dynamic dependencies if generated
-          if ls ~/rpmbuild/SRPMS/*.nosrc.rpm 1> /dev/null 2>&1; then
-              sed -i -e 's/pkgconfig(openh264)/openh264-devel/g' -e 's/noopenh264-devel/openh264-devel/g' -e 's/noopenh264/openh264/g' /github/home/rpmbuild/SPECS/*.spec && dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SRPMS/*.nosrc.rpm || true
-          fi
+            # First attempt (generates buildreqs.nosrc.rpm for Rust packages)
+            rpmbuild -bb --nocheck specs/ermete-${{ matrix.package }}/*.spec || true
           
-          # Workaround for Fedora 43 rust-sysinfo bug
-          if ls /usr/share/cargo/registry/sysinfo-*/src/lib.rs 1> /dev/null 2>&1; then
-              for sysinfo_dir in /usr/share/cargo/registry/sysinfo-*/; do
-                  touch "$sysinfo_dir/README.md"
-              done
-          fi
+            # Install dynamic dependencies if generated
+            if ls ~/rpmbuild/SRPMS/*.nosrc.rpm 1> /dev/null 2>&1; then
+                sed -i -e 's/pkgconfig(openh264)/openh264-devel/g' -e 's/noopenh264-devel/openh264-devel/g' -e 's/noopenh264/openh264/g' ~/rpmbuild/SPECS/*.spec && dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SRPMS/*.nosrc.rpm || true
+            fi
           
-          # Second attempt (actual build)
-          rpmbuild -bb --nocheck specs/ermete-${{ matrix.package }}/*.spec
+            # Workaround for Fedora 43 rust-sysinfo bug
+            if ls /usr/share/cargo/registry/sysinfo-*/src/lib.rs 1> /dev/null 2>&1; then
+                for sysinfo_dir in /usr/share/cargo/registry/sysinfo-*/; do
+                    touch "$sysinfo_dir/README.md"
+                done
+            fi
           
-          mkdir -p /github/home/RPMS
-          cp ~/rpmbuild/RPMS/*/*.rpm /github/home/RPMS/
+            # Second attempt (actual build)
+            rpmbuild -bb --nocheck specs/ermete-${{ matrix.package }}/*.spec
+          
+            mkdir -p /workspace/forge/RPMS
+            cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
+          '
       - name: Publish Micro-Container OCI
         if: steps.check.outputs.skip != 'true'
         run: |
@@ -164,7 +166,7 @@ jobs:
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
-          buildah copy $ctr /github/home/RPMS/*.rpm /
+          buildah copy $ctr RPMS/*.rpm /
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
           buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
           buildah commit --omit-timestamp $ctr $IMAGE_LOWER:latest
@@ -338,9 +340,6 @@ jobs:
     env:
       REGISTRY: ghcr.io
       FEDORA_VERSION: 43
-    container:
-      image: ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest
-      options: --privileged
     steps:
       - uses: actions/checkout@v4
       
@@ -366,46 +365,53 @@ jobs:
       - name: Fetch, Patch and Build ${{ matrix.package }}
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
-          sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
-          dnf install -y rpm-build dnf-plugins-core rpmdevtools mold gcc-c++ which autoconf automake libtool
-          cp config/rpmmacros ~/.rpmmacros
-          rpmdev-setuptree
-          cd ~/rpmbuild/SRPMS
+          mkdir -p RPMS
+          podman run --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace/forge \
+            ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
+            bash -c '
+            sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
+            dnf install -y rpm-build dnf-plugins-core rpmdevtools mold gcc-c++ which autoconf automake libtool
+            cp config/rpmmacros ~/.rpmmacros
+            rpmdev-setuptree
+            cd ~/rpmbuild/SRPMS
           
-          echo "--- Downloading Source RPM per ${{ matrix.package }} ---"
-          dnf download --source ${{ matrix.package }} || dnf download --source --disablerepo="rpmfusion*" ${{ matrix.package }}
+            echo "--- Downloading Source RPM per ${{ matrix.package }} ---"
+            dnf download --source ${{ matrix.package }} || dnf download --source --disablerepo="rpmfusion*" ${{ matrix.package }}
           
-          echo "--- Estrazione SRPM per applicare Ponytail Ultra ---"
-          rpm -ivh *.src.rpm
+            echo "--- Estrazione SRPM per applicare Ponytail Ultra ---"
+            rpm -ivh *.src.rpm
           
-          echo "--- Patching ffmpeg spec per rimuovere noopenh264 ---"
-          sed -i -e 's/pkgconfig(openh264)/openh264-devel/g' -e 's/noopenh264-devel/openh264-devel/g' -e 's/noopenh264/openh264/g' /github/home/rpmbuild/SPECS/*.spec
+            echo "--- Patching ffmpeg spec per rimuovere noopenh264 ---"
+            sed -i -e 's/pkgconfig(openh264)/openh264-devel/g' -e 's/noopenh264-devel/openh264-devel/g' -e 's/noopenh264/openh264/g' ~/rpmbuild/SPECS/*.spec
           
-          echo "--- Risoluzione Dipendenze Estrema (su SPEC) ---"
-          dnf builddep -y --allowerasing /github/home/rpmbuild/SPECS/*.spec
+            echo "--- Risoluzione Dipendenze Estrema (su SPEC) ---"
+            dnf builddep -y --allowerasing ~/rpmbuild/SPECS/*.spec
           
-          echo "--- Iniezione Dinamica Ponytail Ultra ---"
-          for spec in ~/rpmbuild/SPECS/*.spec; do
-            # Disattiva pacchetti di debug globalmente
-            if ! grep -q "debug_package %nil" "$spec"; then
-              awk '/^Name:/ { print "%global debug_package %nil"; print $0; next } 1' "$spec" > "$spec.tmp" && mv "$spec.tmp" "$spec"
+            echo "--- Iniezione Dinamica Ponytail Ultra ---"
+            for spec in ~/rpmbuild/SPECS/*.spec; do
+              # Disattiva pacchetti di debug globalmente
+              if ! grep -q "debug_package %nil" "$spec"; then
+                awk '/^Name:/ { print "%global debug_package %nil"; print $0; next } 1' "$spec" > "$spec.tmp" && mv "$spec.tmp" "$spec"
+              fi
+            done
+          
+            echo "--- Ricompilazione estrema con macro Ermete e Ponytail ---"
+            if ! rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec; then
+              if ls ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm >/dev/null 2>&1; then
+                echo "--- Installazione Dipendenze Dinamiche (%generate_buildrequires) ---"
+                dnf builddep -y --nogpgcheck --allowerasing ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm
+                echo "--- Secondo tentativo di Ricompilazione Estrema ---"
+                rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec
+              else
+                exit 1
+              fi
             fi
-          done
           
-          echo "--- Ricompilazione estrema con macro Ermete e Ponytail ---"
-          if ! rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec; then
-            if ls ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm >/dev/null 2>&1; then
-              echo "--- Installazione Dipendenze Dinamiche (%generate_buildrequires) ---"
-              dnf builddep -y --nogpgcheck --allowerasing ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm
-              echo "--- Secondo tentativo di Ricompilazione Estrema ---"
-              rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec
-            else
-              exit 1
-            fi
-          fi
-          
-          mkdir -p /github/home/RPMS
-          cp ~/rpmbuild/RPMS/*/*.rpm /github/home/RPMS/
+            mkdir -p /workspace/forge/RPMS
+            cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
+          '
       - name: Publish Micro-Container OCI
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
@@ -414,7 +420,7 @@ jobs:
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
-          buildah copy $ctr /github/home/RPMS/*.rpm /
+          buildah copy $ctr RPMS/*.rpm /
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-rolling-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
           buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
           buildah commit --omit-timestamp $ctr $IMAGE_LOWER:latest
@@ -440,9 +446,6 @@ jobs:
     env:
       REGISTRY: ghcr.io
       FEDORA_VERSION: 43
-    container:
-      image: ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest
-      options: --privileged
     steps:
       - uses: actions/checkout@v4
       
@@ -468,43 +471,50 @@ jobs:
       - name: Fetch, Patch and Build ${{ matrix.package }}
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
-          sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
-          dnf install -y rpm-build dnf-plugins-core rpmdevtools mold gcc-c++ which autoconf automake libtool
-          cp config/rpmmacros ~/.rpmmacros
-          rpmdev-setuptree
-          cd ~/rpmbuild/SRPMS
+          mkdir -p RPMS
+          podman run --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace/forge \
+            ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
+            bash -c '
+            sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
+            dnf install -y rpm-build dnf-plugins-core rpmdevtools mold gcc-c++ which autoconf automake libtool
+            cp config/rpmmacros ~/.rpmmacros
+            rpmdev-setuptree
+            cd ~/rpmbuild/SRPMS
           
-          echo "--- Downloading Source RPM per ${{ matrix.package }} ---"
-          dnf download --source ${{ matrix.package }} || dnf download --source --disablerepo="rpmfusion*" ${{ matrix.package }}
+            echo "--- Downloading Source RPM per ${{ matrix.package }} ---"
+            dnf download --source ${{ matrix.package }} || dnf download --source --disablerepo="rpmfusion*" ${{ matrix.package }}
           
-          echo "--- Estrazione SRPM per applicare Ponytail Ultra ---"
-          rpm -ivh *.src.rpm
+            echo "--- Estrazione SRPM per applicare Ponytail Ultra ---"
+            rpm -ivh *.src.rpm
           
-          echo "--- Risoluzione Dipendenze Estrema (su SPEC) ---"
-          sed -i -e 's/pkgconfig(openh264)/openh264-devel/g' -e 's/noopenh264-devel/openh264-devel/g' -e 's/noopenh264/openh264/g' /github/home/rpmbuild/SPECS/*.spec && dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SPECS/*.spec
+            echo "--- Risoluzione Dipendenze Estrema (su SPEC) ---"
+            sed -i -e 's/pkgconfig(openh264)/openh264-devel/g' -e 's/noopenh264-devel/openh264-devel/g' -e 's/noopenh264/openh264/g' ~/rpmbuild/SPECS/*.spec && dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SPECS/*.spec
           
-          echo "--- Iniezione Dinamica Ponytail Ultra ---"
-          for spec in ~/rpmbuild/SPECS/*.spec; do
-            # Disattiva pacchetti di debug globalmente
-            if ! grep -q "debug_package %nil" "$spec"; then
-              awk '/^Name:/ { print "%global debug_package %nil"; print $0; next } 1' "$spec" > "$spec.tmp" && mv "$spec.tmp" "$spec"
+            echo "--- Iniezione Dinamica Ponytail Ultra ---"
+            for spec in ~/rpmbuild/SPECS/*.spec; do
+              # Disattiva pacchetti di debug globalmente
+              if ! grep -q "debug_package %nil" "$spec"; then
+                awk '/^Name:/ { print "%global debug_package %nil"; print $0; next } 1' "$spec" > "$spec.tmp" && mv "$spec.tmp" "$spec"
+              fi
+            done
+          
+            echo "--- Ricompilazione estrema con macro Ermete e Ponytail ---"
+            if ! rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec; then
+              if ls ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm >/dev/null 2>&1; then
+                echo "--- Installazione Dipendenze Dinamiche (%generate_buildrequires) ---"
+                dnf install -y ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm
+                echo "--- Secondo tentativo di Ricompilazione Estrema ---"
+                rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec
+              else
+                exit 1
+              fi
             fi
-          done
           
-          echo "--- Ricompilazione estrema con macro Ermete e Ponytail ---"
-          if ! rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec; then
-            if ls ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm >/dev/null 2>&1; then
-              echo "--- Installazione Dipendenze Dinamiche (%generate_buildrequires) ---"
-              dnf install -y ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm
-              echo "--- Secondo tentativo di Ricompilazione Estrema ---"
-              rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec
-            else
-              exit 1
-            fi
-          fi
-          
-          mkdir -p /github/home/RPMS
-          cp ~/rpmbuild/RPMS/*/*.rpm /github/home/RPMS/
+            mkdir -p /workspace/forge/RPMS
+            cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
+          '
       - name: Publish Micro-Container OCI
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
@@ -513,7 +523,7 @@ jobs:
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
-          buildah copy $ctr /github/home/RPMS/*.rpm /
+          buildah copy $ctr RPMS/*.rpm /
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-rolling-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
           buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
           buildah commit --omit-timestamp $ctr $IMAGE_LOWER:latest
@@ -539,9 +549,6 @@ jobs:
     env:
       REGISTRY: ghcr.io
       FEDORA_VERSION: 43
-    container:
-      image: ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest
-      options: --privileged
     steps:
       - uses: actions/checkout@v4
       
@@ -567,43 +574,50 @@ jobs:
       - name: Fetch, Patch and Build ${{ matrix.package }}
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
-          sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
-          dnf install -y rpm-build dnf-plugins-core rpmdevtools mold gcc-c++ which autoconf automake libtool
-          cp config/rpmmacros ~/.rpmmacros
-          rpmdev-setuptree
-          cd ~/rpmbuild/SRPMS
+          mkdir -p RPMS
+          podman run --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace/forge \
+            ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
+            bash -c '
+            sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
+            dnf install -y rpm-build dnf-plugins-core rpmdevtools mold gcc-c++ which autoconf automake libtool
+            cp config/rpmmacros ~/.rpmmacros
+            rpmdev-setuptree
+            cd ~/rpmbuild/SRPMS
           
-          echo "--- Downloading Source RPM per ${{ matrix.package }} ---"
-          dnf download --source ${{ matrix.package }} || dnf download --source --disablerepo="rpmfusion*" ${{ matrix.package }}
+            echo "--- Downloading Source RPM per ${{ matrix.package }} ---"
+            dnf download --source ${{ matrix.package }} || dnf download --source --disablerepo="rpmfusion*" ${{ matrix.package }}
           
-          echo "--- Estrazione SRPM per applicare Ponytail Ultra ---"
-          rpm -ivh *.src.rpm
+            echo "--- Estrazione SRPM per applicare Ponytail Ultra ---"
+            rpm -ivh *.src.rpm
           
-          echo "--- Risoluzione Dipendenze Estrema (su SPEC) ---"
-          sed -i -e 's/pkgconfig(openh264)/openh264-devel/g' -e 's/noopenh264-devel/openh264-devel/g' -e 's/noopenh264/openh264/g' /github/home/rpmbuild/SPECS/*.spec && dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SPECS/*.spec
+            echo "--- Risoluzione Dipendenze Estrema (su SPEC) ---"
+            sed -i -e 's/pkgconfig(openh264)/openh264-devel/g' -e 's/noopenh264-devel/openh264-devel/g' -e 's/noopenh264/openh264/g' ~/rpmbuild/SPECS/*.spec && dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SPECS/*.spec
           
-          echo "--- Iniezione Dinamica Ponytail Ultra ---"
-          for spec in ~/rpmbuild/SPECS/*.spec; do
-            # Disattiva pacchetti di debug globalmente
-            if ! grep -q "debug_package %nil" "$spec"; then
-              awk '/^Name:/ { print "%global debug_package %nil"; print $0; next } 1' "$spec" > "$spec.tmp" && mv "$spec.tmp" "$spec"
+            echo "--- Iniezione Dinamica Ponytail Ultra ---"
+            for spec in ~/rpmbuild/SPECS/*.spec; do
+              # Disattiva pacchetti di debug globalmente
+              if ! grep -q "debug_package %nil" "$spec"; then
+                awk '/^Name:/ { print "%global debug_package %nil"; print $0; next } 1' "$spec" > "$spec.tmp" && mv "$spec.tmp" "$spec"
+              fi
+            done
+          
+            echo "--- Ricompilazione estrema con macro Ermete e Ponytail ---"
+            if ! rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec; then
+              if ls ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm >/dev/null 2>&1; then
+                echo "--- Installazione Dipendenze Dinamiche (%generate_buildrequires) ---"
+                dnf install -y ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm
+                echo "--- Secondo tentativo di Ricompilazione Estrema ---"
+                rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec
+              else
+                exit 1
+              fi
             fi
-          done
           
-          echo "--- Ricompilazione estrema con macro Ermete e Ponytail ---"
-          if ! rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec; then
-            if ls ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm >/dev/null 2>&1; then
-              echo "--- Installazione Dipendenze Dinamiche (%generate_buildrequires) ---"
-              dnf install -y ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm
-              echo "--- Secondo tentativo di Ricompilazione Estrema ---"
-              rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec
-            else
-              exit 1
-            fi
-          fi
-          
-          mkdir -p /github/home/RPMS
-          cp ~/rpmbuild/RPMS/*/*.rpm /github/home/RPMS/
+            mkdir -p /workspace/forge/RPMS
+            cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
+          '
       - name: Publish Micro-Container OCI
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
@@ -612,7 +626,7 @@ jobs:
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
-          buildah copy $ctr /github/home/RPMS/*.rpm /
+          buildah copy $ctr RPMS/*.rpm /
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-rolling-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
           buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
           buildah commit --omit-timestamp $ctr $IMAGE_LOWER:latest
@@ -639,9 +653,6 @@ jobs:
     env:
       REGISTRY: ghcr.io
       FEDORA_VERSION: 43
-    container:
-      image: ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest
-      options: --privileged
     steps:
       - uses: actions/checkout@v4
       
@@ -667,43 +678,50 @@ jobs:
       - name: Fetch, Patch and Build ${{ matrix.package }}
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
-          sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
-          dnf install -y rpm-build dnf-plugins-core rpmdevtools mold gcc-c++ which autoconf automake libtool
-          cp config/rpmmacros ~/.rpmmacros
-          rpmdev-setuptree
-          cd ~/rpmbuild/SRPMS
+          mkdir -p RPMS
+          podman run --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace/forge \
+            ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
+            bash -c '
+            sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
+            dnf install -y rpm-build dnf-plugins-core rpmdevtools mold gcc-c++ which autoconf automake libtool
+            cp config/rpmmacros ~/.rpmmacros
+            rpmdev-setuptree
+            cd ~/rpmbuild/SRPMS
           
-          echo "--- Downloading Source RPM per ${{ matrix.package }} ---"
-          dnf download --source ${{ matrix.package }} || dnf download --source --disablerepo="rpmfusion*" ${{ matrix.package }}
+            echo "--- Downloading Source RPM per ${{ matrix.package }} ---"
+            dnf download --source ${{ matrix.package }} || dnf download --source --disablerepo="rpmfusion*" ${{ matrix.package }}
           
-          echo "--- Estrazione SRPM per applicare Ponytail Ultra ---"
-          rpm -ivh *.src.rpm
+            echo "--- Estrazione SRPM per applicare Ponytail Ultra ---"
+            rpm -ivh *.src.rpm
           
-          echo "--- Risoluzione Dipendenze Estrema (su SPEC) ---"
-          sed -i -e 's/pkgconfig(openh264)/openh264-devel/g' -e 's/noopenh264-devel/openh264-devel/g' -e 's/noopenh264/openh264/g' /github/home/rpmbuild/SPECS/*.spec && dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SPECS/*.spec
+            echo "--- Risoluzione Dipendenze Estrema (su SPEC) ---"
+            sed -i -e 's/pkgconfig(openh264)/openh264-devel/g' -e 's/noopenh264-devel/openh264-devel/g' -e 's/noopenh264/openh264/g' ~/rpmbuild/SPECS/*.spec && dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SPECS/*.spec
           
-          echo "--- Iniezione Dinamica Ponytail Ultra ---"
-          for spec in ~/rpmbuild/SPECS/*.spec; do
-            # Disattiva pacchetti di debug globalmente
-            if ! grep -q "debug_package %nil" "$spec"; then
-              awk '/^Name:/ { print "%global debug_package %nil"; print $0; next } 1' "$spec" > "$spec.tmp" && mv "$spec.tmp" "$spec"
+            echo "--- Iniezione Dinamica Ponytail Ultra ---"
+            for spec in ~/rpmbuild/SPECS/*.spec; do
+              # Disattiva pacchetti di debug globalmente
+              if ! grep -q "debug_package %nil" "$spec"; then
+                awk '/^Name:/ { print "%global debug_package %nil"; print $0; next } 1' "$spec" > "$spec.tmp" && mv "$spec.tmp" "$spec"
+              fi
+            done
+          
+            echo "--- Ricompilazione estrema con macro Ermete e Ponytail ---"
+            if ! rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec; then
+              if ls ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm >/dev/null 2>&1; then
+                echo "--- Installazione Dipendenze Dinamiche (%generate_buildrequires) ---"
+                dnf install -y ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm
+                echo "--- Secondo tentativo di Ricompilazione Estrema ---"
+                rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec
+              else
+                exit 1
+              fi
             fi
-          done
           
-          echo "--- Ricompilazione estrema con macro Ermete e Ponytail ---"
-          if ! rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec; then
-            if ls ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm >/dev/null 2>&1; then
-              echo "--- Installazione Dipendenze Dinamiche (%generate_buildrequires) ---"
-              dnf install -y ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm
-              echo "--- Secondo tentativo di Ricompilazione Estrema ---"
-              rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec
-            else
-              exit 1
-            fi
-          fi
-          
-          mkdir -p /github/home/RPMS
-          cp ~/rpmbuild/RPMS/*/*.rpm /github/home/RPMS/
+            mkdir -p /workspace/forge/RPMS
+            cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
+          '
       - name: Publish Micro-Container OCI
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
@@ -712,7 +730,7 @@ jobs:
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
-          buildah copy $ctr /github/home/RPMS/*.rpm /
+          buildah copy $ctr RPMS/*.rpm /
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-rolling-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
           buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
           buildah commit --omit-timestamp $ctr $IMAGE_LOWER:latest
@@ -729,9 +747,6 @@ jobs:
       contents: write
       packages: write
       id-token: write
-    container:
-      image: ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest
-      options: --privileged
     steps:
       - uses: actions/checkout@v4
       - name: Create Repo and Push OCI
@@ -759,10 +774,10 @@ jobs:
           # Create repositories and push micro-containers for each Tier plus the full repo
           for tier in tier0 tier1 tier2 tier3 ""; do
             if [ -n "$tier" ]; then
-              dir="/github/home/repo-${tier}"
+              dir="repo-cache-${tier}"
               img_name="ermete-os-forge-${tier}-repo:latest"
             else
-              dir="/github/home/repo"
+              dir="repo-cache"
               img_name="ermete-os-forge-repo:latest"
             fi
             
@@ -798,10 +813,10 @@ jobs:
           # Aggrega i tier e pubblica su GitHub Pages (Rolling Release)
           echo "🌐 Pubblicazione dei repository DNF su GitHub Pages (gh-pages branch)..."
           mkdir -p /github/home/pages_repo
-          cp -a /github/home/repo-tier0 /github/home/pages_repo/tier0
-          cp -a /github/home/repo-tier1 /github/home/pages_repo/tier1
-          cp -a /github/home/repo-tier2 /github/home/pages_repo/tier2
-          cp -a /github/home/repo-tier3 /github/home/pages_repo/tier3
+          cp -a repo-cache-tier0 /github/home/pages_repo/tier0
+          cp -a repo-cache-tier1 /github/home/pages_repo/tier1
+          cp -a repo-cache-tier2 /github/home/pages_repo/tier2
+          cp -a repo-cache-tier3 /github/home/pages_repo/tier3
           
           # Draft: Generazione payload UEFI HTTP Boot (iPXE) per Internet Recovery
           echo "🌐 Generazione payload UEFI HTTP Boot Internet Recovery..."
