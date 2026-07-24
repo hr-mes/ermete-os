@@ -53,3 +53,14 @@ jobs:
       with:
         name: ermete-chimera-kernel-srpm
         path: rpmbuild_out/SRPMS/*.src.rpm
+    - name: Publish Kernel Micro-Container OCI
+      run: |
+        sudo dnf install -y buildah
+        export STORAGE_DRIVER=overlay
+        export BUILDAH_ISOLATION=chroot
+        buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
+        ctr=$(buildah from scratch)
+        buildah copy $ctr rpmbuild_out/RPMS/x86_64/*.rpm /
+        IMAGE_LOWER=$(echo "ghcr.io/${{ github.repository_owner }}/ermete-os-kernel:latest" | tr '[:upper:]' '[:lower:]')
+        buildah commit --omit-timestamp $ctr $IMAGE_LOWER
+        buildah push $IMAGE_LOWER

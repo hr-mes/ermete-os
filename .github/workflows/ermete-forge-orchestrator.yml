@@ -3,6 +3,12 @@ name: 🌋 Ermete Forge Orchestrator
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'forge/**'
+      - '.github/workflows/ermete-forge-orchestrator.yml'
+  workflow_run:
+    workflows: ["🧬 Kernel Chimera Build"]
+    types: [completed]
   workflow_dispatch:
   schedule:
     - cron: '0 4 * * *'
@@ -188,7 +194,7 @@ jobs:
           export STORAGE_DRIVER=overlay
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
-          ctr=$(buildah from ghcr.io/${{ github.repository_owner }}/ermete-kernel-source:latest)
+          ctr=$(buildah from ghcr.io/${{ github.repository_owner }}/ermete-os-kernel:latest)
           buildah mount $ctr
           mnt=$(buildah mount $ctr)
           rpm -Uvh --oldpackage --replacepkgs --force $mnt/*.rpm
