@@ -11,6 +11,10 @@ defaults:
   run:
     working-directory: kernel
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build-rpm:
     name: Build Chimera Kernel RPM

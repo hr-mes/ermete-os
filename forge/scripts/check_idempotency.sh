@@ -57,11 +57,18 @@ else
     UPSTREAM_VER=""
   fi
   
+  # Invalidiamo la cache degli upstream (compilati da zero) ad ogni aggiornamento della Base Image
+  # per prevenire desincronizzazione librerie (es. libx265 per ffmpeg).
+  BASE_DIGEST=""
+  if command -v skopeo >/dev/null 2>&1; then
+    BASE_DIGEST=$(skopeo inspect --no-tags "docker://ghcr.io/${OWNER}/ermete-base-nvidia:latest" 2>/dev/null | grep -oP '"Digest": "\K[^"]+' || true)
+  fi
+  
   VERSION=${UPSTREAM_VER:-unknown}
   if [[ -n "$UPSTREAM_VER" ]]; then
-    CONTENT_HASH=$(echo -n "${PACKAGE}-${UPSTREAM_VER}" | sha256sum | awk '{print $1}')
+    CONTENT_HASH=$(echo -n "${PACKAGE}-${UPSTREAM_VER}-${BASE_DIGEST}" | sha256sum | awk '{print $1}')
   else
-    CONTENT_HASH=$(echo -n "${PACKAGE}-${VERSION}-upstream-v1" | sha256sum | awk '{print $1}')
+    CONTENT_HASH=$(echo -n "${PACKAGE}-${VERSION}-upstream-v1-${BASE_DIGEST}" | sha256sum | awk '{print $1}')
   fi
 fi
 
