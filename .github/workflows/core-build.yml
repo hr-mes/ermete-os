@@ -11,7 +11,7 @@ on:
     branches:
       - main
     paths:
-      - 'core/**'
+      - 'system/**'
       - '.github/workflows/core-build.yml'
   workflow_dispatch:
 
@@ -76,7 +76,7 @@ jobs:
             org.opencontainers.image.created=${{ steps.date.outputs.date }}
             org.opencontainers.image.description=${{ env.IMAGE_DESC }}
             org.opencontainers.image.documentation=https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/README.md
-            org.opencontainers.image.source=https://github.com/${{ github.repository }}/blob/${{ github.sha }}/core/Containerfile
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}/blob/${{ github.sha }}/system/Containerfile
             org.opencontainers.image.title=${{ env.IMAGE_NAME }}
             org.opencontainers.image.url=https://github.com/${{ github.repository }}/tree/${{ github.sha }}
             org.opencontainers.image.vendor=${{ github.repository_owner }}
@@ -102,8 +102,8 @@ jobs:
         id: build_push
         uses: docker/build-push-action@v6
         with:
-          context: ./core
-          file: ./core/Containerfile
+          context: ./system
+          file: ./system/Containerfile
           push: ${{ github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}

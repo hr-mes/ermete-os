@@ -1,0 +1,48 @@
+name: Ermete OS Chimera Kernel Build
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-rpm:
+    name: Build Chimera Kernel RPM
+    runs-on: self-hosted
+    steps:
+    - name: Checkout Source
+      uses: actions/checkout@v4
+      
+    - name: Build RPM Packages via Podman (Rootless)
+      run: |
+          # Creazione della directory ccache persistente sull'SSD locale
+          mkdir -p /home/ermete/.ccache_chimera
+          
+          # Esecuzione isolata via Podman con eccezioni SELinux/Seccomp per le policy W^X di Ermete OS
+          podman run --rm --security-opt label=disable --security-opt seccomp=unconfined -v ${{ github.workspace }}:/workspace -v /home/ermete/.ccache_chimera:/home/builder/.ccache -w /workspace fedora:latest bash -c "
+          set -e
+          dnf update -y
+          dnf install -y rpm-build rpmdevtools clang lld llvm make cmake bison flex elfutils-libelf-devel openssl-devel ncurses-devel rsync tar bc cpio python3 zstd jq curl git ccache openssl perl dwarves kmod
+          
+          # Assicura il ripristino permessi anche in caso di fallimento
+          trap \"chown -R 0:0 /workspace /home/builder/.ccache\" EXIT
+          
+          # Setup utente non privilegiato interno
+          useradd builder -m || true
+          echo 'builder ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+          chown -R builder:builder /workspace /home/builder
+          
+          # Avvio della compilazione
+          sudo -H -E -u builder bash -c \"export CC='ccache clang' && export CXX='ccache clang++' && ./build-kernel-rpm.sh\"
+          "
+          
+    - name: Upload Binary RPMs
+      uses: actions/upload-artifact@v4
+      with:
+        name: ermete-chimera-kernel-rpms
+        path: rpmbuild_out/RPMS/x86_64/*.rpm
+        
+    - name: Upload Source RPM
+      uses: actions/upload-artifact@v4
+      with:
+        name: ermete-chimera-kernel-srpm
+        path: rpmbuild_out/SRPMS/*.src.rpm

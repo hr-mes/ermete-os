@@ -133,7 +133,7 @@ jobs:
           
           # Install dynamic dependencies if generated
           if ls ~/rpmbuild/SRPMS/*.nosrc.rpm 1> /dev/null 2>&1; then
-              dnf builddep -y ~/rpmbuild/SRPMS/*.nosrc.rpm || true
+              sed -i 's/pkgconfig(openh264)/openh264-devel/g' /github/home/rpmbuild/SPECS/*.spec && dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SRPMS/*.nosrc.rpm || true
           fi
           
           # Workaround for Fedora 43 rust-sysinfo bug
@@ -239,7 +239,7 @@ jobs:
 
           echo "--- Patching nvidia-kmod spec per forzare LLVM=1 ---"
           rpm -ivh /usr/src/akmods/nvidia-kmod.latest.src.rpm
-          sed -i 's/make %{?_smp_mflags}/export IGNORE_CC_MISMATCH=1 LLVM=1 LLVM_IAS=1 KCFLAGS="-Wno-error -fno-lto"; make %{?_smp_mflags}/g' /github/home/rpmbuild/SPECS/nvidia-kmod.spec
+          sed -i 's/make %{?_smp_mflags}/export CCACHE_DISABLE=1 SCCACHE_DISABLE=1 IGNORE_CC_MISMATCH=1 LLVM=1 LLVM_IAS=1 KCFLAGS="-Wno-error -fno-lto"; make %{?_smp_mflags}/g' /github/home/rpmbuild/SPECS/nvidia-kmod.spec
           
           echo "--- Esecuzione diretta di rpmbuild (bypass akmods freeze) ---"
           if ! rpmbuild -bb --target x86_64 --define "kernels $REAL_KERNEL_VER" /github/home/rpmbuild/SPECS/nvidia-kmod.spec; then
@@ -463,7 +463,7 @@ jobs:
           rpm -ivh *.src.rpm
           
           echo "--- Risoluzione Dipendenze Estrema (su SPEC) ---"
-          dnf builddep -y ~/rpmbuild/SPECS/*.spec
+          sed -i 's/pkgconfig(openh264)/openh264-devel/g' /github/home/rpmbuild/SPECS/*.spec && dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SPECS/*.spec
           
           echo "--- Iniezione Dinamica Ponytail Ultra ---"
           for spec in ~/rpmbuild/SPECS/*.spec; do
@@ -562,7 +562,7 @@ jobs:
           rpm -ivh *.src.rpm
           
           echo "--- Risoluzione Dipendenze Estrema (su SPEC) ---"
-          dnf builddep -y ~/rpmbuild/SPECS/*.spec
+          sed -i 's/pkgconfig(openh264)/openh264-devel/g' /github/home/rpmbuild/SPECS/*.spec && dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SPECS/*.spec
           
           echo "--- Iniezione Dinamica Ponytail Ultra ---"
           for spec in ~/rpmbuild/SPECS/*.spec; do
@@ -662,7 +662,7 @@ jobs:
           rpm -ivh *.src.rpm
           
           echo "--- Risoluzione Dipendenze Estrema (su SPEC) ---"
-          dnf builddep -y ~/rpmbuild/SPECS/*.spec
+          sed -i 's/pkgconfig(openh264)/openh264-devel/g' /github/home/rpmbuild/SPECS/*.spec && dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SPECS/*.spec
           
           echo "--- Iniezione Dinamica Ponytail Ultra ---"
           for spec in ~/rpmbuild/SPECS/*.spec; do
