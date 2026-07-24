@@ -24,6 +24,7 @@ defaults:
 jobs:
   orchestrator-brain:
     name: 🧠 Orchestrator Brain
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     container:
       image: fedora:43
@@ -44,6 +45,7 @@ jobs:
 
   build-builder:
     name: 🏗️ Build Base Builder
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: read

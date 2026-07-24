@@ -25,6 +25,11 @@
 %define _without_selftests 1
 %define debug_package %{nil}
 
+# Disable shebang mangling and python bytecompilation to fix ambiguous python shebang errors
+%undefine __brp_mangle_shebangs
+%undefine __brp_python_bytecompile
+
+
 # Binary payload compression
 %define _binary_payload w1.zstdio
 %define _source_payload w1.zstdio
