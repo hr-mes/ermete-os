@@ -1,0 +1,14 @@
+name: Test MOK
+on:
+  push:
+    branches: [ test-mok ]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test
+        run: |
+          echo "MOK_PRIVATE_KEY starts with:"
+          echo "${{ secrets.MOK_PRIVATE_KEY }}" | head -n 1
+          echo "MOK_PUBLIC_DER starts with:"
+          echo "${{ secrets.MOK_PUBLIC_DER }}" | head -n 1
