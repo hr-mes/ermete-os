@@ -183,115 +183,125 @@ jobs:
       contents: read
       packages: write
       id-token: write
-    container:
-      image: ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest
-      options: --privileged
     steps:
       - uses: actions/checkout@v4
       - name: Resolve Kernel Version and Install Chimera Headers
         id: kernel
         run: |
-          curl -Lo /etc/yum.repos.d/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo
-          dnf install -y buildah
-          export STORAGE_DRIVER=overlay
-          export BUILDAH_ISOLATION=chroot
-          buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
-          ctr=$(buildah from ghcr.io/${{ github.repository_owner }}/ermete-os-kernel:latest)
-          buildah mount $ctr
-          mnt=$(buildah mount $ctr)
-          rpm -Uvh --oldpackage --replacepkgs --force $mnt/*.rpm
-          buildah umount $ctr
-          QUALIFIED_KERNEL=$(rpm -q --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}\n' kernel-devel | sort -V | tail -n 1)
-          QUALIFIED_NVIDIA=$(dnf repoquery --qf '%{VERSION}-%{RELEASE}\n' akmod-nvidia 2>/dev/null | sort -V | tail -n 1)
-          echo "kernel_ver=${QUALIFIED_KERNEL}" >> $GITHUB_OUTPUT
-          echo "nvidia_ver=${QUALIFIED_NVIDIA}" >> $GITHUB_OUTPUT
+          podman run --rm --security-opt label=disable --security-opt seccomp=unconfined \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
+            bash -c '
+              curl -Lo /etc/yum.repos.d/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo
+              dnf install -y buildah jq
+              export STORAGE_DRIVER=overlay
+              export BUILDAH_ISOLATION=chroot
+              # No need to buildah pull if we just podman run, but we are inside podman!
+              # Actually wait, we are inside podman running buildah? That requires --privileged.
+              # Let us just use buildah to pull and extract.
+              buildah from ghcr.io/${{ github.repository_owner }}/ermete-os-kernel:latest > ctr_id
+              ctr=$(cat ctr_id)
+              mnt=$(buildah mount $ctr)
+              rpm -Uvh --oldpackage --replacepkgs --force $mnt/*.rpm
+              buildah umount $ctr
+              QUALIFIED_KERNEL=$(rpm -q --queryformat "%{VERSION}-%{RELEASE}.%{ARCH}\n" kernel-devel | sort -V | tail -n 1)
+              QUALIFIED_NVIDIA=$(dnf repoquery --qf "%{VERSION}-%{RELEASE}\n" akmod-nvidia 2>/dev/null | sort -V | tail -n 1)
+              echo "QUALIFIED_KERNEL=$QUALIFIED_KERNEL" > /workspace/kernel_info
+              echo "QUALIFIED_NVIDIA=$QUALIFIED_NVIDIA" >> /workspace/kernel_info
+            '
+          echo "kernel_ver=$(grep QUALIFIED_KERNEL kernel_info | cut -d= -f2)" >> $GITHUB_OUTPUT
+          echo "nvidia_ver=$(grep QUALIFIED_NVIDIA kernel_info | cut -d= -f2)" >> $GITHUB_OUTPUT
+
       - name: Cache RPMs
         id: cache
         uses: actions/cache@v4
         with:
-          path: /var/cache/akmods/nvidia/
+          path: nvidia_cache/
           key: rpm-nvidia-bedrock3-${{ steps.kernel.outputs.kernel_ver }}-${{ steps.kernel.outputs.nvidia_ver }}
 
       - name: Install Dependencies and Build
         if: steps.cache.outputs['cache-hit'] != 'true'
         run: |
-          REAL_KERNEL_VER=$(ls /usr/src/kernels/ | head -n 1)
-          echo "Real kernel version is $REAL_KERNEL_VER"
-          
-          if [ -z "$REAL_KERNEL_VER" ]; then
-            echo "::error::REAL_KERNEL_VER is empty! The custom kernel-devel RPM was not found in the downloaded artifact. Wait for ermete-kernel-source to finish building and publishing the new artifact with kernel-devel. Aborting to prevent DNF from pulling an incompatible Fedora kernel-devel that causes akmods to hang."
-            exit 1
-          fi
+          mkdir -p ${{ github.workspace }}/nvidia_cache
+          podman run --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+            -v ${{ github.workspace }}:/workspace \
+            -v ${{ github.workspace }}/nvidia_cache:/var/cache/akmods/nvidia \
+            -w /workspace \
+            -e MOK_PRIVATE_KEY="${{ secrets.MOK_PRIVATE_KEY }}" \
+            -e MOK_PUBLIC_DER="${{ secrets.MOK_PUBLIC_DER }}" \
+            ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
+            bash -c '
+              # Setup repo again
+              curl -Lo /etc/yum.repos.d/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo
+              # Extract kernel headers again (since this is a new container)
+              dnf install -y buildah jq
+              export STORAGE_DRIVER=overlay
+              export BUILDAH_ISOLATION=chroot
+              ctr=$(buildah from ghcr.io/${{ github.repository_owner }}/ermete-os-kernel:latest)
+              mnt=$(buildah mount $ctr)
+              rpm -Uvh --oldpackage --replacepkgs --force $mnt/*.rpm
+              buildah umount $ctr
+              
+              REAL_KERNEL_VER=$(ls /usr/src/kernels/ | head -n 1)
+              echo "Real kernel version is $REAL_KERNEL_VER"
+              
+              if [ -z "$REAL_KERNEL_VER" ]; then
+                echo "::error::REAL_KERNEL_VER is empty!"
+                exit 1
+              fi
 
-          dnf install -y akmods akmod-nvidia gcc gcc-c++ make elfutils-libelf-devel openssl-devel rpm-build rpmdevtools clang lld llvm
+              dnf install -y akmods akmod-nvidia gcc gcc-c++ make elfutils-libelf-devel openssl-devel rpm-build rpmdevtools clang lld llvm
 
-          mkdir -p /lib/modules/$REAL_KERNEL_VER
-          ln -sf /usr/src/kernels/$REAL_KERNEL_VER /lib/modules/$REAL_KERNEL_VER/build
-          mkdir -p /etc/pki/akmods/certs /etc/pki/akmods/private
-          echo "::add-mask::${{ secrets.MOK_PRIVATE_KEY }}"
-          echo "${{ secrets.MOK_PRIVATE_KEY }}" | base64 -d > /etc/pki/akmods/private/private_key.priv
-          echo "::add-mask::${{ secrets.MOK_PUBLIC_DER }}"
-          echo "${{ secrets.MOK_PUBLIC_DER }}" | base64 -d > /etc/pki/akmods/certs/public_key.der
-          cp config/rpmmacros /etc/rpm/macros.98-config
-          chmod 600 /etc/pki/akmods/private/private_key.priv
+              mkdir -p /lib/modules/$REAL_KERNEL_VER
+              ln -sf /usr/src/kernels/$REAL_KERNEL_VER /lib/modules/$REAL_KERNEL_VER/build
+              mkdir -p /etc/pki/akmods/certs /etc/pki/akmods/private
+              echo "$MOK_PRIVATE_KEY" | base64 -d > /etc/pki/akmods/private/private_key.priv
+              echo "$MOK_PUBLIC_DER" | base64 -d > /etc/pki/akmods/certs/public_key.der
+              cp config/rpmmacros /etc/rpm/macros.98-config
+              chmod 600 /etc/pki/akmods/private/private_key.priv
 
-          # [BEDROCK UNIFICATION] The kernel is built with Clang and LLD.
-          # We must instruct rpmbuild to use Clang and LLD as well, otherwise it defaults to GCC
-          # and injects `-ffat-lto-objects` which causes Clang to fail during `make`.
-          # We also MUST inject the exports into `%__spec_build_pre` because rpmbuild strips environment variables!
-          cat << 'MACRO' > /etc/rpm/macros.99-akmods
-          %_ldflags -Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro
-          %optflags %{__global_compiler_flags} -O3 -march=x86-64-v3 -pipe -Wno-error
-          %kcflags -O3 -march=x86-64-v3 -pipe -Wno-error
-          MACRO
+              echo -e "%_ldflags -Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro\n%optflags %{__global_compiler_flags} -O3 -march=x86-64-v3 -pipe -Wno-error\n%kcflags -O3 -march=x86-64-v3 -pipe -Wno-error" > /etc/rpm/macros.99-akmods
 
-          echo "--- Patching nvidia-kmod spec per forzare LLVM=1 ---"
-          rpm -ivh /usr/src/akmods/nvidia-kmod.latest.src.rpm
-          sed -i 's/make %{?_smp_mflags}/export CCACHE_DISABLE=1 SCCACHE_DISABLE=1 IGNORE_CC_MISMATCH=1 LLVM=1 LLVM_IAS=1 KCFLAGS="-Wno-error -fno-lto"; make %{?_smp_mflags}/g' /github/home/rpmbuild/SPECS/nvidia-kmod.spec
-          
-          echo "--- Esecuzione diretta di rpmbuild (bypass akmods freeze) ---"
-          if ! rpmbuild -bb --target x86_64 --define "kernels $REAL_KERNEL_VER" /github/home/rpmbuild/SPECS/nvidia-kmod.spec; then
-            echo "::error::rpmbuild fallito!"
-            exit 1
-          fi
-          
-          # Sposta l'RPM compilato dove se lo aspetta il resto dello script
-          find /github/home/rpmbuild/RPMS -name "*.rpm" -exec cp {} /var/cache/akmods/nvidia/ \;
-          
-          # [BEDROCK UNIFICATION] Download userspace NVIDIA drivers, Wayland EGL, persistenced, and container toolkit
-          # into the micro-container so they are encapsulated natively without remote DNF calls during OSTree build.
-          # [BEDROCK] TODO: Implement Hermetic Build Lockfile for userspace drivers to avoid Negativo17 race conditions
-          dnf download -y --resolve --alldeps --disablerepo="rpmfusion*" --destdir=/var/cache/akmods/nvidia/ \
-            nvidia-driver \
-            nvidia-driver-libs \
-            nvidia-driver-cuda \
-            nvidia-driver-cuda-libs \
-            nvidia-driver-selinux \
-            nvidia-persistenced \
-            nvidia-settings \
-            egl-wayland \
-            egl-gbm \
-            egl-wayland2 \
-            golang-github-nvidia-container-toolkit
+              rpm -ivh /usr/src/akmods/nvidia-kmod.latest.src.rpm
+              sed -i "s/make %{?_smp_mflags}/export CCACHE_DISABLE=1 SCCACHE_DISABLE=1 IGNORE_CC_MISMATCH=1 LLVM=1 LLVM_IAS=1 KCFLAGS=\"-Wno-error -fno-lto\"; make %{?_smp_mflags}/g" /github/home/rpmbuild/SPECS/nvidia-kmod.spec
+              
+              if ! rpmbuild -bb --target x86_64 --define "kernels $REAL_KERNEL_VER" /github/home/rpmbuild/SPECS/nvidia-kmod.spec; then
+                echo "::error::rpmbuild fallito!"
+                exit 1
+              fi
+              
+              find /github/home/rpmbuild/RPMS -name "*.rpm" -exec cp {} /var/cache/akmods/nvidia/ \;
+              
+              dnf download -y --resolve --alldeps --disablerepo="rpmfusion*" --destdir=/var/cache/akmods/nvidia/ \
+                nvidia-driver \
+                nvidia-driver-libs \
+                nvidia-driver-cuda \
+                nvidia-driver-cuda-libs \
+                nvidia-driver-selinux \
+                nvidia-persistenced \
+                nvidia-settings \
+                egl-wayland \
+                egl-gbm \
+                egl-wayland2 \
+                golang-github-nvidia-container-toolkit
 
-          # [BEDROCK CHECK] Se l'RPM non esiste o mancano i driver userspace, facciamo fallire esplicitamente lo step 
-          # per evitare che GitHub Actions salvi una cache vuota o incompleta "corrotta".
-          ls /var/cache/akmods/nvidia/kmod-nvidia*.rpm && ls /var/cache/akmods/nvidia/nvidia-driver-*.rpm || { 
-            echo "ERRORE CRITICO: RPM NVIDIA (kmod o userspace driver) non generati/scaricati! Pulisco la directory per invalidare la cache."; 
-            rm -rf /var/cache/akmods/nvidia/*; 
-            exit 1; 
-          }
+              ls /var/cache/akmods/nvidia/kmod-nvidia*.rpm && ls /var/cache/akmods/nvidia/nvidia-driver-*.rpm || { 
+                echo "ERRORE CRITICO: RPM NVIDIA (kmod o userspace driver) non generati/scaricati! Pulisco la directory per invalidare la cache."; 
+                rm -rf /var/cache/akmods/nvidia/*; 
+                exit 1; 
+              }
+            '          
       - name: Publish Micro-Container OCI
         if: steps.cache.outputs['cache-hit'] != 'true'
         run: |
-          dnf install -y buildah
           export STORAGE_DRIVER=overlay
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
-          buildah copy $ctr /var/cache/akmods/nvidia/*.rpm /
+          buildah copy $ctr ${{ github.workspace }}/nvidia_cache/*.rpm /
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-nvidia:latest" | tr '[:upper:]' '[:lower:]')
-          buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
+          buildah config --label tier.content.sha256="${{ steps.kernel.outputs.nvidia_ver }}" $ctr
           buildah commit --omit-timestamp $ctr $IMAGE_LOWER
           buildah push $IMAGE_LOWER
 
