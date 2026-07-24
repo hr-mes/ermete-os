@@ -161,7 +161,6 @@ jobs:
       - name: Publish Micro-Container OCI
         if: steps.check.outputs.skip != 'true'
         run: |
-          dnf install -y buildah
           export STORAGE_DRIVER=overlay
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
@@ -258,7 +257,7 @@ jobs:
               mkdir -p /lib/modules/$REAL_KERNEL_VER
               ln -sf /usr/src/kernels/$REAL_KERNEL_VER /lib/modules/$REAL_KERNEL_VER/build
               mkdir -p /etc/pki/akmods/certs /etc/pki/akmods/private
-              echo "$MOK_PRIVATE_KEY" | base64 -d > /etc/pki/akmods/private/private_key.priv
+              echo "$MOK_PRIVATE_KEY" > /etc/pki/akmods/private/private_key.priv
               echo "$MOK_PUBLIC_DER" | base64 -d > /etc/pki/akmods/certs/public_key.der
               cp forge/config/rpmmacros /etc/rpm/macros.98-config
               chmod 600 /etc/pki/akmods/private/private_key.priv
@@ -415,7 +414,6 @@ jobs:
       - name: Publish Micro-Container OCI
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
-          dnf install -y buildah
           export STORAGE_DRIVER=overlay
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
@@ -518,7 +516,6 @@ jobs:
       - name: Publish Micro-Container OCI
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
-          dnf install -y buildah
           export STORAGE_DRIVER=overlay
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
@@ -621,7 +618,6 @@ jobs:
       - name: Publish Micro-Container OCI
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
-          dnf install -y buildah
           export STORAGE_DRIVER=overlay
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
@@ -725,7 +721,6 @@ jobs:
       - name: Publish Micro-Container OCI
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
-          dnf install -y buildah
           export STORAGE_DRIVER=overlay
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
@@ -751,101 +746,107 @@ jobs:
       - uses: actions/checkout@v4
       - name: Create Repo and Push OCI
         run: |
-          dnf install -y createrepo_c buildah skopeo jq rpm-sign gnupg2
-          
-          # Setup GPG for RPM signing
-          echo "::add-mask::${{ secrets.RPM_GPG_PASSPHRASE }}"
-          echo "${{ secrets.RPM_GPG_KEY }}" | gpg --import || true
-          cat << 'EOF' > ~/.rpmmacros
-          %_signature gpg
-          %_gpg_name ermete
-          %__gpg_sign_cmd %{__gpg} --batch --verbose --no-armor --passphrase "${RPM_GPG_PASSPHRASE}" --pinentry-mode loopback --no-secmem-warning -u "%{_gpg_name}" -sbo %{__signature_filename} --digest-algo sha256 %{__plaintext_filename}
+          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace/forge \
+            ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
+            bash <<'EOF'
+            dnf install -y createrepo_c buildah skopeo jq rpm-sign gnupg2
+            
+            # Setup GPG for RPM signing
+            echo "::add-mask::${{ secrets.RPM_GPG_PASSPHRASE }}"
+            echo "${{ secrets.RPM_GPG_KEY }}" | gpg --import || true
+            cat << 'EOF' > ~/.rpmmacros
+            %_signature gpg
+            %_gpg_name ermete
+            %__gpg_sign_cmd %{__gpg} --batch --verbose --no-armor --passphrase "${RPM_GPG_PASSPHRASE}" --pinentry-mode loopback --no-secmem-warning -u "%{_gpg_name}" -sbo %{__signature_filename} --digest-algo sha256 %{__plaintext_filename}
           EOF
-          export RPM_GPG_PASSPHRASE="${{ secrets.RPM_GPG_PASSPHRASE }}"
-          
-          # Fetch RPMs dynamically from micro-containers and organize by Tier
-          echo "${{ secrets.GITHUB_TOKEN }}" | buildah login ghcr.io -u ${{ github.actor }} --password-stdin
-          bash scripts/fetch_repo_rpms.sh ${{ github.repository_owner }}
-          
-          export STORAGE_DRIVER=overlay
-          export BUILDAH_ISOLATION=chroot
-          buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
-          
-          # Create repositories and push micro-containers for each Tier plus the full repo
-          for tier in tier0 tier1 tier2 tier3 ""; do
-            if [ -n "$tier" ]; then
-              dir="repo-cache-${tier}"
-              img_name="ermete-os-forge-${tier}-repo:latest"
-            else
-              dir="repo-cache"
-              img_name="ermete-os-forge-repo:latest"
-            fi
+            export RPM_GPG_PASSPHRASE="${{ secrets.RPM_GPG_PASSPHRASE }}"
             
-            IMAGE_LOWER=$(echo "ghcr.io/${{ github.repository_owner }}/$img_name" | tr '[:upper:]' '[:lower:]')
-            NEW_HASH=$(find "$dir" -maxdepth 1 -name '*.rpm' -type f | sort | xargs -r sha256sum | sha256sum | awk '{print $1}')
-            OLD_HASH=$(skopeo inspect --config "docker://$IMAGE_LOWER" 2>/dev/null | jq -r '.config.Labels["tier.content.sha256"] // ""' || echo "")
+            # Fetch RPMs dynamically from micro-containers and organize by Tier
+            echo "${{ secrets.GITHUB_TOKEN }}" | buildah login ghcr.io -u ${{ github.actor }} --password-stdin
+            bash scripts/fetch_repo_rpms.sh ${{ github.repository_owner }}
             
-            if [ -n "$OLD_HASH" ] && [ "$NEW_HASH" = "$OLD_HASH" ]; then
-              echo "✅ Tier '$tier' ($img_name): RPM content hash unchanged ($NEW_HASH). Skipping createrepo_c & push to freeze Tier OCI cache!"
-              continue
-            fi
+            export STORAGE_DRIVER=overlay
+            export BUILDAH_ISOLATION=chroot
+            buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
             
-            echo "----------------------------------------"
-            echo "🚀 Tier '$tier' ($img_name): content hash changed (old: '$OLD_HASH', new: '$NEW_HASH'). Creating metadata & pushing..."
-            cd "$dir"
+            # Create repositories and push micro-containers for each Tier plus the full repo
+            for tier in tier0 tier1 tier2 tier3 ""; do
+              if [ -n "$tier" ]; then
+                dir="repo-cache-${tier}"
+                img_name="ermete-os-forge-${tier}-repo:latest"
+              else
+                dir="repo-cache"
+                img_name="ermete-os-forge-repo:latest"
+              fi
+              
+              IMAGE_LOWER=$(echo "ghcr.io/${{ github.repository_owner }}/$img_name" | tr '[:upper:]' '[:lower:]')
+              NEW_HASH=$(find "$dir" -maxdepth 1 -name '*.rpm' -type f | sort | xargs -r sha256sum | sha256sum | awk '{print $1}')
+              OLD_HASH=$(skopeo inspect --config "docker://$IMAGE_LOWER" 2>/dev/null | jq -r '.config.Labels["tier.content.sha256"] // ""' || echo "")
+              
+              if [ -n "$OLD_HASH" ] && [ "$NEW_HASH" = "$OLD_HASH" ]; then
+                echo "✅ Tier '$tier' ($img_name): RPM content hash unchanged ($NEW_HASH). Skipping createrepo_c & push to freeze Tier OCI cache!"
+                continue
+              fi
+              
+              echo "----------------------------------------"
+              echo "🚀 Tier '$tier' ($img_name): content hash changed (old: '$OLD_HASH', new: '$NEW_HASH'). Creating metadata & pushing..."
+              cd "$dir"
+              
+              # Sign the RPMs only if a GPG key is configured
+              if [ -n "${{ secrets.RPM_GPG_KEY }}" ]; then
+                find . -name "*.rpm" -exec rpmsign --addsign {} + || true
+              fi
+              
+              createrepo_c .
+              
+              ctr=$(buildah from scratch)
+              buildah copy $ctr "$dir" /
+              buildah config --label tier.content.sha256="$NEW_HASH" $ctr
+              buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
+              buildah commit --omit-timestamp $ctr "$IMAGE_LOWER"
+              buildah push "$IMAGE_LOWER"
+              buildah rm "$ctr"
+            done
+  
+            # Aggrega i tier e pubblica su GitHub Pages (Rolling Release)
+            echo "🌐 Pubblicazione dei repository DNF su GitHub Pages (gh-pages branch)..."
+            mkdir -p /workspace/pages_repo
+            cp -a repo-cache-tier0 /workspace/pages_repo/tier0
+            cp -a repo-cache-tier1 /workspace/pages_repo/tier1
+            cp -a repo-cache-tier2 /workspace/pages_repo/tier2
+            cp -a repo-cache-tier3 /workspace/pages_repo/tier3
             
-            # Sign the RPMs only if a GPG key is configured
-            if [ -n "${{ secrets.RPM_GPG_KEY }}" ]; then
-              find . -name "*.rpm" -exec rpmsign --addsign {} + || true
-            fi
-            
-            createrepo_c .
-            
-            ctr=$(buildah from scratch)
-            buildah copy $ctr "$dir" /
-            buildah config --label tier.content.sha256="$NEW_HASH" $ctr
-            buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
-            buildah commit --omit-timestamp $ctr "$IMAGE_LOWER"
-            buildah push "$IMAGE_LOWER"
-            buildah rm "$ctr"
-          done
-
-          # Aggrega i tier e pubblica su GitHub Pages (Rolling Release)
-          echo "🌐 Pubblicazione dei repository DNF su GitHub Pages (gh-pages branch)..."
-          mkdir -p /github/home/pages_repo
-          cp -a repo-cache-tier0 /github/home/pages_repo/tier0
-          cp -a repo-cache-tier1 /github/home/pages_repo/tier1
-          cp -a repo-cache-tier2 /github/home/pages_repo/tier2
-          cp -a repo-cache-tier3 /github/home/pages_repo/tier3
-          
-          # Draft: Generazione payload UEFI HTTP Boot (iPXE) per Internet Recovery
-          echo "🌐 Generazione payload UEFI HTTP Boot Internet Recovery..."
-          dnf install -y ipxe-bootimgs git
-          mkdir -p /github/home/pages_repo/recovery
-          cp /usr/share/ipxe/ipxe-x86_64.efi /github/home/pages_repo/recovery/ipxe.efi
-          cat << 'EOF' > /github/home/pages_repo/recovery/boot.ipxe
-          #!ipxe
-          dhcp
-          chain https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/recovery/menu.ipxe || shell
+            # Draft: Generazione payload UEFI HTTP Boot (iPXE) per Internet Recovery
+            echo "🌐 Generazione payload UEFI HTTP Boot Internet Recovery..."
+            dnf install -y ipxe-bootimgs git
+            mkdir -p /workspace/pages_repo/recovery
+            cp /usr/share/ipxe/ipxe-x86_64.efi /workspace/pages_repo/recovery/ipxe.efi
+            cat << 'EOF' > /workspace/pages_repo/recovery/boot.ipxe
+            #!ipxe
+            dhcp
+            chain https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/recovery/menu.ipxe || shell
           EOF
-          
-          cd /github/home/pages_repo
-          git init
-          git config --global user.name "Ermete Forge"
-          git config --global user.email "forge@ermete.os"
-          git config --global --add safe.directory /github/home/pages_repo
-          git checkout -b gh-pages
-          
-          echo "🧹 Rimozione file > 95MB per rispettare i limiti di GitHub Pages..."
-          find /github/home/pages_repo -type f -name "*.rpm" -size +95M -exec rm -v {} \;
-          
-          echo "🔄 Rigenerazione metadata DNF per GitHub Pages..."
-          for tier_dir in /github/home/pages_repo/tier*; do
-            if [ -d "$tier_dir" ]; then
-              createrepo_c "$tier_dir"
-            fi
-          done
-
-          git add .
-          git commit -m "🚀 Deploy DNF repositories for Ermete OS Rolling Release"
-          git push -f "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" gh-pages
+            
+            cd /workspace/pages_repo
+            git init
+            git config --global user.name "Ermete Forge"
+            git config --global user.email "forge@ermete.os"
+            git config --global --add safe.directory /workspace/pages_repo
+            git checkout -b gh-pages
+            
+            echo "🧹 Rimozione file > 95MB per rispettare i limiti di GitHub Pages..."
+            find /workspace/pages_repo -type f -name "*.rpm" -size +95M -exec rm -v {} \;
+            
+            echo "🔄 Rigenerazione metadata DNF per GitHub Pages..."
+            for tier_dir in /workspace/pages_repo/tier*; do
+              if [ -d "$tier_dir" ]; then
+                createrepo_c "$tier_dir"
+              fi
+            done
+  
+            git add .
+            git commit -m "🚀 Deploy DNF repositories for Ermete OS Rolling Release"
+            git push -f "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" gh-pages
+          EOF
