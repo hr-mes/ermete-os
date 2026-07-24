@@ -52,7 +52,7 @@ else
   # Pacchetti upstream senza spec locale
   if command -v dnf >/dev/null 2>&1; then
     # Cerchiamo la versione effettiva nei repository abilitati
-    UPSTREAM_VER=$(dnf repoquery --qf "%{VERSION}-%{RELEASE}" --arch x86_64,noarch "$PACKAGE" 2>/dev/null | sort -V | tail -n 1 || true)
+    UPSTREAM_VER=$(dnf repoquery --qf "%{VERSION}-%{RELEASE}\n" --arch x86_64,noarch "$PACKAGE" 2>/dev/null | sort -V | tail -n 1 || true)
   else
     UPSTREAM_VER=""
   fi
@@ -66,7 +66,7 @@ else
   
   VERSION=${UPSTREAM_VER:-unknown}
   if [[ -n "$UPSTREAM_VER" ]]; then
-    CONTENT_HASH=$(echo -n "${PACKAGE}-${UPSTREAM_VER}-${BASE_DIGEST}" | sha256sum | awk '{print $1}')
+    CONTENT_HASH=$(echo -n "${PACKAGE}-${UPSTREAM_VER}-${BASE_DIGEST}-v2" | sha256sum | awk '{print $1}')
   else
     CONTENT_HASH=$(echo -n "${PACKAGE}-${VERSION}-upstream-v1-${BASE_DIGEST}" | sha256sum | awk '{print $1}')
   fi
