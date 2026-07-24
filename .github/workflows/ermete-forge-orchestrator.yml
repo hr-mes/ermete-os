@@ -242,16 +242,7 @@ jobs:
             export KCFLAGS="-Wno-error -fno-lto"\
             export CFLAGS="-Wno-error -fno-lto"\
             export LLVM=1\
-            export LLVM_IAS=1\
-            export CC=clang\
-            export CXX=clang++\
-            export LD=ld.lld\
-            export AR=llvm-ar\
-            export NM=llvm-nm\
-            export STRIP=llvm-strip\
-            export OBJCOPY=llvm-objcopy\
-            export OBJDUMP=llvm-objdump\
-            export READELF=llvm-readelf
+            export LLVM_IAS=1
           MACRO
 
           akmods --force --kernels $REAL_KERNEL_VER
@@ -368,7 +359,7 @@ jobs:
           rpm -ivh *.src.rpm
           
           echo "--- Risoluzione Dipendenze Estrema (su SPEC) ---"
-          dnf builddep -y ~/rpmbuild/SPECS/*.spec
+          dnf builddep -y --allowerasing ~/rpmbuild/SPECS/*.spec
           
           echo "--- Iniezione Dinamica Ponytail Ultra ---"
           for spec in ~/rpmbuild/SPECS/*.spec; do
