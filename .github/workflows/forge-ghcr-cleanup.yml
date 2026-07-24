@@ -1,4 +1,4 @@
-name: GHCR Garbage Collection
+name: 🧹 Forge GHCR Cleanup
 
 on:
   schedule:

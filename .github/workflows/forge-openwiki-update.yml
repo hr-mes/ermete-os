@@ -1,4 +1,4 @@
-name: OpenWiki Update
+name: 📖 Forge Wiki Update
 
 on:
   workflow_dispatch:

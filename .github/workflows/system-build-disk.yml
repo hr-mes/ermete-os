@@ -1,5 +1,5 @@
 ---
-name: Build disk images
+name: 💾 System Disk/ISO Build
 
 on:
   workflow_dispatch:

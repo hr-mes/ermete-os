@@ -1,5 +1,5 @@
 ---
-name: Build container image
+name: 💿 System Image Build
 on:
   workflow_run:
     workflows: ["🌋 Ermete Forge Orchestrator"]

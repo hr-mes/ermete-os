@@ -1,4 +1,4 @@
-name: OpenWiki Update
+name: 📖 System Wiki Update
 
 on:
   workflow_dispatch:
