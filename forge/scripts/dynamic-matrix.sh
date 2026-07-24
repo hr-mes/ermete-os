@@ -32,7 +32,7 @@ process_array() {
     
     local image_name="ermete-os-forge-${prefix}${pkg}"
     local out
-    out=$(bash scripts/check_idempotency.sh --package "$pkg" --registry "$REGISTRY" --owner "$OWNER" --image-name "$image_name" 2>/dev/null)
+    out=$(podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN:-}" -v "$(pwd):/workspace" -w /workspace ghcr.io/${OWNER}/ermete-os-builder:latest bash scripts/check_idempotency.sh --package "$pkg" --registry "$REGISTRY" --owner "$OWNER" --image-name "$image_name" 2>/dev/null)
     
     if echo "$out" | grep -q "CACHE_HIT=false"; then
       active_pkgs+=("$pkg")
