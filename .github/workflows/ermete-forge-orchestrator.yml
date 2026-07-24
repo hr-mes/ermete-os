@@ -257,8 +257,12 @@ jobs:
               mkdir -p /lib/modules/$REAL_KERNEL_VER
               ln -sf /usr/src/kernels/$REAL_KERNEL_VER /lib/modules/$REAL_KERNEL_VER/build
               mkdir -p /etc/pki/akmods/certs /etc/pki/akmods/private
-              echo "$MOK_PRIVATE_KEY" > /etc/pki/akmods/private/private_key.priv
-              echo "$MOK_PUBLIC_DER" | base64 -d > /etc/pki/akmods/certs/public_key.der
+              if [ -n "$MOK_PRIVATE_KEY" ]; then
+                echo "$MOK_PRIVATE_KEY" > /etc/pki/akmods/private/private_key.priv
+              fi
+              if [ -n "$MOK_PUBLIC_DER" ]; then
+                echo "$MOK_PUBLIC_DER" | base64 -d > /etc/pki/akmods/certs/public_key.der
+              fi
               cp forge/config/rpmmacros /etc/rpm/macros.98-config
               chmod 600 /etc/pki/akmods/private/private_key.priv
 
