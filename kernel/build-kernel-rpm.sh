@@ -6,7 +6,7 @@ echo " ERMETE OS CHIMERA KERNEL - RPM BUILDER"
 echo "========================================================="
 
 WORKSPACE_DIR="/workspace"
-RPMBUILD_DIR="$WORKSPACE_DIR/rpmbuild_out"
+RPMBUILD_DIR="$WORKSPACE_DIR/kernel/rpmbuild_out"
 
 echo ">>> Preparazione ambiente rpmbuild isolato..."
 mkdir -p "$RPMBUILD_DIR"/{BUILD,RPMS,SOURCES,SPECS,SRPMS}

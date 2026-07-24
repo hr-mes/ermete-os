@@ -41,7 +41,8 @@ RUN --mount=type=bind,from=ghcr.io/patapem/ermete-os-forge-tier0-repo:latest,sou
         rpm -Uvh --replacefiles --replacepkgs --nodeps /mnt/tier0-repo/ermete-base-config*.rpm; \
     fi && \
     echo "Tier 0: Installing Bedrock hardware, kernel Chimera & NVIDIA dependencies..." && \
-    dnf5 install -y --allowerasing --setopt=install_weak_deps=False --setopt=tsflags=nodocs /mnt/tier0-repo/*.rpm && \
+    RPM_LIST=$(find /mnt/tier0-repo -name "*.rpm" ! -name "systemd-standalone-*.rpm" ! -name "systemd-tests-*.rpm" ! -name "*-devel-*.rpm" ! -name "*-debuginfo-*.rpm" ! -name "*-debugsource-*.rpm") && \
+    dnf5 install -y --allowerasing --setopt=install_weak_deps=False --setopt=tsflags=nodocs $RPM_LIST && \
     rm -rf /usr/lib/firmware/{mellanox,qlogic,netronome,liquidio,cxgb4,bnx2x,cavium,dpaa2,amdgpu,radeon,nouveau,intel} && \
     shopt -s nullglob && \
     docs=(/usr/share/doc/* /usr/share/man/* /usr/share/info/* /usr/share/gtk-doc/* /usr/share/help/*) && \
@@ -73,7 +74,8 @@ RUN --mount=type=bind,from=ghcr.io/patapem/ermete-os-forge-tier1-repo:latest,sou
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
     if ls /mnt/tier1-repo/*.rpm 1> /dev/null 2>&1; then \
         echo "Tier 1: Installing Display Server & Core Userspace Services..." && \
-        dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs /mnt/tier1-repo/*.rpm; \
+        RPM_LIST=$(find /mnt/tier1-repo -name "*.rpm" ! -name "*-devel-*.rpm" ! -name "*-debuginfo-*.rpm" ! -name "*-debugsource-*.rpm") && \
+        dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs $RPM_LIST; \
     fi
 
 # TIER 2: DESIGN SYSTEM & STATIC ASSETS (~18 MB)
@@ -81,7 +83,8 @@ RUN --mount=type=bind,from=ghcr.io/patapem/ermete-os-forge-tier2-repo:latest,sou
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
     if ls /mnt/tier2-repo/*.rpm 1> /dev/null 2>&1; then \
         echo "Tier 2: Installing Design System & Static Assets..." && \
-        dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs /mnt/tier2-repo/*.rpm; \
+        RPM_LIST=$(find /mnt/tier2-repo -name "*.rpm" ! -name "*-devel-*.rpm" ! -name "*-debuginfo-*.rpm" ! -name "*-debugsource-*.rpm") && \
+        dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs $RPM_LIST; \
     fi
 
 # TIER 3: AGILE RUST SHELL & APPS (~8 MB - Instant Live Swap Layer)
@@ -89,7 +92,8 @@ RUN --mount=type=bind,from=ghcr.io/patapem/ermete-os-forge-tier3-repo:latest,sou
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/lib/dnf --mount=type=cache,dst=/var/cache/libdnf5 \
     if ls /mnt/tier3-repo/*.rpm 1> /dev/null 2>&1; then \
         echo "Tier 3: Installing Agile Rust Shell & Apps..." && \
-        dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs /mnt/tier3-repo/*.rpm; \
+        RPM_LIST=$(find /mnt/tier3-repo -name "*.rpm" ! -name "*-devel-*.rpm" ! -name "*-debuginfo-*.rpm" ! -name "*-debugsource-*.rpm") && \
+        dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs $RPM_LIST; \
     fi
 
 ### BEDROCK SELINUX (Declarative Compilation)
