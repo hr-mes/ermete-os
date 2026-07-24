@@ -207,14 +207,15 @@ jobs:
       - name: Install Dependencies and Build
         if: steps.cache.outputs['cache-hit'] != 'true'
         run: |
-          dnf install -y akmods akmod-nvidia gcc gcc-c++ make elfutils-libelf-devel openssl-devel rpm-build rpmdevtools clang lld llvm
           REAL_KERNEL_VER=$(ls /usr/src/kernels/ | head -n 1)
           echo "Real kernel version is $REAL_KERNEL_VER"
           
           if [ -z "$REAL_KERNEL_VER" ]; then
-            echo "::error::REAL_KERNEL_VER is empty! kernel-devel package is likely missing or failed to install. Aborting to prevent akmods hang."
+            echo "::error::REAL_KERNEL_VER is empty! The custom kernel-devel RPM was not found in the downloaded artifact. Wait for ermete-kernel-source to finish building and publishing the new artifact with kernel-devel. Aborting to prevent DNF from pulling an incompatible Fedora kernel-devel that causes akmods to hang."
             exit 1
           fi
+
+          dnf install -y akmods akmod-nvidia gcc gcc-c++ make elfutils-libelf-devel openssl-devel rpm-build rpmdevtools clang lld llvm
 
           mkdir -p /lib/modules/$REAL_KERNEL_VER
           ln -sf /usr/src/kernels/$REAL_KERNEL_VER /lib/modules/$REAL_KERNEL_VER/build
@@ -358,7 +359,7 @@ jobs:
           
           echo "--- Risoluzione Dipendenze Estrema (su SPEC) ---"
           dnf remove -y openh264 openh264-devel mozilla-openh264 || true
-          dnf builddep -y --allowerasing ~/rpmbuild/SPECS/*.spec
+          dnf builddep -y --allowerasing --disablerepo="*cisco*" ~/rpmbuild/SPECS/*.spec
           
           echo "--- Iniezione Dinamica Ponytail Ultra ---"
           for spec in ~/rpmbuild/SPECS/*.spec; do
