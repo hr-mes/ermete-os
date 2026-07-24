@@ -239,15 +239,16 @@ jobs:
 
           echo "--- Patching nvidia-kmod spec per forzare LLVM=1 ---"
           rpm -ivh /usr/src/akmods/nvidia-kmod.latest.src.rpm
-          sed -i 's/make %{?_smp_mflags}/export IGNORE_CC_MISMATCH=1 LLVM=1 LLVM_IAS=1 KCFLAGS="-Wno-error -fno-lto"; make %{?_smp_mflags}/g' ~/rpmbuild/SPECS/nvidia-kmod.spec
-          rpmbuild -bs ~/rpmbuild/SPECS/nvidia-kmod.spec
-          cp ~/rpmbuild/SRPMS/nvidia-kmod-*.src.rpm /usr/src/akmods/
-
-          if ! akmods --force --kernels $REAL_KERNEL_VER; then
-            cat /var/cache/akmods/nvidia/*.log || true
+          sed -i 's/make %{?_smp_mflags}/export IGNORE_CC_MISMATCH=1 LLVM=1 LLVM_IAS=1 KCFLAGS="-Wno-error -fno-lto"; make %{?_smp_mflags}/g' /github/home/rpmbuild/SPECS/nvidia-kmod.spec
+          
+          echo "--- Esecuzione diretta di rpmbuild (bypass akmods freeze) ---"
+          if ! rpmbuild -bb --target x86_64 --define "kernels $REAL_KERNEL_VER" /github/home/rpmbuild/SPECS/nvidia-kmod.spec; then
+            echo "::error::rpmbuild fallito!"
             exit 1
           fi
-          cat /var/cache/akmods/nvidia/*.log || true
+          
+          # Sposta l'RPM compilato dove se lo aspetta il resto dello script
+          find /github/home/rpmbuild/RPMS -name "*.rpm" -exec cp {} /var/cache/akmods/nvidia/ \;
           
           # [BEDROCK UNIFICATION] Download userspace NVIDIA drivers, Wayland EGL, persistenced, and container toolkit
           # into the micro-container so they are encapsulated natively without remote DNF calls during OSTree build.
@@ -360,10 +361,10 @@ jobs:
           rpm -ivh *.src.rpm
           
           echo "--- Patching ffmpeg spec per rimuovere noopenh264 ---"
-          sed -i 's/noopenh264-devel/openh264-devel/g' ~/rpmbuild/SPECS/*.spec
+          sed -i 's/pkgconfig(openh264)/openh264-devel/g' /github/home/rpmbuild/SPECS/*.spec
           
           echo "--- Risoluzione Dipendenze Estrema (su SPEC) ---"
-          dnf builddep -y --allowerasing ~/rpmbuild/SPECS/*.spec
+          dnf builddep -y --allowerasing /github/home/rpmbuild/SPECS/*.spec
           
           echo "--- Iniezione Dinamica Ponytail Ultra ---"
           for spec in ~/rpmbuild/SPECS/*.spec; do
