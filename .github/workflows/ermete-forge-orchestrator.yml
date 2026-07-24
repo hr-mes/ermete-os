@@ -210,19 +210,14 @@ jobs:
           dnf install -y akmods akmod-nvidia gcc gcc-c++ make elfutils-libelf-devel openssl-devel rpm-build rpmdevtools clang lld llvm
           REAL_KERNEL_VER=$(ls /usr/src/kernels/ | head -n 1)
           echo "Real kernel version is $REAL_KERNEL_VER"
+          
+          if [ -z "$REAL_KERNEL_VER" ]; then
+            echo "::error::REAL_KERNEL_VER is empty! kernel-devel package is likely missing or failed to install. Aborting to prevent akmods hang."
+            exit 1
+          fi
+
           mkdir -p /lib/modules/$REAL_KERNEL_VER
           ln -sf /usr/src/kernels/$REAL_KERNEL_VER /lib/modules/$REAL_KERNEL_VER/build
-          ln -sf /usr/bin/clang /usr/bin/gcc
-          ln -sf /usr/bin/clang++ /usr/bin/g++
-          ln -sf /usr/bin/clang /usr/bin/cc
-          ln -sf /usr/bin/clang++ /usr/bin/c++
-          ln -sf /usr/bin/ld.lld /usr/bin/ld
-          ln -sf /usr/bin/llvm-ar /usr/bin/ar
-          ln -sf /usr/bin/llvm-nm /usr/bin/nm
-          ln -sf /usr/bin/llvm-objcopy /usr/bin/objcopy
-          ln -sf /usr/bin/llvm-objdump /usr/bin/objdump
-          ln -sf /usr/bin/llvm-readelf /usr/bin/readelf
-          ln -sf /usr/bin/llvm-strip /usr/bin/strip
           mkdir -p /etc/pki/akmods/certs /etc/pki/akmods/private
           echo "::add-mask::${{ secrets.MOK_PRIVATE_KEY }}"
           echo "${{ secrets.MOK_PRIVATE_KEY }}" | base64 -d > /etc/pki/akmods/private/private_key.priv
@@ -249,7 +244,14 @@ jobs:
             export LLVM=1\
             export LLVM_IAS=1\
             export CC=clang\
-            export CXX=clang++
+            export CXX=clang++\
+            export LD=ld.lld\
+            export AR=llvm-ar\
+            export NM=llvm-nm\
+            export STRIP=llvm-strip\
+            export OBJCOPY=llvm-objcopy\
+            export OBJDUMP=llvm-objdump\
+            export READELF=llvm-readelf
           MACRO
 
           akmods --force --kernels $REAL_KERNEL_VER

@@ -16,7 +16,7 @@ skip_if_unavailable=1
 
 [rpmfusion-free-source]
 name=RPM Fusion for Fedora 43 - Free - Source
-baseurl=http://mirror.math.princeton.edu/pub/rpmfusion/free/fedora/development/rawhide/Everything/source/tree/
+baseurl=http://mirror.math.princeton.edu/pub/rpmfusion/free/fedora/development/rawhide/Everything/source/SRPMS/
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora-43
@@ -24,7 +24,7 @@ skip_if_unavailable=1
 
 [rpmfusion-nonfree-source]
 name=RPM Fusion for Fedora 43 - Nonfree - Source
-baseurl=http://mirror.math.princeton.edu/pub/rpmfusion/nonfree/fedora/development/rawhide/Everything/source/tree/
+baseurl=http://mirror.math.princeton.edu/pub/rpmfusion/nonfree/fedora/development/rawhide/Everything/source/SRPMS/
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora-43
