@@ -161,7 +161,7 @@ jobs:
       - name: Publish Micro-Container OCI
         if: steps.check.outputs.skip != 'true'
         run: |
-          export STORAGE_DRIVER=overlay
+          export STORAGE_DRIVER=vfs
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
@@ -196,7 +196,7 @@ jobs:
             bash <<'EOF'
               curl -Lo /etc/yum.repos.d/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo
               dnf install -y buildah jq
-              export STORAGE_DRIVER=overlay
+              export STORAGE_DRIVER=vfs
               export BUILDAH_ISOLATION=chroot
               # No need to buildah pull if we just podman run, but we are inside podman!
               # Actually wait, we are inside podman running buildah? That requires --privileged.
@@ -237,7 +237,7 @@ jobs:
               curl -Lo /etc/yum.repos.d/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo
               # Extract kernel headers again (since this is a new container)
               dnf install -y buildah jq
-              export STORAGE_DRIVER=overlay
+              export STORAGE_DRIVER=vfs
               export BUILDAH_ISOLATION=chroot
               ctr=$(buildah from ghcr.io/${{ github.repository_owner }}/ermete-os-kernel:latest)
               mnt=$(buildah mount $ctr)
@@ -300,7 +300,7 @@ jobs:
       - name: Publish Micro-Container OCI
         if: steps.cache.outputs['cache-hit'] != 'true'
         run: |
-          export STORAGE_DRIVER=overlay
+          export STORAGE_DRIVER=vfs
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
@@ -418,7 +418,7 @@ jobs:
       - name: Publish Micro-Container OCI
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
-          export STORAGE_DRIVER=overlay
+          export STORAGE_DRIVER=vfs
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
@@ -520,7 +520,7 @@ jobs:
       - name: Publish Micro-Container OCI
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
-          export STORAGE_DRIVER=overlay
+          export STORAGE_DRIVER=vfs
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
@@ -622,7 +622,7 @@ jobs:
       - name: Publish Micro-Container OCI
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
-          export STORAGE_DRIVER=overlay
+          export STORAGE_DRIVER=vfs
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
@@ -725,7 +725,7 @@ jobs:
       - name: Publish Micro-Container OCI
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
-          export STORAGE_DRIVER=overlay
+          export STORAGE_DRIVER=vfs
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
@@ -771,7 +771,7 @@ jobs:
             echo "${{ secrets.GITHUB_TOKEN }}" | buildah login ghcr.io -u ${{ github.actor }} --password-stdin
             bash scripts/fetch_repo_rpms.sh ${{ github.repository_owner }}
             
-            export STORAGE_DRIVER=overlay
+            export STORAGE_DRIVER=vfs
             export BUILDAH_ISOLATION=chroot
             buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
             

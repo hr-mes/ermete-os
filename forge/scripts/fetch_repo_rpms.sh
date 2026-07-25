@@ -7,7 +7,7 @@ mkdir -p repo-cache/repo \
          repo-cache/repo-tier2 \
          repo-cache/repo-tier3
 
-export STORAGE_DRIVER=overlay
+export STORAGE_DRIVER=vfs
 export BUILDAH_ISOLATION=chroot
 
 TMP_DIR=$(mktemp -d)
