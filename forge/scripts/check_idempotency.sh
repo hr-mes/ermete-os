@@ -74,9 +74,9 @@ else
   
   VERSION=${UPSTREAM_VER:-unknown}
   if [[ -n "$UPSTREAM_VER" ]]; then
-    CONTENT_HASH=$(echo -n "${PACKAGE}-${UPSTREAM_VER}-${BASE_DIGEST}-v3" | sha256sum | awk '{print $1}')
+    CONTENT_HASH=$(echo -n "${PACKAGE}-${UPSTREAM_VER}-${BASE_DIGEST}-v4" | sha256sum | awk '{print $1}')
   else
-    CONTENT_HASH=$(echo -n "${PACKAGE}-${VERSION}-upstream-v3-${BASE_DIGEST}" | sha256sum | awk '{print $1}')
+    CONTENT_HASH=$(echo -n "${PACKAGE}-${VERSION}-upstream-v4-${BASE_DIGEST}" | sha256sum | awk '{print $1}')
   fi
 fi
 
