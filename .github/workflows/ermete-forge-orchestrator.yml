@@ -791,6 +791,7 @@ jobs:
             
             buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
             
+            mkdir -p .manifests
             # Create repositories and push micro-containers for each Tier plus the full repo
             for tier in tier0 tier1 tier2 tier3 ""; do
               if [ -n "$tier" ]; then
