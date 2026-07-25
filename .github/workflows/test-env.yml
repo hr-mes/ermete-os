@@ -1,0 +1,14 @@
+name: Test Env
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print Env
+        run: |
+          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
+            bash -c 'env'
