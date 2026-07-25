@@ -46,6 +46,10 @@ if [[ -n "$DIR" && -d "$DIR" ]]; then
       echo -n "builder/Containerfile"
       cat "builder/Containerfile"
     fi
+    if [[ -f "builder/rpmfusion-custom.repo" ]]; then
+      echo -n "builder/rpmfusion-custom.repo"
+      cat "builder/rpmfusion-custom.repo"
+    fi
     if [[ -f "config/packages.json" ]]; then
       echo -n "config/packages.json"
       cat "config/packages.json"
@@ -70,9 +74,9 @@ else
   
   VERSION=${UPSTREAM_VER:-unknown}
   if [[ -n "$UPSTREAM_VER" ]]; then
-    CONTENT_HASH=$(echo -n "${PACKAGE}-${UPSTREAM_VER}-${BASE_DIGEST}-v2" | sha256sum | awk '{print $1}')
+    CONTENT_HASH=$(echo -n "${PACKAGE}-${UPSTREAM_VER}-${BASE_DIGEST}-v3" | sha256sum | awk '{print $1}')
   else
-    CONTENT_HASH=$(echo -n "${PACKAGE}-${VERSION}-upstream-v1-${BASE_DIGEST}" | sha256sum | awk '{print $1}')
+    CONTENT_HASH=$(echo -n "${PACKAGE}-${VERSION}-upstream-v3-${BASE_DIGEST}" | sha256sum | awk '{print $1}')
   fi
 fi
 
