@@ -12,6 +12,7 @@ export BUILDAH_ISOLATION=chroot
 export XDG_DATA_HOME=/var/tmp
 export XDG_CONFIG_HOME=/var/tmp
 export XDG_CACHE_HOME=/var/tmp
+export _CONTAINERS_USERNS_CONFIGURED=done
 
 TMP_DIR=$(mktemp -d)
 trap "rm -rf $TMP_DIR" EXIT
