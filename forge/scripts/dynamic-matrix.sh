@@ -56,7 +56,7 @@ process_array() {
     # Pre-populate DNF cache sequentially to prevent locking issues during parallel queries
     dnf makecache --refresh 2>/dev/null || true
     
-    cat << 'EOF2' > /tmp/run_check.sh
+    cat << \EOF2 > /tmp/run_check.sh
 BASE_DIGEST=$1
 REGISTRY=$2
 OWNER=$3
