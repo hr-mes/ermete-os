@@ -763,8 +763,9 @@ jobs:
             export XDG_CACHE_HOME=/var/tmp
             export _CONTAINERS_USERNS_CONFIGURED=done
             
-            # Mount tmpfs to avoid overlayfs chown permission issues with vfs
-            mount -t tmpfs tmpfs /var/tmp
+            # Mount a directory from the workspace (host filesystem) to avoid overlayfs chown issues and tmpfs RAM limits
+            mkdir -p /workspace/var-tmp
+            mount --bind /workspace/var-tmp /var/tmp
             
             # Create a custom storage.conf to explicitly ignore vfs chown errors during storage shutdown
             echo '[storage]' > /var/tmp/storage.conf
@@ -828,6 +829,7 @@ jobs:
                 buildah commit --omit-timestamp $ctr "$IMAGE_LOWER"
                 buildah push "$IMAGE_LOWER"
                 buildah rm "$ctr"
+                buildah rmi "$IMAGE_LOWER"
               )
               
               # Update manifest
