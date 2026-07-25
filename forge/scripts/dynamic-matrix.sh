@@ -33,20 +33,65 @@ process_array() {
   local pkgs=("$@")
   
   local active_pkgs=()
+  local script_args=()
+  
+  for pkg in "${pkgs[@]}"; do
+    pkg="${pkg//,/}"
+    [[ -z "$pkg" ]] && continue
+    script_args+=("$pkg" "ermete-os-forge-${prefix}${pkg}")
+  done
+  
+  if [[ ${#script_args[@]} -eq 0 ]]; then
+    jq -c -n '$ARGS.positional' --args "${active_pkgs[@]}"
+    return
+  fi
+  
+  # Run podman ONCE for all packages in this array, running checks in PARALLEL
+  local out
+  out=$(podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN:-}" -v "$(pwd):/workspace" -v "$(pwd)/.dnf-cache:/var/cache/dnf" -w /workspace ghcr.io/${OWNER}/ermete-os-builder:latest bash -c '
+    BASE_DIGEST=$1; shift
+    REGISTRY=$1; shift
+    OWNER=$1; shift
+    
+    # Pre-populate DNF cache sequentially to prevent locking issues during parallel queries
+    dnf makecache --refresh 2>/dev/null || true
+    
+    cat << 'EOF2' > /tmp/run_check.sh
+BASE_DIGEST=$1
+REGISTRY=$2
+OWNER=$3
+pkg=$4
+img_name=$5
+timeout 20s bash scripts/check_idempotency.sh --package "$pkg" --registry "$REGISTRY" --owner "$OWNER" --image-name "$img_name" --base-digest "$BASE_DIGEST" > "/tmp/${pkg}_res" 2>/dev/null
+EOF2
+
+    echo "$@" | xargs -n 2 -P 5 bash /tmp/run_check.sh "$BASE_DIGEST" "$REGISTRY" "$OWNER"
+    
+    for f in /tmp/*_res; do
+      [ -e "$f" ] || continue
+      res=$(cat "$f")
+      pkg=$(basename "$f" _res)
+      if echo "$res" | grep -q "CACHE_HIT=false"; then
+        echo "RESULT:$pkg:MISS"
+      else
+        echo "RESULT:$pkg:HIT"
+      fi
+    done
+  ' -- "$BASE_DIGEST" "$REGISTRY" "$OWNER" "${script_args[@]}" 2>/dev/null)
   
   for pkg in "${pkgs[@]}"; do
     pkg="${pkg//,/}"
     [[ -z "$pkg" ]] && continue
     
-    local image_name="ermete-os-forge-${prefix}${pkg}"
-    local out
-    out=$(podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN:-}" -v "$(pwd):/workspace" -v "$(pwd)/.dnf-cache:/var/cache/dnf" -w /workspace ghcr.io/${OWNER}/ermete-os-builder:latest bash scripts/check_idempotency.sh --package "$pkg" --registry "$REGISTRY" --owner "$OWNER" --image-name "$image_name" --base-digest "$BASE_DIGEST" 2>/dev/null)
-    
-    if echo "$out" | grep -q "CACHE_HIT=false"; then
+    if echo "$out" | grep -q "RESULT:$pkg:MISS"; then
       active_pkgs+=("$pkg")
       echo "  -> MISS (will build: $pkg)" >&2
-    else
+    elif echo "$out" | grep -q "RESULT:$pkg:HIT"; then
       echo "  -> HIT (skip: $pkg)" >&2
+    else
+      # Fallback in case of errors
+      active_pkgs+=("$pkg")
+      echo "  -> ERROR/MISS (will build: $pkg)" >&2
     fi
   done
   

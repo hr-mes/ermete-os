@@ -54,8 +54,8 @@ if [[ -n "$DIR" && -d "$DIR" ]]; then
 else
   # Pacchetti upstream senza spec locale
   if command -v dnf >/dev/null 2>&1; then
-    # Cerchiamo la versione effettiva nei repository abilitati
-    UPSTREAM_VER=$(dnf repoquery --qf "%{VERSION}-%{RELEASE}\n" --arch x86_64,noarch "$PACKAGE" 2>/dev/null | sort -V | tail -n 1 || true)
+    # Cerchiamo la versione effettiva nei repository abilitati usando cacheonly per evitare lock concorrenti
+    UPSTREAM_VER=$(dnf repoquery --cacheonly --qf "%{VERSION}-%{RELEASE}\n" --arch x86_64,noarch "$PACKAGE" 2>/dev/null | sort -V | tail -n 1 || true)
   else
     UPSTREAM_VER=""
   fi
