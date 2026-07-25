@@ -142,7 +142,7 @@ jobs:
           
             # Install dynamic dependencies if generated
             if ls ~/rpmbuild/SRPMS/*.nosrc.rpm 1> /dev/null 2>&1; then
-                sed -i -e 's/pkgconfig(openh264)/openh264-devel/g' -e 's/noopenh264-devel/openh264-devel/g' -e 's/noopenh264/openh264/g' ~/rpmbuild/SPECS/*.spec && dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SRPMS/*.nosrc.rpm || true
+                dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SRPMS/*.nosrc.rpm || true
             fi
           
             # Workaround for Fedora 43 rust-sysinfo bug
@@ -506,7 +506,7 @@ jobs:
             if ! rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec; then
               if ls ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm >/dev/null 2>&1; then
                 echo "--- Installazione Dipendenze Dinamiche (%generate_buildrequires) ---"
-                dnf install -y ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm
+                dnf builddep -y --nogpgcheck ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm
                 echo "--- Secondo tentativo di Ricompilazione Estrema ---"
                 rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec
               else
@@ -608,7 +608,7 @@ jobs:
             if ! rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec; then
               if ls ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm >/dev/null 2>&1; then
                 echo "--- Installazione Dipendenze Dinamiche (%generate_buildrequires) ---"
-                dnf install -y ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm
+                dnf builddep -y --nogpgcheck ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm
                 echo "--- Secondo tentativo di Ricompilazione Estrema ---"
                 rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec
               else
@@ -711,7 +711,7 @@ jobs:
             if ! rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec; then
               if ls ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm >/dev/null 2>&1; then
                 echo "--- Installazione Dipendenze Dinamiche (%generate_buildrequires) ---"
-                dnf install -y ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm
+                dnf builddep -y --nogpgcheck ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm
                 echo "--- Secondo tentativo di Ricompilazione Estrema ---"
                 rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec
               else
