@@ -207,7 +207,7 @@ jobs:
               mnt=$(buildah mount $ctr)
               rpm -Uvh --oldpackage --replacepkgs --force --nodeps $mnt/*.rpm
               buildah umount $ctr
-              QUALIFIED_KERNEL=$(rpm -q --queryformat "%{VERSION}-%{RELEASE}.%{ARCH}\n" kernel-devel | sort -V | tail -n 1)
+              QUALIFIED_KERNEL=$(rpm -q --queryformat "%{VERSION}-%{RELEASE}.%{ARCH}\n" ermete-kernel-devel | sort -V | tail -n 1)
               QUALIFIED_NVIDIA=$(dnf repoquery --qf "%{VERSION}-%{RELEASE}\n" akmod-nvidia 2>/dev/null | sort -V | tail -n 1)
               echo "QUALIFIED_KERNEL=$QUALIFIED_KERNEL" > /workspace/kernel_info
               echo "QUALIFIED_NVIDIA=$QUALIFIED_NVIDIA" >> /workspace/kernel_info
