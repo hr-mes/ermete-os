@@ -765,14 +765,12 @@ jobs:
             mount -t tmpfs tmpfs /var/tmp
             
             # Create a custom storage.conf to explicitly ignore vfs chown errors during storage shutdown
-            cat << 'EOF_CONF' > /var/tmp/storage.conf
-[storage]
-driver = "vfs"
-runroot = "/var/tmp/containers/runroot"
-graphroot = "/var/tmp/containers/storage"
-[storage.options.vfs]
-ignore_chown_errors = "true"
-EOF_CONF
+            echo '[storage]' > /var/tmp/storage.conf
+            echo 'driver = "vfs"' >> /var/tmp/storage.conf
+            echo 'runroot = "/var/tmp/containers/runroot"' >> /var/tmp/storage.conf
+            echo 'graphroot = "/var/tmp/containers/storage"' >> /var/tmp/storage.conf
+            echo '[storage.options.vfs]' >> /var/tmp/storage.conf
+            echo 'ignore_chown_errors = "true"' >> /var/tmp/storage.conf
             export CONTAINERS_STORAGE_CONF=/var/tmp/storage.conf
             
             dnf install -y createrepo_c buildah skopeo jq rpm-sign gnupg2
