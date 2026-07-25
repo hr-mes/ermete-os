@@ -756,6 +756,7 @@ jobs:
             -w /workspace/forge \
             ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
             bash <<'EOF'
+            set -e
             export BUILDAH_ISOLATION=chroot
             export XDG_DATA_HOME=/var/tmp
             export XDG_CONFIG_HOME=/var/tmp
@@ -793,11 +794,11 @@ jobs:
             # Create repositories and push micro-containers for each Tier plus the full repo
             for tier in tier0 tier1 tier2 tier3 ""; do
               if [ -n "$tier" ]; then
-                dir="repo-cache-${tier}"
+                dir="repo-cache/repo-${tier}"
                 img_name="ermete-os-forge-${tier}-repo:latest"
               else
-                dir="repo-cache"
-                img_name="ermete-os-forge-repo:latest"
+                dir="repo-cache/repo"
+                img_name="ermete-os-forge-rolling-repo:latest"
               fi
               
               IMAGE_LOWER=$(echo "ghcr.io/${{ github.repository_owner }}/$img_name" | tr '[:upper:]' '[:lower:]')
@@ -832,10 +833,10 @@ jobs:
             # Aggrega i tier e pubblica su GitHub Pages (Rolling Release)
             echo "🌐 Pubblicazione dei repository DNF su GitHub Pages (gh-pages branch)..."
             mkdir -p /workspace/pages_repo
-            cp -a repo-cache-tier0 /workspace/pages_repo/tier0
-            cp -a repo-cache-tier1 /workspace/pages_repo/tier1
-            cp -a repo-cache-tier2 /workspace/pages_repo/tier2
-            cp -a repo-cache-tier3 /workspace/pages_repo/tier3
+            cp -a repo-cache/repo-tier0 /workspace/pages_repo/tier0
+            cp -a repo-cache/repo-tier1 /workspace/pages_repo/tier1
+            cp -a repo-cache/repo-tier2 /workspace/pages_repo/tier2
+            cp -a repo-cache/repo-tier3 /workspace/pages_repo/tier3
             
             # Draft: Generazione payload UEFI HTTP Boot (iPXE) per Internet Recovery
             echo "🌐 Generazione payload UEFI HTTP Boot Internet Recovery..."
