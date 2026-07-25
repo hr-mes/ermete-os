@@ -61,10 +61,8 @@ echo "Evaluating upstream_cli..." >&2
 J_U_CLI=$(process_array "rolling-" "${UPSTREAM_CLI[@]}")
 
 # Determine if there are any changes across all packages
-HAS_CHANGES="false"
-if [[ "$J_CUSTOM" != "[]" || "$J_U_CORE" != "[]" || "$J_U_DESK" != "[]" || "$J_U_MEDIA" != "[]" || "$J_U_CLI" != "[]" ]]; then
-  HAS_CHANGES="true"
-fi
+# We force HAS_CHANGES=true to ensure Build Repository always runs and recovers from partial pipeline failures
+HAS_CHANGES="true"
 
 if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
   echo "custom_packages=${J_CUSTOM}" >> "$GITHUB_OUTPUT"
