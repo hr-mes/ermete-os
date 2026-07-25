@@ -757,8 +757,9 @@ jobs:
             bash <<'EOF'
             export STORAGE_DRIVER=vfs
             export BUILDAH_ISOLATION=chroot
-            export HOME=/root
             export XDG_DATA_HOME=/var/tmp
+            export XDG_CONFIG_HOME=/var/tmp
+            export XDG_CACHE_HOME=/var/tmp
 
             dnf install -y createrepo_c buildah skopeo jq rpm-sign gnupg2
             

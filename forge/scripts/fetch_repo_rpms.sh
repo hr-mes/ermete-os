@@ -9,8 +9,9 @@ mkdir -p repo-cache/repo \
 
 export STORAGE_DRIVER=vfs
 export BUILDAH_ISOLATION=chroot
-export HOME=/root
 export XDG_DATA_HOME=/var/tmp
+export XDG_CONFIG_HOME=/var/tmp
+export XDG_CACHE_HOME=/var/tmp
 
 TMP_DIR=$(mktemp -d)
 trap "rm -rf $TMP_DIR" EXIT

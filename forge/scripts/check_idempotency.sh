@@ -8,12 +8,15 @@ REGISTRY=""
 OWNER=""
 IMAGE_NAME=""
 
+BASE_DIGEST=""
+
 while [[ $# -gt 0 ]]; do
   case $1 in
     --package) PACKAGE="$2"; shift 2 ;;
     --registry) REGISTRY="$2"; shift 2 ;;
     --owner) OWNER="$2"; shift 2 ;;
     --image-name) IMAGE_NAME="$2"; shift 2 ;;
+    --base-digest) BASE_DIGEST="$2"; shift 2 ;;
     *) echo "Argomento sconosciuto: $1" >&2; exit 1 ;;
   esac
 done
@@ -59,9 +62,10 @@ else
   
   # Invalidiamo la cache degli upstream (compilati da zero) ad ogni aggiornamento della Base Image
   # per prevenire desincronizzazione librerie (es. libx265 per ffmpeg).
-  BASE_DIGEST=""
-  if command -v skopeo >/dev/null 2>&1; then
-    BASE_DIGEST=$(skopeo inspect --no-tags "docker://ghcr.io/${OWNER}/ermete-base-nvidia:latest" 2>/dev/null | grep -oP '"Digest": "\K[^"]+' || true)
+  if [[ -z "${BASE_DIGEST:-}" ]]; then
+    if command -v skopeo >/dev/null 2>&1; then
+      BASE_DIGEST=$(skopeo inspect --no-tags "docker://ghcr.io/${OWNER}/ermete-base-nvidia:latest" 2>/dev/null | grep -oP '"Digest": "\K[^"]+' || true)
+    fi
   fi
   
   VERSION=${UPSTREAM_VER:-unknown}

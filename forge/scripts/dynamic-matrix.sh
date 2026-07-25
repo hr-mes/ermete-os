@@ -19,6 +19,14 @@ readarray -t UPSTREAM_DESKTOP < <(jq -r '.upstream_desktop[]' config/packages.js
 readarray -t UPSTREAM_MEDIA < <(jq -r '.upstream_media[]' config/packages.json)
 readarray -t UPSTREAM_CLI < <(jq -r '.upstream_cli[]' config/packages.json)
 
+# Create a directory for DNF cache to share across containers
+mkdir -p .dnf-cache
+
+# Pre-fetch Base Digest to avoid 60 unnecessary skopeo network calls (saves ~5 minutes!)
+echo "Fetching base image digest..." >&2
+BASE_DIGEST=$(skopeo inspect --no-tags "docker://ghcr.io/${OWNER}/ermete-base-nvidia:latest" 2>/dev/null | jq -r '.Digest' || echo "")
+echo "Base digest: $BASE_DIGEST" >&2
+
 process_array() {
   local prefix=$1
   shift
@@ -32,7 +40,7 @@ process_array() {
     
     local image_name="ermete-os-forge-${prefix}${pkg}"
     local out
-    out=$(podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN:-}" -v "$(pwd):/workspace" -w /workspace ghcr.io/${OWNER}/ermete-os-builder:latest bash scripts/check_idempotency.sh --package "$pkg" --registry "$REGISTRY" --owner "$OWNER" --image-name "$image_name" 2>/dev/null)
+    out=$(podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN:-}" -v "$(pwd):/workspace" -v "$(pwd)/.dnf-cache:/var/cache/dnf" -w /workspace ghcr.io/${OWNER}/ermete-os-builder:latest bash scripts/check_idempotency.sh --package "$pkg" --registry "$REGISTRY" --owner "$OWNER" --image-name "$image_name" --base-digest "$BASE_DIGEST" 2>/dev/null)
     
     if echo "$out" | grep -q "CACHE_HIT=false"; then
       active_pkgs+=("$pkg")
