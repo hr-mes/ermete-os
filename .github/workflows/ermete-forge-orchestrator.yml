@@ -755,6 +755,11 @@ jobs:
             -w /workspace/forge \
             ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
             bash <<'EOF'
+            export STORAGE_DRIVER=vfs
+            export BUILDAH_ISOLATION=chroot
+            export HOME=/root
+            export XDG_DATA_HOME=/root/.local/share
+
             dnf install -y createrepo_c buildah skopeo jq rpm-sign gnupg2
             
             # Setup GPG for RPM signing
@@ -771,8 +776,6 @@ jobs:
             echo "${{ secrets.GITHUB_TOKEN }}" | buildah login ghcr.io -u ${{ github.actor }} --password-stdin
             bash scripts/fetch_repo_rpms.sh ${{ github.repository_owner }}
             
-            export STORAGE_DRIVER=vfs
-            export BUILDAH_ISOLATION=chroot
             buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
             
             # Create repositories and push micro-containers for each Tier plus the full repo
