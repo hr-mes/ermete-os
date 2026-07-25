@@ -778,11 +778,11 @@ jobs:
             # Setup GPG for RPM signing
             echo "::add-mask::${{ secrets.RPM_GPG_PASSPHRASE }}"
             echo "${{ secrets.RPM_GPG_KEY }}" | gpg --import || true
-            cat << 'EOF' > ~/.rpmmacros
+            cat << 'EOF_MACROS' > ~/.rpmmacros
             %_signature gpg
             %_gpg_name ermete
             %__gpg_sign_cmd %{__gpg} --batch --verbose --no-armor --passphrase "${RPM_GPG_PASSPHRASE}" --pinentry-mode loopback --no-secmem-warning -u "%{_gpg_name}" -sbo %{__signature_filename} --digest-algo sha256 %{__plaintext_filename}
-          EOF
+            EOF_MACROS
             export RPM_GPG_PASSPHRASE="${{ secrets.RPM_GPG_PASSPHRASE }}"
             
             # Fetch RPMs dynamically from micro-containers and organize by Tier
@@ -843,11 +843,11 @@ jobs:
             dnf install -y ipxe-bootimgs git
             mkdir -p /workspace/pages_repo/recovery
             cp /usr/share/ipxe/ipxe-x86_64.efi /workspace/pages_repo/recovery/ipxe.efi
-            cat << 'EOF' > /workspace/pages_repo/recovery/boot.ipxe
+            cat << 'EOF_IPXE' > /workspace/pages_repo/recovery/boot.ipxe
             #!ipxe
             dhcp
             chain https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/recovery/menu.ipxe || shell
-          EOF
+            EOF_IPXE
             
             cd /workspace/pages_repo
             git init
