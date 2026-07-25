@@ -804,7 +804,6 @@ jobs:
               IMAGE_LOWER=$(echo "ghcr.io/${{ github.repository_owner }}/$img_name" | tr '[:upper:]' '[:lower:]')
               NEW_HASH=$(find "$dir" -maxdepth 1 -name '*.rpm' -type f | sort | xargs -r sha256sum | sha256sum | awk '{print $1}')
               OLD_HASH=$(skopeo inspect --config "docker://$IMAGE_LOWER" 2>/dev/null | jq -r '.config.Labels["tier.content.sha256"] // ""' || echo "")
-              
               if [ -n "$OLD_HASH" ] && [ "$NEW_HASH" = "$OLD_HASH" ]; then
                 echo "✅ Tier '$tier' ($img_name): RPM content hash unchanged ($NEW_HASH). Skipping createrepo_c & push to freeze Tier OCI cache!"
                 continue
@@ -812,22 +811,26 @@ jobs:
               
               echo "----------------------------------------"
               echo "🚀 Tier '$tier' ($img_name): content hash changed (old: '$OLD_HASH', new: '$NEW_HASH'). Creating metadata & pushing..."
-              cd "$dir"
               
               # Sign the RPMs only if a GPG key is configured
               if [ -n "${{ secrets.RPM_GPG_KEY }}" ]; then
-                find . -name "*.rpm" -exec rpmsign --addsign {} + || true
+                find "$dir" -name "*.rpm" -exec rpmsign --addsign {} + || true
               fi
               
-              createrepo_c .
+              (
+                cd "$dir"
+                createrepo_c .
+                
+                ctr=$(buildah from scratch)
+                buildah copy $ctr . /
+                buildah config --label tier.content.sha256="$NEW_HASH" $ctr
+                buildah commit --omit-timestamp $ctr "$IMAGE_LOWER"
+                buildah push "$IMAGE_LOWER"
+                buildah rm "$ctr"
+              )
               
-              ctr=$(buildah from scratch)
-              buildah copy $ctr "$dir" /
-              buildah config --label tier.content.sha256="$NEW_HASH" $ctr
-              buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
-              buildah commit --omit-timestamp $ctr "$IMAGE_LOWER"
-              buildah push "$IMAGE_LOWER"
-              buildah rm "$ctr"
+              # Update manifest
+              echo "$NEW_HASH" > ".manifests/${tier}.hash"
             done
   
             # Aggrega i tier e pubblica su GitHub Pages (Rolling Release)
