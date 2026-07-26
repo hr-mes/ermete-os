@@ -30,8 +30,12 @@ tar --exclude='.git' -czf "$RPMBUILD_DIR/SOURCES/linux-cachyos.tar.gz" -C cachyo
 echo ">>> Copia dei file di configurazione e Spec..."
 cp ermete-kernel.spec "$RPMBUILD_DIR/SPECS/"
 
+echo ">>> Rilevamento della stringa di rilascio del Kernel (uname -r)..."
+KREL=$(make -C cachyos-tree -s kernelrelease)
+echo "KREL rilevato: $KREL"
+
 echo ">>> Avvio compilazione RPM tramite rpmbuild..."
-rpmbuild --define "_topdir $RPMBUILD_DIR" -ba "$RPMBUILD_DIR/SPECS/ermete-kernel.spec"
+rpmbuild --define "_topdir $RPMBUILD_DIR" --define "krel $KREL" -ba "$RPMBUILD_DIR/SPECS/ermete-kernel.spec"
 
 echo "========================================================="
 echo " COMPILAZIONE COMPLETATA "

@@ -53,6 +53,10 @@ Requires:       selinux-policy
 Requires:       systemd
 Requires:       dracut
 
+Provides:       kernel-uname-r = %{krel}
+Provides:       kernel-modules-uname-r = %{krel}
+Provides:       kernel-core-uname-r = %{krel}
+
 %description
 The Ermete OS Chimera Kernel combines CachyOS kernel performance improvements
 (BORE scheduler, BBRv3, NTSync, LRNG, UKSM) with aggressive compiler optimization
@@ -81,6 +85,8 @@ make -j$(nproc) LLVM=1 CC="${CC:-clang}" CXX="${CXX:-clang++}" LD=ld.lld KCFLAGS
 %package devel
 Summary:        Development package for building kernel modules to match the Chimera kernel
 Provides:       kernel-devel = %{version}-%{release}
+Provides:       kernel-devel-uname-r = %{krel}
+Provides:       kernel-devel-x86_64 = %{krel}
 
 %description devel
 This package provides kernel headers and makefiles sufficient to build modules
