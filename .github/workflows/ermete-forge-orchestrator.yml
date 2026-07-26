@@ -242,7 +242,7 @@ jobs:
               export BUILDAH_ISOLATION=chroot
               ctr=$(buildah from ghcr.io/${{ github.repository_owner }}/ermete-os-kernel:latest)
               mnt=$(buildah mount $ctr)
-              find $mnt/ -name "*.rpm" ! -name "*debug*" -exec rpm -Uvh --oldpackage --replacepkgs --force {} +
+              find $mnt/ -name "*.rpm" ! -name "*debug*" -exec rpm -Uvh --oldpackage --replacepkgs --force --nodeps {} +
               buildah umount $ctr
               
               REAL_KERNEL_VER=$(ls /usr/src/kernels/ | grep -v "debug" | head -n 1)
