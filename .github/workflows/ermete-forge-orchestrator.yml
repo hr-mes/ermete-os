@@ -383,6 +383,18 @@ jobs:
           
             echo "--- Downloading Source RPM per ${{ matrix.package }} ---"
             dnf download --source ${{ matrix.package }} || dnf download --source --disablerepo="rpmfusion*" ${{ matrix.package }}
+            
+            # Se vengono scaricati più SRPM, tieni solo il più recente
+            num_srcs=$(ls -1 *.src.rpm 2>/dev/null | wc -l)
+            if [ "$num_srcs" -gt 1 ]; then
+              echo "Warning: scaricati multipli src.rpm. Tengo solo il più recente..."
+              latest_src=$(ls -1v *.src.rpm | tail -n 1)
+              for f in *.src.rpm; do
+                if [ "$f" != "$latest_src" ]; then
+                  rm -f "$f"
+                fi
+              done
+            fi
           
             echo "--- Estrazione SRPM per applicare Ponytail Ultra ---"
             rpm -ivh *.src.rpm
@@ -488,6 +500,18 @@ jobs:
           
             echo "--- Downloading Source RPM per ${{ matrix.package }} ---"
             dnf download --source ${{ matrix.package }} || dnf download --source --disablerepo="rpmfusion*" ${{ matrix.package }}
+            
+            # Se vengono scaricati più SRPM, tieni solo il più recente
+            num_srcs=$(ls -1 *.src.rpm 2>/dev/null | wc -l)
+            if [ "$num_srcs" -gt 1 ]; then
+              echo "Warning: scaricati multipli src.rpm. Tengo solo il più recente..."
+              latest_src=$(ls -1v *.src.rpm | tail -n 1)
+              for f in *.src.rpm; do
+                if [ "$f" != "$latest_src" ]; then
+                  rm -f "$f"
+                fi
+              done
+            fi
           
             echo "--- Estrazione SRPM per applicare Ponytail Ultra ---"
             rpm -ivh *.src.rpm
@@ -590,6 +614,18 @@ jobs:
           
             echo "--- Downloading Source RPM per ${{ matrix.package }} ---"
             dnf download --source ${{ matrix.package }} || dnf download --source --disablerepo="rpmfusion*" ${{ matrix.package }}
+            
+            # Se vengono scaricati più SRPM, tieni solo il più recente
+            num_srcs=$(ls -1 *.src.rpm 2>/dev/null | wc -l)
+            if [ "$num_srcs" -gt 1 ]; then
+              echo "Warning: scaricati multipli src.rpm. Tengo solo il più recente..."
+              latest_src=$(ls -1v *.src.rpm | tail -n 1)
+              for f in *.src.rpm; do
+                if [ "$f" != "$latest_src" ]; then
+                  rm -f "$f"
+                fi
+              done
+            fi
           
             echo "--- Estrazione SRPM per applicare Ponytail Ultra ---"
             rpm -ivh *.src.rpm
@@ -693,6 +729,18 @@ jobs:
           
             echo "--- Downloading Source RPM per ${{ matrix.package }} ---"
             dnf download --source ${{ matrix.package }} || dnf download --source --disablerepo="rpmfusion*" ${{ matrix.package }}
+            
+            # Se vengono scaricati più SRPM, tieni solo il più recente
+            num_srcs=$(ls -1 *.src.rpm 2>/dev/null | wc -l)
+            if [ "$num_srcs" -gt 1 ]; then
+              echo "Warning: scaricati multipli src.rpm. Tengo solo il più recente..."
+              latest_src=$(ls -1v *.src.rpm | tail -n 1)
+              for f in *.src.rpm; do
+                if [ "$f" != "$latest_src" ]; then
+                  rm -f "$f"
+                fi
+              done
+            fi
           
             echo "--- Estrazione SRPM per applicare Ponytail Ultra ---"
             rpm -ivh *.src.rpm
