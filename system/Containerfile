@@ -129,7 +129,7 @@ RUN (authselect select sssd with-silent-lastlog without-nullok --force || authse
     boot_files=(/boot/*) && \
     if [ ${#boot_files[@]} -gt 0 ]; then rm -rf "${boot_files[@]}"; fi && \
     tmp_files=(/run/* /tmp/* /var/log/*) && \
-    if [ ${#tmp_files[@]} -gt 0 ]; then rm -rf "${tmp_files[@]}"; fi
+    if [ ${#tmp_files[@]} -gt 0 ]; then rm -rf "${tmp_files[@]}" || true; fi
 
 ### LINTING
 ## Verify final image and contents are correct.
