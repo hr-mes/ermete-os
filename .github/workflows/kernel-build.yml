@@ -43,7 +43,7 @@ jobs:
           chown -R builder:builder /workspace /home/builder
           
           # Avvio della compilazione
-          sudo -H -E -u builder bash -c \"export CC='ccache clang' && export CXX='ccache clang++' && cd kernel && ./build-kernel-rpm.sh\"
+          sudo -H -E -u builder bash -c \"export CCACHE_MAXSIZE='20G' && export CCACHE_COMPRESS=1 && export CC='ccache clang' && export CXX='ccache clang++' && cd kernel && ./build-kernel-rpm.sh\"
           "
           
     - name: Upload Binary RPMs

@@ -76,7 +76,7 @@ export KCFLAGS="%{kcflags}"
 export KBUILD_CFLAGS="%{kcflags}"
 
 make olddefconfig
-make -j$(nproc) bzImage modules
+make -j$(nproc) LLVM=1 CC="${CC:-clang}" CXX="${CXX:-clang++}" LD=ld.lld KCFLAGS="%{kcflags}" bzImage modules
 
 %package devel
 Summary:        Development package for building kernel modules to match the Chimera kernel
@@ -89,8 +89,8 @@ against the %{pkg_name} package.
 %install
 mkdir -p %{buildroot}/boot
 
-make INSTALL_MOD_PATH=%{buildroot} modules_install
-KREL=$(make -s kernelrelease)
+make LLVM=1 CC="${CC:-clang}" CXX="${CXX:-clang++}" LD=ld.lld KCFLAGS="%{kcflags}" INSTALL_MOD_PATH=%{buildroot} modules_install
+KREL=$(make LLVM=1 CC="${CC:-clang}" CXX="${CXX:-clang++}" LD=ld.lld KCFLAGS="%{kcflags}" -s kernelrelease)
 
 cp arch/x86/boot/bzImage %{buildroot}/boot/vmlinuz-$KREL
 cp System.map %{buildroot}/boot/System.map-$KREL
