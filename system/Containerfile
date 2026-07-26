@@ -61,7 +61,7 @@ RUN QUALIFIED_KERNEL="" && \
     echo "Found Chimera Kernel: ${QUALIFIED_KERNEL}" && \
     depmod "${QUALIFIED_KERNEL}" && \
     echo "Generazione Dinamica Initramfs per ${QUALIFIED_KERNEL}..." && \
-    dracut --no-hostonly --kver "${QUALIFIED_KERNEL}" --reproducible --compress "zstd -T0 -19 --long=27" -v \
+    dracut --no-hostonly --kver "${QUALIFIED_KERNEL}" --reproducible --compress "zstd -T0 -9" -v \
         --strip --omit "network bluetooth plymouth iscsi cifs nfs floppy pcsc" --omit-drivers "amdgpu radeon nouveau" \
         --add ostree --add fido2 --force-drivers "nvidia nvidia_modeset nvidia_uvm nvidia_drm" \
         --install "/etc/group" --install "/etc/passwd" \
