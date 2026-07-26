@@ -105,7 +105,7 @@ cp .config %{buildroot}/boot/config-$KREL
 # Install kernel-devel source tree for module building
 mkdir -p %{buildroot}/usr/src/kernels/$KREL
 echo "Copying kernel headers and makefiles..."
-rsync -a --prune-empty-dirs --include '*/' --include '*.h' --include 'Makefile*' --include 'Kbuild*' --include 'Kconfig*' --include 'Module.symvers' --include '.config' --include 'scripts/***' --include 'tools/***' --exclude '*' ./ %{buildroot}/usr/src/kernels/$KREL/
+rsync -a --prune-empty-dirs --include '*/' --include '*.h' --include 'Makefile*' --include 'Kbuild*' --include 'Kconfig*' --include 'Module.symvers' --include '.config' --include 'scripts/***' --include 'tools/***' --include 'include/config/***' --include 'include/generated/***' --include 'arch/x86/include/generated/***' --exclude '*' ./ %{buildroot}/usr/src/kernels/$KREL/
 # Copy some missing binaries required by akmods
 cp -a scripts %{buildroot}/usr/src/kernels/$KREL/
 
