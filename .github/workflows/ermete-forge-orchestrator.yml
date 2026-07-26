@@ -220,7 +220,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: nvidia_cache/
-          key: rpm-nvidia-bedrock3-${{ steps.kernel.outputs.kernel_ver }}-${{ steps.kernel.outputs.nvidia_ver }}
+          key: rpm-nvidia-bedrock4-${{ steps.kernel.outputs.kernel_ver }}-${{ steps.kernel.outputs.nvidia_ver }}
 
       - name: Install Dependencies and Build
         if: steps.cache.outputs['cache-hit'] != 'true'
@@ -245,7 +245,7 @@ jobs:
               find $mnt/ -name "*.rpm" ! -name "*debug*" -exec rpm -Uvh --oldpackage --replacepkgs --force {} +
               buildah umount $ctr
               
-              REAL_KERNEL_VER=$(ls /usr/src/kernels/ | head -n 1)
+              REAL_KERNEL_VER=$(ls /usr/src/kernels/ | grep -v "debug" | head -n 1)
               echo "Real kernel version is $REAL_KERNEL_VER"
               
               if [ -z "$REAL_KERNEL_VER" ]; then
