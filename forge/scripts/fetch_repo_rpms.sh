@@ -105,23 +105,17 @@ pull_and_extract() {
   if [ -n "$ctr" ]; then
     local mnt
     mnt=$(buildah mount "$ctr")
-    
-    # Prune old versions of the same package to avoid conflicting requests downstream
-    for new_rpm in "$mnt"/*.rpm; do
-      if [ -f "$new_rpm" ]; then
-        local pkg_name
-        pkg_name=$(rpm -qp --queryformat '%{NAME}' "$new_rpm" 2>/dev/null || true)
-        if [ -n "$pkg_name" ]; then
-          (
-            flock 200
-            rm -f "$target_dir/${pkg_name}"-[0-9]*.rpm 2>/dev/null || true
-          ) 200>"$target_dir/.lock"
-        fi
-      fi
-    done
-
     (
       flock 200
+      # Prune old versions of the same package to avoid conflicting requests downstream
+      for new_rpm in "$mnt"/*.rpm; do
+        if [ -f "$new_rpm" ]; then
+          pkg_name=$(rpm -qp --queryformat '%{NAME}' "$new_rpm" 2>/dev/null || true)
+          if [ -n "$pkg_name" ]; then
+            rm -f "$target_dir/${pkg_name}"-[0-9]*.rpm 2>/dev/null || true
+          fi
+        fi
+      done
       cp -a "$mnt"/*.rpm "$target_dir/" 2>/dev/null || true
     ) 200>"$target_dir/.lock"
     buildah umount "$ctr"
@@ -178,6 +172,29 @@ done
 
 for pid in $(jobs -p); do
   wait $pid || { echo "FATAL: Un job in parallelo è fallito"; exit 1; }
+done
+
+echo "=== Post-Processing: Deduplicating RPMs (Keeping Latest) ==="
+# In case of leftover duplicates from parallel jobs, keep only the latest version of each RPM
+for tier in tier0 tier1 tier2 tier3; do
+  for rpm_file in repo-cache/repo-${tier}/*.rpm; do
+    [ -e "$rpm_file" ] || continue
+    pkg_name=$(rpm -qp --queryformat '%{NAME}' "$rpm_file" 2>/dev/null || true)
+    if [ -n "$pkg_name" ]; then
+      # Find all RPMs matching this package name in this tier
+      matching_rpms=(repo-cache/repo-${tier}/${pkg_name}-[0-9]*.rpm)
+      if [ ${#matching_rpms[@]} -gt 1 ]; then
+        # Sort by version using ls -1v and keep the latest (last one)
+        latest_rpm=$(ls -1v "${matching_rpms[@]}" | tail -n 1)
+        for f in "${matching_rpms[@]}"; do
+          if [ "$f" != "$latest_rpm" ]; then
+            echo "    [DEDUPLICATION] Removing older duplicate: $f"
+            rm -f "$f"
+          fi
+        done
+      fi
+    fi
+  done
 done
 
 echo "=== Syncing tiered RPMs to aggregate repo ==="
