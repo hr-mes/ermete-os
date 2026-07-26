@@ -31,7 +31,15 @@ echo ">>> Copia dei file di configurazione e Spec..."
 cp ermete-kernel.spec "$RPMBUILD_DIR/SPECS/"
 
 echo ">>> Rilevamento della stringa di rilascio del Kernel (uname -r)..."
-KREL=$(make -C cachyos-tree -s kernelrelease)
+KVER=$(awk '/^VERSION =/ {print $3}' cachyos-tree/Makefile)
+KPATCH=$(awk '/^PATCHLEVEL =/ {print $3}' cachyos-tree/Makefile)
+KSUB=$(awk '/^SUBLEVEL =/ {print $3}' cachyos-tree/Makefile)
+KEXTRA=$(awk '/^EXTRAVERSION =/ {print $3}' cachyos-tree/Makefile)
+if [ -z "$KSUB" ]; then
+  KREL="${KVER}.${KPATCH}${KEXTRA}"
+else
+  KREL="${KVER}.${KPATCH}.${KSUB}${KEXTRA}"
+fi
 echo "KREL rilevato: $KREL"
 
 echo ">>> Avvio compilazione RPM tramite rpmbuild..."
