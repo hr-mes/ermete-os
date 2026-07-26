@@ -92,22 +92,22 @@ mkdir -p %{buildroot}/boot
 make INSTALL_MOD_PATH=%{buildroot} modules_install
 KREL=$(make -s kernelrelease)
 
-cp arch/x86/boot/bzImage %{buildroot}/boot/vmlinuz-$KREL-chimera
-cp System.map %{buildroot}/boot/System.map-$KREL-chimera
-cp .config %{buildroot}/boot/config-$KREL-chimera
+cp arch/x86/boot/bzImage %{buildroot}/boot/vmlinuz-$KREL
+cp System.map %{buildroot}/boot/System.map-$KREL
+cp .config %{buildroot}/boot/config-$KREL
 
 # Install kernel-devel source tree for module building
-mkdir -p %{buildroot}/usr/src/kernels/$KREL-chimera
+mkdir -p %{buildroot}/usr/src/kernels/$KREL
 echo "Copying kernel headers and makefiles..."
-rsync -a --prune-empty-dirs --include '*/' --include '*.h' --include 'Makefile*' --include 'Kbuild*' --include 'Kconfig*' --include 'Module.symvers' --include '.config' --include 'scripts/***' --include 'tools/***' --exclude '*' ./ %{buildroot}/usr/src/kernels/$KREL-chimera/
+rsync -a --prune-empty-dirs --include '*/' --include '*.h' --include 'Makefile*' --include 'Kbuild*' --include 'Kconfig*' --include 'Module.symvers' --include '.config' --include 'scripts/***' --include 'tools/***' --exclude '*' ./ %{buildroot}/usr/src/kernels/$KREL/
 # Copy some missing binaries required by akmods
-cp -a scripts %{buildroot}/usr/src/kernels/$KREL-chimera/
+cp -a scripts %{buildroot}/usr/src/kernels/$KREL/
 
 # Fix the symlink in /lib/modules so it points to our new kernel-devel directory
 rm -f %{buildroot}/lib/modules/$KREL/build
 rm -f %{buildroot}/lib/modules/$KREL/source
-ln -snf /usr/src/kernels/$KREL-chimera %{buildroot}/lib/modules/$KREL/build
-ln -snf /usr/src/kernels/$KREL-chimera %{buildroot}/lib/modules/$KREL/source
+ln -snf /usr/src/kernels/$KREL %{buildroot}/lib/modules/$KREL/build
+ln -snf /usr/src/kernels/$KREL %{buildroot}/lib/modules/$KREL/source
 
 %files
 /boot/vmlinuz-*
