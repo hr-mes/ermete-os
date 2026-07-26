@@ -68,7 +68,7 @@ else
   # per prevenire desincronizzazione librerie (es. libx265 per ffmpeg).
   if [[ -z "${BASE_DIGEST:-}" ]]; then
     if command -v skopeo >/dev/null 2>&1; then
-      BASE_DIGEST=$(skopeo inspect --no-tags "docker://ghcr.io/${OWNER}/ermete-base-nvidia:latest" 2>/dev/null | grep -oP '"Digest": "\K[^"]+' || true)
+      BASE_DIGEST=$(skopeo inspect --no-tags "docker://ghcr.io/${OWNER}/ermete-base-nvidia:latest" 2>/dev/null | grep -oP '"Digest": "\K[^"]+' | head -n 1 || true)
     fi
   fi
   
