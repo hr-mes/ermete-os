@@ -270,7 +270,7 @@ jobs:
               echo -e "%_ldflags -Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro\n%optflags %{__global_compiler_flags} -O3 -march=x86-64-v3 -pipe -Wno-error\n%kcflags -O3 -march=x86-64-v3 -pipe -Wno-error" > /etc/rpm/macros.99-akmods
 
               rpm -ivh /usr/src/akmods/nvidia-kmod*.src.rpm
-              sed -i "s/make %{?_smp_mflags}/export CCACHE_DISABLE=1 SCCACHE_DISABLE=1 IGNORE_CC_MISMATCH=1 KCFLAGS=\"-Wno-error -fno-lto\"; make LLVM=1 LLVM_IAS=1 %{?_smp_mflags}/g" ~/rpmbuild/SPECS/nvidia-kmod.spec
+              sed -i "s/make %{?_smp_mflags}/export CCACHE_DISABLE=1 SCCACHE_DISABLE=1 IGNORE_CC_MISMATCH=1 KCFLAGS=\"-Wno-error -fno-lto\"; make LLVM=1 LLVM_IAS=1 CC=clang LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf STRIP=llvm-strip %{?_smp_mflags}/g" ~/rpmbuild/SPECS/nvidia-kmod.spec
               
               if ! rpmbuild -bb --target x86_64 --define "kernels $REAL_KERNEL_VER" ~/rpmbuild/SPECS/nvidia-kmod.spec; then
                 echo "::error::rpmbuild fallito!"
