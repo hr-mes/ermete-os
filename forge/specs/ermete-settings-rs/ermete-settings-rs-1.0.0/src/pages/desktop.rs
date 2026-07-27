@@ -11,7 +11,7 @@ async fn scan_dir_async(dir: &Path, wallpapers: &mut Vec<PathBuf>, depth: usize)
         while let Ok(Some(entry)) = entries.next_entry().await {
             let path = entry.path();
             if path.is_dir() {
-                Box::pin(scan_dir_async(&path, wallpapers, depth + 1)).await;
+                std::boxed::Box::pin(scan_dir_async(&path, wallpapers, depth + 1)).await;
             } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
                 let ext_lower = ext.to_lowercase();
                 if ["png", "jpg", "jpeg", "webp", "gif"].contains(&ext_lower.as_str()) {

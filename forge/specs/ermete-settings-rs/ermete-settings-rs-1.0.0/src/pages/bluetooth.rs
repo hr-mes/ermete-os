@@ -143,10 +143,11 @@ pub fn build_page() -> Box {
                                             .build();
                                             
                                         let connect_btn_clone = connect_btn.clone();
+                                        let device_path_for_closure = device_path.clone();
                                         connect_btn.connect_clicked(move |_| {
                                             connect_btn_clone.set_label("Connessione...");
                                             connect_btn_clone.set_sensitive(false);
-                                            let path = device_path.clone();
+                                            let path = device_path_for_closure.clone();
                                             let connect_btn_async = connect_btn_clone.clone();
                                             relm4::spawn_local(async move {
                                                 let mut success = true;

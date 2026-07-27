@@ -109,6 +109,11 @@ rm -f %{buildroot}/lib/modules/$KREL/source
 ln -snf /usr/src/kernels/$KREL-chimera %{buildroot}/lib/modules/$KREL/build
 ln -snf /usr/src/kernels/$KREL-chimera %{buildroot}/lib/modules/$KREL/source
 
+# Aggressive python shebang fix for brp-python-bytecompile
+find %{buildroot}/usr/src/kernels/$KREL-chimera/tools/ -type f -exec sed -i 's|#!/usr/bin/env python$|#!/usr/bin/python3|g' {} +
+find %{buildroot}/usr/src/kernels/$KREL-chimera/tools/ -type f -exec sed -i 's|#!/usr/bin/env python |#!/usr/bin/python3 |g' {} +
+find %{buildroot}/usr/src/kernels/$KREL-chimera/tools/ -type f -exec sed -i 's|#!/usr/bin/python$|#!/usr/bin/python3|g' {} +
+
 %files
 /boot/vmlinuz-*
 /boot/System.map-*
