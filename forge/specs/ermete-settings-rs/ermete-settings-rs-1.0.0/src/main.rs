@@ -12,6 +12,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 thread_local! {
     pub static DBUS_CONN: RefCell<Option<zbus::Connection>> = RefCell::new(None);
+    pub static DBUS_SYSTEM_CONN: RefCell<Option<zbus::Connection>> = RefCell::new(None);
     pub static MAIN_WINDOW: RefCell<Option<ApplicationWindow>> = RefCell::new(None);
     pub static MAIN_STACK: RefCell<Option<Stack>> = RefCell::new(None);
     pub static MAIN_LIST_BOX: RefCell<Option<ListBox>> = RefCell::new(None);
@@ -23,6 +24,15 @@ pub async fn get_connection() -> Result<zbus::Connection, zbus::Error> {
     }
     let conn = zbus::Connection::session().await?;
     DBUS_CONN.with(|c| *c.borrow_mut() = Some(conn.clone()));
+    Ok(conn)
+}
+
+pub async fn get_system_connection() -> Result<zbus::Connection, zbus::Error> {
+    if let Some(conn) = DBUS_SYSTEM_CONN.with(|c| c.borrow().clone()) {
+        return Ok(conn);
+    }
+    let conn = zbus::Connection::system().await?;
+    DBUS_SYSTEM_CONN.with(|c| *c.borrow_mut() = Some(conn.clone()));
     Ok(conn)
 }
 

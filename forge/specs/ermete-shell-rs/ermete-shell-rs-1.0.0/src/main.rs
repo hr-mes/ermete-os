@@ -143,7 +143,7 @@ fn main() -> glib::ExitCode {
         static ACTIVATED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
         if !ACTIVATED.swap(true, std::sync::atomic::Ordering::SeqCst) {
             use relm4::Component;
-            let ctrl = ui::topbar_relm4::TopbarModel::builder()
+            let ctrl = ui::topbar::TopbarModel::builder()
                 .launch(app.clone());
             
             Box::leak(Box::new(ctrl));

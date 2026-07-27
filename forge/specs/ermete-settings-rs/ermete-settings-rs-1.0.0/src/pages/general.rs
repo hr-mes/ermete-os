@@ -86,7 +86,7 @@ pub fn build_page() -> gtk4::Box {
 
     vo_switch.connect_state_set(move |_, state| {
         glib::MainContext::default().spawn_local(async move {
-            if let Ok(connection) = zbus::Connection::session().await {
+            if let Ok(connection) = crate::get_connection().await {
                 let _ = connection.call_method(
                     Some("org.ermete.Settings"),
                     "/org/ermete/Settings",
@@ -100,7 +100,7 @@ pub fn build_page() -> gtk4::Box {
     });
 
     glib::MainContext::default().spawn_local(async move {
-        if let Ok(connection) = zbus::Connection::session().await {
+        if let Ok(connection) = crate::get_connection().await {
             if let Ok(msg) = connection.call_method(
                 Some("org.ermete.Settings"),
                 "/org/ermete/Settings",

@@ -1,15 +1,13 @@
 use notify::{Watcher, RecursiveMode};
+use relm4::{gtk, ComponentParts, ComponentSender, SimpleComponent, RelmWidgetExt};
+use relm4::factory::{FactoryComponent, FactoryVecDeque, FactorySender};
+use gtk::prelude::*;
+use gtk4::{Application, ApplicationWindow, CssProvider};
+use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
 use crate::core::*;
 use crate::ui::spotlight::*;
 use crate::ui::notifications::*;
 use crate::ui::control_center::*;
-use glib::clone;
-use gtk4::prelude::*;
-use gtk4::{
-    Align, Application, ApplicationWindow, Box as GtkBox, Button, CenterBox, CssProvider,
-    Label, Orientation,
-};
-use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
 
 pub const TOPBAR_CSS: &str = r#"
 window.topbar-window {
@@ -418,12 +416,15 @@ progressbar.cc-progress-indigo progress {
 }
 "#;
 
+thread_local! {
+    static CSS_PROVIDER: std::cell::RefCell<Option<CssProvider>> = std::cell::RefCell::new(None);
+}
+
 fn load_css() {
     let home = std::env::var("HOME").unwrap_or_else(|_| "/root".to_string());
     let colors_path = format!("{}/.config/ermete-shell/colors.css", home);
     let colors_css = std::fs::read_to_string(&colors_path).unwrap_or_default();
     
-    // In caso il file di matugen non definisca nulla o sia vuoto, diamo dei fallback di sicurezza.
     let fallback = if colors_css.is_empty() {
         r#"
         @define-color shell_bg alpha(#1c1c1e, 0.65);
@@ -592,297 +593,324 @@ pub fn setup_popup_autoclose(pop: &ApplicationWindow, tag: &str) {
     pop.add_controller(key_ctrl);
 }
 
-fn build_left_island(app: &Application) -> (GtkBox, Button) {
-    let box_left = GtkBox::builder()
-        .orientation(Orientation::Horizontal)
-        .spacing(2)
-        .valign(Align::Center)
-        .build();
-
-    let apple_logo = Button::builder()
-        .label("◈")
-        .css_classes(["macos-menu-item", "macos-apple-logo"])
-        .build();
-    let app_clone = app.clone();
-    apple_logo.connect_clicked(move |_| {
-        show_start_menu_popover(&app_clone);
-    });
-    crate::core::attach_voiceover_hover(&apple_logo, "Menu di avvio e sistema");
-    box_left.append(&apple_logo);
-
-    let app_title = Button::builder()
-        .label("Ermete OS")
-        .css_classes(["macos-menu-item", "macos-app-title"])
-        .build();
-    crate::core::attach_voiceover_hover(&app_title, "Nome dell'applicazione corrente");
-    box_left.append(&app_title);
-
-    (box_left, app_title)
+pub struct WorkspaceItem {
+    pub ws: crate::core::NiriWorkspace,
 }
 
-fn build_center_island(_app: &Application) -> GtkBox {
-    let workspace_box = GtkBox::builder()
-        .orientation(Orientation::Horizontal)
-        .spacing(8)
-        .valign(Align::Center)
-        .build();
+#[derive(Debug)]
+pub enum WorkspaceMsg {
+    Focus,
+}
 
-    let scroll_ctrl = gtk4::EventControllerScroll::new(gtk4::EventControllerScrollFlags::VERTICAL);
-    scroll_ctrl.connect_scroll(|_, _dx, dy| {
-        if dy > 0.0 {
-            crate::core::niri_client::focus_workspace_down();
-        } else if dy < 0.0 {
-            crate::core::niri_client::focus_workspace_up();
-        }
-        glib::Propagation::Stop
-    });
-    workspace_box.add_controller(scroll_ctrl);
+#[relm4::factory(pub)]
+impl FactoryComponent for WorkspaceItem {
+    type Init = crate::core::NiriWorkspace;
+    type Input = WorkspaceMsg;
+    type Output = ();
+    type CommandOutput = ();
+    type ParentWidget = gtk::Box;
 
-    let (sender, receiver) = glib::MainContext::channel(glib::Priority::DEFAULT);
-    spawn_niri_workspace_watcher(sender);
-
-    let workspace_box_clone = workspace_box.clone();
-    receiver.attach(None, move |workspaces| {
-        while let Some(child) = workspace_box_clone.first_child() {
-            workspace_box_clone.remove(&child);
-        }
-
-        let active_output = workspaces.iter()
-            .find(|w| w.is_focused)
-            .or_else(|| workspaces.iter().find(|w| w.is_active))
-            .map(|w| w.output.clone())
-            .unwrap_or_default();
-
-        let mut filtered_ws: Vec<_> = workspaces.into_iter().filter(|w| w.output == active_output).collect();
-        filtered_ws.sort_by_key(|w| w.idx);
-
-        for ws in filtered_ws {
-            let label = if ws.is_active { "●" } else { "○" };
-            let ws_btn = Button::builder()
-                .label(label)
-                .css_classes(["macos-menu-item"])
-                .build();
+    view! {
+        gtk::Button {
+            #[watch]
+            set_css_classes: &[
+                "macos-menu-item",
+                if self.ws.is_focused { "workspace-focused" } 
+                else if self.ws.is_active { "workspace-active" } 
+                else { "" }
+            ],
             
-            if ws.is_focused {
-                ws_btn.add_css_class("workspace-focused");
-            } else if ws.is_active {
-                ws_btn.add_css_class("workspace-active");
-            }
-
-            let ws_id = ws.id;
-            ws_btn.connect_clicked(move |_| {
-                crate::core::niri_client::focus_workspace_by_id(ws_id);
-            });
-
-            workspace_box_clone.append(&ws_btn);
+            #[watch]
+            set_label: if self.ws.is_active { "●" } else { "○" },
+            
+            connect_clicked => WorkspaceMsg::Focus,
         }
-        glib::ControlFlow::Continue
-    });
-
-    workspace_box
-}
-
-fn build_right_island(app: &Application, clock_label: &Label) -> (GtkBox, Button, Button) {
-    let box_right = GtkBox::builder()
-        .orientation(Orientation::Horizontal)
-        .spacing(2)
-        .valign(Align::Center)
-        .build();
-
-    // 1. Battery / Power Dongle (macOS style)
-    let batt_item = Button::builder()
-        .label("100% 󰁹")
-        .css_classes(["macos-status-item"])
-        .build();
-    crate::core::attach_voiceover_hover(&batt_item, "Stato batteria e alimentazione");
-
-    // 2. Dynamic Network Dongle (macOS style: Ethernet/Wi-Fi/Off)
-    let (init_icon, _, _) = get_network_status();
-    let net_item = Button::builder()
-        .label(&init_icon)
-        .css_classes(["macos-status-item"])
-        .build();
-    let app_net = app.clone();
-    net_item.connect_clicked(move |_| {
-        show_wifi_popover(&app_net);
-    });
-    crate::core::attach_voiceover_hover(&net_item, "Connettività Wi-Fi e Rete");
-
-    // 3. Spotlight Dongle (macOS style)
-    let spot_item = Button::builder()
-        .label("🔍")
-        .css_classes(["macos-status-item"])
-        .build();
-    let app_clone1 = app.clone();
-    spot_item.connect_clicked(move |_| {
-        show_spotlight_modal(&app_clone1);
-    });
-    crate::core::attach_voiceover_hover(&spot_item, "Ricerca globale Spotlight");
-
-    // 4. Control Center Dongle (macOS style)
-    let cc_item = Button::builder()
-        .label("❖")
-        .css_classes(["macos-status-item"])
-        .build();
-    let app_clone2 = app.clone();
-    cc_item.connect_clicked(move |_| {
-        show_control_center_popover(&app_clone2);
-    });
-    crate::core::attach_voiceover_hover(&cc_item, "Centro di Controllo di sistema");
-
-    // 5. Clock Dongle (macOS style)
-    let clock_item = Button::builder()
-        .css_classes(["macos-status-item", "macos-clock"])
-        .build();
-    clock_item.set_child(Some(clock_label));
-    let app_clone3 = app.clone();
-    clock_item.connect_clicked(move |_| {
-        show_calendar_popover(&app_clone3);
-    });
-    crate::core::attach_voiceover_hover(&clock_item, "Orologio e Calendario");
-
-    // 6. Notification Center Bell
-    let notif_item = Button::builder()
-        .label("󰂚")
-        .css_classes(["macos-status-item"])
-        .build();
-    let app_clone_notif = app.clone();
-    notif_item.connect_clicked(move |_| {
-        toggle_or_open_popup("notifications", || crate::ui::notifications::show_notification_center(&app_clone_notif));
-    });
-    crate::core::attach_voiceover_hover(&notif_item, "Centro Notifiche");
-
-    box_right.append(&batt_item);
-    box_right.append(&net_item);
-    box_right.append(&spot_item);
-    box_right.append(&cc_item);
-    box_right.append(&notif_item);
-    box_right.append(&clock_item);
-    (box_right, net_item, batt_item)
-}
-
-pub fn build_ui(app: &Application) {
-    if UI_BUILT.swap(true, std::sync::atomic::Ordering::SeqCst) {
-        return;
     }
-    load_css();
-    spawn_css_watcher();
-    spawn_notification_daemon(app);
 
-    let window = ApplicationWindow::builder()
-        .application(app)
-        .title("Ermete Shell")
-        .css_classes(["topbar-window"])
-        .build();
+    fn init_model(init: Self::Init, _index: &relm4::factory::DynamicIndex, _sender: FactorySender<Self>) -> Self {
+        Self { ws: init }
+    }
 
-    window.init_layer_shell();
-    window.set_layer(Layer::Top);
-    window.set_namespace("bar");
-    window.auto_exclusive_zone_enable();
-
-    window.set_anchor(Edge::Top, true);
-    window.set_anchor(Edge::Left, true);
-    window.set_anchor(Edge::Right, true);
-
-    // macOS Sonoma / Sequoia height = 28px exactly
-    window.set_height_request(28);
-
-    let container = GtkBox::builder()
-        .orientation(Orientation::Horizontal)
-        .css_classes(["topbar-container"])
-        .hexpand(true)
-        .build();
-
-    let clock_label = Label::new(Some(&macos_clock_string()));
-
-    let center_box = CenterBox::new();
-    let (left_island, app_title) = build_left_island(app);
-    center_box.set_start_widget(Some(&left_island));
-    center_box.set_center_widget(Some(&build_center_island(app)));
-    let (right_island, net_btn, batt_btn) = build_right_island(app, &clock_label);
-    center_box.set_end_widget(Some(&right_island));
-    center_box.set_hexpand(true);
-
-    container.append(&center_box);
-    window.set_child(Some(&container));
-
-    glib::timeout_add_seconds_local(
-        5,
-        clone!(@weak clock_label, @weak net_btn, @weak batt_btn => @default-return glib::ControlFlow::Break, move || {
-            clock_label.set_label(&macos_clock_string());
-            let (net_icon, _, _) = get_network_status();
-            net_btn.set_label(&net_icon);
-            
-            let live = crate::core::live_state::get_live_state();
-            if live.has_battery {
-                batt_btn.set_visible(true);
-                let batt_icon = if live.battery_percent < 20.0 {
-                    "󰁺"
-                } else if live.battery_percent < 50.0 {
-                    "󰁼"
-                } else {
-                    "󰁹"
-                };
-                batt_btn.set_label(&format!("{}% {}", live.battery_percent.round() as i32, batt_icon));
-            } else {
-                batt_btn.set_visible(false);
+    fn update(&mut self, msg: Self::Input, _sender: FactorySender<Self>) {
+        match msg {
+            WorkspaceMsg::Focus => {
+                crate::core::niri_client::focus_workspace_by_id(self.ws.id);
             }
-            
-            glib::ControlFlow::Continue
-        }),
-    );
-
-    // Fast Polling for Niri Window Focus (Every 100ms for snappiness)
-    glib::timeout_add_local(
-        std::time::Duration::from_millis(200),
-        clone!(@weak app_title => @default-return glib::ControlFlow::Break, move || {
-            let niri = crate::core::niri_state::get_niri_state();
-            if let Some(title) = niri.focused_window_title {
-                app_title.set_label(&title);
-            } else {
-                app_title.set_label("Ermete OS");
-            }
-            glib::ControlFlow::Continue
-        }),
-    );
-
-    window.present();
+        }
+    }
 }
 
-#[allow(dead_code)]
-const APP_ID: &str = "os.ermete.Shell";
+pub struct TopbarModel {
+    pub app: gtk::Application,
+    pub clock_text: String,
+    pub battery_percent: f64,
+    pub has_battery: bool,
+    pub network_icon: String,
+    pub focused_app_title: String,
+    pub workspaces: FactoryVecDeque<WorkspaceItem>,
+}
 
-#[allow(dead_code)]
-pub fn toggle_or_open_popup(tag: &str, open_fn: impl FnOnce()) {
-    let mut to_close = None;
-    let mut already_open = false;
-    ACTIVE_POPUP.with(|p| {
-        if let Some((old_tag, old_weak)) = p.borrow().as_ref() {
-            if let Some(old_win) = old_weak.upgrade() {
-                if old_win.is_visible() {
-                    to_close = Some(old_win);
-                    if old_tag == tag {
-                        already_open = true;
+#[derive(Debug)]
+pub enum TopbarInput {
+    TickSecond,          // Aggiorna orologio e stato base
+    TickFast,            // Aggiorna titolo app
+    UpdateWorkspaces(Vec<crate::core::NiriWorkspace>),
+    ToggleStartMenu,
+    ToggleControlCenter,
+    ToggleSpotlight,
+    ToggleCalendar,
+    ToggleWifi,
+    ToggleNotifications,
+    ToggleDesktopWidgets,
+    ToggleLiveTheming,
+}
+
+#[relm4::component(pub)]
+impl SimpleComponent for TopbarModel {
+    type Input = TopbarInput;
+    type Output = ();
+    type Init = gtk::Application;
+
+    view! {
+        gtk::ApplicationWindow {
+            set_title: Some("Ermete Shell - Topbar"),
+            add_css_class: "topbar-window",
+            set_visible: true,
+            
+            gtk::Box {
+                set_orientation: gtk::Orientation::Horizontal,
+                add_css_class: "topbar-container",
+                set_hexpand: true,
+                
+                gtk::CenterBox {
+                    set_hexpand: true,
+                    
+                    // --- ISOLA SINISTRA ---
+                    #[wrap(Some)]
+                    set_start_widget = &gtk::Box {
+                        set_orientation: gtk::Orientation::Horizontal,
+                        set_spacing: 2,
+                        set_valign: gtk::Align::Center,
+                        
+                        gtk::Button {
+                            set_label: "◈",
+                            add_css_class: "macos-menu-item",
+                            add_css_class: "macos-apple-logo",
+                            connect_clicked => TopbarInput::ToggleStartMenu,
+                        },
+                        
+                        gtk::Button {
+                            #[watch]
+                            set_label: &model.focused_app_title,
+                            add_css_class: "macos-menu-item",
+                            add_css_class: "macos-app-title",
+                        }
+                    },
+                    
+                    // --- ISOLA CENTRALE (Workspaces Factory) ---
+                    #[wrap(Some)]
+                    set_center_widget = &gtk::Box {
+                        set_orientation: gtk::Orientation::Horizontal,
+                        set_spacing: 8,
+                        set_valign: gtk::Align::Center,
+                        
+                        #[local_ref]
+                        workspaces_box -> gtk::Box {
+                            set_orientation: gtk::Orientation::Horizontal,
+                            set_spacing: 8,
+                        }
+                    },
+                    
+                    // --- ISOLA DESTRA ---
+                    #[wrap(Some)]
+                    set_end_widget = &gtk::Box {
+                        set_orientation: gtk::Orientation::Horizontal,
+                        set_spacing: 2,
+                        set_valign: gtk::Align::Center,
+                        
+                        gtk::Button {
+                            #[watch]
+                            set_visible: model.has_battery,
+                            #[watch]
+                            set_label: &format!("{}% 󰁹", model.battery_percent.round() as i32),
+                            add_css_class: "macos-status-item",
+                        },
+                        
+                        gtk::Button {
+                            #[watch]
+                            set_label: &model.network_icon,
+                            add_css_class: "macos-status-item",
+                            connect_clicked => TopbarInput::ToggleWifi,
+                        },
+                        
+                        gtk::Button {
+                            set_label: "🔍",
+                            add_css_class: "macos-status-item",
+                            connect_clicked => TopbarInput::ToggleSpotlight,
+                        },
+                        
+                        gtk::Button {
+                            set_label: "❖",
+                            add_css_class: "macos-status-item",
+                            connect_clicked => TopbarInput::ToggleControlCenter,
+                        },
+                        
+                        gtk::Button {
+                            set_label: "🧩",
+                            add_css_class: "macos-status-item",
+                            set_tooltip_text: Some("Desktop Widgets"),
+                            connect_clicked => TopbarInput::ToggleDesktopWidgets,
+                        },
+                        
+                        gtk::Button {
+                            set_label: "🎨",
+                            add_css_class: "macos-status-item",
+                            set_tooltip_text: Some("Live Theming & Dynamic Accent"),
+                            connect_clicked => TopbarInput::ToggleLiveTheming,
+                        },
+                        
+                        gtk::Button {
+                            set_label: "󰂚",
+                            add_css_class: "macos-status-item",
+                            connect_clicked => TopbarInput::ToggleNotifications,
+                        },
+                        
+                        gtk::Button {
+                            #[watch]
+                            set_label: &model.clock_text,
+                            add_css_class: "macos-status-item",
+                            add_css_class: "macos-clock",
+                            connect_clicked => TopbarInput::ToggleCalendar,
+                        }
                     }
                 }
             }
         }
-        *p.borrow_mut() = None;
-    });
-
-    if let Some(win) = to_close {
-        win.close();
     }
 
-    if !already_open {
-        open_fn();
+    fn init(
+        app: Self::Init,
+        root: Self::Root,
+        sender: ComponentSender<Self>,
+    ) -> ComponentParts<Self> {
+        load_css();
+        spawn_css_watcher();
+        crate::ui::notifications::spawn_notification_daemon(&app);
+
+        root.set_application(Some(&app));
+        root.init_layer_shell();
+        root.set_layer(Layer::Top);
+        root.set_namespace("bar");
+        root.auto_exclusive_zone_enable();
+        root.set_anchor(Edge::Top, true);
+        root.set_anchor(Edge::Left, true);
+        root.set_anchor(Edge::Right, true);
+        root.set_height_request(28);
+
+        let workspaces = FactoryVecDeque::builder()
+            .launch(gtk::Box::default())
+            .detach();
+
+        let model = TopbarModel {
+            app: app.clone(),
+            clock_text: "Caricamento...".to_string(),
+            battery_percent: 100.0,
+            has_battery: true,
+            network_icon: "󰤨".to_string(),
+            focused_app_title: "Ermete OS".to_string(),
+            workspaces,
+        };
+
+        let workspaces_box = model.workspaces.widget();
+        let widgets = view_output!();
+
+        let sender_slow = sender.clone();
+        glib::timeout_add_seconds_local(5, move || {
+            sender_slow.input(TopbarInput::TickSecond);
+            glib::ControlFlow::Continue
+        });
+
+        let sender_fast = sender.clone();
+        glib::timeout_add_local(std::time::Duration::from_millis(200), move || {
+            sender_fast.input(TopbarInput::TickFast);
+            glib::ControlFlow::Continue
+        });
+
+        let (niri_tx, niri_rx) = glib::MainContext::channel(glib::Priority::DEFAULT);
+        crate::core::spawn_niri_workspace_watcher(niri_tx);
+        
+        let sender_ws = sender.clone();
+        niri_rx.attach(None, move |workspaces_data| {
+            sender_ws.input(TopbarInput::UpdateWorkspaces(workspaces_data));
+            glib::ControlFlow::Continue
+        });
+
+        sender.input(TopbarInput::TickSecond);
+        sender.input(TopbarInput::TickFast);
+
+        ComponentParts { model, widgets }
+    }
+
+    fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
+        match message {
+            TopbarInput::TickSecond => {
+                self.clock_text = crate::core::macos_clock_string();
+                
+                let (net_icon, _, _) = crate::core::get_network_status();
+                self.network_icon = net_icon;
+                
+                let live = crate::core::live_state::get_live_state();
+                self.has_battery = live.has_battery;
+                self.battery_percent = live.battery_percent;
+            }
+            TopbarInput::TickFast => {
+                let niri = crate::core::niri_state::get_niri_state();
+                self.focused_app_title = niri.focused_window_title.unwrap_or_else(|| "Ermete OS".to_string());
+            }
+            TopbarInput::UpdateWorkspaces(workspaces_data) => {
+                let active_output = workspaces_data.iter()
+                    .find(|w| w.is_focused)
+                    .or_else(|| workspaces_data.iter().find(|w| w.is_active))
+                    .map(|w| w.output.clone())
+                    .unwrap_or_default();
+
+                let mut filtered_ws: Vec<_> = workspaces_data.into_iter().filter(|w| w.output == active_output).collect();
+                filtered_ws.sort_by_key(|w| w.idx);
+
+                let mut ws_guard = self.workspaces.guard();
+                ws_guard.clear();
+                for ws in filtered_ws {
+                    ws_guard.push_back(ws);
+                }
+            }
+            TopbarInput::ToggleStartMenu => {
+                toggle_or_open_popup("launcher", || crate::ui::control_center::show_start_menu_popover(&self.app));
+            }
+            TopbarInput::ToggleControlCenter => {
+                toggle_or_open_popup("control-center", || crate::ui::control_center::show_control_center_popover(&self.app));
+            }
+            TopbarInput::ToggleSpotlight => {
+                toggle_or_open_popup("spotlight", || crate::ui::spotlight::show_spotlight_modal(&self.app));
+            }
+            TopbarInput::ToggleCalendar => {
+                toggle_or_open_popup("calendar", || crate::ui::control_center::show_calendar_popover(&self.app));
+            }
+            TopbarInput::ToggleWifi => {
+                toggle_or_open_popup("wifi", || crate::ui::control_center::show_wifi_popover(&self.app));
+            }
+            TopbarInput::ToggleNotifications => {
+                toggle_or_open_popup("notifications", || crate::ui::notifications::show_notification_center(&self.app));
+            }
+            TopbarInput::ToggleDesktopWidgets => {
+                let _ = gtk4::glib::spawn_command_line_async("ermete-settings-rs --page desktop");
+            }
+            TopbarInput::ToggleLiveTheming => {
+                let _ = gtk4::glib::spawn_command_line_async("ermete-settings-rs --page appearance");
+            }
+        }
     }
 }
 
-#[allow(dead_code)]
-static UI_BUILT: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
-
-#[allow(dead_code)]
 pub fn handle_command(app: &Application, arg: &str) {
     match arg {
         "spotlight" | "launcher" => toggle_or_open_popup("spotlight", || crate::ui::spotlight::show_spotlight_modal(app)),

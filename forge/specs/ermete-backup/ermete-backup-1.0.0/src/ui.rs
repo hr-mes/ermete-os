@@ -6,6 +6,7 @@ use gtk4::{
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
+use std::sync::OnceLock;
 
 #[derive(Debug, Clone, Serialize, Deserialize, zbus::zvariant::Type)]
 struct SnapshotInfo {
@@ -28,7 +29,21 @@ trait Backup1 {
     fn restore_snapshot(&self, id: &str) -> zbus::Result<bool>;
 }
 
+static DBUS_CONN: OnceLock<Option<zbus::blocking::Connection>> = OnceLock::new();
+
+fn get_system_connection() -> Option<&'static zbus::blocking::Connection> {
+    DBUS_CONN.get_or_init(|| zbus::blocking::Connection::system().ok()).as_ref()
+}
+
 fn get_snapshots() -> Vec<SnapshotInfo> {
+    if let Some(conn) = get_system_connection() {
+        if let Ok(proxy) = Backup1ProxyBlocking::new(conn) {
+            if let Ok(snaps) = proxy.list_snapshots() {
+                return snaps;
+            }
+        }
+    }
+    // Fallback: direct filesystem read if DBus service is offline
     let home = std::env::var("HOME").unwrap_or_else(|_| "/var/home/ermete".to_string());
     let mut path = PathBuf::from(&home);
     path.push(".snapshots");
@@ -129,6 +144,94 @@ fn apply_css() {
     );
 }
 
+fn populate_snapshot_list(list_box: &GtkBox) {
+    while let Some(child) = list_box.first_child() {
+        list_box.remove(&child);
+    }
+
+    let snapshots = get_snapshots();
+    if snapshots.is_empty() {
+        let empty_lbl = Label::builder()
+            .label("Nessuna istantanea presente. Scatta la prima istantanea ora.")
+            .css_classes(["snap-meta"])
+            .margin_top(40)
+            .build();
+        list_box.append(&empty_lbl);
+        return;
+    }
+
+    for snap in &snapshots {
+        let card = GtkBox::builder()
+            .orientation(Orientation::Horizontal)
+            .spacing(12)
+            .css_classes(["card"])
+            .build();
+
+        let info_box = GtkBox::builder()
+            .orientation(Orientation::Vertical)
+            .spacing(4)
+            .hexpand(true)
+            .build();
+
+        let title_lbl = Label::builder()
+            .label(&format!("📸 {} ({})", snap.note, snap.id))
+            .css_classes(["snap-title"])
+            .halign(Align::Start)
+            .build();
+
+        let meta_lbl = Label::builder()
+            .label(&format!("Creato il: {} | Spazio stimato: {}", snap.timestamp, snap.size_estimate))
+            .css_classes(["snap-meta"])
+            .halign(Align::Start)
+            .build();
+
+        info_box.append(&title_lbl);
+        info_box.append(&meta_lbl);
+
+        let act_box = GtkBox::builder()
+            .orientation(Orientation::Horizontal)
+            .spacing(8)
+            .valign(Align::Center)
+            .build();
+
+        let restore_btn = Button::builder()
+            .label("🔄 Ripristina")
+            .css_classes(["btn-restore"])
+            .build();
+        let snap_id = snap.id.clone();
+        restore_btn.connect_clicked(move |_| {
+            println!("[Time Machine] Restoring snapshot {}", snap_id);
+            if let Some(conn) = get_system_connection() {
+                if let Ok(proxy) = Backup1ProxyBlocking::new(conn) {
+                    let _ = proxy.restore_snapshot(&snap_id);
+                }
+            }
+        });
+
+        let delete_btn = Button::builder()
+            .label("🗑️")
+            .css_classes(["btn-delete"])
+            .build();
+        let snap_id_del = snap.id.clone();
+        let list_box_clone = list_box.clone();
+        delete_btn.connect_clicked(move |_| {
+            if let Some(conn) = get_system_connection() {
+                if let Ok(proxy) = Backup1ProxyBlocking::new(conn) {
+                    let _ = proxy.delete_snapshot(&snap_id_del);
+                }
+            }
+            populate_snapshot_list(&list_box_clone);
+        });
+
+        act_box.append(&restore_btn);
+        act_box.append(&delete_btn);
+
+        card.append(&info_box);
+        card.append(&act_box);
+        list_box.append(&card);
+    }
+}
+
 fn build_ui(app: &Application) {
     apply_css();
 
@@ -180,18 +283,24 @@ fn build_ui(app: &Application) {
         .css_classes(["btn-action"])
         .build();
 
+    let list_box = GtkBox::builder()
+        .orientation(Orientation::Vertical)
+        .spacing(10)
+        .build();
+
     let entry_clone = note_entry.clone();
-    let win_clone = window.clone();
+    let list_box_clone = list_box.clone();
     create_btn.connect_clicked(move |_| {
         let note = entry_clone.text().to_string();
         let note = if note.is_empty() { "Snapshot manuale".to_string() } else { note };
         println!("[Time Machine] Requesting snapshot creation with note: {}", note);
-        if let Ok(conn) = zbus::blocking::Connection::system() {
-            if let Ok(proxy) = Backup1ProxyBlocking::new(&conn) {
+        if let Some(conn) = get_system_connection() {
+            if let Ok(proxy) = Backup1ProxyBlocking::new(conn) {
                 let _ = proxy.create_snapshot(&note);
             }
         }
-        win_clone.close();
+        entry_clone.set_text("");
+        populate_snapshot_list(&list_box_clone);
     });
 
     new_card.append(&note_entry);
@@ -204,91 +313,7 @@ fn build_ui(app: &Application) {
         .vexpand(true)
         .build();
 
-    let list_box = GtkBox::builder()
-        .orientation(Orientation::Vertical)
-        .spacing(10)
-        .build();
-
-    let snapshots = get_snapshots();
-    if snapshots.is_empty() {
-        let empty_lbl = Label::builder()
-            .label("Nessuna istantanea presente. Scatta la prima istantanea ora.")
-            .css_classes(["snap-meta"])
-            .margin_top(40)
-            .build();
-        list_box.append(&empty_lbl);
-    } else {
-        for snap in &snapshots {
-            let card = GtkBox::builder()
-                .orientation(Orientation::Horizontal)
-                .spacing(12)
-                .css_classes(["card"])
-                .build();
-
-            let info_box = GtkBox::builder()
-                .orientation(Orientation::Vertical)
-                .spacing(4)
-                .hexpand(true)
-                .build();
-
-            let title_lbl = Label::builder()
-                .label(&format!("📸 {} ({})", snap.note, snap.id))
-                .css_classes(["snap-title"])
-                .halign(Align::Start)
-                .build();
-
-            let meta_lbl = Label::builder()
-                .label(&format!("Creato il: {} | Spazio stimato: {}", snap.timestamp, snap.size_estimate))
-                .css_classes(["snap-meta"])
-                .halign(Align::Start)
-                .build();
-
-            info_box.append(&title_lbl);
-            info_box.append(&meta_lbl);
-
-            let act_box = GtkBox::builder()
-                .orientation(Orientation::Horizontal)
-                .spacing(8)
-                .valign(Align::Center)
-                .build();
-
-            let restore_btn = Button::builder()
-                .label("🔄 Ripristina")
-                .css_classes(["btn-restore"])
-                .build();
-            let snap_id = snap.id.clone();
-            restore_btn.connect_clicked(move |_| {
-                println!("[Time Machine] Restoring snapshot {}", snap_id);
-                if let Ok(conn) = zbus::blocking::Connection::system() {
-                    if let Ok(proxy) = Backup1ProxyBlocking::new(&conn) {
-                        let _ = proxy.restore_snapshot(&snap_id);
-                    }
-                }
-            });
-
-            let delete_btn = Button::builder()
-                .label("🗑️")
-                .css_classes(["btn-delete"])
-                .build();
-            let snap_id_del = snap.id.clone();
-            let w_clone = window.clone();
-            delete_btn.connect_clicked(move |_| {
-                if let Ok(conn) = zbus::blocking::Connection::system() {
-                    if let Ok(proxy) = Backup1ProxyBlocking::new(&conn) {
-                        let _ = proxy.delete_snapshot(&snap_id_del);
-                    }
-                }
-                w_clone.close();
-            });
-
-            act_box.append(&restore_btn);
-            act_box.append(&delete_btn);
-
-            card.append(&info_box);
-            card.append(&act_box);
-            list_box.append(&card);
-        }
-    }
+    populate_snapshot_list(&list_box);
 
     scroll.set_child(Some(&list_box));
     main_box.append(&scroll);
@@ -332,4 +357,3 @@ mod tests {
         assert_eq!(<Backup1Proxy as zbus::ProxyDefault>::INTERFACE, Some("org.ermete.Backup1"));
     }
 }
-

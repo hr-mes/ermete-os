@@ -3,6 +3,9 @@
 # Holy Grail Optimizations: Clear Linux + CachyOS + Gentoo LTO
 # =========================================================================
 
+# Disable debug subpackages globally for Ermete Forge builds
+%debug_package %{nil}
+
 # Ignora i file decompressi ma non pacchettizzati (necessario per Ponytail Ultra che rimuove %doc)
 %_unpackaged_files_terminate_build 0
 

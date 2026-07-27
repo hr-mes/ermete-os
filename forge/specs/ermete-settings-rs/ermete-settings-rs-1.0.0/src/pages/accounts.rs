@@ -144,7 +144,7 @@ pub fn build_page() -> gtk4::Box {
                     let ctx = gtk4::glib::MainContext::default();
                     ctx.spawn_local(async move {
                         let mut success = false;
-                        match zbus::Connection::system().await {
+                        match crate::get_system_connection().await {
                             Ok(conn) => {
                                 let uid = unsafe { libc::getuid() };
                                 let path = format!("/org/freedesktop/Accounts/User{}", uid);

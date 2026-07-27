@@ -62,7 +62,7 @@ pub fn build_page() -> Box {
     let power_switch_clone = power_switch.clone();
     let ctx = gtk4::glib::MainContext::default();
     ctx.spawn_local(async move {
-        match zbus::Connection::system().await {
+        match crate::get_system_connection().await {
             Ok(conn) => {
                 match BluetoothProxy::new(&conn).await {
                     Ok(proxy) => {
@@ -81,7 +81,7 @@ pub fn build_page() -> Box {
     power_switch.connect_state_set(|_switch, state| {
         let ctx = gtk4::glib::MainContext::default();
         ctx.spawn_local(async move {
-            match zbus::Connection::system().await {
+            match crate::get_system_connection().await {
                 Ok(conn) => {
                     match BluetoothProxy::new(&conn).await {
                         Ok(proxy) => {
@@ -130,7 +130,7 @@ pub fn build_page() -> Box {
         
         let ctx = gtk4::glib::MainContext::default();
         ctx.spawn_local(async move {
-            match zbus::Connection::system().await {
+            match crate::get_system_connection().await {
                 Ok(conn) => {
                     match BluetoothProxy::new(&conn).await {
                         Ok(proxy) => {
@@ -167,7 +167,7 @@ pub fn build_page() -> Box {
                                             let ctx = gtk4::glib::MainContext::default();
                                             ctx.spawn_local(async move {
                                                 let mut success = true;
-                                                match zbus::Connection::system().await {
+                                                match crate::get_system_connection().await {
                                                     Ok(conn) => {
                                                         let Ok(builder) = Device1Proxy::builder(&conn).path(path.as_str()) else {
                                                             eprintln!("Invalid DBus object path for device: {}", path);

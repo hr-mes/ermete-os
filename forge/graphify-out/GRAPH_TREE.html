@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>/ — graphify tree viewer</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f9f9f9;
+      color: #333;
+    }
+    h1 {
+      margin: 20px 0 0 24px;
+      font-size: 2.2rem;
+      font-weight: bold;
+      color: #1e3a56;
+    }
+    .controls {
+      margin: 20px 0 15px 24px;
+    }
+    button {
+      margin-right: 10px;
+      padding: 8px 18px;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s ease-in-out;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    button:active {
+      background: #004085;
+    }
+    #tree-container {
+      width: calc(100vw - 48px); /* Adjust for body margin/padding */
+      height: 85vh;
+      overflow: auto;
+      border-radius: 8px;
+      background: #fff;
+      margin-left: 24px;
+      margin-right: 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border: 1px solid #ddd;
+    }
+    svg {
+      background: #fff;
+      border-radius: 8px;
+      display: block; /* Important for D3 */
+    }
+    .node circle {
+      stroke-width: 2.5px;
+    }
+    .node text { /* Base style for the <text> container */
+      font: 13px 'Segoe UI', sans-serif;
+      paint-order: stroke fill; /* Ensures text is readable over lines */
+      stroke: #fff; /* White halo */
+      stroke-width: 3px; /* Halo thickness */
+      stroke-linejoin: round;
+      stroke-opacity: 0.85; /* Halo opacity */
+    }
+    .link {
+      fill: none;
+      stroke-opacity: 0.7;
+      stroke-width: 2px;
+    }
+  </style>
+</head>
+<body>
+  <h1>/ — Knowledge Graph</h1>
+  <div class="controls">
+    <button onclick="expandAll()">Expand All</button>
+    <button onclick="collapseAll()">Collapse All</button>
+    <button onclick="resetView()">Reset View</button>
+  </div>
+  <div id="tree-container">
+    <svg id="tree-svg" width="6000" height="8000"></svg>
+  </div>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    const initialJsonData = {"name":"/","total_count":530,"children":[{"name":"scripts","total_count":11,"children":[{"name":"build_rolling_local.sh","total_count":1,"children":[{"name":"build_rolling_local.sh script","total_count":1,"children":[]}]},{"name":"check_idempotency.sh","total_count":1,"children":[{"name":"check_idempotency.sh script","total_count":1,"children":[]}]},{"name":"dynamic-matrix.sh","total_count":2,"children":[{"name":"dynamic-matrix.sh script","total_count":1,"children":[]},{"name":"process_array()","total_count":1,"children":[]}]},{"name":"fetch_repo_rpms.sh","total_count":4,"children":[{"name":"BUILDAH_ISOLATION","total_count":1,"children":[]},{"name":"fetch_repo_rpms.sh script","total_count":1,"children":[]},{"name":"pull_and_extract()","total_count":1,"children":[]},{"name":"STORAGE_DRIVER","total_count":1,"children":[]}]},{"name":"forge-ai-healer.py","total_count":3,"children":[{"name":"call_local_llm()","total_count":1,"children":[]},{"name":"Chiama il modello locale in ascolto sulle GPU tramite API OpenAI compatibile.","total_count":1,"children":[]},{"name":"heal_spec_file()","total_count":1,"children":[]}]}]},{"name":"specs","total_count":519,"children":[{"name":"ermete-backup","total_count":19,"children":[{"name":"ermete-backup-1.0.0","total_count":19,"children":[{"name":"src","total_count":19,"children":[{"name":"daemon.rs","total_count":11,"children":[{"name":".create_snapshot()","total_count":1,"children":[]},{"name":".delete_snapshot()","total_count":1,"children":[]},{"name":".get_manifest_path()","total_count":1,"children":[]},{"name":".list_snapshots()","total_count":1,"children":[]},{"name":".new()","total_count":1,"children":[]},{"name":".restore_snapshot()","total_count":1,"children":[]},{"name":"BackupServer","total_count":1,"children":[]},{"name":"main()","total_count":1,"children":[]},{"name":"SnapshotInfo","total_count":1,"children":[]},{"name":"test_backup_server_init_and_manifest_path()","total_count":1,"children":[]},{"name":"test_snapshot_lifecycle_and_restore()","total_count":1,"children":[]}]},{"name":"ui.rs","total_count":8,"children":[{"name":"apply_css()","total_count":1,"children":[]},{"name":"Backup1","total_count":1,"children":[]},{"name":"build_ui()","total_count":1,"children":[]},{"name":"get_snapshots()","total_count":1,"children":[]},{"name":"main()","total_count":1,"children":[]},{"name":"SnapshotInfo","total_count":1,"children":[]},{"name":"test_proxy_interface_and_structure()","total_count":1,"children":[]},{"name":"test_snapshot_info_serialization_and_parsing()","total_count":1,"children":[]}]}]}]}]},{"name":"ermete-base-config","total_count":2,"children":[{"name":"SOURCES","total_count":2,"children":[{"name":"usr","total_count":2,"children":[{"name":"bin","total_count":2,"children":[{"name":"nvidia-sleep.sh","total_count":2,"children":[{"name":"nvidia-sleep.sh script","total_count":1,"children":[]},{"name":"RestoreVT()","total_count":1,"children":[]}]}]}]}]}]},{"name":"ermete-cloud-rs","total_count":7,"children":[{"name":"ermete-cloud-rs-1.0.0","total_count":7,"children":[{"name":"src","total_count":7,"children":[{"name":"dbus.rs","total_count":2,"children":[{"name":".push_clipboard()","total_count":1,"children":[]},{"name":"CloudIface","total_count":1,"children":[]}]},{"name":"main.rs","total_count":1,"children":[{"name":"main()","total_count":1,"children":[]}]},{"name":"sync.rs","total_count":4,"children":[{"name":".new()","total_count":1,"children":[]},{"name":".send_clipboard()","total_count":1,"children":[]},{"name":".start_discovery()","total_count":1,"children":[]},{"name":"SyncEngine","total_count":1,"children":[]}]}]}]}]},{"name":"ermete-daemon-rs","total_count":93,"children":[{"name":"ermete-daemon-rs-0.2.1","total_count":93,"children":[{"name":"src","total_count":93,"children":[{"name":"ai.rs","total_count":2,"children":[{"name":".new()","total_count":1,"children":[]},{"name":"AiCore","total_count":1,"children":[]}]},{"name":"audio_spatial.rs","total_count":5,"children":[{"name":".listen_to_niri_events()","total_count":1,"children":[]},{"name":".new()","total_count":1,"children":[]},{"name":".update_binaural_panning()","total_count":1,"children":[]},{"name":"AudioSpatializer","total_count":1,"children":[]},{"name":"start_audio_raytracing()","total_count":1,"children":[]}]},{"name":"bedrock.rs","total_count":5,"children":[{"name":".audio_volume()","total_count":1,"children":[]},{"name":".new()","total_count":1,"children":[]},{"name":".ping()","total_count":1,"children":[]},{"name":".set_audio_volume()","total_count":1,"children":[]},{"name":"Bedrock","total_count":1,"children":[]}]},{"name":"bluetooth.rs","total_count":5,"children":[{"name":".get_devices()","total_count":1,"children":[]},{"name":".new()","total_count":1,"children":[]},{"name":".power()","total_count":1,"children":[]},{"name":".set_power()","total_count":1,"children":[]},{"name":"Bluetooth","total_count":1,"children":[]}]},{"name":"continuity.rs","total_count":3,"children":[{"name":".new()","total_count":1,"children":[]},{"name":".start_background_sync()","total_count":1,"children":[]},{"name":"ContinuityService","total_count":1,"children":[]}]},{"name":"gatekeeper_listener.rs","total_count":2,"children":[{"name":"Gatekeeper","total_count":1,"children":[]},{"name":"start_gatekeeper_listener()","total_count":1,"children":[]}]},{"name":"gaze.rs","total_count":4,"children":[{"name":".new()","total_count":1,"children":[]},{"name":".start()","total_count":1,"children":[]},{"name":".stop()","total_count":1,"children":[]},{"name":"GazeTracker","total_count":1,"children":[]}]},{"name":"main.rs","total_count":1,"children":[{"name":"main()","total_count":1,"children":[]}]},{"name":"network.rs","total_count":15,"children":[{"name":".add_vpn_tunnel()","total_count":1,"children":[]},{"name":".build_enterprise_wifi_dict()","total_count":1,"children":[]},{"name":".build_vpn_tunnel_dict()","total_count":1,"children":[]},{"name":".check_connectivity()","total_count":1,"children":[]},{"name":".connect_enterprise_wifi()","total_count":1,"children":[]},{"name":".new()","total_count":1,"children":[]},{"name":".scan_networks()","total_count":1,"children":[]},{"name":"Network","total_count":1,"children":[]},{"name":"NetworkManager","total_count":1,"children":[]},{"name":"NmAccessPoint","total_count":1,"children":[]},{"name":"NmDevice","total_count":1,"children":[]},{"name":"NmSettings","total_count":1,"children":[]},{"name":"NmWireless","total_count":1,"children":[]},{"name":"test_build_enterprise_wifi_dict()","total_count":1,"children":[]},{"name":"test_build_vpn_tunnel_dict_from_file()","total_count":1,"children":[]}]},{"name":"portal.rs","total_count":5,"children":[{"name":".new()","total_count":1,"children":[]},{"name":".parse_hex_rgb()","total_count":1,"children":[]},{"name":".read()","total_count":1,"children":[]},{"name":".read_all()","total_count":1,"children":[]},{"name":"PortalSettingsService","total_count":1,"children":[]}]},{"name":"portal_screencast.rs","total_count":16,"children":[{"name":".create_session()","total_count":1,"children":[]},{"name":".create_session()","total_count":1,"children":[]},{"name":".new()","total_count":1,"children":[]},{"name":".new()","total_count":1,"children":[]},{"name":".query_niri_outputs()","total_count":1,"children":[]},{"name":".resolve_pipewire_node()","total_count":1,"children":[]},{"name":".select_devices()","total_count":1,"children":[]},{"name":".select_sources()","total_count":1,"children":[]},{"name":".start()","total_count":1,"children":[]},{"name":".start()","total_count":1,"children":[]},{"name":".stop()","total_count":1,"children":[]},{"name":".stop()","total_count":1,"children":[]},{"name":"PortalRemoteDesktopService","total_count":1,"children":[]},{"name":"PortalScreenCastService","total_count":1,"children":[]},{"name":"ScreenCastSession","total_count":1,"children":[]},{"name":"test_portal_screencast_session_and_dynamic_node()","total_count":1,"children":[]}]},{"name":"power.rs","total_count":5,"children":[{"name":".new()","total_count":1,"children":[]},{"name":".start_monitoring()","total_count":1,"children":[]},{"name":"PowerManager","total_count":1,"children":[]},{"name":"PowerProfiles","total_count":1,"children":[]},{"name":"UPower","total_count":1,"children":[]}]},{"name":"qos.rs","total_count":1,"children":[{"name":"start_qos_observer()","total_count":1,"children":[]}]},{"name":"settings.rs","total_count":20,"children":[{"name":".accent_color()","total_count":1,"children":[]},{"name":".color_scheme()","total_count":1,"children":[]},{"name":".config_path()","total_count":1,"children":[]},{"name":".default()","total_count":1,"children":[]},{"name":".load()","total_count":1,"children":[]},{"name":".new()","total_count":1,"children":[]},{"name":".save()","total_count":1,"children":[]},{"name":".set_accent_color()","total_count":1,"children":[]},{"name":".set_color_scheme()","total_count":1,"children":[]},{"name":".set_true_tone_enabled()","total_count":1,"children":[]},{"name":".set_true_tone_temperature()","total_count":1,"children":[]},{"name":".set_voiceover_enabled()","total_count":1,"children":[]},{"name":".set_wallpaper()","total_count":1,"children":[]},{"name":".true_tone_enabled()","total_count":1,"children":[]},{"name":".true_tone_temperature()","total_count":1,"children":[]},{"name":".voiceover_enabled()","total_count":1,"children":[]},{"name":".wallpaper()","total_count":1,"children":[]},{"name":"apply_true_tone()","total_count":1,"children":[]},{"name":"SettingsService","total_count":1,"children":[]},{"name":"SettingsState","total_count":1,"children":[]}]},{"name":"voiceover.rs","total_count":4,"children":[{"name":".new()","total_count":1,"children":[]},{"name":".speak()","total_count":1,"children":[]},{"name":".stop()","total_count":1,"children":[]},{"name":"VoiceOverService","total_count":1,"children":[]}]}]}]}]},{"name":"ermete-doctor","total_count":1,"children":[{"name":"ermete-doctor-0.1.0","total_count":1,"children":[{"name":"src","total_count":1,"children":[{"name":"main.rs","total_count":1,"children":[{"name":"main()","total_count":1,"children":[]}]}]}]}]},{"name":"ermete-gatekeeper-rs","total_count":4,"children":[{"name":"ermete-gatekeeper-rs-1.0.0","total_count":4,"children":[{"name":"src","total_count":4,"children":[{"name":"main.rs","total_count":4,"children":[{"name":".approve_execution()","total_count":1,"children":[]},{"name":".deny_execution()","total_count":1,"children":[]},{"name":"GatekeeperManager","total_count":1,"children":[]},{"name":"main()","total_count":1,"children":[]}]}]}]}]},{"name":"ermete-kernel","total_count":8,"children":[{"name":"build-local.sh","total_count":1,"children":[{"name":"build-local.sh script","total_count":1,"children":[]}]},{"name":"prepare-chimera.sh","total_count":7,"children":[{"name":"fetch_pinned()","total_count":1,"children":[]},{"name":"KBUILD_CFLAGS","total_count":1,"children":[]},{"name":"KCFLAGS","total_count":1,"children":[]},{"name":"LLVM","total_count":1,"children":[]},{"name":"MAKEFLAGS","total_count":1,"children":[]},{"name":"prepare-chimera.sh script","total_count":1,"children":[]},{"name":"route_patch()","total_count":1,"children":[]}]}]},{"name":"ermete-lvfs-rs","total_count":6,"children":[{"name":"ermete-lvfs-rs-1.0.0","total_count":6,"children":[{"name":"src","total_count":6,"children":[{"name":"dbus.rs","total_count":2,"children":[{"name":".apply_firmware()","total_count":1,"children":[]},{"name":"LvfsIface","total_count":1,"children":[]}]},{"name":"firmware.rs","total_count":3,"children":[{"name":".check_and_update()","total_count":1,"children":[]},{"name":".new()","total_count":1,"children":[]},{"name":"FirmwareEngine","total_count":1,"children":[]}]},{"name":"main.rs","total_count":1,"children":[{"name":"main()","total_count":1,"children":[]}]}]}]}]},{"name":"ermete-mdm-rs","total_count":7,"children":[{"name":"ermete-mdm-rs-1.0.0","total_count":7,"children":[{"name":"src","total_count":7,"children":[{"name":"dbus.rs","total_count":2,"children":[{"name":".trigger_local_wipe()","total_count":1,"children":[]},{"name":"MdmIface","total_count":1,"children":[]}]},{"name":"main.rs","total_count":1,"children":[{"name":"main()","total_count":1,"children":[]}]},{"name":"wipe.rs","total_count":4,"children":[{"name":".execute_cryptsetup_erase()","total_count":1,"children":[]},{"name":".new()","total_count":1,"children":[]},{"name":".poll_server()","total_count":1,"children":[]},{"name":"WipeEngine","total_count":1,"children":[]}]}]}]}]},{"name":"ermete-recovery","total_count":6,"children":[{"name":"ermete-recovery-1.0.0","total_count":6,"children":[{"name":"src","total_count":6,"children":[{"name":"main.rs","total_count":6,"children":[{"name":"apply_css()","total_count":1,"children":[]},{"name":"build_ui()","total_count":1,"children":[]},{"name":"get_deployments()","total_count":1,"children":[]},{"name":"main()","total_count":1,"children":[]},{"name":"OstreeDeployment","total_count":1,"children":[]},{"name":"OstreeStatus","total_count":1,"children":[]}]}]}]}]},{"name":"ermete-secure-boot","total_count":1,"children":[{"name":"SOURCES","total_count":1,"children":[{"name":"usr","total_count":1,"children":[{"name":"libexec","total_count":1,"children":[{"name":"ermete-secure-boot-measure.sh","total_count":1,"children":[{"name":"ermete-secure-boot-measure.sh script","total_count":1,"children":[]}]}]}]}]}]},{"name":"ermete-settings-rs","total_count":53,"children":[{"name":"ermete-settings-rs-1.0.0","total_count":53,"children":[{"name":"src","total_count":53,"children":[{"name":"main.rs","total_count":6,"children":[{"name":".init()","total_count":1,"children":[]},{"name":"AppModel","total_count":1,"children":[]},{"name":"category_matches_query()","total_count":1,"children":[]},{"name":"get_connection()","total_count":1,"children":[]},{"name":"main()","total_count":1,"children":[]},{"name":"switch_to_page()","total_count":1,"children":[]}]},{"name":"niri_client.rs","total_count":8,"children":[{"name":"get_outputs()","total_count":1,"children":[]},{"name":"send_socket_request()","total_count":1,"children":[]},{"name":"set_keyboard_layout_by_index()","total_count":1,"children":[]},{"name":"set_output_hdr()","total_count":1,"children":[]},{"name":"set_output_mode()","total_count":1,"children":[]},{"name":"set_output_scale()","total_count":1,"children":[]},{"name":"set_output_vrr()","total_count":1,"children":[]},{"name":"update_niri_kdl_setting()","total_count":1,"children":[]}]},{"name":"pages","total_count":37,"children":[{"name":"accounts.rs","total_count":5,"children":[{"name":"AccountsUser","total_count":1,"children":[]},{"name":"Bedrock","total_count":1,"children":[]},{"name":"build_page()","total_count":1,"children":[]},{"name":"get_username()","total_count":1,"children":[]},{"name":"test_accounts_proxies_exist()","total_count":1,"children":[]}]},{"name":"appearance.rs","total_count":1,"children":[{"name":"build_page()","total_count":1,"children":[]}]},{"name":"audio.rs","total_count":2,"children":[{"name":"Bedrock","total_count":1,"children":[]},{"name":"build_page()","total_count":1,"children":[]}]},{"name":"battery.rs","total_count":2,"children":[{"name":"build_page()","total_count":1,"children":[]},{"name":"get_battery_capacity()","total_count":1,"children":[]}]},{"name":"bluetooth.rs","total_count":4,"children":[{"name":"Bluetooth","total_count":1,"children":[]},{"name":"build_page()","total_count":1,"children":[]},{"name":"Device1","total_count":1,"children":[]},{"name":"test_bluetooth_proxies_exist()","total_count":1,"children":[]}]},{"name":"desktop.rs","total_count":4,"children":[{"name":"build_page()","total_count":1,"children":[]},{"name":"is_dock_active()","total_count":1,"children":[]},{"name":"scan_dir()","total_count":1,"children":[]},{"name":"scan_wallpapers()","total_count":1,"children":[]}]},{"name":"displays.rs","total_count":2,"children":[{"name":"build_page()","total_count":1,"children":[]},{"name":"get_niri_outputs()","total_count":1,"children":[]}]},{"name":"ecosystem.rs","total_count":1,"children":[{"name":"build_page()","total_count":1,"children":[]}]},{"name":"focus.rs","total_count":1,"children":[{"name":"build_page()","total_count":1,"children":[]}]},{"name":"general.rs","total_count":1,"children":[{"name":"build_page()","total_count":1,"children":[]}]},{"name":"keyboard.rs","total_count":1,"children":[{"name":"build_page()","total_count":1,"children":[]}]},{"name":"labs.rs","total_count":1,"children":[{"name":"build_page()","total_count":1,"children":[]}]},{"name":"mouse.rs","total_count":1,"children":[{"name":"build_page()","total_count":1,"children":[]}]},{"name":"network.rs","total_count":2,"children":[{"name":"build_page()","total_count":1,"children":[]},{"name":"Network","total_count":1,"children":[]}]},{"name":"notifications.rs","total_count":1,"children":[{"name":"build_page()","total_count":1,"children":[]}]},{"name":"privacy.rs","total_count":4,"children":[{"name":"build_page()","total_count":1,"children":[]},{"name":"generate_permission_store_payload()","total_count":1,"children":[]},{"name":"PermissionStore","total_count":1,"children":[]},{"name":"test_permission_store_key_generation()","total_count":1,"children":[]}]},{"name":"updates.rs","total_count":1,"children":[{"name":"build_page()","total_count":1,"children":[]}]},{"name":"wired.rs","total_count":2,"children":[{"name":"build_page()","total_count":1,"children":[]},{"name":"get_ethernet_status()","total_count":1,"children":[]}]},{"name":"mod.rs","total_count":1,"children":[]}]},{"name":"settings_proxy.rs","total_count":1,"children":[{"name":"Settings","total_count":1,"children":[]}]},{"name":"style.rs","total_count":1,"children":[{"name":"load_global_css()","total_count":1,"children":[]}]}]}]}]},{"name":"ermete-shell-rs","total_count":255,"children":[{"name":"ermete-shell-rs-1.0.0","total_count":255,"children":[{"name":"src","total_count":255,"children":[{"name":"core","total_count":143,"children":[{"name":"battery.rs","total_count":4,"children":[{"name":"BatteryState","total_count":1,"children":[]},{"name":"get_battery_state()","total_count":1,"children":[]},{"name":"UPower","total_count":1,"children":[]},{"name":"UPowerDevice","total_count":1,"children":[]}]},{"name":"dock_config.rs","total_count":14,"children":[{"name":".default()","total_count":1,"children":[]},{"name":".drop()","total_count":1,"children":[]},{"name":".is_pinned()","total_count":1,"children":[]},{"name":".set()","total_count":1,"children":[]},{"name":"add_pin()","total_count":1,"children":[]},{"name":"DockConfig","total_count":1,"children":[]},{"name":"get_dock_config_path()","total_count":1,"children":[]},{"name":"HomeGuard","total_count":1,"children":[]},{"name":"is_pinned()","total_count":1,"children":[]},{"name":"load_dock_config()","total_count":1,"children":[]},{"name":"remove_pin()","total_count":1,"children":[]},{"name":"save_dock_config()","total_count":1,"children":[]},{"name":"test_add_and_remove_pin_logic()","total_count":1,"children":[]},{"name":"test_api_add_remove_and_is_pinned()","total_count":1,"children":[]}]},{"name":"dock_data.rs","total_count":9,"children":[{"name":"capitalize()","total_count":1,"children":[]},{"name":"derive_display_name_and_icon()","total_count":1,"children":[]},{"name":"DockItem","total_count":1,"children":[]},{"name":"matches_desktop_or_app_id()","total_count":1,"children":[]},{"name":"NiriWindowInfo","total_count":1,"children":[]},{"name":"NiriWorkspaceInfo","total_count":1,"children":[]},{"name":"reconcile_dock_items()","total_count":1,"children":[]},{"name":"test_reconcile_dock_items_merging()","total_count":1,"children":[]},{"name":"WindowLayout","total_count":1,"children":[]}]},{"name":"dock_watcher.rs","total_count":9,"children":[{"name":".drop()","total_count":1,"children":[]},{"name":".set()","total_count":1,"children":[]},{"name":"fetch_current_active_workspace_id()","total_count":1,"children":[]},{"name":"fetch_current_niri_windows()","total_count":1,"children":[]},{"name":"fetch_current_workspaces()","total_count":1,"children":[]},{"name":"HomeGuard","total_count":1,"children":[]},{"name":"spawn_dock_watchers()","total_count":1,"children":[]},{"name":"test_fetch_current_niri_windows_does_not_panic()","total_count":1,"children":[]},{"name":"test_spawn_dock_watchers_initial_send()","total_count":1,"children":[]}]},{"name":"live_state.rs","total_count":3,"children":[{"name":".default()","total_count":1,"children":[]},{"name":"get_live_state()","total_count":1,"children":[]},{"name":"LiveState","total_count":1,"children":[]}]},{"name":"mod.rs","total_count":19,"children":[{"name":".close_notification()","total_count":1,"children":[]},{"name":".get_capabilities()","total_count":1,"children":[]},{"name":".get_server_information()","total_count":1,"children":[]},{"name":".notify()","total_count":1,"children":[]},{"name":"attach_voiceover_hover()","total_count":1,"children":[]},{"name":"default_timestamp()","total_count":1,"children":[]},{"name":"dirs_next_or_home()","total_count":1,"children":[]},{"name":"get_cpu_load()","total_count":1,"children":[]},{"name":"get_network_status()","total_count":1,"children":[]},{"name":"get_notifications_file_path()","total_count":1,"children":[]},{"name":"get_ram_info()","total_count":1,"children":[]},{"name":"load_notification_history()","total_count":1,"children":[]},{"name":"macos_clock_string()","total_count":1,"children":[]},{"name":"NiriWorkspace","total_count":1,"children":[]},{"name":"NotificationData","total_count":1,"children":[]},{"name":"NotificationServer","total_count":1,"children":[]},{"name":"save_notification_history()","total_count":1,"children":[]},{"name":"spawn_niri_workspace_watcher()","total_count":1,"children":[]},{"name":"speak_text()","total_count":1,"children":[]}]},{"name":"mpris.rs","total_count":2,"children":[{"name":"get_mpris_state()","total_count":1,"children":[]},{"name":"MprisState","total_count":1,"children":[]}]},{"name":"network.rs","total_count":2,"children":[{"name":"get_network_status_dbus()","total_count":1,"children":[]},{"name":"NetworkManager","total_count":1,"children":[]}]},{"name":"niri_client.rs","total_count":14,"children":[{"name":"close_window()","total_count":1,"children":[]},{"name":"close_window_by_id()","total_count":1,"children":[]},{"name":"fetch_niri_data()","total_count":1,"children":[]},{"name":"focus_window()","total_count":1,"children":[]},{"name":"focus_workspace_by_id()","total_count":1,"children":[]},{"name":"focus_workspace_down()","total_count":1,"children":[]},{"name":"focus_workspace_up()","total_count":1,"children":[]},{"name":"get_niri_socket_path()","total_count":1,"children":[]},{"name":"niri_action()","total_count":1,"children":[]},{"name":"niri_request()","total_count":1,"children":[]},{"name":"power_off_monitors()","total_count":1,"children":[]},{"name":"quit_niri()","total_count":1,"children":[]},{"name":"screenshot()","total_count":1,"children":[]},{"name":"watch_niri_event_stream()","total_count":1,"children":[]}]},{"name":"niri_state.rs","total_count":2,"children":[{"name":"get_niri_state()","total_count":1,"children":[]},{"name":"NiriState","total_count":1,"children":[]}]},{"name":"spring.rs","total_count":7,"children":[{"name":".animate_to()","total_count":1,"children":[]},{"name":".default()","total_count":1,"children":[]},{"name":".new()","total_count":1,"children":[]},{"name":".set_value_immediate()","total_count":1,"children":[]},{"name":".value()","total_count":1,"children":[]},{"name":"SpringAnimator","total_count":1,"children":[]},{"name":"SpringConfig","total_count":1,"children":[]}]},{"name":"system_proxies.rs","total_count":58,"children":[{"name":".connect_wifi()","total_count":1,"children":[]},{"name":".delete_wifi()","total_count":1,"children":[]},{"name":".disconnect_wifi()","total_count":1,"children":[]},{"name":".extract_ssid()","total_count":1,"children":[]},{"name":".get_brightness()","total_count":1,"children":[]},{"name":".get_cached_mpris_state()","total_count":1,"children":[]},{"name":".get_cached_network_status()","total_count":1,"children":[]},{"name":".get_cached_volume()","total_count":1,"children":[]},{"name":".get_last_player_command()","total_count":1,"children":[]},{"name":".get_volume()","total_count":1,"children":[]},{"name":".get_wifi_details()","total_count":1,"children":[]},{"name":".is_bluetooth_enabled()","total_count":1,"children":[]},{"name":".is_wifi_enabled()","total_count":1,"children":[]},{"name":".list_bluetooth_devices()","total_count":1,"children":[]},{"name":".list_wifi_networks()","total_count":1,"children":[]},{"name":".lock_screen()","total_count":1,"children":[]},{"name":".modify_wifi()","total_count":1,"children":[]},{"name":".new()","total_count":1,"children":[]},{"name":".new_mock()","total_count":1,"children":[]},{"name":".player_command()","total_count":1,"children":[]},{"name":".power_off()","total_count":1,"children":[]},{"name":".reboot()","total_count":1,"children":[]},{"name":".refresh_mpris()","total_count":1,"children":[]},{"name":".refresh_network_status()","total_count":1,"children":[]},{"name":".set_bluetooth_powered()","total_count":1,"children":[]},{"name":".set_brightness()","total_count":1,"children":[]},{"name":".set_source_volume()","total_count":1,"children":[]},{"name":".set_volume()","total_count":1,"children":[]},{"name":".set_wifi_powered()","total_count":1,"children":[]},{"name":".suspend()","total_count":1,"children":[]},{"name":".toggle_bluetooth()","total_count":1,"children":[]},{"name":".toggle_mute()","total_count":1,"children":[]},{"name":".toggle_source_mute()","total_count":1,"children":[]},{"name":".toggle_wifi()","total_count":1,"children":[]},{"name":"BedrockAudio","total_count":1,"children":[]},{"name":"BluetoothDeviceInfo","total_count":1,"children":[]},{"name":"BlueZ","total_count":1,"children":[]},{"name":"ControllerBackend","total_count":1,"children":[]},{"name":"get_global_controller()","total_count":1,"children":[]},{"name":"init_system_controller()","total_count":1,"children":[]},{"name":"Logind","total_count":1,"children":[]},{"name":"LogindSession","total_count":1,"children":[]},{"name":"MockState","total_count":1,"children":[]},{"name":"MprisPlayer","total_count":1,"children":[]},{"name":"NetworkManager","total_count":1,"children":[]},{"name":"NmAccessPoint","total_count":1,"children":[]},{"name":"NmActiveConnection","total_count":1,"children":[]},{"name":"NmDevice","total_count":1,"children":[]},{"name":"NmSettings","total_count":1,"children":[]},{"name":"NmSettingsConnection","total_count":1,"children":[]},{"name":"NmWireless","total_count":1,"children":[]},{"name":"SecretEnroller","total_count":1,"children":[]},{"name":"SystemController","total_count":1,"children":[]},{"name":"test_review_findings_compliance()","total_count":1,"children":[]},{"name":"test_system_controller_power_and_global_methods()","total_count":1,"children":[]},{"name":"test_system_controller_state_updates()","total_count":1,"children":[]},{"name":"test_system_controller_ui_network_and_bt_methods()","total_count":1,"children":[]},{"name":"WifiNetworkInfo","total_count":1,"children":[]}]}]},{"name":"greeter.rs","total_count":12,"children":[{"name":"authenticate_interactive()","total_count":1,"children":[]},{"name":"authenticate_or_simulate()","total_count":1,"children":[]},{"name":"build_ui()","total_count":1,"children":[]},{"name":"capitalize_first()","total_count":1,"children":[]},{"name":"discover_target_user()","total_count":1,"children":[]},{"name":"format_italian_date()","total_count":1,"children":[]},{"name":"resolve_target_username()","total_count":1,"children":[]},{"name":"send_request()","total_count":1,"children":[]},{"name":"test_unlock_keyring_automatic_empty_password()","total_count":1,"children":[]},{"name":"test_unlock_keyring_automatic_with_password()","total_count":1,"children":[]},{"name":"unlock_keyring_automatic()","total_count":1,"children":[]},{"name":"UserInfo","total_count":1,"children":[]}]},{"name":"main.rs","total_count":2,"children":[{"name":"Args","total_count":1,"children":[]},{"name":"main()","total_count":1,"children":[]}]},{"name":"ui","total_count":98,"children":[{"name":"a11y.rs","total_count":4,"children":[{"name":".new()","total_count":1,"children":[]},{"name":".read_focused_element()","total_count":1,"children":[]},{"name":".setup_shortcuts()","total_count":1,"children":[]},{"name":"VoiceOver","total_count":1,"children":[]}]},{"name":"clipboard.rs","total_count":1,"children":[{"name":"show_clipboard_modal()","total_count":1,"children":[]}]},{"name":"control_center.rs","total_count":13,"children":[{"name":"build_cc_compact_tile()","total_count":1,"children":[]},{"name":"build_cc_row()","total_count":1,"children":[]},{"name":"build_quick_toggle_content()","total_count":1,"children":[]},{"name":"populate_wifi_list()","total_count":1,"children":[]},{"name":"show_audio_mixer_popover()","total_count":1,"children":[]},{"name":"show_bluetooth_popover()","total_count":1,"children":[]},{"name":"show_calendar_popover()","total_count":1,"children":[]},{"name":"show_control_center_popover()","total_count":1,"children":[]},{"name":"show_start_menu_popover()","total_count":1,"children":[]},{"name":"show_system_monitor_modal()","total_count":1,"children":[]},{"name":"show_wifi_details_modal()","total_count":1,"children":[]},{"name":"show_wifi_password_modal()","total_count":1,"children":[]},{"name":"show_wifi_popover()","total_count":1,"children":[]}]},{"name":"desktop_widgets.rs","total_count":13,"children":[{"name":"build_clock_widget()","total_count":1,"children":[]},{"name":"build_desktop_widgets()","total_count":1,"children":[]},{"name":"build_system_widget()","total_count":1,"children":[]},{"name":"default_config()","total_count":1,"children":[]},{"name":"DesktopConfig","total_count":1,"children":[]},{"name":"get_config_path()","total_count":1,"children":[]},{"name":"get_cpu_times()","total_count":1,"children":[]},{"name":"get_memory_usage()","total_count":1,"children":[]},{"name":"load_config()","total_count":1,"children":[]},{"name":"make_widget_draggable()","total_count":1,"children":[]},{"name":"reload_widgets()","total_count":1,"children":[]},{"name":"update_widget_position()","total_count":1,"children":[]},{"name":"WidgetConfig","total_count":1,"children":[]}]},{"name":"dock.rs","total_count":10,"children":[{"name":"animate_dock_visibility()","total_count":1,"children":[]},{"name":"build_ui()","total_count":1,"children":[]},{"name":"create_dock_for_monitor()","total_count":1,"children":[]},{"name":"DockMonitorInstance","total_count":1,"children":[]},{"name":"DockState","total_count":1,"children":[]},{"name":"refresh_monitor_instance()","total_count":1,"children":[]},{"name":"should_autohide_for_monitor()","total_count":1,"children":[]},{"name":"show_dock_context_menu()","total_count":1,"children":[]},{"name":"show_window_picker_popover()","total_count":1,"children":[]},{"name":"toggle_dock_visibility()","total_count":1,"children":[]}]},{"name":"gatekeeper_prompt.rs","total_count":1,"children":[{"name":"build_ui()","total_count":1,"children":[]}]},{"name":"generative.rs","total_count":7,"children":[{"name":".build_ui()","total_count":1,"children":[]},{"name":".container()","total_count":1,"children":[]},{"name":".handle_intent()","total_count":1,"children":[]},{"name":".new()","total_count":1,"children":[]},{"name":"GenerativeUiEngine","total_count":1,"children":[]},{"name":"IntentPayload","total_count":1,"children":[]},{"name":"UiElement","total_count":1,"children":[]}]},{"name":"mission_control.rs","total_count":2,"children":[{"name":"build_ui()","total_count":1,"children":[]},{"name":"get_icon_for_app_id()","total_count":1,"children":[]}]},{"name":"notifications.rs","total_count":6,"children":[{"name":"format_action_invoked_payload()","total_count":1,"children":[]},{"name":"send_action_invoked()","total_count":1,"children":[]},{"name":"show_notification_center()","total_count":1,"children":[]},{"name":"show_toast_popup()","total_count":1,"children":[]},{"name":"spawn_notification_daemon()","total_count":1,"children":[]},{"name":"test_inline_reply_payload_structure()","total_count":1,"children":[]}]},{"name":"osd.rs","total_count":1,"children":[{"name":"spawn_osd()","total_count":1,"children":[]}]},{"name":"powermenu.rs","total_count":1,"children":[{"name":"show_powermenu_modal()","total_count":1,"children":[]}]},{"name":"privacy_prompt.rs","total_count":1,"children":[{"name":"build_ui()","total_count":1,"children":[]}]},{"name":"spotlight.rs","total_count":5,"children":[{"name":"ensure_index_loaded()","total_count":1,"children":[]},{"name":"populate_launcher_list()","total_count":1,"children":[]},{"name":"show_spotlight_modal()","total_count":1,"children":[]},{"name":"SpotlightAction","total_count":1,"children":[]},{"name":"SpotlightItem","total_count":1,"children":[]}]},{"name":"spring.rs","total_count":10,"children":[{"name":".default()","total_count":1,"children":[]},{"name":".is_at_rest()","total_count":1,"children":[]},{"name":".new()","total_count":1,"children":[]},{"name":".new()","total_count":1,"children":[]},{"name":".set_target()","total_count":1,"children":[]},{"name":".snap_to()","total_count":1,"children":[]},{"name":".step()","total_count":1,"children":[]},{"name":".step_144hz()","total_count":1,"children":[]},{"name":"SpringConfig","total_count":1,"children":[]},{"name":"SpringState","total_count":1,"children":[]}]},{"name":"store.rs","total_count":3,"children":[{"name":"create_app_card()","total_count":1,"children":[]},{"name":"show_store_modal()","total_count":1,"children":[]},{"name":"Store","total_count":1,"children":[]}]},{"name":"topbar.rs","total_count":9,"children":[{"name":"build_center_island()","total_count":1,"children":[]},{"name":"build_left_island()","total_count":1,"children":[]},{"name":"build_right_island()","total_count":1,"children":[]},{"name":"build_ui()","total_count":1,"children":[]},{"name":"handle_command()","total_count":1,"children":[]},{"name":"load_css()","total_count":1,"children":[]},{"name":"setup_popup_autoclose()","total_count":1,"children":[]},{"name":"spawn_css_watcher()","total_count":1,"children":[]},{"name":"toggle_or_open_popup()","total_count":1,"children":[]}]},{"name":"topbar_relm4.rs","total_count":10,"children":[{"name":".init()","total_count":1,"children":[]},{"name":".init_model()","total_count":1,"children":[]},{"name":".update()","total_count":1,"children":[]},{"name":".update()","total_count":1,"children":[]},{"name":"load_css()","total_count":1,"children":[]},{"name":"spawn_css_watcher()","total_count":1,"children":[]},{"name":"TopbarInput","total_count":1,"children":[]},{"name":"TopbarModel","total_count":1,"children":[]},{"name":"WorkspaceItem","total_count":1,"children":[]},{"name":"WorkspaceMsg","total_count":1,"children":[]}]},{"name":"mod.rs","total_count":1,"children":[]}]}]}]}]},{"name":"ermete-store-rs","total_count":20,"children":[{"name":"ermete-store-rs-1.0.0","total_count":20,"children":[{"name":"src","total_count":20,"children":[{"name":"dbus.rs","total_count":7,"children":[{"name":".get_app_details()","total_count":1,"children":[]},{"name":".install_app()","total_count":1,"children":[]},{"name":".list_installed()","total_count":1,"children":[]},{"name":".new()","total_count":1,"children":[]},{"name":".search_apps()","total_count":1,"children":[]},{"name":".uninstall_app()","total_count":1,"children":[]},{"name":"StoreIface","total_count":1,"children":[]}]},{"name":"flathub.rs","total_count":6,"children":[{"name":".get_app_details()","total_count":1,"children":[]},{"name":".new()","total_count":1,"children":[]},{"name":".search()","total_count":1,"children":[]},{"name":"FlathubApp","total_count":1,"children":[]},{"name":"FlathubClient","total_count":1,"children":[]},{"name":"SearchResponse","total_count":1,"children":[]}]},{"name":"flatpak.rs","total_count":6,"children":[{"name":".install_app()","total_count":1,"children":[]},{"name":".list_installed()","total_count":1,"children":[]},{"name":".new()","total_count":1,"children":[]},{"name":".sync_remotes()","total_count":1,"children":[]},{"name":".uninstall_app()","total_count":1,"children":[]},{"name":"FlatpakManager","total_count":1,"children":[]}]},{"name":"main.rs","total_count":1,"children":[{"name":"main()","total_count":1,"children":[]}]}]}]}]},{"name":"ermete-system-config","total_count":2,"children":[{"name":"SOURCES","total_count":2,"children":[{"name":"etc","total_count":1,"children":[{"name":"greenboot","total_count":1,"children":[{"name":"check","total_count":1,"children":[{"name":"required.d","total_count":1,"children":[{"name":"10-greetd-running.sh","total_count":1,"children":[{"name":"10-greetd-running.sh script","total_count":1,"children":[]}]}]}]}]}]},{"name":"usr","total_count":1,"children":[{"name":"libexec","total_count":1,"children":[{"name":"ermete-snapshot-trigger.sh","total_count":1,"children":[{"name":"ermete-snapshot-trigger.sh script","total_count":1,"children":[]}]}]}]}]}]},{"name":"ermete-telemetry-rs","total_count":11,"children":[{"name":"ermete-telemetry-rs-1.0.0","total_count":11,"children":[{"name":"src","total_count":11,"children":[{"name":"coredump.rs","total_count":3,"children":[{"name":".new()","total_count":1,"children":[]},{"name":".poll_new_crashes()","total_count":1,"children":[]},{"name":"CoredumpWatcher","total_count":1,"children":[]}]},{"name":"dbus.rs","total_count":2,"children":[{"name":".submit_crash()","total_count":1,"children":[]},{"name":"TelemetryIface","total_count":1,"children":[]}]},{"name":"github.rs","total_count":5,"children":[{"name":".extract_safe_metadata()","total_count":1,"children":[]},{"name":".new()","total_count":1,"children":[]},{"name":".report_crash()","total_count":1,"children":[]},{"name":"GitHubReporter","total_count":1,"children":[]},{"name":"test_extract_safe_metadata()","total_count":1,"children":[]}]},{"name":"main.rs","total_count":1,"children":[{"name":"main()","total_count":1,"children":[]}]}]}]}]},{"name":"ermete-ui-agent","total_count":5,"children":[{"name":"ermete-ui-agent-1.0.0","total_count":5,"children":[{"name":"agent.py","total_count":5,"children":[{"name":"handle_ipc()","total_count":1,"children":[]},{"name":"main()","total_count":1,"children":[]},{"name":"query_llm()","total_count":1,"children":[]},{"name":"read_system_prompt()","total_count":1,"children":[]},{"name":"update_widgets()","total_count":1,"children":[]}]}]}]},{"name":"ermete-updater-rs","total_count":8,"children":[{"name":"ermete-updater-rs-1.0.0","total_count":8,"children":[{"name":"src","total_count":8,"children":[{"name":"dbus.rs","total_count":3,"children":[{"name":".apply_updates()","total_count":1,"children":[]},{"name":".check_updates()","total_count":1,"children":[]},{"name":"UpdaterIface","total_count":1,"children":[]}]},{"name":"engine.rs","total_count":4,"children":[{"name":".check_and_apply()","total_count":1,"children":[]},{"name":".new()","total_count":1,"children":[]},{"name":"UpdateEngine","total_count":1,"children":[]},{"name":"UpdateStatus","total_count":1,"children":[]}]},{"name":"main.rs","total_count":1,"children":[{"name":"main()","total_count":1,"children":[]}]}]}]}]},{"name":"ermete-xdg-desktop-portal-ermete","total_count":11,"children":[{"name":"xdg-desktop-portal-ermete-1.0.0","total_count":11,"children":[{"name":"src","total_count":11,"children":[{"name":"main.rs","total_count":1,"children":[{"name":"main()","total_count":1,"children":[]}]},{"name":"portal.rs","total_count":10,"children":[{"name":".access_camera()","total_count":1,"children":[]},{"name":".access_microphone()","total_count":1,"children":[]},{"name":".create_session()","total_count":1,"children":[]},{"name":".create_session()","total_count":1,"children":[]},{"name":".request_permission()","total_count":1,"children":[]},{"name":"CameraPortal","total_count":1,"children":[]},{"name":"ErmetePortal","total_count":1,"children":[]},{"name":"LocationPortal","total_count":1,"children":[]},{"name":"MicrophonePortal","total_count":1,"children":[]},{"name":"ScreenCastPortal","total_count":1,"children":[]}]}]}]}]}]}]};
+
+    function transformData(jsonData) {
+        // Helper function to recursively build the children structure
+        function processNode(node, parentL1StageName) {
+            let displayName = node.name;
+            // Append total_count if it exists and is not already in the name
+            if (node.total_count !== undefined) {
+                if (!/\(Total Count: \d+\)$/.test(displayName)) {
+                    displayName += ` (Total Count: ${node.total_count})`;
+                }
+            }
+
+            const newNode = { name: displayName };
+
+            if (parentL1StageName === "Root") {
+                 newNode.originalStageName = node.name;
+            } else {
+                newNode.originalStageName = parentL1StageName;
+            }
+
+            if (node.children && node.children.length > 0) {
+                const stageNameToPass = (parentL1StageName === "Root") ? node.name : parentL1StageName;
+                newNode.children = node.children.map(child => processNode(child, stageNameToPass));
+            }
+
+            return newNode;
+        }
+
+        let rootDisplayName = jsonData.name;
+        if (jsonData.total_count !== undefined && !/\(Total Count: \d+\)$/.test(rootDisplayName)) {
+            rootDisplayName += ` (Total Count: ${jsonData.total_count})`;
+        }
+
+        return {
+            name: rootDisplayName,
+            originalStageName: "Root",
+            children: (jsonData.children || []).map(child => processNode(child, "Root"))
+        };
+    }
+
+    const treeData = transformData(initialJsonData);
+
+    // Auto-populated phaseColors: every depth-1 child of the root gets
+    // a stable colour from a bigger palette so all top-level dirs are
+    // distinguishable.
+    const PALETTE = [
+      ["#3498DB","#2980B9","#AED6F1"], ["#2ECC71","#27AE60","#A9DFBF"],
+      ["#E74C3C","#C0392B","#F5B7B1"], ["#9B59B6","#8E44AD","#D7BDE2"],
+      ["#F39C12","#D68910","#FAD7A0"], ["#1ABC9C","#117864","#A2D9CE"],
+      ["#34495E","#1B2631","#ABB2B9"], ["#E67E22","#BA4A00","#F5CBA7"],
+      ["#16A085","#0E6655","#A2D9CE"], ["#D35400","#A04000","#EDBB99"],
+      ["#7F8C8D","#566573","#D5DBDB"], ["#C0392B","#7B241C","#F5B7B1"],
+      ["#2E86C1","#1B4F72","#A9CCE3"], ["#28B463","#196F3D","#A9DFBF"],
+      ["#AF7AC5","#6C3483","#D2B4DE"],
+    ];
+    const phaseColors = { "Root": { fill: "#4A4A4A", stroke: "#333333", collapsedFill: "#6C757D" },
+                          "Default": { fill: "#BDC3C7", stroke: "#95A5A6", collapsedFill: "#ECF0F1" } };
+    (initialJsonData.children || []).forEach((c, i) => {
+      const pal = PALETTE[i % PALETTE.length];
+      phaseColors[c.name] = { fill: pal[0], stroke: pal[1], collapsedFill: pal[2] };
+    });
+
+    const levelSpecificPalettes = {
+      0: { fill: "#4A4A4A", stroke: "#333333", collapsedFill: "#6C757D" },
+      2: { fill: "#6ab04c", stroke: "#508a38", collapsedFill: "#a3d391" },
+      3: { fill: "#f0932b", stroke: "#d0730f", collapsedFill: "#f6c07e" },
+      4: { fill: "#be2edd", stroke: "#a01cb3", collapsedFill: "#e08bf2" },
+      5: { fill: "#00a8ff", stroke: "#007ac1", collapsedFill: "#74d2ff" },
+      6: { fill: "#e55039", stroke: "#c23620", collapsedFill: "#f09a8d" },
+      default: { fill: "#747d8c", stroke: "#57606f", collapsedFill: "#a4b0be" }
+    };
+
+    const svgElement = d3.select("#tree-svg");
+    const initialSvgWidth = +svgElement.attr("width");
+    const initialSvgHeight = +svgElement.attr("height");
+    const margin = { top: 40, right: 120, bottom: 80, left: 450 };
+    let width = initialSvgWidth - margin.left - margin.right;
+    let height = initialSvgHeight - margin.top - margin.bottom;
+    const duration = 500;
+    let nodeCounter = 0;
+    const g = svgElement.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+    const treemap = d3.tree().nodeSize([40, 0]);
+    let rootNode = d3.hierarchy(treeData, d => d.children);
+    rootNode.x0 = 0;
+    rootNode.y0 = 0;
+
+    if (rootNode.children) {
+      rootNode.children.forEach(d_child => {
+        if (d_child.children) { collapseBranch(d_child); }
+      });
+    }
+    updateTree(rootNode);
+
+    function collapseBranch(d) { if (d.children) { d._children = d.children; d._children.forEach(collapseBranch); d.children = null; } }
+    function expandBranch(d) { if (d._children) { d.children = d._children; d._children = null; } if (d.children) { d.children.forEach(expandBranch); } }
+    window.expandAll = () => { expandBranch(rootNode); updateTree(rootNode); };
+    window.collapseAll = () => { if (rootNode.children) { rootNode.children.forEach(collapseBranch); } updateTree(rootNode); };
+    window.resetView = () => { if (rootNode.children) { rootNode.children.forEach(d_child => { if (d_child.children || d_child._children) { collapseBranch(d_child); } }); } if (rootNode._children && !rootNode.children) { rootNode.children = rootNode._children; rootNode._children = null; } updateTree(rootNode); };
+
+    function updateTree(source) {
+      const treeLayoutData = treemap(rootNode);
+      let nodes = treeLayoutData.descendants();
+      let links = treeLayoutData.descendants().slice(1);
+
+      let minX = 0;
+      let maxX = 0;
+      if (nodes.length > 0) {
+        minX = d3.min(nodes, d => d.x);
+        maxX = d3.max(nodes, d => d.x);
+      }
+
+      let neededHeight = Math.max(initialSvgHeight, maxX - minX + margin.top + margin.bottom + 100);
+      svgElement.transition().duration(duration / 2).attr("height", neededHeight);
+      g.transition().duration(duration / 2).attr("transform", `translate(${margin.left},${margin.top - minX + 40})`);
+
+      nodes.forEach(d => { d.y = d.depth * 400; }); // Adjust horizontal separation if needed
+
+      const node = g.selectAll('g.node').data(nodes, d => d.id || (d.id = ++nodeCounter));
+      const nodeEnter = node.enter().append('g')
+        .attr('class', d => "node" + (d.children || d._children ? " node--internal" : " node--leaf") + (d._children ? " _children" : ""))
+        .attr('transform', d => `translate(${source.y0},${source.x0})`)
+        .on('click', (event, d) => { if (d.children) { d._children = d.children; d.children = null; } else if (d._children) { d.children = d._children; d._children = null; } updateTree(d); })
+        .style('cursor', d => (d.children || d._children) ? 'pointer' : 'default');
+
+      nodeEnter.append('circle').attr('r', 1e-6);
+
+      nodeEnter.append('text')
+        .attr('dy', '.35em')
+        .attr('x', d => d.children || d._children ? -14 : 14)
+        .attr('text-anchor', d => d.children || d._children ? 'end' : 'start')
+        .style("fill-opacity", 1e-6)
+        .call(wrapText, 380);
+
+      const nodeUpdate = nodeEnter.merge(node);
+      nodeUpdate.transition().duration(duration)
+        .attr('transform', d => `translate(${d.y},${d.x})`)
+        .attr('class', d => "node" + (d.children ? " node--internal" : " node--leaf") + (d._children ? " node--internal _children" : ""));
+
+      nodeUpdate.select('circle').attr('r', 8.5)
+        .style('fill', d => {
+            let palette;
+            if (d.depth === 0) {
+                palette = levelSpecificPalettes[0];
+            } else if (d.depth === 1) {
+                palette = phaseColors[d.data.originalStageName] || phaseColors.Default;
+            } else {
+                palette = levelSpecificPalettes[d.depth] || levelSpecificPalettes.default;
+            }
+            if (d._children) return palette.collapsedFill;
+            if (d.children) return palette.fill;
+            return "#fff";
+        })
+        .style('stroke', d => {
+            let palette;
+            if (d.depth === 0) {
+                palette = levelSpecificPalettes[0];
+            } else if (d.depth === 1) {
+                palette = phaseColors[d.data.originalStageName] || phaseColors.Default;
+            } else {
+                palette = levelSpecificPalettes[d.depth] || levelSpecificPalettes.default;
+            }
+            return palette.stroke;
+        });
+      nodeUpdate.select('text').style("fill-opacity", 1).call(wrapText, 380);
+
+      const nodeExit = node.exit().transition().duration(duration).attr('transform', d => `translate(${source.y},${source.x})`).remove();
+      nodeExit.select('circle').attr('r', 1e-6);
+      nodeExit.select('text').style('fill-opacity', 1e-6);
+
+      const link = g.selectAll('path.link').data(links, d => d.id);
+      const linkEnter = link.enter().insert('path', "g").attr('class', 'link').attr('d', d => { const o = { x: source.x0, y: source.y0 }; return diagonal(o, o); });
+
+      linkEnter.merge(link).transition().duration(duration).attr('d', d => diagonal(d, d.parent))
+        .style('stroke', d => {
+            const sourceNode = d.parent;
+            if (!sourceNode) return phaseColors.Default.stroke;
+            const l1AncestorName = sourceNode.data.originalStageName;
+            const colorPalette = phaseColors[l1AncestorName] || phaseColors.Default;
+            return colorPalette.stroke;
+        });
+      link.exit().transition().duration(duration).attr('d', d => { const o = { x: source.x, y: source.y }; return diagonal(o, o); }).remove();
+      nodes.forEach(d => { d.x0 = d.x; d.y0 = d.y; });
+    }
+
+    function diagonal(s, d) { return `M ${s.y} ${s.x} C ${(s.y + d.y) / 2} ${s.x}, ${(s.y + d.y) / 2} ${d.x}, ${d.y} ${d.x}`; }
+
+    function wrapText(textElements, maxWidth) {
+        const textPartColors = {
+            name: '#343a40',
+            count: '#0056b3'
+        };
+        const countRegex = /(\s\(Total Count: \d+\))$/;
+
+        textElements.each(function () {
+            const textD3 = d3.select(this);
+            const originalNodeText = textD3.datum().data.name;
+            const x = parseFloat(textD3.attr("x") || 0);
+            const initialDy = textD3.attr("dy");
+            const textAnchor = textD3.attr("text-anchor");
+            const lineHeight = 1.1;
+
+            textD3.text(null);
+
+            let namePart = originalNodeText;
+            let countPartText = "";
+
+            const countMatch = originalNodeText.match(countRegex);
+            if (countMatch && originalNodeText.endsWith(countMatch[0])) {
+                namePart = originalNodeText.substring(0, originalNodeText.length - countMatch[0].length).trim();
+                countPartText = countMatch[0].trim();
+            }
+
+            const tokens = [];
+            namePart.split(/\s+/).filter(Boolean).forEach(word => {
+                tokens.push({ text: word, type: 'name' });
+            });
+            if (countPartText) {
+                tokens.push({ text: countPartText, type: 'count' });
+            }
+
+            if (tokens.length === 0 && originalNodeText) {
+                tokens.push({ text: originalNodeText, type: 'name' });
+            }
+
+            let currentTspan = textD3.append("tspan").attr("x", x).attr("dy", initialDy);
+            if (textAnchor === "end") currentTspan.attr("text-anchor", "end");
+
+            let lineTokens = [];
+
+            for (let i = 0; i < tokens.length; i++) {
+                const tokenObj = tokens[i];
+
+                lineTokens.push(tokenObj);
+                currentTspan.text(lineTokens.map(t => t.text).join(" "));
+
+                if (currentTspan.node().getComputedTextLength() > maxWidth && lineTokens.length > 1) {
+                    lineTokens.pop();
+
+                    currentTspan.text(null);
+                    lineTokens.forEach((prevToken, idx) => {
+                        currentTspan.append("tspan")
+                            .text((idx > 0 ? " " : "") + prevToken.text)
+                            .style("fill", textPartColors[prevToken.type] || textPartColors.name)
+                            .style("font-weight", prevToken.type === 'count' ? "bold" : "normal");
+                    });
+
+                    lineTokens = [tokenObj];
+                    currentTspan = textD3.append("tspan").attr("x", x).attr("dy", lineHeight + "em");
+                    if (textAnchor === "end") currentTspan.attr("text-anchor", "end");
+                }
+            }
+
+            currentTspan.text(null);
+            lineTokens.forEach((token, idx) => {
+                currentTspan.append("tspan")
+                    .text((idx > 0 ? " " : "") + token.text)
+                    .style("fill", textPartColors[token.type] || textPartColors.name)
+                    .style("font-weight", token.type === 'count' ? "bold" : "normal");
+            });
+
+            if (textD3.selectAll("tspan > tspan").empty() && textD3.select("tspan").text().length === 0 && originalNodeText) {
+                let t = textD3.select("tspan");
+                let displayText = originalNodeText;
+                t.text(displayText).style("fill", textPartColors.name);
+                if (t.node() && t.node().getComputedTextLength() > maxWidth && displayText.length > 20) {
+                    let estimatedChars = Math.floor(maxWidth / (t.node().getComputedTextLength()/displayText.length) );
+                    displayText = displayText.substring(0, Math.max(0, estimatedChars - 3)) + "...";
+                    t.text(displayText);
+                }
+            }
+        });
+    }
+  </script>
+</body>
+</html>

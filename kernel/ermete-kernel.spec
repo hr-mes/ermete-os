@@ -25,11 +25,6 @@
 %define _without_selftests 1
 %define debug_package %{nil}
 
-# Disable shebang mangling and python bytecompilation to fix ambiguous python shebang errors
-%undefine __brp_mangle_shebangs
-%undefine __brp_python_bytecompile
-
-
 # Binary payload compression
 %define _binary_payload w1.zstdio
 %define _source_payload w1.zstdio
@@ -41,7 +36,7 @@ Summary:        The Ermete OS Chimera Kernel (CachyOS Base, BORE, NTSync, UKSM, 
 License:        GPLv2
 URL:            https://github.com/CachyOS/linux-cachyos
 
-Source0:        linux-cachyos.tar.gz
+# Source0 removed for build optimization (no tarball used)
 Source1:        ermete-bedrock.cfg
 
 BuildRequires:  clang llvm lld
@@ -53,15 +48,6 @@ Requires:       selinux-policy
 Requires:       systemd
 Requires:       dracut
 
-Provides:       kernel-uname-r = %{krel}
-Provides:       kernel-modules-uname-r = %{krel}
-Provides:       kernel-core-uname-r = %{krel}
-Provides:       kernel = %{version}-%{release}
-Provides:       kernel-core = %{version}-%{release}
-Provides:       kernel-modules = %{version}-%{release}
-Provides:       kernel-modules-core = %{version}-%{release}
-Provides:       kernel-modules-extra = %{version}-%{release}
-
 %description
 The Ermete OS Chimera Kernel combines CachyOS kernel performance improvements
 (BORE scheduler, BBRv3, NTSync, LRNG, UKSM) with aggressive compiler optimization
@@ -69,7 +55,8 @@ The Ermete OS Chimera Kernel combines CachyOS kernel performance improvements
 maximum throughput, 1GB HugePages for KVM/AI workloads, and full Fedora OSTree/SELinux compatibility.
 
 %prep
-%setup -c -n linux-cachyos
+# Ignoriamo il tarball, entriamo direttamente nella cartella copiata
+%setup -T -D -n linux-cachyos
 # Prepare build tree and apply bedrock config overrides
 if [ -f %{SOURCE1} ]; then
     cat %{SOURCE1} >> .config
@@ -85,13 +72,11 @@ export KCFLAGS="%{kcflags}"
 export KBUILD_CFLAGS="%{kcflags}"
 
 make olddefconfig
-make -j$(nproc) LLVM=1 CC="${CC:-clang}" CXX="${CXX:-clang++}" LD=ld.lld KCFLAGS="%{kcflags}" bzImage modules
+make -j$(nproc) bzImage modules
 
 %package devel
 Summary:        Development package for building kernel modules to match the Chimera kernel
 Provides:       kernel-devel = %{version}-%{release}
-Provides:       kernel-devel-uname-r = %{krel}
-Provides:       kernel-devel-x86_64 = %{krel}
 
 %description devel
 This package provides kernel headers and makefiles sufficient to build modules
@@ -100,27 +85,31 @@ against the %{pkg_name} package.
 %install
 mkdir -p %{buildroot}/boot
 
-make LLVM=1 CC="${CC:-clang}" CXX="${CXX:-clang++}" LD=ld.lld KCFLAGS="%{kcflags}" INSTALL_MOD_PATH=%{buildroot} modules_install
-KREL=$(make LLVM=1 CC="${CC:-clang}" CXX="${CXX:-clang++}" LD=ld.lld KCFLAGS="%{kcflags}" -s kernelrelease)
+make INSTALL_MOD_PATH=%{buildroot} modules_install
+KREL=$(make -s kernelrelease)
 
-cp arch/x86/boot/bzImage %{buildroot}/lib/modules/$KREL/vmlinuz
-cp System.map %{buildroot}/lib/modules/$KREL/System.map
-cp .config %{buildroot}/lib/modules/$KREL/config
+cp arch/x86/boot/bzImage %{buildroot}/boot/vmlinuz-$KREL-chimera
+ln -snf /boot/vmlinuz-$KREL-chimera %{buildroot}/lib/modules/$KREL/vmlinuz
+cp System.map %{buildroot}/boot/System.map-$KREL-chimera
+cp .config %{buildroot}/boot/config-$KREL-chimera
 
 # Install kernel-devel source tree for module building
-mkdir -p %{buildroot}/usr/src/kernels/$KREL
+mkdir -p %{buildroot}/usr/src/kernels/$KREL-chimera
 echo "Copying kernel headers and makefiles..."
-rsync -a --prune-empty-dirs --include '*/' --include '*.h' --include 'Makefile*' --include 'Kbuild*' --include 'Kconfig*' --include 'Module.symvers' --include '.config' --include 'scripts/***' --include 'tools/***' --include 'include/config/***' --include 'include/generated/***' --include 'arch/x86/include/generated/***' --exclude '*' ./ %{buildroot}/usr/src/kernels/$KREL/
+rsync -a --prune-empty-dirs --include '*/' --include '*.h' --include 'Makefile*' --include 'Kbuild*' --include 'Kconfig*' --include 'Module.symvers' --include '.config' --include 'scripts/***' --include 'tools/***' --exclude '*' ./ %{buildroot}/usr/src/kernels/$KREL-chimera/
 # Copy some missing binaries required by akmods
-cp -a scripts %{buildroot}/usr/src/kernels/$KREL/
+cp -a scripts %{buildroot}/usr/src/kernels/$KREL-chimera/
 
 # Fix the symlink in /lib/modules so it points to our new kernel-devel directory
 rm -f %{buildroot}/lib/modules/$KREL/build
 rm -f %{buildroot}/lib/modules/$KREL/source
-ln -snf /usr/src/kernels/$KREL %{buildroot}/lib/modules/$KREL/build
-ln -snf /usr/src/kernels/$KREL %{buildroot}/lib/modules/$KREL/source
+ln -snf /usr/src/kernels/$KREL-chimera %{buildroot}/lib/modules/$KREL/build
+ln -snf /usr/src/kernels/$KREL-chimera %{buildroot}/lib/modules/$KREL/source
 
 %files
+/boot/vmlinuz-*
+/boot/System.map-*
+/boot/config-*
 /lib/modules/*
 
 %files devel

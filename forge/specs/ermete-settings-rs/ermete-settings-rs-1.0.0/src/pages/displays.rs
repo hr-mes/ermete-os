@@ -212,7 +212,7 @@ pub fn build_page() -> Box {
 
     tt_switch.connect_state_set(move |_, state| {
         glib::MainContext::default().spawn_local(async move {
-            if let Ok(connection) = zbus::Connection::session().await {
+            if let Ok(connection) = crate::get_connection().await {
                 let _ = connection.call_method(
                     Some("org.ermete.Settings"),
                     "/org/ermete/Settings",
@@ -228,7 +228,7 @@ pub fn build_page() -> Box {
     temp_scale.connect_value_changed(move |s| {
         let val = s.value() as u32;
         glib::MainContext::default().spawn_local(async move {
-            if let Ok(connection) = zbus::Connection::session().await {
+            if let Ok(connection) = crate::get_connection().await {
                 let _ = connection.call_method(
                     Some("org.ermete.Settings"),
                     "/org/ermete/Settings",
@@ -241,7 +241,7 @@ pub fn build_page() -> Box {
     });
 
     glib::MainContext::default().spawn_local(async move {
-        if let Ok(connection) = zbus::Connection::session().await {
+        if let Ok(connection) = crate::get_connection().await {
             if let Ok(msg) = connection.call_method(
                 Some("org.ermete.Settings"),
                 "/org/ermete/Settings",

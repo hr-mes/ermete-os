@@ -5,8 +5,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Install RPMFusion release packages to provision the GPG keys
 RUN dnf install -y --nogpgcheck https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-43.noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-43.noarch.rpm
 
-# Copy the custom RPMFusion repository configurations pointing to stable release paths
-COPY rpmfusion-custom.repo /etc/yum.repos.d/rpmfusion-custom.repo
+# Note: We rely entirely on the official RPMFusion repos installed above.
 
 # Install core build tools and full development environment
 RUN dnf install -y \
@@ -16,10 +15,7 @@ RUN dnf install -y \
     gcc \
     gcc-c++ \
     make \
-    akmods \
-    mock \
     createrepo_c \
-    buildah \
     jq \
     skopeo \
     cargo \
@@ -27,24 +23,28 @@ RUN dnf install -y \
     cmake \
     mold \
     clang \
-    clang-devel \
     sccache \
-    ccache \
+    buildah \
+    git \
+    tar \
+    xz \
+    curl \
+    which \
+    autoconf \
+    automake \
+    libtool \
+    pkgconf-pkg-config \
+    zlib-devel \
+    openssl-devel \
+    checkpolicy \
+    policycoreutils \
+    spdlog-devel \
     systemd-devel \
     nlohmann-json-devel \
     fmt-devel \
-    spdlog-devel \
-    policycoreutils \
-    checkpolicy \
-    pango-devel \
-    cairo-devel \
-    gdk-pixbuf2-devel \
-    glib2-devel \
-    gtk4-devel \
-    graphene-devel \
-    wayland-devel \
-    pipewire-devel \
+    cargo-rpm-macros \
     speech-dispatcher-devel \
-    pkgconf-pkg-config \
-    openssl-devel \
+    rpm-sign \
+    gnupg2 \
+    ipxe-bootimgs \
     && dnf clean all
