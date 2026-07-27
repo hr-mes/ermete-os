@@ -11,7 +11,7 @@ fn main() -> Result<()> {
         .init();
 
     info!("Starting Ermete Store UI (GTK4)...");
-    crate::ui::window::run_app()?;
+    crate::ui::window::run_app();
 
     Ok(())
 }

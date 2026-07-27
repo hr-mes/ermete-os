@@ -929,3 +929,31 @@ pub fn handle_command(app: &Application, arg: &str) {
         _ => {}
     }
 }
+
+pub fn toggle_or_open_popup(tag: &str, open_fn: impl FnOnce()) {
+    let mut to_close = None;
+    let mut already_open = false;
+    ACTIVE_POPUP.with(|p| {
+        if let Some((old_tag, old_weak)) = p.borrow().as_ref() {
+            if let Some(old_win) = old_weak.upgrade() {
+                if old_win.is_visible() {
+                    to_close = Some(old_win);
+                    if old_tag == tag {
+                        already_open = true;
+                    }
+                }
+            }
+        }
+        *p.borrow_mut() = None;
+    });
+
+    if let Some(win) = to_close {
+        use gtk4::prelude::WidgetExt;
+        win.set_visible(false);
+    }
+    
+    if !already_open {
+        open_fn();
+    }
+}
+

@@ -1,5 +1,5 @@
 use gtk4::prelude::*;
-use relm4::{ComponentParts, ComponentSender, Controller, RelmApp, SimpleComponent};
+use relm4::{Component, ComponentParts, ComponentSender, Controller, RelmApp, SimpleComponent};
 
 use crate::ui::showcase::{ShowcaseModel, ShowcaseMsg};
 
@@ -360,7 +360,7 @@ impl SimpleComponent for AppModel {
     fn init(
         _init: Self::Init,
         root: Self::Root,
-        _sender: ComponentSender<Self>,
+        sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         // Applica le regole CSS Glassmorphism
         load_glass_css();

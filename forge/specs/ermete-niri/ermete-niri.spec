@@ -16,6 +16,7 @@ BuildRequires:  wayland-devel
 BuildRequires:  mesa-libgbm-devel
 BuildRequires:  libxkbcommon-devel
 BuildRequires:  cairo-devel
+BuildRequires:  cairo-gobject-devel
 BuildRequires:  pango-devel
 BuildRequires:  libseat-devel
 BuildRequires:  libinput-devel
