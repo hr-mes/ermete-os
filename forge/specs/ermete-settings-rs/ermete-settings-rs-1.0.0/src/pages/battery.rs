@@ -1,12 +1,6 @@
 use gtk4::prelude::*;
 use gtk4::{Align, Box as GtkBox, Button, Label, Orientation, ProgressBar};
-use std::process::Command;
-
-fn get_battery_capacity() -> Option<u32> {
-    std::fs::read_to_string("/sys/class/power_supply/BAT0/capacity")
-        .ok()
-        .and_then(|s| s.trim().parse::<u32>().ok())
-}
+use crate::components::action_row::ActionRow;
 
 pub fn build_page() -> GtkBox {
     let container = GtkBox::builder()
@@ -26,84 +20,102 @@ pub fn build_page() -> GtkBox {
     title.add_css_class("title-1");
     container.append(&title);
 
-    let (label_text, fraction, progress_text) = match get_battery_capacity() {
-        Some(cap) => {
-            let cap = cap.min(100);
-            (
-                format!("Livello Batteria Attuale: {}%", cap),
-                cap as f64 / 100.0,
-                format!("{}%", cap),
-            )
-        }
-        None => (
-            "Livello Batteria Attuale: N/D (Alimentazione AC)".to_string(),
-            0.0,
-            "N/D".to_string(),
-        ),
-    };
-
-    // Battery progress
-    let battery_label = Label::builder()
-        .label(&label_text)
-        .halign(Align::Start)
-        .margin_top(12)
+    let settings_card = GtkBox::builder()
+        .orientation(Orientation::Vertical)
+        .spacing(16)
+        .css_classes(["card"])
         .build();
-    container.append(&battery_label);
 
+    // Battery progress bar
     let progress_bar = ProgressBar::builder()
-        .fraction(fraction)
+        .fraction(0.0)
         .show_text(true)
-        .text(&progress_text)
+        .text("Caricamento...")
+        .width_request(200)
+        .valign(Align::Center)
         .build();
-    container.append(&progress_bar);
 
-    // Power Profiles Label
-    let profiles_label = Label::builder()
-        .label("Profili Energetici")
-        .halign(Align::Start)
-        .margin_top(24)
+    let battery_row = ActionRow::builder("Livello Batteria")
+        .subtitle("Stato di carica e alimentazione")
+        .suffix(&progress_bar)
         .build();
-    profiles_label.add_css_class("title-2");
-    container.append(&profiles_label);
+
+    settings_card.append(&battery_row);
+
+    // Asynchronously fetch sysfs capacity
+    let progress_bar_clone = progress_bar.clone();
+    relm4::spawn_local(async move {
+        let capacity = match tokio::fs::read_to_string("/sys/class/power_supply/BAT0/capacity").await {
+            Ok(s) => s.trim().parse::<u32>().ok(),
+            Err(_) => None,
+        };
+
+        let (fraction, progress_text) = match capacity {
+            Some(cap) => {
+                let cap = cap.min(100);
+                (cap as f64 / 100.0, format!("{}%", cap))
+            }
+            None => (0.0, "N/D (AC)".to_string()),
+        };
+
+        progress_bar_clone.set_fraction(fraction);
+        progress_bar_clone.set_text(Some(&progress_text));
+    });
+
+    let separator = gtk4::Separator::builder()
+        .orientation(Orientation::Horizontal)
+        .build();
+    settings_card.append(&separator);
 
     // Power Profiles Buttons
     let profiles_box = GtkBox::builder()
         .orientation(Orientation::Horizontal)
         .spacing(8)
+        .valign(Align::Center)
         .build();
 
     let btn_performance = Button::with_label("Prestazioni");
     btn_performance.connect_clicked(|_| {
-        Command::new("powerprofilesctl")
-            .arg("set")
-            .arg("performance")
-            .spawn()
-            .ok();
+        relm4::spawn_local(async move {
+            let _ = tokio::process::Command::new("powerprofilesctl")
+                .args(["set", "performance"])
+                .status()
+                .await;
+        });
     });
 
     let btn_balanced = Button::with_label("Bilanciato");
     btn_balanced.connect_clicked(|_| {
-        Command::new("powerprofilesctl")
-            .arg("set")
-            .arg("balanced")
-            .spawn()
-            .ok();
+        relm4::spawn_local(async move {
+            let _ = tokio::process::Command::new("powerprofilesctl")
+                .args(["set", "balanced"])
+                .status()
+                .await;
+        });
     });
 
     let btn_power_saver = Button::with_label("Risparmio Energetico");
     btn_power_saver.connect_clicked(|_| {
-        Command::new("powerprofilesctl")
-            .arg("set")
-            .arg("power-saver")
-            .spawn()
-            .ok();
+        relm4::spawn_local(async move {
+            let _ = tokio::process::Command::new("powerprofilesctl")
+                .args(["set", "power-saver"])
+                .status()
+                .await;
+        });
     });
 
     profiles_box.append(&btn_performance);
     profiles_box.append(&btn_balanced);
     profiles_box.append(&btn_power_saver);
 
-    container.append(&profiles_box);
+    let profiles_row = ActionRow::builder("Profili Energetici")
+        .subtitle("Seleziona la modalità di gestione delle prestazioni e dei consumi")
+        .suffix(&profiles_box)
+        .build();
+
+    settings_card.append(&profiles_row);
+
+    container.append(&settings_card);
 
     container
 }

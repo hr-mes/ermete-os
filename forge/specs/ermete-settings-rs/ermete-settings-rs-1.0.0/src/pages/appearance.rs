@@ -1,5 +1,6 @@
 use gtk4::prelude::*;
 use gtk4::{Align, Box, Button, Label, Orientation, ToggleButton};
+use crate::components::action_row::ActionRow;
 use crate::settings_proxy::SettingsProxy;
 
 pub fn build_page() -> Box {
@@ -21,35 +22,33 @@ pub fn build_page() -> Box {
 
     container.append(&title);
 
-    // Color Scheme Section
-    let scheme_label = Label::builder()
-        .label("Tema Colore")
-        .halign(Align::Start)
+    let settings_card = Box::builder()
+        .orientation(Orientation::Vertical)
+        .spacing(16)
+        .css_classes(["card"])
         .build();
-    scheme_label.add_css_class("heading");
-    container.append(&scheme_label);
 
+    // Color Scheme Section
     let scheme_box = Box::builder()
         .orientation(Orientation::Horizontal)
         .spacing(12)
-        .halign(Align::Center)
+        .valign(Align::Center)
         .build();
 
     let btn_light = ToggleButton::with_label("Chiaro");
     let btn_dark = ToggleButton::with_label("Scuro");
     let btn_auto = ToggleButton::with_label("Auto");
 
-    btn_light.set_size_request(120, 80);
-    btn_dark.set_size_request(120, 80);
-    btn_auto.set_size_request(120, 80);
+    btn_light.set_size_request(100, 40);
+    btn_dark.set_size_request(100, 40);
+    btn_auto.set_size_request(100, 40);
 
     btn_dark.set_group(Some(&btn_light));
     btn_auto.set_group(Some(&btn_light));
 
     btn_light.connect_toggled(|btn| {
         if btn.is_active() {
-            let ctx = gtk4::glib::MainContext::default();
-            ctx.spawn_local(async move {
+            relm4::spawn_local(async move {
                 if let Ok(conn) = crate::get_connection().await {
                     if let Ok(proxy) = SettingsProxy::new(&conn).await {
                         let _ = proxy.set_color_scheme("prefer-light").await;
@@ -61,8 +60,7 @@ pub fn build_page() -> Box {
 
     btn_dark.connect_toggled(|btn| {
         if btn.is_active() {
-            let ctx = gtk4::glib::MainContext::default();
-            ctx.spawn_local(async move {
+            relm4::spawn_local(async move {
                 if let Ok(conn) = crate::get_connection().await {
                     if let Ok(proxy) = SettingsProxy::new(&conn).await {
                         let _ = proxy.set_color_scheme("prefer-dark").await;
@@ -74,8 +72,7 @@ pub fn build_page() -> Box {
 
     btn_auto.connect_toggled(|btn| {
         if btn.is_active() {
-            let ctx = gtk4::glib::MainContext::default();
-            ctx.spawn_local(async move {
+            relm4::spawn_local(async move {
                 if let Ok(conn) = crate::get_connection().await {
                     if let Ok(proxy) = SettingsProxy::new(&conn).await {
                         let _ = proxy.set_color_scheme("default").await;
@@ -88,20 +85,24 @@ pub fn build_page() -> Box {
     scheme_box.append(&btn_light);
     scheme_box.append(&btn_dark);
     scheme_box.append(&btn_auto);
-    container.append(&scheme_box);
+
+    let scheme_row = ActionRow::builder("Tema Colore")
+        .subtitle("Seleziona la modalità di visualizzazione dell'interfaccia")
+        .suffix(&scheme_box)
+        .build();
+
+    settings_card.append(&scheme_row);
+
+    let separator = gtk4::Separator::builder()
+        .orientation(Orientation::Horizontal)
+        .build();
+    settings_card.append(&separator);
 
     // Accent Color Section
-    let accent_label = Label::builder()
-        .label("Colore Accento")
-        .halign(Align::Start)
-        .build();
-    accent_label.add_css_class("heading");
-    container.append(&accent_label);
-
     let accent_box = Box::builder()
         .orientation(Orientation::Horizontal)
-        .spacing(12)
-        .halign(Align::Center)
+        .spacing(8)
+        .valign(Align::Center)
         .build();
 
     let accents = [
@@ -115,12 +116,11 @@ pub fn build_page() -> Box {
 
     for (name, _gnome_val, hex_val) in accents {
         let btn = Button::with_label(name);
-        btn.set_size_request(80, 40);
+        btn.set_size_request(70, 36);
         let hex_clone = hex_val.to_string();
         btn.connect_clicked(move |_| {
             let hex_c = hex_clone.clone();
-            let ctx = gtk4::glib::MainContext::default();
-            ctx.spawn_local(async move {
+            relm4::spawn_local(async move {
                 if let Ok(conn) = crate::get_connection().await {
                     if let Ok(proxy) = SettingsProxy::new(&conn).await {
                         let _ = proxy.set_accent_color(&hex_c).await;
@@ -131,14 +131,20 @@ pub fn build_page() -> Box {
         accent_box.append(&btn);
     }
 
-    container.append(&accent_box);
+    let accent_row = ActionRow::builder("Colore Accento")
+        .subtitle("Personalizza il colore di evidenziazione dell'interfaccia")
+        .suffix(&accent_box)
+        .build();
+
+    settings_card.append(&accent_row);
+
+    container.append(&settings_card);
 
     // Load current state from D-Bus on page initialization
     let bl = btn_light.clone();
     let bd = btn_dark.clone();
     let ba = btn_auto.clone();
-    let ctx = gtk4::glib::MainContext::default();
-    ctx.spawn_local(async move {
+    relm4::spawn_local(async move {
         if let Ok(conn) = crate::get_connection().await {
             if let Ok(proxy) = SettingsProxy::new(&conn).await {
                 if let Ok(scheme) = proxy.color_scheme().await {

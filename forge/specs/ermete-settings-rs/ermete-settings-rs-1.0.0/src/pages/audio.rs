@@ -1,5 +1,6 @@
 use gtk4::prelude::*;
 use gtk4::{Align, Box, Label, Orientation, Scale};
+use crate::components::action_row::ActionRow;
 
 #[zbus::dbus_proxy(
     interface = "os.ermete.Bedrock",
@@ -29,12 +30,19 @@ pub fn build_page() -> Box {
         .build();
     container.append(&title);
 
+    let settings_card = Box::builder()
+        .orientation(Orientation::Vertical)
+        .spacing(16)
+        .css_classes(["card"])
+        .build();
+
     let scale = Scale::with_range(gtk4::Orientation::Horizontal, 0.0, 1.0, 0.05);
+    scale.set_width_request(240);
+    scale.set_valign(Align::Center);
     scale.set_value(0.5); // Initial placeholder, loaded via D-Bus immediately below
 
     let scale_clone = scale.clone();
-    let ctx = gtk4::glib::MainContext::default();
-    ctx.spawn_local(async move {
+    relm4::spawn_local(async move {
         if let Ok(conn) = crate::get_connection().await {
             if let Ok(proxy) = BedrockProxy::new(&conn).await {
                 if let Ok(vol) = proxy.audio_volume().await {
@@ -46,8 +54,7 @@ pub fn build_page() -> Box {
 
     scale.connect_value_changed(move |s| {
         let val = s.value();
-        let ctx = gtk4::glib::MainContext::default();
-        ctx.spawn_local(async move {
+        relm4::spawn_local(async move {
             if let Ok(conn) = crate::get_connection().await {
                 if let Ok(proxy) = BedrockProxy::new(&conn).await {
                     let _ = proxy.set_audio_volume(val).await;
@@ -56,7 +63,13 @@ pub fn build_page() -> Box {
         });
     });
 
-    container.append(&scale);
+    let volume_row = ActionRow::builder("Volume Output")
+        .subtitle("Regola il livello del volume principale degli altoparlanti")
+        .suffix(&scale)
+        .build();
+
+    settings_card.append(&volume_row);
+    container.append(&settings_card);
+
     container
 }
-

@@ -1,6 +1,6 @@
 use gtk4::prelude::*;
-use gtk4::{Align, Box, Label, ListBox, ListBoxRow, Orientation, Switch};
-use std::process::Command;
+use gtk4::{Align, Box, Label, ListBox, Orientation, Switch};
+use crate::components::action_row::ActionRow;
 
 pub fn build_page() -> Box {
     let container = Box::new(Orientation::Vertical, 16);
@@ -15,25 +15,25 @@ pub fn build_page() -> Box {
     container.append(&title);
 
     // Do Not Disturb section
-    let dnd_box = Box::new(Orientation::Horizontal, 16);
-    dnd_box.set_halign(Align::Fill);
-
-    let dnd_label = Label::new(Some("Non Disturbare"));
-    dnd_label.set_halign(Align::Start);
-    dnd_label.set_hexpand(true);
-    dnd_box.append(&dnd_label);
-
     let dnd_switch = Switch::new();
     dnd_switch.set_valign(Align::Center);
     dnd_switch.connect_active_notify(|switch| {
-        if switch.is_active() {
-            let _ = Command::new("makoctl").args(["mode", "-s", "dnd"]).spawn();
-        } else {
-            let _ = Command::new("makoctl").args(["mode", "-s", "default"]).spawn();
-        }
+        let is_active = switch.is_active();
+        relm4::spawn_local(async move {
+            let mode = if is_active { "dnd" } else { "default" };
+            let _ = tokio::process::Command::new("makoctl")
+                .args(["mode", "-s", mode])
+                .output()
+                .await;
+        });
     });
-    dnd_box.append(&dnd_switch);
-    container.append(&dnd_box);
+
+    let dnd_row = ActionRow::builder("Non Disturbare")
+        .subtitle("Silenzia tutte le notifiche di sistema ed avvisi popup (mako)")
+        .suffix(&dnd_switch)
+        .build();
+
+    container.append(&dnd_row);
 
     // Apps section
     let apps_title = Label::new(Some("Applicazioni"));
@@ -46,26 +46,22 @@ pub fn build_page() -> Box {
     list_box.set_selection_mode(gtk4::SelectionMode::None);
     list_box.add_css_class("boxed-list");
 
-    let apps = vec!["Discord", "Firefox", "Slack"];
-    for app in apps {
-        let row = ListBoxRow::new();
-        let row_box = Box::new(Orientation::Horizontal, 16);
-        row_box.set_margin_start(16);
-        row_box.set_margin_end(16);
-        row_box.set_margin_top(12);
-        row_box.set_margin_bottom(12);
+    let apps = vec![
+        ("Discord", "Notifiche per messaggi diretti e canali"),
+        ("Firefox", "Notifiche dai siti web e completamento download"),
+        ("Slack", "Notifiche per menzioni e messaggi del team"),
+    ];
 
-        let app_label = Label::new(Some(app));
-        app_label.set_halign(Align::Start);
-        app_label.set_hexpand(true);
-        row_box.append(&app_label);
-
+    for (app_name, app_desc) in apps {
         let app_switch = Switch::new();
         app_switch.set_active(true);
         app_switch.set_valign(Align::Center);
-        row_box.append(&app_switch);
 
-        row.set_child(Some(&row_box));
+        let row = ActionRow::builder(app_name)
+            .subtitle(app_desc)
+            .suffix(&app_switch)
+            .build();
+
         list_box.append(&row);
     }
 

@@ -1,5 +1,6 @@
 use gtk4::prelude::*;
-use gtk4::{Align, Box, Label, Orientation, Button, Spinner};
+use gtk4::{Align, Box, Button, Label, Orientation, Switch};
+use crate::components::action_row::ActionRow;
 
 pub fn build_page() -> Box {
     let container = Box::builder()
@@ -19,34 +20,54 @@ pub fn build_page() -> Box {
 
     let card = Box::builder()
         .orientation(Orientation::Vertical)
-        .spacing(16)
+        .spacing(12)
         .css_classes(["settings-card"])
         .build();
 
-    let hbox = Box::builder().orientation(Orientation::Horizontal).spacing(16).build();
-    
-    let icon = gtk4::Image::builder().icon_name("software-update-available-symbolic").pixel_size(64).build();
-    hbox.append(&icon);
+    let check_btn = Button::builder()
+        .label("Verifica Aggiornamenti")
+        .css_classes(["suggested-action"])
+        .valign(Align::Center)
+        .build();
 
-    let vbox = Box::builder().orientation(Orientation::Vertical).spacing(4).hexpand(true).valign(Align::Center).build();
-    let status_title = Label::builder().label("Ermete OS è aggiornato").css_classes(["heading"]).halign(Align::Start).build();
-    let status_desc = Label::builder().label("Ultimo controllo: Oggi alle 10:45\nVersione corrente: Ermete OS 1.0.0 (Layer 0) - Ostree Native").css_classes(["subtitle"]).halign(Align::Start).build();
-    vbox.append(&status_title);
-    vbox.append(&status_desc);
-    hbox.append(&vbox);
+    let status_row = ActionRow::builder("Ermete OS è aggiornato")
+        .subtitle("Ultimo controllo: Oggi alle 10:45 • Versione 1.0.0 (Layer 0 - Ostree Native)")
+        .suffix(&check_btn)
+        .build();
 
-    let check_btn = Button::builder().label("Verifica Aggiornamenti").css_classes(["suggested-action"]).valign(Align::Center).build();
-    hbox.append(&check_btn);
+    let status_row_clone = status_row.clone();
+    check_btn.connect_clicked(move |_| {
+        let _row = status_row_clone.clone();
+        relm4::spawn_local(async move {
+            // Esecuzione controllo aggiornamenti non bloccante via ostree / flatpak
+            let _ = tokio::process::Command::new("ostree")
+                .args(["admin", "status"])
+                .output()
+                .await;
+        });
+    });
 
-    card.append(&hbox);
+    card.append(&status_row);
 
-    // OTA Info
-    let info_box = Box::builder().orientation(Orientation::Horizontal).spacing(8).margin_top(16).build();
-    let info_icon = gtk4::Image::builder().icon_name("dialog-information-symbolic").build();
-    let info_text = Label::builder().label("Gli aggiornamenti della UI (Layer 1) vengono applicati istantaneamente senza riavvio (Live Update). Gli aggiornamenti del Kernel richiedono un riavvio.").css_classes(["subtitle"]).wrap(true).build();
-    info_box.append(&info_icon);
-    info_box.append(&info_text);
-    card.append(&info_box);
+    // OTA Info Layer 1 Live Update
+    let live_switch = Switch::builder().active(true).valign(Align::Center).build();
+    let live_row = ActionRow::builder("Aggiornamenti Live UI (Layer 1)")
+        .subtitle("Gli aggiornamenti dell'interfaccia utente vengono applicati istantaneamente senza riavvio")
+        .suffix(&live_switch)
+        .build();
+    card.append(&live_row);
+
+    // OTA Info Layer 0 Kernel Update
+    let kernel_status_label = Label::builder()
+        .label("Atomico Ostree")
+        .css_classes(["subtitle"])
+        .valign(Align::Center)
+        .build();
+    let kernel_row = ActionRow::builder("Aggiornamenti Base & Kernel (Layer 0)")
+        .subtitle("Gli aggiornamenti del sistema base richiedono un riavvio per l'applicazione del deployment")
+        .suffix(&kernel_status_label)
+        .build();
+    card.append(&kernel_row);
 
     container.append(&card);
 

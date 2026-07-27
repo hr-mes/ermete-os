@@ -1,5 +1,6 @@
 use gtk4::prelude::*;
-use gtk4::{Adjustment, Box, ComboBoxText, Label, Orientation, Scale};
+use gtk4::{Adjustment, Align, Box, ComboBoxText, Label, Orientation, Scale};
+use crate::components::action_row::ActionRow;
 
 pub fn build_page() -> Box {
     let container = Box::builder()
@@ -13,29 +14,12 @@ pub fn build_page() -> Box {
 
     let title = Label::builder()
         .label("Tastiera")
-        .halign(gtk4::Align::Start)
+        .css_classes(["title-1"])
+        .halign(Align::Start)
         .build();
-    title.add_css_class("title-1");
     container.append(&title);
 
-    let content_box = Box::builder()
-        .orientation(Orientation::Vertical)
-        .spacing(16)
-        .build();
-    container.append(&content_box);
-
     // Layout
-    let layout_box = Box::builder()
-        .orientation(Orientation::Horizontal)
-        .spacing(12)
-        .build();
-        
-    let layout_label = Label::builder()
-        .label("Layout")
-        .halign(gtk4::Align::Start)
-        .hexpand(true)
-        .build();
-        
     let layout_combo = ComboBoxText::new();
     layout_combo.append(Some("it"), "Italiano");
     layout_combo.append(Some("us"), "English (US)");
@@ -44,36 +28,65 @@ pub fn build_page() -> Box {
 
     layout_combo.connect_changed(|combo| {
         if let Some(idx) = combo.active() {
-            crate::niri_client::set_keyboard_layout_by_index(idx as usize);
+            relm4::spawn_local(async move {
+                crate::niri_client::set_keyboard_layout_by_index(idx as usize).await;
+            });
         }
     });
 
-    layout_box.append(&layout_label);
-    layout_box.append(&layout_combo);
-    content_box.append(&layout_box);
+    let layout_row = ActionRow::builder("Layout Tastiera")
+        .subtitle("Mappatura e disposizione dei tasti per la digitazione")
+        .suffix(&layout_combo)
+        .build();
+    container.append(&layout_row);
 
     // Repeat Rate
-    let rate_box = Box::builder()
-        .orientation(Orientation::Vertical)
-        .spacing(6)
-        .build();
-        
-    let rate_label = Label::builder()
-        .label("Velocità Ripetizione Tasti")
-        .halign(gtk4::Align::Start)
-        .build();
-        
     let rate_adj = Adjustment::new(25.0, 10.0, 100.0, 1.0, 5.0, 0.0);
     let rate_scale = Scale::builder()
         .orientation(Orientation::Horizontal)
         .adjustment(&rate_adj)
         .digits(0)
         .draw_value(true)
+        .hexpand(true)
         .build();
-        
-    rate_box.append(&rate_label);
-    rate_box.append(&rate_scale);
-    content_box.append(&rate_box);
+
+    rate_scale.connect_value_changed(|scale| {
+        let val = scale.value() as u32;
+        let val_str = val.to_string();
+        relm4::spawn_local(async move {
+            crate::niri_client::update_niri_kdl_setting("repeat-rate", &val_str).await;
+        });
+    });
+
+    let rate_row = ActionRow::builder("Velocità Ripetizione Tasti")
+        .subtitle("Frequenza dei caratteri generati quando un tasto è tenuto premuto")
+        .suffix(&rate_scale)
+        .build();
+    container.append(&rate_row);
+
+    // Repeat Delay
+    let delay_adj = Adjustment::new(600.0, 200.0, 1000.0, 50.0, 100.0, 0.0);
+    let delay_scale = Scale::builder()
+        .orientation(Orientation::Horizontal)
+        .adjustment(&delay_adj)
+        .digits(0)
+        .draw_value(true)
+        .hexpand(true)
+        .build();
+
+    delay_scale.connect_value_changed(|scale| {
+        let val = scale.value() as u32;
+        let val_str = val.to_string();
+        relm4::spawn_local(async move {
+            crate::niri_client::update_niri_kdl_setting("repeat-delay", &val_str).await;
+        });
+    });
+
+    let delay_row = ActionRow::builder("Ritardo di Ripetizione (ms)")
+        .subtitle("Intervallo di attesa iniziale prima dell'avvio della ripetizione")
+        .suffix(&delay_scale)
+        .build();
+    container.append(&delay_row);
 
     container
 }

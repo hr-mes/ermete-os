@@ -1,25 +1,17 @@
 use gtk4::prelude::*;
 use gtk4::{Align, Box, Button, Grid, Label, Orientation, ScrolledWindow, Switch};
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use crate::components::action_row::ActionRow;
 
-fn is_dock_active() -> bool {
-    Command::new("systemctl")
-        .args(["--user", "is-active", "--quiet", "ermete-dock.service"])
-        .status()
-        .map(|status| status.success())
-        .unwrap_or(false)
-}
-
-fn scan_dir(dir: &Path, wallpapers: &mut Vec<PathBuf>, depth: usize) {
+async fn scan_dir_async(dir: &Path, wallpapers: &mut Vec<PathBuf>, depth: usize) {
     if depth > 3 {
         return;
     }
-    if let Ok(entries) = std::fs::read_dir(dir) {
-        for entry in entries.flatten() {
+    if let Ok(mut entries) = tokio::fs::read_dir(dir).await {
+        while let Ok(Some(entry)) = entries.next_entry().await {
             let path = entry.path();
             if path.is_dir() {
-                scan_dir(&path, wallpapers, depth + 1);
+                Box::pin(scan_dir_async(&path, wallpapers, depth + 1)).await;
             } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
                 let ext_lower = ext.to_lowercase();
                 if ["png", "jpg", "jpeg", "webp", "gif"].contains(&ext_lower.as_str()) {
@@ -30,11 +22,11 @@ fn scan_dir(dir: &Path, wallpapers: &mut Vec<PathBuf>, depth: usize) {
     }
 }
 
-fn scan_wallpapers() -> Vec<PathBuf> {
+async fn scan_wallpapers_async() -> Vec<PathBuf> {
     let mut wallpapers = Vec::new();
     let dirs = ["/usr/share/backgrounds", "/usr/share/wallpapers"];
     for d in dirs {
-        scan_dir(Path::new(d), &mut wallpapers, 0);
+        scan_dir_async(Path::new(d), &mut wallpapers, 0).await;
     }
     wallpapers.sort();
     wallpapers.dedup();
@@ -67,48 +59,46 @@ pub fn build_page() -> Box {
 
     container.append(&title);
 
-    // Dock Section
-    let dock_label_heading = Label::builder()
-        .label("Dock")
-        .halign(Align::Start)
-        .css_classes(["heading"])
-        .build();
-    container.append(&dock_label_heading);
-
-    let dock_box = Box::builder()
-        .orientation(Orientation::Horizontal)
-        .spacing(12)
-        .build();
-
-    let dock_label = Label::builder()
-        .label("Mostra Dock in basso")
-        .halign(Align::Start)
-        .hexpand(true)
+    // Dock Section inside Card
+    let dock_card = Box::builder()
+        .orientation(Orientation::Vertical)
+        .spacing(16)
+        .css_classes(["card"])
         .build();
 
     let dock_switch = Switch::builder()
         .valign(Align::Center)
-        .active(is_dock_active())
         .build();
 
+    let dock_switch_clone = dock_switch.clone();
+    relm4::spawn_local(async move {
+        let is_active = tokio::process::Command::new("systemctl")
+            .args(["--user", "is-active", "--quiet", "ermete-dock.service"])
+            .status()
+            .await
+            .map(|status| status.success())
+            .unwrap_or(false);
+        dock_switch_clone.set_active(is_active);
+    });
+
     dock_switch.connect_state_set(|_, state| {
-        if state {
-            let _ = Command::new("systemctl")
-                .args(["--user", "start", "ermete-dock.service"])
-                .spawn();
-            println!("Dock enabled (ermete-dock.service started)");
-        } else {
-            let _ = Command::new("systemctl")
-                .args(["--user", "stop", "ermete-dock.service"])
-                .spawn();
-            println!("Dock disabled (ermete-dock.service stopped)");
-        }
+        relm4::spawn_local(async move {
+            let action = if state { "start" } else { "stop" };
+            let _ = tokio::process::Command::new("systemctl")
+                .args(["--user", action, "ermete-dock.service"])
+                .status()
+                .await;
+        });
         gtk4::glib::Propagation::Proceed
     });
 
-    dock_box.append(&dock_label);
-    dock_box.append(&dock_switch);
-    container.append(&dock_box);
+    let dock_row = ActionRow::builder("Mostra Dock in basso")
+        .subtitle("Abilita la barra delle applicazioni Ermete Dock")
+        .suffix(&dock_switch)
+        .build();
+
+    dock_card.append(&dock_row);
+    container.append(&dock_card);
 
     // Wallpaper Section
     let wallpaper_label = Label::builder()
@@ -123,43 +113,45 @@ pub fn build_page() -> Box {
         .row_spacing(12)
         .build();
 
-    let wallpapers = scan_wallpapers();
-    let columns = 3;
+    let wallpaper_grid_clone = wallpaper_grid.clone();
+    relm4::spawn_local(async move {
+        let wallpapers = scan_wallpapers_async().await;
+        let columns = 3;
 
-    for (i, path) in wallpapers.iter().enumerate() {
-        let col = (i % columns) as i32;
-        let row = (i / columns) as i32;
+        for (i, path) in wallpapers.iter().enumerate() {
+            let col = (i % columns) as i32;
+            let row = (i / columns) as i32;
 
-        let label_text = path
-            .file_stem()
-            .and_then(|s| s.to_str())
-            .unwrap_or("Wallpaper")
-            .to_string();
+            let label_text = path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("Wallpaper")
+                .to_string();
 
-        let btn = Button::builder()
-            .label(&label_text)
-            .width_request(180)
-            .height_request(100)
-            .tooltip_text(path.to_string_lossy().as_ref())
-            .build();
+            let btn = Button::builder()
+                .label(&label_text)
+                .width_request(180)
+                .height_request(100)
+                .tooltip_text(path.to_string_lossy().as_ref())
+                .build();
 
-        let path_clone = path.clone();
-        btn.connect_clicked(move |_| {
-            let abs_path = path_clone.to_string_lossy().to_string();
-            let abs_path_clone = abs_path.clone();
-            let ctx = gtk4::glib::MainContext::default();
-            ctx.spawn_local(async move {
-                if let Ok(conn) = crate::get_connection().await {
-                    if let Ok(proxy) = crate::settings_proxy::SettingsProxy::new(&conn).await {
-                        let _ = proxy.set_wallpaper(&abs_path_clone).await;
+            let path_clone = path.clone();
+            btn.connect_clicked(move |_| {
+                let abs_path = path_clone.to_string_lossy().to_string();
+                let abs_path_clone = abs_path.clone();
+                relm4::spawn_local(async move {
+                    if let Ok(conn) = crate::get_connection().await {
+                        if let Ok(proxy) = crate::settings_proxy::SettingsProxy::new(&conn).await {
+                            let _ = proxy.set_wallpaper(&abs_path_clone).await;
+                        }
                     }
-                }
+                });
+                println!("Wallpaper selected via D-Bus: {}", abs_path);
             });
-            println!("Wallpaper selected via D-Bus: {}", abs_path);
-        });
 
-        wallpaper_grid.attach(&btn, col, row, 1, 1);
-    }
+            wallpaper_grid_clone.attach(&btn, col, row, 1, 1);
+        }
+    });
 
     let scroll = ScrolledWindow::builder()
         .hscrollbar_policy(gtk4::PolicyType::Never)
@@ -172,4 +164,3 @@ pub fn build_page() -> Box {
 
     container
 }
-

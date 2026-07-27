@@ -1,5 +1,6 @@
 use gtk4::prelude::*;
 use gtk4::{Align, Box as GtkBox, Button, Image, Label, Orientation, Switch};
+use crate::components::action_row::ActionRow;
 
 #[zbus::dbus_proxy(
     interface = "org.freedesktop.Accounts.User",
@@ -18,7 +19,7 @@ trait Bedrock {
     fn enroll_keyring_secret(&self, secret: &str) -> zbus::Result<()>;
 }
 
-pub fn build_page() -> gtk4::Box {
+pub fn build_page() -> GtkBox {
     let container = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(32)
@@ -82,31 +83,6 @@ pub fn build_page() -> gtk4::Box {
         .build();
 
     // Change Password Row
-    let password_row = GtkBox::builder()
-        .orientation(Orientation::Horizontal)
-        .spacing(16)
-        .margin_top(12)
-        .margin_bottom(12)
-        .margin_start(16)
-        .margin_end(16)
-        .build();
-
-    let password_label_box = GtkBox::builder()
-        .orientation(Orientation::Vertical)
-        .hexpand(true)
-        .build();
-    let password_title = Label::builder()
-        .label("Password")
-        .halign(Align::Start)
-        .build();
-    let password_desc = Label::builder()
-        .label("Modifica la password di accesso")
-        .halign(Align::Start)
-        .css_classes(["dim-label"])
-        .build();
-    password_label_box.append(&password_title);
-    password_label_box.append(&password_desc);
-
     let password_btn = Button::builder()
         .label("Cambia Password...")
         .valign(Align::Center)
@@ -141,8 +117,7 @@ pub fn build_page() -> gtk4::Box {
                     let new_password = entry_clone.text().to_string();
                     let dlg_clone = dlg.clone();
                     let entry_for_error = entry_clone.clone();
-                    let ctx = gtk4::glib::MainContext::default();
-                    ctx.spawn_local(async move {
+                    relm4::spawn_local(async move {
                         let mut success = false;
                         match crate::get_system_connection().await {
                             Ok(conn) => {
@@ -194,47 +169,26 @@ pub fn build_page() -> gtk4::Box {
         }
     });
 
-    password_row.append(&password_label_box);
-    password_row.append(&password_btn);
+    let password_row = ActionRow::builder("Password")
+        .subtitle("Modifica la password di accesso")
+        .suffix(&password_btn)
+        .build();
 
     // Auto Login Row
-    let autologin_row = GtkBox::builder()
-        .orientation(Orientation::Horizontal)
-        .spacing(16)
-        .margin_top(12)
-        .margin_bottom(12)
-        .margin_start(16)
-        .margin_end(16)
-        .build();
-
-    let autologin_label_box = GtkBox::builder()
-        .orientation(Orientation::Vertical)
-        .hexpand(true)
-        .build();
-    let autologin_title = Label::builder()
-        .label("Login Automatico")
-        .halign(Align::Start)
-        .build();
-    let autologin_desc = Label::builder()
-        .label("Accedi senza inserire la password all'avvio")
-        .halign(Align::Start)
-        .css_classes(["dim-label"])
-        .build();
-    autologin_label_box.append(&autologin_title);
-    autologin_label_box.append(&autologin_desc);
-
     let autologin_switch = Switch::builder()
         .valign(Align::Center)
         .build();
 
-    autologin_row.append(&autologin_label_box);
-    autologin_row.append(&autologin_switch);
+    let autologin_row = ActionRow::builder("Login Automatico")
+        .subtitle("Accedi senza inserire la password all'avvio")
+        .suffix(&autologin_switch)
+        .build();
 
-    settings_list.append(&password_row);
-    // Add a separator here if you prefer using GtkSeparator
     let separator = gtk4::Separator::builder()
         .orientation(Orientation::Horizontal)
         .build();
+
+    settings_list.append(&password_row);
     settings_list.append(&separator);
     settings_list.append(&autologin_row);
 
@@ -257,12 +211,7 @@ mod tests {
 
     #[test]
     fn test_accounts_proxies_exist() {
-        // Assert proxy interfaces exist without live D-Bus connection
-        // (This validates that zbus macros successfully compiled the proxy traits)
         let _ = AccountsUserProxy::builder;
         let _ = BedrockProxy::builder;
-        
-        // Some zbus versions don't expose INTERFACE as string constant, so just verifying the builder
-        // exists and typechecks is sufficient struct verification.
     }
 }

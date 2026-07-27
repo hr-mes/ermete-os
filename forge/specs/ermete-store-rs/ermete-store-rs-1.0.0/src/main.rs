@@ -1,41 +1,27 @@
 use anyhow::Result;
-use std::time::Duration;
-use tokio::time::sleep;
-use tracing::{info, warn, error};
+use std::env;
+use tracing::info;
 
+mod backend;
 mod dbus;
-mod flatpak;
-mod flathub;
+mod ui;
 
-#[tokio::main]
-async fn main() -> Result<()> {
+fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
 
-    info!("Starting Ermete Store Daemon (Universal App Store Engine)");
+    let args: Vec<String> = env::args().collect();
+    let is_daemon = args.iter().any(|arg| arg == "--daemon");
 
-    // Export D-Bus interface
-    let _conn = zbus::ConnectionBuilder::system()?
-        .name("os.ermete.Store")?
-        .serve_at("/os/ermete/Store", dbus::StoreIface::new())?
-        .build()
-        .await?;
-
-    info!("D-Bus Interface 'os.ermete.Store' registered.");
-
-    let manager = flatpak::FlatpakManager::new();
-    
-    // Perform initial sync on startup
-    if let Err(e) = manager.sync_remotes().await {
-        error!("Failed initial Flatpak sync: {:?}", e);
+    if is_daemon {
+        info!("Starting Ermete Store in Daemon mode (Zbus Server)...");
+        let rt = tokio::runtime::Runtime::new()?;
+        rt.block_on(crate::dbus::server::run_server())?;
+    } else {
+        info!("Starting Ermete Store UI (GTK4)...");
+        crate::ui::window::run_app()?;
     }
 
-    // Main event loop
-    loop {
-        // Here we could periodically check for app updates in the background
-        info!("Polling for app updates...");
-        
-        sleep(Duration::from_secs(3600)).await;
-    }
+    Ok(())
 }

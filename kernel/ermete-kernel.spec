@@ -57,6 +57,9 @@ maximum throughput, 1GB HugePages for KVM/AI workloads, and full Fedora OSTree/S
 %prep
 %setup -T -c
 rsync -a --exclude='.git' /workspace/kernel/cachyos-tree/ .
+# Fix python shebangs required by Fedora RPM bytecompile
+find tools/ -type f -exec sed -i '1s|^#!/usr/bin/env python$|#!/usr/bin/env python3|' {} +
+find tools/ -type f -exec sed -i '1s|^#!/usr/bin/python$|#!/usr/bin/python3|' {} +
 # Prepare build tree and apply bedrock config overrides
 if [ -f %{SOURCE1} ]; then
     cat %{SOURCE1} >> .config

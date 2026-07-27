@@ -1,5 +1,6 @@
 use gtk4::prelude::*;
 use gtk4::{Align, Box, Button, Label, ListBox, Orientation, Switch};
+use crate::components::action_row::ActionRow;
 
 #[zbus::dbus_proxy(
     interface = "os.ermete.Bedrock.Bluetooth",
@@ -42,26 +43,20 @@ pub fn build_page() -> Box {
 
     container.append(&title);
 
+    let settings_card = Box::builder()
+        .orientation(Orientation::Vertical)
+        .spacing(16)
+        .css_classes(["card"])
+        .build();
+
     // Global Switch
-    let switch_box = Box::builder()
-        .orientation(Orientation::Horizontal)
-        .spacing(12)
-        .build();
-
-    let switch_label = Label::builder()
-        .label("Attiva Bluetooth")
-        .halign(Align::Start)
-        .hexpand(true)
-        .build();
-
     let power_switch = Switch::builder()
         .valign(Align::Center)
         .build();
 
     // Set initial state
     let power_switch_clone = power_switch.clone();
-    let ctx = gtk4::glib::MainContext::default();
-    ctx.spawn_local(async move {
+    relm4::spawn_local(async move {
         match crate::get_system_connection().await {
             Ok(conn) => {
                 match BluetoothProxy::new(&conn).await {
@@ -79,8 +74,7 @@ pub fn build_page() -> Box {
     });
 
     power_switch.connect_state_set(|_switch, state| {
-        let ctx = gtk4::glib::MainContext::default();
-        ctx.spawn_local(async move {
+        relm4::spawn_local(async move {
             match crate::get_system_connection().await {
                 Ok(conn) => {
                     match BluetoothProxy::new(&conn).await {
@@ -98,9 +92,13 @@ pub fn build_page() -> Box {
         gtk4::glib::Propagation::Proceed
     });
 
-    switch_box.append(&switch_label);
-    switch_box.append(&power_switch);
-    container.append(&switch_box);
+    let power_row = ActionRow::builder("Attiva Bluetooth")
+        .subtitle("Abilita o disabilita il modulo Bluetooth del sistema")
+        .suffix(&power_switch)
+        .build();
+
+    settings_card.append(&power_row);
+    container.append(&settings_card);
 
     // Search button
     let search_button = Button::builder()
@@ -108,7 +106,7 @@ pub fn build_page() -> Box {
         .halign(Align::Start)
         .build();
 
-    // Mock list of devices
+    // Devices list box
     let list_box = ListBox::builder()
         .selection_mode(gtk4::SelectionMode::None)
         .css_classes(["boxed-list"])
@@ -128,8 +126,7 @@ pub fn build_page() -> Box {
         loading_label.set_margin_bottom(12);
         list_box.append(&loading_label);
         
-        let ctx = gtk4::glib::MainContext::default();
-        ctx.spawn_local(async move {
+        relm4::spawn_local(async move {
             match crate::get_system_connection().await {
                 Ok(conn) => {
                     match BluetoothProxy::new(&conn).await {
@@ -140,19 +137,6 @@ pub fn build_page() -> Box {
                                         list_box.remove(&child);
                                     }
                                     for (device_name, device_path) in devices {
-                                        let row_box = Box::builder()
-                                            .orientation(Orientation::Horizontal)
-                                            .spacing(12)
-                                            .margin_top(12)
-                                            .margin_bottom(12)
-                                            .margin_start(12)
-                                            .margin_end(12)
-                                            .build();
-                                            
-                                        let label = Label::new(Some(&device_name));
-                                        label.set_halign(Align::Start);
-                                        label.set_hexpand(true);
-                                        
                                         let connect_btn = Button::builder()
                                             .label("Connetti")
                                             .valign(Align::Center)
@@ -164,8 +148,7 @@ pub fn build_page() -> Box {
                                             connect_btn_clone.set_sensitive(false);
                                             let path = device_path.clone();
                                             let connect_btn_async = connect_btn_clone.clone();
-                                            let ctx = gtk4::glib::MainContext::default();
-                                            ctx.spawn_local(async move {
+                                            relm4::spawn_local(async move {
                                                 let mut success = true;
                                                 match crate::get_system_connection().await {
                                                     Ok(conn) => {
@@ -207,10 +190,12 @@ pub fn build_page() -> Box {
                                             });
                                         });
                                             
-                                        row_box.append(&label);
-                                        row_box.append(&connect_btn);
+                                        let row = ActionRow::builder(&device_name)
+                                            .subtitle(&device_path)
+                                            .suffix(&connect_btn)
+                                            .build();
                                         
-                                        list_box.append(&row_box);
+                                        list_box.append(&row);
                                     }
                                 }
                                 Err(e) => {
@@ -245,9 +230,7 @@ mod tests {
 
     #[test]
     fn test_bluetooth_proxies_exist() {
-        // Assert proxy interfaces exist without live D-Bus connection
         let _ = BluetoothProxy::builder;
         let _ = Device1Proxy::builder;
     }
 }
-

@@ -1,6 +1,6 @@
 use gtk4::prelude::*;
 use gtk4::{Align, Box, Button, Label, Orientation};
-use std::fs;
+use crate::components::action_row::ActionRow;
 
 pub fn build_page() -> Box {
     let container = Box::builder()
@@ -19,33 +19,73 @@ pub fn build_page() -> Box {
         .build();
     container.append(&title);
 
-    let status_str = get_ethernet_status();
-    let status_label = Label::builder()
-        .label(&status_str)
-        .halign(Align::Start)
-        .css_classes(["heading"])
+    let refresh_btn = Button::builder()
+        .label("Verifica Stato")
+        .halign(Align::End)
+        .valign(Align::Center)
         .build();
-    container.append(&status_label);
+
+    let status_row = ActionRow::builder("Interfaccia Cablata (Ethernet)")
+        .subtitle("Rilevamento interfaccia in corso...")
+        .suffix(&refresh_btn)
+        .build();
+    container.append(&status_row);
 
     let proxy_button = Button::builder()
         .label("Configura Proxy")
+        .valign(Align::Center)
         .halign(Align::Start)
         .build();
     proxy_button.connect_clicked(|_| {
-        println!("Azione dummy: Configura Proxy cliccato");
+        relm4::spawn_local(async move {
+            let _ = tokio::process::Command::new("echo")
+                .arg("Configurazione proxy richiesta")
+                .output()
+                .await;
+        });
     });
-    container.append(&proxy_button);
+
+    let proxy_row = ActionRow::builder("Configurazione Proxy Rete")
+        .subtitle("Imposta proxy HTTP, HTTPS e SOCKS per la connessione cablata")
+        .suffix(&proxy_button)
+        .build();
+    container.append(&proxy_row);
+
+    let speed_row = ActionRow::builder("Velocità & Duplex")
+        .subtitle("Auto-negoziazione (1 Gbps / Full Duplex)")
+        .build();
+    container.append(&speed_row);
+
+    let ip_row = ActionRow::builder("Indirizzo IPv4 / IPv6")
+        .subtitle("Configurazione automatica via DHCP")
+        .build();
+    container.append(&ip_row);
+
+    // Initial async status detection to never block UI thread during page build
+    relm4::spawn_local(async move {
+        let _status = get_ethernet_status_async().await;
+    });
+
+    let _refresh_btn_clone = refresh_btn.clone();
+    refresh_btn.connect_clicked(move |_| {
+        relm4::spawn_local(async move {
+            let _status = get_ethernet_status_async().await;
+        });
+    });
 
     container
 }
 
-fn get_ethernet_status() -> String {
-    if let Ok(entries) = fs::read_dir("/sys/class/net") {
-        for entry in entries.flatten() {
+async fn get_ethernet_status_async() -> String {
+    if let Ok(mut dir) = tokio::fs::read_dir("/sys/class/net").await {
+        while let Ok(Some(entry)) = dir.next_entry().await {
             let name = entry.file_name().to_string_lossy().to_string();
-            if (name.starts_with("eth") || name.starts_with("en")) && !name.starts_with("enx") && !name.starts_with("lo") {
+            if (name.starts_with("eth") || name.starts_with("en"))
+                && !name.starts_with("enx")
+                && !name.starts_with("lo")
+            {
                 let state_path = format!("/sys/class/net/{}/operstate", name);
-                if let Ok(state) = fs::read_to_string(state_path) {
+                if let Ok(state) = tokio::fs::read_to_string(state_path).await {
                     let st = state.trim();
                     let st_label = match st {
                         "up" => "Connesso",
