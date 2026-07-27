@@ -109,8 +109,6 @@ jobs:
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           pull: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=min
           outputs: type=image,compression=zstd,force-compression=true,oci-mediatypes=true
 
       - name: Run Trivy vulnerability scanner
