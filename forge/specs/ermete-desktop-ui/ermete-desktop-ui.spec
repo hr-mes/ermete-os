@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name:           ermete-desktop-ui
 Version:        1.0.0
-Release:        6%{?dist}
+Release:        7%{?dist}
 Summary:        Ermete OS Desktop UI configurations
 License:        MIT
 URL:            https://github.com/patapem/ermete-forge
@@ -16,6 +16,12 @@ Requires:       lxpolkit
 Requires:       cliphist
 Requires:       swayidle
 Requires:       ddcutil
+Requires:       foot
+Requires:       grim
+Requires:       slurp
+Requires:       wl-clipboard
+Requires:       brightnessctl
+Requires:       playerctl
 
 %description
 Provides the unified Desktop UI (Niri) configuration for Ermete OS.

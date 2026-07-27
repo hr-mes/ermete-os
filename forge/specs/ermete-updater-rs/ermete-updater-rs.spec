@@ -1,14 +1,18 @@
 %global debug_package %{nil}
 Name:           ermete-updater-rs
 Version:        1.0.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Ermete OS Over-The-Air Update Daemon
 
 License:        GPL-3.0-or-later
 URL:            https://github.com/patapem/ermete-forge
 Source0:        %{name}-%{version}.tar.gz
 
-BuildRequires:  rust cargo systemd-rpm-macros
+BuildRequires:  rust cargo systemd-rpm-macros pkgconf-pkg-config openssl-devel polkit-devel
+
+Requires:       bootc
+Requires:       rpm-ostree
+Requires:       polkit
 
 %description
 Ermete OS Over-The-Air Update Daemon for Dual-Layer OTA updates (bootc and rpm-ostree).

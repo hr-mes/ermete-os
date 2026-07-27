@@ -1,14 +1,14 @@
 %global debug_package %{nil}
 Name:           ermete-shell-rs
 Version:        1.0.0
-Release:        21%{?dist}
+Release:        22%{?dist}
 Summary:        Ermete OS Native Rust GTK4 Shell
 
 License:        MIT
 Source0:        ermete-shell-rs-%{version}.tar.gz
 
 BuildRequires:  rust cargo gcc gcc-c++ gtk4-devel glib2-devel pkgconf-pkg-config gtk4-layer-shell-devel clang-devel speech-dispatcher-devel upower-devel
-Requires:       gtk4 gtk4-layer-shell glib2 cage upower
+Requires:       gtk4 gtk4-layer-shell glib2 cage upower xdg-utils plocate foot wl-clipboard
 
 %description
 Pure Rust native shell for Ermete OS, replacing AGS/GJS.

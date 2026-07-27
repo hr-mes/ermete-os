@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name:           ermete-settings-rs
 Version:        1.0.0
-Release:        8%{?dist}
+Release:        9%{?dist}
 Summary:        Pure Rust native System Settings for Ermete OS
 
 License:        GPLv3+
@@ -10,6 +10,9 @@ Source0:        %{name}-%{version}.tar.gz
 
 BuildRequires:  rust cargo
 BuildRequires:  gtk4-devel
+
+Requires:       power-profiles-daemon
+Requires:       mako
 
 %description
 Ermete Settings is the native control panel for Ermete OS, written in pure Rust with GTK4.

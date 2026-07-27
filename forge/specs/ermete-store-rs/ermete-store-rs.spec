@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name:           ermete-store-rs
 Version:        1.0.0
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Ermete OS Universal App Store Daemon
 
 
@@ -10,6 +10,8 @@ URL:            https://github.com/patapem/ermete-forge
 Source0:        %{name}-%{version}.tar.gz
 
 BuildRequires:  rust cargo systemd-rpm-macros pkgconf-pkg-config openssl-devel
+
+Requires:       flatpak
 
 %description
 Ermete OS Universal App Store Daemon for Flatpak and OCI container management.

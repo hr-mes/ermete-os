@@ -1,6 +1,6 @@
 Name:           ermete-niri
 Version:        0.1.8
-Release:        1.fc43
+Release:        2.fc43
 Summary:        Ermete-patched version of the Niri scrollable tiling compositor
 License:        GPL-3.0-or-later
 
@@ -39,13 +39,21 @@ cargo build --release --locked
 %install
 mkdir -p %{buildroot}%{_bindir}
 install -m 0755 target/release/niri %{buildroot}%{_bindir}/niri
+install -m 0755 resources/niri-session %{buildroot}%{_bindir}/niri-session
 
 mkdir -p %{buildroot}%{_datadir}/wayland-sessions
 install -m 0644 resources/niri.desktop %{buildroot}%{_datadir}/wayland-sessions/niri.desktop
 
+mkdir -p %{buildroot}%{_userunitdir}
+install -m 0644 resources/niri.service %{buildroot}%{_userunitdir}/niri.service
+install -m 0644 resources/niri-shutdown.target %{buildroot}%{_userunitdir}/niri-shutdown.target
+
 %files
 %{_bindir}/niri
+%{_bindir}/niri-session
 %{_datadir}/wayland-sessions/niri.desktop
+%{_userunitdir}/niri.service
+%{_userunitdir}/niri-shutdown.target
 
 %changelog
 * Sat Jul 18 2026 Ermete Forge <forge@ermete.os> - 0.1.8-1
