@@ -4,7 +4,7 @@
 # ===================================================================
 
 %define pkg_name ermete-kernel
-%define kernel_version 6.14
+%{!?kernel_version: %define kernel_version 6.14}
 %define pkg_release 1.chimera%{?dist}
 
 # Enforce Clang / LLVM Toolchain & ThinLTO
@@ -81,8 +81,9 @@ make olddefconfig
 make -j$(nproc) bzImage modules
 
 %package devel
-Summary:        Development package for building kernel modules to match the Chimera kernel
+Summary:        Development package for building kernel modules to match the %{version} kernel
 Provides:       kernel-devel = %{version}-%{release}
+Provides:       /bin/env
 
 %description devel
 This package provides kernel headers and makefiles sufficient to build modules

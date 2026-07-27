@@ -32,6 +32,9 @@ RUN --mount=type=bind,from=ghcr.io/patapem/ermete-os-forge-tier0-repo:latest,sou
         rpm -Uvh --replacefiles --replacepkgs --nodeps /mnt/tier0-repo/ermete-base-config*.rpm; \
     fi && \
     echo "Tier 0: Installing Bedrock hardware, kernel Chimera & NVIDIA dependencies..." && \
+    rm -f /mnt/tier0-repo/systemd-standalone-*.rpm \
+          /mnt/tier0-repo/*-free-*.rpm \
+          /mnt/tier0-repo/glibc32*.rpm || true && \
     dnf5 install -y --allowerasing --setopt=install_weak_deps=False --setopt=tsflags=nodocs /mnt/tier0-repo/*.rpm && \
     rm -rf /usr/lib/firmware/{mellanox,qlogic,netronome,liquidio,cxgb4,bnx2x,cavium,dpaa2,amdgpu,radeon,nouveau,intel}
 

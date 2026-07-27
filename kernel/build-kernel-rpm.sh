@@ -37,12 +37,14 @@ KEXTRA=$(awk '/^EXTRAVERSION =/ {print $3}' cachyos-tree/Makefile)
 if [ -z "$KSUB" ]; then
   KREL="${KVER}.${KPATCH}${KEXTRA}"
 else
-  KREL="${KVER}.${KPATCH}.${KSUB}${KEXTRA}"
+KREL="${KVER}.${KPATCH}.${KSUB}${KEXTRA}"
 fi
-echo "KREL rilevato: $KREL"
+# RPM version cannot contain hyphens, replace with tilde
+KVERSION="${KREL//-/~}"
+echo "KREL rilevato: $KREL (KVERSION: $KVERSION)"
 
 echo ">>> Avvio compilazione RPM tramite rpmbuild..."
-rpmbuild --define "_topdir $RPMBUILD_DIR" --define "krel $KREL" -ba "$RPMBUILD_DIR/SPECS/ermete-kernel.spec"
+rpmbuild --define "_topdir $RPMBUILD_DIR" --define "krel $KREL" --define "kernel_version $KVERSION" -ba "$RPMBUILD_DIR/SPECS/ermete-kernel.spec"
 
 echo "========================================================="
 echo " COMPILAZIONE COMPLETATA "
