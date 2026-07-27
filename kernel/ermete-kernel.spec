@@ -25,6 +25,7 @@
 %define _without_selftests 1
 %define debug_package %{nil}
 %global __brp_python_bytecompile %{nil}
+%undefine __brp_mangle_shebangs
 %global _python_bytecompile_errors_terminate_build 0
 
 # Binary payload compression

@@ -19,6 +19,7 @@ BuildRequires:  cairo-devel
 BuildRequires:  pango-devel
 BuildRequires:  libseat-devel
 BuildRequires:  libinput-devel
+BuildRequires:  pipewire-devel
 
 # Evita conflitti con il niri vanilla di Fedora
 Conflicts:      niri

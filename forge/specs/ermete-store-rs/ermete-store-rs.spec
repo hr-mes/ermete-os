@@ -9,7 +9,7 @@ License:        GPL-3.0-or-later
 URL:            https://github.com/patapem/ermete-forge
 Source0:        %{name}-%{version}.tar.gz
 
-BuildRequires:  rust cargo systemd-rpm-macros pkgconf-pkg-config openssl-devel
+BuildRequires:  rust cargo systemd-rpm-macros pkgconf-pkg-config openssl-devel gtk4-devel
 
 Requires:       flatpak
 
