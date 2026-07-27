@@ -49,3 +49,6 @@ echo "========================================================="
 echo " COMPILAZIONE COMPLETATA "
 echo "========================================================="
 echo "I pacchetti RPM si trovano in: $RPMBUILD_DIR/RPMS/x86_64/"
+
+echo ">>> Statistiche CCACHE:"
+ccache -s || true

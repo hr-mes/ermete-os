@@ -56,6 +56,11 @@ Requires:       dracut
 Provides:       kernel-uname-r = %{krel}
 Provides:       kernel-modules-uname-r = %{krel}
 Provides:       kernel-core-uname-r = %{krel}
+Provides:       kernel = %{version}-%{release}
+Provides:       kernel-core = %{version}-%{release}
+Provides:       kernel-modules = %{version}-%{release}
+Provides:       kernel-modules-core = %{version}-%{release}
+Provides:       kernel-modules-extra = %{version}-%{release}
 
 %description
 The Ermete OS Chimera Kernel combines CachyOS kernel performance improvements
@@ -98,9 +103,9 @@ mkdir -p %{buildroot}/boot
 make LLVM=1 CC="${CC:-clang}" CXX="${CXX:-clang++}" LD=ld.lld KCFLAGS="%{kcflags}" INSTALL_MOD_PATH=%{buildroot} modules_install
 KREL=$(make LLVM=1 CC="${CC:-clang}" CXX="${CXX:-clang++}" LD=ld.lld KCFLAGS="%{kcflags}" -s kernelrelease)
 
-cp arch/x86/boot/bzImage %{buildroot}/boot/vmlinuz-$KREL
-cp System.map %{buildroot}/boot/System.map-$KREL
-cp .config %{buildroot}/boot/config-$KREL
+cp arch/x86/boot/bzImage %{buildroot}/lib/modules/$KREL/vmlinuz
+cp System.map %{buildroot}/lib/modules/$KREL/System.map
+cp .config %{buildroot}/lib/modules/$KREL/config
 
 # Install kernel-devel source tree for module building
 mkdir -p %{buildroot}/usr/src/kernels/$KREL
@@ -116,9 +121,6 @@ ln -snf /usr/src/kernels/$KREL %{buildroot}/lib/modules/$KREL/build
 ln -snf /usr/src/kernels/$KREL %{buildroot}/lib/modules/$KREL/source
 
 %files
-/boot/vmlinuz-*
-/boot/System.map-*
-/boot/config-*
 /lib/modules/*
 
 %files devel
