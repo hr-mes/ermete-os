@@ -1,5 +1,5 @@
 use gtk4::prelude::*;
-use relm4::{Component, ComponentParts, ComponentSender, Controller, RelmApp, SimpleComponent};
+use relm4::{Component, ComponentController, ComponentParts, ComponentSender, Controller, RelmApp, SimpleComponent};
 
 use crate::ui::showcase::{ShowcaseModel, ShowcaseMsg};
 
