@@ -5,9 +5,11 @@
 
 ---
 
+The `system` sub-project is the final assembly line of Ermete OS. It takes the output artifacts from the `forge` (Custom RPMs) and the `kernel` (Chimera Kernel) sub-projects, and layers them sequentially on top of the **Fedora Atomic 43** base image to produce the final `ermete-os-system` bootable OCI container.
+
 ## 🏗️ Architecture: The 4-Tier Pyramid OCI Layering Strategy
 
-Ermete OS is an immutable Operating System distributed as an atomic Bootable OCI Container (`bootc`). Built upon Fedora Atomic 43, it structures the OS into **4 sequential layers** inside `Containerfile` to achieve maximum OCI layer caching efficiency:
+Ermete OS structures the OS into **4 sequential layers** inside `Containerfile` to achieve maximum OCI layer caching efficiency. Lower tiers require reboots to update, while higher tiers can be updated live.
 
 ```
 +-------------------------------------------------------------------------+
@@ -29,7 +31,7 @@ Ermete OS is an immutable Operating System distributed as an atomic Bootable OCI
 ```
 
 ### The Bedrock Diet (-1.1 GB Safe Pruning)
-Inside Tier 0 and the final hardening step, Ermete OS applies the **Bedrock Diet** to strip non-consumer datacenter fat:
+Inside Tier 0 and the final hardening step, Ermete OS applies the **Bedrock Diet** to strip non-consumer datacenter fat, drastically reducing the final OCI image size:
 - **Server Firmware Removal (-400 MB)**: Purges `mellanox`, `qlogic`, `netronome`, `liquidio` datacenter network firmware blobs while keeping 100% of AMD/Intel/NVIDIA/Wi-Fi/BT consumer hardware firmware.
 - **DKMS Build Tools Removal (-350 MB)**: Removes `kernel-devel`, `gcc`, and `make` after out-of-tree NVIDIA driver compilation.
 - **DNF Cache Purge (-350 MB)**: Strips intermediate metadata from `/var/cache/dnf` and `/var/lib/dnf`.
@@ -45,20 +47,25 @@ Pre-login authentication is driven by **`ermete-shell-rs --greeter`** running in
 
 ---
 
-## 📦 The Absolute RPM Encapsulation Dogma
+## 🛠️ Build Pipeline & CI/CD Security (`system-build.yml`)
 
-Ermete OS contains **zero scattered configuration scripts**. All packages, system configs, udev rules, SELinux modules, and Rust binaries are imported from `ghcr.io/patapem/ermete-forge-repo:latest`.
+The final OS image is assembled automatically via GitHub Actions:
+
+1. **Docker Buildx Assembly**: The `docker/build-push-action` constructs the image using the `Containerfile`. We intentionally bypass GitHub Action cache export (`cache-to: type=gha`) for this massive artifact to prevent GitHub Runner disk exhaustion (`No space left on device` or `BuildKit EOF` errors).
+2. **Push to GHCR**: The image is compressed using advanced ZSTD (`compression=zstd,force-compression=true`) and pushed to the GitHub Container Registry.
+3. **Trivy Vulnerability Scan**: The pushed image is scanned by **Aqua Security Trivy**. Since the `bootc` image contains no web application dependencies, the scanner focuses strictly on OS-level CVEs (both `os` and `library`).
+4. **Cosign Cryptographic Signature**: The image is cryptographically signed using **Sigstore Cosign**, ensuring that end-users are booting an untampered, verified build of Ermete OS.
 
 ---
 
 ## 🚀 Bare Metal Deployment & Kickstart
 
-### In-Place Atomic Switch
+### In-Place Atomic Switch (For existing Fedora Atomic/Silverblue systems)
 ```bash
-sudo bootc switch ghcr.io/patapem/ermete-os:latest
+sudo bootc switch ghcr.io/patapem/ermete-os-system:latest
 ```
 
-### Automated ISO Build via `bootc-image-builder`
+### Automated ISO Build via `bootc-image-builder` (For clean installs)
 ```bash
 sudo podman run --rm -it --privileged --pull=newer \
     --security-opt label=type:unconfined_t \
@@ -66,5 +73,5 @@ sudo podman run --rm -it --privileged --pull=newer \
     -v $(pwd)/ermete-install.ks:/config.ks \
     quay.io/centos-bootc/bootc-image-builder:latest \
     --type iso --kickstart /config.ks \
-    ghcr.io/patapem/ermete-os:latest
+    ghcr.io/patapem/ermete-os-system:latest
 ```

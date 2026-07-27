@@ -2,15 +2,18 @@
 
 **The absolute zero-trust, high-performance CachyOS-level compiler and package builder for Ermete OS.**
 
-Ermete Forge enforces aggressive compiler optimizations (`-O3`, `-march=x86-64-v3`, `-flto=auto`, `mold` linker) across all custom packages and distributes each package as a granular **Micro-Container OCI artifact** (`ghcr.io/patapem/ermete-forge-*`).
+Ermete Forge is the automated CI/CD engine responsible for generating all the custom software, UI components, and configurations that make up Ermete OS. It enforces aggressive compiler optimizations (`-O3`, `-march=x86-64-v3`, `-flto=auto`, `mold` linker) across all custom packages.
+
+Instead of a monolithic script, Ermete Forge distributes each package as a granular **Micro-Container OCI artifact** or RPM.
 
 ---
 
 ## 🏗️ The Micro-Container OCI Architecture
 
 Every single package or tool has its own independent CI/CD build job producing an isolated `scratch` container image:
-- **Zero Monolithic Bloat**: Granular failure isolation and pristine per-package history.
-- **Absolute RPM Encapsulation**: Every system tweak, udev rule, SELinux policy, and GTK application is encapsulated inside a clean `.spec` and `.rpm`.
+- **Zero Monolithic Bloat**: Granular failure isolation and pristine per-package history. If one package fails to build, it doesn't halt the entire Forge, preventing cascading failures.
+- **Absolute RPM Encapsulation**: Every system tweak, udev rule, SELinux policy, and GTK application is encapsulated inside a clean `.spec` and `.rpm`. 
+- **Tiered Dependency System**: Packages are built in tiers (Tier 0 to Tier 3) ensuring that foundational base packages (like `ermete-base-config`) are built and available before higher-level applications (like `ermete-shell-rs`) attempt to compile.
 
 ---
 
@@ -28,7 +31,6 @@ Every single package or tool has its own independent CI/CD build job producing a
 | `ermete-desktop-ui` | `ermete-desktop-ui` | Wayland Niri session wrappers and startup scripts |
 | `ermete-doctor` | `ermete-doctor` | Rust CLI diagnostics & hardware validation tool |
 | `ermete-ide-bootstrap` | `ermete-ide-bootstrap` | Developer toolchain bootstrap & IDE configurations |
-| `ermete-kernel` | `ermete-kernel` | Automated compiler for Chimera Linux Kernel |
 | `ermete-matugen` | `ermete-matugen` | Material You dynamic wallpaper color palette generator |
 | `ermete-nix-support` | `ermete-nix-support` | Multi-user Nix package manager integration |
 | `ermete-selinux` | `ermete-selinux` | Compiled `.pp` SELinux policies for `bootupd` and `scx` |
@@ -40,10 +42,20 @@ Every single package or tool has its own independent CI/CD build job producing a
 | `ermete-system-services` | `ermete-system-services` | Systemd service units & timers |
 | `ermete-system-tweaks` | `ermete-system-tweaks` | Virtual memory, ZRAM, and I/O latency sysctl tweaks |
 
+*(Note: `ermete-kernel` is built via its own standalone pipeline in the `kernel/` directory due to its complexity and `ccache` requirements).*
+
 ---
 
 ## ⚡ The 100% Rust UI Stack & Kiosk Login Greeter
 
-JavaScript/GJS/NodeJS engines are strictly prohibited in user-space UI:
-1. **Login Greeter**: `ermete-shell-rs --greeter` runs inside a lightweight **`cage`** Wayland Kiosk session (`ermete-system-config`).
-2. **Desktop Environment**: `ermete-shell-rs` + `ermete-settings-rs` + `ermete-store-rs` running on **Niri** scrollable tiling compositor.
+JavaScript/GJS/NodeJS engines are strictly prohibited in user-space UI for Ermete OS:
+1. **Login Greeter**: `ermete-shell-rs --greeter` runs inside a lightweight **`cage`** Wayland Kiosk session (configured by `ermete-system-config`).
+2. **Desktop Environment**: `ermete-shell-rs` + `ermete-settings-rs` + `ermete-store-rs` running on the **Niri** scrollable tiling compositor.
+
+## 🛠️ Build Pipeline (GitHub Actions)
+
+The `forge` workflow (`.github/workflows/forge-orchestrator.yml`) manages the automated build of all RPMs:
+- It processes each tier sequentially.
+- Generates the RPM files via `rpmbuild` inside clean container environments.
+- Skips GitHub Actions caching (`actions/cache`) for massive RPM artifacts to prevent runner disk exhaustion (`No space left on device` errors).
+- Exposes the final compiled RPMs directly to the `system` pipeline, which installs them in the final OCI image without needing GPG signature verification (since they are generated internally).
