@@ -1,0 +1,1170 @@
+﻿2026-07-27T15:08:36.3019232Z Current runner version: '2.335.1'
+2026-07-27T15:08:36.3045138Z ##[group]Runner Image Provisioner
+2026-07-27T15:08:36.3046083Z Hosted Compute Agent
+2026-07-27T15:08:36.3046711Z Version: 20260707.563
+2026-07-27T15:08:36.3047382Z Commit: 02667638d2b423fbc733a8e32a88b44996a3ba6e
+2026-07-27T15:08:36.3048203Z Build Date: 2026-07-07T19:33:50Z
+2026-07-27T15:08:36.3048907Z Worker ID: {261f69af-8acc-4f58-9702-f6f1ac4df359}
+2026-07-27T15:08:36.3049681Z Azure Region: northcentralus
+2026-07-27T15:08:36.3050340Z ##[endgroup]
+2026-07-27T15:08:36.3052017Z ##[group]Operating System
+2026-07-27T15:08:36.3052774Z Ubuntu
+2026-07-27T15:08:36.3053454Z 24.04.4
+2026-07-27T15:08:36.3054357Z LTS
+2026-07-27T15:08:36.3054993Z ##[endgroup]
+2026-07-27T15:08:36.3055612Z ##[group]Runner Image
+2026-07-27T15:08:36.3056637Z Image: ubuntu-24.04
+2026-07-27T15:08:36.3057267Z Version: 20260720.247.2
+2026-07-27T15:08:36.3058594Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260720.247/images/ubuntu/Ubuntu2404-Readme.md
+2026-07-27T15:08:36.3060210Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260720.247
+2026-07-27T15:08:36.3061152Z ##[endgroup]
+2026-07-27T15:08:36.3062467Z ##[group]GITHUB_TOKEN Permissions
+2026-07-27T15:08:36.3065009Z Contents: read
+2026-07-27T15:08:36.3065766Z Metadata: read
+2026-07-27T15:08:36.3066403Z Packages: write
+2026-07-27T15:08:36.3067024Z ##[endgroup]
+2026-07-27T15:08:36.3069244Z Secret source: Actions
+2026-07-27T15:08:36.3070296Z Prepare workflow directory
+2026-07-27T15:08:36.3506982Z Prepare all required actions
+2026-07-27T15:08:36.3546222Z Getting action download info
+2026-07-27T15:08:36.5742170Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-07-27T15:08:36.9549134Z Download action repository 'actions/cache@v4' (SHA:0057852bfaa89a56745cba8c7296529d2fc39830)
+2026-07-27T15:08:37.1583184Z Complete job name: 📦 Custom Packages (store-rs)
+2026-07-27T15:08:37.2363755Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-27T15:08:37.2373034Z ##[group]Run actions/checkout@v4
+2026-07-27T15:08:37.2374182Z with:
+2026-07-27T15:08:37.2374666Z   repository: patapem/ermete-os
+2026-07-27T15:08:37.2378364Z   token: ***
+2026-07-27T15:08:37.2378809Z   ssh-strict: true
+2026-07-27T15:08:37.2379254Z   ssh-user: git
+2026-07-27T15:08:37.2379706Z   persist-credentials: true
+2026-07-27T15:08:37.2380201Z   clean: true
+2026-07-27T15:08:37.2380654Z   sparse-checkout-cone-mode: true
+2026-07-27T15:08:37.2381182Z   fetch-depth: 1
+2026-07-27T15:08:37.2381620Z   fetch-tags: false
+2026-07-27T15:08:37.2382066Z   show-progress: true
+2026-07-27T15:08:37.2382518Z   lfs: false
+2026-07-27T15:08:37.2382979Z   submodules: false
+2026-07-27T15:08:37.2383434Z   set-safe-directory: true
+2026-07-27T15:08:37.2384160Z   allow-unsafe-pr-checkout: false
+2026-07-27T15:08:37.2384965Z env:
+2026-07-27T15:08:37.2385387Z   REGISTRY: ghcr.io
+2026-07-27T15:08:37.2385837Z   FEDORA_VERSION: 43
+2026-07-27T15:08:37.2386280Z ##[endgroup]
+2026-07-27T15:08:37.3605199Z Syncing repository: patapem/ermete-os
+2026-07-27T15:08:37.3608062Z ##[group]Getting Git version info
+2026-07-27T15:08:37.3609387Z Working directory is '/home/runner/work/ermete-os/ermete-os'
+2026-07-27T15:08:37.3611262Z [command]/usr/bin/git version
+2026-07-27T15:08:37.3760244Z git version 2.54.0
+2026-07-27T15:08:37.3800005Z ##[endgroup]
+2026-07-27T15:08:37.3818627Z Temporarily overriding HOME='/home/runner/work/_temp/c3950322-9304-4cb1-a5e5-c690123ee6a0' before making global git config changes
+2026-07-27T15:08:37.3821819Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-27T15:08:37.3825579Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/ermete-os/ermete-os
+2026-07-27T15:08:37.3886996Z Deleting the contents of '/home/runner/work/ermete-os/ermete-os'
+2026-07-27T15:08:37.3895444Z ##[group]Initializing the repository
+2026-07-27T15:08:37.3896757Z [command]/usr/bin/git init /home/runner/work/ermete-os/ermete-os
+2026-07-27T15:08:37.4030739Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-07-27T15:08:37.4032552Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-07-27T15:08:37.4034325Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-07-27T15:08:37.4035551Z hint: call:
+2026-07-27T15:08:37.4036170Z hint:
+2026-07-27T15:08:37.4036950Z hint: 	git config --global init.defaultBranch <name>
+2026-07-27T15:08:37.4037919Z hint:
+2026-07-27T15:08:37.4038845Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-07-27T15:08:37.4040457Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-07-27T15:08:37.4041650Z hint:
+2026-07-27T15:08:37.4042300Z hint: 	git branch -m <name>
+2026-07-27T15:08:37.4043075Z hint:
+2026-07-27T15:08:37.4044262Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-07-27T15:08:37.4045955Z Initialized empty Git repository in /home/runner/work/ermete-os/ermete-os/.git/
+2026-07-27T15:08:37.4060253Z [command]/usr/bin/git remote add origin https://github.com/patapem/ermete-os
+2026-07-27T15:08:37.4150592Z ##[endgroup]
+2026-07-27T15:08:37.4151984Z ##[group]Disabling automatic garbage collection
+2026-07-27T15:08:37.4154375Z [command]/usr/bin/git config --local gc.auto 0
+2026-07-27T15:08:37.4201987Z ##[endgroup]
+2026-07-27T15:08:37.4203310Z ##[group]Setting up auth
+2026-07-27T15:08:37.4204882Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-27T15:08:37.4259391Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-27T15:08:37.4721728Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-27T15:08:37.4765973Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-27T15:08:37.5019665Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-27T15:08:37.5058700Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-27T15:08:37.5292602Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-07-27T15:08:37.5354053Z ##[endgroup]
+2026-07-27T15:08:37.5355255Z ##[group]Fetching the repository
+2026-07-27T15:08:37.5365272Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +e8a1f2b06971a34ff345313f7b440b9309e30e17:refs/remotes/origin/main
+2026-07-27T15:08:51.3785396Z From https://github.com/patapem/ermete-os
+2026-07-27T15:08:51.3786216Z  * [new ref]         e8a1f2b06971a34ff345313f7b440b9309e30e17 -> origin/main
+2026-07-27T15:08:51.3836198Z ##[endgroup]
+2026-07-27T15:08:51.3836814Z ##[group]Determining the checkout info
+2026-07-27T15:08:51.3839169Z ##[endgroup]
+2026-07-27T15:08:51.3845323Z [command]/usr/bin/git sparse-checkout disable
+2026-07-27T15:08:51.3899035Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-07-27T15:08:51.3930720Z ##[group]Checking out the ref
+2026-07-27T15:08:51.3935441Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-07-27T15:08:52.8423160Z Updating files:  69% (1316/1904)
+2026-07-27T15:08:53.3667744Z Updating files:  70% (1333/1904)
+2026-07-27T15:08:53.4101432Z Updating files:  71% (1352/1904)
+2026-07-27T15:08:53.4272209Z Updating files:  71% (1359/1904)
+2026-07-27T15:08:53.5550341Z Updating files:  72% (1371/1904)
+2026-07-27T15:08:53.6480403Z Updating files:  73% (1390/1904)
+2026-07-27T15:08:53.7245336Z Updating files:  74% (1409/1904)
+2026-07-27T15:08:53.7246265Z Updating files:  75% (1428/1904)
+2026-07-27T15:08:53.9213887Z Updating files:  76% (1448/1904)
+2026-07-27T15:08:53.9233790Z Updating files:  77% (1467/1904)
+2026-07-27T15:08:53.9255210Z Updating files:  78% (1486/1904)
+2026-07-27T15:08:53.9278366Z Updating files:  79% (1505/1904)
+2026-07-27T15:08:53.9305002Z Updating files:  80% (1524/1904)
+2026-07-27T15:08:53.9323919Z Updating files:  81% (1543/1904)
+2026-07-27T15:08:53.9351821Z Updating files:  82% (1562/1904)
+2026-07-27T15:08:53.9388522Z Updating files:  83% (1581/1904)
+2026-07-27T15:08:53.9795068Z Updating files:  84% (1600/1904)
+2026-07-27T15:08:53.9817586Z Updating files:  85% (1619/1904)
+2026-07-27T15:08:53.9838051Z Updating files:  86% (1638/1904)
+2026-07-27T15:08:53.9865461Z Updating files:  87% (1657/1904)
+2026-07-27T15:08:53.9896995Z Updating files:  88% (1676/1904)
+2026-07-27T15:08:53.9914437Z Updating files:  89% (1695/1904)
+2026-07-27T15:08:53.9935482Z Updating files:  90% (1714/1904)
+2026-07-27T15:08:53.9954889Z Updating files:  91% (1733/1904)
+2026-07-27T15:08:54.0011140Z Updating files:  92% (1752/1904)
+2026-07-27T15:08:54.0037293Z Updating files:  93% (1771/1904)
+2026-07-27T15:08:54.0052269Z Updating files:  94% (1790/1904)
+2026-07-27T15:08:54.0071508Z Updating files:  95% (1809/1904)
+2026-07-27T15:08:54.0089245Z Updating files:  96% (1828/1904)
+2026-07-27T15:08:54.0099862Z Updating files:  97% (1847/1904)
+2026-07-27T15:08:54.0111488Z Updating files:  98% (1866/1904)
+2026-07-27T15:08:54.0124219Z Updating files:  99% (1885/1904)
+2026-07-27T15:08:54.0125365Z Updating files: 100% (1904/1904)
+2026-07-27T15:08:54.0125905Z Updating files: 100% (1904/1904), done.
+2026-07-27T15:08:54.0163815Z Switched to a new branch 'main'
+2026-07-27T15:08:54.0167821Z branch 'main' set up to track 'origin/main'.
+2026-07-27T15:08:54.0254504Z ##[endgroup]
+2026-07-27T15:08:54.0301576Z [command]/usr/bin/git log -1 --format=%H
+2026-07-27T15:08:54.0333715Z e8a1f2b06971a34ff345313f7b440b9309e30e17
+2026-07-27T15:08:54.0557489Z ##[group]Run podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v /home/runner/work/ermete-os/ermete-os:/workspace -w /workspace/forge ghcr.io/patapem/ermete-os-builder:latest bash scripts/check_idempotency.sh --package store-rs --registry ghcr.io --owner patapem --image-name ermete-os-forge-store-rs > idemp.out
+2026-07-27T15:08:54.0560223Z [36;1mpodman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v /home/runner/work/ermete-os/ermete-os:/workspace -w /workspace/forge ghcr.io/patapem/ermete-os-builder:latest bash scripts/check_idempotency.sh --package store-rs --registry ghcr.io --owner patapem --image-name ermete-os-forge-store-rs > idemp.out[0m
+2026-07-27T15:08:54.0561654Z [36;1msource ./idemp.out[0m
+2026-07-27T15:08:54.0561948Z [36;1mecho "hash=$CONTENT_HASH" >> $GITHUB_OUTPUT[0m
+2026-07-27T15:08:54.0562553Z [36;1mif [ "$CACHE_HIT" = "true" ]; then echo "skip=true" >> $GITHUB_OUTPUT; else echo "skip=false" >> $GITHUB_OUTPUT; fi[0m
+2026-07-27T15:08:54.0611828Z shell: /usr/bin/bash -e {0}
+2026-07-27T15:08:54.0612110Z env:
+2026-07-27T15:08:54.0612319Z   REGISTRY: ghcr.io
+2026-07-27T15:08:54.0612559Z   FEDORA_VERSION: 43
+2026-07-27T15:08:54.0615362Z   GITHUB_TOKEN: ***
+2026-07-27T15:08:54.0615609Z ##[endgroup]
+2026-07-27T15:08:57.4350997Z Trying to pull ghcr.io/patapem/ermete-os-builder:latest...
+2026-07-27T15:08:57.9764472Z Getting image source signatures
+2026-07-27T15:08:57.9766330Z Copying blob sha256:acd8b42f73ce3c867cc593ead04aeeaa3a76332d51a318a009e3ef7c20a7cd83
+2026-07-27T15:08:57.9767498Z Copying blob sha256:e3b9006c957086d002d0808876d2a9c989044c836cf27f19bff374dfb37aafb5
+2026-07-27T15:08:57.9768464Z Copying blob sha256:5217eddb4f530f3a7cf5ea608e63a70c9486863e8efe835a42a31e280beb7045
+2026-07-27T15:08:57.9769563Z Copying blob sha256:03d994101826fdaf4cc14d01019ae27f086327d9923d71a9ebdbc28e2372f364
+2026-07-27T15:09:37.3665601Z Copying config sha256:af8755c663c1d4fd59aab1367159dc0c1cbe3c7a95a91801f5d348dd9d40220b
+2026-07-27T15:09:37.3685424Z Writing manifest to image destination
+2026-07-27T15:09:37.7698193Z >>> Content Hash calcolato per store-rs: 159982965d20f3ae404f7b7f2ae45fc487d7dab6372e1f88019ded12e81da93d
+2026-07-27T15:09:37.7712030Z >>> Verifica esistenza su GHCR: docker://ghcr.io/patapem/ermete-os-forge-store-rs:159982965d20f3ae404f7b7f2ae45fc487d7dab6372e1f88019ded12e81da93d...
+2026-07-27T15:09:38.1206603Z >>> Cache Miss. Procedo con la build.
+2026-07-27T15:09:38.1995043Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-27T15:09:38.1996752Z ##[group]Run actions/cache@v4
+2026-07-27T15:09:38.1997014Z with:
+2026-07-27T15:09:38.1997212Z   path: ~/.cache/sccache
+2026-07-27T15:09:38.1997531Z   key: sccache-store-rs-e8a1f2b06971a34ff345313f7b440b9309e30e17
+2026-07-27T15:09:38.1997919Z   restore-keys: sccache-store-rs-
+
+2026-07-27T15:09:38.1998205Z   enableCrossOsArchive: false
+2026-07-27T15:09:38.1998454Z   fail-on-cache-miss: false
+2026-07-27T15:09:38.1998688Z   lookup-only: false
+2026-07-27T15:09:38.1998901Z   save-always: false
+2026-07-27T15:09:38.1999099Z env:
+2026-07-27T15:09:38.1999282Z   REGISTRY: ghcr.io
+2026-07-27T15:09:38.1999491Z   FEDORA_VERSION: 43
+2026-07-27T15:09:38.1999748Z ##[endgroup]
+2026-07-27T15:09:38.3063009Z (node:2486) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-27T15:09:38.3064506Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-27T15:09:38.4272019Z Cache hit for restore-key: sccache-store-rs-3f667a9b05df2e3127042702ea5120b20c9fd854
+2026-07-27T15:09:38.4380459Z (node:2486) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-07-27T15:09:39.5570767Z Received 115420456 of 115420456 (100.0%), 108.2 MBs/sec
+2026-07-27T15:09:39.5573589Z Cache Size: ~110 MB (115420456 B)
+2026-07-27T15:09:39.5653952Z [command]/usr/bin/tar -xf /home/runner/work/_temp/6a910647-7dc1-47be-bbc4-d00579dbf344/cache.tzst -P -C /home/runner/work/ermete-os/ermete-os --use-compress-program unzstd
+2026-07-27T15:09:39.7451233Z Cache restored successfully
+2026-07-27T15:09:39.7595728Z Cache restored from key: sccache-store-rs-3f667a9b05df2e3127042702ea5120b20c9fd854
+2026-07-27T15:09:39.7732159Z ##[group]Run mkdir -p RPMS
+2026-07-27T15:09:39.7732529Z [36;1mmkdir -p RPMS[0m
+2026-07-27T15:09:39.7733008Z [36;1mpodman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \[0m
+2026-07-27T15:09:39.7733940Z [36;1m  -v /home/runner/work/ermete-os/ermete-os:/workspace \[0m
+2026-07-27T15:09:39.7734366Z [36;1m  -w /workspace/forge \[0m
+2026-07-27T15:09:39.7734707Z [36;1m  ghcr.io/patapem/ermete-os-builder:latest \[0m
+2026-07-27T15:09:39.7735042Z [36;1m  bash <<'EOF'[0m
+2026-07-27T15:09:39.7735320Z [36;1m  sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf[0m
+2026-07-27T15:09:39.7736576Z [36;1m  dnf install -y rpm-build rpmdevtools gcc gcc-c++ cargo rust cmake mold tar xz curl pkgconf-pkg-config zlib-devel openssl-devel checkpolicy policycoreutils spdlog-devel systemd-devel nlohmann-json-devel fmt-devel which autoconf automake libtool cargo-rpm-macros clang clang-devel speech-dispatcher-devel[0m
+2026-07-27T15:09:39.7737854Z [36;1m  cp config/rpmmacros ~/.rpmmacros[0m
+2026-07-27T15:09:39.7738158Z [36;1m  rpmdev-setuptree[0m
+2026-07-27T15:09:39.7738399Z [36;1m[0m
+2026-07-27T15:09:39.7738647Z [36;1m  if [ -d "specs/ermete-store-rs/SOURCES" ]; then [0m
+2026-07-27T15:09:39.7739081Z [36;1m    cp -a specs/ermete-store-rs/SOURCES/* ~/rpmbuild/SOURCES/ || true[0m
+2026-07-27T15:09:39.7739705Z [36;1m  fi[0m
+2026-07-27T15:09:39.7739904Z [36;1m[0m
+2026-07-27T15:09:39.7740192Z [36;1m  # Auto-pack any source directory into tarball for RPM Source0[0m
+2026-07-27T15:09:39.7740617Z [36;1m  for dir in specs/ermete-store-rs/*-*/ ; do[0m
+2026-07-27T15:09:39.7740935Z [36;1m    if [ -d "$dir" ]; then[0m
+2026-07-27T15:09:39.7741211Z [36;1m      pkg_dir=$(basename "$dir")[0m
+2026-07-27T15:09:39.7741619Z [36;1m      echo "Packing $pkg_dir into ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz..."[0m
+2026-07-27T15:09:39.7742191Z [36;1m      tar -czf ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz -C "specs/ermete-store-rs" "$pkg_dir"[0m
+2026-07-27T15:09:39.7742636Z [36;1m    fi[0m
+2026-07-27T15:09:39.7742839Z [36;1m  done[0m
+2026-07-27T15:09:39.7743036Z [36;1m[0m
+2026-07-27T15:09:39.7743308Z [36;1m  dnf builddep -y specs/ermete-store-rs/*.spec || true[0m
+2026-07-27T15:09:39.7743994Z [36;1m  spectool -g -R specs/ermete-store-rs/*.spec || true[0m
+2026-07-27T15:09:39.7744341Z [36;1m[0m
+2026-07-27T15:09:39.7744656Z [36;1m  # First attempt (generates buildreqs.nosrc.rpm for Rust packages)[0m
+2026-07-27T15:09:39.7745136Z [36;1m  rpmbuild -bb --nocheck specs/ermete-store-rs/*.spec || true[0m
+2026-07-27T15:09:39.7745498Z [36;1m[0m
+2026-07-27T15:09:39.7745743Z [36;1m  # Install dynamic dependencies if generated[0m
+2026-07-27T15:09:39.7746135Z [36;1m  if ls ~/rpmbuild/SRPMS/*.nosrc.rpm 1> /dev/null 2>&1; then[0m
+2026-07-27T15:09:39.7746638Z [36;1m      dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SRPMS/*.nosrc.rpm || true[0m
+2026-07-27T15:09:39.7747055Z [36;1m  fi[0m
+2026-07-27T15:09:39.7747256Z [36;1m[0m
+2026-07-27T15:09:39.7747499Z [36;1m  # Workaround for Fedora 43 rust-sysinfo bug[0m
+2026-07-27T15:09:39.7747944Z [36;1m  if ls /usr/share/cargo/registry/sysinfo-*/src/lib.rs 1> /dev/null 2>&1; then[0m
+2026-07-27T15:09:39.7748454Z [36;1m      for sysinfo_dir in /usr/share/cargo/registry/sysinfo-*/; do[0m
+2026-07-27T15:09:39.7748859Z [36;1m          touch "$sysinfo_dir/README.md"[0m
+2026-07-27T15:09:39.7749152Z [36;1m      done[0m
+2026-07-27T15:09:39.7749370Z [36;1m  fi[0m
+2026-07-27T15:09:39.7749568Z [36;1m[0m
+2026-07-27T15:09:39.7749785Z [36;1m  # Second attempt (actual build)[0m
+2026-07-27T15:09:39.7750145Z [36;1m  rpmbuild -bb --nocheck specs/ermete-store-rs/*.spec[0m
+2026-07-27T15:09:39.7750487Z [36;1m[0m
+2026-07-27T15:09:39.7750703Z [36;1m  mkdir -p /workspace/forge/RPMS[0m
+2026-07-27T15:09:39.7751053Z [36;1m  cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/[0m
+2026-07-27T15:09:39.7751373Z [36;1mEOF[0m
+2026-07-27T15:09:39.7798937Z shell: /usr/bin/bash -e {0}
+2026-07-27T15:09:39.7799205Z env:
+2026-07-27T15:09:39.7799616Z   REGISTRY: ghcr.io
+2026-07-27T15:09:39.7799855Z   FEDORA_VERSION: 43
+2026-07-27T15:09:39.7800077Z ##[endgroup]
+2026-07-27T15:09:40.0885491Z Updating and loading repositories:
+2026-07-27T15:09:42.6725424Z  RPM Fusion for Fedora 43 - Nonfree - U 100% |  17.1 KiB/s |  44.0 KiB |  00m03s
+2026-07-27T15:09:42.7621021Z  RPM Fusion for Fedora 43 - Nonfree - S 100% |  31.9 KiB/s |  39.8 KiB |  00m01s
+2026-07-27T15:09:42.8280885Z  RPM Fusion for Fedora 43 - Free - Sour 100% |  57.2 KiB/s |  69.8 KiB |  00m01s
+2026-07-27T15:09:42.9150215Z  RPM Fusion for Fedora 43 - Nonfree     100% |  61.0 KiB/s |  78.3 KiB |  00m01s
+2026-07-27T15:09:43.5653467Z  RPM Fusion for Fedora 43 - Free - Upda 100% |  26.2 KiB/s |  74.5 KiB |  00m03s
+2026-07-27T15:09:43.9816704Z  RPM Fusion for Fedora 43 - Free        100% |  64.5 KiB/s | 148.4 KiB |  00m02s
+2026-07-27T15:09:44.0151892Z  Fedora 43 openh264 (From Cisco) - x86_ 100% |   2.1 KiB/s |   5.8 KiB |  00m03s
+2026-07-27T15:09:44.6922607Z  Fedora 43 - x86_64 - Updates           100% |   3.5 MiB/s |  11.8 MiB |  00m03s
+2026-07-27T15:10:12.1735236Z  Fedora 43 - x86_64                     100% |   1.2 MiB/s |  36.2 MiB |  00m31s
+2026-07-27T15:10:14.8663023Z Repositories loaded.
+2026-07-27T15:10:17.2116032Z Package "rpm-build-6.0.1-1.fc43.x86_64" is already installed.
+2026-07-27T15:10:17.2117861Z Package "rpmdevtools-9.6-13.fc43.noarch" is already installed.
+2026-07-27T15:10:17.2119172Z Package "gcc-15.2.1-7.fc43.x86_64" is already installed.
+2026-07-27T15:10:17.2120205Z Package "gcc-c++-15.2.1-7.fc43.x86_64" is already installed.
+2026-07-27T15:10:17.2121175Z Package "cargo-1.96.1-1.fc43.x86_64" is already installed.
+2026-07-27T15:10:17.2122069Z Package "rust-1.96.1-1.fc43.x86_64" is already installed.
+2026-07-27T15:10:17.2122968Z Package "cmake-3.31.11-1.fc43.x86_64" is already installed.
+2026-07-27T15:10:17.2124158Z Package "mold-2.40.4-2.fc43.x86_64" is already installed.
+2026-07-27T15:10:17.2125171Z Package "tar-2:1.35-6.fc43.x86_64" is already installed.
+2026-07-27T15:10:17.2126145Z Package "xz-1:5.8.1-4.fc43.x86_64" is already installed.
+2026-07-27T15:10:17.2126991Z Package "curl-8.15.0-7.fc43.x86_64" is already installed.
+2026-07-27T15:10:17.2127818Z Package                       Arch   Version            Repository      Size
+2026-07-27T15:10:17.2128556Z Upgrading:
+2026-07-27T15:10:17.2129207Z  rust-srpm-macros             noarch 28.5-1.fc43        updates      5.5 KiB
+2026-07-27T15:10:17.2130239Z    replacing rust-srpm-macros noarch 28.4-1.fc43        updates      5.5 KiB
+2026-07-27T15:10:17.2130906Z Installing:
+2026-07-27T15:10:17.2131373Z  autoconf                     noarch 2.72-7.fc43        fedora       2.8 MiB
+2026-07-27T15:10:17.2132106Z  automake                     noarch 1.18.1-2.fc43      fedora       1.8 MiB
+2026-07-27T15:10:17.2132894Z  cargo-rpm-macros             noarch 28.5-1.fc43        updates     14.9 KiB
+2026-07-27T15:10:17.2133899Z  libtool                      x86_64 2.5.4-8.fc43       updates      2.7 MiB
+2026-07-27T15:10:17.2134734Z  which                        x86_64 2.23-3.fc43        fedora      83.5 KiB
+2026-07-27T15:10:17.2135313Z Installing dependencies:
+2026-07-27T15:10:17.2135956Z Package "pkgconf-pkg-config-2.3.0-3.fc43.x86_64" is already installed.
+2026-07-27T15:10:17.2136852Z Package "zlib-ng-compat-devel-2.3.3-2.fc43.x86_64" is already installed.
+2026-07-27T15:10:17.2137713Z Package "openssl-devel-1:3.5.7-2.fc43.x86_64" is already installed.
+2026-07-27T15:10:17.2138485Z Package "checkpolicy-3.9-2.fc43.x86_64" is already installed.
+2026-07-27T15:10:17.2139263Z Package "policycoreutils-3.9-7.fc43.x86_64" is already installed.
+2026-07-27T15:10:17.2140071Z Package "spdlog-devel-1.15.3-3.fc43.x86_64" is already installed.
+2026-07-27T15:10:17.2140864Z Package "systemd-devel-258.9-1.fc43.x86_64" is already installed.
+2026-07-27T15:10:17.2141636Z Package "json-devel-3.11.3-4.fc43.x86_64" is already installed.
+2026-07-27T15:10:17.2142385Z Package "fmt-devel-11.2.0-3.fc43.x86_64" is already installed.
+2026-07-27T15:10:17.2143412Z Package "clang-21.1.8-4.fc43.x86_64" is already installed.
+2026-07-27T15:10:17.2144453Z Package "clang-devel-21.1.8-4.fc43.x86_64" is already installed.
+2026-07-27T15:10:17.2145358Z Package "speech-dispatcher-devel-0.12.1-5.fc43.x86_64" is already installed.
+2026-07-27T15:10:17.2145951Z 
+2026-07-27T15:10:17.2146255Z Total size of inbound packages is 3 MiB. Need to download 3 MiB.
+2026-07-27T15:10:17.2147112Z After this operation, 11 MiB extra will be used (install 11 MiB, remove 6 KiB).
+2026-07-27T15:10:17.2147963Z  cargo2rpm                    noarch 0.3.4-1.fc43       updates      1.3 MiB
+2026-07-27T15:10:17.2148848Z  gettext-common-devel         noarch 0.25.1-2.fc43      fedora     592.5 KiB
+2026-07-27T15:10:17.2149680Z  gettext-devel                x86_64 0.25.1-2.fc43      fedora       1.3 MiB
+2026-07-27T15:10:17.2150484Z  perl-File-Compare            noarch 1.100.800-523.fc43 updates      5.6 KiB
+2026-07-27T15:10:17.2151307Z  perl-File-Copy               noarch 2.41-523.fc43      updates     19.7 KiB
+2026-07-27T15:10:17.2152104Z  perl-File-Find               noarch 1.44-523.fc43      updates     42.0 KiB
+2026-07-27T15:10:17.2152927Z  perl-Thread-Queue            noarch 3.14-520.fc43      fedora      28.9 KiB
+2026-07-27T15:10:17.2153944Z  perl-threads                 x86_64 1:2.43-520.fc43    fedora     115.1 KiB
+2026-07-27T15:10:17.2155015Z  perl-threads-shared          x86_64 1.70-520.fc43      fedora      83.6 KiB
+2026-07-27T15:10:17.2155541Z 
+2026-07-27T15:10:17.2155716Z Transaction Summary:
+2026-07-27T15:10:17.2156119Z  Installing:        14 packages
+2026-07-27T15:10:17.2156573Z  Upgrading:          1 package
+2026-07-27T15:10:17.2157007Z  Replacing:          1 package
+2026-07-27T15:10:17.2157294Z 
+2026-07-27T15:10:17.5793962Z [ 1/15] which-0:2.23-3.fc43.x86_64      100% | 115.9 KiB/s |  41.7 KiB |  00m00s
+2026-07-27T15:10:17.6444801Z [ 2/15] perl-Thread-Queue-0:3.14-520.fc 100% | 332.6 KiB/s |  21.3 KiB |  00m00s
+2026-07-27T15:10:17.7829478Z [ 3/15] perl-threads-1:2.43-520.fc43.x8 100% | 419.4 KiB/s |  57.9 KiB |  00m00s
+2026-07-27T15:10:17.8425051Z [ 4/15] perl-threads-shared-0:1.70-520. 100% | 753.0 KiB/s |  44.4 KiB |  00m00s
+2026-07-27T15:10:18.1487599Z [ 5/15] gettext-devel-0:0.25.1-2.fc43.x 100% | 924.8 KiB/s | 282.1 KiB |  00m00s
+2026-07-27T15:10:18.2675318Z [ 6/15] autoconf-0:2.72-7.fc43.noarch   100% | 793.3 KiB/s | 830.6 KiB |  00m01s
+2026-07-27T15:10:18.2702285Z [ 7/15] automake-0:1.18.1-2.fc43.noarch 100% | 688.4 KiB/s | 723.5 KiB |  00m01s
+2026-07-27T15:10:18.3702318Z [ 8/15] cargo-rpm-macros-0:28.5-1.fc43. 100% | 145.8 KiB/s |  14.4 KiB |  00m00s
+2026-07-27T15:10:18.5161509Z [ 9/15] cargo2rpm-0:0.3.4-1.fc43.noarch 100% |   1.4 MiB/s | 204.2 KiB |  00m00s
+2026-07-27T15:10:18.5295368Z [10/15] libtool-0:2.5.4-8.fc43.x86_64   100% |   2.3 MiB/s | 621.4 KiB |  00m00s
+2026-07-27T15:10:18.5507317Z [11/15] perl-File-Compare-0:1.100.800-5 100% | 378.6 KiB/s |  12.9 KiB |  00m00s
+2026-07-27T15:10:18.5608098Z [12/15] perl-File-Copy-0:2.41-523.fc43. 100% | 637.1 KiB/s |  19.7 KiB |  00m00s
+2026-07-27T15:10:18.5864608Z [13/15] perl-File-Find-0:1.44-523.fc43. 100% | 713.4 KiB/s |  25.0 KiB |  00m00s
+2026-07-27T15:10:18.5920559Z [14/15] rust-srpm-macros-0:28.5-1.fc43. 100% | 361.2 KiB/s |  11.2 KiB |  00m00s
+2026-07-27T15:10:18.7011413Z [15/15] gettext-common-devel-0:0.25.1-2 100% |   1.1 MiB/s | 601.7 KiB |  00m01s
+2026-07-27T15:10:18.7012306Z --------------------------------------------------------------------------------
+2026-07-27T15:10:18.7013041Z [15/15] Total                           100% |   2.3 MiB/s |   3.4 MiB |  00m01s
+2026-07-27T15:10:18.7029008Z Running transaction
+2026-07-27T15:10:18.9774409Z [ 1/18] Verify package files            100% |   1.1 KiB/s |  15.0   B |  00m00s
+2026-07-27T15:10:19.0171941Z [ 2/18] Prepare transaction             100% | 141.0   B/s |  16.0   B |  00m00s
+2026-07-27T15:10:19.0236672Z [ 3/18] Installing perl-threads-1:2.43- 100% |  28.6 MiB/s | 117.1 KiB |  00m00s
+2026-07-27T15:10:19.0269226Z [ 4/18] Installing perl-threads-shared- 100% |  28.0 MiB/s |  85.9 KiB |  00m00s
+2026-07-27T15:10:19.0291605Z [ 5/18] Installing perl-Thread-Queue-0: 100% |  14.8 MiB/s |  30.4 KiB |  00m00s
+2026-07-27T15:10:19.0306270Z [ 6/18] Upgrading rust-srpm-macros-0:28 100% |   6.2 MiB/s |   6.4 KiB |  00m00s
+2026-07-27T15:10:19.0319919Z [ 7/18] Installing perl-File-Find-0:1.4 100% |  41.5 MiB/s |  42.5 KiB |  00m00s
+2026-07-27T15:10:19.0333021Z [ 8/18] Installing perl-File-Copy-0:2.4 100% |  19.7 MiB/s |  20.2 KiB |  00m00s
+2026-07-27T15:10:19.0513906Z [ 9/18] Installing perl-File-Compare-0: 100% |   6.0 MiB/s |   6.2 KiB |  00m00s
+2026-07-27T15:10:19.0681715Z [10/18] Installing cargo2rpm-0:0.3.4-1. 100% |  41.8 MiB/s |   1.3 MiB |  00m00s
+2026-07-27T15:10:19.0799942Z [11/18] Installing gettext-common-devel 100% | 289.4 MiB/s | 592.8 KiB |  00m00s
+2026-07-27T15:10:19.1098224Z [12/18] Installing gettext-devel-0:0.25 100% |  50.1 MiB/s |   1.3 MiB |  00m00s
+2026-07-27T15:10:19.1251357Z [13/18] Installing autoconf-0:2.72-7.fc 100% |  96.7 MiB/s |   2.8 MiB |  00m00s
+2026-07-27T15:10:19.1652127Z [14/18] Installing automake-0:1.18.1-2. 100% |  59.2 MiB/s |   1.8 MiB |  00m00s
+2026-07-27T15:10:19.1802964Z [15/18] Installing libtool-0:2.5.4-8.fc 100% | 124.8 MiB/s |   2.7 MiB |  00m00s
+2026-07-27T15:10:19.1832621Z [16/18] Installing cargo-rpm-macros-0:2 100% |   7.8 MiB/s |  15.9 KiB |  00m00s
+2026-07-27T15:10:19.1967485Z [17/18] Installing which-0:2.23-3.fc43. 100% |   5.6 MiB/s |  85.7 KiB |  00m00s
+2026-07-27T15:10:19.3261754Z [18/18] Removing rust-srpm-macros-0:28. 100% |  38.0   B/s |   5.0   B |  00m00s
+2026-07-27T15:10:19.3262455Z Complete!
+2026-07-27T15:10:19.4071334Z Packing ermete-store-rs-1.0.0 into ~/rpmbuild/SOURCES/ermete-store-rs-1.0.0.tar.gz...
+2026-07-27T15:10:19.4435498Z Updating and loading repositories:
+2026-07-27T15:10:20.0655425Z Repositories loaded.
+2026-07-27T15:10:20.2715683Z Package "cargo-1.96.1-1.fc43.x86_64" is already installed.
+2026-07-27T15:10:20.2717258Z Package "openssl-devel-1:3.5.7-2.fc43.x86_64" is already installed.
+2026-07-27T15:10:20.2718117Z Nothing to do.
+2026-07-27T15:10:20.2719069Z Package "pkgconf-pkg-config-2.3.0-3.fc43.x86_64" is already installed.
+2026-07-27T15:10:20.2719979Z Package "rust-1.96.1-1.fc43.x86_64" is already installed.
+2026-07-27T15:10:20.2720649Z Package "systemd-rpm-macros-258.9-1.fc43.noarch" is already installed.
+2026-07-27T15:10:20.2721127Z 
+2026-07-27T15:10:20.5054690Z setting SOURCE_DATE_EPOCH=1784160000
+2026-07-27T15:10:20.5171702Z Executing(%mkbuilddir): /bin/sh -e /var/tmp/rpm-tmp.6QKF3h
+2026-07-27T15:10:20.5237736Z Executing(%prep): /bin/sh -e /var/tmp/rpm-tmp.hxo7rq
+2026-07-27T15:10:20.5254728Z + umask 022
+2026-07-27T15:10:20.5255399Z + cd /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build
+2026-07-27T15:10:20.5255876Z + cd /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build
+2026-07-27T15:10:20.5256598Z + rm -rf ermete-store-rs-1.0.0
+2026-07-27T15:10:20.5267801Z + /usr/lib/rpm/rpmuncompress -x /root/rpmbuild/SOURCES/ermete-store-rs-1.0.0.tar.gz
+2026-07-27T15:10:20.5407620Z + STATUS=0
+2026-07-27T15:10:20.5408206Z + '[' 0 -ne 0 ']'
+2026-07-27T15:10:20.5408798Z + cd ermete-store-rs-1.0.0
+2026-07-27T15:10:20.5409426Z + /usr/bin/chmod -Rf a+rX,u+w,g-w,o-w .
+2026-07-27T15:10:20.5419235Z + RPM_EC=0
+2026-07-27T15:10:20.5422719Z ++ jobs -p
+2026-07-27T15:10:20.5425386Z + exit 0
+2026-07-27T15:10:20.5453997Z Executing(%build): /bin/sh -e /var/tmp/rpm-tmp.Ay1iOT
+2026-07-27T15:10:20.5469219Z + umask 022
+2026-07-27T15:10:20.5469718Z + cd /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build
+2026-07-27T15:10:20.5470426Z + export 'RUSTFLAGS=-C target-cpu=x86-64-v3 -C opt-level=3 -C codegen-units=1 -C link-arg=-fuse-ld=mold'
+2026-07-27T15:10:20.5471366Z + RUSTFLAGS='-C target-cpu=x86-64-v3 -C opt-level=3 -C codegen-units=1 -C link-arg=-fuse-ld=mold'
+2026-07-27T15:10:20.5472194Z + export CARGO_PROFILE_RELEASE_LTO=thin
+2026-07-27T15:10:20.5472749Z + CARGO_PROFILE_RELEASE_LTO=thin
+2026-07-27T15:10:20.5473195Z + export RUSTC_WRAPPER=sccache
+2026-07-27T15:10:20.5473900Z + RUSTC_WRAPPER=sccache
+2026-07-27T15:10:20.5474334Z + cd ermete-store-rs-1.0.0
+2026-07-27T15:10:20.5483062Z + CFLAGS='-O3 -march=x86-64-v3 -mtune=generic -pipe -fno-semantic-interposition -falign-functions=32 -fno-math-errno -fno-trapping-math -mprefer-vector-width=256 -fPIC -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -flto=auto -ffat-lto-objects -fno-semantic-interposition -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer  '
+2026-07-27T15:10:20.5486366Z + export CFLAGS
+2026-07-27T15:10:20.5489336Z + CXXFLAGS='-O3 -march=x86-64-v3 -mtune=generic -pipe -fno-semantic-interposition -falign-functions=32 -fno-math-errno -fno-trapping-math -mprefer-vector-width=256 -fPIC -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -flto=auto -ffat-lto-objects -fno-semantic-interposition -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer  '
+2026-07-27T15:10:20.5495508Z + export CXXFLAGS
+2026-07-27T15:10:20.5499624Z + FFLAGS='-O3 -march=x86-64-v3 -mtune=generic -pipe -fno-semantic-interposition -falign-functions=32 -fno-math-errno -fno-trapping-math -mprefer-vector-width=256 -fPIC -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -flto=auto -ffat-lto-objects -fno-semantic-interposition -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -I/usr/lib64/gfortran/modules  '
+2026-07-27T15:10:20.5504240Z + export FFLAGS
+2026-07-27T15:10:20.5506621Z + FCFLAGS='-O3 -march=x86-64-v3 -mtune=generic -pipe -fno-semantic-interposition -falign-functions=32 -fno-math-errno -fno-trapping-math -mprefer-vector-width=256 -fPIC -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -flto=auto -ffat-lto-objects -fno-semantic-interposition -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -I/usr/lib64/gfortran/modules  '
+2026-07-27T15:10:20.5508925Z + export FCFLAGS
+2026-07-27T15:10:20.5509147Z + VALAFLAGS=-g
+2026-07-27T15:10:20.5509589Z + export VALAFLAGS
+2026-07-27T15:10:20.5510378Z + RUSTFLAGS='-C target-cpu=x86-64-v3 -C opt-level=3 -C codegen-units=1 -C link-arg=-fuse-ld=mold'
+2026-07-27T15:10:20.5511166Z + export RUSTFLAGS
+2026-07-27T15:10:20.5513038Z + LDFLAGS='-Wl,-z,relro -Wl,--as-needed  -Wl,-z,pack-relative-relocs -Wl,-z,now -specs=/usr/lib/rpm/redhat/redhat-hardened-ld -specs=/usr/lib/rpm/redhat/redhat-hardened-ld-errors -specs=/usr/lib/rpm/redhat/redhat-annobin-cc1  -Wl,--build-id=sha1 -specs=/usr/lib/rpm/redhat/redhat-package-notes  '
+2026-07-27T15:10:20.5514747Z + export LDFLAGS
+2026-07-27T15:10:20.5514969Z + LT_SYS_LIBRARY_PATH=/usr/lib64:
+2026-07-27T15:10:20.5515237Z + export LT_SYS_LIBRARY_PATH
+2026-07-27T15:10:20.5515483Z + CC=gcc
+2026-07-27T15:10:20.5515672Z + export CC
+2026-07-27T15:10:20.5515864Z + CXX=g++
+2026-07-27T15:10:20.5516054Z + export CXX
+2026-07-27T15:10:20.5516272Z + cargo build --release --locked
+2026-07-27T15:10:20.7034066Z     Updating crates.io index
+2026-07-27T15:10:21.1065206Z  Downloading crates ...
+2026-07-27T15:10:21.5641837Z   Downloaded async-trait v0.1.89
+2026-07-27T15:10:21.5725114Z   Downloaded zvariant_utils v2.1.0
+2026-07-27T15:10:21.5764890Z   Downloaded rustls-pemfile v1.0.4
+2026-07-27T15:10:21.5817112Z   Downloaded stable_deref_trait v1.2.1
+2026-07-27T15:10:21.5855528Z   Downloaded serde_derive v1.0.228
+2026-07-27T15:10:21.5927301Z   Downloaded zerofrom-derive v0.1.7
+2026-07-27T15:10:21.5960388Z   Downloaded zvariant_derive v4.2.0
+2026-07-27T15:10:21.5994809Z   Downloaded zbus_macros v4.4.0
+2026-07-27T15:10:21.6027828Z   Downloaded writeable v0.6.3
+2026-07-27T15:10:21.6066898Z   Downloaded serde_json v1.0.150
+2026-07-27T15:10:21.6174511Z   Downloaded rand v0.8.7
+2026-07-27T15:10:21.6230680Z   Downloaded zbus v4.4.0
+2026-07-27T15:10:21.6334743Z   Downloaded tracing-subscriber v0.3.23
+2026-07-27T15:10:21.6441915Z   Downloaded futures-util v0.3.32
+2026-07-27T15:10:21.6634913Z   Downloaded zvariant v4.2.0
+2026-07-27T15:10:21.6688156Z   Downloaded zerovec v0.11.6
+2026-07-27T15:10:21.6771952Z   Downloaded winnow v1.0.4
+2026-07-27T15:10:21.6900634Z   Downloaded typenum v1.20.1
+2026-07-27T15:10:21.6948263Z   Downloaded hyper v0.14.32
+2026-07-27T15:10:21.7053318Z   Downloaded rustls v0.21.12
+2026-07-27T15:10:21.7204673Z   Downloaded nix v0.29.0
+2026-07-27T15:10:21.7351960Z   Downloaded zerotrie v0.2.4
+2026-07-27T15:10:21.7406420Z   Downloaded url v2.5.8
+2026-07-27T15:10:21.7439808Z   Downloaded toml_edit v0.25.13+spec-1.1.0
+2026-07-27T15:10:21.7491928Z   Downloaded reqwest v0.11.27
+2026-07-27T15:10:21.7583595Z   Downloaded icu_properties_data v2.2.0
+2026-07-27T15:10:21.7732445Z   Downloaded tokio v1.52.4
+2026-07-27T15:10:21.8325085Z   Downloaded h2 v0.3.27
+2026-07-27T15:10:21.8408906Z   Downloaded zerocopy v0.8.54
+2026-07-27T15:10:21.8699119Z   Downloaded tracing v0.1.44
+2026-07-27T15:10:21.8890431Z   Downloaded rustix v1.1.4
+2026-07-27T15:10:21.9254264Z   Downloaded idna v1.1.0
+2026-07-27T15:10:21.9298643Z   Downloaded hashbrown v0.17.1
+2026-07-27T15:10:21.9368767Z   Downloaded tokio-util v0.7.18
+2026-07-27T15:10:21.9476197Z   Downloaded syn v2.0.119
+2026-07-27T15:10:21.9611408Z   Downloaded mio v1.2.2
+2026-07-27T15:10:21.9697170Z   Downloaded memchr v2.8.3
+2026-07-27T15:10:21.9792508Z   Downloaded indexmap v2.14.0
+2026-07-27T15:10:21.9849014Z   Downloaded webpki-roots v0.25.4
+2026-07-27T15:10:21.9891168Z   Downloaded serde v1.0.228
+2026-07-27T15:10:21.9936392Z   Downloaded icu_normalizer v2.2.0
+2026-07-27T15:10:21.9983395Z   Downloaded icu_locale_core v2.2.0
+2026-07-27T15:10:22.0079410Z   Downloaded icu_collections v2.2.0
+2026-07-27T15:10:22.0160837Z   Downloaded unicode-ident v1.0.24
+2026-07-27T15:10:22.0198512Z   Downloaded tracing-core v0.1.36
+2026-07-27T15:10:22.0235697Z   Downloaded socket2 v0.5.10
+2026-07-27T15:10:22.0269350Z   Downloaded proc-macro2 v1.0.106
+2026-07-27T15:10:22.0329644Z   Downloaded icu_properties v2.2.0
+2026-07-27T15:10:22.0374072Z   Downloaded icu_normalizer_data v2.2.0
+2026-07-27T15:10:22.0413043Z   Downloaded yoke v0.8.3
+2026-07-27T15:10:22.0448206Z   Downloaded libc v0.2.186
+2026-07-27T15:10:22.0964334Z   Downloaded toml_parser v1.1.2+spec-1.1.0
+2026-07-27T15:10:22.0994586Z   Downloaded tokio-rustls v0.24.1
+2026-07-27T15:10:22.1026950Z   Downloaded static_assertions v1.1.0
+2026-07-27T15:10:22.1045939Z   Downloaded socket2 v0.6.5
+2026-07-27T15:10:22.1068799Z   Downloaded polling v3.11.0
+2026-07-27T15:10:22.1108823Z   Downloaded parking_lot_core v0.9.12
+2026-07-27T15:10:22.1138004Z   Downloaded litemap v0.8.2
+2026-07-27T15:10:22.1167368Z   Downloaded icu_provider v2.2.0
+2026-07-27T15:10:22.1201936Z   Downloaded http v0.2.12
+2026-07-27T15:10:22.1247056Z   Downloaded crossbeam-utils v0.8.22
+2026-07-27T15:10:22.1285637Z   Downloaded cc v1.2.67
+2026-07-27T15:10:22.1327882Z   Downloaded base64 v0.21.7
+2026-07-27T15:10:22.1380247Z   Downloaded zmij v1.0.23
+2026-07-27T15:10:22.1402933Z   Downloaded zerovec-derive v0.11.3
+2026-07-27T15:10:22.1424728Z   Downloaded zerofrom v0.1.8
+2026-07-27T15:10:22.1437938Z   Downloaded zbus_names v3.0.0
+2026-07-27T15:10:22.1456665Z   Downloaded yoke-derive v0.8.2
+2026-07-27T15:10:22.1472166Z   Downloaded version_check v0.9.5
+2026-07-27T15:10:22.1489871Z   Downloaded untrusted v0.9.0
+2026-07-27T15:10:22.1512571Z   Downloaded tracing-attributes v0.1.31
+2026-07-27T15:10:22.1547600Z   Downloaded toml_datetime v1.1.1+spec-1.1.0
+2026-07-27T15:10:22.1564999Z   Downloaded tinystr v0.8.3
+2026-07-27T15:10:22.1592294Z   Downloaded shlex v2.0.1
+2026-07-27T15:10:22.1611020Z   Downloaded serde_repr v0.1.20
+2026-07-27T15:10:22.1638999Z   Downloaded encoding_rs v0.8.35
+2026-07-27T15:10:22.1865810Z   Downloaded rand_core v0.6.4
+2026-07-27T15:10:22.1884058Z   Downloaded quote v1.0.46
+2026-07-27T15:10:22.1921007Z   Downloaded pin-project-lite v0.2.17
+2026-07-27T15:10:22.2004111Z   Downloaded parking_lot v0.12.5
+2026-07-27T15:10:22.2036408Z   Downloaded ordered-stream v0.2.0
+2026-07-27T15:10:22.2054116Z   Downloaded once_cell v1.21.4
+2026-07-27T15:10:22.2088860Z   Downloaded nu-ansi-term v0.50.3
+2026-07-27T15:10:22.2122279Z   Downloaded memoffset v0.9.1
+2026-07-27T15:10:22.2140003Z   Downloaded log v0.4.33
+2026-07-27T15:10:22.2172208Z   Downloaded lock_api v0.4.14
+2026-07-27T15:10:22.2189469Z   Downloaded ring v0.17.14
+2026-07-27T15:10:22.2711193Z   Downloaded ipnet v2.12.0
+2026-07-27T15:10:22.2733172Z   Downloaded hyper-rustls v0.24.2
+2026-07-27T15:10:22.2767571Z   Downloaded getrandom v0.2.17
+2026-07-27T15:10:22.2807921Z   Downloaded futures-lite v2.6.1
+2026-07-27T15:10:22.2830767Z   Downloaded futures-channel v0.3.32
+2026-07-27T15:10:22.2855534Z   Downloaded xdg-home v1.3.0
+2026-07-27T15:10:22.2869652Z   Downloaded want v0.3.1
+2026-07-27T15:10:22.2882074Z   Downloaded utf8_iter v1.0.4
+2026-07-27T15:10:22.2896863Z   Downloaded try-lock v0.2.5
+2026-07-27T15:10:22.2909318Z   Downloaded tracing-log v0.2.0
+2026-07-27T15:10:22.2928206Z   Downloaded tower-service v0.3.3
+2026-07-27T15:10:22.2938522Z   Downloaded tokio-macros v2.7.0
+2026-07-27T15:10:22.2952880Z   Downloaded thread_local v1.1.10
+2026-07-27T15:10:22.2971768Z   Downloaded synstructure v0.13.2
+2026-07-27T15:10:22.2985059Z   Downloaded sync_wrapper v0.1.2
+2026-07-27T15:10:22.2996313Z   Downloaded smallvec v1.15.2
+2026-07-27T15:10:22.3014517Z   Downloaded slab v0.4.12
+2026-07-27T15:10:22.3032128Z   Downloaded signal-hook-registry v1.4.8
+2026-07-27T15:10:22.3048623Z   Downloaded sharded-slab v0.1.7
+2026-07-27T15:10:22.3092657Z   Downloaded rand_chacha v0.3.1
+2026-07-27T15:10:22.3107831Z   Downloaded mime v0.3.17
+2026-07-27T15:10:22.3125261Z   Downloaded futures-task v0.3.32
+2026-07-27T15:10:22.3142140Z   Downloaded blocking v1.6.2
+2026-07-27T15:10:22.3158248Z   Downloaded serde_core v1.0.228
+2026-07-27T15:10:22.3192956Z   Downloaded rustls-webpki v0.101.7
+2026-07-27T15:10:22.3418239Z   Downloaded proc-macro-crate v3.5.0
+2026-07-27T15:10:22.3435367Z   Downloaded ppv-lite86 v0.2.21
+2026-07-27T15:10:22.3452535Z   Downloaded piper v0.2.5
+2026-07-27T15:10:22.3475567Z   Downloaded percent-encoding v2.3.2
+2026-07-27T15:10:22.3487360Z   Downloaded parking v2.2.1
+2026-07-27T15:10:22.3502162Z   Downloaded itoa v1.0.18
+2026-07-27T15:10:22.3521982Z   Downloaded idna_adapter v1.2.2
+2026-07-27T15:10:22.3534412Z   Downloaded generic-array v0.14.7
+2026-07-27T15:10:22.3555829Z   Downloaded futures-sink v0.3.32
+2026-07-27T15:10:22.3569087Z   Downloaded futures-io v0.3.32
+2026-07-27T15:10:22.3580926Z   Downloaded form_urlencoded v1.2.2
+2026-07-27T15:10:22.3591886Z   Downloaded bytes v1.12.1
+2026-07-27T15:10:22.3638486Z   Downloaded sha1 v0.10.7
+2026-07-27T15:10:22.3660660Z   Downloaded serde_urlencoded v0.7.1
+2026-07-27T15:10:22.3683503Z   Downloaded sct v0.7.1
+2026-07-27T15:10:22.3736380Z   Downloaded ryu v1.0.23
+2026-07-27T15:10:22.3781702Z   Downloaded potential_utf v0.1.5
+2026-07-27T15:10:22.3796145Z   Downloaded lazy_static v1.5.0
+2026-07-27T15:10:22.3820359Z   Downloaded httpdate v1.0.3
+2026-07-27T15:10:22.3836394Z   Downloaded http-body v0.4.6
+2026-07-27T15:10:22.3859669Z   Downloaded futures-core v0.3.32
+2026-07-27T15:10:22.3878311Z   Downloaded fnv v1.0.7
+2026-07-27T15:10:22.3890111Z   Downloaded enumflags2_derive v0.7.12
+2026-07-27T15:10:22.3902300Z   Downloaded endi v1.1.1
+2026-07-27T15:10:22.3917939Z   Downloaded cpufeatures v0.2.17
+2026-07-27T15:10:22.3936640Z   Downloaded bitflags v2.13.1
+2026-07-27T15:10:22.3999314Z   Downloaded autocfg v1.5.1
+2026-07-27T15:10:22.4023231Z   Downloaded httparse v1.10.1
+2026-07-27T15:10:22.4055094Z   Downloaded displaydoc v0.2.6
+2026-07-27T15:10:22.4082054Z   Downloaded digest v0.10.7
+2026-07-27T15:10:22.4106585Z   Downloaded concurrent-queue v2.5.0
+2026-07-27T15:10:22.4127629Z   Downloaded cfg_aliases v0.2.2
+2026-07-27T15:10:22.4140651Z   Downloaded block-buffer v0.10.4
+2026-07-27T15:10:22.4156221Z   Downloaded atomic-waker v1.1.2
+2026-07-27T15:10:22.4171678Z   Downloaded async-io v2.6.0
+2026-07-27T15:10:22.4209329Z   Downloaded scopeguard v1.2.0
+2026-07-27T15:10:22.4225861Z   Downloaded hex v0.4.3
+2026-07-27T15:10:22.4246851Z   Downloaded find-msvc-tools v0.1.9
+2026-07-27T15:10:22.4268514Z   Downloaded fastrand v2.4.1
+2026-07-27T15:10:22.4287026Z   Downloaded event-listener-strategy v0.5.4
+2026-07-27T15:10:22.4301759Z   Downloaded event-listener v5.4.1
+2026-07-27T15:10:22.4328555Z   Downloaded errno v0.3.14
+2026-07-27T15:10:22.4349095Z   Downloaded equivalent v1.0.2
+2026-07-27T15:10:22.4362334Z   Downloaded enumflags2 v0.7.12
+2026-07-27T15:10:22.4380734Z   Downloaded crypto-common v0.1.7
+2026-07-27T15:10:22.4393394Z   Downloaded cfg-if v1.0.4
+2026-07-27T15:10:22.4410873Z   Downloaded async-task v4.7.1
+2026-07-27T15:10:22.4444034Z   Downloaded async-fs v2.2.0
+2026-07-27T15:10:22.4457261Z   Downloaded async-executor v1.14.0
+2026-07-27T15:10:22.4482138Z   Downloaded async-lock v3.4.2
+2026-07-27T15:10:22.4510125Z   Downloaded async-channel v2.5.0
+2026-07-27T15:10:22.4527176Z   Downloaded async-broadcast v0.7.2
+2026-07-27T15:10:22.4550073Z   Downloaded anyhow v1.0.103
+2026-07-27T15:10:22.4606171Z   Downloaded linux-raw-sys v0.12.1
+2026-07-27T15:10:22.5939827Z    Compiling proc-macro2 v1.0.106
+2026-07-27T15:10:22.5940590Z    Compiling unicode-ident v1.0.24
+2026-07-27T15:10:22.5941148Z    Compiling quote v1.0.46
+2026-07-27T15:10:22.5941595Z    Compiling libc v0.2.186
+2026-07-27T15:10:22.7558864Z    Compiling cfg-if v1.0.4
+2026-07-27T15:10:22.8745004Z    Compiling pin-project-lite v0.2.17
+2026-07-27T15:10:22.9226159Z    Compiling futures-core v0.3.32
+2026-07-27T15:10:23.0427073Z    Compiling stable_deref_trait v1.2.1
+2026-07-27T15:10:23.1370608Z    Compiling smallvec v1.15.2
+2026-07-27T15:10:23.1575524Z    Compiling crossbeam-utils v0.8.22
+2026-07-27T15:10:23.5171381Z    Compiling futures-io v0.3.32
+2026-07-27T15:10:23.7460670Z    Compiling find-msvc-tools v0.1.9
+2026-07-27T15:10:24.1341737Z    Compiling parking v2.2.1
+2026-07-27T15:10:24.2840744Z    Compiling shlex v2.0.1
+2026-07-27T15:10:24.3520174Z    Compiling concurrent-queue v2.5.0
+2026-07-27T15:10:24.6740253Z    Compiling serde_core v1.0.228
+2026-07-27T15:10:24.6899293Z    Compiling cc v1.2.67
+2026-07-27T15:10:25.1944796Z    Compiling parking_lot_core v0.9.12
+2026-07-27T15:10:25.5351131Z    Compiling once_cell v1.21.4
+2026-07-27T15:10:25.8530213Z    Compiling scopeguard v1.2.0
+2026-07-27T15:10:25.9989143Z    Compiling bytes v1.12.1
+2026-07-27T15:10:26.1347936Z    Compiling getrandom v0.2.17
+2026-07-27T15:10:26.4188476Z    Compiling errno v0.3.14
+2026-07-27T15:10:26.9780672Z    Compiling syn v2.0.119
+2026-07-27T15:10:27.0154195Z    Compiling lock_api v0.4.14
+2026-07-27T15:10:27.1112544Z    Compiling tracing-core v0.1.36
+2026-07-27T15:10:28.1367394Z    Compiling autocfg v1.5.1
+2026-07-27T15:10:29.4686599Z    Compiling equivalent v1.0.2
+2026-07-27T15:10:29.6046267Z    Compiling writeable v0.6.3
+2026-07-27T15:10:29.9253256Z    Compiling serde v1.0.228
+2026-07-27T15:10:30.4154826Z    Compiling slab v0.4.12
+2026-07-27T15:10:30.7003825Z    Compiling version_check v0.9.5
+2026-07-27T15:10:31.0826628Z    Compiling ring v0.17.14
+2026-07-27T15:10:31.2689150Z    Compiling litemap v0.8.2
+2026-07-27T15:10:31.5733067Z    Compiling hashbrown v0.17.1
+2026-07-27T15:10:31.6784664Z    Compiling itoa v1.0.18
+2026-07-27T15:10:31.9564770Z    Compiling winnow v1.0.4
+2026-07-27T15:10:32.6789438Z    Compiling indexmap v2.14.0
+2026-07-27T15:10:33.9989580Z    Compiling generic-array v0.14.7
+2026-07-27T15:10:34.1702800Z    Compiling parking_lot v0.12.5
+2026-07-27T15:10:34.3883999Z    Compiling toml_parser v1.1.2+spec-1.1.0
+2026-07-27T15:10:34.9587404Z    Compiling signal-hook-registry v1.4.8
+2026-07-27T15:10:35.4147481Z    Compiling socket2 v0.6.5
+2026-07-27T15:10:36.2560812Z    Compiling mio v1.2.2
+2026-07-27T15:10:36.4047864Z    Compiling event-listener v5.4.1
+2026-07-27T15:10:36.9747888Z    Compiling fastrand v2.4.1
+2026-07-27T15:10:37.1341403Z    Compiling futures-sink v0.3.32
+2026-07-27T15:10:37.4361832Z    Compiling memchr v2.8.3
+2026-07-27T15:10:37.6025459Z    Compiling toml_datetime v1.1.1+spec-1.1.0
+2026-07-27T15:10:38.1671810Z    Compiling icu_normalizer_data v2.2.0
+2026-07-27T15:10:38.3659085Z    Compiling untrusted v0.9.0
+2026-07-27T15:10:38.5398201Z    Compiling icu_properties_data v2.2.0
+2026-07-27T15:10:38.7244676Z    Compiling utf8_iter v1.0.4
+2026-07-27T15:10:38.8424749Z    Compiling toml_edit v0.25.13+spec-1.1.0
+2026-07-27T15:10:38.9430099Z    Compiling event-listener-strategy v0.5.4
+2026-07-27T15:10:39.1739165Z    Compiling zerocopy v0.8.54
+2026-07-27T15:10:40.0624966Z    Compiling log v0.4.33
+2026-07-27T15:10:40.3925049Z    Compiling futures-task v0.3.32
+2026-07-27T15:10:40.6161757Z    Compiling fnv v1.0.7
+2026-07-27T15:10:40.7631174Z    Compiling typenum v1.20.1
+2026-07-27T15:10:42.8357532Z    Compiling proc-macro-crate v3.5.0
+2026-07-27T15:10:42.9944197Z    Compiling http v0.2.12
+2026-07-27T15:10:44.9164276Z    Compiling futures-util v0.3.32
+2026-07-27T15:10:45.6124575Z    Compiling futures-lite v2.6.1
+2026-07-27T15:10:47.0126135Z    Compiling bitflags v2.13.1
+2026-07-27T15:10:48.5111514Z    Compiling rustix v1.1.4
+2026-07-27T15:10:48.5475496Z    Compiling rustls v0.21.12
+2026-07-27T15:10:48.6873887Z    Compiling httparse v1.10.1
+2026-07-27T15:10:49.4125654Z    Compiling sct v0.7.1
+2026-07-27T15:10:49.4847882Z    Compiling rustls-webpki v0.101.7
+2026-07-27T15:10:50.5910612Z    Compiling memoffset v0.9.1
+2026-07-27T15:10:50.7607155Z    Compiling cfg_aliases v0.2.2
+2026-07-27T15:10:50.9035469Z    Compiling try-lock v0.2.5
+2026-07-27T15:10:51.0664665Z    Compiling linux-raw-sys v0.12.1
+2026-07-27T15:10:51.3455685Z    Compiling atomic-waker v1.1.2
+2026-07-27T15:10:51.5021460Z    Compiling zmij v1.0.23
+2026-07-27T15:10:51.8348396Z    Compiling percent-encoding v2.3.2
+2026-07-27T15:10:52.1514637Z    Compiling async-task v4.7.1
+2026-07-27T15:10:52.5034961Z    Compiling form_urlencoded v1.2.2
+2026-07-27T15:10:52.8280593Z    Compiling piper v0.2.5
+2026-07-27T15:10:54.5526906Z    Compiling synstructure v0.13.2
+2026-07-27T15:10:56.1950376Z    Compiling zerovec-derive v0.11.3
+2026-07-27T15:10:59.9484086Z    Compiling zerofrom-derive v0.1.7
+2026-07-27T15:11:00.8918541Z    Compiling yoke-derive v0.8.2
+2026-07-27T15:11:01.7337908Z    Compiling displaydoc v0.2.6
+2026-07-27T15:11:02.1623075Z    Compiling serde_derive v1.0.228
+2026-07-27T15:11:05.4990209Z    Compiling tokio-macros v2.7.0
+2026-07-27T15:11:08.8855156Z    Compiling tokio v1.52.4
+2026-07-27T15:11:08.9061104Z    Compiling tracing-attributes v0.1.31
+2026-07-27T15:11:10.6705925Z    Compiling zerofrom v0.1.8
+2026-07-27T15:11:10.8723978Z    Compiling yoke v0.8.3
+2026-07-27T15:11:11.1686520Z    Compiling zerovec v0.11.6
+2026-07-27T15:11:12.1690409Z    Compiling tinystr v0.8.3
+2026-07-27T15:11:12.4574813Z    Compiling icu_locale_core v2.2.0
+2026-07-27T15:11:15.1849746Z    Compiling potential_utf v0.1.5
+2026-07-27T15:11:15.4157646Z    Compiling zerotrie v0.2.4
+2026-07-27T15:11:15.9207519Z    Compiling icu_provider v2.2.0
+2026-07-27T15:11:16.5855461Z    Compiling icu_collections v2.2.0
+2026-07-27T15:11:17.1581135Z    Compiling zvariant_utils v2.1.0
+2026-07-27T15:11:17.3882080Z    Compiling icu_normalizer v2.2.0
+2026-07-27T15:11:18.7269861Z    Compiling icu_properties v2.2.0
+2026-07-27T15:11:19.2089310Z    Compiling enumflags2_derive v0.7.12
+2026-07-27T15:11:19.4637872Z    Compiling tracing v0.1.44
+2026-07-27T15:11:19.9526590Z    Compiling zvariant_derive v4.2.0
+2026-07-27T15:11:20.8778166Z    Compiling idna_adapter v1.2.2
+2026-07-27T15:11:21.0591618Z    Compiling ppv-lite86 v0.2.21
+2026-07-27T15:11:21.6844425Z    Compiling want v0.3.1
+2026-07-27T15:11:21.8010858Z    Compiling tokio-util v0.7.18
+2026-07-27T15:11:21.8273093Z    Compiling enumflags2 v0.7.12
+2026-07-27T15:11:21.9410751Z    Compiling nix v0.29.0
+2026-07-27T15:11:22.7042817Z    Compiling http-body v0.4.6
+2026-07-27T15:11:23.0053467Z    Compiling crypto-common v0.1.7
+2026-07-27T15:11:23.0463956Z    Compiling h2 v0.3.27
+2026-07-27T15:11:23.0849918Z    Compiling block-buffer v0.10.4
+2026-07-27T15:11:23.1910609Z    Compiling async-channel v2.5.0
+2026-07-27T15:11:23.2854648Z    Compiling async-io v2.6.0
+2026-07-27T15:11:23.4521008Z    Compiling rand_core v0.6.4
+2026-07-27T15:11:23.5252527Z    Compiling socket2 v0.5.10
+2026-07-27T15:11:23.7841289Z    Compiling futures-channel v0.3.32
+2026-07-27T15:11:23.9835829Z    Compiling serde_json v1.0.150
+2026-07-27T15:11:24.1584654Z    Compiling httpdate v1.0.3
+2026-07-27T15:11:24.1848904Z    Compiling endi v1.1.1
+2026-07-27T15:11:24.4370223Z    Compiling tower-service v0.3.3
+2026-07-27T15:11:24.4417775Z    Compiling static_assertions v1.1.0
+2026-07-27T15:11:24.5537978Z    Compiling rand_chacha v0.3.1
+2026-07-27T15:11:24.5868880Z    Compiling zvariant v4.2.0
+2026-07-27T15:11:24.5917990Z    Compiling blocking v1.6.2
+2026-07-27T15:11:25.1155523Z    Compiling digest v0.10.7
+2026-07-27T15:11:25.3314304Z    Compiling tokio-rustls v0.24.1
+2026-07-27T15:11:25.4418629Z    Compiling idna v1.1.0
+2026-07-27T15:11:25.6841229Z    Compiling polling v3.11.0
+2026-07-27T15:11:26.5959451Z    Compiling async-lock v3.4.2
+2026-07-27T15:11:27.3756577Z    Compiling ryu v1.0.23
+2026-07-27T15:11:27.5772337Z    Compiling cpufeatures v0.2.17
+2026-07-27T15:11:27.7060628Z    Compiling anyhow v1.0.103
+2026-07-27T15:11:27.7134169Z    Compiling lazy_static v1.5.0
+2026-07-27T15:11:27.8720349Z    Compiling base64 v0.21.7
+2026-07-27T15:11:28.4138251Z    Compiling sharded-slab v0.1.7
+2026-07-27T15:11:28.5116445Z    Compiling rustls-pemfile v1.0.4
+2026-07-27T15:11:28.8778640Z    Compiling sha1 v0.10.7
+2026-07-27T15:11:29.3088987Z    Compiling serde_urlencoded v0.7.1
+2026-07-27T15:11:29.3228208Z    Compiling async-fs v2.2.0
+2026-07-27T15:11:29.5042942Z    Compiling zbus_names v3.0.0
+2026-07-27T15:11:29.7057751Z    Compiling url v2.5.8
+2026-07-27T15:11:29.8114528Z    Compiling hyper v0.14.32
+2026-07-27T15:11:32.1825825Z    Compiling rand v0.8.7
+2026-07-27T15:11:32.6405700Z    Compiling zbus_macros v4.4.0
+2026-07-27T15:11:33.3714119Z    Compiling async-trait v0.1.89
+2026-07-27T15:11:34.0009299Z    Compiling serde_repr v0.1.20
+2026-07-27T15:11:35.2421317Z    Compiling hyper-rustls v0.24.2
+2026-07-27T15:11:35.5658417Z    Compiling async-executor v1.14.0
+2026-07-27T15:11:36.1772234Z    Compiling tracing-log v0.2.0
+2026-07-27T15:11:36.5817264Z    Compiling async-broadcast v0.7.2
+2026-07-27T15:11:36.6417277Z    Compiling xdg-home v1.3.0
+2026-07-27T15:11:36.8361506Z    Compiling ordered-stream v0.2.0
+2026-07-27T15:11:36.9738574Z    Compiling encoding_rs v0.8.35
+2026-07-27T15:11:37.3235783Z    Compiling thread_local v1.1.10
+2026-07-27T15:11:37.6599747Z    Compiling mime v0.3.17
+2026-07-27T15:11:38.1505798Z    Compiling nu-ansi-term v0.50.3
+2026-07-27T15:11:38.7368022Z    Compiling ipnet v2.12.0
+2026-07-27T15:11:39.7578485Z    Compiling webpki-roots v0.25.4
+2026-07-27T15:11:39.9454442Z    Compiling hex v0.4.3
+2026-07-27T15:11:40.3764284Z    Compiling sync_wrapper v0.1.2
+2026-07-27T15:11:40.5245520Z    Compiling tracing-subscriber v0.3.23
+2026-07-27T15:11:41.3941121Z    Compiling reqwest v0.11.27
+2026-07-27T15:11:48.5185502Z    Compiling zbus v4.4.0
+2026-07-27T15:12:15.8190512Z    Compiling ermete-store-rs v1.0.0 (/root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build/ermete-store-rs-1.0.0)
+2026-07-27T15:12:15.9057259Z warning: unused import: `warn`
+2026-07-27T15:12:15.9058258Z  --> src/main.rs:4:21
+2026-07-27T15:12:15.9059106Z   |
+2026-07-27T15:12:15.9066618Z 4 | use tracing::{info, warn, error};
+2026-07-27T15:12:15.9067126Z   |                     ^^^^
+2026-07-27T15:12:15.9067525Z   |
+2026-07-27T15:12:15.9068046Z   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+2026-07-27T15:12:15.9068566Z 
+2026-07-27T15:12:47.3934010Z warning: `ermete-store-rs` (bin "ermete-store-rs") generated 1 warning (run `cargo fix --bin "ermete-store-rs" -p ermete-store-rs` to apply 1 suggestion)
+2026-07-27T15:12:47.3935641Z     Finished `release` profile [optimized] target(s) in 2m 26s
+2026-07-27T15:12:47.4447545Z + RPM_EC=0
+2026-07-27T15:12:47.4449825Z ++ jobs -p
+2026-07-27T15:12:47.4452209Z + exit 0
+2026-07-27T15:12:47.4513499Z Executing(%install): /bin/sh -e /var/tmp/rpm-tmp.4AYfiH
+2026-07-27T15:12:47.4530750Z + umask 022
+2026-07-27T15:12:47.4531205Z + cd /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build
+2026-07-27T15:12:47.4532420Z + '[' /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build/BUILDROOT '!=' / ']'
+2026-07-27T15:12:47.4533607Z + rm -rf /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build/BUILDROOT
+2026-07-27T15:12:47.4545891Z ++ dirname /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build/BUILDROOT
+2026-07-27T15:12:47.4555869Z + mkdir -p /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build
+2026-07-27T15:12:47.4567668Z + mkdir /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build/BUILDROOT
+2026-07-27T15:12:47.4584791Z + CFLAGS='-O3 -march=x86-64-v3 -mtune=generic -pipe -fno-semantic-interposition -falign-functions=32 -fno-math-errno -fno-trapping-math -mprefer-vector-width=256 -fPIC -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -flto=auto -ffat-lto-objects -fno-semantic-interposition -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer  '
+2026-07-27T15:12:47.4587614Z + export CFLAGS
+2026-07-27T15:12:47.4593976Z + CXXFLAGS='-O3 -march=x86-64-v3 -mtune=generic -pipe -fno-semantic-interposition -falign-functions=32 -fno-math-errno -fno-trapping-math -mprefer-vector-width=256 -fPIC -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -flto=auto -ffat-lto-objects -fno-semantic-interposition -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer  '
+2026-07-27T15:12:47.4597907Z + export CXXFLAGS
+2026-07-27T15:12:47.4602073Z + FFLAGS='-O3 -march=x86-64-v3 -mtune=generic -pipe -fno-semantic-interposition -falign-functions=32 -fno-math-errno -fno-trapping-math -mprefer-vector-width=256 -fPIC -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -flto=auto -ffat-lto-objects -fno-semantic-interposition -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -I/usr/lib64/gfortran/modules  '
+2026-07-27T15:12:47.4605951Z + export FFLAGS
+2026-07-27T15:12:47.4608229Z + FCFLAGS='-O3 -march=x86-64-v3 -mtune=generic -pipe -fno-semantic-interposition -falign-functions=32 -fno-math-errno -fno-trapping-math -mprefer-vector-width=256 -fPIC -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -flto=auto -ffat-lto-objects -fno-semantic-interposition -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -I/usr/lib64/gfortran/modules  '
+2026-07-27T15:12:47.4610526Z + export FCFLAGS
+2026-07-27T15:12:47.4610735Z + VALAFLAGS=-g
+2026-07-27T15:12:47.4610950Z + export VALAFLAGS
+2026-07-27T15:12:47.4611644Z + RUSTFLAGS='-Copt-level=3 -Cdebuginfo=2 -Ccodegen-units=1 -Cstrip=none -Cforce-frame-pointers=yes -Clink-arg=-specs=/usr/lib/rpm/redhat/redhat-package-notes --cap-lints=warn'
+2026-07-27T15:12:47.4612393Z + export RUSTFLAGS
+2026-07-27T15:12:47.4614201Z + LDFLAGS='-Wl,-z,relro -Wl,--as-needed  -Wl,-z,pack-relative-relocs -Wl,-z,now -specs=/usr/lib/rpm/redhat/redhat-hardened-ld -specs=/usr/lib/rpm/redhat/redhat-hardened-ld-errors -specs=/usr/lib/rpm/redhat/redhat-annobin-cc1  -Wl,--build-id=sha1 -specs=/usr/lib/rpm/redhat/redhat-package-notes  '
+2026-07-27T15:12:47.4615953Z + export LDFLAGS
+2026-07-27T15:12:47.4616204Z + LT_SYS_LIBRARY_PATH=/usr/lib64:
+2026-07-27T15:12:47.4616481Z + export LT_SYS_LIBRARY_PATH
+2026-07-27T15:12:47.4616729Z + CC=gcc
+2026-07-27T15:12:47.4616917Z + export CC
+2026-07-27T15:12:47.4617110Z + CXX=g++
+2026-07-27T15:12:47.4617296Z + export CXX
+2026-07-27T15:12:47.4617508Z + cd ermete-store-rs-1.0.0
+2026-07-27T15:12:47.4618123Z + install -D -m 0755 target/release/ermete-store-rs /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build/BUILDROOT/usr/bin/ermete-store-rs
+2026-07-27T15:12:47.4630500Z + install -D -m 0644 os.ermete.Store.conf /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build/BUILDROOT/usr/share/dbus-1/system.d/os.ermete.Store.conf
+2026-07-27T15:12:47.4647625Z + install -D -m 0644 os.ermete.store.policy /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build/BUILDROOT/usr/share/polkit-1/actions/os.ermete.store.policy
+2026-07-27T15:12:47.4663289Z + mkdir -p /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build/BUILDROOT/usr/lib/systemd/system
+2026-07-27T15:12:47.4676994Z + cat
+2026-07-27T15:12:47.4689426Z + '[' '%{buildarch}' = noarch ']'
+2026-07-27T15:12:47.4690014Z + QA_CHECK_RPATHS=1
+2026-07-27T15:12:47.4690642Z + case "${QA_CHECK_RPATHS:-}" in
+2026-07-27T15:12:47.4691013Z + /usr/lib/rpm/check-rpaths
+2026-07-27T15:12:47.4943074Z + /usr/lib/rpm/check-buildroot
+2026-07-27T15:12:47.5071287Z + /usr/lib/rpm/redhat/brp-ldconfig
+2026-07-27T15:12:47.5130287Z + /usr/lib/rpm/brp-compress
+2026-07-27T15:12:47.5150096Z + /usr/lib/rpm/brp-strip /usr/bin/strip
+2026-07-27T15:12:47.5739189Z + /usr/lib/rpm/brp-strip-comment-note /usr/bin/strip /usr/bin/objdump
+2026-07-27T15:12:47.5889233Z + /usr/lib/rpm/redhat/brp-strip-lto /usr/bin/strip
+2026-07-27T15:12:47.5937704Z + /usr/lib/rpm/check-rpaths
+2026-07-27T15:12:47.6204857Z + /usr/lib/rpm/redhat/brp-mangle-shebangs
+2026-07-27T15:12:47.6316980Z + /usr/lib/rpm/brp-remove-la-files
+2026-07-27T15:12:47.6416893Z + /usr/lib/rpm/redhat/brp-python-rpm-in-distinfo
+2026-07-27T15:12:47.6449301Z + env /usr/lib/rpm/redhat/brp-python-bytecompile '' 1 0 -j4
+2026-07-27T15:12:47.6491630Z + /usr/lib/rpm/redhat/brp-python-hardlink
+2026-07-27T15:12:47.6524235Z + /usr/bin/add-determinism --brp -j4 /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build/BUILDROOT
+2026-07-27T15:12:47.6556066Z Scanned 11 directories and 4 files,
+2026-07-27T15:12:47.6557109Z                processed 0 inodes,
+2026-07-27T15:12:47.6557670Z                0 modified (0 replaced + 0 rewritten),
+2026-07-27T15:12:47.6558132Z                0 unsupported format, 0 errors
+2026-07-27T15:12:47.6562050Z Reading /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build/SPECPARTS/rpm-debuginfo.specpart
+2026-07-27T15:12:47.6566173Z Processing files: ermete-store-rs-1.0.0-3.fc43.x86_64
+2026-07-27T15:12:47.7111982Z Provides: ermete-store-rs = 1.0.0-3.fc43 ermete-store-rs(x86-64) = 1.0.0-3.fc43
+2026-07-27T15:12:47.7114116Z Requires(rpmlib): rpmlib(CompressedFileNames) <= 3.0.4-1 rpmlib(FileDigests) <= 4.6.0-1 rpmlib(PayloadFilesHavePrefix) <= 4.0-1
+2026-07-27T15:12:47.7117891Z Requires: ld-linux-x86-64.so.2()(64bit) ld-linux-x86-64.so.2(GLIBC_2.3)(64bit) libc.so.6()(64bit) libc.so.6(GLIBC_2.14)(64bit) libc.so.6(GLIBC_2.15)(64bit) libc.so.6(GLIBC_2.16)(64bit) libc.so.6(GLIBC_2.17)(64bit) libc.so.6(GLIBC_2.18)(64bit) libc.so.6(GLIBC_2.2.5)(64bit) libc.so.6(GLIBC_2.25)(64bit) libc.so.6(GLIBC_2.28)(64bit) libc.so.6(GLIBC_2.29)(64bit) libc.so.6(GLIBC_2.3)(64bit) libc.so.6(GLIBC_2.3.2)(64bit) libc.so.6(GLIBC_2.3.4)(64bit) libc.so.6(GLIBC_2.30)(64bit) libc.so.6(GLIBC_2.32)(64bit) libc.so.6(GLIBC_2.33)(64bit) libc.so.6(GLIBC_2.34)(64bit) libc.so.6(GLIBC_2.39)(64bit) libc.so.6(GLIBC_2.4)(64bit) libc.so.6(GLIBC_2.7)(64bit) libc.so.6(GLIBC_2.9)(64bit) libgcc_s.so.1()(64bit) libgcc_s.so.1(GCC_3.0)(64bit) libgcc_s.so.1(GCC_3.3)(64bit) libgcc_s.so.1(GCC_4.2.0)(64bit) libm.so.6()(64bit) libm.so.6(GLIBC_2.29)(64bit) rtld(GNU_HASH)
+2026-07-27T15:12:47.7122119Z Checking for unpackaged file(s): /usr/lib/rpm/check-files /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build/BUILDROOT
+2026-07-27T15:12:50.0156090Z Wrote: /root/rpmbuild/RPMS/x86_64/ermete-store-rs-1.0.0-3.fc43.x86_64.rpm
+2026-07-27T15:12:50.0188089Z Executing(rmbuild): /bin/sh -e /var/tmp/rpm-tmp.HfwhdC
+2026-07-27T15:12:50.0216758Z + umask 022
+2026-07-27T15:12:50.0217816Z + cd /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build
+2026-07-27T15:12:50.0219564Z + test -d /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build
+2026-07-27T15:12:50.0220577Z + /usr/bin/chmod -Rf a+rX,u+w,g-w,o-w /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build
+2026-07-27T15:12:50.0406256Z + rm -rf /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build
+2026-07-27T15:12:50.1398637Z + RPM_EC=0
+2026-07-27T15:12:50.1401780Z ++ jobs -p
+2026-07-27T15:12:50.1404839Z + exit 0
+2026-07-27T15:12:50.1815334Z setting SOURCE_DATE_EPOCH=1784160000
+2026-07-27T15:12:50.1922198Z Executing(%mkbuilddir): /bin/sh -e /var/tmp/rpm-tmp.W2jJd9
+2026-07-27T15:12:50.1984896Z Executing(%prep): /bin/sh -e /var/tmp/rpm-tmp.GbexeP
+2026-07-27T15:12:50.2001465Z + umask 022
+2026-07-27T15:12:50.2001957Z + cd /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build
+2026-07-27T15:12:50.2002626Z + cd /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build
+2026-07-27T15:12:50.2003039Z + rm -rf ermete-store-rs-1.0.0
+2026-07-27T15:12:50.2015146Z + /usr/lib/rpm/rpmuncompress -x /root/rpmbuild/SOURCES/ermete-store-rs-1.0.0.tar.gz
+2026-07-27T15:12:50.2145210Z + STATUS=0
+2026-07-27T15:12:50.2145779Z + '[' 0 -ne 0 ']'
+2026-07-27T15:12:50.2146436Z + cd ermete-store-rs-1.0.0
+2026-07-27T15:12:50.2146937Z + /usr/bin/chmod -Rf a+rX,u+w,g-w,o-w .
+2026-07-27T15:12:50.2158174Z + RPM_EC=0
+2026-07-27T15:12:50.2160454Z ++ jobs -p
+2026-07-27T15:12:50.2162745Z + exit 0
+2026-07-27T15:12:50.2188497Z Executing(%build): /bin/sh -e /var/tmp/rpm-tmp.9AzIRX
+2026-07-27T15:12:50.2213066Z + umask 022
+2026-07-27T15:12:50.2213904Z + cd /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build
+2026-07-27T15:12:50.2214916Z + export 'RUSTFLAGS=-C target-cpu=x86-64-v3 -C opt-level=3 -C codegen-units=1 -C link-arg=-fuse-ld=mold'
+2026-07-27T15:12:50.2216077Z + RUSTFLAGS='-C target-cpu=x86-64-v3 -C opt-level=3 -C codegen-units=1 -C link-arg=-fuse-ld=mold'
+2026-07-27T15:12:50.2216924Z + export CARGO_PROFILE_RELEASE_LTO=thin
+2026-07-27T15:12:50.2217464Z + CARGO_PROFILE_RELEASE_LTO=thin
+2026-07-27T15:12:50.2217976Z + export RUSTC_WRAPPER=sccache
+2026-07-27T15:12:50.2218444Z + RUSTC_WRAPPER=sccache
+2026-07-27T15:12:50.2218855Z + cd ermete-store-rs-1.0.0
+2026-07-27T15:12:50.2222776Z + CFLAGS='-O3 -march=x86-64-v3 -mtune=generic -pipe -fno-semantic-interposition -falign-functions=32 -fno-math-errno -fno-trapping-math -mprefer-vector-width=256 -fPIC -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -flto=auto -ffat-lto-objects -fno-semantic-interposition -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer  '
+2026-07-27T15:12:50.2226815Z + export CFLAGS
+2026-07-27T15:12:50.2229582Z + CXXFLAGS='-O3 -march=x86-64-v3 -mtune=generic -pipe -fno-semantic-interposition -falign-functions=32 -fno-math-errno -fno-trapping-math -mprefer-vector-width=256 -fPIC -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -flto=auto -ffat-lto-objects -fno-semantic-interposition -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer  '
+2026-07-27T15:12:50.2232887Z + export CXXFLAGS
+2026-07-27T15:12:50.2235779Z + FFLAGS='-O3 -march=x86-64-v3 -mtune=generic -pipe -fno-semantic-interposition -falign-functions=32 -fno-math-errno -fno-trapping-math -mprefer-vector-width=256 -fPIC -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -flto=auto -ffat-lto-objects -fno-semantic-interposition -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -I/usr/lib64/gfortran/modules  '
+2026-07-27T15:12:50.2238134Z + export FFLAGS
+2026-07-27T15:12:50.2240384Z + FCFLAGS='-O3 -march=x86-64-v3 -mtune=generic -pipe -fno-semantic-interposition -falign-functions=32 -fno-math-errno -fno-trapping-math -mprefer-vector-width=256 -fPIC -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -flto=auto -ffat-lto-objects -fno-semantic-interposition -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -I/usr/lib64/gfortran/modules  '
+2026-07-27T15:12:50.2242655Z + export FCFLAGS
+2026-07-27T15:12:50.2242869Z + VALAFLAGS=-g
+2026-07-27T15:12:50.2243072Z + export VALAFLAGS
+2026-07-27T15:12:50.2243965Z + RUSTFLAGS='-C target-cpu=x86-64-v3 -C opt-level=3 -C codegen-units=1 -C link-arg=-fuse-ld=mold'
+2026-07-27T15:12:50.2244987Z + export RUSTFLAGS
+2026-07-27T15:12:50.2246117Z + LDFLAGS='-Wl,-z,relro -Wl,--as-needed  -Wl,-z,pack-relative-relocs -Wl,-z,now -specs=/usr/lib/rpm/redhat/redhat-hardened-ld -specs=/usr/lib/rpm/redhat/redhat-hardened-ld-errors -specs=/usr/lib/rpm/redhat/redhat-annobin-cc1  -Wl,--build-id=sha1 -specs=/usr/lib/rpm/redhat/redhat-package-notes  '
+2026-07-27T15:12:50.2247269Z + export LDFLAGS
+2026-07-27T15:12:50.2247496Z + LT_SYS_LIBRARY_PATH=/usr/lib64:
+2026-07-27T15:12:50.2247769Z + export LT_SYS_LIBRARY_PATH
+2026-07-27T15:12:50.2248004Z + CC=gcc
+2026-07-27T15:12:50.2248188Z + export CC
+2026-07-27T15:12:50.2248372Z + CXX=g++
+2026-07-27T15:12:50.2248558Z + export CXX
+2026-07-27T15:12:50.2248782Z + cargo build --release --locked
+2026-07-27T15:12:50.4182524Z    Compiling proc-macro2 v1.0.106
+2026-07-27T15:12:50.4188192Z    Compiling unicode-ident v1.0.24
+2026-07-27T15:12:50.4188819Z    Compiling quote v1.0.46
+2026-07-27T15:12:50.4189367Z    Compiling libc v0.2.186
+2026-07-27T15:12:50.5071204Z    Compiling cfg-if v1.0.4
+2026-07-27T15:12:50.5938672Z    Compiling pin-project-lite v0.2.17
+2026-07-27T15:12:50.7237576Z    Compiling futures-core v0.3.32
+2026-07-27T15:12:50.7507667Z    Compiling smallvec v1.15.2
+2026-07-27T15:12:50.8444986Z    Compiling stable_deref_trait v1.2.1
+2026-07-27T15:12:50.8800221Z    Compiling crossbeam-utils v0.8.22
+2026-07-27T15:12:50.9228292Z    Compiling futures-io v0.3.32
+2026-07-27T15:12:51.0147331Z    Compiling parking v2.2.1
+2026-07-27T15:12:51.1011590Z    Compiling shlex v2.0.1
+2026-07-27T15:12:51.2220043Z    Compiling find-msvc-tools v0.1.9
+2026-07-27T15:12:51.3175512Z    Compiling cc v1.2.67
+2026-07-27T15:12:51.3755503Z    Compiling concurrent-queue v2.5.0
+2026-07-27T15:12:51.4582147Z    Compiling syn v2.0.119
+2026-07-27T15:12:51.4691489Z    Compiling parking_lot_core v0.9.12
+2026-07-27T15:12:51.4849819Z    Compiling serde_core v1.0.228
+2026-07-27T15:12:51.7124785Z    Compiling getrandom v0.2.17
+2026-07-27T15:12:51.7391481Z    Compiling ring v0.17.14
+2026-07-27T15:12:51.8229014Z    Compiling once_cell v1.21.4
+2026-07-27T15:12:51.9576339Z    Compiling scopeguard v1.2.0
+2026-07-27T15:12:51.9746339Z    Compiling bytes v1.12.1
+2026-07-27T15:12:52.0467647Z    Compiling lock_api v0.4.14
+2026-07-27T15:12:52.1045068Z    Compiling synstructure v0.13.2
+2026-07-27T15:12:52.1323936Z    Compiling zerovec-derive v0.11.3
+2026-07-27T15:12:52.1514846Z    Compiling displaydoc v0.2.6
+2026-07-27T15:12:52.2219951Z    Compiling zerofrom-derive v0.1.7
+2026-07-27T15:12:53.3078339Z    Compiling yoke-derive v0.8.2
+2026-07-27T15:12:57.3132614Z    Compiling tracing-core v0.1.36
+2026-07-27T15:12:57.5025313Z    Compiling errno v0.3.14
+2026-07-27T15:12:57.5719934Z    Compiling equivalent v1.0.2
+2026-07-27T15:12:57.6121391Z    Compiling itoa v1.0.18
+2026-07-27T15:12:57.6602785Z    Compiling litemap v0.8.2
+2026-07-27T15:12:57.7132597Z    Compiling writeable v0.6.3
+2026-07-27T15:12:57.7754837Z    Compiling version_check v0.9.5
+2026-07-27T15:12:57.8229075Z    Compiling serde v1.0.228
+2026-07-27T15:12:57.8699058Z    Compiling hashbrown v0.17.1
+2026-07-27T15:12:58.0599017Z    Compiling slab v0.4.12
+2026-07-27T15:12:58.1672291Z    Compiling winnow v1.0.4
+2026-07-27T15:12:58.3014825Z    Compiling autocfg v1.5.1
+2026-07-27T15:12:58.4036208Z    Compiling toml_parser v1.1.2+spec-1.1.0
+2026-07-27T15:12:58.4207401Z    Compiling indexmap v2.14.0
+2026-07-27T15:12:58.5334478Z    Compiling generic-array v0.14.7
+2026-07-27T15:12:58.5876999Z    Compiling signal-hook-registry v1.4.8
+2026-07-27T15:12:58.6649396Z    Compiling parking_lot v0.12.5
+2026-07-27T15:12:58.7117617Z    Compiling tokio-macros v2.7.0
+2026-07-27T15:12:58.7734955Z    Compiling serde_derive v1.0.228
+2026-07-27T15:13:01.3906638Z    Compiling socket2 v0.6.5
+2026-07-27T15:13:01.5454538Z    Compiling mio v1.2.2
+2026-07-27T15:13:01.6946426Z    Compiling event-listener v5.4.1
+2026-07-27T15:13:01.8212125Z    Compiling toml_datetime v1.1.1+spec-1.1.0
+2026-07-27T15:13:01.9180524Z    Compiling futures-sink v0.3.32
+2026-07-27T15:13:02.0250332Z    Compiling untrusted v0.9.0
+2026-07-27T15:13:02.0612548Z    Compiling icu_normalizer_data v2.2.0
+2026-07-27T15:13:02.1191696Z    Compiling fastrand v2.4.1
+2026-07-27T15:13:02.2047782Z    Compiling memchr v2.8.3
+2026-07-27T15:13:02.2480930Z    Compiling icu_properties_data v2.2.0
+2026-07-27T15:13:02.3993447Z    Compiling utf8_iter v1.0.4
+2026-07-27T15:13:02.5010126Z    Compiling tokio v1.52.4
+2026-07-27T15:13:02.7549579Z    Compiling toml_edit v0.25.13+spec-1.1.0
+2026-07-27T15:13:02.9184505Z    Compiling event-listener-strategy v0.5.4
+2026-07-27T15:13:03.0602284Z    Compiling zerofrom v0.1.8
+2026-07-27T15:13:03.0612193Z    Compiling tracing-attributes v0.1.31
+2026-07-27T15:13:03.1515844Z    Compiling yoke v0.8.3
+2026-07-27T15:13:03.2620067Z    Compiling zerovec v0.11.6
+2026-07-27T15:13:03.4492626Z    Compiling tinystr v0.8.3
+2026-07-27T15:13:03.5281184Z    Compiling potential_utf v0.1.5
+2026-07-27T15:13:03.5633150Z    Compiling icu_locale_core v2.2.0
+2026-07-27T15:13:03.6265109Z    Compiling zerotrie v0.2.4
+2026-07-27T15:13:03.7667310Z    Compiling icu_collections v2.2.0
+2026-07-27T15:13:03.8378826Z    Compiling icu_provider v2.2.0
+2026-07-27T15:13:03.9184796Z    Compiling typenum v1.20.1
+2026-07-27T15:13:03.9659205Z    Compiling log v0.4.33
+2026-07-27T15:13:04.0741888Z    Compiling zerocopy v0.8.54
+2026-07-27T15:13:04.2634976Z    Compiling futures-task v0.3.32
+2026-07-27T15:13:04.3666001Z    Compiling fnv v1.0.7
+2026-07-27T15:13:04.4564771Z    Compiling http v0.2.12
+2026-07-27T15:13:04.6601911Z    Compiling futures-util v0.3.32
+2026-07-27T15:13:05.1156176Z    Compiling proc-macro-crate v3.5.0
+2026-07-27T15:13:05.3510216Z    Compiling futures-lite v2.6.1
+2026-07-27T15:13:05.5065774Z    Compiling zvariant_utils v2.1.0
+2026-07-27T15:13:05.5874006Z    Compiling rustls v0.21.12
+2026-07-27T15:13:05.6054469Z    Compiling bitflags v2.13.1
+2026-07-27T15:13:05.7214656Z    Compiling httparse v1.10.1
+2026-07-27T15:13:05.7495783Z    Compiling rustix v1.1.4
+2026-07-27T15:13:06.7158092Z    Compiling icu_properties v2.2.0
+2026-07-27T15:13:06.8441528Z    Compiling icu_normalizer v2.2.0
+2026-07-27T15:13:07.0464582Z    Compiling tokio-util v0.7.18
+2026-07-27T15:13:07.2477741Z    Compiling sct v0.7.1
+2026-07-27T15:13:07.3486484Z    Compiling rustls-webpki v0.101.7
+2026-07-27T15:13:07.4880458Z    Compiling memoffset v0.9.1
+2026-07-27T15:13:07.6744521Z    Compiling enumflags2_derive v0.7.12
+2026-07-27T15:13:07.9539656Z    Compiling async-task v4.7.1
+2026-07-27T15:13:08.0696009Z    Compiling try-lock v0.2.5
+2026-07-27T15:13:08.1661956Z    Compiling percent-encoding v2.3.2
+2026-07-27T15:13:08.2755224Z    Compiling cfg_aliases v0.2.2
+2026-07-27T15:13:08.3826873Z    Compiling atomic-waker v1.1.2
+2026-07-27T15:13:08.4774849Z    Compiling linux-raw-sys v0.12.1
+2026-07-27T15:13:08.8323718Z    Compiling zmij v1.0.23
+2026-07-27T15:13:10.1822153Z    Compiling piper v0.2.5
+2026-07-27T15:13:10.3036859Z    Compiling nix v0.29.0
+2026-07-27T15:13:10.3301649Z    Compiling form_urlencoded v1.2.2
+2026-07-27T15:13:10.4295676Z    Compiling want v0.3.1
+2026-07-27T15:13:10.5301435Z    Compiling ppv-lite86 v0.2.21
+2026-07-27T15:13:11.1372694Z    Compiling idna_adapter v1.2.2
+2026-07-27T15:13:11.3608310Z    Compiling zvariant_derive v4.2.0
+2026-07-27T15:13:11.3894404Z    Compiling block-buffer v0.10.4
+2026-07-27T15:13:11.4881743Z    Compiling crypto-common v0.1.7
+2026-07-27T15:13:11.5880785Z    Compiling http-body v0.4.6
+2026-07-27T15:13:11.7055357Z    Compiling async-channel v2.5.0
+2026-07-27T15:13:11.8265980Z    Compiling async-io v2.6.0
+2026-07-27T15:13:11.9991160Z    Compiling rand_core v0.6.4
+2026-07-27T15:13:12.1046103Z    Compiling socket2 v0.5.10
+2026-07-27T15:13:12.2512641Z    Compiling futures-channel v0.3.32
+2026-07-27T15:13:12.3650893Z    Compiling serde_json v1.0.150
+2026-07-27T15:13:12.5558235Z    Compiling static_assertions v1.1.0
+2026-07-27T15:13:12.6507128Z    Compiling endi v1.1.1
+2026-07-27T15:13:12.7590834Z    Compiling tower-service v0.3.3
+2026-07-27T15:13:12.8584149Z    Compiling httpdate v1.0.3
+2026-07-27T15:13:12.9956934Z    Compiling rand_chacha v0.3.1
+2026-07-27T15:13:13.1346544Z    Compiling enumflags2 v0.7.12
+2026-07-27T15:13:13.2160769Z    Compiling blocking v1.6.2
+2026-07-27T15:13:13.2542087Z    Compiling digest v0.10.7
+2026-07-27T15:13:13.3418918Z    Compiling idna v1.1.0
+2026-07-27T15:13:13.3670068Z    Compiling tokio-rustls v0.24.1
+2026-07-27T15:13:13.4882287Z    Compiling polling v3.11.0
+2026-07-27T15:13:13.5984412Z    Compiling async-lock v3.4.2
+2026-07-27T15:13:13.6842150Z    Compiling base64 v0.21.7
+2026-07-27T15:13:13.7984442Z    Compiling lazy_static v1.5.0
+2026-07-27T15:13:13.8326165Z    Compiling anyhow v1.0.103
+2026-07-27T15:13:13.8569239Z    Compiling tracing v0.1.44
+2026-07-27T15:13:13.9126438Z    Compiling ryu v1.0.23
+2026-07-27T15:13:14.0064127Z    Compiling h2 v0.3.27
+2026-07-27T15:13:14.0394288Z    Compiling cpufeatures v0.2.17
+2026-07-27T15:13:14.1317598Z    Compiling sha1 v0.10.7
+2026-07-27T15:13:14.2795428Z    Compiling serde_urlencoded v0.7.1
+2026-07-27T15:13:14.3796676Z    Compiling sharded-slab v0.1.7
+2026-07-27T15:13:14.4456939Z    Compiling rustls-pemfile v1.0.4
+2026-07-27T15:13:14.5291322Z    Compiling async-fs v2.2.0
+2026-07-27T15:13:14.5479965Z    Compiling hyper v0.14.32
+2026-07-27T15:13:14.8005745Z    Compiling url v2.5.8
+2026-07-27T15:13:14.9454275Z    Compiling rand v0.8.7
+2026-07-27T15:13:14.9604881Z    Compiling hyper-rustls v0.24.2
+2026-07-27T15:13:15.0866034Z    Compiling async-executor v1.14.0
+2026-07-27T15:13:15.1308326Z    Compiling zbus_macros v4.4.0
+2026-07-27T15:13:15.1480067Z    Compiling tracing-log v0.2.0
+2026-07-27T15:13:15.2019523Z    Compiling async-broadcast v0.7.2
+2026-07-27T15:13:15.2661728Z    Compiling async-trait v0.1.89
+2026-07-27T15:13:15.2977088Z    Compiling zvariant v4.2.0
+2026-07-27T15:13:15.3482502Z    Compiling serde_repr v0.1.20
+2026-07-27T15:13:15.7105373Z    Compiling zbus_names v3.0.0
+2026-07-27T15:13:15.9238966Z    Compiling xdg-home v1.3.0
+2026-07-27T15:13:16.0282601Z    Compiling ordered-stream v0.2.0
+2026-07-27T15:13:16.1704483Z    Compiling thread_local v1.1.10
+2026-07-27T15:13:16.2792432Z    Compiling encoding_rs v0.8.35
+2026-07-27T15:13:16.8072850Z    Compiling ipnet v2.12.0
+2026-07-27T15:13:16.9374267Z    Compiling mime v0.3.17
+2026-07-27T15:13:17.0475161Z    Compiling webpki-roots v0.25.4
+2026-07-27T15:13:17.1496401Z    Compiling nu-ansi-term v0.50.3
+2026-07-27T15:13:17.2655045Z    Compiling hex v0.4.3
+2026-07-27T15:13:17.3833442Z    Compiling sync_wrapper v0.1.2
+2026-07-27T15:13:17.4773376Z    Compiling reqwest v0.11.27
+2026-07-27T15:13:17.6918316Z    Compiling tracing-subscriber v0.3.23
+2026-07-27T15:13:27.6096083Z    Compiling zbus v4.4.0
+2026-07-27T15:13:27.9820435Z    Compiling ermete-store-rs v1.0.0 (/root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build/ermete-store-rs-1.0.0)
+2026-07-27T15:13:28.0696041Z warning: unused import: `warn`
+2026-07-27T15:13:28.0697101Z  --> src/main.rs:4:21
+2026-07-27T15:13:28.0697714Z   |
+2026-07-27T15:13:28.0698307Z 4 | use tracing::{info, warn, error};
+2026-07-27T15:13:28.0698813Z   |                     ^^^^
+2026-07-27T15:13:28.0699296Z   |
+2026-07-27T15:13:28.0699991Z   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+2026-07-27T15:13:28.0700611Z 
+2026-07-27T15:14:00.4740050Z warning: `ermete-store-rs` (bin "ermete-store-rs") generated 1 warning (run `cargo fix --bin "ermete-store-rs" -p ermete-store-rs` to apply 1 suggestion)
+2026-07-27T15:14:00.4741464Z     Finished `release` profile [optimized] target(s) in 1m 10s
+2026-07-27T15:14:00.4888852Z + RPM_EC=0
+2026-07-27T15:14:00.4892029Z ++ jobs -p
+2026-07-27T15:14:00.4895534Z + exit 0
+2026-07-27T15:14:00.4957832Z Executing(%install): /bin/sh -e /var/tmp/rpm-tmp.6XUlG2
+2026-07-27T15:14:00.4975582Z + umask 022
+2026-07-27T15:14:00.4976351Z + cd /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build
+2026-07-27T15:14:00.4979194Z + '[' /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build/BUILDROOT '!=' / ']'
+2026-07-27T15:14:00.4980068Z + rm -rf /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build/BUILDROOT
+2026-07-27T15:14:00.4990021Z ++ dirname /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build/BUILDROOT
+2026-07-27T15:14:00.4999463Z + mkdir -p /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build
+2026-07-27T15:14:00.5013296Z + mkdir /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build/BUILDROOT
+2026-07-27T15:14:00.5030328Z + CFLAGS='-O3 -march=x86-64-v3 -mtune=generic -pipe -fno-semantic-interposition -falign-functions=32 -fno-math-errno -fno-trapping-math -mprefer-vector-width=256 -fPIC -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -flto=auto -ffat-lto-objects -fno-semantic-interposition -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer  '
+2026-07-27T15:14:00.5033188Z + export CFLAGS
+2026-07-27T15:14:00.5039325Z + CXXFLAGS='-O3 -march=x86-64-v3 -mtune=generic -pipe -fno-semantic-interposition -falign-functions=32 -fno-math-errno -fno-trapping-math -mprefer-vector-width=256 -fPIC -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -flto=auto -ffat-lto-objects -fno-semantic-interposition -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer  '
+2026-07-27T15:14:00.5044047Z + export CXXFLAGS
+2026-07-27T15:14:00.5048365Z + FFLAGS='-O3 -march=x86-64-v3 -mtune=generic -pipe -fno-semantic-interposition -falign-functions=32 -fno-math-errno -fno-trapping-math -mprefer-vector-width=256 -fPIC -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -flto=auto -ffat-lto-objects -fno-semantic-interposition -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -I/usr/lib64/gfortran/modules  '
+2026-07-27T15:14:00.5050776Z + export FFLAGS
+2026-07-27T15:14:00.5053983Z + FCFLAGS='-O3 -march=x86-64-v3 -mtune=generic -pipe -fno-semantic-interposition -falign-functions=32 -fno-math-errno -fno-trapping-math -mprefer-vector-width=256 -fPIC -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -flto=auto -ffat-lto-objects -fno-semantic-interposition -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -I/usr/lib64/gfortran/modules  '
+2026-07-27T15:14:00.5057014Z + export FCFLAGS
+2026-07-27T15:14:00.5057254Z + VALAFLAGS=-g
+2026-07-27T15:14:00.5057462Z + export VALAFLAGS
+2026-07-27T15:14:00.5058160Z + RUSTFLAGS='-Copt-level=3 -Cdebuginfo=2 -Ccodegen-units=1 -Cstrip=none -Cforce-frame-pointers=yes -Clink-arg=-specs=/usr/lib/rpm/redhat/redhat-package-notes --cap-lints=warn'
+2026-07-27T15:14:00.5058914Z + export RUSTFLAGS
+2026-07-27T15:14:00.5059995Z + LDFLAGS='-Wl,-z,relro -Wl,--as-needed  -Wl,-z,pack-relative-relocs -Wl,-z,now -specs=/usr/lib/rpm/redhat/redhat-hardened-ld -specs=/usr/lib/rpm/redhat/redhat-hardened-ld-errors -specs=/usr/lib/rpm/redhat/redhat-annobin-cc1  -Wl,--build-id=sha1 -specs=/usr/lib/rpm/redhat/redhat-package-notes  '
+2026-07-27T15:14:00.5061109Z + export LDFLAGS
+2026-07-27T15:14:00.5061328Z + LT_SYS_LIBRARY_PATH=/usr/lib64:
+2026-07-27T15:14:00.5061612Z + export LT_SYS_LIBRARY_PATH
+2026-07-27T15:14:00.5061849Z + CC=gcc
+2026-07-27T15:14:00.5062033Z + export CC
+2026-07-27T15:14:00.5062226Z + CXX=g++
+2026-07-27T15:14:00.5062413Z + export CXX
+2026-07-27T15:14:00.5062628Z + cd ermete-store-rs-1.0.0
+2026-07-27T15:14:00.5063199Z + install -D -m 0755 target/release/ermete-store-rs /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build/BUILDROOT/usr/bin/ermete-store-rs
+2026-07-27T15:14:00.5082536Z + install -D -m 0644 os.ermete.Store.conf /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build/BUILDROOT/usr/share/dbus-1/system.d/os.ermete.Store.conf
+2026-07-27T15:14:00.5098293Z + install -D -m 0644 os.ermete.store.policy /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build/BUILDROOT/usr/share/polkit-1/actions/os.ermete.store.policy
+2026-07-27T15:14:00.5112716Z + mkdir -p /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build/BUILDROOT/usr/lib/systemd/system
+2026-07-27T15:14:00.5127584Z + cat
+2026-07-27T15:14:00.5141089Z + '[' '%{buildarch}' = noarch ']'
+2026-07-27T15:14:00.5142985Z + QA_CHECK_RPATHS=1
+2026-07-27T15:14:00.5143385Z + case "${QA_CHECK_RPATHS:-}" in
+2026-07-27T15:14:00.5144067Z + /usr/lib/rpm/check-rpaths
+2026-07-27T15:14:00.5408659Z + /usr/lib/rpm/check-buildroot
+2026-07-27T15:14:00.5533071Z + /usr/lib/rpm/redhat/brp-ldconfig
+2026-07-27T15:14:00.5591492Z + /usr/lib/rpm/brp-compress
+2026-07-27T15:14:00.5610478Z + /usr/lib/rpm/brp-strip /usr/bin/strip
+2026-07-27T15:14:00.6199873Z + /usr/lib/rpm/brp-strip-comment-note /usr/bin/strip /usr/bin/objdump
+2026-07-27T15:14:00.6365157Z + /usr/lib/rpm/redhat/brp-strip-lto /usr/bin/strip
+2026-07-27T15:14:00.6411562Z + /usr/lib/rpm/check-rpaths
+2026-07-27T15:14:00.6675221Z + /usr/lib/rpm/redhat/brp-mangle-shebangs
+2026-07-27T15:14:00.6789284Z + /usr/lib/rpm/brp-remove-la-files
+2026-07-27T15:14:00.6886941Z + /usr/lib/rpm/redhat/brp-python-rpm-in-distinfo
+2026-07-27T15:14:00.6919218Z + env /usr/lib/rpm/redhat/brp-python-bytecompile '' 1 0 -j4
+2026-07-27T15:14:00.6960223Z + /usr/lib/rpm/redhat/brp-python-hardlink
+2026-07-27T15:14:00.6992761Z + /usr/bin/add-determinism --brp -j4 /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build/BUILDROOT
+2026-07-27T15:14:00.7026421Z Scanned 11 directories and 4 files,
+2026-07-27T15:14:00.7026952Z                processed 0 inodes,
+2026-07-27T15:14:00.7027437Z                0 modified (0 replaced + 0 rewritten),
+2026-07-27T15:14:00.7027946Z                0 unsupported format, 0 errors
+2026-07-27T15:14:00.7030775Z Reading /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build/SPECPARTS/rpm-debuginfo.specpart
+2026-07-27T15:14:00.7034663Z Processing files: ermete-store-rs-1.0.0-3.fc43.x86_64
+2026-07-27T15:14:00.7573900Z Provides: ermete-store-rs = 1.0.0-3.fc43 ermete-store-rs(x86-64) = 1.0.0-3.fc43
+2026-07-27T15:14:00.7574993Z Requires(rpmlib): rpmlib(CompressedFileNames) <= 3.0.4-1 rpmlib(FileDigests) <= 4.6.0-1 rpmlib(PayloadFilesHavePrefix) <= 4.0-1
+2026-07-27T15:14:00.7579594Z Requires: ld-linux-x86-64.so.2()(64bit) ld-linux-x86-64.so.2(GLIBC_2.3)(64bit) libc.so.6()(64bit) libc.so.6(GLIBC_2.14)(64bit) libc.so.6(GLIBC_2.15)(64bit) libc.so.6(GLIBC_2.16)(64bit) libc.so.6(GLIBC_2.17)(64bit) libc.so.6(GLIBC_2.18)(64bit) libc.so.6(GLIBC_2.2.5)(64bit) libc.so.6(GLIBC_2.25)(64bit) libc.so.6(GLIBC_2.28)(64bit) libc.so.6(GLIBC_2.29)(64bit) libc.so.6(GLIBC_2.3)(64bit) libc.so.6(GLIBC_2.3.2)(64bit) libc.so.6(GLIBC_2.3.4)(64bit) libc.so.6(GLIBC_2.30)(64bit) libc.so.6(GLIBC_2.32)(64bit) libc.so.6(GLIBC_2.33)(64bit) libc.so.6(GLIBC_2.34)(64bit) libc.so.6(GLIBC_2.39)(64bit) libc.so.6(GLIBC_2.4)(64bit) libc.so.6(GLIBC_2.7)(64bit) libc.so.6(GLIBC_2.9)(64bit) libgcc_s.so.1()(64bit) libgcc_s.so.1(GCC_3.0)(64bit) libgcc_s.so.1(GCC_3.3)(64bit) libgcc_s.so.1(GCC_4.2.0)(64bit) libm.so.6()(64bit) libm.so.6(GLIBC_2.29)(64bit) rtld(GNU_HASH)
+2026-07-27T15:14:00.7582414Z Checking for unpackaged file(s): /usr/lib/rpm/check-files /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build/BUILDROOT
+2026-07-27T15:14:03.0954796Z Wrote: /root/rpmbuild/RPMS/x86_64/ermete-store-rs-1.0.0-3.fc43.x86_64.rpm
+2026-07-27T15:14:03.0998007Z Executing(rmbuild): /bin/sh -e /var/tmp/rpm-tmp.GkcQe8
+2026-07-27T15:14:03.1022838Z + umask 022
+2026-07-27T15:14:03.1023416Z + cd /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build
+2026-07-27T15:14:03.1024369Z + test -d /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build
+2026-07-27T15:14:03.1025200Z + /usr/bin/chmod -Rf a+rX,u+w,g-w,o-w /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build
+2026-07-27T15:14:03.1208243Z + rm -rf /root/rpmbuild/BUILD/ermete-store-rs-1.0.0-build
+2026-07-27T15:14:03.2223263Z + RPM_EC=0
+2026-07-27T15:14:03.2226458Z ++ jobs -p
+2026-07-27T15:14:03.2229054Z + exit 0
+2026-07-27T15:14:03.6442133Z ##[group]Run export STORAGE_DRIVER=vfs
+2026-07-27T15:14:03.6442650Z [36;1mexport STORAGE_DRIVER=vfs[0m
+2026-07-27T15:14:03.6443072Z [36;1mexport BUILDAH_ISOLATION=chroot[0m
+2026-07-27T15:14:03.6448680Z [36;1mbuildah login -u patapem -p *** ghcr.io[0m
+2026-07-27T15:14:03.6449322Z [36;1mctr=$(buildah from scratch)[0m
+2026-07-27T15:14:03.6449853Z [36;1mbuildah copy $ctr RPMS/*.rpm /[0m
+2026-07-27T15:14:03.6450741Z [36;1mIMAGE_LOWER=$(echo "ghcr.io/patapem/ermete-os-forge-store-rs" | tr '[:upper:]' '[:lower:]')[0m
+2026-07-27T15:14:03.6452130Z [36;1mbuildah config --label tier.content.sha256="159982965d20f3ae404f7b7f2ae45fc487d7dab6372e1f88019ded12e81da93d" $ctr[0m
+2026-07-27T15:14:03.6453169Z [36;1mbuildah commit --omit-timestamp $ctr $IMAGE_LOWER:latest[0m
+2026-07-27T15:14:03.6454360Z [36;1mbuildah tag $IMAGE_LOWER:latest $IMAGE_LOWER:159982965d20f3ae404f7b7f2ae45fc487d7dab6372e1f88019ded12e81da93d[0m
+2026-07-27T15:14:03.6455111Z [36;1mbuildah push $IMAGE_LOWER:latest[0m
+2026-07-27T15:14:03.6455909Z [36;1mbuildah push $IMAGE_LOWER:159982965d20f3ae404f7b7f2ae45fc487d7dab6372e1f88019ded12e81da93d[0m
+2026-07-27T15:14:03.6519559Z shell: /usr/bin/bash -e {0}
+2026-07-27T15:14:03.6520020Z env:
+2026-07-27T15:14:03.6520389Z   REGISTRY: ghcr.io
+2026-07-27T15:14:03.6520801Z   FEDORA_VERSION: 43
+2026-07-27T15:14:03.6521198Z ##[endgroup]
+2026-07-27T15:14:06.4826987Z Login Succeeded!
+2026-07-27T15:14:06.6449133Z bb52a0a50fe1893b8067407759ffe726790c263d1b83ae177d8a2016e4897f6d
+2026-07-27T15:14:06.7239579Z Getting image source signatures
+2026-07-27T15:14:06.7240324Z Copying blob sha256:b831bfc4fbf33e9a5c010c80ffa54ede4fce7b377dd99575d55bb3d32bba88db
+2026-07-27T15:14:06.7690803Z Copying config sha256:902d2936854f5c1b05250bf11cb1c746dae9620132f1030d2feba50a3748f5cc
+2026-07-27T15:14:06.7707606Z Writing manifest to image destination
+2026-07-27T15:14:06.7752818Z 902d2936854f5c1b05250bf11cb1c746dae9620132f1030d2feba50a3748f5cc
+2026-07-27T15:14:06.8347410Z Getting image source signatures
+2026-07-27T15:14:06.8348383Z Copying blob sha256:b831bfc4fbf33e9a5c010c80ffa54ede4fce7b377dd99575d55bb3d32bba88db
+2026-07-27T15:14:08.5203076Z Copying config sha256:902d2936854f5c1b05250bf11cb1c746dae9620132f1030d2feba50a3748f5cc
+2026-07-27T15:14:09.9137898Z Writing manifest to image destination
+2026-07-27T15:14:10.3241822Z Getting image source signatures
+2026-07-27T15:14:10.3242619Z Copying blob sha256:b831bfc4fbf33e9a5c010c80ffa54ede4fce7b377dd99575d55bb3d32bba88db
+2026-07-27T15:14:10.7447260Z Copying config sha256:902d2936854f5c1b05250bf11cb1c746dae9620132f1030d2feba50a3748f5cc
+2026-07-27T15:14:10.8171935Z Writing manifest to image destination
+2026-07-27T15:14:11.1795550Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-27T15:14:11.1796845Z Post job cleanup.
+2026-07-27T15:14:11.2979295Z (node:12036) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-27T15:14:11.2980217Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-27T15:14:11.3112797Z [warning]Path Validation Error: Path(s) specified in the action for caching do(es) not exist, hence no cache is being saved.
+2026-07-27T15:14:11.3277298Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-27T15:14:11.3278558Z Post job cleanup.
+2026-07-27T15:14:11.4184399Z [command]/usr/bin/git version
+2026-07-27T15:14:11.4234500Z git version 2.54.0
+2026-07-27T15:14:11.4278642Z Temporarily overriding HOME='/home/runner/work/_temp/329b5c9b-190a-433f-82f2-764f7299640e' before making global git config changes
+2026-07-27T15:14:11.4279652Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-27T15:14:11.4286273Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/ermete-os/ermete-os
+2026-07-27T15:14:11.4333008Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-27T15:14:11.4371687Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-27T15:14:11.4641773Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-27T15:14:11.4669634Z http.https://github.com/.extraheader
+2026-07-27T15:14:11.4682523Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-07-27T15:14:11.4725521Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-27T15:14:11.5007949Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-27T15:14:11.5049492Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-27T15:14:11.5499930Z Cleaning up orphan processes
+2026-07-27T15:14:11.5979483Z Terminate orphan process: pid (2163) (catatonit)
+2026-07-27T15:14:11.6129697Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/cache@v4, actions/checkout@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

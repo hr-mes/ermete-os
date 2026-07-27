@@ -55,8 +55,8 @@ The Ermete OS Chimera Kernel combines CachyOS kernel performance improvements
 maximum throughput, 1GB HugePages for KVM/AI workloads, and full Fedora OSTree/SELinux compatibility.
 
 %prep
-# Ignoriamo il tarball, entriamo direttamente nella cartella copiata
-%setup -T -D -n linux-cachyos
+%setup -T -c
+rsync -a --exclude='.git' /workspace/kernel/cachyos-tree/ .
 # Prepare build tree and apply bedrock config overrides
 if [ -f %{SOURCE1} ]; then
     cat %{SOURCE1} >> .config

@@ -23,10 +23,8 @@ echo ">>> Creazione del file ermete-bedrock.cfg (Fusione configurazioni)..."
 cat cachyos-base.cfg > "$RPMBUILD_DIR/SOURCES/ermete-bedrock.cfg"
 cat ermete-bedrock.cfg >> "$RPMBUILD_DIR/SOURCES/ermete-bedrock.cfg"
 
-echo ">>> Ottimizzazione: Spostamento sorgenti direttamente nella cartella BUILD..."
-# Evitiamo di creare un tarball gigante
-mkdir -p "$RPMBUILD_DIR/BUILD/linux-cachyos"
-rsync -a --exclude='.git' cachyos-tree/ "$RPMBUILD_DIR/BUILD/linux-cachyos/"
+echo ">>> Ottimizzazione: Evitiamo tarball, spec farà rsync in %prep"
+# mkdir e rsync sono stati spostati nel %prep dello spec per supportare directory versionate di rpmbuild
 
 echo ">>> Copia dei file di configurazione e Spec..."
 cp ermete-kernel.spec "$RPMBUILD_DIR/SPECS/"

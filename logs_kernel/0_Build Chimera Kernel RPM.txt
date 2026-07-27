@@ -1,0 +1,1462 @@
+﻿2026-07-27T18:28:04.5428994Z Current runner version: '2.336.0'
+2026-07-27T18:28:04.5434152Z Runner name: 'monorepo-runner-1'
+2026-07-27T18:28:04.5434825Z Runner group name: 'Default'
+2026-07-27T18:28:04.5435610Z Machine name: 'customer'
+2026-07-27T18:28:04.5438190Z ##[group]GITHUB_TOKEN Permissions
+2026-07-27T18:28:04.5440026Z Contents: read
+2026-07-27T18:28:04.5440506Z Metadata: read
+2026-07-27T18:28:04.5440935Z Packages: write
+2026-07-27T18:28:04.5441439Z ##[endgroup]
+2026-07-27T18:28:04.5443352Z Secret source: Actions
+2026-07-27T18:28:04.5444421Z Prepare workflow directory
+2026-07-27T18:28:04.5992057Z Prepare all required actions
+2026-07-27T18:28:04.6028035Z Getting action download info
+2026-07-27T18:28:05.2492862Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-07-27T18:28:05.8134857Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-07-27T18:28:06.6962371Z Complete job name: Build Chimera Kernel RPM
+2026-07-27T18:28:06.7533965Z ##[warning]You are running out of disk space. The runner will stop working when the machine runs out of disk space. Free space left: 0 MB
+2026-07-27T18:28:06.8100655Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-27T18:28:06.8109437Z ##[group]Run actions/checkout@v4
+2026-07-27T18:28:06.8110550Z with:
+2026-07-27T18:28:06.8111243Z   repository: patapem/ermete-os
+2026-07-27T18:28:06.8117828Z   token: ***
+2026-07-27T18:28:06.8118566Z   ssh-strict: true
+2026-07-27T18:28:06.8119274Z   ssh-user: git
+2026-07-27T18:28:06.8119982Z   persist-credentials: true
+2026-07-27T18:28:06.8120761Z   clean: true
+2026-07-27T18:28:06.8121441Z   sparse-checkout-cone-mode: true
+2026-07-27T18:28:06.8122354Z   fetch-depth: 1
+2026-07-27T18:28:06.8123056Z   fetch-tags: false
+2026-07-27T18:28:06.8123757Z   show-progress: true
+2026-07-27T18:28:06.8124498Z   lfs: false
+2026-07-27T18:28:06.8125202Z   submodules: false
+2026-07-27T18:28:06.8125980Z   set-safe-directory: true
+2026-07-27T18:28:06.8126764Z   allow-unsafe-pr-checkout: false
+2026-07-27T18:28:06.8127872Z ##[endgroup]
+2026-07-27T18:28:06.8918801Z Syncing repository: patapem/ermete-os
+2026-07-27T18:28:06.8921045Z ##[group]Getting Git version info
+2026-07-27T18:28:06.8922553Z Working directory is '/var/home/ermete/actions-runner-monorepo/_work/ermete-os/ermete-os'
+2026-07-27T18:28:06.8925431Z [command]/usr/bin/git version
+2026-07-27T18:28:06.8926258Z git version 2.55.0
+2026-07-27T18:28:06.8931220Z ##[endgroup]
+2026-07-27T18:28:06.8940276Z Temporarily overriding HOME='/var/home/ermete/actions-runner-monorepo/_work/_temp/417ce412-50d5-4d8f-8006-43d23b881a9e' before making global git config changes
+2026-07-27T18:28:06.8942969Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-27T18:28:06.8945798Z [command]/usr/bin/git config --global --add safe.directory /var/home/ermete/actions-runner-monorepo/_work/ermete-os/ermete-os
+2026-07-27T18:28:06.8972361Z [command]/usr/bin/git config --local --get remote.origin.url
+2026-07-27T18:28:06.8987710Z https://github.com/patapem/ermete-os
+2026-07-27T18:28:06.8997316Z ##[group]Removing previously created refs, to avoid conflicts
+2026-07-27T18:28:06.8999169Z [command]/usr/bin/git rev-parse --symbolic-full-name --verify --quiet HEAD
+2026-07-27T18:28:06.9018553Z refs/heads/main
+2026-07-27T18:28:06.9026221Z [command]/usr/bin/git checkout --detach
+2026-07-27T18:28:06.9124753Z HEAD si trova ora a 5a3daf6 chore: remove claude and apply cleanups
+2026-07-27T18:28:06.9161223Z [command]/usr/bin/git branch --delete --force main
+2026-07-27T18:28:06.9186493Z Branch main eliminato (era 5a3daf6).
+2026-07-27T18:28:06.9217866Z ##[endgroup]
+2026-07-27T18:28:06.9218971Z [command]/usr/bin/git submodule status
+2026-07-27T18:28:06.9473846Z ##[group]Cleaning the repository
+2026-07-27T18:28:06.9475501Z [command]/usr/bin/git clean -ffdx
+2026-07-27T18:28:07.0100628Z Eliminazione di ctr_id in corso
+2026-07-27T18:28:07.0102436Z Eliminazione di kernel_info in corso
+2026-07-27T18:28:07.0103891Z Eliminazione di nvidia_cache/ in corso
+2026-07-27T18:28:07.0107950Z [command]/usr/bin/git reset --hard HEAD
+2026-07-27T18:28:07.0209102Z HEAD ora si trova a 5a3daf6 chore: remove claude and apply cleanups
+2026-07-27T18:28:07.0214185Z ##[endgroup]
+2026-07-27T18:28:07.0215784Z ##[group]Disabling automatic garbage collection
+2026-07-27T18:28:07.0217265Z [command]/usr/bin/git config --local gc.auto 0
+2026-07-27T18:28:07.0242479Z ##[endgroup]
+2026-07-27T18:28:07.0244095Z ##[group]Setting up auth
+2026-07-27T18:28:07.0245983Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-27T18:28:07.0268862Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-27T18:28:07.0526161Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-27T18:28:07.0550422Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-27T18:28:07.0815117Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-27T18:28:07.0837090Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-27T18:28:07.1089730Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-07-27T18:28:07.1114814Z ##[endgroup]
+2026-07-27T18:28:07.1116475Z ##[group]Fetching the repository
+2026-07-27T18:28:07.1127232Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +5a3daf6de7633f0eb486c6b4fd4b87ed1070d1f7:refs/remotes/origin/main
+2026-07-27T18:28:07.7370421Z ##[endgroup]
+2026-07-27T18:28:07.7372738Z ##[group]Determining the checkout info
+2026-07-27T18:28:07.7375211Z ##[endgroup]
+2026-07-27T18:28:07.7376524Z [command]/usr/bin/git sparse-checkout disable
+2026-07-27T18:28:07.7424775Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-07-27T18:28:07.7447759Z ##[group]Checking out the ref
+2026-07-27T18:28:07.7449872Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-07-27T18:28:07.7523034Z Si è passati a un nuovo branch 'main'
+2026-07-27T18:28:07.7525212Z branch 'main' set up to track 'origin/main'.
+2026-07-27T18:28:07.7530499Z ##[endgroup]
+2026-07-27T18:28:07.7557789Z [command]/usr/bin/git log -1 --format=%H
+2026-07-27T18:28:07.7575687Z 5a3daf6de7633f0eb486c6b4fd4b87ed1070d1f7
+2026-07-27T18:28:07.7785116Z ##[group]Run # Creazione della directory ccache persistente sull'SSD locale
+2026-07-27T18:28:07.7786639Z [36;1m# Creazione della directory ccache persistente sull'SSD locale[0m
+2026-07-27T18:28:07.7787873Z [36;1mmkdir -p /home/ermete/.ccache_chimera[0m
+2026-07-27T18:28:07.7788730Z [36;1m[0m
+2026-07-27T18:28:07.7789928Z [36;1m# Esecuzione isolata via Podman con eccezioni SELinux/Seccomp per le policy W^X di Ermete OS[0m
+2026-07-27T18:28:07.7793306Z [36;1mpodman run --rm --security-opt label=disable --security-opt seccomp=unconfined -v /var/home/ermete/actions-runner-monorepo/_work/ermete-os/ermete-os:/workspace -v /home/ermete/.ccache_chimera:/home/builder/.ccache -w /workspace fedora:latest bash -c "[0m
+2026-07-27T18:28:07.7796049Z [36;1mset -e[0m
+2026-07-27T18:28:07.7796723Z [36;1mdnf update -y[0m
+2026-07-27T18:28:07.7798990Z [36;1mdnf install -y rpm-build rpmdevtools clang lld llvm make cmake bison flex elfutils-libelf-devel openssl-devel ncurses-devel rsync tar bc cpio python3 zstd jq curl git ccache openssl perl dwarves kmod[0m
+2026-07-27T18:28:07.7801283Z [36;1m[0m
+2026-07-27T18:28:07.7802331Z [36;1m# Assicura il ripristino permessi anche in caso di fallimento[0m
+2026-07-27T18:28:07.7803576Z [36;1mtrap \"chown -R 0:0 /workspace /home/builder/.ccache\" EXIT[0m
+2026-07-27T18:28:07.7804640Z [36;1m[0m
+2026-07-27T18:28:07.7805346Z [36;1m# Setup utente non privilegiato interno[0m
+2026-07-27T18:28:07.7806263Z [36;1museradd builder -m || true[0m
+2026-07-27T18:28:07.7807390Z [36;1mecho 'builder ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers[0m
+2026-07-27T18:28:07.7808521Z [36;1mchown -R builder:builder /workspace /home/builder[0m
+2026-07-27T18:28:07.7809473Z [36;1m[0m
+2026-07-27T18:28:07.7810118Z [36;1m# Avvio della compilazione[0m
+2026-07-27T18:28:07.7812222Z [36;1msudo -H -E -u builder bash -c \"export CCACHE_MAXSIZE='20G' && export CCACHE_COMPRESS=1 && export CC='ccache clang' && export CXX='ccache clang++' && cd kernel && ./build-kernel-rpm.sh\"[0m
+2026-07-27T18:28:07.7814263Z [36;1m"[0m
+2026-07-27T18:28:07.7821703Z shell: /usr/bin/bash -e {0}
+2026-07-27T18:28:07.7822574Z ##[endgroup]
+2026-07-27T18:28:08.0260743Z Updating and loading repositories:
+2026-07-27T18:28:12.5693169Z  Fedora 44 openh264 (From Cisco) - x86_ 100% |   1.4 KiB/s |   5.3 KiB |  00m04s
+2026-07-27T18:28:12.6406227Z  Fedora 44 - x86_64 - Updates           100% |   2.3 MiB/s |  10.5 MiB |  00m05s
+2026-07-27T18:28:16.1720125Z  Fedora 44 - x86_64                     100% |   5.5 MiB/s |  36.8 MiB |  00m07s
+2026-07-27T18:28:18.1505280Z Repositories loaded.
+2026-07-27T18:28:19.3864075Z Total size of inbound packages is 2 MiB. Need to download 2 MiB.
+2026-07-27T18:28:19.3864927Z After this operation, 12 KiB extra will be used (install 5 MiB, remove 5 MiB).
+2026-07-27T18:28:19.3865610Z Package                                  Arch   Version          Repository                            Size
+2026-07-27T18:28:19.3866264Z Upgrading:
+2026-07-27T18:28:19.3866876Z  systemd-libs                            x86_64 0:259.8-1.fc44   updates                            2.4 MiB
+2026-07-27T18:28:19.3867605Z    replacing systemd-libs                x86_64 0:259.7-1.fc44   449fd63065ff4f40811e498bdf3523e1   2.4 MiB
+2026-07-27T18:28:19.3868387Z  systemd-standalone-sysusers             x86_64 0:259.8-1.fc44   updates                          305.7 KiB
+2026-07-27T18:28:19.3869153Z    replacing systemd-standalone-sysusers x86_64 0:259.7-1.fc44   449fd63065ff4f40811e498bdf3523e1 301.7 KiB
+2026-07-27T18:28:19.3869858Z  vim-data                                noarch 2:9.2.843-1.fc44 updates                           10.2 KiB
+2026-07-27T18:28:19.3870689Z    replacing vim-data                    noarch 2:9.2.782-1.fc44 449fd63065ff4f40811e498bdf3523e1  10.2 KiB
+2026-07-27T18:28:19.3871431Z  vim-minimal                             x86_64 2:9.2.843-1.fc44 updates                            1.8 MiB
+2026-07-27T18:28:19.3872432Z    replacing vim-minimal                 x86_64 2:9.2.782-1.fc44 449fd63065ff4f40811e498bdf3523e1   1.8 MiB
+2026-07-27T18:28:19.3872802Z 
+2026-07-27T18:28:19.3872982Z Transaction Summary:
+2026-07-27T18:28:19.3873307Z  Upgrading:          4 packages
+2026-07-27T18:28:19.3873764Z  Replacing:          4 packages
+2026-07-27T18:28:19.3873945Z 
+2026-07-27T18:28:19.7896311Z [1/4] vim-data-2:9.2.843-1.fc44.noarch  100% |  44.3 KiB/s |  17.8 KiB |  00m00s
+2026-07-27T18:28:19.9878998Z [2/4] systemd-standalone-sysusers-0:259 100% | 253.1 KiB/s | 151.6 KiB |  00m01s
+2026-07-27T18:28:20.1286078Z [3/4] systemd-libs-0:259.8-1.fc44.x86_6 100% |   1.1 MiB/s | 867.5 KiB |  00m01s
+2026-07-27T18:28:20.1774106Z [4/4] vim-minimal-2:9.2.843-1.fc44.x86_ 100% |   2.3 MiB/s | 892.8 KiB |  00m00s
+2026-07-27T18:28:20.1775091Z --------------------------------------------------------------------------------
+2026-07-27T18:28:20.1776012Z [4/4] Total                             100% |   2.4 MiB/s |   1.9 MiB |  00m01s
+2026-07-27T18:28:20.1776773Z Running transaction
+2026-07-27T18:28:20.2397111Z [ 1/10] Verify package files            100% | 800.0   B/s |   4.0   B |  00m00s
+2026-07-27T18:28:20.2434116Z [ 2/10] Prepare transaction             100% | 444.0   B/s |   8.0   B |  00m00s
+2026-07-27T18:28:20.2507915Z [ 3/10] Upgrading vim-data-2:9.2.843-1. 100% |   5.5 MiB/s |  11.3 KiB |  00m00s
+2026-07-27T18:28:20.2626672Z [ 4/10] Upgrading vim-minimal-2:9.2.843 100% | 111.9 MiB/s |   1.8 MiB |  00m00s
+2026-07-27T18:28:20.2799071Z [ 5/10] Upgrading systemd-standalone-sy 100% |  27.2 MiB/s | 306.3 KiB |  00m00s
+2026-07-27T18:28:20.2876167Z [ 6/10] Upgrading systemd-libs-0:259.8- 100% | 174.5 MiB/s |   2.4 MiB |  00m00s
+2026-07-27T18:28:20.2942297Z [ 7/10] Removing vim-minimal-2:9.2.782- 100% |   2.4 KiB/s |  15.0   B |  00m00s
+2026-07-27T18:28:20.3001161Z [ 8/10] Removing vim-data-2:9.2.782-1.f 100% |   1.4 KiB/s |   7.0   B |  00m00s
+2026-07-27T18:28:20.3073255Z [ 9/10] Removing systemd-standalone-sys 100% | 500.0   B/s |   3.0   B |  00m00s
+2026-07-27T18:28:20.3667829Z [10/10] Removing systemd-libs-0:259.7-1 100% | 383.0   B/s |  23.0   B |  00m00s
+2026-07-27T18:28:20.3668443Z Complete!
+2026-07-27T18:28:20.4128898Z Updating and loading repositories:
+2026-07-27T18:28:20.6928343Z Repositories loaded.
+2026-07-27T18:28:20.8238573Z Package "tar-2:1.35-8.fc44.x86_64" is already installed.
+2026-07-27T18:28:20.8239177Z Package "zstd-1.5.7-5.fc44.x86_64" is already installed.
+2026-07-27T18:28:20.8239809Z Package "curl-8.18.0-7.fc44.x86_64" is already installed.
+2026-07-27T18:28:20.8240119Z 
+2026-07-27T18:28:20.8268950Z Package                            Arch   Version                   Repository      Size
+2026-07-27T18:28:20.8270047Z Installing:
+2026-07-27T18:28:20.8270752Z  bc                                x86_64 0:1.08.2-4.fc44           fedora     236.2 KiB
+2026-07-27T18:28:20.8271663Z  bison                             x86_64 0:3.8.2-15.fc44           fedora       3.5 MiB
+2026-07-27T18:28:20.8272838Z  ccache                            x86_64 0:4.12.3-1.fc44           fedora       2.1 MiB
+2026-07-27T18:28:20.8273917Z  clang                             x86_64 0:22.1.8-4.fc44           updates     61.5 MiB
+2026-07-27T18:28:20.8274876Z  cmake                             x86_64 0:4.3.0-1.fc44            fedora      40.5 MiB
+2026-07-27T18:28:20.8275866Z  cpio                              x86_64 0:2.15-9.fc44             fedora       1.1 MiB
+2026-07-27T18:28:20.8276793Z  dwarves                           x86_64 0:1.30-3.fc44             fedora     392.6 KiB
+2026-07-27T18:28:20.8277857Z  elfutils-libelf-devel             x86_64 0:0.195-1.fc44            updates    104.3 KiB
+2026-07-27T18:28:20.8278883Z  flex                              x86_64 0:2.6.4-24.fc44           fedora     805.1 KiB
+2026-07-27T18:28:20.8280006Z  git                               x86_64 0:2.55.0-1.fc44           updates     57.7 KiB
+2026-07-27T18:28:20.8280914Z  jq                                x86_64 0:1.8.1-3.fc44            updates    465.4 KiB
+2026-07-27T18:28:20.8281898Z  kmod                              x86_64 0:34.2-4.fc44             fedora     251.0 KiB
+2026-07-27T18:28:20.8282888Z  lld                               x86_64 0:22.1.8-4.fc44           updates     42.4 KiB
+2026-07-27T18:28:20.8283443Z  llvm                              x86_64 0:22.1.8-4.fc44           updates     86.3 MiB
+2026-07-27T18:28:20.8284076Z  make                              x86_64 1:4.4.1-12.fc44           fedora       1.8 MiB
+2026-07-27T18:28:20.8284600Z  ncurses-devel                     x86_64 0:6.6-1.fc44              fedora     895.6 KiB
+2026-07-27T18:28:20.8285563Z  openssl                           x86_64 1:3.5.7-2.fc44            updates      1.8 MiB
+2026-07-27T18:28:20.8286134Z  openssl-devel                     x86_64 1:3.5.7-2.fc44            updates      4.5 MiB
+2026-07-27T18:28:20.8286655Z  perl                              x86_64 4:5.42.2-524.fc44         updates      0.0   B
+2026-07-27T18:28:20.8287268Z  python3                           x86_64 0:3.14.6-1.fc44           updates     28.7 KiB
+2026-07-27T18:28:20.8287800Z  rpm-build                         x86_64 0:6.0.1-2.fc44            fedora     294.6 KiB
+2026-07-27T18:28:20.8288367Z  rpmdevtools                       noarch 0:9.6-14.fc44             fedora     203.4 KiB
+2026-07-27T18:28:20.8289058Z  rsync                             x86_64 0:3.4.4-1.fc44            updates    808.1 KiB
+2026-07-27T18:28:20.8289490Z Installing dependencies:
+2026-07-27T18:28:20.8290014Z  R-srpm-macros                     noarch 0:1.3.7-2.fc44            updates      3.5 KiB
+2026-07-27T18:28:20.8290586Z  add-determinism                   x86_64 0:0.7.3-2.fc44            updates      2.2 MiB
+2026-07-27T18:28:20.8291130Z  annobin-docs                      noarch 0:13.14-1.fc44            updates     99.3 KiB
+2026-07-27T18:28:20.8291741Z  annobin-plugin-gcc                x86_64 0:13.14-1.fc44            updates    699.3 KiB
+2026-07-27T18:28:20.8292445Z  ansible-srpm-macros               noarch 0:1-20.1.fc44             fedora      35.7 KiB
+2026-07-27T18:28:20.8293075Z  binutils                          x86_64 0:2.46.1-1.fc44           updates     28.2 MiB
+2026-07-27T18:28:20.8293708Z  build-reproducibility-srpm-macros noarch 0:0.7.3-2.fc44            updates      1.2 KiB
+2026-07-27T18:28:20.8294312Z  clang-libs                        x86_64 0:22.1.8-4.fc44           updates    109.7 MiB
+2026-07-27T18:28:20.8294924Z  clang-resource-filesystem         x86_64 0:22.1.8-4.fc44           updates     15.3 KiB
+2026-07-27T18:28:20.8295504Z  cmake-data                        noarch 0:4.3.0-1.fc44            fedora       9.4 MiB
+2026-07-27T18:28:20.8296073Z  cmake-filesystem                  x86_64 0:4.3.0-1.fc44            fedora       0.0   B
+2026-07-27T18:28:20.8296698Z  cmake-rpm-macros                  noarch 0:4.3.0-1.fc44            fedora       8.4 KiB
+2026-07-27T18:28:20.8297398Z  cmake-srpm-macros                 noarch 0:4.3.0-1.fc44            fedora     524.0   B
+2026-07-27T18:28:20.8298065Z  cpp                               x86_64 0:16.1.1-2.fc44           updates     42.1 MiB
+2026-07-27T18:28:20.8298614Z  debugedit                         x86_64 0:5.3-2.fc44              updates    220.8 KiB
+2026-07-27T18:28:20.8299184Z  diffutils                         x86_64 0:3.12-5.fc44             fedora       1.6 MiB
+2026-07-27T18:28:20.8299757Z  dwz                               x86_64 0:0.16-3.fc44             fedora     290.9 KiB
+2026-07-27T18:28:20.8300250Z  ed                                x86_64 0:1.22.5-2.fc44           fedora     149.7 KiB
+2026-07-27T18:28:20.8300806Z  efi-srpm-macros                   noarch 0:6-6.fc44                fedora      40.2 KiB
+2026-07-27T18:28:20.8301367Z  elfutils                          x86_64 0:0.195-1.fc44            updates      3.0 MiB
+2026-07-27T18:28:20.8302069Z  elfutils-debuginfod-client        x86_64 0:0.195-1.fc44            updates     83.8 KiB
+2026-07-27T18:28:20.8302840Z  emacs-filesystem                  x86_64 1:30.2-2.fc44             fedora       0.0   B
+2026-07-27T18:28:20.8303421Z  erlang-srpm-macros                noarch 0:0.3.11-1.fc44           fedora       1.9 KiB
+2026-07-27T18:28:20.8304108Z  expat                             x86_64 0:2.8.1-1.fc44            updates    327.4 KiB
+2026-07-27T18:28:20.8304602Z  fakeroot                          x86_64 0:1.37.1-4.fc44           fedora     154.5 KiB
+2026-07-27T18:28:20.8305073Z  fakeroot-libs                     x86_64 0:1.37.1-4.fc44           fedora     124.4 KiB
+2026-07-27T18:28:20.8305537Z  file                              x86_64 0:5.46-10.fc44            updates    100.1 KiB
+2026-07-27T18:28:20.8305984Z  filesystem-srpm-macros            noarch 0:3.18-52.fc44            fedora      38.2 KiB
+2026-07-27T18:28:20.8306548Z  fonts-srpm-macros                 noarch 1:5.0.0-2.fc44            fedora      55.8 KiB
+2026-07-27T18:28:20.8307067Z  forge-srpm-macros                 noarch 0:0.4.0-4.fc44            fedora      38.9 KiB
+2026-07-27T18:28:20.8307675Z  fpc-srpm-macros                   noarch 0:1.3-16.fc44             fedora     144.0   B
+2026-07-27T18:28:20.8308268Z  gap-srpm-macros                   noarch 0:2-2.fc44                fedora       2.1 KiB
+2026-07-27T18:28:20.8308760Z  gcc                               x86_64 0:16.1.1-2.fc44           updates    120.8 MiB
+2026-07-27T18:28:20.8309277Z  gcc-c++                           x86_64 0:16.1.1-2.fc44           updates     46.4 MiB
+2026-07-27T18:28:20.8309816Z  gcc-plugin-annobin                x86_64 0:16.1.1-2.fc44           updates     57.2 KiB
+2026-07-27T18:28:20.8310291Z  gdb-minimal                       x86_64 0:17.2-2.fc44             updates     14.2 MiB
+2026-07-27T18:28:20.8310847Z  ghc-srpm-macros                   noarch 0:1.10-1.fc44             fedora     792.0   B
+2026-07-27T18:28:20.8311336Z  git-core                          x86_64 0:2.55.0-1.fc44           updates     25.6 MiB
+2026-07-27T18:28:20.8311778Z  git-core-doc                      noarch 0:2.55.0-1.fc44           updates     18.9 MiB
+2026-07-27T18:28:20.8312336Z  glibc-devel                       x86_64 0:2.43-7.fc44             updates      2.3 MiB
+2026-07-27T18:28:20.8312831Z  glibc-gconv-extra                 x86_64 0:2.43-7.fc44             updates      7.4 MiB
+2026-07-27T18:28:20.8313275Z  gnat-srpm-macros                  noarch 0:7-2.fc44                fedora       1.0 KiB
+2026-07-27T18:28:20.8313787Z  gnome-srpm-macros                 noarch 0:1.0-1.fc44              updates      3.5 KiB
+2026-07-27T18:28:20.8314248Z  go-srpm-macros                    noarch 0:3.8.0-2.fc44            fedora      61.9 KiB
+2026-07-27T18:28:20.8314707Z  gpgverify                         noarch 0:2.2-4.fc44              fedora       8.7 KiB
+2026-07-27T18:28:20.8315210Z  groff-base                        x86_64 0:1.23.0-12.fc44          fedora       3.9 MiB
+2026-07-27T18:28:20.8315633Z  hiredis                           x86_64 0:1.2.0-8.fc44            fedora     105.7 KiB
+2026-07-27T18:28:20.8316106Z  jansson                           x86_64 0:2.14-4.fc44             fedora      88.9 KiB
+2026-07-27T18:28:20.8316548Z  java-srpm-macros                  noarch 0:1-8.fc44                fedora     870.0   B
+2026-07-27T18:28:20.8317014Z  jsoncpp                           x86_64 0:1.9.6-3.fc44            fedora     285.6 KiB
+2026-07-27T18:28:20.8317508Z  kernel-headers                    x86_64 0:7.1.3-200.fc44          updates      6.9 MiB
+2026-07-27T18:28:20.8317975Z  kernel-srpm-macros                noarch 0:1.0-28.fc44             fedora       1.9 KiB
+2026-07-27T18:28:20.8318452Z  less                              x86_64 0:704-2.fc44              updates    479.5 KiB
+2026-07-27T18:28:20.8318877Z  libatomic                         x86_64 0:16.1.1-2.fc44           updates     45.6 KiB
+2026-07-27T18:28:20.8319300Z  libdatrie                         x86_64 0:0.2.14-2.fc44           fedora      61.7 KiB
+2026-07-27T18:28:20.8319798Z  libdb                             x86_64 0:5.3.28-67.fc44          fedora       1.9 MiB
+2026-07-27T18:28:20.8320217Z  libdwarves1                       x86_64 0:1.30-3.fc44             fedora     649.9 KiB
+2026-07-27T18:28:20.8320663Z  libedit                           x86_64 0:3.1-59.20260512cvs.fc44 updates    248.3 KiB
+2026-07-27T18:28:20.8321189Z  libfdisk                          x86_64 0:2.41.5-1.fc44           updates    388.3 KiB
+2026-07-27T18:28:20.8321639Z  liblastlog2                       x86_64 0:2.41.5-1.fc44           updates     41.6 KiB
+2026-07-27T18:28:20.8322212Z  libmpc                            x86_64 0:1.4.1-1.fc44            updates    168.7 KiB
+2026-07-27T18:28:20.8322654Z  libpkgconf                        x86_64 0:2.5.1-1.fc44            fedora      90.1 KiB
+2026-07-27T18:28:20.8323085Z  libselinux-utils                  x86_64 0:3.10-1.fc44             fedora     305.7 KiB
+2026-07-27T18:28:20.8323595Z  libstdc++-devel                   x86_64 0:16.1.1-2.fc44           updates     41.2 MiB
+2026-07-27T18:28:20.8324024Z  libthai                           x86_64 0:0.1.30-2.fc44           fedora     800.9 KiB
+2026-07-27T18:28:20.8324526Z  libuv                             x86_64 1:1.52.1-2.fc44           updates    593.1 KiB
+2026-07-27T18:28:20.8324961Z  libxcrypt-devel                   x86_64 0:4.5.2-3.fc44            fedora      31.0 KiB
+2026-07-27T18:28:20.8325390Z  libzstd-devel                     x86_64 0:1.5.7-5.fc44            fedora     217.6 KiB
+2026-07-27T18:28:20.8325968Z  linkdupes                         x86_64 0:0.7.3-2.fc44            updates    780.9 KiB
+2026-07-27T18:28:20.8326425Z  lld-libs                          x86_64 0:22.1.8-4.fc44           updates      6.1 MiB
+2026-07-27T18:28:20.8326884Z  llvm-filesystem                   x86_64 0:22.1.8-4.fc44           updates      0.0   B
+2026-07-27T18:28:20.8327332Z  llvm-libs                         x86_64 0:22.1.8-4.fc44           updates    140.5 MiB
+2026-07-27T18:28:20.8327765Z  lua-srpm-macros                   noarch 0:1-17.fc44               fedora       1.3 KiB
+2026-07-27T18:28:20.8328226Z  m4                                x86_64 0:1.4.21-1.fc44           fedora     881.1 KiB
+2026-07-27T18:28:20.8328670Z  mpdecimal                         x86_64 0:4.0.1-3.fc44            fedora     217.1 KiB
+2026-07-27T18:28:20.8329092Z  ncurses                           x86_64 0:6.6-1.fc44              fedora     611.4 KiB
+2026-07-27T18:28:20.8329581Z  ncurses-c++-libs                  x86_64 0:6.6-1.fc44              fedora     161.5 KiB
+2026-07-27T18:28:20.8330021Z  ninja-build                       x86_64 0:1.13.2-2.fc44           fedora     496.5 KiB
+2026-07-27T18:28:20.8330489Z  ocaml-srpm-macros                 noarch 0:11-3.fc44               fedora       1.9 KiB
+2026-07-27T18:28:20.8330942Z  oniguruma                         x86_64 0:6.9.10-4.fc44           fedora     770.9 KiB
+2026-07-27T18:28:20.8331421Z  openblas-srpm-macros              noarch 0:2-21.fc44               fedora     112.0   B
+2026-07-27T18:28:20.8331902Z  openssh                           x86_64 0:10.2p1-13.fc44          updates      1.4 MiB
+2026-07-27T18:28:20.8332422Z  openssh-clients                   x86_64 0:10.2p1-13.fc44          updates      2.7 MiB
+2026-07-27T18:28:20.8332889Z  package-notes-srpm-macros         noarch 0:0.20-1.fc44             updates      1.6 KiB
+2026-07-27T18:28:20.8333399Z  patch                             x86_64 0:2.8-4.fc44              fedora     226.6 KiB
+2026-07-27T18:28:20.8333904Z  perl-Algorithm-Diff               noarch 0:1.2010-15.fc44          fedora     107.5 KiB
+2026-07-27T18:28:20.8334412Z  perl-Archive-Tar                  noarch 0:3.12-1.fc44             updates    157.9 KiB
+2026-07-27T18:28:20.8334866Z  perl-Archive-Zip                  noarch 0:1.68-18.fc44            fedora     291.1 KiB
+2026-07-27T18:28:20.8335324Z  perl-Attribute-Handlers           noarch 0:1.03-524.fc44           updates     39.9 KiB
+2026-07-27T18:28:20.8335843Z  perl-AutoLoader                   noarch 0:5.74-524.fc44           updates     20.6 KiB
+2026-07-27T18:28:20.8336325Z  perl-AutoSplit                    noarch 0:5.74-524.fc44           updates     23.1 KiB
+2026-07-27T18:28:20.8336769Z  perl-B                            x86_64 0:1.89-524.fc44           updates    501.2 KiB
+2026-07-27T18:28:20.8337304Z  perl-Benchmark                    noarch 0:1.27-524.fc44           updates     36.4 KiB
+2026-07-27T18:28:20.8337774Z  perl-CPAN                         noarch 0:2.38-522.fc44           fedora       1.9 MiB
+2026-07-27T18:28:20.8338295Z  perl-CPAN-Meta                    noarch 0:2.150013-1.fc44         fedora     595.5 KiB
+2026-07-27T18:28:20.8338778Z  perl-CPAN-Meta-Requirements       noarch 0:2.145-1.fc44            fedora      82.8 KiB
+2026-07-27T18:28:20.8339249Z  perl-CPAN-Meta-YAML               noarch 0:0.020-522.fc44          fedora      52.1 KiB
+2026-07-27T18:28:20.8339747Z  perl-Carp                         noarch 0:1.54-521.fc44           fedora      46.6 KiB
+2026-07-27T18:28:20.8340188Z  perl-Class-Struct                 noarch 0:0.68-524.fc44           updates     25.4 KiB
+2026-07-27T18:28:20.8340673Z  perl-Compress-Bzip2               x86_64 0:2.28-25.fc44            fedora     142.5 KiB
+2026-07-27T18:28:20.8341192Z  perl-Compress-Raw-Bzip2           x86_64 0:2.218-1.fc44            updates     72.7 KiB
+2026-07-27T18:28:20.8341677Z  perl-Compress-Raw-Lzma            x86_64 0:2.221-1.fc44            fedora     145.8 KiB
+2026-07-27T18:28:20.8342308Z  perl-Compress-Raw-Zlib            x86_64 0:2.222-1.fc44            fedora     172.3 KiB
+2026-07-27T18:28:20.8342905Z  perl-Config-Extensions            noarch 0:0.03-524.fc44           updates      2.7 KiB
+2026-07-27T18:28:20.8343470Z  perl-Config-Perl-V                noarch 0:0.39-1.fc44             fedora      26.0 KiB
+2026-07-27T18:28:20.8343944Z  perl-DBM_Filter                   noarch 0:0.07-524.fc44           updates     28.7 KiB
+2026-07-27T18:28:20.8344385Z  perl-DB_File                      x86_64 0:1.860-1.fc44            fedora     189.6 KiB
+2026-07-27T18:28:20.8344857Z  perl-Data-Dumper                  x86_64 0:2.192-523.fc44          updates    115.5 KiB
+2026-07-27T18:28:20.8345315Z  perl-Data-OptList                 noarch 0:0.114-8.fc44            fedora      50.1 KiB
+2026-07-27T18:28:20.8345791Z  perl-Data-Section                 noarch 0:0.200008-9.fc44         fedora      42.7 KiB
+2026-07-27T18:28:20.8346312Z  perl-Devel-PPPort                 x86_64 0:3.73-522.fc44           fedora     889.6 KiB
+2026-07-27T18:28:20.8346776Z  perl-Devel-Peek                   x86_64 0:1.36-524.fc44           updates     43.4 KiB
+2026-07-27T18:28:20.8347269Z  perl-Devel-SelfStubber            noarch 0:1.06-524.fc44           updates      6.8 KiB
+2026-07-27T18:28:20.8347749Z  perl-Devel-Size                   x86_64 0:0.86-1.fc44             fedora      42.0 KiB
+2026-07-27T18:28:20.8348225Z  perl-Digest                       noarch 0:1.20-521.fc44           fedora      35.3 KiB
+2026-07-27T18:28:20.8348699Z  perl-Digest-MD5                   x86_64 0:2.59-521.fc44           fedora      59.6 KiB
+2026-07-27T18:28:20.8349142Z  perl-Digest-SHA                   x86_64 1:6.04-522.fc44           fedora     112.4 KiB
+2026-07-27T18:28:20.8349575Z  perl-DirHandle                    noarch 0:1.05-524.fc44           updates      3.4 KiB
+2026-07-27T18:28:20.8350076Z  perl-Dumpvalue                    noarch 0:2.27-524.fc44           updates     19.8 KiB
+2026-07-27T18:28:20.8350764Z  perl-DynaLoader                   x86_64 0:1.57-524.fc44           updates     32.1 KiB
+2026-07-27T18:28:20.8351296Z  perl-Encode                       x86_64 4:3.21-521.fc44           fedora       4.7 MiB
+2026-07-27T18:28:20.8351756Z  perl-Encode-devel                 x86_64 4:3.21-521.fc44           fedora      99.6 KiB
+2026-07-27T18:28:20.8352266Z  perl-English                      noarch 0:1.11-524.fc44           updates      6.2 KiB
+2026-07-27T18:28:20.8352738Z  perl-Env                          noarch 0:1.06-521.fc44           fedora      26.1 KiB
+2026-07-27T18:28:20.8353222Z  perl-Errno                        x86_64 0:1.38-524.fc44           updates      8.4 KiB
+2026-07-27T18:28:20.8353665Z  perl-Error                        noarch 1:0.17030-3.fc44          fedora      76.8 KiB
+2026-07-27T18:28:20.8354108Z  perl-Exporter                     noarch 0:5.79-521.fc44           fedora      54.3 KiB
+2026-07-27T18:28:20.8354663Z  perl-ExtUtils-CBuilder            noarch 1:0.280242-521.fc44       fedora      97.3 KiB
+2026-07-27T18:28:20.8355191Z  perl-ExtUtils-Command             noarch 2:7.76-522.fc44           fedora       9.6 KiB
+2026-07-27T18:28:20.8355714Z  perl-ExtUtils-Constant            noarch 0:0.25-524.fc44           updates     85.9 KiB
+2026-07-27T18:28:20.8356177Z  perl-ExtUtils-Embed               noarch 0:1.35-524.fc44           updates     15.6 KiB
+2026-07-27T18:28:20.8356686Z  perl-ExtUtils-Install             noarch 0:2.22-521.fc44           fedora      85.5 KiB
+2026-07-27T18:28:20.8357170Z  perl-ExtUtils-MM-Utils            noarch 2:7.76-522.fc44           fedora       2.9 KiB
+2026-07-27T18:28:20.8357676Z  perl-ExtUtils-MakeMaker           noarch 2:7.76-522.fc44           fedora     739.7 KiB
+2026-07-27T18:28:20.8358205Z  perl-ExtUtils-Manifest            noarch 1:1.75-521.fc44           fedora      84.8 KiB
+2026-07-27T18:28:20.8358684Z  perl-ExtUtils-Miniperl            noarch 0:1.14-524.fc44           updates      8.3 KiB
+2026-07-27T18:28:20.8359207Z  perl-ExtUtils-ParseXS             noarch 1:3.61-2.fc44             fedora     712.7 KiB
+2026-07-27T18:28:20.8359658Z  perl-Fcntl                        x86_64 0:1.20-524.fc44           updates     48.7 KiB
+2026-07-27T18:28:20.8360181Z  perl-File-Basename                noarch 0:2.86-524.fc44           updates     14.0 KiB
+2026-07-27T18:28:20.8360728Z  perl-File-Compare                 noarch 0:1.100.800-524.fc44      updates      5.6 KiB
+2026-07-27T18:28:20.8361182Z  perl-File-Copy                    noarch 0:2.41-524.fc44           updates     19.7 KiB
+2026-07-27T18:28:20.8361656Z  perl-File-DosGlob                 x86_64 0:1.12-524.fc44           updates     20.7 KiB
+2026-07-27T18:28:20.8362163Z  perl-File-Fetch                   noarch 0:1.08-4.fc44             fedora      60.3 KiB
+2026-07-27T18:28:20.8362610Z  perl-File-Find                    noarch 0:1.44-524.fc44           updates     42.0 KiB
+2026-07-27T18:28:20.8363161Z  perl-File-HomeDir                 noarch 0:1.006-16.fc44           fedora     119.3 KiB
+2026-07-27T18:28:20.8363614Z  perl-File-Path                    noarch 0:2.18-522.fc44           fedora      63.5 KiB
+2026-07-27T18:28:20.8364085Z  perl-File-Temp                    noarch 1:0.231.200-2.fc44        fedora     163.7 KiB
+2026-07-27T18:28:20.8364543Z  perl-File-Which                   noarch 0:1.27-15.fc44            fedora      30.4 KiB
+2026-07-27T18:28:20.8364990Z  perl-File-stat                    noarch 0:1.14-524.fc44           updates     12.5 KiB
+2026-07-27T18:28:20.8365517Z  perl-FileCache                    noarch 0:1.10-524.fc44           updates      7.5 KiB
+2026-07-27T18:28:20.8365973Z  perl-FileHandle                   noarch 0:2.05-524.fc44           updates      9.4 KiB
+2026-07-27T18:28:20.8366408Z  perl-Filter                       x86_64 2:1.65-2.fc44             fedora     156.3 KiB
+2026-07-27T18:28:20.8366904Z  perl-Filter-Simple                noarch 0:0.96-521.fc44           fedora      50.7 KiB
+2026-07-27T18:28:20.8367359Z  perl-FindBin                      noarch 0:1.54-524.fc44           updates      6.8 KiB
+2026-07-27T18:28:20.8367822Z  perl-GDBM_File                    x86_64 1:1.24-524.fc44           updates     79.5 KiB
+2026-07-27T18:28:20.8368318Z  perl-Getopt-Long                  noarch 1:2.58-521.fc44           fedora     144.5 KiB
+2026-07-27T18:28:20.8368774Z  perl-Getopt-Std                   noarch 0:1.14-524.fc44           updates     11.2 KiB
+2026-07-27T18:28:20.8369246Z  perl-Git                          noarch 0:2.55.0-1.fc44           updates     64.4 KiB
+2026-07-27T18:28:20.8369688Z  perl-HTTP-Tiny                    noarch 0:0.094-1.fc44            updates    158.2 KiB
+2026-07-27T18:28:20.8370322Z  perl-Hash-Util                    x86_64 0:0.32-524.fc44           updates     54.9 KiB
+2026-07-27T18:28:20.8370891Z  perl-Hash-Util-FieldHash          x86_64 0:1.27-524.fc44           updates     62.5 KiB
+2026-07-27T18:28:20.8371372Z  perl-I18N-Collate                 noarch 0:1.02-524.fc44           updates      7.1 KiB
+2026-07-27T18:28:20.8371991Z  perl-I18N-LangTags                noarch 0:0.45-524.fc44           updates     82.4 KiB
+2026-07-27T18:28:20.8372549Z  perl-I18N-Langinfo                x86_64 0:0.24-524.fc44           updates     34.6 KiB
+2026-07-27T18:28:20.8373023Z  perl-IO                           x86_64 0:1.55-524.fc44           updates    147.3 KiB
+2026-07-27T18:28:20.8373528Z  perl-IO-Compress                  noarch 0:2.221-1.fc44            updates      1.0 MiB
+2026-07-27T18:28:20.8373996Z  perl-IO-Compress-Lzma             noarch 0:2.217-1.fc44            fedora     217.1 KiB
+2026-07-27T18:28:20.8374479Z  perl-IO-Socket-IP                 noarch 0:0.43-522.fc44           fedora     100.3 KiB
+2026-07-27T18:28:20.8374948Z  perl-IO-Socket-SSL                noarch 0:2.098-2.fc44            fedora     723.5 KiB
+2026-07-27T18:28:20.8375425Z  perl-IO-Zlib                      noarch 1:1.15-521.fc44           fedora      25.7 KiB
+2026-07-27T18:28:20.8375896Z  perl-IPC-Cmd                      noarch 2:1.04-522.fc44           fedora      84.9 KiB
+2026-07-27T18:28:20.8376344Z  perl-IPC-Open3                    noarch 0:1.24-524.fc44           updates     27.7 KiB
+2026-07-27T18:28:20.8376983Z  perl-IPC-SysV                     x86_64 0:2.09-522.fc44           fedora      73.6 KiB
+2026-07-27T18:28:20.8377464Z  perl-IPC-System-Simple            noarch 0:1.30-17.fc44            fedora      71.7 KiB
+2026-07-27T18:28:20.8377952Z  perl-JSON-PP                      noarch 1:4.16-523.fc44           fedora     141.9 KiB
+2026-07-27T18:28:20.8378443Z  perl-Locale-Maketext              noarch 0:1.33-522.fc44           fedora     171.3 KiB
+2026-07-27T18:28:20.8378933Z  perl-Locale-Maketext-Simple       noarch 1:0.21-524.fc44           updates     12.8 KiB
+2026-07-27T18:28:20.8379412Z  perl-MIME-Base32                  noarch 0:1.303-25.fc44           fedora      30.7 KiB
+2026-07-27T18:28:20.8379907Z  perl-MIME-Base64                  x86_64 0:3.16-521.fc44           fedora      41.9 KiB
+2026-07-27T18:28:20.8380398Z  perl-MIME-Charset                 noarch 0:1.013.1-10.fc44         fedora     104.4 KiB
+2026-07-27T18:28:20.8380898Z  perl-MRO-Compat                   noarch 0:0.15-13.fc44            fedora      43.0 KiB
+2026-07-27T18:28:20.8381509Z  perl-Math-BigInt                  noarch 1:2.0050.03-4.fc44        fedora       1.1 MiB
+2026-07-27T18:28:20.8382047Z  perl-Math-BigInt-FastCalc         x86_64 0:0.502.000-521.fc44      fedora      43.9 KiB
+2026-07-27T18:28:20.8382579Z  perl-Math-Complex                 noarch 0:1.63-524.fc44           updates     85.1 KiB
+2026-07-27T18:28:20.8383068Z  perl-Memoize                      noarch 0:1.17-524.fc44           updates     64.7 KiB
+2026-07-27T18:28:20.8383512Z  perl-Module-Build                 noarch 2:0.42.34-10.fc44         fedora     654.2 KiB
+2026-07-27T18:28:20.8384025Z  perl-Module-CoreList              noarch 1:5.20260601-1.fc44       updates      1.3 MiB
+2026-07-27T18:28:20.8384511Z  perl-Module-CoreList-tools        noarch 1:5.20260601-1.fc44       updates     18.6 KiB
+2026-07-27T18:28:20.8385018Z  perl-Module-Load                  noarch 1:0.36-521.fc44           fedora      14.9 KiB
+2026-07-27T18:28:20.8385564Z  perl-Module-Load-Conditional      noarch 0:0.74-521.fc44           fedora      28.7 KiB
+2026-07-27T18:28:20.8386053Z  perl-Module-Loaded                noarch 1:0.08-524.fc44           updates      5.0 KiB
+2026-07-27T18:28:20.8386599Z  perl-Module-Metadata              noarch 0:1.000038-521.fc44       fedora      67.5 KiB
+2026-07-27T18:28:20.8387098Z  perl-Module-Signature             noarch 0:0.93-3.fc44             fedora     136.5 KiB
+2026-07-27T18:28:20.8387575Z  perl-NDBM_File                    x86_64 0:1.18-524.fc44           updates     28.4 KiB
+2026-07-27T18:28:20.8388052Z  perl-NEXT                         noarch 0:0.69-524.fc44           updates     23.6 KiB
+2026-07-27T18:28:20.8388476Z  perl-Net                          noarch 0:1.04-524.fc44           updates     22.4 KiB
+2026-07-27T18:28:20.8388937Z  perl-Net-Ping                     noarch 0:2.76-521.fc44           fedora     134.2 KiB
+2026-07-27T18:28:20.8389564Z  perl-Net-SSLeay                   x86_64 0:1.94-12.fc44            fedora       1.3 MiB
+2026-07-27T18:28:20.8390041Z  perl-ODBM_File                    x86_64 0:1.20-524.fc44           updates     28.4 KiB
+2026-07-27T18:28:20.8390590Z  perl-Opcode                       x86_64 0:1.69-524.fc44           updates     48.5 KiB
+2026-07-27T18:28:20.8391211Z  perl-POSIX                        x86_64 0:2.23-524.fc44           updates    229.4 KiB
+2026-07-27T18:28:20.8391724Z  perl-Package-Generator            noarch 0:1.106-35.fc44           fedora      29.9 KiB
+2026-07-27T18:28:20.8392271Z  perl-Params-Check                 noarch 1:0.38-521.fc44           fedora      27.6 KiB
+2026-07-27T18:28:20.8392807Z  perl-Params-Util                  x86_64 0:1.102-20.fc44           fedora      58.4 KiB
+2026-07-27T18:28:20.8393524Z  perl-PathTools                    x86_64 0:3.94-521.fc44           fedora     179.9 KiB
+2026-07-27T18:28:20.8393995Z  perl-Perl-OSType                  noarch 0:1.010-522.fc44          fedora      32.8 KiB
+2026-07-27T18:28:20.8394476Z  perl-PerlIO-via-QuotedPrint       noarch 0:0.10-521.fc44           fedora      30.2 KiB
+2026-07-27T18:28:20.8395127Z  perl-Pod-Checker                  noarch 4:1.77-521.fc44           fedora      52.2 KiB
+2026-07-27T18:28:20.8395620Z  perl-Pod-Escapes                  noarch 1:1.07-521.fc44           fedora      24.9 KiB
+2026-07-27T18:28:20.8396139Z  perl-Pod-Functions                noarch 0:1.14-524.fc44           updates     14.4 KiB
+2026-07-27T18:28:20.8396605Z  perl-Pod-Html                     noarch 0:1.35-524.fc44           updates     42.3 KiB
+2026-07-27T18:28:20.8397049Z  perl-Pod-Perldoc                  noarch 0:3.28.01-522.fc44        fedora     163.7 KiB
+2026-07-27T18:28:20.8397556Z  perl-Pod-Simple                   noarch 1:3.47-4.fc44             fedora     565.3 KiB
+2026-07-27T18:28:20.8398005Z  perl-Pod-Usage                    noarch 4:2.05-521.fc44           fedora      86.3 KiB
+2026-07-27T18:28:20.8398498Z  perl-Safe                         noarch 0:2.47-524.fc44           updates     30.7 KiB
+2026-07-27T18:28:20.8398964Z  perl-Scalar-List-Utils            x86_64 5:1.70-2.fc44             fedora     144.8 KiB
+2026-07-27T18:28:20.8399432Z  perl-Search-Dict                  noarch 0:1.08-524.fc44           updates      4.7 KiB
+2026-07-27T18:28:20.8399915Z  perl-SelectSaver                  noarch 0:1.02-524.fc44           updates      2.2 KiB
+2026-07-27T18:28:20.8400426Z  perl-SelfLoader                   noarch 0:1.28-524.fc44           updates     22.2 KiB
+2026-07-27T18:28:20.8400891Z  perl-Socket                       x86_64 4:2.041-1.fc44            updates    120.7 KiB
+2026-07-27T18:28:20.8401391Z  perl-Software-License             noarch 0:0.104007-3.fc44         fedora     500.7 KiB
+2026-07-27T18:28:20.8401846Z  perl-Storable                     x86_64 1:3.37-522.fc44           fedora     235.1 KiB
+2026-07-27T18:28:20.8402536Z  perl-Sub-Exporter                 noarch 0:0.991-7.fc44            fedora     194.9 KiB
+2026-07-27T18:28:20.8403014Z  perl-Sub-Install                  noarch 0:0.929-9.fc44            fedora      35.9 KiB
+2026-07-27T18:28:20.8403496Z  perl-Symbol                       noarch 0:1.09-524.fc44           updates      6.8 KiB
+2026-07-27T18:28:20.8403979Z  perl-Sys-Hostname                 x86_64 0:1.25-524.fc44           updates     15.7 KiB
+2026-07-27T18:28:20.8404424Z  perl-Sys-Syslog                   x86_64 0:0.36-522.fc44           fedora      94.6 KiB
+2026-07-27T18:28:20.8404872Z  perl-Term-ANSIColor               noarch 0:5.01-522.fc44           fedora      97.5 KiB
+2026-07-27T18:28:20.8405375Z  perl-Term-Cap                     noarch 0:1.18-521.fc44           fedora      29.3 KiB
+2026-07-27T18:28:20.8405859Z  perl-Term-Complete                noarch 0:1.403-524.fc44          updates      5.8 KiB
+2026-07-27T18:28:20.8406347Z  perl-Term-ReadLine                noarch 0:1.17-524.fc44           updates     17.3 KiB
+2026-07-27T18:28:20.8406934Z  perl-Term-Size-Perl               x86_64 0:0.031-23.fc44           fedora      25.4 KiB
+2026-07-27T18:28:20.8407395Z  perl-Term-Table                   noarch 0:0.028-2.fc44            fedora      78.5 KiB
+2026-07-27T18:28:20.8407915Z  perl-TermReadKey                  x86_64 0:2.38-27.fc44            fedora      63.9 KiB
+2026-07-27T18:28:20.8408387Z  perl-Test                         noarch 0:1.31-524.fc44           updates     37.0 KiB
+2026-07-27T18:28:20.8408857Z  perl-Test-Harness                 noarch 1:3.52-5.fc44             fedora     560.8 KiB
+2026-07-27T18:28:20.8409331Z  perl-Test-Simple                  noarch 3:1.302219-2.fc44         fedora       1.8 MiB
+2026-07-27T18:28:20.8409786Z  perl-Text-Abbrev                  noarch 0:1.02-524.fc44           updates      3.1 KiB
+2026-07-27T18:28:20.8410478Z  perl-Text-Balanced                noarch 0:2.07-2.fc44             fedora     111.5 KiB
+2026-07-27T18:28:20.8410970Z  perl-Text-Diff                    noarch 0:1.45-25.fc44            fedora      83.0 KiB
+2026-07-27T18:28:20.8411406Z  perl-Text-Glob                    noarch 0:0.11-27.fc44            fedora       8.4 KiB
+2026-07-27T18:28:20.8411913Z  perl-Text-ParseWords              noarch 0:3.31-521.fc44           fedora      13.6 KiB
+2026-07-27T18:28:20.8412544Z  perl-Text-Tabs+Wrap               noarch 0:2024.001-521.fc44       fedora      22.6 KiB
+2026-07-27T18:28:20.8413052Z  perl-Text-Template                noarch 0:1.61-9.fc44             fedora     112.4 KiB
+2026-07-27T18:28:20.8413558Z  perl-Thread                       noarch 0:3.06-524.fc44           updates     12.1 KiB
+2026-07-27T18:28:20.8414006Z  perl-Thread-Queue                 noarch 0:3.14-521.fc44           fedora      28.9 KiB
+2026-07-27T18:28:20.8414510Z  perl-Thread-Semaphore             noarch 0:2.13-524.fc44           updates     10.0 KiB
+2026-07-27T18:28:20.8415083Z  perl-Tie                          noarch 0:4.6-524.fc44            updates     32.1 KiB
+2026-07-27T18:28:20.8415527Z  perl-Tie-File                     noarch 0:1.10-524.fc44           updates     85.6 KiB
+2026-07-27T18:28:20.8416073Z  perl-Tie-Memoize                  noarch 0:1.1-524.fc44            updates      6.2 KiB
+2026-07-27T18:28:20.8416539Z  perl-Tie-RefHash                  noarch 0:1.41-521.fc44           fedora      35.9 KiB
+2026-07-27T18:28:20.8417035Z  perl-Time                         noarch 0:1.04-524.fc44           updates      9.8 KiB
+2026-07-27T18:28:20.8417473Z  perl-Time-HiRes                   x86_64 4:1.9778-521.fc44         fedora     115.6 KiB
+2026-07-27T18:28:20.8417909Z  perl-Time-Local                   noarch 2:1.350-521.fc44          fedora      69.0 KiB
+2026-07-27T18:28:20.8418430Z  perl-Time-Piece                   x86_64 0:1.3600-524.fc44         updates     71.1 KiB
+2026-07-27T18:28:20.8418863Z  perl-URI                          noarch 0:5.35-1.fc44             updates    268.2 KiB
+2026-07-27T18:28:20.8419343Z  perl-Unicode-Collate              x86_64 0:1.31-521.fc44           fedora       4.2 MiB
+2026-07-27T18:28:20.8419832Z  perl-Unicode-Normalize            x86_64 0:1.32-521.fc44           fedora     486.0 KiB
+2026-07-27T18:28:20.8420305Z  perl-Unicode-UCD                  noarch 0:0.81-524.fc44           updates    206.4 KiB
+2026-07-27T18:28:20.8420830Z  perl-User-pwent                   noarch 0:1.05-524.fc44           updates     17.1 KiB
+2026-07-27T18:28:20.8421275Z  perl-autodie                      noarch 0:2.37-522.fc44           fedora     214.9 KiB
+2026-07-27T18:28:20.8421701Z  perl-autouse                      noarch 0:1.11-524.fc44           updates      5.9 KiB
+2026-07-27T18:28:20.8422241Z  perl-base                         noarch 0:2.27-524.fc44           updates     12.6 KiB
+2026-07-27T18:28:20.8422679Z  perl-bignum                       noarch 0:0.67-522.fc44           fedora     133.1 KiB
+2026-07-27T18:28:20.8423161Z  perl-blib                         noarch 0:1.07-524.fc44           updates      3.2 KiB
+2026-07-27T18:28:20.8423616Z  perl-constant                     noarch 0:1.33-522.fc44           fedora      26.2 KiB
+2026-07-27T18:28:20.8424142Z  perl-debugger                     noarch 0:1.60-524.fc44           updates    403.2 KiB
+2026-07-27T18:28:20.8424643Z  perl-deprecate                    noarch 0:0.04-524.fc44           updates      6.6 KiB
+2026-07-27T18:28:20.8425093Z  perl-devel                        x86_64 4:5.42.2-524.fc44         updates      3.8 MiB
+2026-07-27T18:28:20.8425557Z  perl-diagnostics                  noarch 0:1.40-524.fc44           updates    471.0 KiB
+2026-07-27T18:28:20.8426072Z  perl-doc                          noarch 0:5.42.2-524.fc44         updates     11.4 MiB
+2026-07-27T18:28:20.8426502Z  perl-encoding                     x86_64 4:3.00-521.fc44           fedora     149.5 KiB
+2026-07-27T18:28:20.8426986Z  perl-encoding-warnings            noarch 0:0.14-524.fc44           updates     10.1 KiB
+2026-07-27T18:28:20.8427464Z  perl-experimental                 noarch 0:0.036-3.fc44            fedora      43.4 KiB
+2026-07-27T18:28:20.8427990Z  perl-fields                       noarch 0:2.27-524.fc44           updates     11.9 KiB
+2026-07-27T18:28:20.8428488Z  perl-filetest                     noarch 0:1.03-524.fc44           updates      6.4 KiB
+2026-07-27T18:28:20.8429015Z  perl-if                           noarch 0:0.61.000-524.fc44       updates      5.8 KiB
+2026-07-27T18:28:20.8429476Z  perl-inc-latest                   noarch 2:0.500-32.fc44           fedora      34.6 KiB
+2026-07-27T18:28:20.8430270Z  perl-interpreter                  x86_64 4:5.42.2-524.fc44         updates    118.7 KiB
+2026-07-27T18:28:20.8430714Z  perl-less                         noarch 0:0.03-524.fc44           updates      4.9 KiB
+2026-07-27T18:28:20.8431172Z  perl-lib                          x86_64 0:0.65-524.fc44           updates      8.5 KiB
+2026-07-27T18:28:20.8431599Z  perl-libnet                       noarch 0:3.15-522.fc44           fedora     289.4 KiB
+2026-07-27T18:28:20.8432086Z  perl-libnetcfg                    noarch 4:5.42.2-524.fc44         updates     16.9 KiB
+2026-07-27T18:28:20.8432583Z  perl-libs                         x86_64 4:5.42.2-524.fc44         updates     11.6 MiB
+2026-07-27T18:28:20.8433049Z  perl-local-lib                    noarch 0:2.000029-11.fc44        fedora     117.6 KiB
+2026-07-27T18:28:20.8433521Z  perl-locale                       noarch 0:1.13-524.fc44           updates      6.1 KiB
+2026-07-27T18:28:20.8433968Z  perl-macros                       noarch 4:5.42.2-524.fc44         updates      5.5 KiB
+2026-07-27T18:28:20.8434417Z  perl-meta-notation                noarch 0:5.42.2-524.fc44         updates      2.0 KiB
+2026-07-27T18:28:20.8434893Z  perl-mro                          x86_64 0:1.29-524.fc44           updates     41.4 KiB
+2026-07-27T18:28:20.8435354Z  perl-open                         noarch 0:1.13-524.fc44           updates     11.3 KiB
+2026-07-27T18:28:20.8435832Z  perl-overload                     noarch 0:1.40-524.fc44           updates     71.6 KiB
+2026-07-27T18:28:20.8436294Z  perl-overloading                  noarch 0:0.02-524.fc44           updates      4.9 KiB
+2026-07-27T18:28:20.8436746Z  perl-parent                       noarch 1:0.244-521.fc44          fedora      10.3 KiB
+2026-07-27T18:28:20.8437223Z  perl-perlfaq                      noarch 0:5.20250619-521.fc44     fedora     733.6 KiB
+2026-07-27T18:28:20.8437688Z  perl-ph                           x86_64 0:5.42.2-524.fc44         updates    278.7 KiB
+2026-07-27T18:28:20.8438110Z  perl-podlators                    noarch 1:6.0.2-521.fc44          fedora     317.5 KiB
+2026-07-27T18:28:20.8438599Z  perl-sigtrap                      noarch 0:1.10-524.fc44           updates     11.1 KiB
+2026-07-27T18:28:20.8439034Z  perl-sort                         noarch 0:2.06-524.fc44           updates      4.8 KiB
+2026-07-27T18:28:20.8439499Z  perl-srpm-macros                  noarch 0:1-61.fc44               fedora     861.0   B
+2026-07-27T18:28:20.8439988Z  perl-subs                         noarch 0:1.04-524.fc44           updates      2.1 KiB
+2026-07-27T18:28:20.8440421Z  perl-threads                      x86_64 1:2.43-521.fc44           fedora     114.9 KiB
+2026-07-27T18:28:20.8440982Z  perl-threads-shared               x86_64 0:1.70-521.fc44           fedora      83.5 KiB
+2026-07-27T18:28:20.8441447Z  perl-utils                        noarch 0:5.42.2-524.fc44         updates     97.0 KiB
+2026-07-27T18:28:20.8441865Z  perl-vars                         noarch 0:1.05-524.fc44           updates      3.9 KiB
+2026-07-27T18:28:20.8443059Z  perl-version                      x86_64 9:0.99.33-522.fc44        fedora     128.6 KiB
+2026-07-27T18:28:20.8443694Z  perl-vmsish                       noarch 0:1.04-524.fc44           updates      6.6 KiB
+2026-07-27T18:28:20.8444295Z  pkgconf                           x86_64 0:2.5.1-1.fc44            fedora      92.7 KiB
+2026-07-27T18:28:20.8444862Z  pkgconf-m4                        noarch 0:2.5.1-1.fc44            fedora      14.3 KiB
+2026-07-27T18:28:20.8445483Z  pkgconf-pkg-config                x86_64 0:2.5.1-1.fc44            fedora     989.0   B
+2026-07-27T18:28:20.8446155Z  policycoreutils                   x86_64 0:3.10-4.fc44             updates    884.6 KiB
+2026-07-27T18:28:20.8446775Z  pyproject-srpm-macros             noarch 0:1.22.2-1.fc44           updates      3.2 KiB
+2026-07-27T18:28:20.8447589Z  python-pip-wheel                  noarch 0:26.0.1-2.fc44           fedora       1.2 MiB
+2026-07-27T18:28:20.8448234Z  python-srpm-macros                noarch 0:3.14-12.fc44            fedora      51.6 KiB
+2026-07-27T18:28:20.8448823Z  python3-argcomplete               noarch 0:3.6.3-4.fc44            fedora     325.2 KiB
+2026-07-27T18:28:20.8449477Z  python3-charset-normalizer        noarch 0:3.4.4-2.fc44            fedora     356.2 KiB
+2026-07-27T18:28:20.8450066Z  python3-idna                      noarch 0:3.18-1.fc44             updates    522.3 KiB
+2026-07-27T18:28:20.8450598Z  python3-libs                      x86_64 0:3.14.6-1.fc44           updates     43.9 MiB
+2026-07-27T18:28:20.8451226Z  python3-progressbar2              noarch 0:4.5.0-6.fc44            fedora     609.9 KiB
+2026-07-27T18:28:20.8451860Z  python3-pyparsing                 noarch 0:3.1.2-15.fc44           fedora       1.0 MiB
+2026-07-27T18:28:20.8452568Z  python3-pysocks                   noarch 0:1.7.1-32.fc44           fedora     102.0 KiB
+2026-07-27T18:28:20.8453176Z  python3-requests                  noarch 0:2.33.1-1.fc44           updates    477.3 KiB
+2026-07-27T18:28:20.8453733Z  python3-rpm                       x86_64 0:6.0.1-2.fc44            fedora     179.2 KiB
+2026-07-27T18:28:20.8454511Z  python3-rpmautospec-core          noarch 0:0.1.5-10.fc44           fedora      11.3 KiB
+2026-07-27T18:28:20.8455232Z  python3-six                       noarch 0:1.17.0-8.fc44           fedora     118.0 KiB
+2026-07-27T18:28:20.8455758Z  python3-typing-extensions         noarch 0:4.15.0-3.fc44           fedora     538.4 KiB
+2026-07-27T18:28:20.8456363Z  python3-urllib3                   noarch 0:2.7.0-1.fc44            updates      1.1 MiB
+2026-07-27T18:28:20.8456878Z  python3-utils                     noarch 0:3.9.1-3.fc44            fedora     243.2 KiB
+2026-07-27T18:28:20.8457490Z  qt5-srpm-macros                   noarch 0:5.15.18-2.fc44          fedora     500.0   B
+2026-07-27T18:28:20.8458199Z  qt6-srpm-macros                   noarch 0:6.11.1-1.fc44           updates    472.0   B
+2026-07-27T18:28:20.8458738Z  redhat-rpm-config                 noarch 0:344-2.fc44              updates    183.7 KiB
+2026-07-27T18:28:20.8459294Z  rhash                             x86_64 0:1.4.5-4.fc44            fedora     354.8 KiB
+2026-07-27T18:28:20.8459776Z  rpm-plugin-selinux                x86_64 0:6.0.1-2.fc44            fedora      11.9 KiB
+2026-07-27T18:28:20.8460319Z  rust-srpm-macros                  noarch 0:28.5-1.fc44             updates      5.5 KiB
+2026-07-27T18:28:20.8460883Z  selinux-policy                    noarch 0:44.4-1.fc44             updates     32.1 KiB
+2026-07-27T18:28:20.8461418Z  selinux-policy-targeted           noarch 0:44.4-1.fc44             updates     18.6 MiB
+2026-07-27T18:28:20.8462164Z  sombok                            x86_64 0:2.4.0-25.fc44           fedora     131.5 KiB
+2026-07-27T18:28:20.8462695Z  systemtap-sdt-devel               x86_64 0:5.5-1.fc44              updates    184.5 KiB
+2026-07-27T18:28:20.8463222Z  systemtap-sdt-dtrace              x86_64 0:5.5-1.fc44              updates    181.1 KiB
+2026-07-27T18:28:20.8463857Z  tree-sitter-srpm-macros           noarch 0:0.4.2-2.fc44            fedora       8.3 KiB
+2026-07-27T18:28:20.8464357Z  unzip                             x86_64 0:6.0-69.fc44             fedora     445.8 KiB
+2026-07-27T18:28:20.8464844Z  util-linux                        x86_64 0:2.41.5-1.fc44           updates      3.5 MiB
+2026-07-27T18:28:20.8465352Z  vim-filesystem                    noarch 2:9.2.843-1.fc44          updates     40.0   B
+2026-07-27T18:28:20.8465848Z  xxhash-libs                       x86_64 0:0.8.3-4.fc44            fedora      94.0 KiB
+2026-07-27T18:28:20.8466484Z Total size of inbound packages is 289 MiB. Need to download 289 MiB.
+2026-07-27T18:28:20.8467004Z After this operation, 1 GiB extra will be used (install 1 GiB, remove 0 B).
+2026-07-27T18:28:20.8467518Z  zig-srpm-macros                   noarch 0:1-8.fc44                fedora       1.3 KiB
+2026-07-27T18:28:20.8468182Z  zip                               x86_64 0:3.0-45.fc44             fedora     698.0 KiB
+2026-07-27T18:28:20.8468733Z  zlib-ng-compat-devel              x86_64 0:2.3.3-3.fc44            fedora     107.0 KiB
+2026-07-27T18:28:20.8469200Z Installing weak dependencies:
+2026-07-27T18:28:20.8469586Z  7zip                              x86_64 0:26.02-1.fc44            updates      3.3 MiB
+2026-07-27T18:28:20.8470022Z  bat                               x86_64 0:0.26.1-1.fc44           fedora       5.9 MiB
+2026-07-27T18:28:20.8470537Z  compiler-rt                       x86_64 0:22.1.8-4.fc44           updates     41.3 MiB
+2026-07-27T18:28:20.8471058Z  less-color                        x86_64 0:704-2.fc44              updates      2.4 KiB
+2026-07-27T18:28:20.8471554Z  libomp                            x86_64 0:22.1.8-4.fc44           updates      2.9 MiB
+2026-07-27T18:28:20.8472098Z  libomp-devel                      x86_64 0:22.1.8-4.fc44           updates      2.9 MiB
+2026-07-27T18:28:20.8472654Z  perl-CPAN-DistnameInfo            noarch 0:0.12-34.fc44            fedora      10.6 KiB
+2026-07-27T18:28:20.8473240Z  perl-Encode-Locale                noarch 0:1.05-33.fc44            fedora      19.0 KiB
+2026-07-27T18:28:20.8473809Z  perl-Module-Pluggable             noarch 2:6.3-4.fc44              fedora      56.1 KiB
+2026-07-27T18:28:20.8475060Z  perl-Module-Runtime               noarch 0:0.018-3.fc44            fedora      63.1 KiB
+2026-07-27T18:28:20.8475640Z  perl-Term-Size-Any                noarch 0:0.002-46.fc44           fedora       8.0 KiB
+2026-07-27T18:28:20.8476162Z  perl-Unicode-LineBreak            x86_64 0:2019.001-26.fc44        fedora     260.4 KiB
+2026-07-27T18:28:20.8476715Z  python-unversioned-command        noarch 0:3.14.6-1.fc44           updates     23.0   B
+2026-07-27T18:28:20.8477258Z  python3-html2text                 noarch 0:2025.4.15-6.fc44        fedora     289.4 KiB
+2026-07-27T18:28:20.8477795Z  python3-rpmautospec               noarch 0:0.8.4-1.fc44            fedora     466.6 KiB
+2026-07-27T18:28:20.8478352Z  python3-urllib3+socks             noarch 0:2.7.0-1.fc44            updates      0.0   B
+2026-07-27T18:28:20.8478648Z 
+2026-07-27T18:28:20.8478758Z Transaction Summary:
+2026-07-27T18:28:20.8479173Z  Installing:       385 packages
+2026-07-27T18:28:20.8479521Z 
+2026-07-27T18:28:22.8508380Z [  1/385] rpmdevtools-0:9.6-14.fc44.noa 100% | 331.1 KiB/s |  94.4 KiB |  00m00s
+2026-07-27T18:28:22.9034790Z [  2/385] rpm-build-0:6.0.1-2.fc44.x86_ 100% | 413.9 KiB/s | 139.9 KiB |  00m00s
+2026-07-27T18:28:22.9982226Z [  3/385] make-1:4.4.1-12.fc44.x86_64   100% |   1.3 MiB/s | 588.7 KiB |  00m00s
+2026-07-27T18:28:23.1293178Z [  4/385] bc-0:1.08.2-4.fc44.x86_64     100% | 965.9 KiB/s | 125.6 KiB |  00m00s
+2026-07-27T18:28:23.1531518Z [  5/385] flex-0:2.6.4-24.fc44.x86_64   100% |   1.2 MiB/s | 299.3 KiB |  00m00s
+2026-07-27T18:28:23.3229259Z [  6/385] cpio-0:2.15-9.fc44.x86_64     100% |   1.5 MiB/s | 293.3 KiB |  00m00s
+2026-07-27T18:28:23.3280507Z [  7/385] bison-0:3.8.2-15.fc44.x86_64  100% |   2.0 MiB/s | 998.2 KiB |  00m00s
+2026-07-27T18:28:23.4257892Z [  8/385] kmod-0:34.2-4.fc44.x86_64     100% |   1.4 MiB/s | 136.1 KiB |  00m00s
+2026-07-27T18:28:23.4541839Z [  9/385] ccache-0:4.12.3-1.fc44.x86_64 100% |   2.5 MiB/s | 760.4 KiB |  00m00s
+2026-07-27T18:28:23.4754987Z [ 10/385] dwarves-0:1.30-3.fc44.x86_64  100% | 986.3 KiB/s | 149.9 KiB |  00m00s
+2026-07-27T18:28:23.5598970Z [ 11/385] patch-0:2.8-4.fc44.x86_64     100% |   1.1 MiB/s | 115.2 KiB |  00m00s
+2026-07-27T18:28:23.5672482Z [ 12/385] diffutils-0:3.12-5.fc44.x86_6 100% |   2.7 MiB/s | 395.3 KiB |  00m00s
+2026-07-27T18:28:23.6317800Z [ 13/385] unzip-0:6.0-69.fc44.x86_64    100% |   1.2 MiB/s | 199.6 KiB |  00m00s
+2026-07-27T18:28:23.6371721Z [ 14/385] fakeroot-0:1.37.1-4.fc44.x86_ 100% |   1.4 MiB/s | 100.1 KiB |  00m00s
+2026-07-27T18:28:23.7219541Z [ 15/385] python3-progressbar2-0:4.5.0- 100% |   1.8 MiB/s | 153.3 KiB |  00m00s
+2026-07-27T18:28:23.7264603Z [ 16/385] emacs-filesystem-1:30.2-2.fc4 100% |  48.5 KiB/s |   8.0 KiB |  00m00s
+2026-07-27T18:28:23.7482580Z [ 17/385] python3-argcomplete-0:3.6.3-4 100% | 848.2 KiB/s |  98.4 KiB |  00m00s
+2026-07-27T18:28:23.8317620Z [ 18/385] python3-rpm-0:6.0.1-2.fc44.x8 100% | 652.7 KiB/s |  71.1 KiB |  00m00s
+2026-07-27T18:28:23.8690449Z [ 19/385] m4-0:1.4.21-1.fc44.x86_64     100% |   2.4 MiB/s | 347.3 KiB |  00m00s
+2026-07-27T18:28:23.8695817Z [ 20/385] hiredis-0:1.2.0-8.fc44.x86_64 100% | 434.7 KiB/s |  52.6 KiB |  00m00s
+2026-07-27T18:28:23.9328791Z [ 21/385] xxhash-libs-0:0.8.3-4.fc44.x8 100% | 412.2 KiB/s |  41.2 KiB |  00m00s
+2026-07-27T18:28:24.0171629Z [ 22/385] ed-0:1.22.5-2.fc44.x86_64     100% | 580.8 KiB/s |  85.4 KiB |  00m00s
+2026-07-27T18:28:24.0240654Z [ 23/385] libdwarves1-0:1.30-3.fc44.x86 100% |   1.8 MiB/s | 281.8 KiB |  00m00s
+2026-07-27T18:28:24.0435238Z [ 24/385] python3-six-0:1.17.0-8.fc44.n 100% | 381.9 KiB/s |  42.0 KiB |  00m00s
+2026-07-27T18:28:24.0804097Z [ 25/385] python3-utils-0:3.9.1-3.fc44. 100% |   1.3 MiB/s |  81.3 KiB |  00m00s
+2026-07-27T18:28:24.1854053Z [ 26/385] python3-typing-extensions-0:4 100% | 697.8 KiB/s | 112.4 KiB |  00m00s
+2026-07-27T18:28:24.2682312Z [ 27/385] clang-resource-filesystem-0:2 100% | 193.5 KiB/s |  15.9 KiB |  00m00s
+2026-07-27T18:28:24.3959784Z [ 28/385] lld-0:22.1.8-4.fc44.x86_64    100% | 275.8 KiB/s |  35.0 KiB |  00m00s
+2026-07-27T18:28:24.9031356Z [ 29/385] clang-0:22.1.8-4.fc44.x86_64  100% |   8.3 MiB/s |   7.1 MiB |  00m01s
+2026-07-27T18:28:27.3698203Z [ 30/385] llvm-0:22.1.8-4.fc44.x86_64   100% |   7.9 MiB/s |  23.4 MiB |  00m03s
+2026-07-27T18:28:27.4339173Z [ 31/385] llvm-filesystem-0:22.1.8-4.fc 100% | 159.0 KiB/s |  10.0 KiB |  00m00s
+2026-07-27T18:28:27.8050690Z [ 32/385] lld-libs-0:22.1.8-4.fc44.x86_ 100% |   4.6 MiB/s |   1.7 MiB |  00m00s
+2026-07-27T18:28:28.5154949Z [ 33/385] clang-libs-0:22.1.8-4.fc44.x8 100% |   6.4 MiB/s |  28.2 MiB |  00m04s
+2026-07-27T18:28:28.5960351Z [ 34/385] llvm-libs-0:22.1.8-4.fc44.x86 100% |   9.2 MiB/s |  34.1 MiB |  00m04s
+2026-07-27T18:28:28.5967447Z [ 35/385] cmake-rpm-macros-0:4.3.0-1.fc 100% | 172.7 KiB/s |  13.8 KiB |  00m00s
+2026-07-27T18:28:28.6882497Z [ 36/385] cmake-filesystem-0:4.3.0-1.fc 100% | 164.7 KiB/s |  15.0 KiB |  00m00s
+2026-07-27T18:28:28.8619033Z [ 37/385] jsoncpp-0:1.9.6-3.fc44.x86_64 100% | 636.0 KiB/s | 110.0 KiB |  00m00s
+2026-07-27T18:28:28.9036173Z [ 38/385] cmake-data-0:4.3.0-1.fc44.noa 100% |   8.7 MiB/s |   2.7 MiB |  00m00s
+2026-07-27T18:28:29.0429431Z [ 39/385] rhash-0:1.4.5-4.fc44.x86_64   100% |   1.1 MiB/s | 201.9 KiB |  00m00s
+2026-07-27T18:28:29.1002992Z [ 40/385] ninja-build-0:1.13.2-2.fc44.x 100% |   1.0 MiB/s | 203.9 KiB |  00m00s
+2026-07-27T18:28:29.1509164Z [ 41/385] elfutils-libelf-devel-0:0.195 100% |   1.1 MiB/s | 124.0 KiB |  00m00s
+2026-07-27T18:28:29.1883460Z [ 42/385] cmake-0:4.3.0-1.fc44.x86_64   100% |  10.4 MiB/s |  14.4 MiB |  00m01s
+2026-07-27T18:28:29.2737600Z [ 43/385] ncurses-c++-libs-0:6.6-1.fc44 100% | 469.8 KiB/s |  39.5 KiB |  00m00s
+2026-07-27T18:28:29.3417394Z [ 44/385] openssl-devel-1:3.5.7-2.fc44. 100% |  12.5 MiB/s |   3.0 MiB |  00m00s
+2026-07-27T18:28:29.3789255Z [ 45/385] rsync-0:3.4.4-1.fc44.x86_64   100% |   4.1 MiB/s | 439.6 KiB |  00m00s
+2026-07-27T18:28:29.4087246Z [ 46/385] python3-0:3.14.6-1.fc44.x86_6 100% | 436.7 KiB/s |  28.8 KiB |  00m00s
+2026-07-27T18:28:29.4808243Z [ 47/385] ncurses-devel-0:6.6-1.fc44.x8 100% |   1.8 MiB/s | 591.2 KiB |  00m00s
+2026-07-27T18:28:29.4860305Z [ 48/385] mpdecimal-0:4.0.1-3.fc44.x86_ 100% |   1.3 MiB/s |  99.1 KiB |  00m00s
+2026-07-27T18:28:29.6377886Z [ 49/385] expat-0:2.8.1-1.fc44.x86_64   100% | 859.2 KiB/s | 129.7 KiB |  00m00s
+2026-07-27T18:28:29.7721421Z [ 50/385] python-pip-wheel-0:26.0.1-2.f 100% |   3.9 MiB/s |   1.1 MiB |  00m00s
+2026-07-27T18:28:29.7819171Z [ 51/385] jq-0:1.8.1-3.fc44.x86_64      100% |   1.5 MiB/s | 215.5 KiB |  00m00s
+2026-07-27T18:28:29.8605767Z [ 52/385] git-0:2.55.0-1.fc44.x86_64    100% | 527.4 KiB/s |  41.1 KiB |  00m00s
+2026-07-27T18:28:29.9097215Z [ 53/385] oniguruma-0:6.9.10-4.fc44.x86 100% |   1.6 MiB/s | 220.0 KiB |  00m00s
+2026-07-27T18:28:29.9683253Z [ 54/385] perl-Getopt-Long-1:2.58-521.f 100% | 594.5 KiB/s |  63.6 KiB |  00m00s
+2026-07-27T18:28:29.9990212Z [ 55/385] perl-PathTools-0:3.94-521.fc4 100% | 981.2 KiB/s |  87.3 KiB |  00m00s
+2026-07-27T18:28:30.0280373Z [ 56/385] python3-libs-0:3.14.6-1.fc44. 100% |  15.6 MiB/s |  10.1 MiB |  00m01s
+2026-07-27T18:28:30.0558600Z [ 57/385] perl-TermReadKey-0:2.38-27.fc 100% | 407.5 KiB/s |  35.5 KiB |  00m00s
+2026-07-27T18:28:30.1379205Z [ 58/385] perl-Git-0:2.55.0-1.fc44.noar 100% | 465.4 KiB/s |  37.7 KiB |  00m00s
+2026-07-27T18:28:30.2467087Z [ 59/385] perl-Exporter-0:5.79-521.fc44 100% | 285.3 KiB/s |  30.8 KiB |  00m00s
+2026-07-27T18:28:30.3374214Z [ 60/385] git-core-doc-0:2.55.0-1.fc44. 100% |  10.2 MiB/s |   3.2 MiB |  00m00s
+2026-07-27T18:28:30.3601033Z [ 61/385] perl-Pod-Usage-4:2.05-521.fc4 100% | 359.8 KiB/s |  40.7 KiB |  00m00s
+2026-07-27T18:28:30.4194844Z [ 62/385] perl-Text-ParseWords-0:3.31-5 100% | 203.4 KiB/s |  16.5 KiB |  00m00s
+2026-07-27T18:28:30.4524253Z [ 63/385] perl-constant-0:1.33-522.fc44 100% | 248.9 KiB/s |  22.9 KiB |  00m00s
+2026-07-27T18:28:30.5233079Z [ 64/385] perl-Carp-0:1.54-521.fc44.noa 100% | 279.4 KiB/s |  28.8 KiB |  00m00s
+2026-07-27T18:28:30.5389860Z [ 65/385] perl-Scalar-List-Utils-5:1.70 100% | 876.7 KiB/s |  75.4 KiB |  00m00s
+2026-07-27T18:28:30.6149860Z [ 66/385] perl-Pod-Perldoc-0:3.28.01-52 100% |   1.1 MiB/s |  86.1 KiB |  00m00s
+2026-07-27T18:28:30.6368318Z [ 67/385] perl-Error-1:0.17030-3.fc44.n 100% | 356.7 KiB/s |  40.3 KiB |  00m00s
+2026-07-27T18:28:30.6434402Z [ 68/385] git-core-0:2.55.0-1.fc44.x86_ 100% |   8.5 MiB/s |   5.4 MiB |  00m01s
+2026-07-27T18:28:30.6963096Z [ 69/385] perl-podlators-1:6.0.2-521.fc 100% |   1.5 MiB/s | 128.5 KiB |  00m00s
+2026-07-27T18:28:30.7406798Z [ 70/385] perl-File-Temp-1:0.231.200-2. 100% | 620.4 KiB/s |  59.6 KiB |  00m00s
+2026-07-27T18:28:30.8229936Z [ 71/385] perl-Pod-Simple-1:3.47-4.fc44 100% |   1.7 MiB/s | 220.0 KiB |  00m00s
+2026-07-27T18:28:30.8534627Z [ 72/385] perl-parent-1:0.244-521.fc44. 100% | 132.9 KiB/s |  14.9 KiB |  00m00s
+2026-07-27T18:28:30.8767824Z [ 73/385] groff-base-0:1.23.0-12.fc44.x 100% |   4.7 MiB/s |   1.1 MiB |  00m00s
+2026-07-27T18:28:30.9449451Z [ 74/385] perl-Term-ANSIColor-0:5.01-52 100% | 394.0 KiB/s |  47.7 KiB |  00m00s
+2026-07-27T18:28:30.9888260Z [ 75/385] perl-Term-Cap-0:1.18-521.fc44 100% | 162.9 KiB/s |  22.0 KiB |  00m00s
+2026-07-27T18:28:31.0108432Z [ 76/385] perl-File-Path-0:2.18-522.fc4 100% | 265.1 KiB/s |  35.3 KiB |  00m00s
+2026-07-27T18:28:31.0206504Z [ 77/385] perl-Pod-Escapes-1:1.07-521.f 100% | 263.9 KiB/s |  19.8 KiB |  00m00s
+2026-07-27T18:28:31.0655215Z [ 78/385] perl-Text-Tabs+Wrap-0:2024.00 100% | 286.2 KiB/s |  21.8 KiB |  00m00s
+2026-07-27T18:28:31.1405746Z [ 79/385] openssl-1:3.5.7-2.fc44.x86_64 100% |  10.4 MiB/s |   1.2 MiB |  00m00s
+2026-07-27T18:28:31.1411135Z [ 80/385] perl-4:5.42.2-524.fc44.x86_64 100% | 178.6 KiB/s |  13.4 KiB |  00m00s
+2026-07-27T18:28:31.1518572Z [ 81/385] ncurses-0:6.6-1.fc44.x86_64   100% |   3.0 MiB/s | 429.8 KiB |  00m00s
+2026-07-27T18:28:31.2724466Z [ 82/385] perl-CPAN-Meta-Requirements-0 100% | 293.3 KiB/s |  35.2 KiB |  00m00s
+2026-07-27T18:28:31.3344650Z [ 83/385] perl-CPAN-0:2.38-522.fc44.noa 100% |   2.9 MiB/s | 567.2 KiB |  00m00s
+2026-07-27T18:28:31.3369299Z [ 84/385] perl-CPAN-Meta-0:2.150013-1.f 100% | 986.3 KiB/s | 192.3 KiB |  00m00s
+2026-07-27T18:28:31.3797033Z [ 85/385] perl-CPAN-Meta-YAML-0:0.020-5 100% | 250.7 KiB/s |  26.8 KiB |  00m00s
+2026-07-27T18:28:31.4248195Z [ 86/385] perl-Compress-Raw-Zlib-0:2.22 100% | 762.2 KiB/s |  68.6 KiB |  00m00s
+2026-07-27T18:28:31.4448601Z [ 87/385] perl-Config-Perl-V-0:0.39-1.f 100% | 201.6 KiB/s |  21.6 KiB |  00m00s
+2026-07-27T18:28:31.5152480Z [ 88/385] perl-Digest-0:1.20-521.fc44.n 100% | 355.1 KiB/s |  24.9 KiB |  00m00s
+2026-07-27T18:28:31.5206046Z [ 89/385] perl-DB_File-0:1.860-1.fc44.x 100% | 578.6 KiB/s |  81.0 KiB |  00m00s
+2026-07-27T18:28:31.5616970Z [ 90/385] perl-Devel-PPPort-0:3.73-522. 100% |   1.6 MiB/s | 219.9 KiB |  00m00s
+2026-07-27T18:28:31.5979578Z [ 91/385] perl-Digest-SHA-1:6.04-522.fc 100% | 795.0 KiB/s |  61.2 KiB |  00m00s
+2026-07-27T18:28:31.6022640Z [ 92/385] perl-Digest-MD5-0:2.59-521.fc 100% | 418.8 KiB/s |  36.0 KiB |  00m00s
+2026-07-27T18:28:31.6394963Z [ 93/385] perl-Env-0:1.06-521.fc44.noar 100% | 253.9 KiB/s |  19.5 KiB |  00m00s
+2026-07-27T18:28:31.7326920Z [ 94/385] perl-ExtUtils-CBuilder-1:0.28 100% | 377.7 KiB/s |  50.6 KiB |  00m00s
+2026-07-27T18:28:31.8041523Z [ 95/385] perl-ExtUtils-Install-0:2.22- 100% | 265.3 KiB/s |  43.5 KiB |  00m00s
+2026-07-27T18:28:31.8141537Z [ 96/385] perl-ExtUtils-Command-2:7.76- 100% |  66.7 KiB/s |  14.1 KiB |  00m00s
+2026-07-27T18:28:31.8457983Z [ 97/385] perl-ExtUtils-MM-Utils-2:7.76 100% | 103.9 KiB/s |  11.6 KiB |  00m00s
+2026-07-27T18:28:31.9448910Z [ 98/385] perl-ExtUtils-Manifest-1:1.75 100% | 261.9 KiB/s |  34.0 KiB |  00m00s
+2026-07-27T18:28:31.9673362Z [ 99/385] perl-ExtUtils-MakeMaker-2:7.7 100% |   1.8 MiB/s | 294.6 KiB |  00m00s
+2026-07-27T18:28:32.1406328Z [100/385] perl-File-Fetch-0:1.08-4.fc44 100% | 158.4 KiB/s |  30.9 KiB |  00m00s
+2026-07-27T18:28:32.1897671Z [101/385] perl-Filter-2:1.65-2.fc44.x86 100% | 387.6 KiB/s |  86.0 KiB |  00m00s
+2026-07-27T18:28:32.2481850Z [102/385] perl-Filter-Simple-0:0.96-521 100% | 251.6 KiB/s |  26.9 KiB |  00m00s
+2026-07-27T18:28:32.2605700Z [103/385] perl-ExtUtils-ParseXS-1:3.61- 100% | 706.8 KiB/s | 292.6 KiB |  00m00s
+2026-07-27T18:28:32.3357071Z [104/385] perl-IO-Zlib-1:1.15-521.fc44. 100% | 225.8 KiB/s |  19.6 KiB |  00m00s
+2026-07-27T18:28:32.3782438Z [105/385] perl-IPC-Cmd-2:1.04-522.fc44. 100% | 338.5 KiB/s |  39.6 KiB |  00m00s
+2026-07-27T18:28:32.4443732Z [106/385] perl-IPC-SysV-0:2.09-522.fc44 100% | 376.2 KiB/s |  40.6 KiB |  00m00s
+2026-07-27T18:28:32.4755846Z [107/385] perl-IO-Socket-IP-0:0.43-522. 100% | 147.9 KiB/s |  42.2 KiB |  00m00s
+2026-07-27T18:28:32.5409012Z [108/385] perl-JSON-PP-1:4.16-523.fc44. 100% | 405.5 KiB/s |  65.7 KiB |  00m00s
+2026-07-27T18:28:32.6287866Z [109/385] perl-Locale-Maketext-0:1.33-5 100% | 508.4 KiB/s |  93.5 KiB |  00m00s
+2026-07-27T18:28:32.6403964Z [110/385] perl-MIME-Base64-0:3.16-521.f 100% | 181.5 KiB/s |  29.8 KiB |  00m00s
+2026-07-27T18:28:32.7213019Z [111/385] perl-Math-BigInt-FastCalc-0:0 100% | 305.9 KiB/s |  28.1 KiB |  00m00s
+2026-07-27T18:28:32.7370451Z [112/385] perl-Math-BigInt-1:2.0050.03- 100% |   1.2 MiB/s | 233.8 KiB |  00m00s
+2026-07-27T18:28:32.7803219Z [113/385] perl-Module-Load-1:0.36-521.f 100% | 124.1 KiB/s |  17.3 KiB |  00m00s
+2026-07-27T18:28:32.8728568Z [114/385] perl-Module-Metadata-0:1.0000 100% | 261.1 KiB/s |  35.2 KiB |  00m00s
+2026-07-27T18:28:32.9106859Z [115/385] perl-Module-Load-Conditional- 100% | 116.3 KiB/s |  22.0 KiB |  00m00s
+2026-07-27T18:28:32.9440071Z [116/385] perl-Net-Ping-0:2.76-521.fc44 100% | 304.0 KiB/s |  49.6 KiB |  00m00s
+2026-07-27T18:28:32.9862234Z [117/385] perl-Params-Check-1:0.38-521. 100% | 192.6 KiB/s |  21.8 KiB |  00m00s
+2026-07-27T18:28:32.9974322Z [118/385] perl-Perl-OSType-0:1.010-522. 100% | 266.3 KiB/s |  22.9 KiB |  00m00s
+2026-07-27T18:28:33.0200233Z [119/385] perl-PerlIO-via-QuotedPrint-0 100% | 289.7 KiB/s |  21.7 KiB |  00m00s
+2026-07-27T18:28:33.1017368Z [120/385] perl-Sys-Syslog-0:0.36-522.fc 100% | 573.4 KiB/s |  46.4 KiB |  00m00s
+2026-07-27T18:28:33.1275656Z [121/385] perl-Pod-Checker-4:1.77-521.f 100% | 224.2 KiB/s |  31.6 KiB |  00m00s
+2026-07-27T18:28:33.1443938Z [122/385] perl-Storable-1:3.37-522.fc44 100% | 690.9 KiB/s | 100.9 KiB |  00m00s
+2026-07-27T18:28:33.2042557Z [123/385] perl-Term-Table-0:0.028-2.fc4 100% | 425.4 KiB/s |  43.4 KiB |  00m00s
+2026-07-27T18:28:33.3404612Z [124/385] perl-Text-Balanced-0:2.07-2.f 100% | 362.0 KiB/s |  48.9 KiB |  00m00s
+2026-07-27T18:28:33.3577311Z [125/385] perl-Test-Harness-1:3.52-5.fc 100% |   1.2 MiB/s | 276.9 KiB |  00m00s
+2026-07-27T18:28:33.4215328Z [126/385] perl-Thread-Queue-0:3.14-521. 100% | 266.8 KiB/s |  21.3 KiB |  00m00s
+2026-07-27T18:28:33.4817095Z [127/385] perl-Tie-RefHash-0:1.41-521.f 100% | 191.8 KiB/s |  23.6 KiB |  00m00s
+2026-07-27T18:28:33.5580896Z [128/385] perl-Test-Simple-3:1.302219-2 100% |   2.1 MiB/s | 884.7 KiB |  00m00s
+2026-07-27T18:28:33.5995577Z [129/385] perl-Time-HiRes-4:1.9778-521. 100% | 323.1 KiB/s |  57.2 KiB |  00m00s
+2026-07-27T18:28:33.6857105Z [130/385] perl-Time-Local-2:1.350-521.f 100% | 170.0 KiB/s |  34.5 KiB |  00m00s
+2026-07-27T18:28:33.7806976Z [131/385] perl-Unicode-Collate-0:1.31-5 100% |   2.8 MiB/s | 644.6 KiB |  00m00s
+2026-07-27T18:28:33.8223707Z [132/385] perl-autodie-0:2.37-522.fc44. 100% | 710.9 KiB/s |  96.7 KiB |  00m00s
+2026-07-27T18:28:33.9033971Z [133/385] perl-Unicode-Normalize-0:1.32 100% | 245.6 KiB/s |  74.4 KiB |  00m00s
+2026-07-27T18:28:33.9091000Z [134/385] perl-bignum-0:0.67-522.fc44.n 100% | 382.3 KiB/s |  48.9 KiB |  00m00s
+2026-07-27T18:28:33.9531914Z [135/385] perl-encoding-4:3.00-521.fc44 100% | 484.0 KiB/s |  62.9 KiB |  00m00s
+2026-07-27T18:28:33.9897930Z [136/385] perl-experimental-0:0.036-3.f 100% | 319.6 KiB/s |  27.5 KiB |  00m00s
+2026-07-27T18:28:34.1267437Z [137/385] perl-threads-1:2.43-521.fc44. 100% | 427.6 KiB/s |  58.2 KiB |  00m00s
+2026-07-27T18:28:34.1599292Z [138/385] perl-libnet-0:3.15-522.fc44.n 100% | 513.6 KiB/s | 128.4 KiB |  00m00s
+2026-07-27T18:28:34.2027822Z [139/385] perl-threads-shared-0:1.70-52 100% | 602.5 KiB/s |  45.2 KiB |  00m00s
+2026-07-27T18:28:34.2466688Z [140/385] perl-version-9:0.99.33-522.fc 100% | 734.2 KiB/s |  63.1 KiB |  00m00s
+2026-07-27T18:28:34.3003080Z [141/385] perl-perlfaq-0:5.20250619-521 100% |   1.1 MiB/s | 378.6 KiB |  00m00s
+2026-07-27T18:28:34.3167561Z [142/385] perl-interpreter-4:5.42.2-524 100% |   1.0 MiB/s |  72.1 KiB |  00m00s
+2026-07-27T18:28:34.5493838Z [143/385] perl-Archive-Zip-0:1.68-18.fc 100% | 480.2 KiB/s | 111.4 KiB |  00m00s
+2026-07-27T18:28:34.5505489Z [144/385] perl-devel-4:5.42.2-524.fc44. 100% |   1.9 MiB/s | 662.8 KiB |  00m00s
+2026-07-27T18:28:34.6368406Z [145/385] perl-Compress-Bzip2-0:2.28-25 100% | 771.7 KiB/s |  67.1 KiB |  00m00s
+2026-07-27T18:28:34.7026695Z [146/385] perl-File-HomeDir-0:1.006-16. 100% | 912.0 KiB/s |  59.3 KiB |  00m00s
+2026-07-27T18:28:34.7075816Z [147/385] perl-Devel-Size-0:0.86-1.fc44 100% | 196.1 KiB/s |  30.6 KiB |  00m00s
+2026-07-27T18:28:34.8497268Z [148/385] perl-Module-Signature-0:0.93- 100% | 621.7 KiB/s |  87.7 KiB |  00m00s
+2026-07-27T18:28:34.8525384Z [149/385] perl-Module-Build-2:0.42.34-1 100% |   1.6 MiB/s | 251.3 KiB |  00m00s
+2026-07-27T18:28:34.9350612Z [150/385] perl-Text-Glob-0:0.11-27.fc44 100% | 157.3 KiB/s |  13.4 KiB |  00m00s
+2026-07-27T18:28:34.9519902Z [151/385] perl-local-lib-0:2.000029-11. 100% | 669.2 KiB/s |  66.3 KiB |  00m00s
+2026-07-27T18:28:35.0175305Z [152/385] perl-IPC-System-Simple-0:1.30 100% | 595.1 KiB/s |  38.7 KiB |  00m00s
+2026-07-27T18:28:35.0546375Z [153/385] libxcrypt-devel-0:4.5.2-3.fc4 100% | 833.9 KiB/s |  30.0 KiB |  00m00s
+2026-07-27T18:28:35.1482686Z [154/385] perl-File-Which-0:1.27-15.fc4 100% | 231.5 KiB/s |  21.5 KiB |  00m00s
+2026-07-27T18:28:35.3028713Z [155/385] perl-libs-4:5.42.2-524.fc44.x 100% |   2.6 MiB/s |   2.6 MiB |  00m01s
+2026-07-27T18:28:35.3479799Z [156/385] perl-Software-License-0:0.104 100% | 755.7 KiB/s | 150.4 KiB |  00m00s
+2026-07-27T18:28:35.4076946Z [157/385] perl-inc-latest-2:0.500-32.fc 100% | 223.6 KiB/s |  23.2 KiB |  00m00s
+2026-07-27T18:28:35.4671057Z [158/385] perl-Text-Diff-0:1.45-25.fc44 100% | 339.0 KiB/s |  40.0 KiB |  00m00s
+2026-07-27T18:28:35.4685086Z [159/385] libdb-0:5.3.28-67.fc44.x86_64 100% |   1.5 MiB/s | 802.3 KiB |  00m01s
+2026-07-27T18:28:35.5050369Z [160/385] perl-Data-Section-0:0.200008- 100% | 258.0 KiB/s |  25.0 KiB |  00m00s
+2026-07-27T18:28:35.5437945Z [161/385] perl-Algorithm-Diff-0:1.2010- 100% | 619.5 KiB/s |  46.5 KiB |  00m00s
+2026-07-27T18:28:35.5857584Z [162/385] perl-Text-Template-0:1.61-9.f 100% | 502.6 KiB/s |  59.3 KiB |  00m00s
+2026-07-27T18:28:35.6039903Z [163/385] perl-Errno-0:1.38-524.fc44.x8 100% | 245.1 KiB/s |  14.7 KiB |  00m00s
+2026-07-27T18:28:35.6088248Z [164/385] perl-ph-0:5.42.2-524.fc44.x86 100% | 494.1 KiB/s |  50.9 KiB |  00m00s
+2026-07-27T18:28:35.6569986Z [165/385] perl-MRO-Compat-0:0.15-13.fc4 100% | 358.1 KiB/s |  25.4 KiB |  00m00s
+2026-07-27T18:28:35.7284242Z [166/385] perl-utils-0:5.42.2-524.fc44. 100% | 439.0 KiB/s |  52.2 KiB |  00m00s
+2026-07-27T18:28:35.7292200Z [167/385] perl-Sub-Exporter-0:0.991-7.f 100% | 617.9 KiB/s |  77.2 KiB |  00m00s
+2026-07-27T18:28:35.8190390Z [168/385] perl-Data-OptList-0:0.114-8.f 100% | 299.7 KiB/s |  26.7 KiB |  00m00s
+2026-07-27T18:28:35.8193353Z [169/385] perl-Pod-Functions-0:1.14-524 100% | 160.5 KiB/s |  14.4 KiB |  00m00s
+2026-07-27T18:28:35.8474657Z [170/385] perl-diagnostics-0:1.40-524.f 100% |   1.1 MiB/s | 220.3 KiB |  00m00s
+2026-07-27T18:28:35.8902882Z [171/385] perl-Params-Util-0:1.102-20.f 100% | 467.2 KiB/s |  32.7 KiB |  00m00s
+2026-07-27T18:28:35.9337460Z [172/385] perl-Sub-Install-0:0.929-9.fc 100% | 263.7 KiB/s |  22.7 KiB |  00m00s
+2026-07-27T18:28:35.9341801Z [173/385] perl-Package-Generator-0:1.10 100% | 194.3 KiB/s |  22.3 KiB |  00m00s
+2026-07-27T18:28:35.9499683Z [174/385] perl-File-Basename-0:2.86-524 100% | 287.0 KiB/s |  16.9 KiB |  00m00s
+2026-07-27T18:28:35.9834427Z [175/385] perl-vars-0:1.05-524.fc44.noa 100% | 260.6 KiB/s |  12.8 KiB |  00m00s
+2026-07-27T18:28:35.9936588Z [176/385] perl-DynaLoader-0:1.57-524.fc 100% | 599.5 KiB/s |  25.8 KiB |  00m00s
+2026-07-27T18:28:35.9989265Z [177/385] perl-Getopt-Std-0:1.14-524.fc 100% | 241.8 KiB/s |  15.5 KiB |  00m00s
+2026-07-27T18:28:36.0707366Z [178/385] perl-File-Compare-0:1.100.800 100% | 183.5 KiB/s |  13.0 KiB |  00m00s
+2026-07-27T18:28:36.0714066Z [179/385] perl-ExtUtils-Constant-0:0.25 100% | 566.3 KiB/s |  43.6 KiB |  00m00s
+2026-07-27T18:28:36.1361676Z [180/385] ansible-srpm-macros-0:1-20.1. 100% | 314.1 KiB/s |  20.1 KiB |  00m00s
+2026-07-27T18:28:36.2204798Z [181/385] cmake-srpm-macros-0:4.3.0-1.f 100% | 124.2 KiB/s |  10.4 KiB |  00m00s
+2026-07-27T18:28:36.2287070Z [182/385] redhat-rpm-config-0:344-2.fc4 100% | 497.2 KiB/s |  78.1 KiB |  00m00s
+2026-07-27T18:28:36.2307433Z [183/385] perl-Encode-4:3.21-521.fc44.x 100% |   4.3 MiB/s |   1.1 MiB |  00m00s
+2026-07-27T18:28:36.2978912Z [184/385] erlang-srpm-macros-0:0.3.11-1 100% | 150.9 KiB/s |  10.0 KiB |  00m00s
+2026-07-27T18:28:36.3514439Z [185/385] filesystem-srpm-macros-0:3.18 100% | 502.4 KiB/s |  26.6 KiB |  00m00s
+2026-07-27T18:28:36.3709672Z [186/385] dwz-0:0.16-3.fc44.x86_64      100% | 925.9 KiB/s | 138.9 KiB |  00m00s
+2026-07-27T18:28:36.4003968Z [187/385] fonts-srpm-macros-1:5.0.0-2.f 100% | 570.4 KiB/s |  27.4 KiB |  00m00s
+2026-07-27T18:28:36.4272988Z [188/385] forge-srpm-macros-0:0.4.0-4.f 100% | 356.9 KiB/s |  20.0 KiB |  00m00s
+2026-07-27T18:28:36.4604136Z [189/385] fpc-srpm-macros-0:1.3-16.fc44 100% | 134.5 KiB/s |   7.9 KiB |  00m00s
+2026-07-27T18:28:36.4816231Z [190/385] gap-srpm-macros-0:2-2.fc44.no 100% | 169.3 KiB/s |   9.1 KiB |  00m00s
+2026-07-27T18:28:36.5362941Z [191/385] ghc-srpm-macros-0:1.10-1.fc44 100% | 117.2 KiB/s |   8.8 KiB |  00m00s
+2026-07-27T18:28:36.5737903Z [192/385] go-srpm-macros-0:3.8.0-2.fc44 100% | 762.8 KiB/s |  28.2 KiB |  00m00s
+2026-07-27T18:28:36.6126123Z [193/385] gnat-srpm-macros-0:7-2.fc44.n 100% |  67.2 KiB/s |   8.7 KiB |  00m00s
+2026-07-27T18:28:36.6231706Z [194/385] java-srpm-macros-0:1-8.fc44.n 100% | 165.6 KiB/s |   8.1 KiB |  00m00s
+2026-07-27T18:28:36.6670879Z [195/385] lua-srpm-macros-0:1-17.fc44.n 100% | 206.5 KiB/s |   8.9 KiB |  00m00s
+2026-07-27T18:28:36.6675060Z [196/385] kernel-srpm-macros-0:1.0-28.f 100% | 167.5 KiB/s |   9.0 KiB |  00m00s
+2026-07-27T18:28:36.7104091Z [197/385] ocaml-srpm-macros-0:11-3.fc44 100% | 215.7 KiB/s |   9.3 KiB |  00m00s
+2026-07-27T18:28:36.7537319Z [198/385] openblas-srpm-macros-0:2-21.f 100% |  91.8 KiB/s |   7.8 KiB |  00m00s
+2026-07-27T18:28:36.8024715Z [199/385] perl-srpm-macros-0:1-61.fc44. 100% |  92.6 KiB/s |   8.4 KiB |  00m00s
+2026-07-27T18:28:36.8028509Z [200/385] python-srpm-macros-0:3.14-12. 100% | 500.8 KiB/s |  24.0 KiB |  00m00s
+2026-07-27T18:28:36.8515517Z [201/385] efi-srpm-macros-0:6-6.fc44.no 100% |  36.3 KiB/s |  22.6 KiB |  00m01s
+2026-07-27T18:28:36.8621900Z [202/385] tree-sitter-srpm-macros-0:0.4 100% | 228.3 KiB/s |  13.5 KiB |  00m00s
+2026-07-27T18:28:36.9875668Z [203/385] qt5-srpm-macros-0:5.15.18-2.f 100% |  47.2 KiB/s |   8.7 KiB |  00m00s
+2026-07-27T18:28:37.0194938Z [204/385] zip-0:3.0-45.fc44.x86_64      100% |   1.6 MiB/s | 264.4 KiB |  00m00s
+2026-07-27T18:28:37.0198821Z [205/385] zig-srpm-macros-0:1-8.fc44.no 100% |  52.4 KiB/s |   8.8 KiB |  00m00s
+2026-07-27T18:28:37.1337339Z [206/385] gnome-srpm-macros-0:1.0-1.fc4 100% |  59.7 KiB/s |   8.7 KiB |  00m00s
+2026-07-27T18:28:37.1821479Z [207/385] systemtap-sdt-dtrace-0:5.5-1. 100% | 436.5 KiB/s |  70.7 KiB |  00m00s
+2026-07-27T18:28:37.2529198Z [208/385] perl-Data-Dumper-0:2.192-523. 100% | 803.7 KiB/s |  56.3 KiB |  00m00s
+2026-07-27T18:28:37.3520189Z [209/385] perl-B-0:1.89-524.fc44.x86_64 100% |   1.8 MiB/s | 177.7 KiB |  00m00s
+2026-07-27T18:28:37.4152928Z [210/385] perl-if-0:0.61.000-524.fc44.n 100% | 218.8 KiB/s |  13.8 KiB |  00m00s
+2026-07-27T18:28:37.4750694Z [211/385] perl-overloading-0:0.02-524.f 100% | 214.9 KiB/s |  12.7 KiB |  00m00s
+2026-07-27T18:28:37.5847945Z [212/385] perl-Archive-Tar-0:3.12-1.fc4 100% | 659.6 KiB/s |  71.9 KiB |  00m00s
+2026-07-27T18:28:37.6218656Z [213/385] systemtap-sdt-devel-0:5.5-1.f 100% | 116.3 KiB/s |  70.0 KiB |  00m01s
+2026-07-27T18:28:37.7314208Z [214/385] perl-IO-Compress-Lzma-0:2.217 100% | 528.8 KiB/s |  77.2 KiB |  00m00s
+2026-07-27T18:28:37.8077890Z [215/385] perl-Attribute-Handlers-0:1.0 100% | 366.5 KiB/s |  27.9 KiB |  00m00s
+2026-07-27T18:28:37.8710473Z [216/385] perl-AutoLoader-0:5.74-524.fc 100% | 333.6 KiB/s |  21.0 KiB |  00m00s
+2026-07-27T18:28:37.9150852Z [217/385] perl-Compress-Raw-Lzma-0:2.22 100% | 204.6 KiB/s |  59.7 KiB |  00m00s
+2026-07-27T18:28:37.9809847Z [218/385] perl-AutoSplit-0:5.74-524.fc4 100% | 196.4 KiB/s |  21.4 KiB |  00m00s
+2026-07-27T18:28:38.0457268Z [219/385] perl-Class-Struct-0:0.68-524. 100% | 341.6 KiB/s |  21.9 KiB |  00m00s
+2026-07-27T18:28:38.0669705Z [220/385] perl-Benchmark-0:1.27-524.fc4 100% | 176.0 KiB/s |  26.6 KiB |  00m00s
+2026-07-27T18:28:38.1442569Z [221/385] perl-Compress-Raw-Bzip2-0:2.2 100% | 385.9 KiB/s |  37.8 KiB |  00m00s
+2026-07-27T18:28:38.1536370Z [222/385] perl-Config-Extensions-0:0.03 100% | 140.1 KiB/s |  12.0 KiB |  00m00s
+2026-07-27T18:28:38.2247168Z [223/385] perl-DBM_Filter-0:0.07-524.fc 100% | 337.7 KiB/s |  27.0 KiB |  00m00s
+2026-07-27T18:28:38.2408581Z [224/385] python3-pyparsing-0:3.1.2-15. 100% | 259.3 KiB/s | 286.8 KiB |  00m01s
+2026-07-27T18:28:38.2955446Z [225/385] perl-Devel-SelfStubber-0:1.06 100% | 201.5 KiB/s |  14.1 KiB |  00m00s
+2026-07-27T18:28:38.3169177Z [226/385] perl-Devel-Peek-0:1.36-524.fc 100% | 194.7 KiB/s |  31.7 KiB |  00m00s
+2026-07-27T18:28:38.3226646Z [227/385] perl-DirHandle-0:1.05-524.fc4 100% | 151.1 KiB/s |  12.2 KiB |  00m00s
+2026-07-27T18:28:38.3883189Z [228/385] perl-Dumpvalue-0:2.27-524.fc4 100% | 196.7 KiB/s |  18.1 KiB |  00m00s
+2026-07-27T18:28:38.4229551Z [229/385] perl-English-0:1.11-524.fc44. 100% | 133.8 KiB/s |  13.4 KiB |  00m00s
+2026-07-27T18:28:38.4798696Z [230/385] perl-ExtUtils-Embed-0:1.35-52 100% | 191.9 KiB/s |  17.5 KiB |  00m00s
+2026-07-27T18:28:38.5133314Z [231/385] perl-Encode-devel-4:3.21-521. 100% | 209.1 KiB/s |  41.0 KiB |  00m00s
+2026-07-27T18:28:38.5450437Z [232/385] perl-Fcntl-0:1.20-524.fc44.x8 100% | 454.0 KiB/s |  29.5 KiB |  00m00s
+2026-07-27T18:28:38.5454979Z [233/385] perl-ExtUtils-Miniperl-0:1.14 100% | 121.4 KiB/s |  14.8 KiB |  00m00s
+2026-07-27T18:28:38.6432782Z [234/385] perl-File-DosGlob-0:1.12-524. 100% | 198.5 KiB/s |  19.3 KiB |  00m00s
+2026-07-27T18:28:38.6483056Z [235/385] perl-File-Find-0:1.44-524.fc4 100% | 246.3 KiB/s |  25.1 KiB |  00m00s
+2026-07-27T18:28:38.6546541Z [236/385] perl-File-Copy-0:2.41-524.fc4 100% | 141.2 KiB/s |  19.9 KiB |  00m00s
+2026-07-27T18:28:38.7199914Z [237/385] perl-FileCache-0:1.10-524.fc4 100% | 204.3 KiB/s |  14.5 KiB |  00m00s
+2026-07-27T18:28:38.7250787Z [238/385] perl-File-stat-0:1.14-524.fc4 100% | 207.9 KiB/s |  16.8 KiB |  00m00s
+2026-07-27T18:28:38.7453144Z [239/385] perl-FileHandle-0:2.05-524.fc 100% | 169.7 KiB/s |  15.3 KiB |  00m00s
+2026-07-27T18:28:38.7958224Z [240/385] perl-FindBin-0:1.54-524.fc44. 100% | 186.8 KiB/s |  14.0 KiB |  00m00s
+2026-07-27T18:28:38.9036035Z [241/385] perl-GDBM_File-1:1.24-524.fc4 100% | 238.3 KiB/s |  42.4 KiB |  00m00s
+2026-07-27T18:28:38.9478556Z [242/385] perl-HTTP-Tiny-0:0.094-1.fc44 100% | 282.7 KiB/s |  57.1 KiB |  00m00s
+2026-07-27T18:28:39.0289860Z [243/385] perl-IO-Socket-SSL-0:2.098-2. 100% |   1.0 MiB/s | 234.7 KiB |  00m00s
+2026-07-27T18:28:39.1097923Z [244/385] perl-Hash-Util-0:0.32-524.fc4 100% | 213.6 KiB/s |  34.4 KiB |  00m00s
+2026-07-27T18:28:39.2180316Z [245/385] perl-I18N-Collate-0:1.02-524. 100% | 129.2 KiB/s |  14.0 KiB |  00m00s
+2026-07-27T18:28:39.2335104Z [246/385] perl-Hash-Util-FieldHash-0:1. 100% | 189.7 KiB/s |  38.7 KiB |  00m00s
+2026-07-27T18:28:39.3157438Z [247/385] perl-I18N-Langinfo-0:0.24-524 100% | 309.3 KiB/s |  25.4 KiB |  00m00s
+2026-07-27T18:28:39.4087694Z [248/385] perl-IO-0:1.55-524.fc44.x86_6 100% | 890.6 KiB/s |  81.9 KiB |  00m00s
+2026-07-27T18:28:39.4566582Z [249/385] perl-I18N-LangTags-0:0.45-524 100% | 220.0 KiB/s |  52.4 KiB |  00m00s
+2026-07-27T18:28:39.5763861Z [250/385] perl-IPC-Open3-0:1.24-524.fc4 100% | 199.1 KiB/s |  23.7 KiB |  00m00s
+2026-07-27T18:28:39.6739718Z [251/385] perl-Locale-Maketext-Simple-1 100% | 178.9 KiB/s |  17.4 KiB |  00m00s
+2026-07-27T18:28:39.8418281Z [252/385] perl-Math-Complex-0:1.63-524. 100% | 275.1 KiB/s |  45.9 KiB |  00m00s
+2026-07-27T18:28:39.8595297Z [253/385] perl-Net-SSLeay-0:1.94-12.fc4 100% | 391.0 KiB/s | 373.4 KiB |  00m01s
+2026-07-27T18:28:40.0334949Z [254/385] perl-Module-CoreList-1:5.2026 100% | 549.0 KiB/s |  95.0 KiB |  00m00s
+2026-07-27T18:28:40.0700894Z [255/385] perl-IO-Compress-0:2.221-1.fc 100% | 469.8 KiB/s | 310.5 KiB |  00m01s
+2026-07-27T18:28:40.0870452Z [256/385] perl-Memoize-0:1.17-524.fc44. 100% | 189.0 KiB/s |  46.3 KiB |  00m00s
+2026-07-27T18:28:40.1190485Z [257/385] perl-Module-CoreList-tools-1: 100% | 222.4 KiB/s |  18.9 KiB |  00m00s
+2026-07-27T18:28:40.1406084Z [258/385] perl-Module-Loaded-1:0.08-524 100% | 188.1 KiB/s |  13.2 KiB |  00m00s
+2026-07-27T18:28:40.1954687Z [259/385] perl-NDBM_File-0:1.18-524.fc4 100% | 206.4 KiB/s |  22.3 KiB |  00m00s
+2026-07-27T18:28:40.1958698Z [260/385] perl-NEXT-0:0.69-524.fc44.noa 100% | 272.7 KiB/s |  20.7 KiB |  00m00s
+2026-07-27T18:28:40.2549830Z [261/385] perl-Net-0:1.04-524.fc44.noar 100% | 197.0 KiB/s |  22.5 KiB |  00m00s
+2026-07-27T18:28:40.3324424Z [262/385] perl-POSIX-0:2.23-524.fc44.x8 100% |   1.2 MiB/s |  96.8 KiB |  00m00s
+2026-07-27T18:28:40.3414759Z [263/385] perl-ODBM_File-0:1.20-524.fc4 100% | 155.2 KiB/s |  22.5 KiB |  00m00s
+2026-07-27T18:28:40.3585676Z [264/385] perl-Opcode-0:1.69-524.fc44.x 100% | 220.5 KiB/s |  35.7 KiB |  00m00s
+2026-07-27T18:28:40.4238954Z [265/385] perl-Pod-Html-0:1.35-524.fc44 100% | 322.0 KiB/s |  29.3 KiB |  00m00s
+2026-07-27T18:28:40.4558438Z [266/385] perl-Search-Dict-0:1.08-524.f 100% | 131.8 KiB/s |  12.8 KiB |  00m00s
+2026-07-27T18:28:40.4732064Z [267/385] perl-Safe-0:2.47-524.fc44.noa 100% | 188.6 KiB/s |  24.7 KiB |  00m00s
+2026-07-27T18:28:40.4735866Z [268/385] perl-SelectSaver-0:1.02-524.f 100% | 234.8 KiB/s |  11.5 KiB |  00m00s
+2026-07-27T18:28:40.5317414Z [269/385] perl-Symbol-0:1.09-524.fc44.n 100% | 245.3 KiB/s |  14.0 KiB |  00m00s
+2026-07-27T18:28:40.5537412Z [270/385] perl-SelfLoader-0:1.28-524.fc 100% | 218.6 KiB/s |  21.2 KiB |  00m00s
+2026-07-27T18:28:40.6303208Z [271/385] perl-Socket-4:2.041-1.fc44.x8 100% | 352.4 KiB/s |  55.0 KiB |  00m00s
+2026-07-27T18:28:40.6350530Z [272/385] perl-Sys-Hostname-0:1.25-524. 100% | 163.6 KiB/s |  16.9 KiB |  00m00s
+2026-07-27T18:28:40.6354409Z [273/385] perl-Term-Complete-0:1.403-52 100% | 157.7 KiB/s |  12.8 KiB |  00m00s
+2026-07-27T18:28:40.6953028Z [274/385] perl-Text-Abbrev-0:1.02-524.f 100% | 202.2 KiB/s |  11.9 KiB |  00m00s
+2026-07-27T18:28:40.7326818Z [275/385] perl-Test-0:1.31-524.fc44.noa 100% | 292.2 KiB/s |  28.3 KiB |  00m00s
+2026-07-27T18:28:40.7428056Z [276/385] perl-Term-ReadLine-0:1.17-524 100% | 168.0 KiB/s |  18.8 KiB |  00m00s
+2026-07-27T18:28:40.7719511Z [277/385] perl-Thread-0:3.06-524.fc44.n 100% | 234.1 KiB/s |  17.8 KiB |  00m00s
+2026-07-27T18:28:40.8210864Z [278/385] perl-Thread-Semaphore-0:2.13- 100% | 175.3 KiB/s |  15.4 KiB |  00m00s
+2026-07-27T18:28:40.8584650Z [279/385] perl-Tie-0:4.6-524.fc44.noarc 100% | 239.8 KiB/s |  27.6 KiB |  00m00s
+2026-07-27T18:28:40.8633269Z [280/385] perl-Tie-File-0:1.10-524.fc44 100% | 472.8 KiB/s |  43.0 KiB |  00m00s
+2026-07-27T18:28:40.9109185Z [281/385] perl-Tie-Memoize-0:1.1-524.fc 100% | 156.0 KiB/s |  13.9 KiB |  00m00s
+2026-07-27T18:28:40.9731406Z [282/385] perl-Time-Piece-0:1.3600-524. 100% | 367.8 KiB/s |  40.1 KiB |  00m00s
+2026-07-27T18:28:40.9735425Z [283/385] perl-Time-0:1.04-524.fc44.noa 100% | 145.6 KiB/s |  16.6 KiB |  00m00s
+2026-07-27T18:28:41.0632517Z [284/385] perl-autouse-0:1.11-524.fc44. 100% | 152.5 KiB/s |  13.6 KiB |  00m00s
+2026-07-27T18:28:41.0968673Z [285/385] perl-Unicode-UCD-0:0.81-524.f 100% | 427.6 KiB/s |  79.1 KiB |  00m00s
+2026-07-27T18:28:41.1177856Z [286/385] perl-User-pwent-0:1.05-524.fc 100% | 134.2 KiB/s |  19.3 KiB |  00m00s
+2026-07-27T18:28:41.1179616Z [287/385] perl-base-0:2.27-524.fc44.noa 100% | 296.1 KiB/s |  16.0 KiB |  00m00s
+2026-07-27T18:28:41.1616363Z [288/385] perl-blib-0:1.07-524.fc44.noa 100% | 190.4 KiB/s |  12.2 KiB |  00m00s
+2026-07-27T18:28:41.1829322Z [289/385] perl-meta-notation-0:5.42.2-5 100% | 163.1 KiB/s |  10.4 KiB |  00m00s
+2026-07-27T18:28:41.2277848Z [290/385] perl-deprecate-0:0.04-524.fc4 100% | 326.5 KiB/s |  14.4 KiB |  00m00s
+2026-07-27T18:28:41.2484087Z [291/385] perl-sigtrap-0:1.10-524.fc44. 100% | 179.4 KiB/s |  15.4 KiB |  00m00s
+2026-07-27T18:28:41.3082523Z [292/385] perl-encoding-warnings-0:0.14 100% | 276.8 KiB/s |  16.3 KiB |  00m00s
+2026-07-27T18:28:41.3795338Z [293/385] perl-fields-0:2.27-524.fc44.n 100% | 223.9 KiB/s |  15.9 KiB |  00m00s
+2026-07-27T18:28:41.4401606Z [294/385] perl-debugger-0:1.60-524.fc44 100% | 414.9 KiB/s | 133.2 KiB |  00m00s
+2026-07-27T18:28:41.4558172Z [295/385] perl-filetest-0:1.03-524.fc44 100% | 189.2 KiB/s |  14.4 KiB |  00m00s
+2026-07-27T18:28:41.5317863Z [296/385] perl-less-0:0.03-524.fc44.noa 100% | 142.6 KiB/s |  13.0 KiB |  00m00s
+2026-07-27T18:28:41.5369701Z [297/385] perl-lib-0:0.65-524.fc44.x86_ 100% | 181.6 KiB/s |  14.7 KiB |  00m00s
+2026-07-27T18:28:41.6120706Z [298/385] perl-locale-0:1.13-524.fc44.n 100% | 179.5 KiB/s |  13.3 KiB |  00m00s
+2026-07-27T18:28:41.6546764Z [299/385] perl-libnetcfg-4:5.42.2-524.f 100% | 132.0 KiB/s |  16.1 KiB |  00m00s
+2026-07-27T18:28:41.6937414Z [300/385] perl-macros-4:5.42.2-524.fc44 100% | 149.0 KiB/s |  12.1 KiB |  00m00s
+2026-07-27T18:28:41.7750654Z [301/385] perl-mro-0:1.29-524.fc44.x86_ 100% | 246.6 KiB/s |  29.6 KiB |  00m00s
+2026-07-27T18:28:41.8024453Z [302/385] perl-open-0:1.13-524.fc44.noa 100% | 150.9 KiB/s |  16.3 KiB |  00m00s
+2026-07-27T18:28:41.8895539Z [303/385] perl-sort-0:2.06-524.fc44.noa 100% | 150.8 KiB/s |  13.0 KiB |  00m00s
+2026-07-27T18:28:41.9121820Z [304/385] perl-overload-0:1.40-524.fc44 100% | 333.4 KiB/s |  45.3 KiB |  00m00s
+2026-07-27T18:28:41.9694433Z [305/385] perl-subs-0:1.04-524.fc44.noa 100% | 145.4 KiB/s |  11.5 KiB |  00m00s
+2026-07-27T18:28:42.1040077Z [306/385] pkgconf-pkg-config-0:2.5.1-1. 100% |  70.7 KiB/s |   9.5 KiB |  00m00s
+2026-07-27T18:28:42.2201580Z [307/385] pkgconf-0:2.5.1-1.fc44.x86_64 100% | 423.4 KiB/s |  48.7 KiB |  00m00s
+2026-07-27T18:28:42.2723945Z [308/385] perl-vmsish-0:1.04-524.fc44.n 100% |  38.6 KiB/s |  13.9 KiB |  00m00s
+2026-07-27T18:28:42.2801315Z [309/385] pkgconf-m4-0:2.5.1-1.fc44.noa 100% | 233.1 KiB/s |  13.8 KiB |  00m00s
+2026-07-27T18:28:42.4161526Z [310/385] libpkgconf-0:2.5.1-1.fc44.x86 100% | 298.4 KiB/s |  42.7 KiB |  00m00s
+2026-07-27T18:28:42.4682316Z [311/385] libedit-0:3.1-59.20260512cvs. 100% | 590.5 KiB/s | 110.4 KiB |  00m00s
+2026-07-27T18:28:42.6778376Z [312/385] perl-doc-0:5.42.2-524.fc44.no 100% |   3.5 MiB/s |   5.0 MiB |  00m01s
+2026-07-27T18:28:42.7801541Z [313/385] less-0:704-2.fc44.x86_64      100% | 628.0 KiB/s | 227.9 KiB |  00m00s
+2026-07-27T18:28:42.7840474Z [314/385] openssh-0:10.2p1-13.fc44.x86_ 100% |   3.3 MiB/s | 356.1 KiB |  00m00s
+2026-07-27T18:28:42.8322893Z [315/385] zlib-ng-compat-devel-0:2.3.3- 100% | 811.6 KiB/s |  38.1 KiB |  00m00s
+2026-07-27T18:28:42.9158234Z [316/385] libzstd-devel-0:1.5.7-5.fc44. 100% | 417.3 KiB/s |  56.3 KiB |  00m00s
+2026-07-27T18:28:43.1171296Z [317/385] openssh-clients-0:10.2p1-13.f 100% |   1.2 MiB/s | 778.9 KiB |  00m01s
+2026-07-27T18:28:44.3553848Z [318/385] gcc-c++-0:16.1.1-2.fc44.x86_6 100% |  11.3 MiB/s |  17.2 MiB |  00m02s
+2026-07-27T18:28:44.4006847Z [319/385] gcc-plugin-annobin-0:16.1.1-2 100% |   1.2 MiB/s |  53.6 KiB |  00m00s
+2026-07-27T18:28:44.8497726Z [320/385] libstdc++-devel-0:16.1.1-2.fc 100% |  13.3 MiB/s |   6.0 MiB |  00m00s
+2026-07-27T18:28:44.9653052Z [321/385] file-0:5.46-10.fc44.x86_64    100% | 423.8 KiB/s |  48.7 KiB |  00m00s
+2026-07-27T18:28:45.0486098Z [322/385] python3-requests-0:2.33.1-1.f 100% |   1.9 MiB/s | 160.6 KiB |  00m00s
+2026-07-27T18:28:45.1687716Z [323/385] python3-charset-normalizer-0: 100% | 985.8 KiB/s | 117.3 KiB |  00m00s
+2026-07-27T18:28:45.5165953Z [324/385] binutils-0:2.46.1-1.fc44.x86_ 100% |  17.8 MiB/s |   6.2 MiB |  00m00s
+2026-07-27T18:28:45.5671771Z [325/385] jansson-0:2.14-4.fc44.x86_64  100% | 942.3 KiB/s |  47.1 KiB |  00m00s
+2026-07-27T18:28:45.6173408Z [326/385] debugedit-0:5.3-2.fc44.x86_64 100% |   1.7 MiB/s |  87.8 KiB |  00m00s
+2026-07-27T18:28:45.7860130Z [327/385] elfutils-0:0.195-1.fc44.x86_6 100% |   3.4 MiB/s | 588.4 KiB |  00m00s
+2026-07-27T18:28:45.8533210Z [328/385] elfutils-debuginfod-client-0: 100% | 690.2 KiB/s |  46.2 KiB |  00m00s
+2026-07-27T18:28:45.9089819Z [329/385] perl-URI-0:5.35-1.fc44.noarch 100% |   2.6 MiB/s | 148.9 KiB |  00m00s
+2026-07-27T18:28:46.0087687Z [330/385] perl-MIME-Base32-0:1.303-25.f 100% | 207.3 KiB/s |  20.5 KiB |  00m00s
+2026-07-27T18:28:46.0529787Z [331/385] vim-filesystem-2:9.2.843-1.fc 100% | 367.5 KiB/s |  15.8 KiB |  00m00s
+2026-07-27T18:28:46.1578218Z [332/385] glibc-devel-0:2.43-7.fc44.x86 100% |   5.8 MiB/s | 617.2 KiB |  00m00s
+2026-07-27T18:28:46.2291101Z [333/385] fakeroot-libs-0:1.37.1-4.fc44 100% | 549.3 KiB/s |  39.0 KiB |  00m00s
+2026-07-27T18:28:46.4355769Z [334/385] util-linux-0:2.41.5-1.fc44.x8 100% |   5.8 MiB/s |   1.2 MiB |  00m00s
+2026-07-27T18:28:46.5089949Z [335/385] libuv-1:1.52.1-2.fc44.x86_64  100% |   3.7 MiB/s | 274.0 KiB |  00m00s
+2026-07-27T18:28:46.6293617Z [336/385] cpp-0:16.1.1-2.fc44.x86_64    100% |   4.1 MiB/s |  14.5 MiB |  00m04s
+2026-07-27T18:28:46.6300865Z [337/385] libfdisk-0:2.41.5-1.fc44.x86_ 100% |   1.4 MiB/s | 168.6 KiB |  00m00s
+2026-07-27T18:28:46.7297997Z [338/385] annobin-plugin-gcc-0:13.14-1. 100% |   6.8 MiB/s | 684.4 KiB |  00m00s
+2026-07-27T18:28:46.7303536Z [339/385] liblastlog2-0:2.41.5-1.fc44.x 100% | 241.7 KiB/s |  24.2 KiB |  00m00s
+2026-07-27T18:28:46.7761779Z [340/385] R-srpm-macros-0:1.3.7-2.fc44. 100% | 243.7 KiB/s |  11.0 KiB |  00m00s
+2026-07-27T18:28:46.8002512Z [341/385] annobin-docs-0:13.14-1.fc44.n 100% |   1.2 MiB/s |  86.7 KiB |  00m00s
+2026-07-27T18:28:46.8327158Z [342/385] build-reproducibility-srpm-ma 100% | 238.4 KiB/s |  13.3 KiB |  00m00s
+2026-07-27T18:28:46.9134915Z [343/385] linkdupes-0:0.7.3-2.fc44.x86_ 100% |   4.2 MiB/s | 344.8 KiB |  00m00s
+2026-07-27T18:28:46.9383077Z [344/385] add-determinism-0:0.7.3-2.fc4 100% |   6.1 MiB/s | 854.6 KiB |  00m00s
+2026-07-27T18:28:46.9640612Z [345/385] package-notes-srpm-macros-0:0 100% | 207.4 KiB/s |  10.4 KiB |  00m00s
+2026-07-27T18:28:46.9761913Z [346/385] pyproject-srpm-macros-0:1.22. 100% | 418.7 KiB/s |  15.5 KiB |  00m00s
+2026-07-27T18:28:47.0079792Z [347/385] qt6-srpm-macros-0:6.11.1-1.fc 100% | 214.3 KiB/s |   9.2 KiB |  00m00s
+2026-07-27T18:28:47.0242370Z [348/385] rust-srpm-macros-0:28.5-1.fc4 100% | 238.2 KiB/s |  11.2 KiB |  00m00s
+2026-07-27T18:28:47.0693141Z [349/385] python3-idna-0:3.18-1.fc44.no 100% |   1.7 MiB/s | 104.1 KiB |  00m00s
+2026-07-27T18:28:47.2473556Z [350/385] kernel-headers-0:7.1.3-200.fc 100% |   9.8 MiB/s |   1.7 MiB |  00m00s
+2026-07-27T18:28:47.2526053Z [351/385] python3-urllib3-0:2.7.0-1.fc4 100% |   1.3 MiB/s | 301.6 KiB |  00m00s
+2026-07-27T18:28:47.3052958Z [352/385] libmpc-0:1.4.1-1.fc44.x86_64  100% |   1.3 MiB/s |  75.5 KiB |  00m00s
+2026-07-27T18:28:47.3442124Z [353/385] libatomic-0:16.1.1-2.fc44.x86 100% | 551.6 KiB/s |  50.2 KiB |  00m00s
+2026-07-27T18:28:47.7435742Z [354/385] gdb-minimal-0:17.2-2.fc44.x86 100% |  10.8 MiB/s |   4.7 MiB |  00m00s
+2026-07-27T18:28:47.7906859Z [355/385] selinux-policy-0:44.4-1.fc44. 100% | 514.3 KiB/s |  23.7 KiB |  00m00s
+2026-07-27T18:28:47.9415759Z [356/385] policycoreutils-0:3.10-4.fc44 100% |   1.7 MiB/s | 259.0 KiB |  00m00s
+2026-07-27T18:28:48.0280115Z [357/385] selinux-policy-targeted-0:44. 100% |   9.9 MiB/s |   6.8 MiB |  00m01s
+2026-07-27T18:28:48.0593133Z [358/385] libselinux-utils-0:3.10-1.fc4 100% |   1.0 MiB/s | 119.6 KiB |  00m00s
+2026-07-27T18:28:48.1057267Z [359/385] gpgverify-0:2.2-4.fc44.noarch 100% | 244.1 KiB/s |  11.2 KiB |  00m00s
+2026-07-27T18:28:48.1819751Z [360/385] glibc-gconv-extra-0:2.43-7.fc 100% |  10.6 MiB/s |   1.6 MiB |  00m00s
+2026-07-27T18:28:48.1851758Z [361/385] rpm-plugin-selinux-0:6.0.1-2. 100% | 242.5 KiB/s |  19.2 KiB |  00m00s
+2026-07-27T18:28:48.2344247Z [362/385] python3-rpmautospec-core-0:0. 100% | 320.1 KiB/s |  15.4 KiB |  00m00s
+2026-07-27T18:28:48.2452444Z [363/385] python3-rpmautospec-0:0.8.4-1 100% |   2.9 MiB/s | 187.2 KiB |  00m00s
+2026-07-27T18:28:48.6217132Z [364/385] libomp-0:22.1.8-4.fc44.x86_64 100% |   2.2 MiB/s | 853.8 KiB |  00m00s
+2026-07-27T18:28:48.8922142Z [365/385] libomp-devel-0:22.1.8-4.fc44. 100% |   1.9 MiB/s | 532.4 KiB |  00m00s
+2026-07-27T18:28:48.9015084Z [366/385] compiler-rt-0:22.1.8-4.fc44.x 100% |   4.6 MiB/s |   3.0 MiB |  00m01s
+2026-07-27T18:28:48.9533127Z [367/385] python-unversioned-command-0: 100% | 182.6 KiB/s |  11.0 KiB |  00m00s
+2026-07-27T18:28:48.9618831Z [368/385] perl-CPAN-DistnameInfo-0:0.12 100% | 237.0 KiB/s |  14.2 KiB |  00m00s
+2026-07-27T18:28:49.1325531Z [369/385] perl-Unicode-LineBreak-0:2019 100% | 699.4 KiB/s | 118.9 KiB |  00m00s
+2026-07-27T18:28:49.1329855Z [370/385] perl-Encode-Locale-0:1.05-33. 100% | 102.9 KiB/s |  18.4 KiB |  00m00s
+2026-07-27T18:28:49.2238167Z [371/385] gcc-0:16.1.1-2.fc44.x86_64    100% |   6.8 MiB/s |  43.1 MiB |  00m06s
+2026-07-27T18:28:49.2245387Z [372/385] perl-MIME-Charset-0:1.013.1-1 100% | 527.4 KiB/s |  48.0 KiB |  00m00s
+2026-07-27T18:28:49.3000121Z [373/385] sombok-0:2.4.0-25.fc44.x86_64 100% | 297.8 KiB/s |  49.4 KiB |  00m00s
+2026-07-27T18:28:49.3354754Z [374/385] libdatrie-0:0.2.14-2.fc44.x86 100% | 300.5 KiB/s |  33.1 KiB |  00m00s
+2026-07-27T18:28:49.4034380Z [375/385] perl-Term-Size-Any-0:0.002-46 100% | 126.8 KiB/s |  13.1 KiB |  00m00s
+2026-07-27T18:28:49.4040654Z [376/385] libthai-0:0.1.30-2.fc44.x86_6 100% |   1.2 MiB/s | 216.1 KiB |  00m00s
+2026-07-27T18:28:49.4159543Z [377/385] perl-Term-Size-Perl-0:0.031-2 100% | 259.6 KiB/s |  20.8 KiB |  00m00s
+2026-07-27T18:28:49.5005552Z [378/385] python3-html2text-0:2025.4.15 100% | 972.4 KiB/s |  81.7 KiB |  00m00s
+2026-07-27T18:28:49.5241893Z [379/385] perl-Module-Pluggable-2:6.3-4 100% | 265.9 KiB/s |  31.9 KiB |  00m00s
+2026-07-27T18:28:49.6117843Z [380/385] less-color-0:704-2.fc44.x86_6 100% |  97.1 KiB/s |  10.8 KiB |  00m00s
+2026-07-27T18:28:49.6373133Z [381/385] python3-urllib3+socks-0:2.7.0 100% |  97.4 KiB/s |  10.8 KiB |  00m00s
+2026-07-27T18:28:49.6762747Z [382/385] python3-pysocks-0:1.7.1-32.fc 100% | 623.4 KiB/s |  39.9 KiB |  00m00s
+2026-07-27T18:28:49.7684007Z [383/385] perl-Module-Runtime-0:0.018-3 100% | 235.4 KiB/s |  31.1 KiB |  00m00s
+2026-07-27T18:28:50.0040337Z [384/385] bat-0:0.26.1-1.fc44.x86_64    100% |   8.5 MiB/s |   2.8 MiB |  00m00s
+2026-07-27T18:28:50.1693311Z [385/385] 7zip-0:26.02-1.fc44.x86_64    100% |   1.7 MiB/s |   1.3 MiB |  00m01s
+2026-07-27T18:28:50.1693957Z --------------------------------------------------------------------------------
+2026-07-27T18:28:50.1694487Z [385/385] Total                         100% |   9.8 MiB/s | 288.8 MiB |  00m29s
+2026-07-27T18:28:50.1697545Z Running transaction
+2026-07-27T18:28:52.8288121Z [  1/387] Verify package files          100% | 493.0   B/s | 385.0   B |  00m01s
+2026-07-27T18:28:52.9428335Z [  2/387] Prepare transaction           100% |   2.1 KiB/s | 385.0   B |  00m00s
+2026-07-27T18:28:52.9500311Z [  3/387] Installing cmake-filesystem-0 100% |   1.5 MiB/s |   9.4 KiB |  00m00s
+2026-07-27T18:28:52.9527009Z [  4/387] Installing libmpc-0:1.4.1-1.f 100% |  83.2 MiB/s | 170.4 KiB |  00m00s
+2026-07-27T18:28:52.9639618Z [  5/387] Installing elfutils-debuginfo 100% |   7.0 MiB/s |  86.1 KiB |  00m00s
+2026-07-27T18:28:52.9746827Z [  6/387] Installing file-0:5.46-10.fc4 100% |  11.0 MiB/s | 101.6 KiB |  00m00s
+2026-07-27T18:28:52.9852818Z [  7/387] Installing expat-0:2.8.1-1.fc 100% |  29.3 MiB/s | 329.5 KiB |  00m00s
+2026-07-27T18:28:52.9868879Z [  8/387] Installing clang-resource-fil 100% |  16.3 MiB/s |  16.7 KiB |  00m00s
+2026-07-27T18:28:52.9910506Z [  9/387] Installing xxhash-libs-0:0.8. 100% |  93.2 MiB/s |  95.4 KiB |  00m00s
+2026-07-27T18:28:53.0045603Z [ 10/387] Installing diffutils-0:3.12-5 100% | 121.0 MiB/s |   1.6 MiB |  00m00s
+2026-07-27T18:28:53.0438296Z [ 11/387] Installing make-1:4.4.1-12.fc 100% | 150.0 MiB/s |   1.8 MiB |  00m00s
+2026-07-27T18:28:53.0751505Z [ 12/387] Installing gdb-minimal-0:17.2 100% | 295.0 MiB/s |  14.2 MiB |  00m00s
+2026-07-27T18:28:53.0879170Z [ 13/387] Installing elfutils-0:0.195-1 100% | 129.4 MiB/s |   3.0 MiB |  00m00s
+2026-07-27T18:28:53.1448364Z [ 14/387] Installing vim-filesystem-2:9 100% |   1.2 MiB/s |   4.8 KiB |  00m00s
+2026-07-27T18:28:53.2431137Z [ 15/387] Installing libstdc++-devel-0: 100% | 277.3 MiB/s |  41.3 MiB |  00m00s
+2026-07-27T18:28:53.2527563Z [ 16/387] Installing less-0:704-2.fc44. 100% |  39.3 MiB/s | 483.3 KiB |  00m00s
+2026-07-27T18:28:53.2564049Z [ 17/387] Installing libedit-0:3.1-59.2 100% | 122.0 MiB/s | 250.0 KiB |  00m00s
+2026-07-27T18:28:53.2681711Z [ 18/387] Installing dwz-0:0.16-3.fc44. 100% |  28.5 MiB/s | 292.3 KiB |  00m00s
+2026-07-27T18:28:53.2708688Z [ 19/387] Installing oniguruma-0:6.9.10 100% | 251.6 MiB/s | 773.1 KiB |  00m00s
+2026-07-27T18:28:53.2818483Z [ 20/387] Installing m4-0:1.4.21-1.fc44 100% |  72.2 MiB/s | 887.6 KiB |  00m00s
+2026-07-27T18:28:53.2848421Z [ 21/387] Installing emacs-filesystem-1 100% | 793.0 KiB/s | 812.0   B |  00m00s
+2026-07-27T18:28:53.2976258Z [ 22/387] Installing unzip-0:6.0-69.fc4 100% |  36.6 MiB/s | 449.3 KiB |  00m00s
+2026-07-27T18:28:53.3540116Z [ 23/387] Installing zip-0:3.0-45.fc44. 100% |  57.1 MiB/s | 701.9 KiB |  00m00s
+2026-07-27T18:28:53.4180801Z [ 24/387] Installing cpp-0:16.1.1-2.fc4 100% | 386.0 MiB/s |  42.1 MiB |  00m00s
+2026-07-27T18:28:53.4217120Z [ 25/387] Installing libdatrie-0:0.2.14 100% |  30.7 MiB/s |  62.8 KiB |  00m00s
+2026-07-27T18:28:53.4235716Z [ 26/387] Installing libthai-0:0.1.30-2 100% | 261.3 MiB/s | 802.7 KiB |  00m00s
+2026-07-27T18:28:53.4251723Z [ 27/387] Installing sombok-0:2.4.0-25. 100% | 130.5 MiB/s | 133.6 KiB |  00m00s
+2026-07-27T18:28:53.4321603Z [ 28/387] Installing gpgverify-0:2.2-4. 100% |   9.2 MiB/s |   9.4 KiB |  00m00s
+2026-07-27T18:28:53.4435510Z [ 29/387] Installing libselinux-utils-0 100% |  19.5 MiB/s | 320.1 KiB |  00m00s
+2026-07-27T18:28:53.4550386Z [ 30/387] Installing libatomic-0:16.1.1 100% |  15.2 MiB/s |  46.7 KiB |  00m00s
+2026-07-27T18:28:53.5631501Z [ 31/387] Installing kernel-headers-0:7 100% |  61.2 MiB/s |   7.1 MiB |  00m00s
+2026-07-27T18:28:53.5639275Z [ 32/387] Installing rust-srpm-macros-0 100% |   6.2 MiB/s |   6.4 KiB |  00m00s
+2026-07-27T18:28:53.5648184Z [ 33/387] Installing qt6-srpm-macros-0: 100% |   0.0   B/s | 748.0   B |  00m00s
+2026-07-27T18:28:53.5681809Z [ 34/387] Installing package-notes-srpm 100% |   2.0 MiB/s |   2.1 KiB |  00m00s
+2026-07-27T18:28:53.5840387Z [ 35/387] Installing linkdupes-0:0.7.3- 100% |  63.7 MiB/s | 782.3 KiB |  00m00s
+2026-07-27T18:28:53.5944245Z [ 36/387] Installing add-determinism-0: 100% | 145.5 MiB/s |   2.2 MiB |  00m00s
+2026-07-27T18:28:53.6028049Z [ 37/387] Installing annobin-docs-0:13. 100% |  98.1 MiB/s | 100.5 KiB |  00m00s
+2026-07-27T18:28:53.6120549Z [ 38/387] Installing liblastlog2-0:2.41 100% |   3.0 MiB/s |  43.7 KiB |  00m00s
+2026-07-27T18:28:53.6536198Z [ 39/387] Installing libfdisk-0:2.41.5- 100% |  95.1 MiB/s | 389.4 KiB |  00m00s
+2026-07-27T18:28:53.6741521Z [ 40/387] Installing util-linux-0:2.41. 100% |  60.7 MiB/s |   3.6 MiB |  00m00s
+2026-07-27T18:28:53.6998183Z [ 41/387] Installing policycoreutils-0: 100% |  37.2 MiB/s | 913.0 KiB |  00m00s
+2026-07-27T18:28:53.7754612Z [ 42/387] Installing selinux-policy-0:4 100% |   1.6 MiB/s |  34.5 KiB |  00m00s
+2026-07-27T18:28:53.9513616Z [ 43/387] Installing selinux-policy-tar 100% |  64.5 MiB/s |  14.9 MiB |  00m00s
+2026-07-27T18:28:53.9557618Z [ 44/387] Installing build-reproducibil 100% |   1.5 MiB/s |   1.5 KiB |  00m00s
+2026-07-27T18:28:53.9757505Z [ 45/387] Installing openssh-0:10.2p1-1 100% |  95.5 MiB/s |   1.4 MiB |  00m00s
+2026-07-27T18:28:54.0318433Z [ 46/387] Installing openssh-clients-0: 100% | 112.1 MiB/s |   2.7 MiB |  00m00s
+2026-07-27T18:28:54.0692095Z [ 47/387] Installing git-core-0:2.55.0- 100% | 382.2 MiB/s |  25.6 MiB |  00m00s
+2026-07-27T18:28:54.0766981Z [ 48/387] Installing git-core-doc-0:2.5 100% |   1.2 GiB/s |  19.1 MiB |  00m00s
+2026-07-27T18:28:54.0792397Z [ 49/387] Installing libuv-1:1.52.1-2.f 100% | 194.0 MiB/s | 595.9 KiB |  00m00s
+2026-07-27T18:28:54.0815188Z [ 50/387] Installing fakeroot-libs-0:1. 100% |  61.4 MiB/s | 125.7 KiB |  00m00s
+2026-07-27T18:28:54.1128375Z [ 51/387] Installing fakeroot-0:1.37.1- 100% |   5.0 MiB/s | 159.1 KiB |  00m00s
+2026-07-27T18:28:54.1329277Z [ 52/387] Installing jansson-0:2.14-4.f 100% |  29.4 MiB/s |  90.3 KiB |  00m00s
+2026-07-27T18:28:54.1851460Z [ 53/387] Installing binutils-0:2.46.1- 100% | 421.8 MiB/s |  28.3 MiB |  00m00s
+2026-07-27T18:28:54.1967197Z [ 54/387] Installing debugedit-0:5.3-2. 100% |  18.2 MiB/s | 224.0 KiB |  00m00s
+2026-07-27T18:28:54.1987905Z [ 55/387] Installing libpkgconf-0:2.5.1 100% |  89.1 MiB/s |  91.3 KiB |  00m00s
+2026-07-27T18:28:54.2088082Z [ 56/387] Installing pkgconf-0:2.5.1-1. 100% |   9.3 MiB/s |  95.2 KiB |  00m00s
+2026-07-27T18:28:54.2100005Z [ 57/387] Installing pkgconf-m4-0:2.5.1 100% |  14.4 MiB/s |  14.7 KiB |  00m00s
+2026-07-27T18:28:54.2198152Z [ 58/387] Installing pkgconf-pkg-config 100% | 197.0 KiB/s |   1.8 KiB |  00m00s
+2026-07-27T18:28:54.2338159Z [ 59/387] Installing libxcrypt-devel-0: 100% |  16.3 MiB/s |  33.3 KiB |  00m00s
+2026-07-27T18:28:54.3351179Z [ 60/387] Installing glibc-devel-0:2.43 100% |  47.7 MiB/s |   2.4 MiB |  00m00s
+2026-07-27T18:28:54.5418643Z [ 61/387] Installing gcc-0:16.1.1-2.fc4 100% | 449.3 MiB/s | 120.9 MiB |  00m00s
+2026-07-27T18:28:54.6607110Z [ 62/387] Installing gcc-c++-0:16.1.1-2 100% | 393.1 MiB/s |  46.4 MiB |  00m00s
+2026-07-27T18:28:54.6639164Z [ 63/387] Installing gcc-plugin-annobin 100% |  28.6 MiB/s |  58.6 KiB |  00m00s
+2026-07-27T18:28:54.6668391Z [ 64/387] Installing annobin-plugin-gcc 100% | 228.2 MiB/s | 701.0 KiB |  00m00s
+2026-07-27T18:28:54.6687882Z [ 65/387] Installing libzstd-devel-0:1. 100% | 107.0 MiB/s | 219.1 KiB |  00m00s
+2026-07-27T18:28:54.6705396Z [ 66/387] Installing zlib-ng-compat-dev 100% |  53.0 MiB/s | 108.6 KiB |  00m00s
+2026-07-27T18:28:54.6717038Z [ 67/387] Installing systemtap-sdt-deve 100% | 181.6 MiB/s | 185.9 KiB |  00m00s
+2026-07-27T18:28:54.6727252Z [ 68/387] Installing gnome-srpm-macros- 100% |   4.0 MiB/s |   4.1 KiB |  00m00s
+2026-07-27T18:28:54.6739426Z [ 69/387] Installing zig-srpm-macros-0: 100% |   1.8 MiB/s |   1.9 KiB |  00m00s
+2026-07-27T18:28:54.6749906Z [ 70/387] Installing tree-sitter-srpm-m 100% |   9.1 MiB/s |   9.3 KiB |  00m00s
+2026-07-27T18:28:54.6757864Z [ 71/387] Installing qt5-srpm-macros-0: 100% |   0.0   B/s | 776.0   B |  00m00s
+2026-07-27T18:28:54.6765946Z [ 72/387] Installing perl-srpm-macros-0 100% |   0.0   B/s |   1.1 KiB |  00m00s
+2026-07-27T18:28:54.6773728Z [ 73/387] Installing openblas-srpm-macr 100% |   0.0   B/s | 392.0   B |  00m00s
+2026-07-27T18:28:54.6783526Z [ 74/387] Installing ocaml-srpm-macros- 100% |   0.0   B/s |   2.1 KiB |  00m00s
+2026-07-27T18:28:54.6794360Z [ 75/387] Installing lua-srpm-macros-0: 100% |   1.9 MiB/s |   1.9 KiB |  00m00s
+2026-07-27T18:28:54.6803068Z [ 76/387] Installing kernel-srpm-macros 100% |   2.3 MiB/s |   2.3 KiB |  00m00s
+2026-07-27T18:28:54.6811421Z [ 77/387] Installing java-srpm-macros-0 100% |   0.0   B/s |   1.1 KiB |  00m00s
+2026-07-27T18:28:54.6819402Z [ 78/387] Installing gnat-srpm-macros-0 100% |   0.0   B/s |   1.3 KiB |  00m00s
+2026-07-27T18:28:54.6829623Z [ 79/387] Installing ghc-srpm-macros-0: 100% |   0.0   B/s |   1.0 KiB |  00m00s
+2026-07-27T18:28:54.6838673Z [ 80/387] Installing gap-srpm-macros-0: 100% |   2.6 MiB/s |   2.7 KiB |  00m00s
+2026-07-27T18:28:54.6852089Z [ 81/387] Installing fpc-srpm-macros-0: 100% |   0.0   B/s | 420.0   B |  00m00s
+2026-07-27T18:28:54.6865355Z [ 82/387] Installing filesystem-srpm-ma 100% |  38.0 MiB/s |  38.9 KiB |  00m00s
+2026-07-27T18:28:54.6876789Z [ 83/387] Installing efi-srpm-macros-0: 100% |  40.2 MiB/s |  41.2 KiB |  00m00s
+2026-07-27T18:28:54.6889035Z [ 84/387] Installing cmake-srpm-macros- 100% |   0.0   B/s | 804.0   B |  00m00s
+2026-07-27T18:28:54.6949290Z [ 85/387] Installing ansible-srpm-macro 100% |  35.4 MiB/s |  36.2 KiB |  00m00s
+2026-07-27T18:28:54.6993921Z [ 86/387] Installing libdb-0:5.3.28-67. 100% | 271.7 MiB/s |   1.9 MiB |  00m00s
+2026-07-27T18:28:54.7450014Z [ 87/387] Installing ncurses-0:6.6-1.fc 100% |  30.2 MiB/s | 618.0 KiB |  00m00s
+2026-07-27T18:28:54.7656385Z [ 88/387] Installing groff-base-0:1.23. 100% |  82.9 MiB/s |   3.9 MiB |  00m00s
+2026-07-27T18:28:54.7669473Z [ 89/387] Installing perl-Digest-0:1.20 100% |  36.2 MiB/s |  37.1 KiB |  00m00s
+2026-07-27T18:28:54.7704660Z [ 90/387] Installing perl-FileHandle-0: 100% |   9.6 MiB/s |   9.8 KiB |  00m00s
+2026-07-27T18:28:54.7731834Z [ 91/387] Installing perl-B-0:1.89-524. 100% | 123.2 MiB/s | 504.5 KiB |  00m00s
+2026-07-27T18:28:54.7748180Z [ 92/387] Installing perl-Digest-MD5-0: 100% |  60.0 MiB/s |  61.5 KiB |  00m00s
+2026-07-27T18:28:54.7781842Z [ 93/387] Installing perl-MIME-Base32-0 100% |  31.4 MiB/s |  32.2 KiB |  00m00s
+2026-07-27T18:28:54.7809805Z [ 94/387] Installing perl-libnet-0:3.15 100% |  71.9 MiB/s | 294.7 KiB |  00m00s
+2026-07-27T18:28:54.7896829Z [ 95/387] Installing perl-Data-Dumper-0 100% |  38.2 MiB/s | 117.4 KiB |  00m00s
+2026-07-27T18:28:54.7932162Z [ 96/387] Installing perl-URI-0:5.35-1. 100% |  30.6 MiB/s | 282.0 KiB |  00m00s
+2026-07-27T18:28:54.7944087Z [ 97/387] Installing perl-IO-Socket-IP- 100% |  99.8 MiB/s | 102.2 KiB |  00m00s
+2026-07-27T18:28:54.7972382Z [ 98/387] Installing perl-AutoLoader-0: 100% |   0.0   B/s |  21.0 KiB |  00m00s
+2026-07-27T18:28:54.7989613Z [ 99/387] Installing perl-IO-Socket-SSL 100% | 236.9 MiB/s | 727.6 KiB |  00m00s
+2026-07-27T18:28:54.8085026Z [100/387] Installing perl-locale-0:1.13 100% |   6.4 MiB/s |   6.5 KiB |  00m00s
+2026-07-27T18:28:54.8118965Z [101/387] Installing perl-Net-SSLeay-0: 100% | 122.4 MiB/s |   1.3 MiB |  00m00s
+2026-07-27T18:28:54.8129540Z [102/387] Installing perl-if-0:0.61.000 100% |   0.0   B/s |   6.2 KiB |  00m00s
+2026-07-27T18:28:54.8142252Z [103/387] Installing perl-Pod-Escapes-1 100% |  25.3 MiB/s |  25.9 KiB |  00m00s
+2026-07-27T18:28:54.8158146Z [104/387] Installing perl-File-Path-0:2 100% |  63.0 MiB/s |  64.5 KiB |  00m00s
+2026-07-27T18:28:54.8176251Z [105/387] Installing perl-Time-Local-2: 100% |  68.9 MiB/s |  70.6 KiB |  00m00s
+2026-07-27T18:28:54.8198298Z [106/387] Installing perl-Time-HiRes-4: 100% |  57.5 MiB/s | 117.7 KiB |  00m00s
+2026-07-27T18:28:54.8215329Z [107/387] Installing perl-Text-Tabs+Wra 100% |  23.3 MiB/s |  23.9 KiB |  00m00s
+2026-07-27T18:28:54.8234612Z [108/387] Installing perl-HTTP-Tiny-0:0 100% |  78.3 MiB/s | 160.3 KiB |  00m00s
+2026-07-27T18:28:54.8250514Z [109/387] Installing perl-IPC-Open3-0:1 100% |  27.8 MiB/s |  28.5 KiB |  00m00s
+2026-07-27T18:28:54.8296219Z [110/387] Installing perl-File-Temp-1:0 100% | 161.6 MiB/s | 165.5 KiB |  00m00s
+2026-07-27T18:28:54.8328086Z [111/387] Installing perl-Pod-Simple-1: 100% | 112.3 MiB/s | 574.9 KiB |  00m00s
+2026-07-27T18:28:54.8347530Z [112/387] Installing perl-POSIX-0:2.23- 100% | 112.6 MiB/s | 230.6 KiB |  00m00s
+2026-07-27T18:28:54.8361681Z [113/387] Installing perl-Class-Struct- 100% |  25.3 MiB/s |  25.9 KiB |  00m00s
+2026-07-27T18:28:54.8376209Z [114/387] Installing perl-Term-Cap-0:1. 100% |  29.9 MiB/s |  30.6 KiB |  00m00s
+2026-07-27T18:28:54.8403642Z [115/387] Installing perl-Term-ANSIColo 100% |  96.9 MiB/s |  99.2 KiB |  00m00s
+2026-07-27T18:28:54.8506350Z [116/387] Installing perl-Pod-Perldoc-0 100% |  13.8 MiB/s | 169.2 KiB |  00m00s
+2026-07-27T18:28:54.8637585Z [117/387] Installing perl-podlators-1:6 100% |  26.2 MiB/s | 321.4 KiB |  00m00s
+2026-07-27T18:28:54.8650061Z [118/387] Installing perl-File-stat-0:1 100% |  12.8 MiB/s |  13.1 KiB |  00m00s
+2026-07-27T18:28:54.8661633Z [119/387] Installing perl-Symbol-0:1.09 100% |   7.1 MiB/s |   7.3 KiB |  00m00s
+2026-07-27T18:28:54.8684350Z [120/387] Installing perl-SelectSaver-0 100% |   2.6 MiB/s |   2.6 KiB |  00m00s
+2026-07-27T18:28:54.8707278Z [121/387] Installing perl-Socket-4:2.04 100% |  59.9 MiB/s | 122.7 KiB |  00m00s
+2026-07-27T18:28:54.8826955Z [122/387] Installing perl-Pod-Usage-4:2 100% |   8.6 MiB/s |  87.9 KiB |  00m00s
+2026-07-27T18:28:54.8852036Z [123/387] Installing perl-IO-0:1.55-524 100% |  49.3 MiB/s | 151.5 KiB |  00m00s
+2026-07-27T18:28:54.8863932Z [124/387] Installing perl-mro-0:1.29-52 100% |  41.6 MiB/s |  42.6 KiB |  00m00s
+2026-07-27T18:28:54.8877749Z [125/387] Installing perl-base-0:2.27-5 100% |   0.0   B/s |  13.0 KiB |  00m00s
+2026-07-27T18:28:54.8892945Z [126/387] Installing perl-Fcntl-0:1.20- 100% |  48.6 MiB/s |  49.8 KiB |  00m00s
+2026-07-27T18:28:54.8905326Z [127/387] Installing perl-overloading-0 100% |   5.4 MiB/s |   5.6 KiB |  00m00s
+2026-07-27T18:28:54.8924029Z [128/387] Installing perl-Text-ParseWor 100% |  14.2 MiB/s |  14.6 KiB |  00m00s
+2026-07-27T18:28:54.8943040Z [129/387] Installing perl-Getopt-Long-1 100% |  71.9 MiB/s | 147.2 KiB |  00m00s
+2026-07-27T18:28:54.8962213Z [130/387] Installing perl-overload-0:1. 100% |  70.3 MiB/s |  72.0 KiB |  00m00s
+2026-07-27T18:28:54.8987948Z [131/387] Installing perl-Storable-1:3. 100% |  77.1 MiB/s | 236.7 KiB |  00m00s
+2026-07-27T18:28:54.9001025Z [132/387] Installing perl-vars-0:1.05-5 100% |   4.2 MiB/s |   4.3 KiB |  00m00s
+2026-07-27T18:28:54.9012799Z [133/387] Installing perl-Getopt-Std-0: 100% |  11.5 MiB/s |  11.8 KiB |  00m00s
+2026-07-27T18:28:54.9024080Z [134/387] Installing perl-File-Basename 100% |  14.3 MiB/s |  14.6 KiB |  00m00s
+2026-07-27T18:28:54.9042986Z [135/387] Installing perl-Errno-0:1.38- 100% |   8.6 MiB/s |   8.8 KiB |  00m00s
+2026-07-27T18:28:54.9065996Z [136/387] Installing perl-MIME-Base64-0 100% |  14.4 MiB/s |  44.2 KiB |  00m00s
+2026-07-27T18:28:54.9097872Z [137/387] Installing perl-parent-1:0.24 100% |  10.7 MiB/s |  11.0 KiB |  00m00s
+2026-07-27T18:28:54.9121569Z [138/387] Installing perl-Scalar-List-U 100% |  36.3 MiB/s | 148.5 KiB |  00m00s
+2026-07-27T18:28:54.9310890Z [139/387] Installing perl-constant-0:1. 100% |  26.7 MiB/s |  27.4 KiB |  00m00s
+2026-07-27T18:28:54.9432942Z [140/387] Installing perl-Encode-4:3.21 100% | 161.8 MiB/s |   4.7 MiB |  00m00s
+2026-07-27T18:28:54.9459839Z [141/387] Installing perl-DynaLoader-0: 100% |  31.7 MiB/s |  32.5 KiB |  00m00s
+2026-07-27T18:28:54.9484728Z [142/387] Installing perl-PathTools-0:3 100% |  60.0 MiB/s | 184.4 KiB |  00m00s
+2026-07-27T18:28:54.9498896Z [143/387] Installing perl-Carp-0:1.54-5 100% |  46.6 MiB/s |  47.7 KiB |  00m00s
+2026-07-27T18:28:54.9518118Z [144/387] Installing perl-Exporter-0:5. 100% |  27.1 MiB/s |  55.6 KiB |  00m00s
+2026-07-27T18:28:55.0492149Z [145/387] Installing perl-libs-4:5.42.2 100% | 121.7 MiB/s |  11.7 MiB |  00m00s
+2026-07-27T18:28:55.0590922Z [146/387] Installing perl-interpreter-4 100% |  10.7 MiB/s | 120.4 KiB |  00m00s
+2026-07-27T18:28:55.0616218Z [147/387] Installing perl-File-Find-0:1 100% |  41.5 MiB/s |  42.5 KiB |  00m00s
+2026-07-27T18:28:55.0636664Z [148/387] Installing perl-version-9:0.9 100% |  42.8 MiB/s | 131.4 KiB |  00m00s
+2026-07-27T18:28:55.0651694Z [149/387] Installing perl-File-Copy-0:2 100% |  19.7 MiB/s |  20.2 KiB |  00m00s
+2026-07-27T18:28:55.0670346Z [150/387] Installing perl-ExtUtils-Mani 100% |  84.3 MiB/s |  86.3 KiB |  00m00s
+2026-07-27T18:28:55.0695546Z [151/387] Installing perl-threads-1:2.4 100% |  57.1 MiB/s | 117.0 KiB |  00m00s
+2026-07-27T18:28:55.0713987Z [152/387] Installing perl-threads-share 100% |  41.9 MiB/s |  85.8 KiB |  00m00s
+2026-07-27T18:28:55.0734459Z [153/387] Installing perl-lib-0:0.65-52 100% |   0.0   B/s |   8.9 KiB |  00m00s
+2026-07-27T18:28:55.0753710Z [154/387] Installing perl-Compress-Raw- 100% |  85.3 MiB/s | 174.7 KiB |  00m00s
+2026-07-27T18:28:55.0769894Z [155/387] Installing perl-File-Compare- 100% |   0.0   B/s |   6.2 KiB |  00m00s
+2026-07-27T18:28:55.0785724Z [156/387] Installing perl-CPAN-Meta-Req 100% |  83.0 MiB/s |  85.0 KiB |  00m00s
+2026-07-27T18:28:55.0818943Z [157/387] Installing perl-Module-Metada 100% |  67.4 MiB/s |  69.0 KiB |  00m00s
+2026-07-27T18:28:55.0838181Z [158/387] Installing perl-Module-CoreLi 100% | 427.9 MiB/s |   1.3 MiB |  00m00s
+2026-07-27T18:28:55.0979295Z [159/387] Installing perl-Digest-SHA-1: 100% |  11.2 MiB/s | 114.9 KiB |  00m00s
+2026-07-27T18:28:55.1009286Z [160/387] Installing perl-Filter-2:1.65 100% |  23.1 MiB/s | 165.7 KiB |  00m00s
+2026-07-27T18:28:55.1023024Z [161/387] Installing perl-Module-Load-1 100% |  15.5 MiB/s |  15.9 KiB |  00m00s
+2026-07-27T18:28:55.1050347Z [162/387] Installing perl-Perl-OSType-0 100% |  33.5 MiB/s |  34.3 KiB |  00m00s
+2026-07-27T18:28:55.1073035Z [163/387] Installing perl-Unicode-Norma 100% | 159.0 MiB/s | 488.3 KiB |  00m00s
+2026-07-27T18:28:55.1087270Z [164/387] Installing perl-Term-ReadLine 100% |  17.4 MiB/s |  17.9 KiB |  00m00s
+2026-07-27T18:28:55.1098887Z [165/387] Installing perl-Tie-0:4.6-524 100% |  33.1 MiB/s |  33.9 KiB |  00m00s
+2026-07-27T18:28:55.1110502Z [166/387] Installing perl-meta-notation 100% |   0.0   B/s |   2.3 KiB |  00m00s
+2026-07-27T18:28:55.1122065Z [167/387] Installing perl-encoding-4:3. 100% | 146.9 MiB/s | 150.4 KiB |  00m00s
+2026-07-27T18:28:55.1138353Z [168/387] Installing perl-ExtUtils-Comm 100% |   9.9 MiB/s |  10.2 KiB |  00m00s
+2026-07-27T18:28:55.1241810Z [169/387] Installing perl-Pod-Html-0:1. 100% |   4.3 MiB/s |  43.9 KiB |  00m00s
+2026-07-27T18:28:55.1276485Z [170/387] Installing perl-CPAN-Meta-YAM 100% |  52.3 MiB/s |  53.6 KiB |  00m00s
+2026-07-27T18:28:55.1377307Z [171/387] Installing perl-Devel-PPPort- 100% |  72.6 MiB/s | 892.0 KiB |  00m00s
+2026-07-27T18:28:55.1388367Z [172/387] Installing perl-ExtUtils-MM-U 100% |   3.6 MiB/s |   3.7 KiB |  00m00s
+2026-07-27T18:28:55.1408884Z [173/387] Installing perl-Net-Ping-0:2. 100% | 132.2 MiB/s | 135.3 KiB |  00m00s
+2026-07-27T18:28:55.1425056Z [174/387] Installing perl-Term-Table-0: 100% |  39.9 MiB/s |  81.7 KiB |  00m00s
+2026-07-27T18:28:55.1440187Z [175/387] Installing perl-Text-Balanced 100% | 110.2 MiB/s | 112.8 KiB |  00m00s
+2026-07-27T18:28:55.1461912Z [176/387] Installing perl-Tie-RefHash-0 100% |  36.5 MiB/s |  37.4 KiB |  00m00s
+2026-07-27T18:28:55.1480530Z [177/387] Installing perl-Params-Util-0 100% |  29.7 MiB/s |  60.9 KiB |  00m00s
+2026-07-27T18:28:55.1498575Z [178/387] Installing perl-Sub-Install-0 100% |  36.3 MiB/s |  37.2 KiB |  00m00s
+2026-07-27T18:28:55.1509483Z [179/387] Installing perl-ExtUtils-Cons 100% |  85.7 MiB/s |  87.7 KiB |  00m00s
+2026-07-27T18:28:55.1519400Z [180/387] Installing perl-AutoSplit-0:5 100% |   0.0   B/s |  23.6 KiB |  00m00s
+2026-07-27T18:28:55.1599719Z [181/387] Installing perl-Benchmark-0:1 100% |  36.0 MiB/s |  36.8 KiB |  00m00s
+2026-07-27T18:28:55.1712879Z [182/387] Installing perl-Test-Harness- 100% |  31.7 MiB/s | 583.6 KiB |  00m00s
+2026-07-27T18:28:55.1790558Z [183/387] Installing perl-Compress-Raw- 100% |  36.7 MiB/s |  75.2 KiB |  00m00s
+2026-07-27T18:28:55.1900252Z [184/387] Installing perl-IO-Compress-0 100% |  65.8 MiB/s |   1.1 MiB |  00m00s
+2026-07-27T18:28:55.1910586Z [185/387] Installing perl-IO-Zlib-1:1.1 100% |  26.1 MiB/s |  26.7 KiB |  00m00s
+2026-07-27T18:28:55.1920498Z [186/387] Installing perl-DirHandle-0:1 100% |   0.0   B/s |   3.8 KiB |  00m00s
+2026-07-27T18:28:55.1939000Z [187/387] Installing perl-Dumpvalue-0:2 100% |   0.0   B/s |  20.2 KiB |  00m00s
+2026-07-27T18:28:55.1958929Z [188/387] Installing perl-Hash-Util-Fie 100% |  31.3 MiB/s |  64.2 KiB |  00m00s
+2026-07-27T18:28:55.1974092Z [189/387] Installing perl-Hash-Util-0:0 100% |  55.0 MiB/s |  56.3 KiB |  00m00s
+2026-07-27T18:28:55.2012462Z [190/387] Installing perl-fields-0:2.27 100% |  12.0 MiB/s |  12.3 KiB |  00m00s
+2026-07-27T18:28:55.2156427Z [191/387] Installing perl-ExtUtils-Pars 100% |  54.0 MiB/s | 718.5 KiB |  00m00s
+2026-07-27T18:28:55.2268305Z [192/387] Installing perl-ExtUtils-Make 100% |  52.3 MiB/s | 750.3 KiB |  00m00s
+2026-07-27T18:28:55.2284909Z [193/387] Installing perl-ExtUtils-Inst 100% |  85.1 MiB/s |  87.2 KiB |  00m00s
+2026-07-27T18:28:55.2303861Z [194/387] Installing perl-I18N-LangTags 100% |  81.8 MiB/s |  83.8 KiB |  00m00s
+2026-07-27T18:28:55.2317531Z [195/387] Installing perl-Locale-Makete 100% | 169.9 MiB/s | 173.9 KiB |  00m00s
+2026-07-27T18:28:55.2327830Z [196/387] Installing perl-Locale-Makete 100% |  13.2 MiB/s |  13.5 KiB |  00m00s
+2026-07-27T18:28:55.2339163Z [197/387] Installing perl-Params-Check- 100% |  27.9 MiB/s |  28.6 KiB |  00m00s
+2026-07-27T18:28:55.2351780Z [198/387] Installing perl-Module-Load-C 100% |  29.2 MiB/s |  29.9 KiB |  00m00s
+2026-07-27T18:28:55.2368578Z [199/387] Installing perl-IPC-Cmd-2:1.0 100% |  83.9 MiB/s |  85.9 KiB |  00m00s
+2026-07-27T18:28:55.2383528Z [200/387] Installing perl-I18N-Langinfo 100% |  35.2 MiB/s |  36.0 KiB |  00m00s
+2026-07-27T18:28:55.2418454Z [201/387] Installing perl-Math-Complex- 100% |  84.0 MiB/s |  86.0 KiB |  00m00s
+2026-07-27T18:28:55.2445369Z [202/387] Installing perl-Math-BigInt-1 100% | 266.0 MiB/s |   1.1 MiB |  00m00s
+2026-07-27T18:28:55.2570549Z [203/387] Installing perl-JSON-PP-1:4.1 100% |  14.0 MiB/s | 143.6 KiB |  00m00s
+2026-07-27T18:28:55.2604648Z [204/387] Installing perl-CPAN-Meta-0:2 100% | 120.5 MiB/s | 617.1 KiB |  00m00s
+2026-07-27T18:28:55.2616474Z [205/387] Installing perl-NDBM_File-0:1 100% |  28.8 MiB/s |  29.5 KiB |  00m00s
+2026-07-27T18:28:55.2632177Z [206/387] Installing perl-SelfLoader-0: 100% |  22.1 MiB/s |  22.6 KiB |  00m00s
+2026-07-27T18:28:55.2649348Z [207/387] Installing perl-Sys-Hostname- 100% |   8.4 MiB/s |  17.1 KiB |  00m00s
+2026-07-27T18:28:55.2659149Z [208/387] Installing perl-User-pwent-0: 100% |  17.5 MiB/s |  17.9 KiB |  00m00s
+2026-07-27T18:28:55.2669528Z [209/387] Installing perl-autouse-0:1.1 100% |   6.2 MiB/s |   6.4 KiB |  00m00s
+2026-07-27T18:28:55.2678111Z [210/387] Installing perl-deprecate-0:0 100% |   0.0   B/s |   7.0 KiB |  00m00s
+2026-07-27T18:28:55.2692725Z [211/387] Installing perl-subs-0:1.04-5 100% |   0.0   B/s |   2.5 KiB |  00m00s
+2026-07-27T18:28:55.2709240Z [212/387] Installing perl-Opcode-0:1.69 100% |  24.3 MiB/s |  49.9 KiB |  00m00s
+2026-07-27T18:28:55.2719720Z [213/387] Installing perl-Safe-0:2.47-5 100% |   0.0   B/s |  31.1 KiB |  00m00s
+2026-07-27T18:28:55.2727516Z [214/387] Installing perl-Devel-SelfStu 100% |   7.2 MiB/s |   7.3 KiB |  00m00s
+2026-07-27T18:28:55.2984997Z [215/387] Installing perl-Memoize-0:1.1 100% |  32.6 MiB/s |  66.8 KiB |  00m00s
+2026-07-27T18:28:55.3038117Z [216/387] Installing perl-Test-Simple-3 100% |  67.5 MiB/s |   1.8 MiB |  00m00s
+2026-07-27T18:28:55.3069820Z [217/387] Installing perl-Math-BigInt-F 100% |  15.2 MiB/s |  46.8 KiB |  00m00s
+2026-07-27T18:28:55.3088704Z [218/387] Installing perl-bignum-0:0.67 100% |  66.6 MiB/s | 136.5 KiB |  00m00s
+2026-07-27T18:28:55.3105106Z [219/387] Installing perl-File-Fetch-0: 100% |  59.9 MiB/s |  61.3 KiB |  00m00s
+2026-07-27T18:28:55.3116943Z [220/387] Installing perl-inc-latest-2: 100% |  35.5 MiB/s |  36.3 KiB |  00m00s
+2026-07-27T18:28:55.3218551Z [221/387] Installing perl-libnetcfg-4:5 100% |   1.9 MiB/s |  17.3 KiB |  00m00s
+2026-07-27T18:28:55.3233213Z [222/387] Installing perl-DBM_Filter-0: 100% |  30.0 MiB/s |  30.7 KiB |  00m00s
+2026-07-27T18:28:55.3245630Z [223/387] Installing perl-Data-OptList- 100% |  51.0 MiB/s |  52.2 KiB |  00m00s
+2026-07-27T18:28:55.3255574Z [224/387] Installing perl-Filter-Simple 100% |  50.5 MiB/s |  51.7 KiB |  00m00s
+2026-07-27T18:28:55.3275569Z [225/387] Installing perl-open-0:1.13-5 100% |   0.0   B/s |  11.7 KiB |  00m00s
+2026-07-27T18:28:55.3286856Z [226/387] Installing perl-debugger-0:1. 100% | 197.4 MiB/s | 404.3 KiB |  00m00s
+2026-07-27T18:28:55.3299524Z [227/387] Installing perl-sigtrap-0:1.1 100% |   0.0   B/s |  11.5 KiB |  00m00s
+2026-07-27T18:28:55.3479888Z [228/387] Installing perl-Env-0:1.06-52 100% |  26.6 MiB/s |  27.2 KiB |  00m00s
+2026-07-27T18:28:55.3524149Z [229/387] Installing perl-Unicode-Colla 100% | 209.3 MiB/s |   4.2 MiB |  00m00s
+2026-07-27T18:28:55.3534519Z [230/387] Installing perl-Unicode-UCD-0 100% | 202.1 MiB/s | 206.9 KiB |  00m00s
+2026-07-27T18:28:55.3645165Z [231/387] Installing perl-Module-CoreLi 100% |   2.1 MiB/s |  19.3 KiB |  00m00s
+2026-07-27T18:28:55.3746909Z [232/387] Installing perl-Archive-Zip-0 100% |  24.2 MiB/s | 297.8 KiB |  00m00s
+2026-07-27T18:28:55.3760568Z [233/387] Installing perl-Thread-Queue- 100% |  29.7 MiB/s |  30.4 KiB |  00m00s
+2026-07-27T18:28:55.3771351Z [234/387] Installing perl-Thread-0:3.06 100% |   0.0   B/s |  12.5 KiB |  00m00s
+2026-07-27T18:28:55.3784457Z [235/387] Installing perl-Thread-Semaph 100% |  10.4 MiB/s |  10.6 KiB |  00m00s
+2026-07-27T18:28:55.3802201Z [236/387] Installing perl-experimental- 100% |  43.8 MiB/s |  44.8 KiB |  00m00s
+2026-07-27T18:28:55.3897579Z [237/387] Installing perl-Encode-devel- 100% |   9.9 MiB/s | 101.1 KiB |  00m00s
+2026-07-27T18:28:55.3998610Z [238/387] Installing perl-Pod-Checker-4 100% |   5.8 MiB/s |  53.5 KiB |  00m00s
+2026-07-27T18:28:55.4104079Z [239/387] Installing perl-utils-0:5.42. 100% |   9.6 MiB/s |  98.6 KiB |  00m00s
+2026-07-27T18:28:55.4198035Z [240/387] Installing perl-diagnostics-0 100% |  46.1 MiB/s | 472.1 KiB |  00m00s
+2026-07-27T18:28:55.4215065Z [241/387] Installing perl-macros-4:5.42 100% |   0.0   B/s |   5.8 KiB |  00m00s
+2026-07-27T18:28:55.4241548Z [242/387] Installing perl-TermReadKey-0 100% |  32.3 MiB/s |  66.1 KiB |  00m00s
+2026-07-27T18:28:55.4257157Z [243/387] Installing perl-Error-1:0.170 100% |  78.1 MiB/s |  80.0 KiB |  00m00s
+2026-07-27T18:28:55.4272325Z [244/387] Installing git-0:2.55.0-1.fc4 100% |  57.6 MiB/s |  59.0 KiB |  00m00s
+2026-07-27T18:28:55.4284821Z [245/387] Installing perl-Git-0:2.55.0- 100% |  63.8 MiB/s |  65.4 KiB |  00m00s
+2026-07-27T18:28:55.4304143Z [246/387] Installing perl-Config-Perl-V 100% |  27.0 MiB/s |  27.6 KiB |  00m00s
+2026-07-27T18:28:55.4332307Z [247/387] Installing perl-DB_File-0:1.8 100% |  93.4 MiB/s | 191.3 KiB |  00m00s
+2026-07-27T18:28:55.4357526Z [248/387] Installing perl-IPC-SysV-0:2. 100% |  37.4 MiB/s |  76.6 KiB |  00m00s
+2026-07-27T18:28:55.4377099Z [249/387] Installing perl-PerlIO-via-Qu 100% |  31.4 MiB/s |  32.1 KiB |  00m00s
+2026-07-27T18:28:55.4416426Z [250/387] Installing perl-Sys-Syslog-0: 100% |  47.2 MiB/s |  96.8 KiB |  00m00s
+2026-07-27T18:28:55.4439238Z [251/387] Installing perl-perlfaq-0:5.2 100% | 240.2 MiB/s | 737.9 KiB |  00m00s
+2026-07-27T18:28:55.4464885Z [252/387] Installing perl-Compress-Bzip 100% |  47.3 MiB/s | 145.2 KiB |  00m00s
+2026-07-27T18:28:55.4476534Z [253/387] Installing perl-Devel-Size-0: 100% |  42.7 MiB/s |  43.8 KiB |  00m00s
+2026-07-27T18:28:55.4500140Z [254/387] Installing perl-Text-Glob-0:0 100% |   0.0   B/s |   9.3 KiB |  00m00s
+2026-07-27T18:28:55.4519999Z [255/387] Installing perl-local-lib-0:2 100% |  58.8 MiB/s | 120.4 KiB |  00m00s
+2026-07-27T18:28:55.4547466Z [256/387] Installing perl-IPC-System-Si 100% |  71.8 MiB/s |  73.5 KiB |  00m00s
+2026-07-27T18:28:55.4565459Z [257/387] Installing perl-autodie-0:2.3 100% |  71.3 MiB/s | 219.1 KiB |  00m00s
+2026-07-27T18:28:55.4589201Z [258/387] Installing perl-File-Which-0: 100% |  30.7 MiB/s |  31.4 KiB |  00m00s
+2026-07-27T18:28:55.4608953Z [259/387] Installing perl-File-HomeDir- 100% |  60.5 MiB/s | 123.8 KiB |  00m00s
+2026-07-27T18:28:55.4622281Z [260/387] Installing perl-Text-Template 100% | 111.3 MiB/s | 114.0 KiB |  00m00s
+2026-07-27T18:28:55.4638493Z [261/387] Installing perl-Algorithm-Dif 100% | 106.9 MiB/s | 109.5 KiB |  00m00s
+2026-07-27T18:28:55.4659486Z [262/387] Installing perl-Text-Diff-0:1 100% |  41.5 MiB/s |  85.1 KiB |  00m00s
+2026-07-27T18:28:55.4760379Z [263/387] Installing perl-Module-Signat 100% |  13.6 MiB/s | 138.8 KiB |  00m00s
+2026-07-27T18:28:55.4817004Z [264/387] Installing perl-ph-0:5.42.2-5 100% |  55.5 MiB/s | 284.0 KiB |  00m00s
+2026-07-27T18:28:55.4831638Z [265/387] Installing perl-MRO-Compat-0: 100% |  43.8 MiB/s |  44.9 KiB |  00m00s
+2026-07-27T18:28:55.4844736Z [266/387] Installing perl-Pod-Functions 100% |   0.0   B/s |  14.8 KiB |  00m00s
+2026-07-27T18:28:55.4859969Z [267/387] Installing perl-Package-Gener 100% |  30.8 MiB/s |  31.5 KiB |  00m00s
+2026-07-27T18:28:55.4884311Z [268/387] Installing perl-Sub-Exporter- 100% |  98.6 MiB/s | 201.9 KiB |  00m00s
+2026-07-27T18:28:55.4938070Z [269/387] Installing perl-Data-Section- 100% |  43.0 MiB/s |  44.1 KiB |  00m00s
+2026-07-27T18:28:55.4995166Z [270/387] Installing perl-Software-Lice 100% |  83.5 MiB/s | 513.2 KiB |  00m00s
+2026-07-27T18:28:55.5112846Z [271/387] Installing perl-Module-Build- 100% |  46.3 MiB/s | 663.2 KiB |  00m00s
+2026-07-27T18:28:55.5150279Z [272/387] Installing perl-Compress-Raw- 100% |  72.5 MiB/s | 148.4 KiB |  00m00s
+2026-07-27T18:28:55.5176174Z [273/387] Installing perl-IO-Compress-L 100% |  72.3 MiB/s | 222.2 KiB |  00m00s
+2026-07-27T18:28:55.5280014Z [274/387] Installing perl-Archive-Tar-0 100% |  14.2 MiB/s | 160.3 KiB |  00m00s
+2026-07-27T18:28:55.5291295Z [275/387] Installing perl-Attribute-Han 100% |  39.6 MiB/s |  40.5 KiB |  00m00s
+2026-07-27T18:28:55.5307487Z [276/387] Installing perl-Config-Extens 100% |   3.2 MiB/s |   3.2 KiB |  00m00s
+2026-07-27T18:28:55.5319708Z [277/387] Installing perl-Devel-Peek-0: 100% |  43.7 MiB/s |  44.8 KiB |  00m00s
+2026-07-27T18:28:55.5332338Z [278/387] Installing perl-English-0:1.1 100% |   0.0   B/s |   6.6 KiB |  00m00s
+2026-07-27T18:28:55.5342816Z [279/387] Installing perl-File-DosGlob- 100% |  21.5 MiB/s |  22.0 KiB |  00m00s
+2026-07-27T18:28:55.5352110Z [280/387] Installing perl-FileCache-0:1 100% |   0.0   B/s |   7.9 KiB |  00m00s
+2026-07-27T18:28:55.5367450Z [281/387] Installing perl-FindBin-0:1.5 100% |   7.0 MiB/s |   7.2 KiB |  00m00s
+2026-07-27T18:28:55.5383835Z [282/387] Installing perl-GDBM_File-1:1 100% |  39.4 MiB/s |  80.6 KiB |  00m00s
+2026-07-27T18:28:55.5394216Z [283/387] Installing perl-I18N-Collate- 100% |   0.0   B/s |   7.6 KiB |  00m00s
+2026-07-27T18:28:55.5403565Z [284/387] Installing perl-Module-Loaded 100% |   0.0   B/s |   5.6 KiB |  00m00s
+2026-07-27T18:28:55.5416559Z [285/387] Installing perl-NEXT-0:0.69-5 100% |  23.4 MiB/s |  24.0 KiB |  00m00s
+2026-07-27T18:28:55.5430486Z [286/387] Installing perl-Net-0:1.04-52 100% |  23.3 MiB/s |  23.9 KiB |  00m00s
+2026-07-27T18:28:55.5446860Z [287/387] Installing perl-ODBM_File-0:1 100% |  28.9 MiB/s |  29.6 KiB |  00m00s
+2026-07-27T18:28:55.5457431Z [288/387] Installing perl-Search-Dict-0 100% |   5.1 MiB/s |   5.2 KiB |  00m00s
+2026-07-27T18:28:55.5468111Z [289/387] Installing perl-Term-Complete 100% |   6.2 MiB/s |   6.3 KiB |  00m00s
+2026-07-27T18:28:55.5479670Z [290/387] Installing perl-Test-0:1.31-5 100% |   0.0   B/s |  37.4 KiB |  00m00s
+2026-07-27T18:28:55.5491128Z [291/387] Installing perl-Text-Abbrev-0 100% |   3.5 MiB/s |   3.6 KiB |  00m00s
+2026-07-27T18:28:55.5500825Z [292/387] Installing perl-Tie-File-0:1. 100% |  84.1 MiB/s |  86.2 KiB |  00m00s
+2026-07-27T18:28:55.5513355Z [293/387] Installing perl-Tie-Memoize-0 100% |   6.6 MiB/s |   6.8 KiB |  00m00s
+2026-07-27T18:28:55.5532086Z [294/387] Installing perl-Time-0:1.04-5 100% |  10.7 MiB/s |  10.9 KiB |  00m00s
+2026-07-27T18:28:55.5549633Z [295/387] Installing perl-Time-Piece-0: 100% |  35.5 MiB/s |  72.8 KiB |  00m00s
+2026-07-27T18:28:55.5771490Z [296/387] Installing perl-blib-0:1.07-5 100% |   3.6 MiB/s |   3.6 KiB |  00m00s
+2026-07-27T18:28:55.5915725Z [297/387] Installing perl-doc-0:5.42.2- 100% | 328.2 MiB/s |  11.5 MiB |  00m00s
+2026-07-27T18:28:55.5925857Z [298/387] Installing perl-encoding-warn 100% |  10.4 MiB/s |  10.7 KiB |  00m00s
+2026-07-27T18:28:55.5934203Z [299/387] Installing perl-filetest-0:1. 100% |   0.0   B/s |   6.8 KiB |  00m00s
+2026-07-27T18:28:55.5943403Z [300/387] Installing perl-less-0:0.03-5 100% |   0.0   B/s |   5.3 KiB |  00m00s
+2026-07-27T18:28:55.5951903Z [301/387] Installing perl-sort-0:2.06-5 100% |   0.0   B/s |   5.2 KiB |  00m00s
+2026-07-27T18:28:55.5972831Z [302/387] Installing perl-vmsish-0:1.04 100% |   0.0   B/s |   7.0 KiB |  00m00s
+2026-07-27T18:28:55.5995289Z [303/387] Installing perl-MIME-Charset- 100% |  52.4 MiB/s | 107.3 KiB |  00m00s
+2026-07-27T18:28:55.6025562Z [304/387] Installing perl-Term-Size-Per 100% |  26.7 MiB/s |  27.4 KiB |  00m00s
+2026-07-27T18:28:55.6044914Z [305/387] Installing python-pip-wheel-0 100% | 407.6 MiB/s |   1.2 MiB |  00m00s
+2026-07-27T18:28:55.6782292Z [306/387] Installing mpdecimal-0:4.0.1- 100% |  42.7 MiB/s | 218.6 KiB |  00m00s
+2026-07-27T18:28:55.8924171Z [307/387] Installing python3-libs-0:3.1 100% | 156.4 MiB/s |  44.3 MiB |  00m00s
+2026-07-27T18:28:55.9077856Z [308/387] Installing python3-0:3.14.6-1 100% |   3.0 MiB/s |  30.5 KiB |  00m00s
+2026-07-27T18:28:55.9304013Z [309/387] Installing python3-idna-0:3.1 100% |  34.5 MiB/s | 530.2 KiB |  00m00s
+2026-07-27T18:28:55.9396359Z [310/387] Installing python3-urllib3-0: 100% |  81.3 MiB/s |   1.1 MiB |  00m00s
+2026-07-27T18:28:55.9528058Z [311/387] Installing python3-argcomplet 100% |  18.4 MiB/s | 339.0 KiB |  00m00s
+2026-07-27T18:28:55.9567061Z [312/387] Installing python3-rpm-0:6.0. 100% |  59.6 MiB/s | 183.0 KiB |  00m00s
+2026-07-27T18:28:55.9599211Z [313/387] Installing python3-six-0:1.17 100% |  58.7 MiB/s | 120.3 KiB |  00m00s
+2026-07-27T18:28:55.9665947Z [314/387] Installing python3-typing-ext 100% | 176.0 MiB/s | 540.7 KiB |  00m00s
+2026-07-27T18:28:55.9766036Z [315/387] Installing python3-utils-0:3. 100% |  35.4 MiB/s | 253.8 KiB |  00m00s
+2026-07-27T18:28:55.9911634Z [316/387] Installing python3-progressba 100% |  32.0 MiB/s | 623.1 KiB |  00m00s
+2026-07-27T18:28:56.0015786Z [317/387] Installing ninja-build-0:1.13 100% |  37.5 MiB/s | 499.6 KiB |  00m00s
+2026-07-27T18:28:56.0083712Z [318/387] Installing cmake-rpm-macros-0 100% |   8.8 MiB/s |   9.0 KiB |  00m00s
+2026-07-27T18:28:56.0109341Z [319/387] Installing python3-pyparsing- 100% | 147.1 MiB/s |   1.0 MiB |  00m00s
+2026-07-27T18:28:56.0252339Z [320/387] Installing systemtap-sdt-dtra 100% |  17.8 MiB/s | 182.4 KiB |  00m00s
+2026-07-27T18:28:56.0415404Z [321/387] Installing python3-charset-no 100% |  23.9 MiB/s | 366.4 KiB |  00m00s
+2026-07-27T18:28:56.0449289Z [322/387] Installing python3-requests-0 100% |  68.3 MiB/s | 489.5 KiB |  00m00s
+2026-07-27T18:28:56.0477085Z [323/387] Installing python3-rpmautospe 100% |   7.0 MiB/s |  14.3 KiB |  00m00s
+2026-07-27T18:28:56.0497890Z [324/387] Installing python3-pysocks-0: 100% |  51.1 MiB/s | 104.7 KiB |  00m00s
+2026-07-27T18:28:56.0537434Z [325/387] Installing ncurses-c++-libs-0 100% |  79.4 MiB/s | 162.6 KiB |  00m00s
+2026-07-27T18:28:56.0657437Z [326/387] Installing rhash-0:1.4.5-4.fc 100% |  27.1 MiB/s | 360.1 KiB |  00m00s
+2026-07-27T18:28:56.1027300Z [327/387] Installing jsoncpp-0:1.9.6-3. 100% |  93.5 MiB/s | 287.1 KiB |  00m00s
+2026-07-27T18:28:56.2037824Z [328/387] Installing cmake-0:4.3.0-1.fc 100% | 364.8 MiB/s |  40.5 MiB |  00m00s
+2026-07-27T18:28:56.5379925Z [329/387] Installing cmake-data-0:4.3.0 100% |  28.2 MiB/s |  10.1 MiB |  00m00s
+2026-07-27T18:28:56.6169115Z [330/387] Installing llvm-filesystem-0: 100% |   1.0 MiB/s |   1.1 KiB |  00m00s
+2026-07-27T18:28:56.9201770Z [331/387] Installing llvm-libs-0:22.1.8 100% | 451.6 MiB/s | 140.5 MiB |  00m00s
+2026-07-27T18:28:57.1225806Z [332/387] Installing clang-libs-0:22.1. 100% | 405.1 MiB/s | 109.8 MiB |  00m00s
+2026-07-27T18:28:57.1477894Z [333/387] Installing lld-libs-0:22.1.8- 100% | 358.7 MiB/s |   6.1 MiB |  00m00s
+2026-07-27T18:28:57.1572840Z [334/387] Installing libomp-0:22.1.8-4. 100% | 291.6 MiB/s |   2.9 MiB |  00m00s
+2026-07-27T18:28:57.1694111Z [335/387] Installing ed-0:1.22.5-2.fc44 100% |   8.2 MiB/s | 152.0 KiB |  00m00s
+2026-07-27T18:28:57.1824786Z [336/387] Installing patch-0:2.8-4.fc44 100% |  20.2 MiB/s | 228.1 KiB |  00m00s
+2026-07-27T18:28:57.1854202Z [337/387] Installing libdwarves1-0:1.30 100% | 159.1 MiB/s | 651.8 KiB |  00m00s
+2026-07-27T18:28:57.1975654Z [338/387] Installing hiredis-0:1.2.0-8. 100% |   9.5 MiB/s | 107.4 KiB |  00m00s
+2026-07-27T18:28:57.2136427Z [339/387] Installing cpio-0:2.15-9.fc44 100% |  91.9 MiB/s |   1.1 MiB |  00m00s
+2026-07-27T18:28:57.2256928Z [340/387] Installing rpm-build-0:6.0.1- 100% |  17.4 MiB/s | 303.7 KiB |  00m00s
+2026-07-27T18:28:57.2272891Z [341/387] Installing erlang-srpm-macros 100% |   2.4 MiB/s |   2.5 KiB |  00m00s
+2026-07-27T18:28:57.2325796Z [342/387] Installing pyproject-srpm-mac 100% |   3.7 MiB/s |   3.8 KiB |  00m00s
+2026-07-27T18:28:57.2499728Z [343/387] Installing redhat-rpm-config- 100% |   9.3 MiB/s | 189.9 KiB |  00m00s
+2026-07-27T18:28:57.2520604Z [344/387] Installing forge-srpm-macros- 100% |  19.7 MiB/s |  40.3 KiB |  00m00s
+2026-07-27T18:28:57.2540342Z [345/387] Installing fonts-srpm-macros- 100% |  55.7 MiB/s |  57.0 KiB |  00m00s
+2026-07-27T18:28:57.2557409Z [346/387] Installing go-srpm-macros-0:3 100% |  61.6 MiB/s |  63.0 KiB |  00m00s
+2026-07-27T18:28:57.2570871Z [347/387] Installing python-srpm-macros 100% |  51.7 MiB/s |  52.9 KiB |  00m00s
+2026-07-27T18:28:57.2731488Z [348/387] Installing R-srpm-macros-0:1. 100% |   4.3 MiB/s |   4.4 KiB |  00m00s
+2026-07-27T18:28:57.2872468Z [349/387] Installing perl-devel-4:5.42. 100% | 141.1 MiB/s |   3.8 MiB |  00m00s
+2026-07-27T18:28:57.2894799Z [350/387] Installing perl-ExtUtils-CBui 100% |  24.9 MiB/s | 102.1 KiB |  00m00s
+2026-07-27T18:28:57.2904948Z [351/387] Installing perl-ExtUtils-Embe 100% |  15.7 MiB/s |  16.1 KiB |  00m00s
+2026-07-27T18:28:57.2912647Z [352/387] Installing perl-ExtUtils-Mini 100% |   8.6 MiB/s |   8.8 KiB |  00m00s
+2026-07-27T18:28:57.2993052Z [353/387] Installing perl-4:5.42.2-524. 100% | 121.1 KiB/s | 124.0   B |  00m00s
+2026-07-27T18:28:57.3159605Z [354/387] Installing perl-CPAN-0:2.38-5 100% | 105.3 MiB/s |   1.9 MiB |  00m00s
+2026-07-27T18:28:57.3370331Z [355/387] Installing rpmdevtools-0:9.6- 100% |   8.3 MiB/s | 213.3 KiB |  00m00s
+2026-07-27T18:28:57.3370860Z >>> Running sysusers scriptlet: ccache-0:4.12.3-1.fc44.x86_64
+2026-07-27T18:28:57.3371258Z >>> Finished sysusers scriptlet: ccache-0:4.12.3-1.fc44.x86_64
+2026-07-27T18:28:57.3371578Z >>> Scriptlet output:
+2026-07-27T18:28:57.3371823Z >>> Creating group 'ccache' with GID 999.
+2026-07-27T18:28:57.3372223Z >>> 
+2026-07-27T18:28:57.3763513Z [356/387] Installing ccache-0:4.12.3-1. 100% |  62.9 MiB/s |   2.1 MiB |  00m00s
+2026-07-27T18:28:57.3966501Z [357/387] Installing dwarves-0:1.30-3.f 100% |  23.0 MiB/s | 399.5 KiB |  00m00s
+2026-07-27T18:28:57.3995304Z [358/387] Installing libomp-devel-0:22. 100% | 319.6 MiB/s |   2.9 MiB |  00m00s
+2026-07-27T18:28:57.4378382Z [359/387] Installing lld-0:22.1.8-4.fc4 100% |   2.3 MiB/s |  45.4 KiB |  00m00s
+2026-07-27T18:28:57.5448564Z [360/387] Installing clang-0:22.1.8-4.f 100% | 484.4 MiB/s |  61.5 MiB |  00m00s
+2026-07-27T18:28:57.8084971Z [361/387] Installing llvm-0:22.1.8-4.fc 100% | 338.8 MiB/s |  86.4 MiB |  00m00s
+2026-07-27T18:28:57.8240999Z [362/387] Installing ncurses-devel-0:6. 100% |  44.3 MiB/s |   1.0 MiB |  00m00s
+2026-07-27T18:28:57.8390995Z [363/387] Installing python3-urllib3+so 100% | 121.1 KiB/s | 124.0   B |  00m00s
+2026-07-27T18:28:57.8478821Z [364/387] Installing python3-rpmautospe 100% |  28.8 MiB/s | 500.8 KiB |  00m00s
+2026-07-27T18:28:57.9216787Z [365/387] Installing compiler-rt-0:22.1 100% | 530.2 MiB/s |  41.4 MiB |  00m00s
+2026-07-27T18:28:57.9356579Z [366/387] Installing python-unversioned 100% |  41.4 KiB/s | 424.0   B |  00m00s
+2026-07-27T18:28:57.9466449Z [367/387] Installing python3-html2text- 100% |  20.8 MiB/s | 297.9 KiB |  00m00s
+2026-07-27T18:28:57.9489202Z [368/387] Installing perl-Term-Size-Any 100% |   9.1 MiB/s |   9.3 KiB |  00m00s
+2026-07-27T18:28:57.9536975Z [369/387] Installing perl-Unicode-LineB 100% |  52.0 MiB/s | 266.3 KiB |  00m00s
+2026-07-27T18:28:57.9550886Z [370/387] Installing perl-Module-Plugga 100% |  56.7 MiB/s |  58.1 KiB |  00m00s
+2026-07-27T18:28:57.9563172Z [371/387] Installing perl-Encode-Locale 100% |  19.6 MiB/s |  20.1 KiB |  00m00s
+2026-07-27T18:28:57.9575689Z [372/387] Installing perl-CPAN-Distname 100% |  11.3 MiB/s |  11.6 KiB |  00m00s
+2026-07-27T18:28:57.9594378Z [373/387] Installing perl-Module-Runtim 100% |  63.0 MiB/s |  64.5 KiB |  00m00s
+2026-07-27T18:28:57.9706315Z [374/387] Installing elfutils-libelf-de 100% |  59.3 MiB/s | 121.5 KiB |  00m00s
+2026-07-27T18:28:58.0124028Z [375/387] Installing kmod-0:34.2-4.fc44 100% |   9.3 MiB/s | 256.9 KiB |  00m00s
+2026-07-27T18:28:58.0383697Z [376/387] Installing openssl-devel-1:3. 100% | 136.3 MiB/s |   5.5 MiB |  00m00s
+2026-07-27T18:28:58.0513943Z [377/387] Installing bison-0:3.8.2-15.f 100% | 166.3 MiB/s |   3.5 MiB |  00m00s
+2026-07-27T18:28:58.0677249Z [378/387] Installing flex-0:2.6.4-24.fc 100% |  56.6 MiB/s | 811.1 KiB |  00m00s
+2026-07-27T18:28:58.0929113Z [379/387] Installing jq-0:1.8.1-3.fc44. 100% |  38.1 MiB/s | 467.8 KiB |  00m00s
+2026-07-27T18:28:58.1040291Z [380/387] Installing bat-0:0.26.1-1.fc4 100% | 236.6 MiB/s |   5.9 MiB |  00m00s
+2026-07-27T18:28:58.1158575Z [381/387] Installing less-color-0:704-2 100% | 294.7 KiB/s |   2.7 KiB |  00m00s
+2026-07-27T18:28:58.1356955Z [382/387] Installing rsync-0:3.4.4-1.fc 100% |  61.1 MiB/s | 813.6 KiB |  00m00s
+2026-07-27T18:28:58.1464673Z [383/387] Installing 7zip-0:26.02-1.fc4 100% | 176.2 MiB/s |   3.3 MiB |  00m00s
+2026-07-27T18:28:58.1523689Z [384/387] Installing rpm-plugin-selinux 100% |   4.2 MiB/s |  12.9 KiB |  00m00s
+2026-07-27T18:28:58.2358527Z [385/387] Installing glibc-gconv-extra- 100% |  92.6 MiB/s |   7.5 MiB |  00m00s
+2026-07-27T18:28:58.2516208Z [386/387] Installing openssl-1:3.5.7-2. 100% |  99.8 MiB/s |   1.9 MiB |  00m00s
+2026-07-27T18:29:02.3970376Z [387/387] Installing bc-0:1.08.2-4.fc44 100% |  57.8 KiB/s | 239.6 KiB |  00m04s
+2026-07-27T18:29:02.3971836Z Complete!
+2026-07-27T18:29:02.4163619Z useradd: warning: the home directory /home/builder already exists.
+2026-07-27T18:29:02.4164154Z useradd: Not copying any file from skel directory into it.
+2026-07-27T18:29:02.6783300Z =========================================================
+2026-07-27T18:29:02.6783698Z  ERMETE OS CHIMERA KERNEL - RPM BUILDER
+2026-07-27T18:29:02.6784004Z =========================================================
+2026-07-27T18:29:02.6784324Z >>> Preparazione ambiente rpmbuild isolato...
+2026-07-27T18:29:02.6793200Z >>> Download del Kernel CachyOS (Sorgente Pura)...
+2026-07-27T18:29:02.6811198Z Cloning into 'cachyos-tree'...
+2026-07-27T18:29:19.2536702Z Updating files:  23% (22306/93028)
+2026-07-27T18:29:19.2935556Z Updating files:  24% (22327/93028)
+2026-07-27T18:29:19.3331070Z Updating files:  25% (23257/93028)
+2026-07-27T18:29:19.3798991Z Updating files:  26% (24188/93028)
+2026-07-27T18:29:19.4197029Z Updating files:  27% (25118/93028)
+2026-07-27T18:29:19.4589712Z Updating files:  28% (26048/93028)
+2026-07-27T18:29:19.5044998Z Updating files:  29% (26979/93028)
+2026-07-27T18:29:19.5583027Z Updating files:  30% (27909/93028)
+2026-07-27T18:29:19.6159859Z Updating files:  31% (28839/93028)
+2026-07-27T18:29:19.6757463Z Updating files:  32% (29769/93028)
+2026-07-27T18:29:19.7323466Z Updating files:  33% (30700/93028)
+2026-07-27T18:29:19.7900864Z Updating files:  34% (31630/93028)
+2026-07-27T18:29:19.8397218Z Updating files:  35% (32560/93028)
+2026-07-27T18:29:19.8942568Z Updating files:  36% (33491/93028)
+2026-07-27T18:29:19.9496944Z Updating files:  37% (34421/93028)
+2026-07-27T18:29:20.0152149Z Updating files:  38% (35351/93028)
+2026-07-27T18:29:20.2590872Z Updating files:  39% (36281/93028)
+2026-07-27T18:29:20.6103434Z Updating files:  39% (37011/93028)
+2026-07-27T18:29:20.7015187Z Updating files:  40% (37212/93028)
+2026-07-27T18:29:20.7562342Z Updating files:  41% (38142/93028)
+2026-07-27T18:29:20.8073752Z Updating files:  42% (39072/93028)
+2026-07-27T18:29:20.8518004Z Updating files:  43% (40003/93028)
+2026-07-27T18:29:20.9057878Z Updating files:  44% (40933/93028)
+2026-07-27T18:29:20.9549526Z Updating files:  45% (41863/93028)
+2026-07-27T18:29:21.0114773Z Updating files:  46% (42793/93028)
+2026-07-27T18:29:21.0646212Z Updating files:  47% (43724/93028)
+2026-07-27T18:29:21.1210063Z Updating files:  48% (44654/93028)
+2026-07-27T18:29:21.1736391Z Updating files:  49% (45584/93028)
+2026-07-27T18:29:21.2286736Z Updating files:  50% (46514/93028)
+2026-07-27T18:29:21.2527050Z Updating files:  51% (47445/93028)
+2026-07-27T18:29:21.2841107Z Updating files:  51% (47795/93028)
+2026-07-27T18:29:21.3338916Z Updating files:  52% (48375/93028)
+2026-07-27T18:29:21.3871012Z Updating files:  53% (49305/93028)
+2026-07-27T18:29:21.4429451Z Updating files:  54% (50236/93028)
+2026-07-27T18:29:21.5082426Z Updating files:  55% (51166/93028)
+2026-07-27T18:29:21.5723020Z Updating files:  56% (52096/93028)
+2026-07-27T18:29:21.6324061Z Updating files:  57% (53026/93028)
+2026-07-27T18:29:21.6977310Z Updating files:  58% (53957/93028)
+2026-07-27T18:29:21.7590869Z Updating files:  59% (54887/93028)
+2026-07-27T18:29:21.8251368Z Updating files:  60% (55817/93028)
+2026-07-27T18:29:21.8922233Z Updating files:  61% (56748/93028)
+2026-07-27T18:29:21.9467042Z Updating files:  62% (57678/93028)
+2026-07-27T18:29:22.0027726Z Updating files:  63% (58608/93028)
+2026-07-27T18:29:22.0600316Z Updating files:  64% (59538/93028)
+2026-07-27T18:29:22.1117179Z Updating files:  65% (60469/93028)
+2026-07-27T18:29:22.1863495Z Updating files:  66% (61399/93028)
+2026-07-27T18:29:22.2418751Z Updating files:  67% (62329/93028)
+2026-07-27T18:29:22.2527110Z Updating files:  68% (63260/93028)
+2026-07-27T18:29:22.2882133Z Updating files:  68% (63519/93028)
+2026-07-27T18:29:22.3489245Z Updating files:  69% (64190/93028)
+2026-07-27T18:29:22.4073142Z Updating files:  70% (65120/93028)
+2026-07-27T18:29:22.4592003Z Updating files:  71% (66050/93028)
+2026-07-27T18:29:22.5211184Z Updating files:  72% (66981/93028)
+2026-07-27T18:29:22.5836347Z Updating files:  73% (67911/93028)
+2026-07-27T18:29:22.6284652Z Updating files:  74% (68841/93028)
+2026-07-27T18:29:22.6660281Z Updating files:  75% (69771/93028)
+2026-07-27T18:29:22.7158248Z Updating files:  76% (70702/93028)
+2026-07-27T18:29:22.7638427Z Updating files:  77% (71632/93028)
+2026-07-27T18:29:22.8067245Z Updating files:  78% (72562/93028)
+2026-07-27T18:29:22.8532690Z Updating files:  79% (73493/93028)
+2026-07-27T18:29:22.8972265Z Updating files:  80% (74423/93028)
+2026-07-27T18:29:22.9527778Z Updating files:  81% (75353/93028)
+2026-07-27T18:29:23.0033074Z Updating files:  82% (76283/93028)
+2026-07-27T18:29:23.0629177Z Updating files:  83% (77214/93028)
+2026-07-27T18:29:23.1218819Z Updating files:  84% (78144/93028)
+2026-07-27T18:29:23.1771621Z Updating files:  85% (79074/93028)
+2026-07-27T18:29:23.2217637Z Updating files:  86% (80005/93028)
+2026-07-27T18:29:23.2527794Z Updating files:  87% (80935/93028)
+2026-07-27T18:29:23.2749854Z Updating files:  87% (81498/93028)
+2026-07-27T18:29:23.3369633Z Updating files:  88% (81865/93028)
+2026-07-27T18:29:23.3899226Z Updating files:  89% (82795/93028)
+2026-07-27T18:29:23.4369149Z Updating files:  90% (83726/93028)
+2026-07-27T18:29:23.4837480Z Updating files:  91% (84656/93028)
+2026-07-27T18:29:23.5454493Z Updating files:  92% (85586/93028)
+2026-07-27T18:29:23.5897825Z Updating files:  93% (86517/93028)
+2026-07-27T18:29:23.6356723Z Updating files:  94% (87447/93028)
+2026-07-27T18:29:23.6730072Z Updating files:  95% (88377/93028)
+2026-07-27T18:29:23.7149691Z Updating files:  96% (89307/93028)
+2026-07-27T18:29:23.7593038Z Updating files:  97% (90238/93028)
+2026-07-27T18:29:23.8010718Z Updating files:  98% (91168/93028)
+2026-07-27T18:29:23.8419258Z Updating files:  99% (92098/93028)
+2026-07-27T18:29:23.8419607Z Updating files: 100% (93028/93028)
+2026-07-27T18:29:23.8419922Z Updating files: 100% (93028/93028), done.
+2026-07-27T18:29:23.9232294Z >>> Download del file di configurazione base CachyOS...
+2026-07-27T18:29:24.4309111Z >>> Creazione del file ermete-bedrock.cfg (Fusione configurazioni)...
+2026-07-27T18:29:24.4340803Z >>> Ottimizzazione: Spostamento sorgenti direttamente nella cartella BUILD...
+2026-07-27T18:29:33.3843420Z >>> Copia dei file di configurazione e Spec...
+2026-07-27T18:29:33.3866842Z >>> Rilevamento della stringa di rilascio del Kernel (uname -r)...
+2026-07-27T18:29:33.3959052Z KREL rilevato: 7.0.0-rc5
+2026-07-27T18:29:33.3959386Z >>> Avvio compilazione RPM tramite rpmbuild...
+2026-07-27T18:29:33.4164762Z setting SOURCE_DATE_EPOCH=1784764800
+2026-07-27T18:29:33.4374394Z Executing(%mkbuilddir): /bin/sh -e /var/tmp/rpm-tmp.CupM1D
+2026-07-27T18:29:33.4424756Z Executing(%prep): /bin/sh -e /var/tmp/rpm-tmp.8RF2VH
+2026-07-27T18:29:33.4444452Z + umask 022
+2026-07-27T18:29:33.4445040Z + cd /workspace/kernel/rpmbuild_out/BUILD/ermete-kernel-6.14-build
+2026-07-27T18:29:33.4445870Z + cd /workspace/kernel/rpmbuild_out/BUILD/ermete-kernel-6.14-build
+2026-07-27T18:29:33.4446514Z + cd linux-cachyos
+2026-07-27T18:29:33.4447214Z /var/tmp/rpm-tmp.8RF2VH: line 36: cd: linux-cachyos: No such file or directory
+2026-07-27T18:29:33.4448104Z error: Bad exit status from /var/tmp/rpm-tmp.8RF2VH (%prep)
+2026-07-27T18:29:33.4448834Z     Bad exit status from /var/tmp/rpm-tmp.8RF2VH (%prep)
+2026-07-27T18:29:33.4449212Z 
+2026-07-27T18:29:33.4449398Z RPM build errors:
+2026-07-27T18:29:36.0387660Z ##[error]Process completed with exit code 1.
+2026-07-27T18:29:36.0511373Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-27T18:29:36.0513013Z Post job cleanup.
+2026-07-27T18:29:36.1125127Z [command]/usr/bin/git version
+2026-07-27T18:29:36.1167533Z git version 2.55.0
+2026-07-27T18:29:36.1198988Z Temporarily overriding HOME='/var/home/ermete/actions-runner-monorepo/_work/_temp/c512e31a-5706-4667-8808-fc79116c3496' before making global git config changes
+2026-07-27T18:29:36.1200219Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-27T18:29:36.1201520Z [command]/usr/bin/git config --global --add safe.directory /var/home/ermete/actions-runner-monorepo/_work/ermete-os/ermete-os
+2026-07-27T18:29:36.1228301Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-27T18:29:36.1254517Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-27T18:29:36.1561214Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-27T18:29:36.1580940Z http.https://github.com/.extraheader
+2026-07-27T18:29:36.1589719Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-07-27T18:29:36.1618403Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-27T18:29:36.1872139Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-27T18:29:36.1895745Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-27T18:29:36.2275534Z Cleaning up orphan processes
+2026-07-27T18:29:36.2933905Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

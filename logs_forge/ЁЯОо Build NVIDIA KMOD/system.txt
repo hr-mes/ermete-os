@@ -1,0 +1,7 @@
+2026-07-27T15:06:44.4670000Z Evaluating build-nvidia.if
+2026-07-27T15:06:44.4670000Z Evaluating: success()
+2026-07-27T15:06:44.4670000Z Result: true
+2026-07-27T15:06:44.4720000Z Requested labels: self-hosted
+2026-07-27T15:06:44.4720000Z Job defined at: patapem/ermete-os/.github/workflows/ermete-forge-orchestrator.yml@refs/heads/main
+2026-07-27T15:06:44.4720000Z Waiting for a runner to pick up this job...
+2026-07-27T15:06:44.7240000Z Job is about to start running on the runner: monorepo-runner-1

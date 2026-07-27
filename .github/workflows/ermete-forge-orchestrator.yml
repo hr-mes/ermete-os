@@ -912,8 +912,8 @@ jobs:
             git config --global --add safe.directory /workspace/pages_repo
             git checkout -b gh-pages
             
-            echo "🧹 Rimozione file > 95MB per rispettare i limiti di GitHub Pages..."
-            find /workspace/pages_repo -type f -name "*.rpm" -size +95M -exec rm -v {} \;
+            echo "🧹 Rimozione file > 49MB per rispettare i limiti e warnings di GitHub Pages..."
+            find /workspace/pages_repo -type f -name "*.rpm" -size +49M -exec rm -v {} \;
             
             echo "🔄 Rigenerazione metadata DNF per GitHub Pages..."
             for tier_dir in /workspace/pages_repo/tier*; do

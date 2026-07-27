@@ -1,0 +1,1966 @@
+﻿2026-07-27T15:22:11.4258640Z Current runner version: '2.336.0'
+2026-07-27T15:22:11.4288172Z ##[group]Runner Image Provisioner
+2026-07-27T15:22:11.4289145Z Hosted Compute Agent
+2026-07-27T15:22:11.4289777Z Version: 20260707.563
+2026-07-27T15:22:11.4290456Z Commit: 02667638d2b423fbc733a8e32a88b44996a3ba6e
+2026-07-27T15:22:11.4291249Z Build Date: 2026-07-07T19:33:50Z
+2026-07-27T15:22:11.4291947Z Worker ID: {453f43db-c607-413d-8528-c17a5365eabe}
+2026-07-27T15:22:11.4292703Z Azure Region: northcentralus
+2026-07-27T15:22:11.4293387Z ##[endgroup]
+2026-07-27T15:22:11.4295123Z ##[group]Operating System
+2026-07-27T15:22:11.4295851Z Ubuntu
+2026-07-27T15:22:11.4296411Z 24.04.4
+2026-07-27T15:22:11.4296970Z LTS
+2026-07-27T15:22:11.4297544Z ##[endgroup]
+2026-07-27T15:22:11.4298114Z ##[group]Runner Image
+2026-07-27T15:22:11.4299085Z Image: ubuntu-24.04
+2026-07-27T15:22:11.4299778Z Version: 20260720.247.2
+2026-07-27T15:22:11.4301117Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260720.247/images/ubuntu/Ubuntu2404-Readme.md
+2026-07-27T15:22:11.4302719Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260720.247
+2026-07-27T15:22:11.4304032Z ##[endgroup]
+2026-07-27T15:22:11.4305519Z ##[group]GITHUB_TOKEN Permissions
+2026-07-27T15:22:11.4307816Z Contents: write
+2026-07-27T15:22:11.4308580Z Metadata: read
+2026-07-27T15:22:11.4309178Z Packages: write
+2026-07-27T15:22:11.4309782Z ##[endgroup]
+2026-07-27T15:22:11.4312009Z Secret source: Actions
+2026-07-27T15:22:11.4313534Z Prepare workflow directory
+2026-07-27T15:22:11.4767485Z Prepare all required actions
+2026-07-27T15:22:11.4811787Z Getting action download info
+2026-07-27T15:22:11.7217677Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-07-27T15:22:12.1556021Z Complete job name: 📦 Build Repository
+2026-07-27T15:22:12.2545515Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-27T15:22:12.2554834Z ##[group]Run actions/checkout@v4
+2026-07-27T15:22:12.2555622Z with:
+2026-07-27T15:22:12.2556092Z   repository: patapem/ermete-os
+2026-07-27T15:22:12.2560984Z   token: ***
+2026-07-27T15:22:12.2561478Z   ssh-strict: true
+2026-07-27T15:22:12.2561938Z   ssh-user: git
+2026-07-27T15:22:12.2562718Z   persist-credentials: true
+2026-07-27T15:22:12.2563817Z   clean: true
+2026-07-27T15:22:12.2564490Z   sparse-checkout-cone-mode: true
+2026-07-27T15:22:12.2565044Z   fetch-depth: 1
+2026-07-27T15:22:12.2565485Z   fetch-tags: false
+2026-07-27T15:22:12.2565947Z   show-progress: true
+2026-07-27T15:22:12.2566411Z   lfs: false
+2026-07-27T15:22:12.2566891Z   submodules: false
+2026-07-27T15:22:12.2567358Z   set-safe-directory: true
+2026-07-27T15:22:12.2567884Z   allow-unsafe-pr-checkout: false
+2026-07-27T15:22:12.2568795Z env:
+2026-07-27T15:22:12.2569230Z   REGISTRY: ghcr.io
+2026-07-27T15:22:12.2569719Z   FEDORA_VERSION: 43
+2026-07-27T15:22:12.2570171Z ##[endgroup]
+2026-07-27T15:22:12.3669351Z Syncing repository: patapem/ermete-os
+2026-07-27T15:22:12.3672216Z ##[group]Getting Git version info
+2026-07-27T15:22:12.3673472Z Working directory is '/home/runner/work/ermete-os/ermete-os'
+2026-07-27T15:22:12.3675486Z [command]/usr/bin/git version
+2026-07-27T15:22:12.3732515Z git version 2.54.0
+2026-07-27T15:22:12.3805555Z ##[endgroup]
+2026-07-27T15:22:12.3814556Z Temporarily overriding HOME='/home/runner/work/_temp/4e286f15-6f21-4d85-9562-54f1933fe26f' before making global git config changes
+2026-07-27T15:22:12.3816894Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-27T15:22:12.3821366Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/ermete-os/ermete-os
+2026-07-27T15:22:12.3892973Z Deleting the contents of '/home/runner/work/ermete-os/ermete-os'
+2026-07-27T15:22:12.3915879Z ##[group]Initializing the repository
+2026-07-27T15:22:12.3933368Z [command]/usr/bin/git init /home/runner/work/ermete-os/ermete-os
+2026-07-27T15:22:12.4024192Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-07-27T15:22:12.4028876Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-07-27T15:22:12.4030791Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-07-27T15:22:12.4032265Z hint: call:
+2026-07-27T15:22:12.4033093Z hint:
+2026-07-27T15:22:12.4034280Z hint: 	git config --global init.defaultBranch <name>
+2026-07-27T15:22:12.4035378Z hint:
+2026-07-27T15:22:12.4036415Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-07-27T15:22:12.4038074Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-07-27T15:22:12.4039315Z hint:
+2026-07-27T15:22:12.4040001Z hint: 	git branch -m <name>
+2026-07-27T15:22:12.4040790Z hint:
+2026-07-27T15:22:12.4041890Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-07-27T15:22:12.4044073Z Initialized empty Git repository in /home/runner/work/ermete-os/ermete-os/.git/
+2026-07-27T15:22:12.4047094Z [command]/usr/bin/git remote add origin https://github.com/patapem/ermete-os
+2026-07-27T15:22:12.4098398Z ##[endgroup]
+2026-07-27T15:22:12.4099753Z ##[group]Disabling automatic garbage collection
+2026-07-27T15:22:12.4104328Z [command]/usr/bin/git config --local gc.auto 0
+2026-07-27T15:22:12.4143284Z ##[endgroup]
+2026-07-27T15:22:12.4144959Z ##[group]Setting up auth
+2026-07-27T15:22:12.4153361Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-27T15:22:12.4205647Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-27T15:22:12.4607920Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-27T15:22:12.4673120Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-27T15:22:12.4958912Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-27T15:22:12.5007338Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-27T15:22:12.5271408Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-07-27T15:22:12.5318290Z ##[endgroup]
+2026-07-27T15:22:12.5319126Z ##[group]Fetching the repository
+2026-07-27T15:22:12.5328816Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +e8a1f2b06971a34ff345313f7b440b9309e30e17:refs/remotes/origin/main
+2026-07-27T15:22:26.5068566Z From https://github.com/patapem/ermete-os
+2026-07-27T15:22:26.5070444Z  * [new ref]         e8a1f2b06971a34ff345313f7b440b9309e30e17 -> origin/main
+2026-07-27T15:22:26.5105628Z ##[endgroup]
+2026-07-27T15:22:26.5106920Z ##[group]Determining the checkout info
+2026-07-27T15:22:26.5108530Z ##[endgroup]
+2026-07-27T15:22:26.5114532Z [command]/usr/bin/git sparse-checkout disable
+2026-07-27T15:22:26.5166171Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-07-27T15:22:26.5203076Z ##[group]Checking out the ref
+2026-07-27T15:22:26.5207229Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-07-27T15:22:27.9581005Z Updating files:  69% (1316/1904)
+2026-07-27T15:22:28.4658212Z Updating files:  70% (1333/1904)
+2026-07-27T15:22:28.5262625Z Updating files:  71% (1352/1904)
+2026-07-27T15:22:28.5274715Z Updating files:  72% (1371/1904)
+2026-07-27T15:22:28.6542868Z Updating files:  72% (1372/1904)
+2026-07-27T15:22:28.7490061Z Updating files:  73% (1390/1904)
+2026-07-27T15:22:28.8224729Z Updating files:  74% (1409/1904)
+2026-07-27T15:22:28.8246677Z Updating files:  75% (1428/1904)
+2026-07-27T15:22:29.0222509Z Updating files:  76% (1448/1904)
+2026-07-27T15:22:29.0245056Z Updating files:  77% (1467/1904)
+2026-07-27T15:22:29.0268812Z Updating files:  78% (1486/1904)
+2026-07-27T15:22:29.0294567Z Updating files:  79% (1505/1904)
+2026-07-27T15:22:29.0330625Z Updating files:  80% (1524/1904)
+2026-07-27T15:22:29.0342720Z Updating files:  81% (1543/1904)
+2026-07-27T15:22:29.0373033Z Updating files:  82% (1562/1904)
+2026-07-27T15:22:29.0413123Z Updating files:  83% (1581/1904)
+2026-07-27T15:22:29.0819363Z Updating files:  84% (1600/1904)
+2026-07-27T15:22:29.0836996Z Updating files:  85% (1619/1904)
+2026-07-27T15:22:29.0856521Z Updating files:  86% (1638/1904)
+2026-07-27T15:22:29.0877693Z Updating files:  87% (1657/1904)
+2026-07-27T15:22:29.0902143Z Updating files:  88% (1676/1904)
+2026-07-27T15:22:29.0920605Z Updating files:  89% (1695/1904)
+2026-07-27T15:22:29.0941642Z Updating files:  90% (1714/1904)
+2026-07-27T15:22:29.0961726Z Updating files:  91% (1733/1904)
+2026-07-27T15:22:29.1017760Z Updating files:  92% (1752/1904)
+2026-07-27T15:22:29.1043055Z Updating files:  93% (1771/1904)
+2026-07-27T15:22:29.1058578Z Updating files:  94% (1790/1904)
+2026-07-27T15:22:29.1078215Z Updating files:  95% (1809/1904)
+2026-07-27T15:22:29.1097590Z Updating files:  96% (1828/1904)
+2026-07-27T15:22:29.1109522Z Updating files:  97% (1847/1904)
+2026-07-27T15:22:29.1122652Z Updating files:  98% (1866/1904)
+2026-07-27T15:22:29.1133442Z Updating files:  99% (1885/1904)
+2026-07-27T15:22:29.1134344Z Updating files: 100% (1904/1904)
+2026-07-27T15:22:29.1135035Z Updating files: 100% (1904/1904), done.
+2026-07-27T15:22:29.1829787Z Switched to a new branch 'main'
+2026-07-27T15:22:29.1832898Z branch 'main' set up to track 'origin/main'.
+2026-07-27T15:22:29.1917544Z ##[endgroup]
+2026-07-27T15:22:29.1967582Z [command]/usr/bin/git log -1 --format=%H
+2026-07-27T15:22:29.2001098Z e8a1f2b06971a34ff345313f7b440b9309e30e17
+2026-07-27T15:22:29.2271540Z ##[group]Run podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+2026-07-27T15:22:29.2272577Z [36;1mpodman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \[0m
+2026-07-27T15:22:29.2273176Z [36;1m  -v /home/runner/work/ermete-os/ermete-os:/workspace \[0m
+2026-07-27T15:22:29.2274106Z [36;1m  -w /workspace/forge \[0m
+2026-07-27T15:22:29.2274487Z [36;1m  ghcr.io/patapem/ermete-os-builder:latest \[0m
+2026-07-27T15:22:29.2274814Z [36;1m  bash <<'EOF'[0m
+2026-07-27T15:22:29.2275061Z [36;1m  set -e[0m
+2026-07-27T15:22:29.2275317Z [36;1m  export BUILDAH_ISOLATION=chroot[0m
+2026-07-27T15:22:29.2275620Z [36;1m  export XDG_DATA_HOME=/var/tmp[0m
+2026-07-27T15:22:29.2275939Z [36;1m  export XDG_CONFIG_HOME=/var/tmp[0m
+2026-07-27T15:22:29.2276227Z [36;1m  export XDG_CACHE_HOME=/var/tmp[0m
+2026-07-27T15:22:29.2276543Z [36;1m  export _CONTAINERS_USERNS_CONFIGURED=done[0m
+2026-07-27T15:22:29.2276893Z [36;1m  [0m
+2026-07-27T15:22:29.2277363Z [36;1m  # Mount a directory from the workspace (host filesystem) to avoid overlayfs chown issues and tmpfs RAM limits[0m
+2026-07-27T15:22:29.2277933Z [36;1m  mkdir -p /workspace/var-tmp[0m
+2026-07-27T15:22:29.2278248Z [36;1m  mount --bind /workspace/var-tmp /var/tmp[0m
+2026-07-27T15:22:29.2278549Z [36;1m  [0m
+2026-07-27T15:22:29.2278969Z [36;1m  # Create a custom storage.conf to explicitly ignore vfs chown errors during storage shutdown[0m
+2026-07-27T15:22:29.2279472Z [36;1m  echo '[storage]' > /var/tmp/storage.conf[0m
+2026-07-27T15:22:29.2279818Z [36;1m  echo 'driver = "vfs"' >> /var/tmp/storage.conf[0m
+2026-07-27T15:22:29.2280248Z [36;1m  echo 'runroot = "/var/tmp/containers/runroot"' >> /var/tmp/storage.conf[0m
+2026-07-27T15:22:29.2280765Z [36;1m  echo 'graphroot = "/var/tmp/containers/storage"' >> /var/tmp/storage.conf[0m
+2026-07-27T15:22:29.2281232Z [36;1m  echo '[storage.options.vfs]' >> /var/tmp/storage.conf[0m
+2026-07-27T15:22:29.2281653Z [36;1m  echo 'ignore_chown_errors = "true"' >> /var/tmp/storage.conf[0m
+2026-07-27T15:22:29.2282307Z [36;1m  export CONTAINERS_STORAGE_CONF=/var/tmp/storage.conf[0m
+2026-07-27T15:22:29.2282639Z [36;1m  [0m
+2026-07-27T15:22:29.2282931Z [36;1m  dnf install -y createrepo_c buildah skopeo jq rpm-sign gnupg2[0m
+2026-07-27T15:22:29.2283296Z [36;1m  [0m
+2026-07-27T15:22:29.2283505Z [36;1m  # Setup GPG for RPM signing[0m
+2026-07-27T15:22:29.2284103Z [36;1m  echo "::add-mask::"[0m
+2026-07-27T15:22:29.2284391Z [36;1m  echo "" | gpg --import || true[0m
+2026-07-27T15:22:29.2284719Z [36;1m  echo '%_signature gpg' > ~/.rpmmacros[0m
+2026-07-27T15:22:29.2285060Z [36;1m  echo '%_gpg_name ermete' >> ~/.rpmmacros[0m
+2026-07-27T15:22:29.2286079Z [36;1m  echo '%__gpg_sign_cmd %{__gpg} --batch --verbose --no-armor --passphrase "${RPM_GPG_PASSPHRASE}" --pinentry-mode loopback --no-secmem-warning -u "%{_gpg_name}" -sbo %{__signature_filename} --digest-algo sha256 %{__plaintext_filename}' >> ~/.rpmmacros[0m
+2026-07-27T15:22:29.2287077Z [36;1m  export RPM_GPG_PASSPHRASE=""[0m
+2026-07-27T15:22:29.2287369Z [36;1m  [0m
+2026-07-27T15:22:29.2287684Z [36;1m  # Fetch RPMs dynamically from micro-containers and organize by Tier[0m
+2026-07-27T15:22:29.2290709Z [36;1m  echo "***" | buildah login ghcr.io -u patapem --password-stdin[0m
+2026-07-27T15:22:29.2291156Z [36;1m  bash scripts/fetch_repo_rpms.sh patapem[0m
+2026-07-27T15:22:29.2291461Z [36;1m  [0m
+2026-07-27T15:22:29.2294056Z [36;1m  buildah login -u patapem -p *** ghcr.io[0m
+2026-07-27T15:22:29.2294377Z [36;1m  [0m
+2026-07-27T15:22:29.2294591Z [36;1m  mkdir -p .manifests[0m
+2026-07-27T15:22:29.2295008Z [36;1m  # Create repositories and push micro-containers for each Tier plus the full repo[0m
+2026-07-27T15:22:29.2295484Z [36;1m  for tier in tier0 tier1 tier2 tier3 ""; do[0m
+2026-07-27T15:22:29.2295796Z [36;1m    if [ -n "$tier" ]; then[0m
+2026-07-27T15:22:29.2296080Z [36;1m      dir="repo-cache/repo-${tier}"[0m
+2026-07-27T15:22:29.2296671Z [36;1m      img_name="ermete-os-forge-${tier}-repo:latest"[0m
+2026-07-27T15:22:29.2297009Z [36;1m    else[0m
+2026-07-27T15:22:29.2297227Z [36;1m      dir="repo-cache/repo"[0m
+2026-07-27T15:22:29.2297545Z [36;1m      img_name="ermete-os-forge-rolling-repo:latest"[0m
+2026-07-27T15:22:29.2297861Z [36;1m    fi[0m
+2026-07-27T15:22:29.2298056Z [36;1m    [0m
+2026-07-27T15:22:29.2298394Z [36;1m    IMAGE_LOWER=$(echo "ghcr.io/patapem/$img_name" | tr '[:upper:]' '[:lower:]')[0m
+2026-07-27T15:22:29.2299056Z [36;1m    NEW_HASH=$(find "$dir" -maxdepth 1 -name '*.rpm' -type f | sort | xargs -r sha256sum | sha256sum | awk '{print $1}')[0m
+2026-07-27T15:22:29.2299912Z [36;1m    OLD_HASH=$(skopeo inspect --config "docker://$IMAGE_LOWER" 2>/dev/null | jq -r '.config.Labels["tier.content.sha256"] // ""' || echo "")[0m
+2026-07-27T15:22:29.2300589Z [36;1m    if [ -n "$OLD_HASH" ] && [ "$NEW_HASH" = "$OLD_HASH" ]; then[0m
+2026-07-27T15:22:29.2301277Z [36;1m      echo "✅ Tier '$tier' ($img_name): RPM content hash unchanged ($NEW_HASH). Skipping createrepo_c & push to freeze Tier OCI cache!"[0m
+2026-07-27T15:22:29.2301879Z [36;1m      continue[0m
+2026-07-27T15:22:29.2302105Z [36;1m    fi[0m
+2026-07-27T15:22:29.2302342Z [36;1m    [0m
+2026-07-27T15:22:29.2302616Z [36;1m    echo "----------------------------------------"[0m
+2026-07-27T15:22:29.2303196Z [36;1m    echo "🚀 Tier '$tier' ($img_name): content hash changed (old: '$OLD_HASH', new: '$NEW_HASH'). Creating metadata & pushing..."[0m
+2026-07-27T15:22:29.2304009Z [36;1m    [0m
+2026-07-27T15:22:29.2304270Z [36;1m    # Sign the RPMs only if a GPG key is configured[0m
+2026-07-27T15:22:29.2304597Z [36;1m    if [ -n "" ]; then[0m
+2026-07-27T15:22:29.2304955Z [36;1m      find "$dir" -name "*.rpm" -exec rpmsign --addsign {} + || true[0m
+2026-07-27T15:22:29.2305320Z [36;1m    fi[0m
+2026-07-27T15:22:29.2305519Z [36;1m    [0m
+2026-07-27T15:22:29.2305711Z [36;1m    ([0m
+2026-07-27T15:22:29.2305919Z [36;1m      cd "$dir"[0m
+2026-07-27T15:22:29.2306172Z [36;1m      createrepo_c .[0m
+2026-07-27T15:22:29.2306582Z [36;1m      [0m
+2026-07-27T15:22:29.2306804Z [36;1m      ctr=$(buildah from scratch)[0m
+2026-07-27T15:22:29.2307092Z [36;1m      buildah copy $ctr . /[0m
+2026-07-27T15:22:29.2307457Z [36;1m      buildah config --label tier.content.sha256="$NEW_HASH" $ctr[0m
+2026-07-27T15:22:29.2307899Z [36;1m      buildah commit --omit-timestamp $ctr "$IMAGE_LOWER"[0m
+2026-07-27T15:22:29.2308255Z [36;1m      buildah push "$IMAGE_LOWER"[0m
+2026-07-27T15:22:29.2308538Z [36;1m      buildah rm "$ctr"[0m
+2026-07-27T15:22:29.2308811Z [36;1m      buildah rmi "$IMAGE_LOWER"[0m
+2026-07-27T15:22:29.2309076Z [36;1m    )[0m
+2026-07-27T15:22:29.2309277Z [36;1m    [0m
+2026-07-27T15:22:29.2309488Z [36;1m    # Update manifest[0m
+2026-07-27T15:22:29.2309778Z [36;1m    echo "$NEW_HASH" > ".manifests/${tier}.hash"[0m
+2026-07-27T15:22:29.2310085Z [36;1m  done[0m
+2026-07-27T15:22:29.2310283Z [36;1m[0m
+2026-07-27T15:22:29.2310576Z [36;1m  # Aggrega i tier e pubblica su GitHub Pages (Rolling Release)[0m
+2026-07-27T15:22:29.2311111Z [36;1m  echo "🌐 Pubblicazione dei repository DNF su GitHub Pages (gh-pages branch)..."[0m
+2026-07-27T15:22:29.2311572Z [36;1m  mkdir -p /workspace/pages_repo[0m
+2026-07-27T15:22:29.2311933Z [36;1m  cp -a repo-cache/repo-tier0 /workspace/pages_repo/tier0[0m
+2026-07-27T15:22:29.2312347Z [36;1m  cp -a repo-cache/repo-tier1 /workspace/pages_repo/tier1[0m
+2026-07-27T15:22:29.2312753Z [36;1m  cp -a repo-cache/repo-tier2 /workspace/pages_repo/tier2[0m
+2026-07-27T15:22:29.2313153Z [36;1m  cp -a repo-cache/repo-tier3 /workspace/pages_repo/tier3[0m
+2026-07-27T15:22:29.2313475Z [36;1m  [0m
+2026-07-27T15:22:29.2314097Z [36;1m  # Draft: Generazione payload UEFI HTTP Boot (iPXE) per Internet Recovery[0m
+2026-07-27T15:22:29.2314622Z [36;1m  echo "🌐 Generazione payload UEFI HTTP Boot Internet Recovery..."[0m
+2026-07-27T15:22:29.2315026Z [36;1m  dnf install -y ipxe-bootimgs git[0m
+2026-07-27T15:22:29.2315537Z [36;1m  mkdir -p /workspace/pages_repo/recovery[0m
+2026-07-27T15:22:29.2316010Z [36;1m  cp /usr/share/ipxe/ipxe-x86_64.efi /workspace/pages_repo/recovery/ipxe.efi[0m
+2026-07-27T15:22:29.2316497Z [36;1m  echo '#!ipxe' > /workspace/pages_repo/recovery/boot.ipxe[0m
+2026-07-27T15:22:29.2316911Z [36;1m  echo 'dhcp' >> /workspace/pages_repo/recovery/boot.ipxe[0m
+2026-07-27T15:22:29.2317559Z [36;1m  echo 'chain https://patapem.github.io/ermete-os/recovery/menu.ipxe || shell' >> /workspace/pages_repo/recovery/boot.ipxe[0m
+2026-07-27T15:22:29.2318124Z [36;1m  [0m
+2026-07-27T15:22:29.2318335Z [36;1m  cd /workspace/pages_repo[0m
+2026-07-27T15:22:29.2318602Z [36;1m  git init[0m
+2026-07-27T15:22:29.2318868Z [36;1m  git config --global user.name "Ermete Forge"[0m
+2026-07-27T15:22:29.2319239Z [36;1m  git config --global user.email "forge@ermete.os"[0m
+2026-07-27T15:22:29.2319667Z [36;1m  git config --global --add safe.directory /workspace/pages_repo[0m
+2026-07-27T15:22:29.2320055Z [36;1m  git checkout -b gh-pages[0m
+2026-07-27T15:22:29.2320315Z [36;1m  [0m
+2026-07-27T15:22:29.2320647Z [36;1m  echo "🧹 Rimozione file > 95MB per rispettare i limiti di GitHub Pages..."[0m
+2026-07-27T15:22:29.2321192Z [36;1m  find /workspace/pages_repo -type f -name "*.rpm" -size +95M -exec rm -v {} \;[0m
+2026-07-27T15:22:29.2321605Z [36;1m  [0m
+2026-07-27T15:22:29.2321880Z [36;1m  echo "🔄 Rigenerazione metadata DNF per GitHub Pages..."[0m
+2026-07-27T15:22:29.2322280Z [36;1m  for tier_dir in /workspace/pages_repo/tier*; do[0m
+2026-07-27T15:22:29.2322612Z [36;1m    if [ -d "$tier_dir" ]; then[0m
+2026-07-27T15:22:29.2322892Z [36;1m      createrepo_c "$tier_dir"[0m
+2026-07-27T15:22:29.2323152Z [36;1m    fi[0m
+2026-07-27T15:22:29.2323350Z [36;1m  done[0m
+2026-07-27T15:22:29.2323542Z [36;1m[0m
+2026-07-27T15:22:29.2324006Z [36;1m  git add .[0m
+2026-07-27T15:22:29.2324372Z [36;1m  git commit -m "🚀 Deploy DNF repositories for Ermete OS Rolling Release"[0m
+2026-07-27T15:22:29.2327289Z [36;1m  git push -f "***github.com/patapem/ermete-os.git" gh-pages[0m
+2026-07-27T15:22:29.2327843Z [36;1mEOF[0m
+2026-07-27T15:22:29.2379122Z shell: /usr/bin/bash -e {0}
+2026-07-27T15:22:29.2379427Z env:
+2026-07-27T15:22:29.2379641Z   REGISTRY: ghcr.io
+2026-07-27T15:22:29.2379874Z   FEDORA_VERSION: 43
+2026-07-27T15:22:29.2380100Z ##[endgroup]
+2026-07-27T15:22:32.6789941Z Trying to pull ghcr.io/patapem/ermete-os-builder:latest...
+2026-07-27T15:22:33.1492410Z Getting image source signatures
+2026-07-27T15:22:33.1497761Z Copying blob sha256:e3b9006c957086d002d0808876d2a9c989044c836cf27f19bff374dfb37aafb5
+2026-07-27T15:22:33.1498921Z Copying blob sha256:03d994101826fdaf4cc14d01019ae27f086327d9923d71a9ebdbc28e2372f364
+2026-07-27T15:22:33.1500140Z Copying blob sha256:acd8b42f73ce3c867cc593ead04aeeaa3a76332d51a318a009e3ef7c20a7cd83
+2026-07-27T15:22:33.1501271Z Copying blob sha256:5217eddb4f530f3a7cf5ea608e63a70c9486863e8efe835a42a31e280beb7045
+2026-07-27T15:23:14.8195182Z Copying config sha256:af8755c663c1d4fd59aab1367159dc0c1cbe3c7a95a91801f5d348dd9d40220b
+2026-07-27T15:23:14.8212830Z Writing manifest to image destination
+2026-07-27T15:23:15.2941885Z Updating and loading repositories:
+2026-07-27T15:23:17.4351434Z  RPM Fusion for Fedora 43 - Nonfree - U 100% |  26.6 KiB/s |  56.8 KiB |  00m02s
+2026-07-27T15:23:17.6352174Z  RPM Fusion for Fedora 43 - Nonfree - S 100% |  49.8 KiB/s |  39.8 KiB |  00m01s
+2026-07-27T15:23:17.7024161Z  RPM Fusion for Fedora 43 - Free - Sour 100% |  87.2 KiB/s |  69.8 KiB |  00m01s
+2026-07-27T15:23:17.7783514Z  RPM Fusion for Fedora 43 - Nonfree     100% | 102.0 KiB/s |  78.3 KiB |  00m01s
+2026-07-27T15:23:17.8595289Z  RPM Fusion for Fedora 43 - Free        100% | 175.0 KiB/s | 148.4 KiB |  00m01s
+2026-07-27T15:23:18.8825897Z  Fedora 43 - x86_64                     100% |  26.4 MiB/s |  69.4 MiB |  00m03s
+2026-07-27T15:23:19.4515265Z  Fedora 43 openh264 (From Cisco) - x86_ 100% |   2.1 KiB/s |   5.8 KiB |  00m03s
+2026-07-27T15:23:20.6890188Z  Fedora 43 - x86_64 - Updates           100% |   5.9 MiB/s |  25.1 MiB |  00m04s
+2026-07-27T15:23:20.8691301Z  RPM Fusion for Fedora 43 - Free - Upda 100% |  15.0 KiB/s |  74.5 KiB |  00m05s
+2026-07-27T15:23:23.6434859Z Repositories loaded.
+2026-07-27T15:23:25.9585358Z Package "createrepo_c-1.2.1-3.fc43.x86_64" is already installed.
+2026-07-27T15:23:25.9590741Z Package "buildah-2:1.43.2-1.fc43.x86_64" is already installed.
+2026-07-27T15:23:25.9591484Z Package   Arch   Version      Repository      Size
+2026-07-27T15:23:25.9592582Z Package "skopeo-1:1.22.2-1.fc43.x86_64" is already installed.
+2026-07-27T15:23:25.9593274Z Package "jq-1.8.1-3.fc43.x86_64" is already installed.
+2026-07-27T15:23:25.9594154Z Package "gnupg2-2.4.9-5.fc43.x86_64" is already installed.
+2026-07-27T15:23:25.9594580Z 
+2026-07-27T15:23:25.9594881Z Total size of inbound packages is 22 KiB. Need to download 22 KiB.
+2026-07-27T15:23:25.9595675Z After this operation, 19 KiB extra will be used (install 19 KiB, remove 0 B).
+2026-07-27T15:23:25.9596333Z Installing:
+2026-07-27T15:23:25.9609976Z  rpm-sign x86_64 6.0.1-1.fc43 updates     18.9 KiB
+2026-07-27T15:23:25.9610388Z 
+2026-07-27T15:23:25.9610617Z Transaction Summary:
+2026-07-27T15:23:25.9611022Z  Installing:         1 package
+2026-07-27T15:23:25.9611308Z 
+2026-07-27T15:23:26.0086585Z [1/1] rpm-sign-0:6.0.1-1.fc43.x86_64    100% | 479.2 KiB/s |  22.0 KiB |  00m00s
+2026-07-27T15:23:26.0087483Z --------------------------------------------------------------------------------
+2026-07-27T15:23:26.0088271Z [1/1] Total                             100% | 449.8 KiB/s |  22.0 KiB |  00m00s
+2026-07-27T15:23:26.0105436Z Running transaction
+2026-07-27T15:23:26.1386607Z [1/3] Verify package files              100% |   0.0   B/s |   1.0   B |  00m00s
+2026-07-27T15:23:26.1798985Z [2/3] Prepare transaction               100% |  10.0   B/s |   1.0   B |  00m00s
+2026-07-27T15:23:26.2923009Z [3/3] Installing rpm-sign-0:6.0.1-1.fc4 100% | 174.2 KiB/s |  19.7 KiB |  00m00s
+2026-07-27T15:23:26.2924339Z Complete!
+2026-07-27T15:23:26.3109813Z ##[warning]Can't add secret mask for empty string in ##[add-mask] command.
+2026-07-27T15:23:26.3122589Z gpg: directory '/root/.gnupg' created
+2026-07-27T15:23:26.3124488Z gpg: no valid OpenPGP data found.
+2026-07-27T15:23:26.3124965Z gpg: Total number processed: 0
+2026-07-27T15:23:26.6087657Z Login Succeeded!
+2026-07-27T15:23:26.6239986Z === Restoring Aggregate Tier Repos (Caching) ===
+2026-07-27T15:23:26.6253407Z     Pulling previous ghcr.io/patapem/ermete-os-forge-tier0-repo:latest...
+2026-07-27T15:24:06.9360344Z 6a3ed1d7cf6cbbce05af8de8825e8178ef1b6d8b8bcdbbc591fa07b400df3565
+2026-07-27T15:24:07.2225245Z 6a3ed1d7cf6cbbce05af8de8825e8178ef1b6d8b8bcdbbc591fa07b400df3565
+2026-07-27T15:24:07.2322658Z     Pulling previous ghcr.io/patapem/ermete-os-forge-tier1-repo:latest...
+2026-07-27T15:24:09.9126857Z 73e66ea32e294d3e8320c5e51516306702f13873bb9bc7fc2d132cbfe16580c0
+2026-07-27T15:24:09.9404919Z 73e66ea32e294d3e8320c5e51516306702f13873bb9bc7fc2d132cbfe16580c0
+2026-07-27T15:24:09.9490543Z     Pulling previous ghcr.io/patapem/ermete-os-forge-tier2-repo:latest...
+2026-07-27T15:24:10.7134397Z 7b98da9f4bb81458621a5d52b2efea99242f9bc7e84e4244fc087b977fea5490
+2026-07-27T15:24:10.7331235Z 7b98da9f4bb81458621a5d52b2efea99242f9bc7e84e4244fc087b977fea5490
+2026-07-27T15:24:10.7390463Z     Pulling previous ghcr.io/patapem/ermete-os-forge-tier3-repo:latest...
+2026-07-27T15:24:11.7744630Z fbd6d9170536f531f57bcd1e9fe7fd5c4fa5f54e63d5ffe064f7ab5395f4118c
+2026-07-27T15:24:11.7945439Z fbd6d9170536f531f57bcd1e9fe7fd5c4fa5f54e63d5ffe064f7ab5395f4118c
+2026-07-27T15:24:11.7994435Z === Extracting Tier 0 RPMs ===
+2026-07-27T15:24:11.9407862Z === Extracting Tier 1 RPMs ===
+2026-07-27T15:24:12.3356182Z === Extracting Tier 2 RPMs ===
+2026-07-27T15:24:12.4165662Z === Extracting Tier 3 RPMs ===
+2026-07-27T15:24:15.5860496Z     [CACHE HIT] ermete-os-forge-nix-support hasn't changed. Skipping pull.
+2026-07-27T15:24:15.6175078Z     [CACHE MISS] Pulling ermete-os-forge-base-config (old: bc70409adf6f1b3d87d9cda465df8b3d04dd953f0ef44825b7b229862e4b65f2, new: ba4098336ad560d7b791a72665eb7d30a37d9dfe5bcbf10153050609816ea2bf)
+2026-07-27T15:24:15.9788801Z     [CACHE HIT] ermete-os-forge-selinux hasn't changed. Skipping pull.
+2026-07-27T15:24:16.0386613Z     [CACHE HIT] ermete-os-forge-secure-boot hasn't changed. Skipping pull.
+2026-07-27T15:24:16.0618507Z Trying to pull ghcr.io/patapem/ermete-os-forge-base-config:latest...
+2026-07-27T15:24:16.5295543Z     [CACHE HIT] ermete-os-forge-bat hasn't changed. Skipping pull.
+2026-07-27T15:24:16.5505684Z     [CACHE HIT] ermete-os-forge-cloud-rs hasn't changed. Skipping pull.
+2026-07-27T15:24:16.6953955Z     [CACHE HIT] ermete-os-forge-ide-bootstrap hasn't changed. Skipping pull.
+2026-07-27T15:24:16.7518187Z     [CACHE HIT] ermete-os-forge-dart-sass hasn't changed. Skipping pull.
+2026-07-27T15:24:16.9136029Z     [CACHE HIT] ermete-os-forge-telemetry-rs hasn't changed. Skipping pull.
+2026-07-27T15:24:17.1022378Z     [CACHE MISS] Pulling ermete-os-forge-shell-rs (old: 81dc78d1458fefd26ad687c546f60efaf078880e09e92abd18fed1847d2dbd29, new: 52924117f9d5d770da43c79c5e6656659b982df9473e0ed47518de43ee521c44)
+2026-07-27T15:24:17.2343262Z     [CACHE HIT] ermete-os-forge-starship hasn't changed. Skipping pull.
+2026-07-27T15:24:17.2403383Z     [CACHE HIT] ermete-os-forge-mdm-rs hasn't changed. Skipping pull.
+2026-07-27T15:24:17.2776118Z     [CACHE HIT] ermete-os-forge-system-tweaks hasn't changed. Skipping pull.
+2026-07-27T15:24:17.3245470Z     [CACHE HIT] ermete-os-forge-xdg-desktop-portal-ermete hasn't changed. Skipping pull.
+2026-07-27T15:24:17.4182905Z     [CACHE HIT] ermete-os-forge-doctor hasn't changed. Skipping pull.
+2026-07-27T15:24:17.4235437Z     [CACHE HIT] ermete-os-forge-backup hasn't changed. Skipping pull.
+2026-07-27T15:24:17.4649725Z     [CACHE HIT] ermete-os-forge-matugen hasn't changed. Skipping pull.
+2026-07-27T15:24:17.5012669Z     [CACHE HIT] ermete-os-forge-ananicy hasn't changed. Skipping pull.
+2026-07-27T15:24:17.5025442Z     [CACHE HIT] ermete-os-forge-lvfs-rs hasn't changed. Skipping pull.
+2026-07-27T15:24:17.5968677Z     [CACHE MISS] Pulling ermete-os-forge-store-rs (old: 1ab17bf3f6c5331c75707db4f99976cac7e313170ca7162ba3b7100949de0b99, new: 159982965d20f3ae404f7b7f2ae45fc487d7dab6372e1f88019ded12e81da93d)
+2026-07-27T15:24:17.8526305Z     [CACHE HIT] ermete-os-forge-bibata hasn't changed. Skipping pull.
+2026-07-27T15:24:17.8557493Z     [CACHE HIT] ermete-os-forge-cliphist hasn't changed. Skipping pull.
+2026-07-27T15:24:18.0762554Z Trying to pull ghcr.io/patapem/ermete-os-forge-store-rs:latest...
+2026-07-27T15:24:18.1702932Z     [CACHE HIT] ermete-os-forge-system-services hasn't changed. Skipping pull.
+2026-07-27T15:24:18.2385126Z     [CACHE MISS] Pulling ermete-os-forge-settings-rs (old: 01d152acd0c61cbb90867e1266cdccefdc756ccc98733d5bff5e7bd88d0fa309, new: 7e7be46025fc838e5c3f8196e0228b513be72124934c290ad8797bfc55c1826e)
+2026-07-27T15:24:18.4311857Z     [CACHE MISS] Pulling ermete-os-forge-updater-rs (old: 857a8321bca9a7ae681e0940acd9eb84cb5ce19e2430282ee2c1e86351bae4d8, new: ad1bfedb04f61d6b4764c692b2d35ecaffc75d371bc604819c09eea12a43193a)
+2026-07-27T15:24:18.4735023Z     [CACHE HIT] ermete-os-forge-rolling-imv hasn't changed. Skipping pull.
+2026-07-27T15:24:18.4783258Z     [CACHE HIT] ermete-os-forge-rolling-jetbrains-mono-fonts hasn't changed. Skipping pull.
+2026-07-27T15:24:18.5310482Z     [CACHE MISS] Pulling ermete-os-forge-desktop-ui (old: b9e7b13216a82ece60b2ed0625b83b336b6861afbea81676c7b0e5dcf585ea03, new: 3c3ec55bc0f5d811266810b9ef809475fb6d766c7f5bbf02d5d28adfbcf3afa5)
+2026-07-27T15:24:18.5722061Z     [CACHE HIT] ermete-os-forge-daemon-rs hasn't changed. Skipping pull.
+2026-07-27T15:24:18.7010358Z     [CACHE HIT] ermete-os-forge-gatekeeper-rs hasn't changed. Skipping pull.
+2026-07-27T15:24:18.8089797Z     [CACHE HIT] ermete-os-forge-rolling-adw-gtk3-theme hasn't changed. Skipping pull.
+2026-07-27T15:24:18.8100041Z Trying to pull ghcr.io/patapem/ermete-os-forge-shell-rs:latest...
+2026-07-27T15:24:18.8655870Z     [CACHE HIT] ermete-os-forge-nvidia hasn't changed. Skipping pull.
+2026-07-27T15:24:18.9258817Z Trying to pull ghcr.io/patapem/ermete-os-forge-settings-rs:latest...
+2026-07-27T15:24:18.9326269Z     [CACHE HIT] ermete-os-forge-rolling-greetd hasn't changed. Skipping pull.
+2026-07-27T15:24:19.0066942Z     [CACHE HIT] ermete-os-forge-system-config hasn't changed. Skipping pull.
+2026-07-27T15:24:19.0353880Z     [CACHE HIT] ermete-os-forge-ui-agent hasn't changed. Skipping pull.
+2026-07-27T15:24:19.0431033Z     [CACHE HIT] ermete-os-forge-rolling-openssl hasn't changed. Skipping pull.
+2026-07-27T15:24:19.2969357Z     [CACHE HIT] ermete-os-forge-rolling-foot hasn't changed. Skipping pull.
+2026-07-27T15:24:19.4059021Z     [CACHE HIT] ermete-os-forge-rolling-wayland hasn't changed. Skipping pull.
+2026-07-27T15:24:19.6162897Z Trying to pull ghcr.io/patapem/ermete-os-forge-updater-rs:latest...
+2026-07-27T15:24:19.7652564Z Trying to pull ghcr.io/patapem/ermete-os-forge-desktop-ui:latest...
+2026-07-27T15:24:19.8601832Z     [CACHE HIT] ermete-os-forge-rolling-wayland-utils hasn't changed. Skipping pull.
+2026-07-27T15:24:19.8987874Z     [CACHE HIT] ermete-os-forge-rolling-upower hasn't changed. Skipping pull.
+2026-07-27T15:24:19.9679349Z     [CACHE HIT] ermete-os-forge-rolling-xdg-desktop-portal-gnome hasn't changed. Skipping pull.
+2026-07-27T15:24:20.0266752Z     [CACHE HIT] ermete-os-forge-rolling-sqlite hasn't changed. Skipping pull.
+2026-07-27T15:24:20.2833342Z     [CACHE HIT] ermete-os-forge-rolling-libva-nvidia-driver hasn't changed. Skipping pull.
+2026-07-27T15:24:20.2921198Z     [CACHE HIT] ermete-os-forge-rolling-qt5-qtwayland hasn't changed. Skipping pull.
+2026-07-27T15:24:20.4218727Z     [CACHE HIT] ermete-os-forge-rolling-gtk4-layer-shell hasn't changed. Skipping pull.
+2026-07-27T15:24:20.5516065Z     [CACHE HIT] ermete-os-forge-rolling-fd-find hasn't changed. Skipping pull.
+2026-07-27T15:24:20.5585093Z Getting image source signatures
+2026-07-27T15:24:20.5600291Z Copying blob sha256:68138a2df12bf96c0752c8fb43f56b38cb42a29f2a63dd5873d64254974ef01c
+2026-07-27T15:24:20.5614417Z     [CACHE HIT] ermete-os-forge-rolling-gnome-keyring hasn't changed. Skipping pull.
+2026-07-27T15:24:20.5872570Z     [CACHE HIT] ermete-os-forge-rolling-libnotify hasn't changed. Skipping pull.
+2026-07-27T15:24:20.6202207Z     [CACHE HIT] ermete-os-forge-rolling-swaylock hasn't changed. Skipping pull.
+2026-07-27T15:24:20.6791417Z     [CACHE HIT] ermete-os-forge-rolling-mokutil hasn't changed. Skipping pull.
+2026-07-27T15:24:20.7294776Z     [CACHE HIT] ermete-os-forge-rolling-gtk-layer-shell hasn't changed. Skipping pull.
+2026-07-27T15:24:20.7816242Z     [CACHE HIT] ermete-os-forge-rolling-rsync hasn't changed. Skipping pull.
+2026-07-27T15:24:20.7959328Z     [CACHE HIT] ermete-os-forge-rolling-greenboot hasn't changed. Skipping pull.
+2026-07-27T15:24:20.7989609Z     [CACHE HIT] ermete-os-forge-rolling-squashfuse hasn't changed. Skipping pull.
+2026-07-27T15:24:20.8124674Z     [CACHE HIT] ermete-os-forge-rolling-firewalld hasn't changed. Skipping pull.
+2026-07-27T15:24:20.8628902Z     [CACHE HIT] ermete-os-forge-rolling-playerctl hasn't changed. Skipping pull.
+2026-07-27T15:24:20.8969293Z     [CACHE HIT] ermete-os-forge-rolling-fontawesome-fonts-all hasn't changed. Skipping pull.
+2026-07-27T15:24:20.9274741Z     [CACHE HIT] ermete-os-forge-rolling-parallel hasn't changed. Skipping pull.
+2026-07-27T15:24:20.9376860Z     [CACHE HIT] ermete-os-forge-rolling-dbus-x11 hasn't changed. Skipping pull.
+2026-07-27T15:24:20.9411573Z     [CACHE HIT] ermete-os-forge-rolling-btop hasn't changed. Skipping pull.
+2026-07-27T15:24:20.9563949Z     [CACHE HIT] ermete-os-forge-rolling-fuse hasn't changed. Skipping pull.
+2026-07-27T15:24:21.0364874Z     [CACHE HIT] ermete-os-forge-rolling-wlr-randr hasn't changed. Skipping pull.
+2026-07-27T15:24:21.0438431Z     [CACHE HIT] ermete-os-forge-rolling-file-roller hasn't changed. Skipping pull.
+2026-07-27T15:24:21.0665525Z     [CACHE HIT] ermete-os-forge-rolling-nftables hasn't changed. Skipping pull.
+2026-07-27T15:24:21.0940287Z     [CACHE HIT] ermete-os-forge-rolling-lm_sensors hasn't changed. Skipping pull.
+2026-07-27T15:24:21.1353801Z Getting image source signatures
+2026-07-27T15:24:21.1361685Z Copying blob sha256:0686c078926f63ece3a90105c034ab3b25a3ffc57f6265976d72d10ac6799a5b
+2026-07-27T15:24:21.1761427Z     [CACHE HIT] ermete-os-forge-rolling-glibc-langpack-en hasn't changed. Skipping pull.
+2026-07-27T15:24:21.2179223Z     [CACHE HIT] ermete-os-forge-rolling-glibc-langpack-it hasn't changed. Skipping pull.
+2026-07-27T15:24:21.2209034Z     [CACHE HIT] ermete-os-forge-rolling-brightnessctl hasn't changed. Skipping pull.
+2026-07-27T15:24:21.2319182Z     [CACHE HIT] ermete-os-forge-rolling-pipewire hasn't changed. Skipping pull.
+2026-07-27T15:24:21.2535647Z     [CACHE HIT] ermete-os-forge-rolling-sbsigntools hasn't changed. Skipping pull.
+2026-07-27T15:24:21.2734599Z     [CACHE HIT] ermete-os-forge-rolling-wl-mirror hasn't changed. Skipping pull.
+2026-07-27T15:24:21.2769755Z     [CACHE HIT] ermete-os-forge-rolling-libva-utils hasn't changed. Skipping pull.
+2026-07-27T15:24:21.3015964Z     [CACHE HIT] ermete-os-forge-rolling-thunar-archive-plugin hasn't changed. Skipping pull.
+2026-07-27T15:24:21.3210180Z     [CACHE HIT] ermete-os-forge-rolling-wireplumber hasn't changed. Skipping pull.
+2026-07-27T15:24:21.3240508Z     [CACHE HIT] ermete-os-forge-rolling-mesa-vulkan-drivers hasn't changed. Skipping pull.
+2026-07-27T15:24:21.3299823Z     [CACHE HIT] ermete-os-forge-rolling-nushell hasn't changed. Skipping pull.
+2026-07-27T15:24:21.4105598Z Copying config sha256:19ce337ebd0c2da725e36cf1ff898033add05d5c06e5c2ba148fcc09cc1ad4c3
+2026-07-27T15:24:21.4187882Z Writing manifest to image destination
+2026-07-27T15:24:21.4462484Z     [CACHE HIT] ermete-os-forge-rolling-eza hasn't changed. Skipping pull.
+2026-07-27T15:24:21.4663801Z     [CACHE HIT] ermete-os-forge-rolling-gnome-keyring-pam hasn't changed. Skipping pull.
+2026-07-27T15:24:21.4721662Z     [CACHE HIT] ermete-os-forge-rolling-ripgrep hasn't changed. Skipping pull.
+2026-07-27T15:24:21.4731628Z     [CACHE HIT] ermete-os-forge-rolling-ffmpeg hasn't changed. Skipping pull.
+2026-07-27T15:24:21.4761304Z     [CACHE HIT] ermete-os-forge-rolling-btrfs-progs hasn't changed. Skipping pull.
+2026-07-27T15:24:21.4825991Z     [CACHE HIT] ermete-os-forge-rolling-thunar-volman hasn't changed. Skipping pull.
+2026-07-27T15:24:21.5057783Z Getting image source signatures
+2026-07-27T15:24:21.5070428Z Copying blob sha256:0ec91feb23bf6751d662a0a366430dc06a622d65423cb10f94dbe918dfba1507
+2026-07-27T15:24:21.5643524Z     [CACHE HIT] ermete-os-forge-rolling-git hasn't changed. Skipping pull.
+2026-07-27T15:24:21.5654435Z     [CACHE HIT] ermete-os-forge-rolling-cage hasn't changed. Skipping pull.
+2026-07-27T15:24:21.5701563Z     [CACHE HIT] ermete-os-kernel hasn't changed. Skipping pull.
+2026-07-27T15:24:21.6166808Z     [CACHE HIT] ermete-os-forge-rolling-sysstat hasn't changed. Skipping pull.
+2026-07-27T15:24:21.6219344Z     [CACHE HIT] ermete-os-forge-rolling-gvfs hasn't changed. Skipping pull.
+2026-07-27T15:24:21.6354883Z     [CACHE HIT] ermete-os-forge-rolling-x264 hasn't changed. Skipping pull.
+2026-07-27T15:24:21.6369756Z     [CACHE HIT] ermete-os-forge-rolling-qemu-kvm hasn't changed. Skipping pull.
+2026-07-27T15:24:21.6397844Z     [CACHE HIT] ermete-os-forge-rolling-distribution-gpg-keys hasn't changed. Skipping pull.
+2026-07-27T15:24:21.6797134Z     [CACHE HIT] ermete-os-forge-rolling-drm_info hasn't changed. Skipping pull.
+2026-07-27T15:24:21.7020364Z     [CACHE HIT] ermete-os-forge-rolling-xdg-desktop-portal-gtk hasn't changed. Skipping pull.
+2026-07-27T15:24:21.7122375Z     [CACHE HIT] ermete-os-forge-rolling-swaybg hasn't changed. Skipping pull.
+2026-07-27T15:24:21.7188214Z Getting image source signatures
+2026-07-27T15:24:21.7197657Z Copying blob sha256:002538cf9c4c30e9f6b7b3876192cb2b3a006056920d6257493fa1ffc93bc254
+2026-07-27T15:24:21.7216808Z     [CACHE HIT] ermete-os-forge-rolling-mpv hasn't changed. Skipping pull.
+2026-07-27T15:24:21.7233542Z     [CACHE HIT] ermete-os-forge-rolling-fwupd hasn't changed. Skipping pull.
+2026-07-27T15:24:21.7259640Z     [CACHE HIT] ermete-os-forge-rolling-xorg-x11-server-Xwayland hasn't changed. Skipping pull.
+2026-07-27T15:24:21.7319227Z     [CACHE HIT] ermete-os-forge-rolling-mesa-dri-drivers hasn't changed. Skipping pull.
+2026-07-27T15:24:21.7367720Z Copying config sha256:e2bfbd6dec21ba8b46491d1021a2c1df82b619e9b286e62bed64a0aff9577d2e
+2026-07-27T15:24:21.7388258Z Writing manifest to image destination
+2026-07-27T15:24:21.7584324Z     [CACHE HIT] ermete-os-forge-rolling-xdg-user-dirs hasn't changed. Skipping pull.
+2026-07-27T15:24:21.7625994Z     [CACHE HIT] ermete-os-forge-rolling-dbus-tools hasn't changed. Skipping pull.
+2026-07-27T15:24:21.7742074Z     [CACHE HIT] ermete-os-forge-rolling-greenboot-default-health-checks hasn't changed. Skipping pull.
+2026-07-27T15:24:21.7799499Z     [CACHE HIT] ermete-os-forge-rolling-papirus-icon-theme hasn't changed. Skipping pull.
+2026-07-27T15:24:21.7838644Z     [CACHE HIT] ermete-os-forge-rolling-virt-manager hasn't changed. Skipping pull.
+2026-07-27T15:24:21.7866003Z Copying config sha256:902d2936854f5c1b05250bf11cb1c746dae9620132f1030d2feba50a3748f5cc
+2026-07-27T15:24:21.7875832Z Getting image source signatures
+2026-07-27T15:24:21.7880716Z Copying blob sha256:6e499cbb7b791cdf18b69d0e93d5546c90bbe83fc82f08d1c25f413a8e38dd36
+2026-07-27T15:24:21.7889092Z 8cc6591b519bbc65860326e7071e66eed8a6ac4d977cf924a94a75b3c25c8a66
+2026-07-27T15:24:21.7896370Z Writing manifest to image destination
+2026-07-27T15:24:21.7926256Z     [CACHE HIT] ermete-os-forge-rolling-xdg-user-dirs-gtk hasn't changed. Skipping pull.
+2026-07-27T15:24:21.7962572Z     [CACHE HIT] ermete-os-forge-rolling-rsms-inter-fonts hasn't changed. Skipping pull.
+2026-07-27T15:24:21.7992497Z     [CACHE HIT] ermete-os-forge-rolling-wl-clipboard hasn't changed. Skipping pull.
+2026-07-27T15:24:21.8150407Z     [CACHE HIT] ermete-os-forge-rolling-inotify-tools hasn't changed. Skipping pull.
+2026-07-27T15:24:21.8187631Z     [CACHE HIT] ermete-os-forge-rolling-thunar hasn't changed. Skipping pull.
+2026-07-27T15:24:21.8355597Z 8cc6591b519bbc65860326e7071e66eed8a6ac4d977cf924a94a75b3c25c8a66
+2026-07-27T15:24:21.8457512Z     [CACHE HIT] ermete-os-forge-rolling-qt6-qtwayland hasn't changed. Skipping pull.
+2026-07-27T15:24:21.8638333Z Getting image source signatures
+2026-07-27T15:24:21.8639137Z Copying blob sha256:69ae7a4d96b1d6217c7b98d3f67effb8e54321f3aab62d72c209cd061ebba490
+2026-07-27T15:24:21.8731629Z     [CACHE HIT] ermete-os-forge-rolling-libxcrypt-compat hasn't changed. Skipping pull.
+2026-07-27T15:24:21.8850811Z     [CACHE HIT] ermete-os-forge-rolling-systemd hasn't changed. Skipping pull.
+2026-07-27T15:24:21.9088568Z 0ab21f274edb843de990932a3f4300ac6c711c25c5d390e1c97ac922b64f227a
+2026-07-27T15:24:21.9588424Z Copying config sha256:826ff1d12f284b14dba9329f128b157ee1ba7443c261662d5642e1c3085fefc4
+2026-07-27T15:24:21.9595717Z Writing manifest to image destination
+2026-07-27T15:24:21.9611344Z 91fe15006ec7ec318c5238631c12ff2765a536b5ebe5e464bbf0d29fe391ffed
+2026-07-27T15:24:21.9647483Z     [CACHE HIT] ermete-os-forge-rolling-just hasn't changed. Skipping pull.
+2026-07-27T15:24:21.9697446Z 0ab21f274edb843de990932a3f4300ac6c711c25c5d390e1c97ac922b64f227a
+2026-07-27T15:24:21.9992300Z Copying config sha256:6eb7612e8a805586c0694a6c64d0d05dd05cbe8d76f644bfa0292d5791c09edf
+2026-07-27T15:24:22.0010297Z Writing manifest to image destination
+2026-07-27T15:24:22.0311446Z Copying config sha256:25200bbbd50a565b9c328b3cf5fa18a4ebe3bd4e518d536311dba14d7b7f3367
+2026-07-27T15:24:22.0314909Z Writing manifest to image destination
+2026-07-27T15:24:22.0449469Z 91fe15006ec7ec318c5238631c12ff2765a536b5ebe5e464bbf0d29fe391ffed
+2026-07-27T15:24:22.1229081Z 9300dee7dd68d81009f9a20322d1052c793d3d47de8932812337bed920e982a8
+2026-07-27T15:24:22.1487129Z c15a68d823991170dc89cbab9a397de8f960f8d3489e2e7ad8b5d07a15cb02de
+2026-07-27T15:24:22.1504827Z 9300dee7dd68d81009f9a20322d1052c793d3d47de8932812337bed920e982a8
+2026-07-27T15:24:22.1686515Z 99be1c271332c70198544ad7a4ec1168004e2c695226103754690ac298b5e2d5
+2026-07-27T15:24:22.1730647Z c15a68d823991170dc89cbab9a397de8f960f8d3489e2e7ad8b5d07a15cb02de
+2026-07-27T15:24:22.1895269Z 99be1c271332c70198544ad7a4ec1168004e2c695226103754690ac298b5e2d5
+2026-07-27T15:24:22.1954166Z     [CACHE HIT] ermete-os-forge-rolling-unzip hasn't changed. Skipping pull.
+2026-07-27T15:24:22.1960113Z === Post-Processing: Deduplicating RPMs (Keeping Latest) ===
+2026-07-27T15:24:39.2652801Z === Syncing tiered RPMs to aggregate repo ===
+2026-07-27T15:24:44.2562803Z === Saving New Manifests ===
+2026-07-27T15:24:44.7501604Z --- Extracted RPMs Summary ---
+2026-07-27T15:24:44.7586081Z Tier 0 count: 1111
+2026-07-27T15:24:44.7612357Z Tier 1 count: 121
+2026-07-27T15:24:44.7631284Z Tier 2 count: 3
+2026-07-27T15:24:44.7652175Z Tier 3 count: 17
+2026-07-27T15:24:44.7741955Z Total repo count: 1255
+2026-07-27T15:24:45.0925430Z Login Succeeded!
+2026-07-27T15:24:46.6409883Z ----------------------------------------
+2026-07-27T15:24:46.6411641Z 🚀 Tier 'tier0' (ermete-os-forge-tier0-repo:latest): content hash changed (old: '81c01d4b2288cc6bece4e14a80e1e741293b0956accf590c978cfbb5459d669c', new: '6378659db7b57e068b2b03dc16987641b69308a1efd0f2b1980d27266d140b11'). Creating metadata & pushing...
+2026-07-27T15:24:48.1294535Z Directory walk started
+2026-07-27T15:24:48.1295019Z Directory walk done - 1111 packages
+2026-07-27T15:24:48.1295497Z Temporary output repo path: ./.repodata/
+2026-07-27T15:24:48.1295953Z Pool started (with 5 workers)
+2026-07-27T15:24:48.1296357Z Pool finished
+2026-07-27T15:24:50.6435933Z 303184a82de1ed1f04ba3fb98950c627a13bf949f401c04b6d686681e61a534f
+2026-07-27T15:24:54.4021830Z Getting image source signatures
+2026-07-27T15:24:54.4022595Z Copying blob sha256:303184a82de1ed1f04ba3fb98950c627a13bf949f401c04b6d686681e61a534f
+2026-07-27T15:25:02.3461213Z Copying config sha256:34c3b6a43ad6a88d1d83c2c23cc619bfcf6c53695c82c8382abad78523ec02f5
+2026-07-27T15:25:02.3462056Z Writing manifest to image destination
+2026-07-27T15:25:02.9055070Z 34c3b6a43ad6a88d1d83c2c23cc619bfcf6c53695c82c8382abad78523ec02f5
+2026-07-27T15:25:02.9247648Z Getting image source signatures
+2026-07-27T15:25:02.9254325Z Copying blob sha256:303184a82de1ed1f04ba3fb98950c627a13bf949f401c04b6d686681e61a534f
+2026-07-27T15:26:43.8493166Z Copying config sha256:34c3b6a43ad6a88d1d83c2c23cc619bfcf6c53695c82c8382abad78523ec02f5
+2026-07-27T15:26:45.2201959Z Writing manifest to image destination
+2026-07-27T15:26:45.7119389Z 077582b55d55cbf06d48abb26486448caf5bb4f003350e0a0f65a73432cc6bd5
+2026-07-27T15:26:45.9632636Z untagged: ghcr.io/patapem/ermete-os-forge-tier0-repo:latest
+2026-07-27T15:26:45.9645069Z 34c3b6a43ad6a88d1d83c2c23cc619bfcf6c53695c82c8382abad78523ec02f5
+2026-07-27T15:26:46.8916542Z ✅ Tier 'tier1' (ermete-os-forge-tier1-repo:latest): RPM content hash unchanged (e664fa44fe1e4f55fcaedd67275ef305903c4057f263b5aab8d3c62e94b6a6ce). Skipping createrepo_c & push to freeze Tier OCI cache!
+2026-07-27T15:26:49.9407225Z ✅ Tier 'tier2' (ermete-os-forge-tier2-repo:latest): RPM content hash unchanged (0c315e5236c852309a9a72ead4723336f75aada6f12752c858a23c7fbf58751d). Skipping createrepo_c & push to freeze Tier OCI cache!
+2026-07-27T15:26:50.7520130Z ----------------------------------------
+2026-07-27T15:26:50.7522500Z 🚀 Tier 'tier3' (ermete-os-forge-tier3-repo:latest): content hash changed (old: 'ade14e632c6638840ee00f09cc606542d542934100bfae4a671e342c17b20038', new: '2eb376cf55b7b8b6c109e543b42abc8e583203d7e951a29d1f95c1650018e81f'). Creating metadata & pushing...
+2026-07-27T15:26:50.8120118Z Directory walk started
+2026-07-27T15:26:50.8120587Z Directory walk done - 17 packages
+2026-07-27T15:26:50.8120927Z Temporary output repo path: ./.repodata/
+2026-07-27T15:26:50.8121224Z Pool started (with 5 workers)
+2026-07-27T15:26:50.8121482Z Pool finished
+2026-07-27T15:26:50.9459994Z 745dddecde2f927ad33839fc62234692a23c5a8973d3a68254198c3ef368a22b
+2026-07-27T15:26:51.0184915Z Getting image source signatures
+2026-07-27T15:26:51.0186160Z Copying blob sha256:745dddecde2f927ad33839fc62234692a23c5a8973d3a68254198c3ef368a22b
+2026-07-27T15:26:51.1073385Z Copying config sha256:b200989dbcd19836c836cdb3480c10b68dbe7f8d086fb7582cec002bb9f07b6b
+2026-07-27T15:26:51.1084904Z Writing manifest to image destination
+2026-07-27T15:26:51.1157481Z b200989dbcd19836c836cdb3480c10b68dbe7f8d086fb7582cec002bb9f07b6b
+2026-07-27T15:26:51.1378125Z Getting image source signatures
+2026-07-27T15:26:51.1391470Z Copying blob sha256:745dddecde2f927ad33839fc62234692a23c5a8973d3a68254198c3ef368a22b
+2026-07-27T15:26:56.1406216Z Copying config sha256:b200989dbcd19836c836cdb3480c10b68dbe7f8d086fb7582cec002bb9f07b6b
+2026-07-27T15:26:57.5012806Z Writing manifest to image destination
+2026-07-27T15:26:58.2264017Z 9d13f7ed0676e2cade1373701fe6776099dc1b8822c1afaa70a52c44afb5e0f8
+2026-07-27T15:26:58.2503133Z untagged: ghcr.io/patapem/ermete-os-forge-tier3-repo:latest
+2026-07-27T15:26:58.2504222Z b200989dbcd19836c836cdb3480c10b68dbe7f8d086fb7582cec002bb9f07b6b
+2026-07-27T15:27:01.4465034Z ----------------------------------------
+2026-07-27T15:27:01.4467836Z 🚀 Tier '' (ermete-os-forge-rolling-repo:latest): content hash changed (old: 'f3c09cea7f04d1cb098cd1239c840a93000880d7711d330944b98a96f87d48d2', new: '13ab4dff5b5180d2b8a746398c3a1382afb79ea38c631e6c1d2235eac4f7b6fc'). Creating metadata & pushing...
+2026-07-27T15:27:03.4399987Z Directory walk started
+2026-07-27T15:27:03.4400873Z Directory walk done - 1255 packages
+2026-07-27T15:27:03.4401572Z Temporary output repo path: ./.repodata/
+2026-07-27T15:27:03.4402069Z Pool started (with 5 workers)
+2026-07-27T15:27:03.4402457Z Pool finished
+2026-07-27T15:27:06.1163650Z b4ba9600d0642d7081ec5642db1d5de849b0b0335b57e52831a59d943e4536ed
+2026-07-27T15:27:10.1259504Z Getting image source signatures
+2026-07-27T15:27:10.1260294Z Copying blob sha256:b4ba9600d0642d7081ec5642db1d5de849b0b0335b57e52831a59d943e4536ed
+2026-07-27T15:27:19.4946075Z Copying config sha256:98579720ceac199ce4b7e50ce3569ecab7dbb9c49215d5da50d2d1b6fb22185e
+2026-07-27T15:27:19.4951721Z Writing manifest to image destination
+2026-07-27T15:27:19.7168447Z 98579720ceac199ce4b7e50ce3569ecab7dbb9c49215d5da50d2d1b6fb22185e
+2026-07-27T15:27:19.7388378Z Getting image source signatures
+2026-07-27T15:27:19.7389351Z Copying blob sha256:b4ba9600d0642d7081ec5642db1d5de849b0b0335b57e52831a59d943e4536ed
+2026-07-27T15:29:13.4766781Z Copying config sha256:98579720ceac199ce4b7e50ce3569ecab7dbb9c49215d5da50d2d1b6fb22185e
+2026-07-27T15:29:14.8466640Z Writing manifest to image destination
+2026-07-27T15:29:15.4196033Z 3fbc4686d9a582fad0715c92c6ea4833561881abb21da3f4a0722719b337ba4b
+2026-07-27T15:29:15.6829974Z untagged: ghcr.io/patapem/ermete-os-forge-rolling-repo:latest
+2026-07-27T15:29:15.6830810Z 98579720ceac199ce4b7e50ce3569ecab7dbb9c49215d5da50d2d1b6fb22185e
+2026-07-27T15:29:15.6848846Z 🌐 Pubblicazione dei repository DNF su GitHub Pages (gh-pages branch)...
+2026-07-27T15:29:17.9354790Z 🌐 Generazione payload UEFI HTTP Boot Internet Recovery...
+2026-07-27T15:29:18.7583485Z Updating and loading repositories:
+2026-07-27T15:29:19.5017210Z Repositories loaded.
+2026-07-27T15:29:19.7065673Z Total size of inbound packages is 16 MiB. Need to download 16 MiB.
+2026-07-27T15:29:19.7066317Z After this operation, 62 MiB extra will be used (install 62 MiB, remove 0 B).
+2026-07-27T15:29:19.7066946Z Package            Arch   Version                     Repository      Size
+2026-07-27T15:29:19.7067879Z Installing:
+2026-07-27T15:29:19.7068687Z  git               x86_64 2.55.0-1.fc43               updates     57.7 KiB
+2026-07-27T15:29:19.7069417Z  ipxe-bootimgs-x86 noarch 20240119-4.gitde8a0821.fc43 fedora       3.8 MiB
+2026-07-27T15:29:19.7070073Z Installing dependencies:
+2026-07-27T15:29:19.7070645Z  git-core          x86_64 2.55.0-1.fc43               updates     25.1 MiB
+2026-07-27T15:29:19.7071463Z  git-core-doc      noarch 2.55.0-1.fc43               updates     18.9 MiB
+2026-07-27T15:29:19.7072195Z  less              x86_64 704-2.fc43                  updates    471.5 KiB
+2026-07-27T15:29:19.7072934Z  openssh           x86_64 10.0p1-11.fc43              updates      1.4 MiB
+2026-07-27T15:29:19.7074008Z  openssh-clients   x86_64 10.0p1-11.fc43              updates      2.6 MiB
+2026-07-27T15:29:19.7074891Z  perl-Error        noarch 1:0.17030-2.fc43            fedora      76.7 KiB
+2026-07-27T15:29:19.7076047Z  perl-Git          noarch 2.55.0-1.fc43               updates     64.4 KiB
+2026-07-27T15:29:19.7076812Z  perl-TermReadKey  x86_64 2.38-26.fc43                fedora      64.0 KiB
+2026-07-27T15:29:19.7077520Z  perl-lib          x86_64 0.65-523.fc43               updates      8.5 KiB
+2026-07-27T15:29:19.7078100Z Installing weak dependencies:
+2026-07-27T15:29:19.7078608Z  7zip              x86_64 26.02-1.fc43                updates      3.3 MiB
+2026-07-27T15:29:19.7079256Z  bat               x86_64 0.26.1-1.fc43               updates      5.9 MiB
+2026-07-27T15:29:19.7079924Z  less-color        x86_64 704-2.fc43                  updates      2.4 KiB
+2026-07-27T15:29:19.7080664Z  python3-html2text noarch 2025.4.15-5.fc43            fedora     289.0 KiB
+2026-07-27T15:29:19.7081137Z 
+2026-07-27T15:29:19.7081288Z Transaction Summary:
+2026-07-27T15:29:19.7081657Z  Installing:        15 packages
+2026-07-27T15:29:19.7081913Z 
+2026-07-27T15:29:20.2632571Z [ 1/15] git-0:2.55.0-1.fc43.x86_64      100% | 203.2 KiB/s |  40.8 KiB |  00m00s
+2026-07-27T15:29:20.5416717Z [ 2/15] git-core-doc-0:2.55.0-1.fc43.no 100% |  11.4 MiB/s |   3.2 MiB |  00m00s
+2026-07-27T15:29:20.5536631Z [ 3/15] git-core-0:2.55.0-1.fc43.x86_64 100% |  10.9 MiB/s |   5.4 MiB |  00m00s
+2026-07-27T15:29:20.5919143Z [ 4/15] perl-Git-0:2.55.0-1.fc43.noarch 100% | 762.9 KiB/s |  37.4 KiB |  00m00s
+2026-07-27T15:29:20.6325236Z [ 5/15] perl-TermReadKey-0:2.38-26.fc43 100% | 451.9 KiB/s |  35.2 KiB |  00m00s
+2026-07-27T15:29:20.6824712Z [ 6/15] perl-Error-1:0.17030-2.fc43.noa 100% | 446.5 KiB/s |  40.2 KiB |  00m00s
+2026-07-27T15:29:20.6836977Z [ 7/15] less-0:704-2.fc43.x86_64        100% |   4.4 MiB/s | 222.8 KiB |  00m00s
+2026-07-27T15:29:20.7356630Z [ 8/15] openssh-0:10.0p1-11.fc43.x86_64 100% |   6.5 MiB/s | 338.2 KiB |  00m00s
+2026-07-27T15:29:20.7370990Z [ 9/15] openssh-clients-0:10.0p1-11.fc4 100% |  13.5 MiB/s | 746.8 KiB |  00m00s
+2026-07-27T15:29:20.7856449Z [10/15] perl-lib-0:0.65-523.fc43.x86_64 100% | 297.4 KiB/s |  14.6 KiB |  00m00s
+2026-07-27T15:29:20.7938100Z [11/15] 7zip-0:26.02-1.fc43.x86_64      100% |  22.3 MiB/s |   1.2 MiB |  00m00s
+2026-07-27T15:29:20.8438761Z [12/15] less-color-0:704-2.fc43.x86_64  100% | 219.9 KiB/s |  10.8 KiB |  00m00s
+2026-07-27T15:29:20.9512451Z [13/15] bat-0:0.26.1-1.fc43.x86_64      100% |  25.9 MiB/s |   2.8 MiB |  00m00s
+2026-07-27T15:29:21.4121624Z [14/15] python3-html2text-0:2025.4.15-5 100% | 130.4 KiB/s |  81.6 KiB |  00m01s
+2026-07-27T15:29:21.5004795Z [15/15] ipxe-bootimgs-x86-0:20240119-4. 100% |   1.2 MiB/s |   1.7 MiB |  00m01s
+2026-07-27T15:29:21.5005601Z --------------------------------------------------------------------------------
+2026-07-27T15:29:21.5006277Z [15/15] Total                           100% |   8.8 MiB/s |  15.8 MiB |  00m02s
+2026-07-27T15:29:21.5012646Z Running transaction
+2026-07-27T15:29:21.9593710Z [ 1/17] Verify package files            100% | 263.0   B/s |  15.0   B |  00m00s
+2026-07-27T15:29:22.0059742Z [ 2/17] Prepare transaction             100% | 102.0   B/s |  15.0   B |  00m00s
+2026-07-27T15:29:22.0277237Z [ 3/17] Installing less-0:704-2.fc43.x8 100% |  22.1 MiB/s | 475.3 KiB |  00m00s
+2026-07-27T15:29:22.0321251Z [ 4/17] Installing perl-lib-0:0.65-523. 100% |   8.7 MiB/s |   8.9 KiB |  00m00s
+2026-07-27T15:29:22.0561602Z [ 5/17] Installing openssh-0:10.0p1-11. 100% |  81.9 MiB/s |   1.4 MiB |  00m00s
+2026-07-27T15:29:22.1069341Z [ 6/17] Installing openssh-clients-0:10 100% |  59.3 MiB/s |   2.6 MiB |  00m00s
+2026-07-27T15:29:22.1831650Z [ 7/17] Installing git-core-0:2.55.0-1. 100% | 317.8 MiB/s |  25.1 MiB |  00m00s
+2026-07-27T15:29:22.1907033Z [ 8/17] Installing git-core-doc-0:2.55. 100% |   1.0 GiB/s |  19.1 MiB |  00m00s
+2026-07-27T15:29:22.1933153Z [ 9/17] Installing perl-Error-1:0.17030 100% |  39.0 MiB/s |  80.0 KiB |  00m00s
+2026-07-27T15:29:22.1956487Z [10/17] Installing perl-TermReadKey-0:2 100% |  32.3 MiB/s |  66.2 KiB |  00m00s
+2026-07-27T15:29:22.1974646Z [11/17] Installing git-0:2.55.0-1.fc43. 100% |  57.6 MiB/s |  59.0 KiB |  00m00s
+2026-07-27T15:29:22.1986970Z [12/17] Installing perl-Git-0:2.55.0-1. 100% |  63.8 MiB/s |  65.4 KiB |  00m00s
+2026-07-27T15:29:22.2124584Z [13/17] Installing less-color-0:704-2.f 100% | 204.0 KiB/s |   2.7 KiB |  00m00s
+2026-07-27T15:29:22.2480046Z [14/17] Installing bat-0:0.26.1-1.fc43. 100% | 196.4 MiB/s |   5.9 MiB |  00m00s
+2026-07-27T15:29:22.2728320Z [15/17] Installing python3-html2text-0: 100% |  15.3 MiB/s | 297.5 KiB |  00m00s
+2026-07-27T15:29:22.2959967Z [16/17] Installing 7zip-0:26.02-1.fc43. 100% | 135.9 MiB/s |   3.3 MiB |  00m00s
+2026-07-27T15:29:22.4019268Z [17/17] Installing ipxe-bootimgs-x86-0: 100% |  33.2 MiB/s |   3.8 MiB |  00m00s
+2026-07-27T15:29:22.4020859Z Complete!
+2026-07-27T15:29:22.4203287Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-07-27T15:29:22.4204520Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-07-27T15:29:22.4205421Z Initialized empty Git repository in /workspace/pages_repo/.git/
+2026-07-27T15:29:22.4206551Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-07-27T15:29:22.4207197Z hint: call:
+2026-07-27T15:29:22.4207505Z hint:
+2026-07-27T15:29:22.4207905Z hint: 	git config --global init.defaultBranch <name>
+2026-07-27T15:29:22.4208408Z hint:
+2026-07-27T15:29:22.4208887Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-07-27T15:29:22.4209732Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-07-27T15:29:22.4210350Z hint:
+2026-07-27T15:29:22.4210580Z hint: 	git branch -m <name>
+2026-07-27T15:29:22.4211007Z hint:
+2026-07-27T15:29:22.4211478Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-07-27T15:29:22.4265689Z Switched to a new branch 'gh-pages'
+2026-07-27T15:29:22.4270529Z 🧹 Rimozione file > 95MB per rispettare i limiti di GitHub Pages...
+2026-07-27T15:29:22.4389565Z removed '/workspace/pages_repo/tier0/distribution-gpg-keys-copr-1.119-1.fc43.noarch.rpm'
+2026-07-27T15:29:22.4556822Z removed '/workspace/pages_repo/tier0/ermete-kernel-6.14-1.chimera.fc44.x86_64.rpm'
+2026-07-27T15:29:22.4630791Z removed '/workspace/pages_repo/tier0/nvidia-driver-libs-610.43.03-1.fc43.x86_64.rpm'
+2026-07-27T15:29:22.4638284Z 🔄 Rigenerazione metadata DNF per GitHub Pages...
+2026-07-27T15:29:23.3931365Z Directory walk started
+2026-07-27T15:29:23.3931840Z Directory walk done - 1108 packages
+2026-07-27T15:29:23.3932426Z Temporary output repo path: /workspace/pages_repo/tier0/.repodata/
+2026-07-27T15:29:23.3933044Z Pool started (with 5 workers)
+2026-07-27T15:29:23.3933436Z Pool finished
+2026-07-27T15:29:23.7231400Z Directory walk started
+2026-07-27T15:29:23.7231859Z Directory walk done - 121 packages
+2026-07-27T15:29:23.7232451Z Temporary output repo path: /workspace/pages_repo/tier1/.repodata/
+2026-07-27T15:29:23.7233091Z Pool started (with 5 workers)
+2026-07-27T15:29:23.7233469Z Pool finished
+2026-07-27T15:29:23.7554384Z Directory walk started
+2026-07-27T15:29:23.7554876Z Directory walk done - 3 packages
+2026-07-27T15:29:23.7555537Z Temporary output repo path: /workspace/pages_repo/tier2/.repodata/
+2026-07-27T15:29:23.7556008Z Pool started (with 5 workers)
+2026-07-27T15:29:23.7556259Z Pool finished
+2026-07-27T15:29:23.7903537Z Directory walk started
+2026-07-27T15:29:23.7904271Z Directory walk done - 17 packages
+2026-07-27T15:29:23.7904888Z Temporary output repo path: /workspace/pages_repo/tier3/.repodata/
+2026-07-27T15:29:23.7905498Z Pool started (with 5 workers)
+2026-07-27T15:29:23.7905882Z Pool finished
+2026-07-27T15:29:51.8272822Z [gh-pages (root-commit) bf43f54] 🚀 Deploy DNF repositories for Ermete OS Rolling Release
+2026-07-27T15:29:51.8279282Z  1273 files changed, 235 insertions(+)
+2026-07-27T15:29:51.8280228Z  create mode 100644 recovery/boot.ipxe
+2026-07-27T15:29:51.8281109Z  create mode 100644 recovery/ipxe.efi
+2026-07-27T15:29:51.8281928Z  create mode 100644 tier0/.lock
+2026-07-27T15:29:51.8282697Z  create mode 100644 tier0/ModemManager-glib-1.24.2-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8285271Z  create mode 100644 tier0/OpenCL-ICD-Loader-3.0.6-4.20241023git5907ac1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8286791Z  create mode 100644 tier0/abattis-cantarell-vf-fonts-0.301-15.fc43.noarch.rpm
+2026-07-27T15:29:51.8287903Z  create mode 100644 tier0/add-determinism-0.6.0-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8294838Z  create mode 100644 tier0/adwaita-cursor-theme-49.0-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8295740Z  create mode 100644 tier0/adwaita-icon-theme-49.0-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8296690Z  create mode 100644 tier0/adwaita-icon-theme-legacy-46.2-4.fc43.noarch.rpm
+2026-07-27T15:29:51.8297817Z  create mode 100644 tier0/adwaita-mono-fonts-49.0-2.fc43.noarch.rpm
+2026-07-27T15:29:51.8298943Z  create mode 100644 tier0/adwaita-sans-fonts-49.0-2.fc43.noarch.rpm
+2026-07-27T15:29:51.8299935Z  create mode 100644 tier0/akmod-nvidia-610.43.03-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8300851Z  create mode 100644 tier0/akmods-0.6.2-9.fc43.noarch.rpm
+2026-07-27T15:29:51.8301711Z  create mode 100644 tier0/alsa-lib-1.2.16.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8302569Z  create mode 100644 tier0/alternatives-1.33-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8305385Z  create mode 100644 tier0/annobin-docs-12.99-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8306323Z  create mode 100644 tier0/annobin-plugin-gcc-12.99-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8307297Z  create mode 100644 tier0/ansible-srpm-macros-1-18.1.fc43.noarch.rpm
+2026-07-27T15:29:51.8308341Z  create mode 100644 tier0/aribb24-1.0.3^20160216git5e9be27-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8309328Z  create mode 100644 tier0/at-spi2-atk-2.58.7-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8310230Z  create mode 100644 tier0/at-spi2-core-2.58.7-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8311113Z  create mode 100644 tier0/atk-2.58.7-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8311956Z  create mode 100644 tier0/audit-libs-4.1.4-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8312877Z  create mode 100644 tier0/authselect-1.6.2-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8314013Z  create mode 100644 tier0/authselect-libs-1.6.2-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8314983Z  create mode 100644 tier0/avahi-glib-0.9~rc2-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.8316108Z  create mode 100644 tier0/avahi-libs-0.9~rc2-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.8317033Z  create mode 100644 tier0/bash-5.3.0-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8317893Z  create mode 100644 tier0/binutils-2.45.1-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.8318789Z  create mode 100644 tier0/bison-3.8.2-11.fc43.x86_64.rpm
+2026-07-27T15:29:51.8319775Z  create mode 100644 tier0/bluez-libs-5.87-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8320735Z  create mode 100644 tier0/brightnessctl-0.5.1-14.fc43.x86_64.rpm
+2026-07-27T15:29:51.8321691Z  create mode 100644 tier0/btrfs-progs-7.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8322703Z  create mode 100644 tier0/btrfs-progs-devel-7.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8323987Z  create mode 100644 tier0/bubblewrap-0.11.0-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8325116Z  create mode 100644 tier0/build-reproducibility-srpm-macros-0.6.0-3.fc43.noarch.rpm
+2026-07-27T15:29:51.8326162Z  create mode 100644 tier0/bzip2-1.0.8-21.fc43.x86_64.rpm
+2026-07-27T15:29:51.8327023Z  create mode 100644 tier0/bzip2-libs-1.0.8-21.fc43.x86_64.rpm
+2026-07-27T15:29:51.8328044Z  create mode 100644 tier0/ca-certificates-2025.2.80_v9.0.304-1.2.fc43.noarch.rpm
+2026-07-27T15:29:51.8329056Z  create mode 100644 tier0/cairo-1.18.4-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8329958Z  create mode 100644 tier0/cairo-gobject-1.18.4-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8330945Z  create mode 100644 tier0/cdparanoia-libs-10.2-48.fc43.x86_64.rpm
+2026-07-27T15:29:51.8331946Z  create mode 100644 tier0/checkpolicy-3.9-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8332747Z  create mode 100644 tier0/cjson-1.7.18-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8333907Z  create mode 100644 tier0/cmake-filesystem-3.31.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8335061Z  create mode 100644 tier0/cmake-srpm-macros-3.31.11-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8335856Z  create mode 100644 tier0/codec2-1.2.0-7.fc43.x86_64.rpm
+2026-07-27T15:29:51.8336877Z  create mode 100644 tier0/colord-libs-1.4.8-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8338040Z  create mode 100644 tier0/compat-libpthread-nonshared-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8339067Z  create mode 100644 tier0/container-selinux-2.250.0-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8339868Z  create mode 100644 tier0/coreutils-9.7-9.fc43.x86_64.rpm
+2026-07-27T15:29:51.8340769Z  create mode 100644 tier0/coreutils-common-9.7-9.fc43.x86_64.rpm
+2026-07-27T15:29:51.8341601Z  create mode 100644 tier0/cpio-2.15-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.8342329Z  create mode 100644 tier0/cpp-15.3.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8343058Z  create mode 100644 tier0/cracklib-2.10.3-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8344083Z  create mode 100644 tier0/cracklib-dicts-2.10.3-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8345030Z  create mode 100644 tier0/crypto-policies-20251125-1.git63291f8.fc43.noarch.rpm
+2026-07-27T15:29:51.8346192Z  create mode 100644 tier0/crypto-policies-scripts-20251125-1.git63291f8.fc43.noarch.rpm
+2026-07-27T15:29:51.8347106Z  create mode 100644 tier0/cryptsetup-libs-2.8.4-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8348022Z  create mode 100644 tier0/cups-filesystem-2.4.19-3.fc43.noarch.rpm
+2026-07-27T15:29:51.8348860Z  create mode 100644 tier0/cups-libs-2.4.19-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8349561Z  create mode 100644 tier0/curl-8.15.0-7.fc43.x86_64.rpm
+2026-07-27T15:29:51.8350279Z  create mode 100644 tier0/cyrus-sasl-lib-2.1.28-33.fc43.x86_64.rpm
+2026-07-27T15:29:51.8351062Z  create mode 100644 tier0/dbus-1.16.2-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8351799Z  create mode 100644 tier0/dbus-broker-37-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8352808Z  create mode 100644 tier0/dbus-common-1.16.2-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8354004Z  create mode 100644 tier0/dbus-daemon-1.16.2-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8354909Z  create mode 100644 tier0/dbus-devel-1.16.2-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8355546Z  create mode 100644 tier0/dbus-doc-1.16.2-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8356196Z  create mode 100644 tier0/dbus-libs-1.16.2-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8357158Z  create mode 100644 tier0/dbus-tests-1.16.2-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8357792Z  create mode 100644 tier0/dbus-tools-1.16.2-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8358422Z  create mode 100644 tier0/dbus-x11-1.16.2-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8359041Z  create mode 100644 tier0/dconf-0.49.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8359658Z  create mode 100644 tier0/debugedit-5.2-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8360370Z  create mode 100644 tier0/default-fonts-core-sans-4.2-5.fc43.noarch.rpm
+2026-07-27T15:29:51.8361142Z  create mode 100644 tier0/device-mapper-1.02.208-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8361901Z  create mode 100644 tier0/device-mapper-libs-1.02.208-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8362602Z  create mode 100644 tier0/diffutils-3.12-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8363310Z  create mode 100644 tier0/distribution-gpg-keys-1.119-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8364257Z  create mode 100644 tier0/dracut-107-8.fc43.x86_64.rpm
+2026-07-27T15:29:51.8364869Z  create mode 100644 tier0/drm_info-2.9.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8365486Z  create mode 100644 tier0/duktape-2.7.0-10.fc43.x86_64.rpm
+2026-07-27T15:29:51.8366079Z  create mode 100644 tier0/dwz-0.16-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8366628Z  create mode 100644 tier0/ed-1.22.2-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8367242Z  create mode 100644 tier0/efi-srpm-macros-6-4.fc43.noarch.rpm
+2026-07-27T15:29:51.8367884Z  create mode 100644 tier0/egl-gbm-1.1.3-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8368511Z  create mode 100644 tier0/egl-wayland-1.1.21-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8369176Z  create mode 100644 tier0/egl-wayland2-1.0.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8369797Z  create mode 100644 tier0/egl-x11-1.0.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8370397Z  create mode 100644 tier0/elfutils-0.195-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8371376Z  create mode 100644 tier0/elfutils-debuginfod-client-0.195-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8372283Z  create mode 100644 tier0/elfutils-default-yama-scope-0.195-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8373107Z  create mode 100644 tier0/elfutils-libelf-0.195-1.fc43.i686.rpm
+2026-07-27T15:29:51.8374662Z  create mode 100644 tier0/elfutils-libelf-devel-0.195-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8375426Z  create mode 100644 tier0/elfutils-libs-0.195-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8376131Z  create mode 100644 tier0/emacs-filesystem-30.0-5.fc43.noarch.rpm
+2026-07-27T15:29:51.8376875Z  create mode 100644 tier0/ermete-base-config-1.0.0-3.fc43.noarch.rpm
+2026-07-27T15:29:51.8377928Z  create mode 100644 tier0/ermete-kernel-devel-6.14-1.chimera.fc44.x86_64.rpm
+2026-07-27T15:29:51.8456558Z  create mode 100644 tier0/ermete-nix-support-1.0.0-2.fc43.noarch.rpm
+2026-07-27T15:29:51.8457597Z  create mode 100644 tier0/ermete-secure-boot-1.0.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8458661Z  create mode 100644 tier0/ermete-selinux-1.0-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8459568Z  create mode 100644 tier0/exempi-2.6.4-8.fc43.x86_64.rpm
+2026-07-27T15:29:51.8460408Z  create mode 100644 tier0/exiv2-0.28.6-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8461032Z  create mode 100644 tier0/exiv2-libs-0.28.6-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8461671Z  create mode 100644 tier0/expat-2.8.1-1.fc43.i686.rpm
+2026-07-27T15:29:51.8462165Z  create mode 100644 tier0/fakeroot-1.37.1-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8462723Z  create mode 100644 tier0/fakeroot-libs-1.37.1-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8463295Z  create mode 100644 tier0/fdk-aac-free-2.0.0-16.fc43.x86_64.rpm
+2026-07-27T15:29:51.8464211Z  create mode 100644 tier0/fedora-gpg-keys-43-1.noarch.rpm
+2026-07-27T15:29:51.8464775Z  create mode 100644 tier0/fedora-release-43-27.noarch.rpm
+2026-07-27T15:29:51.8465375Z  create mode 100644 tier0/fedora-release-common-43-27.noarch.rpm
+2026-07-27T15:29:51.8466026Z  create mode 100644 tier0/fedora-release-identity-basic-43-27.noarch.rpm
+2026-07-27T15:29:51.8466651Z  create mode 100644 tier0/fedora-repos-43-1.noarch.rpm
+2026-07-27T15:29:51.8467200Z  create mode 100644 tier0/ffmpeg-7.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8468139Z  create mode 100644 tier0/ffmpeg-devel-7.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8468808Z  create mode 100644 tier0/ffmpeg-libs-7.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8469536Z  create mode 100644 tier0/fftw-libs-single-3.3.10-16.fc43.x86_64.rpm
+2026-07-27T15:29:51.8470208Z  create mode 100644 tier0/file-5.46-9.fc43.x86_64.rpm
+2026-07-27T15:29:51.8470808Z  create mode 100644 tier0/file-libs-5.46-9.fc43.x86_64.rpm
+2026-07-27T15:29:51.8471447Z  create mode 100644 tier0/file-roller-44.7-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8472163Z  create mode 100644 tier0/file-roller-nautilus-44.7-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8472880Z  create mode 100644 tier0/filesystem-3.18-50.fc43.x86_64.rpm
+2026-07-27T15:29:51.8474000Z  create mode 100644 tier0/filesystem-srpm-macros-3.18-50.fc43.noarch.rpm
+2026-07-27T15:29:51.8474710Z  create mode 100644 tier0/findutils-4.10.0-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.8475449Z  create mode 100644 tier0/firewall-applet-2.3.2-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8476280Z  create mode 100644 tier0/firewall-config-2.3.2-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8476957Z  create mode 100644 tier0/firewalld-2.3.2-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8477824Z  create mode 100644 tier0/firewalld-filesystem-2.3.2-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8478576Z  create mode 100644 tier0/firewalld-test-2.3.2-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8479257Z  create mode 100644 tier0/flac-libs-1.5.0-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.8479867Z  create mode 100644 tier0/flex-2.6.4-20.fc43.x86_64.rpm
+2026-07-27T15:29:51.8480521Z  create mode 100644 tier0/fontconfig-2.17.0-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8481265Z  create mode 100644 tier0/fonts-filesystem-2.0.5-23.fc43.noarch.rpm
+2026-07-27T15:29:51.8482047Z  create mode 100644 tier0/fonts-srpm-macros-2.0.5-23.fc43.noarch.rpm
+2026-07-27T15:29:51.8483176Z  create mode 100644 tier0/forge-srpm-macros-0.4.0-3.fc43.noarch.rpm
+2026-07-27T15:29:51.8484487Z  create mode 100644 tier0/fpc-srpm-macros-1.3-15.fc43.noarch.rpm
+2026-07-27T15:29:51.8485233Z  create mode 100644 tier0/freetype-2.13.3-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8485904Z  create mode 100644 tier0/fribidi-1.0.16-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8486501Z  create mode 100644 tier0/fuse-2.9.9-24.fc43.x86_64.rpm
+2026-07-27T15:29:51.8487132Z  create mode 100644 tier0/fuse-common-3.16.2-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.8488012Z  create mode 100644 tier0/fuse-devel-2.9.9-24.fc43.x86_64.rpm
+2026-07-27T15:29:51.8488705Z  create mode 100644 tier0/fuse-libs-2.9.9-24.fc43.x86_64.rpm
+2026-07-27T15:29:51.8489273Z  create mode 100644 tier0/fuse3-3.16.2-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.8489851Z  create mode 100644 tier0/fuse3-libs-3.16.2-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.8490433Z  create mode 100644 tier0/fwupd-2.0.20-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8491030Z  create mode 100644 tier0/fwupd-devel-2.0.20-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8491896Z  create mode 100644 tier0/fwupd-plugin-flashrom-2.0.20-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8492760Z  create mode 100644 tier0/fwupd-plugin-modem-manager-2.0.20-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8493951Z  create mode 100644 tier0/fwupd-plugin-uefi-capsule-data-2.0.20-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8494880Z  create mode 100644 tier0/fwupd-tests-2.0.20-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8495578Z  create mode 100644 tier0/game-music-emu-0.6.4-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8496300Z  create mode 100644 tier0/gap-srpm-macros-2-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8497017Z  create mode 100644 tier0/gawk-5.3.2-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8497694Z  create mode 100644 tier0/gawk-all-langpacks-5.3.2-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8498504Z  create mode 100644 tier0/gcc-15.3.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8499167Z  create mode 100644 tier0/gcc-c++-15.3.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8499858Z  create mode 100644 tier0/gcc-plugin-annobin-15.3.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8500592Z  create mode 100644 tier0/gdb-minimal-17.2-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8501562Z  create mode 100644 tier0/gdbm-1.23-10.fc43.x86_64.rpm
+2026-07-27T15:29:51.8502341Z  create mode 100644 tier0/gdbm-libs-1.23-10.fc43.x86_64.rpm
+2026-07-27T15:29:51.8503099Z  create mode 100644 tier0/gdk-pixbuf2-2.44.6^really2.44.4-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8504299Z  create mode 100644 tier0/geoclue2-2.8.2-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8505032Z  create mode 100644 tier0/gettext-envsubst-0.25.1-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8505735Z  create mode 100644 tier0/gettext-libs-0.25.1-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8506420Z  create mode 100644 tier0/gettext-runtime-0.25.1-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8507185Z  create mode 100644 tier0/ghc-srpm-macros-1.9.2-3.fc43.noarch.rpm
+2026-07-27T15:29:51.8507857Z  create mode 100644 tier0/giflib-5.2.2-9.fc43.x86_64.rpm
+2026-07-27T15:29:51.8508519Z  create mode 100644 tier0/glib-networking-2.80.1-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8509195Z  create mode 100644 tier0/glib2-2.86.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8509783Z  create mode 100644 tier0/glibc-2.42-13.fc43.i686.rpm
+2026-07-27T15:29:51.8510424Z  create mode 100644 tier0/glibc-all-langpacks-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8511131Z  create mode 100644 tier0/glibc-benchtests-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8511810Z  create mode 100644 tier0/glibc-common-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8512473Z  create mode 100644 tier0/glibc-devel-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8513129Z  create mode 100644 tier0/glibc-doc-2.42-13.fc43.noarch.rpm
+2026-07-27T15:29:51.8514094Z  create mode 100644 tier0/glibc-gconv-extra-2.42-13.fc43.i686.rpm
+2026-07-27T15:29:51.8514844Z  create mode 100644 tier0/glibc-langpack-aa-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8515584Z  create mode 100644 tier0/glibc-langpack-af-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8516337Z  create mode 100644 tier0/glibc-langpack-agr-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8517334Z  create mode 100644 tier0/glibc-langpack-ak-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8518121Z  create mode 100644 tier0/glibc-langpack-am-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8518880Z  create mode 100644 tier0/glibc-langpack-an-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8519643Z  create mode 100644 tier0/glibc-langpack-anp-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8520388Z  create mode 100644 tier0/glibc-langpack-ar-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8521097Z  create mode 100644 tier0/glibc-langpack-as-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8521834Z  create mode 100644 tier0/glibc-langpack-ast-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8522573Z  create mode 100644 tier0/glibc-langpack-ayc-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8523294Z  create mode 100644 tier0/glibc-langpack-az-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8524405Z  create mode 100644 tier0/glibc-langpack-be-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8525154Z  create mode 100644 tier0/glibc-langpack-bem-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8525904Z  create mode 100644 tier0/glibc-langpack-ber-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8526657Z  create mode 100644 tier0/glibc-langpack-bg-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8527416Z  create mode 100644 tier0/glibc-langpack-bhb-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8528171Z  create mode 100644 tier0/glibc-langpack-bho-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8528916Z  create mode 100644 tier0/glibc-langpack-bi-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8529714Z  create mode 100644 tier0/glibc-langpack-bn-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8530478Z  create mode 100644 tier0/glibc-langpack-bo-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8531268Z  create mode 100644 tier0/glibc-langpack-br-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8532080Z  create mode 100644 tier0/glibc-langpack-brx-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8532866Z  create mode 100644 tier0/glibc-langpack-bs-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8557814Z  create mode 100644 tier0/glibc-langpack-byn-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8559005Z  create mode 100644 tier0/glibc-langpack-ca-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8559803Z  create mode 100644 tier0/glibc-langpack-ce-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8560550Z  create mode 100644 tier0/glibc-langpack-chr-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8561312Z  create mode 100644 tier0/glibc-langpack-ckb-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8562078Z  create mode 100644 tier0/glibc-langpack-cmn-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8562837Z  create mode 100644 tier0/glibc-langpack-crh-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8563577Z  create mode 100644 tier0/glibc-langpack-cs-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8564508Z  create mode 100644 tier0/glibc-langpack-csb-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8565258Z  create mode 100644 tier0/glibc-langpack-cv-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8566023Z  create mode 100644 tier0/glibc-langpack-cy-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8566760Z  create mode 100644 tier0/glibc-langpack-da-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8567493Z  create mode 100644 tier0/glibc-langpack-de-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8568246Z  create mode 100644 tier0/glibc-langpack-doi-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8568994Z  create mode 100644 tier0/glibc-langpack-dsb-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8569739Z  create mode 100644 tier0/glibc-langpack-dv-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8570464Z  create mode 100644 tier0/glibc-langpack-dz-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8571198Z  create mode 100644 tier0/glibc-langpack-el-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8571940Z  create mode 100644 tier0/glibc-langpack-en-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8572676Z  create mode 100644 tier0/glibc-langpack-eo-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8573425Z  create mode 100644 tier0/glibc-langpack-es-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8574595Z  create mode 100644 tier0/glibc-langpack-et-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8575368Z  create mode 100644 tier0/glibc-langpack-eu-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8578174Z  create mode 100644 tier0/glibc-langpack-fa-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8578983Z  create mode 100644 tier0/glibc-langpack-ff-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8579758Z  create mode 100644 tier0/glibc-langpack-fi-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8580532Z  create mode 100644 tier0/glibc-langpack-fil-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8581290Z  create mode 100644 tier0/glibc-langpack-fo-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8582060Z  create mode 100644 tier0/glibc-langpack-fr-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8582824Z  create mode 100644 tier0/glibc-langpack-fur-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8583579Z  create mode 100644 tier0/glibc-langpack-fy-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8584518Z  create mode 100644 tier0/glibc-langpack-ga-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8585285Z  create mode 100644 tier0/glibc-langpack-gbm-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8586026Z  create mode 100644 tier0/glibc-langpack-gd-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8586778Z  create mode 100644 tier0/glibc-langpack-gez-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8587519Z  create mode 100644 tier0/glibc-langpack-gl-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8587946Z  create mode 100644 tier0/glibc-langpack-gu-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8588363Z  create mode 100644 tier0/glibc-langpack-gv-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8588941Z  create mode 100644 tier0/glibc-langpack-ha-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8589371Z  create mode 100644 tier0/glibc-langpack-hak-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8589956Z  create mode 100644 tier0/glibc-langpack-he-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8590381Z  create mode 100644 tier0/glibc-langpack-hi-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8590880Z  create mode 100644 tier0/glibc-langpack-hif-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8591616Z  create mode 100644 tier0/glibc-langpack-hne-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8592129Z  create mode 100644 tier0/glibc-langpack-hr-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8592662Z  create mode 100644 tier0/glibc-langpack-hsb-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8593081Z  create mode 100644 tier0/glibc-langpack-ht-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8593761Z  create mode 100644 tier0/glibc-langpack-hu-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8594490Z  create mode 100644 tier0/glibc-langpack-hy-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8595481Z  create mode 100644 tier0/glibc-langpack-ia-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8596208Z  create mode 100644 tier0/glibc-langpack-id-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8596989Z  create mode 100644 tier0/glibc-langpack-ig-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8597730Z  create mode 100644 tier0/glibc-langpack-ik-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8598448Z  create mode 100644 tier0/glibc-langpack-is-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8599331Z  create mode 100644 tier0/glibc-langpack-it-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8600051Z  create mode 100644 tier0/glibc-langpack-iu-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8600750Z  create mode 100644 tier0/glibc-langpack-ja-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8601448Z  create mode 100644 tier0/glibc-langpack-ka-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8602164Z  create mode 100644 tier0/glibc-langpack-kab-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8602883Z  create mode 100644 tier0/glibc-langpack-kk-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8603761Z  create mode 100644 tier0/glibc-langpack-kl-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8604493Z  create mode 100644 tier0/glibc-langpack-km-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8605197Z  create mode 100644 tier0/glibc-langpack-kn-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8606171Z  create mode 100644 tier0/glibc-langpack-ko-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8606904Z  create mode 100644 tier0/glibc-langpack-kok-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8607630Z  create mode 100644 tier0/glibc-langpack-ks-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8608339Z  create mode 100644 tier0/glibc-langpack-ku-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8609041Z  create mode 100644 tier0/glibc-langpack-kv-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8609747Z  create mode 100644 tier0/glibc-langpack-kw-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8610453Z  create mode 100644 tier0/glibc-langpack-ky-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8611153Z  create mode 100644 tier0/glibc-langpack-lb-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8611856Z  create mode 100644 tier0/glibc-langpack-lg-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8612563Z  create mode 100644 tier0/glibc-langpack-li-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8613325Z  create mode 100644 tier0/glibc-langpack-lij-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8614547Z  create mode 100644 tier0/glibc-langpack-ln-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8615269Z  create mode 100644 tier0/glibc-langpack-lo-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8615975Z  create mode 100644 tier0/glibc-langpack-lt-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8616685Z  create mode 100644 tier0/glibc-langpack-ltg-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8617397Z  create mode 100644 tier0/glibc-langpack-lv-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8618122Z  create mode 100644 tier0/glibc-langpack-lzh-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8618846Z  create mode 100644 tier0/glibc-langpack-mag-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8619576Z  create mode 100644 tier0/glibc-langpack-mai-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8620157Z  create mode 100644 tier0/glibc-langpack-mdf-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8620592Z  create mode 100644 tier0/glibc-langpack-mfe-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8621036Z  create mode 100644 tier0/glibc-langpack-mg-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8621679Z  create mode 100644 tier0/glibc-langpack-mhr-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8622094Z  create mode 100644 tier0/glibc-langpack-mi-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8622533Z  create mode 100644 tier0/glibc-langpack-miq-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8622958Z  create mode 100644 tier0/glibc-langpack-mjw-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8623378Z  create mode 100644 tier0/glibc-langpack-mk-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8624255Z  create mode 100644 tier0/glibc-langpack-ml-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8624677Z  create mode 100644 tier0/glibc-langpack-mn-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8625098Z  create mode 100644 tier0/glibc-langpack-mni-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8625517Z  create mode 100644 tier0/glibc-langpack-mnw-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8625940Z  create mode 100644 tier0/glibc-langpack-mr-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8626352Z  create mode 100644 tier0/glibc-langpack-ms-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8626769Z  create mode 100644 tier0/glibc-langpack-mt-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8627178Z  create mode 100644 tier0/glibc-langpack-my-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8627595Z  create mode 100644 tier0/glibc-langpack-nan-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8628008Z  create mode 100644 tier0/glibc-langpack-nb-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8628424Z  create mode 100644 tier0/glibc-langpack-nds-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8628861Z  create mode 100644 tier0/glibc-langpack-ne-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8629304Z  create mode 100644 tier0/glibc-langpack-nhn-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8629738Z  create mode 100644 tier0/glibc-langpack-niu-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8630164Z  create mode 100644 tier0/glibc-langpack-nl-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8630734Z  create mode 100644 tier0/glibc-langpack-nn-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8631163Z  create mode 100644 tier0/glibc-langpack-nr-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8631582Z  create mode 100644 tier0/glibc-langpack-nso-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8631996Z  create mode 100644 tier0/glibc-langpack-oc-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8632406Z  create mode 100644 tier0/glibc-langpack-om-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8632815Z  create mode 100644 tier0/glibc-langpack-or-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8633224Z  create mode 100644 tier0/glibc-langpack-os-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8633898Z  create mode 100644 tier0/glibc-langpack-pa-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8634508Z  create mode 100644 tier0/glibc-langpack-pap-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8634933Z  create mode 100644 tier0/glibc-langpack-pl-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8635364Z  create mode 100644 tier0/glibc-langpack-ps-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8635785Z  create mode 100644 tier0/glibc-langpack-pt-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8636215Z  create mode 100644 tier0/glibc-langpack-quz-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8636638Z  create mode 100644 tier0/glibc-langpack-raj-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8637058Z  create mode 100644 tier0/glibc-langpack-rif-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8637471Z  create mode 100644 tier0/glibc-langpack-ro-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8637885Z  create mode 100644 tier0/glibc-langpack-ru-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8638294Z  create mode 100644 tier0/glibc-langpack-rw-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8638703Z  create mode 100644 tier0/glibc-langpack-sa-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8639305Z  create mode 100644 tier0/glibc-langpack-sah-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8640087Z  create mode 100644 tier0/glibc-langpack-sat-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8640890Z  create mode 100644 tier0/glibc-langpack-sc-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8642143Z  create mode 100644 tier0/glibc-langpack-scn-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8642827Z  create mode 100644 tier0/glibc-langpack-sd-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8645908Z  create mode 100644 tier0/glibc-langpack-se-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8646726Z  create mode 100644 tier0/glibc-langpack-sgs-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8647513Z  create mode 100644 tier0/glibc-langpack-shn-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8648071Z  create mode 100644 tier0/glibc-langpack-shs-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8648583Z  create mode 100644 tier0/glibc-langpack-si-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8649034Z  create mode 100644 tier0/glibc-langpack-sid-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8649481Z  create mode 100644 tier0/glibc-langpack-sk-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8649922Z  create mode 100644 tier0/glibc-langpack-sl-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8650339Z  create mode 100644 tier0/glibc-langpack-sm-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8650765Z  create mode 100644 tier0/glibc-langpack-so-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8651200Z  create mode 100644 tier0/glibc-langpack-sq-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8651622Z  create mode 100644 tier0/glibc-langpack-sr-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8652039Z  create mode 100644 tier0/glibc-langpack-ss-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8652462Z  create mode 100644 tier0/glibc-langpack-ssy-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8652884Z  create mode 100644 tier0/glibc-langpack-st-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8653301Z  create mode 100644 tier0/glibc-langpack-su-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8654009Z  create mode 100644 tier0/glibc-langpack-sv-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8654474Z  create mode 100644 tier0/glibc-langpack-sw-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8655104Z  create mode 100644 tier0/glibc-langpack-syr-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8655545Z  create mode 100644 tier0/glibc-langpack-szl-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8655967Z  create mode 100644 tier0/glibc-langpack-ta-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8656386Z  create mode 100644 tier0/glibc-langpack-tcy-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8656802Z  create mode 100644 tier0/glibc-langpack-te-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8657213Z  create mode 100644 tier0/glibc-langpack-tg-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8657624Z  create mode 100644 tier0/glibc-langpack-th-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8658039Z  create mode 100644 tier0/glibc-langpack-the-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8658461Z  create mode 100644 tier0/glibc-langpack-ti-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8658876Z  create mode 100644 tier0/glibc-langpack-tig-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8659302Z  create mode 100644 tier0/glibc-langpack-tk-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8659715Z  create mode 100644 tier0/glibc-langpack-tl-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8660131Z  create mode 100644 tier0/glibc-langpack-tn-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8660544Z  create mode 100644 tier0/glibc-langpack-to-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8660963Z  create mode 100644 tier0/glibc-langpack-tok-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8661386Z  create mode 100644 tier0/glibc-langpack-tpi-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8661805Z  create mode 100644 tier0/glibc-langpack-tr-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8662219Z  create mode 100644 tier0/glibc-langpack-ts-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8662636Z  create mode 100644 tier0/glibc-langpack-tt-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8663046Z  create mode 100644 tier0/glibc-langpack-ug-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8663454Z  create mode 100644 tier0/glibc-langpack-uk-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8664131Z  create mode 100644 tier0/glibc-langpack-unm-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8664724Z  create mode 100644 tier0/glibc-langpack-ur-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8665147Z  create mode 100644 tier0/glibc-langpack-uz-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8665570Z  create mode 100644 tier0/glibc-langpack-ve-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8665979Z  create mode 100644 tier0/glibc-langpack-vi-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8666401Z  create mode 100644 tier0/glibc-langpack-wa-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8666840Z  create mode 100644 tier0/glibc-langpack-wae-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8667267Z  create mode 100644 tier0/glibc-langpack-wal-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8667710Z  create mode 100644 tier0/glibc-langpack-wo-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8668147Z  create mode 100644 tier0/glibc-langpack-xh-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8668571Z  create mode 100644 tier0/glibc-langpack-yi-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8668990Z  create mode 100644 tier0/glibc-langpack-yo-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8669413Z  create mode 100644 tier0/glibc-langpack-yue-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8669897Z  create mode 100644 tier0/glibc-langpack-yuw-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8670324Z  create mode 100644 tier0/glibc-langpack-zgh-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8670747Z  create mode 100644 tier0/glibc-langpack-zh-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8671176Z  create mode 100644 tier0/glibc-langpack-zu-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8671625Z  create mode 100644 tier0/glibc-locale-source-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8672089Z  create mode 100644 tier0/glibc-minimal-langpack-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8672538Z  create mode 100644 tier0/glibc-nss-devel-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8672945Z  create mode 100644 tier0/glibc-static-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8673468Z  create mode 100644 tier0/glibc-utils-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8674089Z  create mode 100644 tier0/glibc32-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8674464Z  create mode 100644 tier0/glycin-libs-2.0.8-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8674861Z  create mode 100644 tier0/glycin-loaders-2.0.8-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8675231Z  create mode 100644 tier0/gmp-6.3.0-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.8675600Z  create mode 100644 tier0/gnat-srpm-macros-7-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8676000Z  create mode 100644 tier0/gnome-keyring-48.0-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8676403Z  create mode 100644 tier0/gnome-keyring-pam-48.0-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8676824Z  create mode 100644 tier0/gnome-srpm-macros-1.0-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8677232Z  create mode 100644 tier0/gnulib-l10n-20241231-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8677608Z  create mode 100644 tier0/gnupg2-2.4.9-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.8677988Z  create mode 100644 tier0/gnupg2-dirmngr-2.4.9-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.8678394Z  create mode 100644 tier0/gnupg2-gpg-agent-2.4.9-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.8678802Z  create mode 100644 tier0/gnupg2-gpgconf-2.4.9-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.8679193Z  create mode 100644 tier0/gnupg2-keyboxd-2.4.9-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.8679588Z  create mode 100644 tier0/gnupg2-verify-2.4.9-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.8679963Z  create mode 100644 tier0/gnutls-3.8.13-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8680343Z  create mode 100644 tier0/go-srpm-macros-3.8.0-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8680776Z  create mode 100644 tier0/gobject-introspection-1.84.0-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8681320Z  create mode 100644 tier0/golang-github-nvidia-container-toolkit-1.17.4-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8681895Z  create mode 100644 tier0/google-noto-fonts-common-20251101-2.fc43.noarch.rpm
+2026-07-27T15:29:51.8682416Z  create mode 100644 tier0/google-noto-sans-vf-fonts-20251101-2.fc43.noarch.rpm
+2026-07-27T15:29:51.8682860Z  create mode 100644 tier0/gpgme-1.24.3-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.8683365Z  create mode 100644 tier0/gpgmepp-1.24.3-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.8683943Z  create mode 100644 tier0/gpgverify-2.2-3.fc43.noarch.rpm
+2026-07-27T15:29:51.8684313Z  create mode 100644 tier0/graphene-1.10.8-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8684703Z  create mode 100644 tier0/graphite2-1.3.14-19.fc43.x86_64.rpm
+2026-07-27T15:29:51.8685080Z  create mode 100644 tier0/greenboot-0.16.3-0.fc43.x86_64.rpm
+2026-07-27T15:29:51.8685546Z  create mode 100644 tier0/greenboot-default-health-checks-0.16.3-0.fc43.x86_64.rpm
+2026-07-27T15:29:51.8686004Z  create mode 100644 tier0/grep-3.12-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8686364Z  create mode 100644 tier0/groff-base-1.23.0-11.fc43.x86_64.rpm
+2026-07-27T15:29:51.8686763Z  create mode 100644 tier0/grub2-common-2.12-43.fc43.noarch.rpm
+2026-07-27T15:29:51.8687146Z  create mode 100644 tier0/grub2-tools-2.12-43.fc43.x86_64.rpm
+2026-07-27T15:29:51.8687562Z  create mode 100644 tier0/grub2-tools-minimal-2.12-43.fc43.x86_64.rpm
+2026-07-27T15:29:51.8687972Z  create mode 100644 tier0/grubby-8.40-85.fc43.x86_64.rpm
+2026-07-27T15:29:51.8688389Z  create mode 100644 tier0/gsettings-desktop-schemas-49.1-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8688835Z  create mode 100644 tier0/gsm-1.0.23-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8689193Z  create mode 100644 tier0/gstreamer1-1.26.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8689628Z  create mode 100644 tier0/gstreamer1-plugins-base-1.26.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8690118Z  create mode 100644 tier0/gtk-update-icon-cache-3.24.52-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8690538Z  create mode 100644 tier0/gtk3-3.24.52-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8690884Z  create mode 100644 tier0/gvfs-1.58.4-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8691239Z  create mode 100644 tier0/gvfs-afc-1.58.4-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8691607Z  create mode 100644 tier0/gvfs-afp-1.58.4-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8692255Z  create mode 100644 tier0/gvfs-archive-1.58.4-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8692673Z  create mode 100644 tier0/gvfs-client-1.58.4-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8693056Z  create mode 100644 tier0/gvfs-fuse-1.58.4-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8693423Z  create mode 100644 tier0/gvfs-goa-1.58.4-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8694226Z  create mode 100644 tier0/gvfs-gphoto2-1.58.4-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8694615Z  create mode 100644 tier0/gvfs-mtp-1.58.4-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8694986Z  create mode 100644 tier0/gvfs-nfs-1.58.4-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8695344Z  create mode 100644 tier0/gvfs-smb-1.58.4-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8695686Z  create mode 100644 tier0/gzip-1.13-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.8696032Z  create mode 100644 tier0/harfbuzz-11.5.1-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8696772Z  create mode 100644 tier0/hicolor-icon-theme-0.18-2.fc43.noarch.rpm
+2026-07-27T15:29:51.8697221Z  create mode 100644 tier0/highway-1.3.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8697583Z  create mode 100644 tier0/hwdata-0.409-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8697930Z  create mode 100644 tier0/ilbc-3.0.4-17.fc43.x86_64.rpm
+2026-07-27T15:29:51.8698314Z  create mode 100644 tier0/ima-evm-utils-libs-1.6.2-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.8698698Z  create mode 100644 tier0/imv-4.5.0-7.fc43.x86_64.rpm
+2026-07-27T15:29:51.8699020Z  create mode 100644 tier0/inih-62-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8699350Z  create mode 100644 tier0/inih-cpp-62-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8699727Z  create mode 100644 tier0/intel-mediasdk-23.2.2-8.fc43.x86_64.rpm
+2026-07-27T15:29:51.8700147Z  create mode 100644 tier0/intel-vpl-gpu-rt-26.1.6-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8700552Z  create mode 100644 tier0/iso-codes-4.18.0-2.fc43.noarch.rpm
+2026-07-27T15:29:51.8700918Z  create mode 100644 tier0/jansson-2.14-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8701293Z  create mode 100644 tier0/java-srpm-macros-1-7.fc43.noarch.rpm
+2026-07-27T15:29:51.8701693Z  create mode 100644 tier0/jbigkit-libs-2.1-32.fc43.x86_64.rpm
+2026-07-27T15:29:51.8702236Z  create mode 100644 tier0/json-c-0.18-7.fc43.x86_64.rpm
+2026-07-27T15:29:51.8702594Z  create mode 100644 tier0/json-glib-1.10.8-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.8702944Z  create mode 100644 tier0/kbd-2.8.0-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8703294Z  create mode 100644 tier0/kbd-legacy-2.8.0-3.fc43.noarch.rpm
+2026-07-27T15:29:51.8703937Z  create mode 100644 tier0/kbd-misc-2.8.0-3.fc43.noarch.rpm
+2026-07-27T15:29:51.8704612Z  create mode 100644 tier0/kernel-debug-devel-7.1.4-104.fc43.x86_64.rpm
+2026-07-27T15:29:51.8705357Z  create mode 100644 tier0/kernel-headers-7.1.3-100.fc43.x86_64.rpm
+2026-07-27T15:29:51.8706099Z  create mode 100644 tier0/kernel-srpm-macros-1.0-27.fc43.noarch.rpm
+2026-07-27T15:29:51.8706820Z  create mode 100644 tier0/keyutils-libs-1.6.3-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.8707447Z  create mode 100644 tier0/kmod-34.2-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8708046Z  create mode 100644 tier0/kmod-libs-34.2-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8708765Z  create mode 100644 tier0/kmod-nvidia-7.0.0-rc5-610.43.03-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8709634Z  create mode 100644 tier0/kmod-nvidia-7.1.4-104.fc43.x86_64+debug-610.43.03-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8710430Z  create mode 100644 tier0/kmodtool-1.1-14.fc43.noarch.rpm
+2026-07-27T15:29:51.8711017Z  create mode 100644 tier0/kpartx-0.11.1-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8711599Z  create mode 100644 tier0/krb5-libs-1.22.2-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.8712207Z  create mode 100644 tier0/lame-libs-3.100-20.fc43.x86_64.rpm
+2026-07-27T15:29:51.8712789Z  create mode 100644 tier0/lcms2-2.16-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.8713340Z  create mode 100644 tier0/libX11-1.8.13-1.fc43.i686.rpm
+2026-07-27T15:29:51.8714507Z  create mode 100644 tier0/libX11-common-1.8.13-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8715141Z  create mode 100644 tier0/libX11-xcb-1.8.13-1.fc43.i686.rpm
+2026-07-27T15:29:51.8715930Z  create mode 100644 tier0/libXau-1.0.12-3.fc43.i686.rpm
+2026-07-27T15:29:51.8716552Z  create mode 100644 tier0/libXcomposite-0.4.6-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.8717188Z  create mode 100644 tier0/libXcursor-1.2.3-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8717801Z  create mode 100644 tier0/libXdamage-1.1.6-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.8718395Z  create mode 100644 tier0/libXext-1.3.6-4.fc43.i686.rpm
+2026-07-27T15:29:51.8718972Z  create mode 100644 tier0/libXfixes-6.0.1-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.8719560Z  create mode 100644 tier0/libXft-2.3.8-9.fc43.x86_64.rpm
+2026-07-27T15:29:51.8720117Z  create mode 100644 tier0/libXi-1.8.2-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8720706Z  create mode 100644 tier0/libXinerama-1.1.5-9.fc43.x86_64.rpm
+2026-07-27T15:29:51.8721330Z  create mode 100644 tier0/libXrandr-1.5.4-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.8721961Z  create mode 100644 tier0/libXrender-0.9.12-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8722593Z  create mode 100644 tier0/libXtst-1.2.5-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8723208Z  create mode 100644 tier0/libXv-1.0.13-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8724281Z  create mode 100644 tier0/libXxf86vm-1.1.6-3.fc43.i686.rpm
+2026-07-27T15:29:51.8725670Z  create mode 100644 tier0/libacl-2.4.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8726250Z  create mode 100644 tier0/libaom-3.13.3-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8727075Z  create mode 100644 tier0/libarchive-3.8.4-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8727720Z  create mode 100644 tier0/libaribcaption-1.1.1-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8728393Z  create mode 100644 tier0/libassuan-2.5.7-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.8729028Z  create mode 100644 tier0/libasyncns-0.8-31.fc43.x86_64.rpm
+2026-07-27T15:29:51.8729631Z  create mode 100644 tier0/libattr-2.6.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8730252Z  create mode 100644 tier0/libavcodec-free-7.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8730994Z  create mode 100644 tier0/libavcodec-freeworld-7.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8731729Z  create mode 100644 tier0/libavdevice-7.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8732579Z  create mode 100644 tier0/libavformat-free-7.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8733185Z  create mode 100644 tier0/libavutil-free-7.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8733974Z  create mode 100644 tier0/libblkid-2.41.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8734574Z  create mode 100644 tier0/libbluray-1.3.4-11.fc43.x86_64.rpm
+2026-07-27T15:29:51.8735185Z  create mode 100644 tier0/libbpf-1.6.1-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.8735786Z  create mode 100644 tier0/libbrotli-1.2.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8736403Z  create mode 100644 tier0/libbtrfs-7.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8737032Z  create mode 100644 tier0/libbtrfsutil-7.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8737677Z  create mode 100644 tier0/libcamera-0.5.2-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.8738335Z  create mode 100644 tier0/libcamera-ipa-0.5.2-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.8739021Z  create mode 100644 tier0/libcanberra-0.30-38.fc43.x86_64.rpm
+2026-07-27T15:29:51.8739718Z  create mode 100644 tier0/libcanberra-gtk3-0.30-38.fc43.x86_64.rpm
+2026-07-27T15:29:51.8740386Z  create mode 100644 tier0/libcap-2.76-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.8741000Z  create mode 100644 tier0/libcap-ng-0.9.3-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8741627Z  create mode 100644 tier0/libcbor-0.12.0-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.8742287Z  create mode 100644 tier0/libchromaprint-1.6.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8743010Z  create mode 100644 tier0/libcloudproviders-0.3.6-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8743914Z  create mode 100644 tier0/libcom_err-1.47.3-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8744540Z  create mode 100644 tier0/libcue-2.3.0-12.fc43.x86_64.rpm
+2026-07-27T15:29:51.8745149Z  create mode 100644 tier0/libcurl-8.15.0-7.fc43.x86_64.rpm
+2026-07-27T15:29:51.8745781Z  create mode 100644 tier0/libdatrie-0.2.13-12.fc43.x86_64.rpm
+2026-07-27T15:29:51.8746412Z  create mode 100644 tier0/libdav1d-1.5.3-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8747285Z  create mode 100644 tier0/libdisplay-info-0.2.0-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.8747963Z  create mode 100644 tier0/libdrm-2.4.134-1.fc43.i686.rpm
+2026-07-27T15:29:51.8748586Z  create mode 100644 tier0/libdvdnav-6.1.1-11.fc43.x86_64.rpm
+2026-07-27T15:29:51.8749237Z  create mode 100644 tier0/libdvdread-6.1.3-10.fc43.x86_64.rpm
+2026-07-27T15:29:51.8749886Z  create mode 100644 tier0/libebur128-1.2.6-14.fc43.x86_64.rpm
+2026-07-27T15:29:51.8750516Z  create mode 100644 tier0/libeconf-0.7.9-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8751179Z  create mode 100644 tier0/libedit-3.1-58.20260512cvs.fc43.i686.rpm
+2026-07-27T15:29:51.8751852Z  create mode 100644 tier0/libepoxy-1.5.10-11.fc43.x86_64.rpm
+2026-07-27T15:29:51.8752480Z  create mode 100644 tier0/libevent-2.1.12-16.fc43.x86_64.rpm
+2026-07-27T15:29:51.8753103Z  create mode 100644 tier0/libexif-0.6.26-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8753914Z  create mode 100644 tier0/libfdisk-2.41.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8754528Z  create mode 100644 tier0/libffi-3.5.2-1.fc43.i686.rpm
+2026-07-27T15:29:51.8755133Z  create mode 100644 tier0/libfido2-1.16.0-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8755760Z  create mode 100644 tier0/libfsverity-1.6-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8756371Z  create mode 100644 tier0/libgcc-15.3.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8756991Z  create mode 100644 tier0/libgcrypt-1.11.1-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.8757629Z  create mode 100644 tier0/libgexiv2-0.14.6-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8758251Z  create mode 100644 tier0/libglvnd-1.7.0-8.fc43.i686.rpm
+2026-07-27T15:29:51.8758874Z  create mode 100644 tier0/libglvnd-egl-1.7.0-8.fc43.i686.rpm
+2026-07-27T15:29:51.8759541Z  create mode 100644 tier0/libglvnd-gles-1.7.0-8.fc43.x86_64.rpm
+2026-07-27T15:29:51.8760207Z  create mode 100644 tier0/libglvnd-glx-1.7.0-8.fc43.i686.rpm
+2026-07-27T15:29:51.8760886Z  create mode 100644 tier0/libglvnd-opengl-1.7.0-8.fc43.x86_64.rpm
+2026-07-27T15:29:51.8761549Z  create mode 100644 tier0/libgomp-15.3.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8762191Z  create mode 100644 tier0/libgpg-error-1.55-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8763016Z  create mode 100644 tier0/libgsf-1.14.58-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8763783Z  create mode 100644 tier0/libgudev-238-8.fc43.x86_64.rpm
+2026-07-27T15:29:51.8764395Z  create mode 100644 tier0/libgusb-0.4.9-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.8764991Z  create mode 100644 tier0/libgxps-0.3.2-11.fc43.x86_64.rpm
+2026-07-27T15:29:51.8765600Z  create mode 100644 tier0/libheif-1.20.2-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.8766193Z  create mode 100644 tier0/libicu-77.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8766777Z  create mode 100644 tier0/libidn2-2.3.8-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8767536Z  create mode 100644 tier0/libimobiledevice-1.3.0^20240916gited9703d-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.8768412Z  create mode 100644 tier0/libimobiledevice-glue-1.3.1-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8769154Z  create mode 100644 tier0/libiptcdata-1.0.5-23.fc43.x86_64.rpm
+2026-07-27T15:29:51.8769831Z  create mode 100644 tier0/libjpeg-turbo-3.1.3-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8770480Z  create mode 100644 tier0/libjxl-0.11.2-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8771089Z  create mode 100644 tier0/libkcapi-1.5.0-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.8771753Z  create mode 100644 tier0/libkcapi-hasher-1.5.0-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.8772535Z  create mode 100644 tier0/libkcapi-hmaccalc-1.5.0-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.8773221Z  create mode 100644 tier0/libksba-1.6.7-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.8774012Z  create mode 100644 tier0/liblastlog2-2.41.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8774608Z  create mode 100644 tier0/liblc3-1.1.3-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.8775193Z  create mode 100644 tier0/libldac-2.0.2.3-18.fc43.x86_64.rpm
+2026-07-27T15:29:51.8775801Z  create mode 100644 tier0/libldb-4.23.9-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8776394Z  create mode 100644 tier0/liblerc-4.0.0-9.fc43.x86_64.rpm
+2026-07-27T15:29:51.8777227Z  create mode 100644 tier0/libmodplug-0.8.9.0-28.fc43.x86_64.rpm
+2026-07-27T15:29:51.8777899Z  create mode 100644 tier0/libmount-2.41.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8778517Z  create mode 100644 tier0/libmpc-1.3.1-8.fc43.x86_64.rpm
+2026-07-27T15:29:51.8779150Z  create mode 100644 tier0/libnghttp2-1.66.0-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8779798Z  create mode 100644 tier0/libnotify-0.8.8-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8780474Z  create mode 100644 tier0/libnotify-devel-0.8.8-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8781138Z  create mode 100644 tier0/libnsl-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8781742Z  create mode 100644 tier0/libnsl2-2.0.1-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.8782354Z  create mode 100644 tier0/libogg-1.3.6-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8782991Z  create mode 100644 tier0/libopenjph-0.22.0-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8783821Z  create mode 100644 tier0/libopenmpt-0.8.7-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8784480Z  create mode 100644 tier0/libosinfo-1.12.0-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.8785161Z  create mode 100644 tier0/libpciaccess-0.16-16.fc43.i686.rpm
+2026-07-27T15:29:51.8785828Z  create mode 100644 tier0/libpkgconf-2.3.0-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8786486Z  create mode 100644 tier0/libplist-2.6.0-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.8787114Z  create mode 100644 tier0/libpng-1.6.58-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8787743Z  create mode 100644 tier0/libproxy-0.5.12-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8788368Z  create mode 100644 tier0/libpsl-0.21.5-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.8789023Z  create mode 100644 tier0/libpwquality-1.4.5-14.fc43.x86_64.rpm
+2026-07-27T15:29:51.8789714Z  create mode 100644 tier0/librabbitmq-0.17.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8790370Z  create mode 100644 tier0/librist-0.2.7-10.fc43.x86_64.rpm
+2026-07-27T15:29:51.8790995Z  create mode 100644 tier0/librsvg2-2.61.4-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8791602Z  create mode 100644 tier0/libsbc-2.0-7.fc43.x86_64.rpm
+2026-07-27T15:29:51.8792228Z  create mode 100644 tier0/libseccomp-2.6.1-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8793071Z  create mode 100644 tier0/libsecret-0.21.7-7.fc43.x86_64.rpm
+2026-07-27T15:29:51.8793888Z  create mode 100644 tier0/libselinux-3.9-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.8794554Z  create mode 100644 tier0/libselinux-utils-3.9-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.8795233Z  create mode 100644 tier0/libsemanage-3.9-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.8795857Z  create mode 100644 tier0/libsepol-3.9-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8796501Z  create mode 100644 tier0/libsmartcols-2.41.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8797245Z  create mode 100644 tier0/libsmbclient-4.23.9-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8797916Z  create mode 100644 tier0/libsndfile-1.2.2-10.fc43.x86_64.rpm
+2026-07-27T15:29:51.8798571Z  create mode 100644 tier0/libsodium-1.0.22-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8799212Z  create mode 100644 tier0/libsoup3-3.6.6-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8799837Z  create mode 100644 tier0/libssh-0.11.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8800511Z  create mode 100644 tier0/libssh-config-0.11.5-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8801205Z  create mode 100644 tier0/libstdc++-15.3.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8801884Z  create mode 100644 tier0/libstdc++-devel-15.3.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8802573Z  create mode 100644 tier0/libstemmer-3.0.1-8.fc43.x86_64.rpm
+2026-07-27T15:29:51.8803283Z  create mode 100644 tier0/libswresample-free-7.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8804151Z  create mode 100644 tier0/libtalloc-2.4.3-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.8804777Z  create mode 100644 tier0/libtasn1-4.21.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8805393Z  create mode 100644 tier0/libtdb-1.4.14-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8806024Z  create mode 100644 tier0/libtevent-0.17.1-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8806694Z  create mode 100644 tier0/libtextstyle-0.25.1-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8807367Z  create mode 100644 tier0/libthai-0.1.29-11.fc43.x86_64.rpm
+2026-07-27T15:29:51.8808212Z  create mode 100644 tier0/libtheora-1.1.1-40.fc43.x86_64.rpm
+2026-07-27T15:29:51.8808859Z  create mode 100644 tier0/libtiff-4.7.2-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8809519Z  create mode 100644 tier0/libtinysparql-3.10.1-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.8810191Z  create mode 100644 tier0/libtirpc-1.3.7-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8810848Z  create mode 100644 tier0/libtool-ltdl-2.5.4-8.fc43.x86_64.rpm
+2026-07-27T15:29:51.8811526Z  create mode 100644 tier0/libudfread-1.1.2-12.fc43.x86_64.rpm
+2026-07-27T15:29:51.8812198Z  create mode 100644 tier0/libunistring-1.1-10.fc43.x86_64.rpm
+2026-07-27T15:29:51.8812859Z  create mode 100644 tier0/libunwind-1.8.1-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8813491Z  create mode 100644 tier0/libusb1-1.0.30-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8814292Z  create mode 100644 tier0/libusbmuxd-2.1.0-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.8814926Z  create mode 100644 tier0/libuuid-2.41.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8815544Z  create mode 100644 tier0/libva-2.22.0-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.8816241Z  create mode 100644 tier0/libva-nvidia-driver-0.0.17-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8816977Z  create mode 100644 tier0/libva-utils-2.22.0-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.8817620Z  create mode 100644 tier0/libvdpau-1.5-10.fc43.i686.rpm
+2026-07-27T15:29:51.8818232Z  create mode 100644 tier0/libverto-0.3.2-11.fc43.x86_64.rpm
+2026-07-27T15:29:51.8840606Z  create mode 100644 tier0/libvisual-0.4.2-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8841702Z  create mode 100644 tier0/libvmaf-3.0.0-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.8842674Z  create mode 100644 tier0/libvorbis-1.3.7-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8843924Z  create mode 100644 tier0/libvpl-2.17.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8845114Z  create mode 100644 tier0/libvpx-1.15.0-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.8846081Z  create mode 100644 tier0/libwayland-client-1.25.0-1.fc43.i686.rpm
+2026-07-27T15:29:51.8847001Z  create mode 100644 tier0/libwayland-cursor-1.25.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8847951Z  create mode 100644 tier0/libwayland-egl-1.25.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8849212Z  create mode 100644 tier0/libwayland-server-1.25.0-1.fc43.i686.rpm
+2026-07-27T15:29:51.8850150Z  create mode 100644 tier0/libwbclient-4.23.9-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8851001Z  create mode 100644 tier0/libwebp-1.6.0-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8851806Z  create mode 100644 tier0/libxcb-1.17.0-6.fc43.i686.rpm
+2026-07-27T15:29:51.8852607Z  create mode 100644 tier0/libxcrypt-4.5.2-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8853459Z  create mode 100644 tier0/libxcrypt-compat-4.5.2-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8854675Z  create mode 100644 tier0/libxcrypt-devel-4.5.2-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8855576Z  create mode 100644 tier0/libxcrypt-static-4.5.2-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8856443Z  create mode 100644 tier0/libxkbcommon-1.11.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8857263Z  create mode 100644 tier0/libxml2-2.12.10-5.fc43.i686.rpm
+2026-07-27T15:29:51.8858092Z  create mode 100644 tier0/libxshmfence-1.3.2-7.fc43.i686.rpm
+2026-07-27T15:29:51.8858916Z  create mode 100644 tier0/libxslt-1.1.43-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.8859712Z  create mode 100644 tier0/libyaml-0.2.5-17.fc43.x86_64.rpm
+2026-07-27T15:29:51.8860670Z  create mode 100644 tier0/libyuv-0-0.57.20240704git96bbdb5.fc43.x86_64.rpm
+2026-07-27T15:29:51.8861566Z  create mode 100644 tier0/libzstd-1.5.7-2.fc43.i686.rpm
+2026-07-27T15:29:51.8862382Z  create mode 100644 tier0/libzstd-devel-1.5.7-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8863260Z  create mode 100644 tier0/llvm-filesystem-21.1.8-4.fc43.i686.rpm
+2026-07-27T15:29:51.8864302Z  create mode 100644 tier0/llvm-libs-21.1.8-4.fc43.i686.rpm
+2026-07-27T15:29:51.8865133Z  create mode 100644 tier0/lm_sensors-3.6.0-23.fc43.x86_64.rpm
+2026-07-27T15:29:51.8866012Z  create mode 100644 tier0/lm_sensors-devel-3.6.0-23.fc43.x86_64.rpm
+2026-07-27T15:29:51.8866921Z  create mode 100644 tier0/lm_sensors-libs-3.6.0-23.fc43.i686.rpm
+2026-07-27T15:29:51.8868031Z  create mode 100644 tier0/lm_sensors-sensord-3.6.0-23.fc43.x86_64.rpm
+2026-07-27T15:29:51.8868939Z  create mode 100644 tier0/lmdb-libs-0.9.34-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8869779Z  create mode 100644 tier0/localsearch-3.10.2-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8870620Z  create mode 100644 tier0/logrotate-3.22.0-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.8871504Z  create mode 100644 tier0/low-memory-monitor-2.1-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8872401Z  create mode 100644 tier0/lpcnetfreedv-0.5-9.fc43.x86_64.rpm
+2026-07-27T15:29:51.8873242Z  create mode 100644 tier0/lttng-ust-2.14.0-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.8874221Z  create mode 100644 tier0/lua-libs-5.4.8-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.8875051Z  create mode 100644 tier0/lua-srpm-macros-1-16.fc43.noarch.rpm
+2026-07-27T15:29:51.8875897Z  create mode 100644 tier0/lz4-libs-1.10.0-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8876679Z  create mode 100644 tier0/lzo-2.10-15.fc43.x86_64.rpm
+2026-07-27T15:29:51.8877408Z  create mode 100644 tier0/m4-1.4.21-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8878156Z  create mode 100644 tier0/make-4.4.1-11.fc43.x86_64.rpm
+2026-07-27T15:29:51.8878855Z  create mode 100644 tier0/manifest.json
+2026-07-27T15:29:51.8879562Z  create mode 100644 tier0/mbedtls-3.6.6-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8880358Z  create mode 100644 tier0/memstrack-0.2.5-7.fc43.x86_64.rpm
+2026-07-27T15:29:51.8881229Z  create mode 100644 tier0/mesa-dri-drivers-25.3.6-3.fc43.i686.rpm
+2026-07-27T15:29:51.8882161Z  create mode 100644 tier0/mesa-dxil-devel-25.3.6-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8883087Z  create mode 100644 tier0/mesa-filesystem-25.3.6-3.fc43.i686.rpm
+2026-07-27T15:29:51.8884204Z  create mode 100644 tier0/mesa-libEGL-25.3.6-3.fc43.i686.rpm
+2026-07-27T15:29:51.8885089Z  create mode 100644 tier0/mesa-libEGL-devel-25.3.6-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8885972Z  create mode 100644 tier0/mesa-libGL-25.3.6-3.fc43.i686.rpm
+2026-07-27T15:29:51.8886847Z  create mode 100644 tier0/mesa-libGL-devel-25.3.6-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8887758Z  create mode 100644 tier0/mesa-libOpenCL-25.3.6-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8888930Z  create mode 100644 tier0/mesa-libOpenCL-devel-25.3.6-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8889888Z  create mode 100644 tier0/mesa-libTeflon-25.3.6-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8890786Z  create mode 100644 tier0/mesa-libgbm-25.3.6-3.fc43.i686.rpm
+2026-07-27T15:29:51.8891695Z  create mode 100644 tier0/mesa-libgbm-devel-25.3.6-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8892646Z  create mode 100644 tier0/mesa-va-drivers-25.3.6-3.fc43.i686.rpm
+2026-07-27T15:29:51.8893557Z  create mode 100644 tier0/mesa-vulkan-drivers-25.3.6-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8894689Z  create mode 100644 tier0/mkpasswd-5.6.6-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8895515Z  create mode 100644 tier0/mokutil-0.7.2-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8896384Z  create mode 100644 tier0/mpdecimal-4.0.1-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8897314Z  create mode 100644 tier0/mpfr-4.2.2-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8898156Z  create mode 100644 tier0/mpg123-libs-1.32.10-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8898962Z  create mode 100644 tier0/mpv-0.40.0-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8899729Z  create mode 100644 tier0/mpv-devel-0.40.0-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8900626Z  create mode 100644 tier0/mpv-libs-0.40.0-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8901449Z  create mode 100644 tier0/ncurses-6.5-7.20250614.fc43.x86_64.rpm
+2026-07-27T15:29:51.8902563Z  create mode 100644 tier0/ncurses-base-6.5-7.20250614.fc43.noarch.rpm
+2026-07-27T15:29:51.8903590Z  create mode 100644 tier0/ncurses-libs-6.5-7.20250614.fc43.i686.rpm
+2026-07-27T15:29:51.8904836Z  create mode 100644 tier0/nettle-3.10.1-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8905648Z  create mode 100644 tier0/nftables-1.1.3-6.fc43.1.x86_64.rpm
+2026-07-27T15:29:51.8906496Z  create mode 100644 tier0/nftables-devel-1.1.3-6.fc43.1.x86_64.rpm
+2026-07-27T15:29:51.8907399Z  create mode 100644 tier0/nftables-services-1.1.3-6.fc43.1.noarch.rpm
+2026-07-27T15:29:51.8908459Z  create mode 100644 tier0/ngtcp2-1.22.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8909377Z  create mode 100644 tier0/ngtcp2-crypto-gnutls-1.22.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8910237Z  create mode 100644 tier0/npth-1.8-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8910983Z  create mode 100644 tier0/nspr-4.39.0-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8911727Z  create mode 100644 tier0/nss-3.125.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8912521Z  create mode 100644 tier0/nss-softokn-3.125.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8913427Z  create mode 100644 tier0/nss-softokn-freebl-3.125.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8914610Z  create mode 100644 tier0/nss-sysinit-3.125.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8915477Z  create mode 100644 tier0/nss-util-3.125.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8916240Z  create mode 100644 tier0/nss_db-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8916964Z  create mode 100644 tier0/nss_hesiod-2.42-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.8917759Z  create mode 100644 tier0/numactl-libs-2.0.19-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8918680Z  create mode 100644 tier0/nvidia-driver-610.43.03-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8919644Z  create mode 100644 tier0/nvidia-driver-common-610.43.03-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8920611Z  create mode 100644 tier0/nvidia-driver-cuda-610.43.03-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8921666Z  create mode 100644 tier0/nvidia-driver-cuda-libs-610.43.03-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8922716Z  create mode 100644 tier0/nvidia-driver-selinux-0.1-2.fc43.noarch.rpm
+2026-07-27T15:29:51.8923865Z  create mode 100644 tier0/nvidia-kmod-common-610.43.03-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8924885Z  create mode 100644 tier0/nvidia-libXNVCtrl-610.43.03-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8925895Z  create mode 100644 tier0/nvidia-modprobe-610.43.03-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8926951Z  create mode 100644 tier0/nvidia-persistenced-610.43.03-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8928013Z  create mode 100644 tier0/nvidia-settings-610.43.03-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8929295Z  create mode 100644 tier0/ocaml-srpm-macros-11-2.fc43.noarch.rpm
+2026-07-27T15:29:51.8930295Z  create mode 100644 tier0/openblas-srpm-macros-2-20.fc43.noarch.rpm
+2026-07-27T15:29:51.8931310Z  create mode 100644 tier0/opencl-filesystem-1.0-23.fc43.noarch.rpm
+2026-07-27T15:29:51.8932287Z  create mode 100644 tier0/opencore-amr-0.1.6-9.fc43.x86_64.rpm
+2026-07-27T15:29:51.8933184Z  create mode 100644 tier0/openh264-2.6.0-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8934277Z  create mode 100644 tier0/openjpeg-2.5.4-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8935122Z  create mode 100644 tier0/openldap-2.6.13-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8935948Z  create mode 100644 tier0/openpgm-5.3.128-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.8936742Z  create mode 100644 tier0/openssl-3.5.7-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8937562Z  create mode 100644 tier0/openssl-devel-3.5.7-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8938481Z  create mode 100644 tier0/openssl-devel-engine-3.5.7-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8939383Z  create mode 100644 tier0/openssl-libs-3.5.7-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8940229Z  create mode 100644 tier0/openssl-perl-3.5.7-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8941012Z  create mode 100644 tier0/opus-1.5.2-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.8941739Z  create mode 100644 tier0/orc-0.4.41-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8942509Z  create mode 100644 tier0/os-prober-1.81-10.fc43.x86_64.rpm
+2026-07-27T15:29:51.8943343Z  create mode 100644 tier0/osinfo-db-20251212-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8944414Z  create mode 100644 tier0/osinfo-db-tools-1.12.0-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.8945295Z  create mode 100644 tier0/p11-kit-0.26.2-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8946247Z  create mode 100644 tier0/p11-kit-trust-0.26.2-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8947215Z  create mode 100644 tier0/package-notes-srpm-macros-0.20-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8948331Z  create mode 100644 tier0/pam-1.7.1-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.8949119Z  create mode 100644 tier0/pam-libs-1.7.1-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.8949913Z  create mode 100644 tier0/pango-1.57.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8950793Z  create mode 100644 tier0/passt-selinux-0^20260716.g090d739-2.fc43.noarch.rpm
+2026-07-27T15:29:51.8951657Z  create mode 100644 tier0/patch-2.8-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.8952414Z  create mode 100644 tier0/pcre2-10.47-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8953217Z  create mode 100644 tier0/pcre2-syntax-10.47-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8954320Z  create mode 100644 tier0/perl-AutoLoader-5.74-523.fc43.noarch.rpm
+2026-07-27T15:29:51.8955175Z  create mode 100644 tier0/perl-B-1.89-523.fc43.x86_64.rpm
+2026-07-27T15:29:51.8955920Z  create mode 100644 tier0/perl-Carp-1.54-520.fc43.noarch.rpm
+2026-07-27T15:29:51.8956788Z  create mode 100644 tier0/perl-Class-Struct-0.68-523.fc43.noarch.rpm
+2026-07-27T15:29:51.8957705Z  create mode 100644 tier0/perl-Data-Dumper-2.192-522.fc43.x86_64.rpm
+2026-07-27T15:29:51.8958763Z  create mode 100644 tier0/perl-Digest-1.20-520.fc43.noarch.rpm
+2026-07-27T15:29:51.8959904Z  create mode 100644 tier0/perl-Digest-MD5-2.59-520.fc43.x86_64.rpm
+2026-07-27T15:29:51.8960891Z  create mode 100644 tier0/perl-DynaLoader-1.57-523.fc43.x86_64.rpm
+2026-07-27T15:29:51.8962041Z  create mode 100644 tier0/perl-Encode-3.21-520.fc43.x86_64.rpm
+2026-07-27T15:29:51.8975398Z  create mode 100644 tier0/perl-Errno-1.38-523.fc43.x86_64.rpm
+2026-07-27T15:29:51.8976368Z  create mode 100644 tier0/perl-Exporter-5.79-520.fc43.noarch.rpm
+2026-07-27T15:29:51.8977272Z  create mode 100644 tier0/perl-Fcntl-1.20-523.fc43.x86_64.rpm
+2026-07-27T15:29:51.8978185Z  create mode 100644 tier0/perl-File-Basename-2.86-523.fc43.noarch.rpm
+2026-07-27T15:29:51.8979131Z  create mode 100644 tier0/perl-File-Path-2.18-520.fc43.noarch.rpm
+2026-07-27T15:29:51.8980086Z  create mode 100644 tier0/perl-File-Temp-0.231.100-520.fc43.noarch.rpm
+2026-07-27T15:29:51.8980965Z  create mode 100644 tier0/perl-File-stat-1.14-523.fc43.noarch.rpm
+2026-07-27T15:29:51.8981874Z  create mode 100644 tier0/perl-FileHandle-2.05-523.fc43.noarch.rpm
+2026-07-27T15:29:51.8983027Z  create mode 100644 tier0/perl-Getopt-Long-2.58-520.fc43.noarch.rpm
+2026-07-27T15:29:51.8984175Z  create mode 100644 tier0/perl-Getopt-Std-1.14-523.fc43.noarch.rpm
+2026-07-27T15:29:51.8985086Z  create mode 100644 tier0/perl-HTTP-Tiny-0.094-1.fc43.noarch.rpm
+2026-07-27T15:29:51.8985914Z  create mode 100644 tier0/perl-IO-1.55-523.fc43.x86_64.rpm
+2026-07-27T15:29:51.8986763Z  create mode 100644 tier0/perl-IO-Socket-IP-0.43-521.fc43.noarch.rpm
+2026-07-27T15:29:51.8987697Z  create mode 100644 tier0/perl-IO-Socket-SSL-2.095-2.fc43.noarch.rpm
+2026-07-27T15:29:51.8988638Z  create mode 100644 tier0/perl-IPC-Open3-1.24-523.fc43.noarch.rpm
+2026-07-27T15:29:51.8989511Z  create mode 100644 tier0/perl-MIME-Base32-1.303-24.fc43.noarch.rpm
+2026-07-27T15:29:51.8990336Z  create mode 100644 tier0/perl-MIME-Base64-3.16-520.fc43.x86_64.rpm
+2026-07-27T15:29:51.8991220Z  create mode 100644 tier0/perl-NDBM_File-1.18-523.fc43.x86_64.rpm
+2026-07-27T15:29:51.8992091Z  create mode 100644 tier0/perl-Net-SSLeay-1.94-11.fc43.x86_64.rpm
+2026-07-27T15:29:51.8992939Z  create mode 100644 tier0/perl-POSIX-2.23-523.fc43.x86_64.rpm
+2026-07-27T15:29:51.8993966Z  create mode 100644 tier0/perl-PathTools-3.94-520.fc43.x86_64.rpm
+2026-07-27T15:29:51.8994874Z  create mode 100644 tier0/perl-Pod-Escapes-1.07-520.fc43.noarch.rpm
+2026-07-27T15:29:51.8995788Z  create mode 100644 tier0/perl-Pod-Perldoc-3.28.01-521.fc43.noarch.rpm
+2026-07-27T15:29:51.8996787Z  create mode 100644 tier0/perl-Pod-Simple-3.47-3.fc43.noarch.rpm
+2026-07-27T15:29:51.8997776Z  create mode 100644 tier0/perl-Pod-Usage-2.05-520.fc43.noarch.rpm
+2026-07-27T15:29:51.8998799Z  create mode 100644 tier0/perl-Scalar-List-Utils-1.70-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.8999853Z  create mode 100644 tier0/perl-SelectSaver-1.02-523.fc43.noarch.rpm
+2026-07-27T15:29:51.9000844Z  create mode 100644 tier0/perl-Socket-2.041-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9002042Z  create mode 100644 tier0/perl-Storable-3.37-521.fc43.x86_64.rpm
+2026-07-27T15:29:51.9003085Z  create mode 100644 tier0/perl-Symbol-1.09-523.fc43.noarch.rpm
+2026-07-27T15:29:51.9004366Z  create mode 100644 tier0/perl-Term-ANSIColor-5.01-521.fc43.noarch.rpm
+2026-07-27T15:29:51.9005403Z  create mode 100644 tier0/perl-Term-Cap-1.18-520.fc43.noarch.rpm
+2026-07-27T15:29:51.9006520Z  create mode 100644 tier0/perl-Text-ParseWords-3.31-520.fc43.noarch.rpm
+2026-07-27T15:29:51.9007622Z  create mode 100644 tier0/perl-Text-Tabs+Wrap-2024.001-520.fc43.noarch.rpm
+2026-07-27T15:29:51.9008696Z  create mode 100644 tier0/perl-Time-HiRes-1.9778-520.fc43.x86_64.rpm
+2026-07-27T15:29:51.9009690Z  create mode 100644 tier0/perl-Time-Local-1.350-520.fc43.noarch.rpm
+2026-07-27T15:29:51.9010659Z  create mode 100644 tier0/perl-URI-5.34-2.fc43.noarch.rpm
+2026-07-27T15:29:51.9011563Z  create mode 100644 tier0/perl-base-2.27-523.fc43.noarch.rpm
+2026-07-27T15:29:51.9012511Z  create mode 100644 tier0/perl-constant-1.33-521.fc43.noarch.rpm
+2026-07-27T15:29:51.9013476Z  create mode 100644 tier0/perl-if-0.61.000-523.fc43.noarch.rpm
+2026-07-27T15:29:51.9014652Z  create mode 100644 tier0/perl-interpreter-5.42.2-523.fc43.x86_64.rpm
+2026-07-27T15:29:51.9015560Z  create mode 100644 tier0/perl-libnet-3.15-521.fc43.noarch.rpm
+2026-07-27T15:29:51.9016427Z  create mode 100644 tier0/perl-libs-5.42.2-523.fc43.x86_64.rpm
+2026-07-27T15:29:51.9017257Z  create mode 100644 tier0/perl-locale-1.13-523.fc43.noarch.rpm
+2026-07-27T15:29:51.9018092Z  create mode 100644 tier0/perl-mro-1.29-523.fc43.x86_64.rpm
+2026-07-27T15:29:51.9019025Z  create mode 100644 tier0/perl-overload-1.40-523.fc43.noarch.rpm
+2026-07-27T15:29:51.9020018Z  create mode 100644 tier0/perl-overloading-0.02-523.fc43.noarch.rpm
+2026-07-27T15:29:51.9020998Z  create mode 100644 tier0/perl-parent-0.244-520.fc43.noarch.rpm
+2026-07-27T15:29:51.9021960Z  create mode 100644 tier0/perl-podlators-6.0.2-520.fc43.noarch.rpm
+2026-07-27T15:29:51.9022933Z  create mode 100644 tier0/perl-srpm-macros-1-60.fc43.noarch.rpm
+2026-07-27T15:29:51.9024093Z  create mode 100644 tier0/perl-vars-1.05-523.fc43.noarch.rpm
+2026-07-27T15:29:51.9025270Z  create mode 100644 tier0/pinentry-1.3.2-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9026154Z  create mode 100644 tier0/pipewire-1.4.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9027075Z  create mode 100644 tier0/pipewire-alsa-1.4.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9028068Z  create mode 100644 tier0/pipewire-config-raop-1.4.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9029128Z  create mode 100644 tier0/pipewire-config-rates-1.4.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9030212Z  create mode 100644 tier0/pipewire-config-upmix-1.4.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9031229Z  create mode 100644 tier0/pipewire-devel-1.4.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9032214Z  create mode 100644 tier0/pipewire-doc-1.4.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9033296Z  create mode 100644 tier0/pipewire-gstreamer-1.4.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9034743Z  create mode 100644 tier0/pipewire-jack-audio-connection-kit-1.4.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9036115Z  create mode 100644 tier0/pipewire-jack-audio-connection-kit-devel-1.4.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9037514Z  create mode 100644 tier0/pipewire-jack-audio-connection-kit-libs-1.4.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9038710Z  create mode 100644 tier0/pipewire-libs-1.4.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9039734Z  create mode 100644 tier0/pipewire-module-ffado-1.4.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9040897Z  create mode 100644 tier0/pipewire-module-filter-chain-lv2-1.4.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9042340Z  create mode 100644 tier0/pipewire-module-filter-chain-sofa-1.4.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9043872Z  create mode 100644 tier0/pipewire-module-roc-1.4.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9044983Z  create mode 100644 tier0/pipewire-module-x11-1.4.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9046034Z  create mode 100644 tier0/pipewire-plugin-jack-1.4.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9047385Z  create mode 100644 tier0/pipewire-plugin-libcamera-1.4.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9048564Z  create mode 100644 tier0/pipewire-plugin-vulkan-1.4.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9049644Z  create mode 100644 tier0/pipewire-pulseaudio-1.4.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9050664Z  create mode 100644 tier0/pipewire-utils-1.4.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9051620Z  create mode 100644 tier0/pipewire-v4l2-1.4.11-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9052533Z  create mode 100644 tier0/pixman-0.46.2-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9053442Z  create mode 100644 tier0/pkcs11-provider-1.0-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.9054583Z  create mode 100644 tier0/pkgconf-2.3.0-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.9055472Z  create mode 100644 tier0/pkgconf-m4-2.3.0-3.fc43.noarch.rpm
+2026-07-27T15:29:51.9056426Z  create mode 100644 tier0/pkgconf-pkg-config-2.3.0-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.9057507Z  create mode 100644 tier0/policycoreutils-3.9-7.fc43.x86_64.rpm
+2026-07-27T15:29:51.9058566Z  create mode 100644 tier0/policycoreutils-python-utils-3.9-7.fc43.noarch.rpm
+2026-07-27T15:29:51.9059595Z  create mode 100644 tier0/polkit-126-6.fc43.2.x86_64.rpm
+2026-07-27T15:29:51.9060471Z  create mode 100644 tier0/polkit-libs-126-6.fc43.2.x86_64.rpm
+2026-07-27T15:29:51.9061429Z  create mode 100644 tier0/polkit-pkla-compat-0.1-31.fc43.x86_64.rpm
+2026-07-27T15:29:51.9062395Z  create mode 100644 tier0/poppler-25.07.0-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.9063341Z  create mode 100644 tier0/poppler-data-0.4.11-10.fc43.noarch.rpm
+2026-07-27T15:29:51.9064541Z  create mode 100644 tier0/poppler-glib-25.07.0-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.9065435Z  create mode 100644 tier0/popt-1.19-9.fc43.x86_64.rpm
+2026-07-27T15:29:51.9066301Z  create mode 100644 tier0/procps-ng-4.0.4-7.fc43.1.x86_64.rpm
+2026-07-27T15:29:51.9067356Z  create mode 100644 tier0/publicsuffix-list-dafsa-20260116-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9068466Z  create mode 100644 tier0/pulseaudio-libs-17.0-9.fc43.x86_64.rpm
+2026-07-27T15:29:51.9069552Z  create mode 100644 tier0/pyproject-srpm-macros-1.22.2-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9071028Z  create mode 100644 tier0/python-pip-wheel-25.1.1-18.fc43.noarch.rpm
+2026-07-27T15:29:51.9072074Z  create mode 100644 tier0/python-srpm-macros-3.14-5.fc43.noarch.rpm
+2026-07-27T15:29:51.9073206Z  create mode 100644 tier0/python-unversioned-command-3.14.6-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9074700Z  create mode 100644 tier0/python3-3.14.6-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9075669Z  create mode 100644 tier0/python3-argcomplete-3.6.3-2.fc43.noarch.rpm
+2026-07-27T15:29:51.9076663Z  create mode 100644 tier0/python3-audit-4.1.4-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9077608Z  create mode 100644 tier0/python3-btrfsutil-7.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9078676Z  create mode 100644 tier0/python3-charset-normalizer-3.4.3-3.fc43.noarch.rpm
+2026-07-27T15:29:51.9079762Z  create mode 100644 tier0/python3-distro-1.9.0-10.fc43.noarch.rpm
+2026-07-27T15:29:51.9080772Z  create mode 100644 tier0/python3-firewall-2.3.2-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9081753Z  create mode 100644 tier0/python3-idna-3.10-6.fc43.noarch.rpm
+2026-07-27T15:29:51.9082700Z  create mode 100644 tier0/python3-libs-3.14.6-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9083877Z  create mode 100644 tier0/python3-libselinux-3.9-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.9084927Z  create mode 100644 tier0/python3-libsemanage-3.9-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.9085949Z  create mode 100644 tier0/python3-nftables-1.1.3-6.fc43.1.noarch.rpm
+2026-07-27T15:29:51.9087002Z  create mode 100644 tier0/python3-policycoreutils-3.9-7.fc43.noarch.rpm
+2026-07-27T15:29:51.9088071Z  create mode 100644 tier0/python3-progressbar2-4.5.0-5.fc43.noarch.rpm
+2026-07-27T15:29:51.9089116Z  create mode 100644 tier0/python3-pysocks-1.7.1-31.fc43.noarch.rpm
+2026-07-27T15:29:51.9090118Z  create mode 100644 tier0/python3-requests-2.33.1-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9091348Z  create mode 100644 tier0/python3-rpm-6.0.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9092369Z  create mode 100644 tier0/python3-rpmautospec-0.8.4-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9093532Z  create mode 100644 tier0/python3-rpmautospec-core-0.1.5-8.fc43.noarch.rpm
+2026-07-27T15:29:51.9094888Z  create mode 100644 tier0/python3-setools-4.6.0-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.9095731Z  create mode 100644 tier0/python3-six-1.17.0-7.fc43.noarch.rpm
+2026-07-27T15:29:51.9096487Z  create mode 100644 tier0/python3-typing-extensions-4.15.0-2.fc43.noarch.rpm
+2026-07-27T15:29:51.9158886Z  create mode 100644 tier0/python3-urllib3+socks-2.7.0-2.fc43.noarch.rpm
+2026-07-27T15:29:51.9160445Z  create mode 100644 tier0/python3-urllib3-2.7.0-2.fc43.noarch.rpm
+2026-07-27T15:29:51.9161560Z  create mode 100644 tier0/python3-utils-3.9.1-2.fc43.noarch.rpm
+2026-07-27T15:29:51.9162547Z  create mode 100644 tier0/qemu-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9163501Z  create mode 100644 tier0/qemu-audio-alsa-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9165083Z  create mode 100644 tier0/qemu-audio-dbus-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9166445Z  create mode 100644 tier0/qemu-audio-jack-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9167447Z  create mode 100644 tier0/qemu-audio-oss-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9168450Z  create mode 100644 tier0/qemu-audio-pa-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9169454Z  create mode 100644 tier0/qemu-audio-pipewire-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9170470Z  create mode 100644 tier0/qemu-audio-sdl-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9171533Z  create mode 100644 tier0/qemu-audio-spice-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9172833Z  create mode 100644 tier0/qemu-block-blkio-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9174172Z  create mode 100644 tier0/qemu-block-curl-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9175704Z  create mode 100644 tier0/qemu-block-dmg-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9177016Z  create mode 100644 tier0/qemu-block-gluster-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9178089Z  create mode 100644 tier0/qemu-block-iscsi-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9179504Z  create mode 100644 tier0/qemu-block-nfs-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9180479Z  create mode 100644 tier0/qemu-block-rbd-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9181443Z  create mode 100644 tier0/qemu-block-ssh-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9182417Z  create mode 100644 tier0/qemu-char-baum-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9183395Z  create mode 100644 tier0/qemu-char-spice-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9184574Z  create mode 100644 tier0/qemu-common-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9185593Z  create mode 100644 tier0/qemu-device-display-qxl-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9186796Z  create mode 100644 tier0/qemu-device-display-vhost-user-gpu-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9188085Z  create mode 100644 tier0/qemu-device-display-virtio-gpu-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9189374Z  create mode 100644 tier0/qemu-device-display-virtio-gpu-ccw-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9190652Z  create mode 100644 tier0/qemu-device-display-virtio-gpu-gl-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9191939Z  create mode 100644 tier0/qemu-device-display-virtio-gpu-pci-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9193258Z  create mode 100644 tier0/qemu-device-display-virtio-gpu-pci-gl-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9194925Z  create mode 100644 tier0/qemu-device-display-virtio-gpu-pci-rutabaga-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9196341Z  create mode 100644 tier0/qemu-device-display-virtio-gpu-rutabaga-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9197636Z  create mode 100644 tier0/qemu-device-display-virtio-vga-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9198879Z  create mode 100644 tier0/qemu-device-display-virtio-vga-gl-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9200176Z  create mode 100644 tier0/qemu-device-display-virtio-vga-rutabaga-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9201674Z  create mode 100644 tier0/qemu-device-uefi-vars-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9202803Z  create mode 100644 tier0/qemu-device-usb-host-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9204095Z  create mode 100644 tier0/qemu-device-usb-redirect-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9205247Z  create mode 100644 tier0/qemu-device-usb-smartcard-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9206288Z  create mode 100644 tier0/qemu-docs-10.1.5-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9207238Z  create mode 100644 tier0/qemu-guest-agent-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9208189Z  create mode 100644 tier0/qemu-img-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9209063Z  create mode 100644 tier0/qemu-kvm-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9209981Z  create mode 100644 tier0/qemu-kvm-core-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9210937Z  create mode 100644 tier0/qemu-pr-helper-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9211941Z  create mode 100644 tier0/qemu-system-aarch64-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9213010Z  create mode 100644 tier0/qemu-system-aarch64-core-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9214328Z  create mode 100644 tier0/qemu-system-alpha-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9215406Z  create mode 100644 tier0/qemu-system-alpha-core-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9216443Z  create mode 100644 tier0/qemu-system-arm-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9217453Z  create mode 100644 tier0/qemu-system-arm-core-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9218471Z  create mode 100644 tier0/qemu-system-avr-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9219491Z  create mode 100644 tier0/qemu-system-avr-core-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9220525Z  create mode 100644 tier0/qemu-system-hppa-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9221575Z  create mode 100644 tier0/qemu-system-hppa-core-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9222726Z  create mode 100644 tier0/qemu-system-loongarch64-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9224107Z  create mode 100644 tier0/qemu-system-loongarch64-core-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9225603Z  create mode 100644 tier0/qemu-system-m68k-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9226658Z  create mode 100644 tier0/qemu-system-m68k-core-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9227788Z  create mode 100644 tier0/qemu-system-microblaze-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9228941Z  create mode 100644 tier0/qemu-system-microblaze-core-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9230045Z  create mode 100644 tier0/qemu-system-mips-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9231066Z  create mode 100644 tier0/qemu-system-mips-core-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9232104Z  create mode 100644 tier0/qemu-system-or1k-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9233131Z  create mode 100644 tier0/qemu-system-or1k-core-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9234748Z  create mode 100644 tier0/qemu-system-ppc-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9235915Z  create mode 100644 tier0/qemu-system-ppc-core-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9237053Z  create mode 100644 tier0/qemu-system-riscv-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9238107Z  create mode 100644 tier0/qemu-system-riscv-core-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9239140Z  create mode 100644 tier0/qemu-system-rx-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9240156Z  create mode 100644 tier0/qemu-system-rx-core-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9241193Z  create mode 100644 tier0/qemu-system-s390x-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9242221Z  create mode 100644 tier0/qemu-system-s390x-core-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9243229Z  create mode 100644 tier0/qemu-system-sh4-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9244456Z  create mode 100644 tier0/qemu-system-sh4-core-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9245487Z  create mode 100644 tier0/qemu-system-sparc-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9246773Z  create mode 100644 tier0/qemu-system-sparc-core-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9247893Z  create mode 100644 tier0/qemu-system-tricore-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9248964Z  create mode 100644 tier0/qemu-system-tricore-core-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9250025Z  create mode 100644 tier0/qemu-system-x86-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9251032Z  create mode 100644 tier0/qemu-system-x86-core-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9252072Z  create mode 100644 tier0/qemu-system-xtensa-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9253137Z  create mode 100644 tier0/qemu-system-xtensa-core-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9254404Z  create mode 100644 tier0/qemu-tests-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9255325Z  create mode 100644 tier0/qemu-tools-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9256259Z  create mode 100644 tier0/qemu-ui-curses-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9257229Z  create mode 100644 tier0/qemu-ui-dbus-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9258231Z  create mode 100644 tier0/qemu-ui-egl-headless-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9259228Z  create mode 100644 tier0/qemu-ui-gtk-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9260166Z  create mode 100644 tier0/qemu-ui-opengl-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9261119Z  create mode 100644 tier0/qemu-ui-sdl-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9262085Z  create mode 100644 tier0/qemu-ui-spice-app-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9263120Z  create mode 100644 tier0/qemu-ui-spice-core-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9264317Z  create mode 100644 tier0/qemu-user-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9265279Z  create mode 100644 tier0/qemu-user-binfmt-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9266287Z  create mode 100644 tier0/qemu-user-static-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9267381Z  create mode 100644 tier0/qemu-user-static-aarch64-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9268515Z  create mode 100644 tier0/qemu-user-static-alpha-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9269848Z  create mode 100644 tier0/qemu-user-static-arm-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9270937Z  create mode 100644 tier0/qemu-user-static-hexagon-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9272030Z  create mode 100644 tier0/qemu-user-static-hppa-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9273170Z  create mode 100644 tier0/qemu-user-static-loongarch64-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9274585Z  create mode 100644 tier0/qemu-user-static-m68k-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9275706Z  create mode 100644 tier0/qemu-user-static-microblaze-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9276821Z  create mode 100644 tier0/qemu-user-static-mips-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9277899Z  create mode 100644 tier0/qemu-user-static-or1k-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9278982Z  create mode 100644 tier0/qemu-user-static-ppc-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9280078Z  create mode 100644 tier0/qemu-user-static-riscv-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9281180Z  create mode 100644 tier0/qemu-user-static-s390x-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9282247Z  create mode 100644 tier0/qemu-user-static-sh4-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9283307Z  create mode 100644 tier0/qemu-user-static-sparc-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9284683Z  create mode 100644 tier0/qemu-user-static-x86-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9286107Z  create mode 100644 tier0/qemu-user-static-xtensa-10.1.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9287015Z  create mode 100644 tier0/qrencode-libs-4.1.1-11.fc43.x86_64.rpm
+2026-07-27T15:29:51.9287787Z  create mode 100644 tier0/qt5-srpm-macros-5.15.18-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9288635Z  create mode 100644 tier0/qt6-srpm-macros-6.10.3-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9289411Z  create mode 100644 tier0/rav1e-libs-0.8.1-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9290441Z  create mode 100644 tier0/readline-8.3-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9291175Z  create mode 100644 tier0/redhat-rpm-config-343-14.fc43.noarch.rpm
+2026-07-27T15:29:51.9292257Z  create mode 100644 tier0/repodata/9d6e128cc28520865901868de0324f22f96b94df4a98d70fbc072a3bbf9129cd-filelists.xml.zst
+2026-07-27T15:29:51.9294041Z  create mode 100644 tier0/repodata/c8da3472aab9a0c5f330610ad5ce5d4d57399e3e13c10ee65be3de1fa416c43d-primary.xml.zst
+2026-07-27T15:29:51.9295515Z  create mode 100644 tier0/repodata/fff292e1bea4d54810ed619495e60a0d1e29eeb7ce14435f619b4c8534af570b-other.xml.zst
+2026-07-27T15:29:51.9296523Z  create mode 100644 tier0/repodata/repomd.xml
+2026-07-27T15:29:51.9297119Z  create mode 100644 tier0/rpm-6.0.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9297765Z  create mode 100644 tier0/rpm-build-6.0.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9298449Z  create mode 100644 tier0/rpm-build-libs-6.0.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9299134Z  create mode 100644 tier0/rpm-libs-6.0.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9299835Z  create mode 100644 tier0/rpm-plugin-audit-6.0.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9300635Z  create mode 100644 tier0/rpm-plugin-selinux-6.0.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9301403Z  create mode 100644 tier0/rpm-sequoia-1.10.2-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.9302100Z  create mode 100644 tier0/rpm-sign-libs-6.0.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9302819Z  create mode 100644 tier0/rpmdevtools-9.6-13.fc43.noarch.rpm
+2026-07-27T15:29:51.9303483Z  create mode 100644 tier0/rtkit-0.11-69.fc43.x86_64.rpm
+2026-07-27T15:29:51.9304507Z  create mode 100644 tier0/rust-srpm-macros-28.4-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9305261Z  create mode 100644 tier0/samba-client-libs-4.23.9-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9305975Z  create mode 100644 tier0/samba-common-4.23.9-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9306684Z  create mode 100644 tier0/samba-common-libs-4.23.9-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9307430Z  create mode 100644 tier0/sbsigntools-0.9.5-13.fc43.x86_64.rpm
+2026-07-27T15:29:51.9308054Z  create mode 100644 tier0/sed-4.9-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.9308622Z  create mode 100644 tier0/selinux-policy-43.8-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9308994Z  create mode 100644 tier0/selinux-policy-targeted-43.8-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9309238Z  create mode 100644 tier0/setup-2.15.0-26.fc43.noarch.rpm
+2026-07-27T15:29:51.9309540Z  create mode 100644 tier0/shared-mime-info-2.4-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9309777Z  create mode 100644 tier0/snappy-1.2.2-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9310122Z  create mode 100644 tier0/sound-theme-freedesktop-0.8-24.fc43.noarch.rpm
+2026-07-27T15:29:51.9310342Z  create mode 100644 tier0/soxr-0.1.3-20.fc43.x86_64.rpm
+2026-07-27T15:29:51.9310586Z  create mode 100644 tier0/speex-1.2.0-20.fc43.x86_64.rpm
+2026-07-27T15:29:51.9310882Z  create mode 100644 tier0/spirv-tools-libs-2026.1-2.fc43.i686.rpm
+2026-07-27T15:29:51.9311164Z  create mode 100644 tier0/sqlite-libs-3.50.2-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9311440Z  create mode 100644 tier0/squashfuse-0.5.2-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.9311751Z  create mode 100644 tier0/squashfuse-devel-0.5.2-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.9312053Z  create mode 100644 tier0/squashfuse-libs-0.5.2-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.9312282Z  create mode 100644 tier0/srt-libs-1.5.6-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9312538Z  create mode 100644 tier0/svt-av1-libs-3.1.2-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9312871Z  create mode 100644 tier0/sysroot-x86_64-fc43-glibc-2.42-13.fc43.noarch.rpm
+2026-07-27T15:29:51.9313120Z  create mode 100644 tier0/sysstat-12.7.8-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9313370Z  create mode 100644 tier0/systemd-258.10-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9313932Z  create mode 100644 tier0/systemd-boot-unsigned-258.10-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9314236Z  create mode 100644 tier0/systemd-container-258.10-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9314503Z  create mode 100644 tier0/systemd-devel-258.10-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9315082Z  create mode 100644 tier0/systemd-journal-remote-258.10-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9315375Z  create mode 100644 tier0/systemd-libs-258.10-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9315671Z  create mode 100644 tier0/systemd-networkd-258.10-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9316048Z  create mode 100644 tier0/systemd-networkd-defaults-258.10-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9316380Z  create mode 100644 tier0/systemd-oomd-defaults-258.10-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9316644Z  create mode 100644 tier0/systemd-pam-258.10-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9316955Z  create mode 100644 tier0/systemd-resolved-258.10-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9317286Z  create mode 100644 tier0/systemd-rpm-macros-258.10-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9317576Z  create mode 100644 tier0/systemd-shared-258.10-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9317923Z  create mode 100644 tier0/systemd-standalone-repart-258.10-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9318317Z  create mode 100644 tier0/systemd-standalone-shutdown-258.10-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9318748Z  create mode 100644 tier0/systemd-standalone-sysusers-258.10-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9319140Z  create mode 100644 tier0/systemd-standalone-tmpfiles-258.10-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9319444Z  create mode 100644 tier0/systemd-sysusers-258.10-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9319725Z  create mode 100644 tier0/systemd-tests-258.10-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9319985Z  create mode 100644 tier0/systemd-udev-258.10-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9320274Z  create mode 100644 tier0/systemd-ukify-258.10-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9320489Z  create mode 100644 tier0/tar-1.35-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.9320718Z  create mode 100644 tier0/time-1.9-27.fc43.x86_64.rpm
+2026-07-27T15:29:51.9320993Z  create mode 100644 tier0/tinysparql-3.10.1-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.9321306Z  create mode 100644 tier0/totem-pl-parser-3.26.7-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9321576Z  create mode 100644 tier0/tpm2-tools-5.7-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.9322049Z  create mode 100644 tier0/tpm2-tss-4.1.3-8.fc43.x86_64.rpm
+2026-07-27T15:29:51.9322313Z  create mode 100644 tier0/tpm2-tss-fapi-4.1.3-8.fc43.x86_64.rpm
+2026-07-27T15:29:51.9322643Z  create mode 100644 tier0/tree-sitter-srpm-macros-0.4.2-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9322912Z  create mode 100644 tier0/twolame-libs-0.4.0-8.fc43.x86_64.rpm
+2026-07-27T15:29:51.9323164Z  create mode 100644 tier0/tzdata-2026b-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9323416Z  create mode 100644 tier0/uchardet-0.0.8-8.fc43.x86_64.rpm
+2026-07-27T15:29:51.9323909Z  create mode 100644 tier0/unzip-6.0-67.fc43.x86_64.rpm
+2026-07-27T15:29:51.9324157Z  create mode 100644 tier0/upower-1.91.3-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9324425Z  create mode 100644 tier0/upower-devel-1.91.3-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9324737Z  create mode 100644 tier0/upower-devel-docs-1.91.3-2.fc43.noarch.rpm
+2026-07-27T15:29:51.9325011Z  create mode 100644 tier0/upower-libs-1.91.3-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9325294Z  create mode 100644 tier0/upower-tests-1.91.3-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9325636Z  create mode 100644 tier0/usbmuxd-1.1.1^20240915git0b1b233-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.9325911Z  create mode 100644 tier0/util-linux-2.41.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9326210Z  create mode 100644 tier0/util-linux-core-2.41.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9326495Z  create mode 100644 tier0/virt-install-5.1.0-3.fc43.noarch.rpm
+2026-07-27T15:29:51.9326784Z  create mode 100644 tier0/virt-manager-5.1.0-3.fc43.noarch.rpm
+2026-07-27T15:29:51.9327118Z  create mode 100644 tier0/virt-manager-common-5.1.0-3.fc43.noarch.rpm
+2026-07-27T15:29:51.9327409Z  create mode 100644 tier0/vo-amrwbenc-0.1.3-23.fc43.x86_64.rpm
+2026-07-27T15:29:51.9327706Z  create mode 100644 tier0/vulkan-loader-1.4.341.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9327962Z  create mode 100644 tier0/wayland-devel-1.25.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9328400Z  create mode 100644 tier0/wayland-doc-1.25.0-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9328648Z  create mode 100644 tier0/wcurl-2026.01.05-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9328973Z  create mode 100644 tier0/webrtc-audio-processing-1.3-9.fc43.x86_64.rpm
+2026-07-27T15:29:51.9329221Z  create mode 100644 tier0/whois-nls-5.6.6-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9329494Z  create mode 100644 tier0/wireplumber-0.5.14-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9329795Z  create mode 100644 tier0/wireplumber-devel-0.5.14-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9330093Z  create mode 100644 tier0/wireplumber-doc-0.5.14-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9330384Z  create mode 100644 tier0/wireplumber-libs-0.5.14-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9330703Z  create mode 100644 tier0/x264-0.165-2.20250608gitb35605ac.fc43.x86_64.rpm
+2026-07-27T15:29:51.9331060Z  create mode 100644 tier0/x264-devel-0.165-2.20250608gitb35605ac.fc43.x86_64.rpm
+2026-07-27T15:29:51.9331414Z  create mode 100644 tier0/x264-libs-0.165-2.20250608gitb35605ac.fc43.x86_64.rpm
+2026-07-27T15:29:51.9331718Z  create mode 100644 tier0/xdg-desktop-portal-1.20.4-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9332065Z  create mode 100644 tier0/xdg-desktop-portal-gtk-1.15.3-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9332301Z  create mode 100644 tier0/xevd-libs-0.5.0-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.9332525Z  create mode 100644 tier0/xeve-libs-0.5.1-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.9332821Z  create mode 100644 tier0/xkeyboard-config-2.46-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9333068Z  create mode 100644 tier0/xml-common-0.6.3-67.fc43.noarch.rpm
+2026-07-27T15:29:51.9333285Z  create mode 100644 tier0/xprop-1.2.8-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.9333536Z  create mode 100644 tier0/xvidcore-1.3.7-14.fc43.x86_64.rpm
+2026-07-27T15:29:51.9333977Z  create mode 100644 tier0/xxhash-libs-0.8.3-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.9334173Z  create mode 100644 tier0/xz-5.8.1-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.9334389Z  create mode 100644 tier0/xz-libs-5.8.1-4.fc43.i686.rpm
+2026-07-27T15:29:51.9334626Z  create mode 100644 tier0/zeromq-4.3.5-22.fc43.x86_64.rpm
+2026-07-27T15:29:51.9335085Z  create mode 100644 tier0/zig-srpm-macros-1-5.fc43.noarch.rpm
+2026-07-27T15:29:51.9335292Z  create mode 100644 tier0/zip-3.0-44.fc43.x86_64.rpm
+2026-07-27T15:29:51.9335572Z  create mode 100644 tier0/zlib-ng-compat-2.3.3-2.fc43.i686.rpm
+2026-07-27T15:29:51.9335885Z  create mode 100644 tier0/zlib-ng-compat-devel-2.3.3-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9336087Z  create mode 100644 tier0/zstd-1.5.7-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9336307Z  create mode 100644 tier0/zvbi-0.2.44-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9336544Z  create mode 100644 tier1/Thunar-4.20.9-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9336803Z  create mode 100644 tier1/Thunar-devel-4.20.9-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9337056Z  create mode 100644 tier1/Thunar-docs-4.20.9-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9337320Z  create mode 100644 tier1/adw-gtk3-theme-6.4-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9337568Z  create mode 100644 tier1/ananicy-cpp-1.1.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9337789Z  create mode 100644 tier1/bat-0.26.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9337998Z  create mode 100644 tier1/btop-1.4.7-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9338211Z  create mode 100644 tier1/cage-0.2.0-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.9338496Z  create mode 100644 tier1/ermete-cliphist-0.7.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9338832Z  create mode 100644 tier1/ermete-ide-bootstrap-1.0.0-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9339146Z  create mode 100644 tier1/ermete-starship-1.26.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9339484Z  create mode 100644 tier1/ermete-system-tweaks-1.0.0-3.fc43.noarch.rpm
+2026-07-27T15:29:51.9339692Z  create mode 100644 tier1/eza-0.23.4-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.9339922Z  create mode 100644 tier1/fd-find-10.4.2-4.fc43.x86_64.rpm
+2026-07-27T15:29:51.9340294Z  create mode 100644 tier1/fontawesome-6-brands-fonts-6.7.2-3.fc43.noarch.rpm
+2026-07-27T15:29:51.9340812Z  create mode 100644 tier1/fontawesome-6-free-fonts-6.7.2-3.fc43.noarch.rpm
+2026-07-27T15:29:51.9341154Z  create mode 100644 tier1/fontawesome-fonts-all-6.7.2-3.fc43.noarch.rpm
+2026-07-27T15:29:51.9341476Z  create mode 100644 tier1/fontawesome-fonts-web-6.7.2-3.fc43.noarch.rpm
+2026-07-27T15:29:51.9341697Z  create mode 100644 tier1/foot-1.25.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9341957Z  create mode 100644 tier1/foot-terminfo-1.25.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9342167Z  create mode 100644 tier1/git-2.55.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9342414Z  create mode 100644 tier1/git-all-2.55.0-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9342669Z  create mode 100644 tier1/git-core-2.55.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9342929Z  create mode 100644 tier1/git-core-doc-2.55.0-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9343290Z  create mode 100644 tier1/git-credential-libsecret-2.55.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9343531Z  create mode 100644 tier1/git-cvs-2.55.0-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9343948Z  create mode 100644 tier1/git-daemon-2.55.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9344198Z  create mode 100644 tier1/git-email-2.55.0-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9344457Z  create mode 100644 tier1/git-gui-2.55.0-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9344710Z  create mode 100644 tier1/git-instaweb-2.55.0-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9344961Z  create mode 100644 tier1/git-p4-2.55.0-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9345214Z  create mode 100644 tier1/git-subtree-2.55.0-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9345450Z  create mode 100644 tier1/git-svn-2.55.0-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9345667Z  create mode 100644 tier1/gitk-2.55.0-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9345906Z  create mode 100644 tier1/gitweb-2.55.0-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9346144Z  create mode 100644 tier1/greetd-0.10.3-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.9346442Z  create mode 100644 tier1/greetd-fakegreet-0.10.3-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.9346742Z  create mode 100644 tier1/greetd-selinux-0.10.3-6.fc43.noarch.rpm
+2026-07-27T15:29:51.9347055Z  create mode 100644 tier1/gtk-layer-shell-0.10.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9347595Z  create mode 100644 tier1/gtk-layer-shell-devel-0.10.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9347895Z  create mode 100644 tier1/gtk4-layer-shell-1.3.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9348207Z  create mode 100644 tier1/gtk4-layer-shell-devel-1.3.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9348484Z  create mode 100644 tier1/inotify-tools-4.23.9.0-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.9348810Z  create mode 100644 tier1/inotify-tools-devel-4.23.9.0-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.9349120Z  create mode 100644 tier1/jetbrains-mono-fonts-2.304-9.fc43.noarch.rpm
+2026-07-27T15:29:51.9349477Z  create mode 100644 tier1/jetbrains-mono-fonts-all-2.304-9.fc43.noarch.rpm
+2026-07-27T15:29:51.9349817Z  create mode 100644 tier1/jetbrains-mono-nl-fonts-2.304-9.fc43.noarch.rpm
+2026-07-27T15:29:51.9350044Z  create mode 100644 tier1/just-1.55.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9350289Z  create mode 100644 tier1/lemon-3.50.2-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9350486Z  create mode 100644 tier1/manifest.json
+2026-07-27T15:29:51.9350735Z  create mode 100644 tier1/nushell-0.99.1-6.fc43.x86_64.rpm
+2026-07-27T15:29:51.9351076Z  create mode 100644 tier1/papirus-icon-theme-20250501-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9351430Z  create mode 100644 tier1/papirus-icon-theme-dark-20250501-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9351797Z  create mode 100644 tier1/papirus-icon-theme-light-20250501-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9352051Z  create mode 100644 tier1/parallel-20260622-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9352314Z  create mode 100644 tier1/perl-Git-2.55.0-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9352583Z  create mode 100644 tier1/perl-Git-SVN-2.55.0-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9352828Z  create mode 100644 tier1/playerctl-2.4.1-11.fc43.x86_64.rpm
+2026-07-27T15:29:51.9353117Z  create mode 100644 tier1/playerctl-devel-2.4.1-11.fc43.x86_64.rpm
+2026-07-27T15:29:51.9353579Z  create mode 100644 tier1/playerctl-docs-2.4.1-11.fc43.noarch.rpm
+2026-07-27T15:29:51.9354253Z  create mode 100644 tier1/playerctl-libs-2.4.1-11.fc43.x86_64.rpm
+2026-07-27T15:29:51.9354541Z  create mode 100644 tier1/qt5-qtwayland-5.15.18-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9354865Z  create mode 100644 tier1/qt5-qtwayland-devel-5.15.18-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9355201Z  create mode 100644 tier1/qt5-qtwayland-examples-5.15.18-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9355488Z  create mode 100644 tier1/qt6-qtwayland-6.10.3-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9355903Z  create mode 100644 tier1/qt6-qtwayland-adwaita-decoration-6.10.3-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9356216Z  create mode 100644 tier1/qt6-qtwayland-devel-6.10.3-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9356547Z  create mode 100644 tier1/qt6-qtwayland-examples-6.10.3-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9357188Z  create mode 100644 tier1/repodata/2f74c9891a9a3e2a1aac91604ef4aa239d58eadd88880c7a460a5bfc5837e0d5-primary.xml.zst
+2026-07-27T15:29:51.9357796Z  create mode 100644 tier1/repodata/50f2870e1f32acccd0f22b909c5ce19de7d25e82e18dc553ca94677c85857619-other.xml.zst
+2026-07-27T15:29:51.9358488Z  create mode 100644 tier1/repodata/ff26142c6edd58ed3687ff7c3c7756d28f9197ce25c1dfade3112df60744eec2-filelists.xml.zst
+2026-07-27T15:29:51.9358700Z  create mode 100644 tier1/repodata/repomd.xml
+2026-07-27T15:29:51.9358963Z  create mode 100644 tier1/ripgrep-14.1.1-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.9359254Z  create mode 100644 tier1/rsms-inter-fonts-4.1-2.fc43.noarch.rpm
+2026-07-27T15:29:51.9359548Z  create mode 100644 tier1/rsms-inter-vf-fonts-4.1-2.fc43.noarch.rpm
+2026-07-27T15:29:51.9359771Z  create mode 100644 tier1/rsync-3.4.4-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9360031Z  create mode 100644 tier1/rsync-daemon-3.4.4-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9360289Z  create mode 100644 tier1/rsync-rrsync-3.4.4-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9360661Z  create mode 100644 tier1/rust-bat+application-devel-0.26.1-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9361024Z  create mode 100644 tier1/rust-bat+bugreport-devel-0.26.1-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9361632Z  create mode 100644 tier1/rust-bat+build-assets-devel-0.26.1-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9361960Z  create mode 100644 tier1/rust-bat+clap-devel-0.26.1-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9362287Z  create mode 100644 tier1/rust-bat+default-devel-0.26.1-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9362649Z  create mode 100644 tier1/rust-bat+etcetera-devel-0.26.1-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9362951Z  create mode 100644 tier1/rust-bat+git-devel-0.26.1-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9363271Z  create mode 100644 tier1/rust-bat+git2-devel-0.26.1-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9363796Z  create mode 100644 tier1/rust-bat+grep-cli-devel-0.26.1-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9364238Z  create mode 100644 tier1/rust-bat+minimal-application-devel-0.26.1-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9364582Z  create mode 100644 tier1/rust-bat+minus-devel-0.26.1-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9364953Z  create mode 100644 tier1/rust-bat+paging-devel-0.26.1-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9365284Z  create mode 100644 tier1/rust-bat+regex-devel-0.26.1-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9365641Z  create mode 100644 tier1/rust-bat+regex-fancy-devel-0.26.1-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9366010Z  create mode 100644 tier1/rust-bat+regex-onig-devel-0.26.1-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9366372Z  create mode 100644 tier1/rust-bat+shell-words-devel-0.26.1-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9366714Z  create mode 100644 tier1/rust-bat+walkdir-devel-0.26.1-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9367020Z  create mode 100644 tier1/rust-bat+wild-devel-0.26.1-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9367307Z  create mode 100644 tier1/rust-bat-devel-0.26.1-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9367639Z  create mode 100644 tier1/rust-eza+default-devel-0.23.4-3.fc43.noarch.rpm
+2026-07-27T15:29:51.9367946Z  create mode 100644 tier1/rust-eza+git-devel-0.23.4-3.fc43.noarch.rpm
+2026-07-27T15:29:51.9368427Z  create mode 100644 tier1/rust-eza+git2-devel-0.23.4-3.fc43.noarch.rpm
+2026-07-27T15:29:51.9368718Z  create mode 100644 tier1/rust-eza-devel-0.23.4-3.fc43.noarch.rpm
+2026-07-27T15:29:51.9369056Z  create mode 100644 tier1/rust-just+default-devel-1.55.1-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9369341Z  create mode 100644 tier1/rust-just-devel-1.55.1-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9369560Z  create mode 100644 tier1/sqlite-3.50.2-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9369855Z  create mode 100644 tier1/sqlite-analyzer-3.50.2-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9370141Z  create mode 100644 tier1/sqlite-debug-3.50.2-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9370405Z  create mode 100644 tier1/sqlite-devel-3.50.2-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9370688Z  create mode 100644 tier1/sqlite-doc-3.50.2-2.fc43.noarch.rpm
+2026-07-27T15:29:51.9370956Z  create mode 100644 tier1/sqlite-libs-3.50.2-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9371229Z  create mode 100644 tier1/sqlite-tcl-3.50.2-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9371496Z  create mode 100644 tier1/sqlite-tools-3.50.2-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9371723Z  create mode 100644 tier1/swaybg-1.2.2-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9371951Z  create mode 100644 tier1/swaylock-1.8.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9372270Z  create mode 100644 tier1/thunar-archive-plugin-0.6.0-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9372529Z  create mode 100644 tier1/thunar-volman-4.20.0-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.9372739Z  create mode 100644 tier1/unzip-6.0-67.fc43.x86_64.rpm
+2026-07-27T15:29:51.9372986Z  create mode 100644 tier1/wayland-utils-1.3.0-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9373253Z  create mode 100644 tier1/wl-clipboard-2.2.1-5.fc43.x86_64.rpm
+2026-07-27T15:29:51.9373498Z  create mode 100644 tier1/wl-mirror-0.18.5-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9373905Z  create mode 100644 tier1/wlr-randr-0.5.0-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9374234Z  create mode 100644 tier1/xdg-desktop-portal-gnome-49.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9374578Z  create mode 100644 tier1/xdg-desktop-portal-gtk-1.15.3-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9375015Z  create mode 100644 tier1/xdg-user-dirs-0.18-11.fc43.x86_64.rpm
+2026-07-27T15:29:51.9375298Z  create mode 100644 tier1/xdg-user-dirs-gtk-0.16-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9375643Z  create mode 100644 tier1/xorg-x11-server-Xwayland-24.1.13-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9376044Z  create mode 100644 tier1/xorg-x11-server-Xwayland-devel-24.1.13-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9376360Z  create mode 100644 tier2/ermete-bibata-cursor-2.0.7-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9376646Z  create mode 100644 tier2/ermete-dart-sass-1.77.8-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9376976Z  create mode 100644 tier2/ermete-matugen-4.1.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9377134Z  create mode 100644 tier2/manifest.json
+2026-07-27T15:29:51.9377787Z  create mode 100644 tier2/repodata/33253d0f3dd8cec6f849dd396bd3f5237b5bda9684ef511785c531f4c82f9d8d-filelists.xml.zst
+2026-07-27T15:29:51.9378381Z  create mode 100644 tier2/repodata/c1535218508d843c600a043d0df454a96127ced4226f94637954d625aaa602f5-other.xml.zst
+2026-07-27T15:29:51.9379038Z  create mode 100644 tier2/repodata/fbcc55a04a6e86373c864c0ec4966c57fd35bc3ef0886c1607cbf74abda8671f-primary.xml.zst
+2026-07-27T15:29:51.9379216Z  create mode 100644 tier2/repodata/repomd.xml
+2026-07-27T15:29:51.9379369Z  create mode 100644 tier3/.lock
+2026-07-27T15:29:51.9379622Z  create mode 100644 tier3/ermete-backup-1.0.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9379899Z  create mode 100644 tier3/ermete-cloud-rs-1.0.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9380276Z  create mode 100644 tier3/ermete-daemon-rs-0.2.1-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9380576Z  create mode 100644 tier3/ermete-desktop-ui-1.0.0-7.fc43.noarch.rpm
+2026-07-27T15:29:51.9380852Z  create mode 100644 tier3/ermete-doctor-0.1.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9381170Z  create mode 100644 tier3/ermete-gatekeeper-rs-1.0.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9381631Z  create mode 100644 tier3/ermete-lvfs-rs-1.0.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9381900Z  create mode 100644 tier3/ermete-mdm-rs-1.0.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9382206Z  create mode 100644 tier3/ermete-settings-rs-1.0.0-9.fc43.x86_64.rpm
+2026-07-27T15:29:51.9382504Z  create mode 100644 tier3/ermete-shell-rs-1.0.0-22.fc43.x86_64.rpm
+2026-07-27T15:29:51.9382782Z  create mode 100644 tier3/ermete-store-rs-1.0.0-3.fc43.x86_64.rpm
+2026-07-27T15:29:51.9383101Z  create mode 100644 tier3/ermete-system-config-1.0.0-15.fc43.noarch.rpm
+2026-07-27T15:29:51.9383431Z  create mode 100644 tier3/ermete-system-services-1.0.1-6.fc43.noarch.rpm
+2026-07-27T15:29:51.9383893Z  create mode 100644 tier3/ermete-telemetry-rs-1.0.0-1.fc43.x86_64.rpm
+2026-07-27T15:29:51.9384177Z  create mode 100644 tier3/ermete-ui-agent-1.0.0-1.fc43.noarch.rpm
+2026-07-27T15:29:51.9384453Z  create mode 100644 tier3/ermete-updater-rs-1.0.0-2.fc43.x86_64.rpm
+2026-07-27T15:29:51.9384626Z  create mode 100644 tier3/manifest.json
+2026-07-27T15:29:51.9385249Z  create mode 100644 tier3/repodata/5047026c98aa7827d667c2bd547ae2c7fe7e71c8426bfebb7d84d64990db05ed-other.xml.zst
+2026-07-27T15:29:51.9385908Z  create mode 100644 tier3/repodata/655cede62c5416e00262a17261f272afd23b76ecacce6ae37597ac6c5848befb-filelists.xml.zst
+2026-07-27T15:29:51.9386553Z  create mode 100644 tier3/repodata/aa41ec508c0ddf5f551835ec994df3255a7c307155f639483e9cbc55f1eacb7d-primary.xml.zst
+2026-07-27T15:29:51.9386747Z  create mode 100644 tier3/repodata/repomd.xml
+2026-07-27T15:29:51.9387119Z  create mode 100644 tier3/xdg-desktop-portal-ermete-1.0.0-1.fc43.x86_64.rpm
+2026-07-27T15:31:52.4614268Z remote: warning: See https://gh.io/lfs for more information.        
+2026-07-27T15:31:52.4616036Z remote: warning: File tier0/nvidia-kmod-common-610.43.03-1.fc43.noarch.rpm is 81.82 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB        
+2026-07-27T15:31:52.4617932Z remote: warning: File tier0/ermete-kernel-devel-6.14-1.chimera.fc44.x86_64.rpm is 84.09 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB        
+2026-07-27T15:31:52.4619801Z remote: warning: File tier0/nvidia-driver-cuda-libs-610.43.03-1.fc43.x86_64.rpm is 88.85 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB        
+2026-07-27T15:31:52.4621075Z remote: warning: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.        
+2026-07-27T15:31:52.8908112Z To https://github.com/patapem/ermete-os.git
+2026-07-27T15:31:52.8908948Z  + 3b8ad04...bf43f54 gh-pages -> gh-pages (forced update)
+2026-07-27T15:31:53.0084391Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-27T15:31:53.0086050Z Post job cleanup.
+2026-07-27T15:31:53.2529010Z [command]/usr/bin/git version
+2026-07-27T15:31:53.2584920Z git version 2.54.0
+2026-07-27T15:31:53.2632515Z Temporarily overriding HOME='/home/runner/work/_temp/13b376fa-39d8-4d02-9857-5844772c6654' before making global git config changes
+2026-07-27T15:31:53.2634480Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-27T15:31:53.2639821Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/ermete-os/ermete-os
+2026-07-27T15:31:53.2686091Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-27T15:31:53.2727457Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-27T15:31:53.3028579Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-27T15:31:53.3057302Z http.https://github.com/.extraheader
+2026-07-27T15:31:53.3071153Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-07-27T15:31:53.3113372Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-27T15:31:53.3385482Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-27T15:31:53.3428843Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-27T15:31:53.3850043Z Cleaning up orphan processes
+2026-07-27T15:31:53.4405425Z Terminate orphan process: pid (2258) (catatonit)
+2026-07-27T15:31:53.4515233Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
