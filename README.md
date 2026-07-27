@@ -7,6 +7,30 @@
 
 Ermete OS is an immutable, hyper-optimized Operating System built on top of Fedora Atomic 43. It utilizes OCI container standards (`bootc`) to deliver a robust, unbreakable, and ultra-fast desktop experience. This monorepo contains the entire source code, build pipelines, and documentation required to build the OS from scratch.
 
+## 📥 Download & Install
+
+Ermete OS is distributed as a bootable OCI container image via `bootc`. You can install it on bare metal in two ways:
+
+### 1. In-Place Atomic Switch (Recommended for Fedora Atomic/Silverblue)
+If you are already running a Fedora Atomic variant, you can seamlessly switch to Ermete OS without losing user data:
+```bash
+sudo bootc switch ghcr.io/patapem/ermete-os-system:latest
+```
+
+### 2. Generate a Bootable ISO (For Clean Installs)
+You can generate your own custom ISO locally using Podman:
+```bash
+sudo podman run --rm -it --privileged --pull=newer \
+    --security-opt label=type:unconfined_t \
+    -v $(pwd)/output:/output \
+    -v $(pwd)/ermete-install.ks:/config.ks \
+    quay.io/centos-bootc/bootc-image-builder:latest \
+    --type iso --kickstart /config.ks \
+    ghcr.io/patapem/ermete-os-system:latest
+```
+
+---
+
 ## 🏗️ Repository Architecture
 
 The monorepo is divided into three distinct, highly decoupled sub-projects. Each sub-project has its own dedicated GitHub Actions CI/CD pipeline, ensuring parallel compilation and isolated artifact generation.
