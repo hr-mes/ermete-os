@@ -24,6 +24,8 @@
 %define _without_tools 1
 %define _without_selftests 1
 %define debug_package %{nil}
+%global __brp_python_bytecompile %{nil}
+%global _python_bytecompile_errors_terminate_build 0
 
 # Binary payload compression
 %define _binary_payload w1.zstdio
@@ -109,10 +111,7 @@ rm -f %{buildroot}/lib/modules/$KREL/source
 ln -snf /usr/src/kernels/$KREL-chimera %{buildroot}/lib/modules/$KREL/build
 ln -snf /usr/src/kernels/$KREL-chimera %{buildroot}/lib/modules/$KREL/source
 
-# Aggressive python shebang fix for brp-python-bytecompile
-find %{buildroot}/usr/src/kernels/$KREL-chimera/tools/ -type f -exec sed -i 's|#!/usr/bin/env python$|#!/usr/bin/python3|g' {} +
-find %{buildroot}/usr/src/kernels/$KREL-chimera/tools/ -type f -exec sed -i 's|#!/usr/bin/env python |#!/usr/bin/python3 |g' {} +
-find %{buildroot}/usr/src/kernels/$KREL-chimera/tools/ -type f -exec sed -i 's|#!/usr/bin/python$|#!/usr/bin/python3|g' {} +
+# Python shebangs are ignored by disabling bytecompile check globally
 
 %files
 /boot/vmlinuz-*

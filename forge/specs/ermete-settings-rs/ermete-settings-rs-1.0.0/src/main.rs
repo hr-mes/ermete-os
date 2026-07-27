@@ -27,7 +27,7 @@ pub enum AppMsg {
     SelectPage(String),
 }
 
-#[relm4::component]
+#[relm4::component(pub)]
 impl SimpleComponent for AppModel {
     type Init = Option<String>;
     type Input = AppMsg;
