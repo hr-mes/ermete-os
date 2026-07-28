@@ -95,15 +95,12 @@ This package provides kernel headers and makefiles sufficient to build modules
 against the %{pkg_name} package.
 
 %install
-mkdir -p %{buildroot}/boot
-
 make INSTALL_MOD_PATH=%{buildroot} modules_install
 KREL=$(make -s kernelrelease)
 
-cp arch/x86/boot/bzImage %{buildroot}/boot/vmlinuz-$KREL-chimera
-ln -snf ../../../../boot/vmlinuz-$KREL-chimera %{buildroot}/lib/modules/$KREL/vmlinuz
-cp System.map %{buildroot}/boot/System.map-$KREL-chimera
-cp .config %{buildroot}/boot/config-$KREL-chimera
+cp arch/x86/boot/bzImage %{buildroot}/lib/modules/$KREL/vmlinuz
+cp System.map %{buildroot}/lib/modules/$KREL/System.map
+cp .config %{buildroot}/lib/modules/$KREL/config
 
 # Install kernel-devel source tree for module building
 mkdir -p %{buildroot}/usr/src/kernels/$KREL-chimera
@@ -121,9 +118,6 @@ ln -snf ../../../../usr/src/kernels/$KREL-chimera %{buildroot}/lib/modules/$KREL
 # Python shebangs are ignored by disabling bytecompile check globally
 
 %files
-/boot/vmlinuz-*
-/boot/System.map-*
-/boot/config-*
 /lib/modules/*
 
 %files devel
