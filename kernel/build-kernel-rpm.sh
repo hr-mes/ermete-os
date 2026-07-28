@@ -40,7 +40,7 @@ else
 KREL="${KVER}.${KPATCH}.${KSUB}${KEXTRA}"
 fi
 # RPM version cannot contain hyphens, replace with tilde
-KVERSION="${KREL//-/~}"
+KVERSION="${KREL//-/\~}"
 echo "KREL rilevato: $KREL (KVERSION: $KVERSION)"
 
 echo ">>> Avvio compilazione RPM tramite rpmbuild..."
