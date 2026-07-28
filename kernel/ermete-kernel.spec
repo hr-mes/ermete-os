@@ -51,6 +51,10 @@ Requires:       selinux-policy
 Requires:       systemd
 Requires:       dracut
 
+# Ensure kmod-nvidia and other modules resolve correctly when requiring exact uname -r
+Provides:       kernel-uname-r = %{krel}
+Provides:       kernel = %{krel}
+
 %description
 The Ermete OS Chimera Kernel combines CachyOS kernel performance improvements
 (BORE scheduler, BBRv3, NTSync, LRNG, UKSM) with aggressive compiler optimization
@@ -83,6 +87,7 @@ make -j$(nproc) bzImage modules
 %package devel
 Summary:        Development package for building kernel modules to match the %{version} kernel
 Provides:       kernel-devel = %{version}-%{release}
+Provides:       kernel-devel-uname-r = %{krel}
 Provides:       /bin/env
 
 %description devel
