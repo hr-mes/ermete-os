@@ -1,6 +1,6 @@
 [Unit]
 Description=Ermete OS Btrfs Snapshot & Time Machine Daemon
-Documentation=https://github.com/patapem/ermete-forge
+Documentation=https://github.com/hr-mes/ermete-forge
 PartOf=graphical-session.target
 
 [Service]

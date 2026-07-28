@@ -5,7 +5,7 @@ Release:        9%{?dist}
 Summary:        Pure Rust native System Settings for Ermete OS
 
 License:        GPLv3+
-URL:            https://github.com/patapem/ermete-forge
+URL:            https://github.com/hr-mes/ermete-forge
 Source0:        %{name}-%{version}.tar.gz
 
 BuildRequires:  rust cargo

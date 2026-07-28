@@ -17,7 +17,7 @@ export _CONTAINERS_USERNS_CONFIGURED=done
 TMP_DIR=$(mktemp -d)
 trap "rm -rf $TMP_DIR" EXIT
 
-OWNER="${1:-patapem}"
+OWNER="${1:-hr-mes}"
 
 # Fetch package lists dynamically from Single Source of Truth
 readarray -t UPSTREAM_CORE < <(jq -r '.upstream_core[]' config/packages.json)

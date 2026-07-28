@@ -5,7 +5,7 @@ Version:        1.0.0
 Release:        15%{?dist}
 Summary:        Ermete OS ermete-system-config
 License:        MIT
-URL:            https://github.com/patapem/ermete-forge
+URL:            https://github.com/hr-mes/ermete-forge
 BuildArch:      noarch
 
 Requires:       cage greetd greenboot systemd-ukify usbguard

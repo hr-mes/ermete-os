@@ -1,6 +1,6 @@
 [Unit]
 Description=Ermete OS Hourly Btrfs Home Snapshot Trigger
-Documentation=https://github.com/patapem/ermete-forge
+Documentation=https://github.com/hr-mes/ermete-forge
 
 [Service]
 Type=oneshot

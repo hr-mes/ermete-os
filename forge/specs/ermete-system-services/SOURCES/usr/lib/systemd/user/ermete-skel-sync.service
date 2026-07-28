@@ -1,6 +1,6 @@
 [Unit]
 Description=Ermete OS User Skeleton Sync
-Documentation=https://github.com/patapem/ermete-forge
+Documentation=https://github.com/hr-mes/ermete-forge
 Before=ermete-shell.service ermete-wallpaper.service niri-session.target
 DefaultDependencies=no
 

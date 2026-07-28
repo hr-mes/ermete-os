@@ -4,7 +4,7 @@ Version:        1.0.0
 Release:        7%{?dist}
 Summary:        Ermete OS Desktop UI configurations
 License:        MIT
-URL:            https://github.com/patapem/ermete-forge
+URL:            https://github.com/hr-mes/ermete-forge
 BuildArch:      noarch
 
 Provides:       ermete-ags-config = 1.0.1-3

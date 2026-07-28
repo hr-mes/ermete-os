@@ -74,7 +74,7 @@ impl GitHubReporter {
 
         // Use PRIVATE repository, not public
         let repo = std::env::var("ERMETE_TELEMETRY_REPO")
-            .unwrap_or_else(|_| "patapem/ermete-forge-private".to_string());
+            .unwrap_or_else(|_| "hr-mes/ermete-forge-private".to_string());
         let url = format!("https://api.github.com/repos/{}/issues", repo);
 
         let res = self

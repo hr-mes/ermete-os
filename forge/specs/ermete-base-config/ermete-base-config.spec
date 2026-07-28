@@ -5,7 +5,7 @@ Release:        3%{?dist}
 Summary:        Ermete OS Base Configuration (NVIDIA, Systemd, Branding, GPG)
 
 License:        MIT
-URL:            https://github.com/patapem/ermete-forge
+URL:            https://github.com/hr-mes/ermete-forge
 BuildArch:      noarch
 
 Requires:       glibc-langpack-it glibc-langpack-en

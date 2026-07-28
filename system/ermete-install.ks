@@ -11,7 +11,7 @@ bootloader --append="quiet splash fastboot"
 # di definire manualmente la Root BTRFS e il volume LUKS2 come richiesto dai Power User.
 
 # OCI Image Provisioning
-ostreecontainer --url=ghcr.io/patapem/ermete-os:latest --transport=registry
+ostreecontainer --url=ghcr.io/hr-mes/ermete-os:latest --transport=registry
 
 # Security Hardening: No cleartext root password, strictly SSH Keys
 # WARNING: Replace ALL placeholder values below before production deployment

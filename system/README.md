@@ -62,7 +62,7 @@ The final OS image is assembled automatically via GitHub Actions:
 
 ### In-Place Atomic Switch (For existing Fedora Atomic/Silverblue systems)
 ```bash
-sudo bootc switch ghcr.io/patapem/ermete-os-system:latest
+sudo bootc switch ghcr.io/hr-mes/ermete-os-system:latest
 ```
 
 ### Automated ISO Build via `bootc-image-builder` (For clean installs)
@@ -73,5 +73,5 @@ sudo podman run --rm -it --privileged --pull=newer \
     -v $(pwd)/ermete-install.ks:/config.ks \
     quay.io/centos-bootc/bootc-image-builder:latest \
     --type iso --kickstart /config.ks \
-    ghcr.io/patapem/ermete-os-system:latest
+    ghcr.io/hr-mes/ermete-os-system:latest
 ```

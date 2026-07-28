@@ -4,7 +4,7 @@ Version:        1.0
 Release:        1%{?dist}
 Summary:        Custom SELinux policies for Ermete OS
 License:        MIT
-URL:            https://github.com/patapem/ermete-forge
+URL:            https://github.com/hr-mes/ermete-forge
 Source0:        bootupd_lsblk.te
 Source1:        ermete_scx.te
 

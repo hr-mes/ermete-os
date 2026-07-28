@@ -32,7 +32,7 @@
 2026-07-27T15:22:12.2545515Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
 2026-07-27T15:22:12.2554834Z ##[group]Run actions/checkout@v4
 2026-07-27T15:22:12.2555622Z with:
-2026-07-27T15:22:12.2556092Z   repository: patapem/ermete-os
+2026-07-27T15:22:12.2556092Z   repository: hr-mes/ermete-os
 2026-07-27T15:22:12.2560984Z   token: ***
 2026-07-27T15:22:12.2561478Z   ssh-strict: true
 2026-07-27T15:22:12.2561938Z   ssh-user: git
@@ -50,7 +50,7 @@
 2026-07-27T15:22:12.2569230Z   REGISTRY: ghcr.io
 2026-07-27T15:22:12.2569719Z   FEDORA_VERSION: 43
 2026-07-27T15:22:12.2570171Z ##[endgroup]
-2026-07-27T15:22:12.3669351Z Syncing repository: patapem/ermete-os
+2026-07-27T15:22:12.3669351Z Syncing repository: hr-mes/ermete-os
 2026-07-27T15:22:12.3672216Z ##[group]Getting Git version info
 2026-07-27T15:22:12.3673472Z Working directory is '/home/runner/work/ermete-os/ermete-os'
 2026-07-27T15:22:12.3675486Z [command]/usr/bin/git version
@@ -76,7 +76,7 @@
 2026-07-27T15:22:12.4040790Z hint:
 2026-07-27T15:22:12.4041890Z hint: Disable this message with "git config set advice.defaultBranchName false"
 2026-07-27T15:22:12.4044073Z Initialized empty Git repository in /home/runner/work/ermete-os/ermete-os/.git/
-2026-07-27T15:22:12.4047094Z [command]/usr/bin/git remote add origin https://github.com/patapem/ermete-os
+2026-07-27T15:22:12.4047094Z [command]/usr/bin/git remote add origin https://github.com/hr-mes/ermete-os
 2026-07-27T15:22:12.4098398Z ##[endgroup]
 2026-07-27T15:22:12.4099753Z ##[group]Disabling automatic garbage collection
 2026-07-27T15:22:12.4104328Z [command]/usr/bin/git config --local gc.auto 0
@@ -92,7 +92,7 @@
 2026-07-27T15:22:12.5318290Z ##[endgroup]
 2026-07-27T15:22:12.5319126Z ##[group]Fetching the repository
 2026-07-27T15:22:12.5328816Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +e8a1f2b06971a34ff345313f7b440b9309e30e17:refs/remotes/origin/main
-2026-07-27T15:22:26.5068566Z From https://github.com/patapem/ermete-os
+2026-07-27T15:22:26.5068566Z From https://github.com/hr-mes/ermete-os
 2026-07-27T15:22:26.5070444Z  * [new ref]         e8a1f2b06971a34ff345313f7b440b9309e30e17 -> origin/main
 2026-07-27T15:22:26.5105628Z ##[endgroup]
 2026-07-27T15:22:26.5106920Z ##[group]Determining the checkout info
@@ -144,7 +144,7 @@
 2026-07-27T15:22:29.2272577Z [36;1mpodman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \[0m
 2026-07-27T15:22:29.2273176Z [36;1m  -v /home/runner/work/ermete-os/ermete-os:/workspace \[0m
 2026-07-27T15:22:29.2274106Z [36;1m  -w /workspace/forge \[0m
-2026-07-27T15:22:29.2274487Z [36;1m  ghcr.io/patapem/ermete-os-builder:latest \[0m
+2026-07-27T15:22:29.2274487Z [36;1m  ghcr.io/hr-mes/ermete-os-builder:latest \[0m
 2026-07-27T15:22:29.2274814Z [36;1m  bash <<'EOF'[0m
 2026-07-27T15:22:29.2275061Z [36;1m  set -e[0m
 2026-07-27T15:22:29.2275317Z [36;1m  export BUILDAH_ISOLATION=chroot[0m
@@ -177,10 +177,10 @@
 2026-07-27T15:22:29.2287077Z [36;1m  export RPM_GPG_PASSPHRASE=""[0m
 2026-07-27T15:22:29.2287369Z [36;1m  [0m
 2026-07-27T15:22:29.2287684Z [36;1m  # Fetch RPMs dynamically from micro-containers and organize by Tier[0m
-2026-07-27T15:22:29.2290709Z [36;1m  echo "***" | buildah login ghcr.io -u patapem --password-stdin[0m
-2026-07-27T15:22:29.2291156Z [36;1m  bash scripts/fetch_repo_rpms.sh patapem[0m
+2026-07-27T15:22:29.2290709Z [36;1m  echo "***" | buildah login ghcr.io -u hr-mes --password-stdin[0m
+2026-07-27T15:22:29.2291156Z [36;1m  bash scripts/fetch_repo_rpms.sh hr-mes[0m
 2026-07-27T15:22:29.2291461Z [36;1m  [0m
-2026-07-27T15:22:29.2294056Z [36;1m  buildah login -u patapem -p *** ghcr.io[0m
+2026-07-27T15:22:29.2294056Z [36;1m  buildah login -u hr-mes -p *** ghcr.io[0m
 2026-07-27T15:22:29.2294377Z [36;1m  [0m
 2026-07-27T15:22:29.2294591Z [36;1m  mkdir -p .manifests[0m
 2026-07-27T15:22:29.2295008Z [36;1m  # Create repositories and push micro-containers for each Tier plus the full repo[0m
@@ -193,7 +193,7 @@
 2026-07-27T15:22:29.2297545Z [36;1m      img_name="ermete-os-forge-rolling-repo:latest"[0m
 2026-07-27T15:22:29.2297861Z [36;1m    fi[0m
 2026-07-27T15:22:29.2298056Z [36;1m    [0m
-2026-07-27T15:22:29.2298394Z [36;1m    IMAGE_LOWER=$(echo "ghcr.io/patapem/$img_name" | tr '[:upper:]' '[:lower:]')[0m
+2026-07-27T15:22:29.2298394Z [36;1m    IMAGE_LOWER=$(echo "ghcr.io/hr-mes/$img_name" | tr '[:upper:]' '[:lower:]')[0m
 2026-07-27T15:22:29.2299056Z [36;1m    NEW_HASH=$(find "$dir" -maxdepth 1 -name '*.rpm' -type f | sort | xargs -r sha256sum | sha256sum | awk '{print $1}')[0m
 2026-07-27T15:22:29.2299912Z [36;1m    OLD_HASH=$(skopeo inspect --config "docker://$IMAGE_LOWER" 2>/dev/null | jq -r '.config.Labels["tier.content.sha256"] // ""' || echo "")[0m
 2026-07-27T15:22:29.2300589Z [36;1m    if [ -n "$OLD_HASH" ] && [ "$NEW_HASH" = "$OLD_HASH" ]; then[0m
@@ -241,7 +241,7 @@
 2026-07-27T15:22:29.2316010Z [36;1m  cp /usr/share/ipxe/ipxe-x86_64.efi /workspace/pages_repo/recovery/ipxe.efi[0m
 2026-07-27T15:22:29.2316497Z [36;1m  echo '#!ipxe' > /workspace/pages_repo/recovery/boot.ipxe[0m
 2026-07-27T15:22:29.2316911Z [36;1m  echo 'dhcp' >> /workspace/pages_repo/recovery/boot.ipxe[0m
-2026-07-27T15:22:29.2317559Z [36;1m  echo 'chain https://patapem.github.io/ermete-os/recovery/menu.ipxe || shell' >> /workspace/pages_repo/recovery/boot.ipxe[0m
+2026-07-27T15:22:29.2317559Z [36;1m  echo 'chain https://hr-mes.github.io/ermete-os/recovery/menu.ipxe || shell' >> /workspace/pages_repo/recovery/boot.ipxe[0m
 2026-07-27T15:22:29.2318124Z [36;1m  [0m
 2026-07-27T15:22:29.2318335Z [36;1m  cd /workspace/pages_repo[0m
 2026-07-27T15:22:29.2318602Z [36;1m  git init[0m
@@ -262,14 +262,14 @@
 2026-07-27T15:22:29.2323542Z [36;1m[0m
 2026-07-27T15:22:29.2324006Z [36;1m  git add .[0m
 2026-07-27T15:22:29.2324372Z [36;1m  git commit -m "🚀 Deploy DNF repositories for Ermete OS Rolling Release"[0m
-2026-07-27T15:22:29.2327289Z [36;1m  git push -f "***github.com/patapem/ermete-os.git" gh-pages[0m
+2026-07-27T15:22:29.2327289Z [36;1m  git push -f "***github.com/hr-mes/ermete-os.git" gh-pages[0m
 2026-07-27T15:22:29.2327843Z [36;1mEOF[0m
 2026-07-27T15:22:29.2379122Z shell: /usr/bin/bash -e {0}
 2026-07-27T15:22:29.2379427Z env:
 2026-07-27T15:22:29.2379641Z   REGISTRY: ghcr.io
 2026-07-27T15:22:29.2379874Z   FEDORA_VERSION: 43
 2026-07-27T15:22:29.2380100Z ##[endgroup]
-2026-07-27T15:22:32.6789941Z Trying to pull ghcr.io/patapem/ermete-os-builder:latest...
+2026-07-27T15:22:32.6789941Z Trying to pull ghcr.io/hr-mes/ermete-os-builder:latest...
 2026-07-27T15:22:33.1492410Z Getting image source signatures
 2026-07-27T15:22:33.1497761Z Copying blob sha256:e3b9006c957086d002d0808876d2a9c989044c836cf27f19bff374dfb37aafb5
 2026-07-27T15:22:33.1498921Z Copying blob sha256:03d994101826fdaf4cc14d01019ae27f086327d9923d71a9ebdbc28e2372f364
@@ -317,16 +317,16 @@
 2026-07-27T15:23:26.3124965Z gpg: Total number processed: 0
 2026-07-27T15:23:26.6087657Z Login Succeeded!
 2026-07-27T15:23:26.6239986Z === Restoring Aggregate Tier Repos (Caching) ===
-2026-07-27T15:23:26.6253407Z     Pulling previous ghcr.io/patapem/ermete-os-forge-tier0-repo:latest...
+2026-07-27T15:23:26.6253407Z     Pulling previous ghcr.io/hr-mes/ermete-os-forge-tier0-repo:latest...
 2026-07-27T15:24:06.9360344Z 6a3ed1d7cf6cbbce05af8de8825e8178ef1b6d8b8bcdbbc591fa07b400df3565
 2026-07-27T15:24:07.2225245Z 6a3ed1d7cf6cbbce05af8de8825e8178ef1b6d8b8bcdbbc591fa07b400df3565
-2026-07-27T15:24:07.2322658Z     Pulling previous ghcr.io/patapem/ermete-os-forge-tier1-repo:latest...
+2026-07-27T15:24:07.2322658Z     Pulling previous ghcr.io/hr-mes/ermete-os-forge-tier1-repo:latest...
 2026-07-27T15:24:09.9126857Z 73e66ea32e294d3e8320c5e51516306702f13873bb9bc7fc2d132cbfe16580c0
 2026-07-27T15:24:09.9404919Z 73e66ea32e294d3e8320c5e51516306702f13873bb9bc7fc2d132cbfe16580c0
-2026-07-27T15:24:09.9490543Z     Pulling previous ghcr.io/patapem/ermete-os-forge-tier2-repo:latest...
+2026-07-27T15:24:09.9490543Z     Pulling previous ghcr.io/hr-mes/ermete-os-forge-tier2-repo:latest...
 2026-07-27T15:24:10.7134397Z 7b98da9f4bb81458621a5d52b2efea99242f9bc7e84e4244fc087b977fea5490
 2026-07-27T15:24:10.7331235Z 7b98da9f4bb81458621a5d52b2efea99242f9bc7e84e4244fc087b977fea5490
-2026-07-27T15:24:10.7390463Z     Pulling previous ghcr.io/patapem/ermete-os-forge-tier3-repo:latest...
+2026-07-27T15:24:10.7390463Z     Pulling previous ghcr.io/hr-mes/ermete-os-forge-tier3-repo:latest...
 2026-07-27T15:24:11.7744630Z fbd6d9170536f531f57bcd1e9fe7fd5c4fa5f54e63d5ffe064f7ab5395f4118c
 2026-07-27T15:24:11.7945439Z fbd6d9170536f531f57bcd1e9fe7fd5c4fa5f54e63d5ffe064f7ab5395f4118c
 2026-07-27T15:24:11.7994435Z === Extracting Tier 0 RPMs ===
@@ -337,7 +337,7 @@
 2026-07-27T15:24:15.6175078Z     [CACHE MISS] Pulling ermete-os-forge-base-config (old: bc70409adf6f1b3d87d9cda465df8b3d04dd953f0ef44825b7b229862e4b65f2, new: ba4098336ad560d7b791a72665eb7d30a37d9dfe5bcbf10153050609816ea2bf)
 2026-07-27T15:24:15.9788801Z     [CACHE HIT] ermete-os-forge-selinux hasn't changed. Skipping pull.
 2026-07-27T15:24:16.0386613Z     [CACHE HIT] ermete-os-forge-secure-boot hasn't changed. Skipping pull.
-2026-07-27T15:24:16.0618507Z Trying to pull ghcr.io/patapem/ermete-os-forge-base-config:latest...
+2026-07-27T15:24:16.0618507Z Trying to pull ghcr.io/hr-mes/ermete-os-forge-base-config:latest...
 2026-07-27T15:24:16.5295543Z     [CACHE HIT] ermete-os-forge-bat hasn't changed. Skipping pull.
 2026-07-27T15:24:16.5505684Z     [CACHE HIT] ermete-os-forge-cloud-rs hasn't changed. Skipping pull.
 2026-07-27T15:24:16.6953955Z     [CACHE HIT] ermete-os-forge-ide-bootstrap hasn't changed. Skipping pull.
@@ -356,7 +356,7 @@
 2026-07-27T15:24:17.5968677Z     [CACHE MISS] Pulling ermete-os-forge-store-rs (old: 1ab17bf3f6c5331c75707db4f99976cac7e313170ca7162ba3b7100949de0b99, new: 159982965d20f3ae404f7b7f2ae45fc487d7dab6372e1f88019ded12e81da93d)
 2026-07-27T15:24:17.8526305Z     [CACHE HIT] ermete-os-forge-bibata hasn't changed. Skipping pull.
 2026-07-27T15:24:17.8557493Z     [CACHE HIT] ermete-os-forge-cliphist hasn't changed. Skipping pull.
-2026-07-27T15:24:18.0762554Z Trying to pull ghcr.io/patapem/ermete-os-forge-store-rs:latest...
+2026-07-27T15:24:18.0762554Z Trying to pull ghcr.io/hr-mes/ermete-os-forge-store-rs:latest...
 2026-07-27T15:24:18.1702932Z     [CACHE HIT] ermete-os-forge-system-services hasn't changed. Skipping pull.
 2026-07-27T15:24:18.2385126Z     [CACHE MISS] Pulling ermete-os-forge-settings-rs (old: 01d152acd0c61cbb90867e1266cdccefdc756ccc98733d5bff5e7bd88d0fa309, new: 7e7be46025fc838e5c3f8196e0228b513be72124934c290ad8797bfc55c1826e)
 2026-07-27T15:24:18.4311857Z     [CACHE MISS] Pulling ermete-os-forge-updater-rs (old: 857a8321bca9a7ae681e0940acd9eb84cb5ce19e2430282ee2c1e86351bae4d8, new: ad1bfedb04f61d6b4764c692b2d35ecaffc75d371bc604819c09eea12a43193a)
@@ -366,17 +366,17 @@
 2026-07-27T15:24:18.5722061Z     [CACHE HIT] ermete-os-forge-daemon-rs hasn't changed. Skipping pull.
 2026-07-27T15:24:18.7010358Z     [CACHE HIT] ermete-os-forge-gatekeeper-rs hasn't changed. Skipping pull.
 2026-07-27T15:24:18.8089797Z     [CACHE HIT] ermete-os-forge-rolling-adw-gtk3-theme hasn't changed. Skipping pull.
-2026-07-27T15:24:18.8100041Z Trying to pull ghcr.io/patapem/ermete-os-forge-shell-rs:latest...
+2026-07-27T15:24:18.8100041Z Trying to pull ghcr.io/hr-mes/ermete-os-forge-shell-rs:latest...
 2026-07-27T15:24:18.8655870Z     [CACHE HIT] ermete-os-forge-nvidia hasn't changed. Skipping pull.
-2026-07-27T15:24:18.9258817Z Trying to pull ghcr.io/patapem/ermete-os-forge-settings-rs:latest...
+2026-07-27T15:24:18.9258817Z Trying to pull ghcr.io/hr-mes/ermete-os-forge-settings-rs:latest...
 2026-07-27T15:24:18.9326269Z     [CACHE HIT] ermete-os-forge-rolling-greetd hasn't changed. Skipping pull.
 2026-07-27T15:24:19.0066942Z     [CACHE HIT] ermete-os-forge-system-config hasn't changed. Skipping pull.
 2026-07-27T15:24:19.0353880Z     [CACHE HIT] ermete-os-forge-ui-agent hasn't changed. Skipping pull.
 2026-07-27T15:24:19.0431033Z     [CACHE HIT] ermete-os-forge-rolling-openssl hasn't changed. Skipping pull.
 2026-07-27T15:24:19.2969357Z     [CACHE HIT] ermete-os-forge-rolling-foot hasn't changed. Skipping pull.
 2026-07-27T15:24:19.4059021Z     [CACHE HIT] ermete-os-forge-rolling-wayland hasn't changed. Skipping pull.
-2026-07-27T15:24:19.6162897Z Trying to pull ghcr.io/patapem/ermete-os-forge-updater-rs:latest...
-2026-07-27T15:24:19.7652564Z Trying to pull ghcr.io/patapem/ermete-os-forge-desktop-ui:latest...
+2026-07-27T15:24:19.6162897Z Trying to pull ghcr.io/hr-mes/ermete-os-forge-updater-rs:latest...
+2026-07-27T15:24:19.7652564Z Trying to pull ghcr.io/hr-mes/ermete-os-forge-desktop-ui:latest...
 2026-07-27T15:24:19.8601832Z     [CACHE HIT] ermete-os-forge-rolling-wayland-utils hasn't changed. Skipping pull.
 2026-07-27T15:24:19.8987874Z     [CACHE HIT] ermete-os-forge-rolling-upower hasn't changed. Skipping pull.
 2026-07-27T15:24:19.9679349Z     [CACHE HIT] ermete-os-forge-rolling-xdg-desktop-portal-gnome hasn't changed. Skipping pull.
@@ -515,7 +515,7 @@
 2026-07-27T15:26:43.8493166Z Copying config sha256:34c3b6a43ad6a88d1d83c2c23cc619bfcf6c53695c82c8382abad78523ec02f5
 2026-07-27T15:26:45.2201959Z Writing manifest to image destination
 2026-07-27T15:26:45.7119389Z 077582b55d55cbf06d48abb26486448caf5bb4f003350e0a0f65a73432cc6bd5
-2026-07-27T15:26:45.9632636Z untagged: ghcr.io/patapem/ermete-os-forge-tier0-repo:latest
+2026-07-27T15:26:45.9632636Z untagged: ghcr.io/hr-mes/ermete-os-forge-tier0-repo:latest
 2026-07-27T15:26:45.9645069Z 34c3b6a43ad6a88d1d83c2c23cc619bfcf6c53695c82c8382abad78523ec02f5
 2026-07-27T15:26:46.8916542Z ✅ Tier 'tier1' (ermete-os-forge-tier1-repo:latest): RPM content hash unchanged (e664fa44fe1e4f55fcaedd67275ef305903c4057f263b5aab8d3c62e94b6a6ce). Skipping createrepo_c & push to freeze Tier OCI cache!
 2026-07-27T15:26:49.9407225Z ✅ Tier 'tier2' (ermete-os-forge-tier2-repo:latest): RPM content hash unchanged (0c315e5236c852309a9a72ead4723336f75aada6f12752c858a23c7fbf58751d). Skipping createrepo_c & push to freeze Tier OCI cache!
@@ -537,7 +537,7 @@
 2026-07-27T15:26:56.1406216Z Copying config sha256:b200989dbcd19836c836cdb3480c10b68dbe7f8d086fb7582cec002bb9f07b6b
 2026-07-27T15:26:57.5012806Z Writing manifest to image destination
 2026-07-27T15:26:58.2264017Z 9d13f7ed0676e2cade1373701fe6776099dc1b8822c1afaa70a52c44afb5e0f8
-2026-07-27T15:26:58.2503133Z untagged: ghcr.io/patapem/ermete-os-forge-tier3-repo:latest
+2026-07-27T15:26:58.2503133Z untagged: ghcr.io/hr-mes/ermete-os-forge-tier3-repo:latest
 2026-07-27T15:26:58.2504222Z b200989dbcd19836c836cdb3480c10b68dbe7f8d086fb7582cec002bb9f07b6b
 2026-07-27T15:27:01.4465034Z ----------------------------------------
 2026-07-27T15:27:01.4467836Z 🚀 Tier '' (ermete-os-forge-rolling-repo:latest): content hash changed (old: 'f3c09cea7f04d1cb098cd1239c840a93000880d7711d330944b98a96f87d48d2', new: '13ab4dff5b5180d2b8a746398c3a1382afb79ea38c631e6c1d2235eac4f7b6fc'). Creating metadata & pushing...
@@ -557,7 +557,7 @@
 2026-07-27T15:29:13.4766781Z Copying config sha256:98579720ceac199ce4b7e50ce3569ecab7dbb9c49215d5da50d2d1b6fb22185e
 2026-07-27T15:29:14.8466640Z Writing manifest to image destination
 2026-07-27T15:29:15.4196033Z 3fbc4686d9a582fad0715c92c6ea4833561881abb21da3f4a0722719b337ba4b
-2026-07-27T15:29:15.6829974Z untagged: ghcr.io/patapem/ermete-os-forge-rolling-repo:latest
+2026-07-27T15:29:15.6829974Z untagged: ghcr.io/hr-mes/ermete-os-forge-rolling-repo:latest
 2026-07-27T15:29:15.6830810Z 98579720ceac199ce4b7e50ce3569ecab7dbb9c49215d5da50d2d1b6fb22185e
 2026-07-27T15:29:15.6848846Z 🌐 Pubblicazione dei repository DNF su GitHub Pages (gh-pages branch)...
 2026-07-27T15:29:17.9354790Z 🌐 Generazione payload UEFI HTTP Boot Internet Recovery...
@@ -1944,7 +1944,7 @@
 2026-07-27T15:31:52.4617932Z remote: warning: File tier0/ermete-kernel-devel-6.14-1.chimera.fc44.x86_64.rpm is 84.09 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB        
 2026-07-27T15:31:52.4619801Z remote: warning: File tier0/nvidia-driver-cuda-libs-610.43.03-1.fc43.x86_64.rpm is 88.85 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB        
 2026-07-27T15:31:52.4621075Z remote: warning: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.        
-2026-07-27T15:31:52.8908112Z To https://github.com/patapem/ermete-os.git
+2026-07-27T15:31:52.8908112Z To https://github.com/hr-mes/ermete-os.git
 2026-07-27T15:31:52.8908948Z  + 3b8ad04...bf43f54 gh-pages -> gh-pages (forced update)
 2026-07-27T15:31:53.0084391Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
 2026-07-27T15:31:53.0086050Z Post job cleanup.

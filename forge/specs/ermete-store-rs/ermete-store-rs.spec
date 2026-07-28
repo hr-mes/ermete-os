@@ -6,7 +6,7 @@ Summary:        Ermete OS Universal App Store Daemon
 
 
 License:        GPL-3.0-or-later
-URL:            https://github.com/patapem/ermete-forge
+URL:            https://github.com/hr-mes/ermete-forge
 Source0:        %{name}-%{version}.tar.gz
 
 BuildRequires:  rust cargo systemd-rpm-macros pkgconf-pkg-config openssl-devel gtk4-devel

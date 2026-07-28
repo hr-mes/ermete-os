@@ -14,7 +14,7 @@ Ermete OS is distributed as a bootable OCI container image via `bootc`. You can 
 ### 1. In-Place Atomic Switch (Recommended for Fedora Atomic/Silverblue)
 If you are already running a Fedora Atomic variant, you can seamlessly switch to Ermete OS without losing user data:
 ```bash
-sudo bootc switch ghcr.io/patapem/ermete-os-system:latest
+sudo bootc switch ghcr.io/hr-mes/ermete-os-system:latest
 ```
 
 ### 2. Generate a Bootable ISO (For Clean Installs)
@@ -26,7 +26,7 @@ sudo podman run --rm -it --privileged --pull=newer \
     -v $(pwd)/ermete-install.ks:/config.ks \
     quay.io/centos-bootc/bootc-image-builder:latest \
     --type iso --kickstart /config.ks \
-    ghcr.io/patapem/ermete-os-system:latest
+    ghcr.io/hr-mes/ermete-os-system:latest
 ```
 
 ---

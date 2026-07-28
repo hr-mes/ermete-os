@@ -2,7 +2,7 @@
 set -euo pipefail
 
 REGISTRY="ghcr.io"
-OWNER="${GITHUB_REPOSITORY_OWNER:-patapem}"
+OWNER="${GITHUB_REPOSITORY_OWNER:-hr-mes}"
 
 if ! command -v skopeo >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1; then
   if command -v dnf >/dev/null 2>&1; then

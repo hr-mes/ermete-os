@@ -4,7 +4,7 @@ Release:        1%{?dist}
 Summary:        Ermete OS Measured Secure Boot & TPM Sealing
 
 License:        GPL-3.0-or-later
-URL:            https://github.com/patapem/ermete-forge
+URL:            https://github.com/hr-mes/ermete-forge
 Source0:        %{name}-%{version}.tar.gz
 
 BuildRequires:  systemd-rpm-macros

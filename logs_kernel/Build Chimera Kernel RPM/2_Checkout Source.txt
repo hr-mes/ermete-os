@@ -1,7 +1,7 @@
 ﻿2026-07-27T18:28:06.8100621Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
 2026-07-27T18:28:06.8109418Z ##[group]Run actions/checkout@v4
 2026-07-27T18:28:06.8110537Z with:
-2026-07-27T18:28:06.8111239Z   repository: patapem/ermete-os
+2026-07-27T18:28:06.8111239Z   repository: hr-mes/ermete-os
 2026-07-27T18:28:06.8117817Z   token: ***
 2026-07-27T18:28:06.8118562Z   ssh-strict: true
 2026-07-27T18:28:06.8119271Z   ssh-user: git
@@ -16,7 +16,7 @@
 2026-07-27T18:28:06.8125977Z   set-safe-directory: true
 2026-07-27T18:28:06.8126760Z   allow-unsafe-pr-checkout: false
 2026-07-27T18:28:06.8127862Z ##[endgroup]
-2026-07-27T18:28:06.8918756Z Syncing repository: patapem/ermete-os
+2026-07-27T18:28:06.8918756Z Syncing repository: hr-mes/ermete-os
 2026-07-27T18:28:06.8921024Z ##[group]Getting Git version info
 2026-07-27T18:28:06.8922546Z Working directory is '/var/home/ermete/actions-runner-monorepo/_work/ermete-os/ermete-os'
 2026-07-27T18:28:06.8925417Z [command]/usr/bin/git version
@@ -26,7 +26,7 @@
 2026-07-27T18:28:06.8942959Z Adding repository directory to the temporary git global config as a safe directory
 2026-07-27T18:28:06.8945683Z [command]/usr/bin/git config --global --add safe.directory /var/home/ermete/actions-runner-monorepo/_work/ermete-os/ermete-os
 2026-07-27T18:28:06.8972337Z [command]/usr/bin/git config --local --get remote.origin.url
-2026-07-27T18:28:06.8987694Z https://github.com/patapem/ermete-os
+2026-07-27T18:28:06.8987694Z https://github.com/hr-mes/ermete-os
 2026-07-27T18:28:06.8997299Z ##[group]Removing previously created refs, to avoid conflicts
 2026-07-27T18:28:06.8999161Z [command]/usr/bin/git rev-parse --symbolic-full-name --verify --quiet HEAD
 2026-07-27T18:28:06.9018528Z refs/heads/main

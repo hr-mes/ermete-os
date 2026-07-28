@@ -1,6 +1,6 @@
 [Unit]
 Description=Ermete OS Pre-Boot GUI Recovery Kiosk
-Documentation=https://github.com/patapem/ermete-forge
+Documentation=https://github.com/hr-mes/ermete-forge
 After=systemd-user-sessions.service plymouth-quit-wait.service
 Conflicts=getty@tty9.service
 

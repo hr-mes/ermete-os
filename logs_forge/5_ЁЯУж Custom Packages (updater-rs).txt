@@ -33,7 +33,7 @@
 2026-07-27T15:08:37.7507957Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
 2026-07-27T15:08:37.7515727Z ##[group]Run actions/checkout@v4
 2026-07-27T15:08:37.7516428Z with:
-2026-07-27T15:08:37.7516945Z   repository: patapem/ermete-os
+2026-07-27T15:08:37.7516945Z   repository: hr-mes/ermete-os
 2026-07-27T15:08:37.7520858Z   token: ***
 2026-07-27T15:08:37.7521351Z   ssh-strict: true
 2026-07-27T15:08:37.7521863Z   ssh-user: git
@@ -51,7 +51,7 @@
 2026-07-27T15:08:37.7530501Z   REGISTRY: ghcr.io
 2026-07-27T15:08:37.7531021Z   FEDORA_VERSION: 43
 2026-07-27T15:08:37.7531508Z ##[endgroup]
-2026-07-27T15:08:37.8463164Z Syncing repository: patapem/ermete-os
+2026-07-27T15:08:37.8463164Z Syncing repository: hr-mes/ermete-os
 2026-07-27T15:08:37.8465337Z ##[group]Getting Git version info
 2026-07-27T15:08:37.8466169Z Working directory is '/home/runner/work/ermete-os/ermete-os'
 2026-07-27T15:08:37.8467289Z [command]/usr/bin/git version
@@ -77,7 +77,7 @@
 2026-07-27T15:08:37.9341491Z hint:
 2026-07-27T15:08:37.9342128Z hint: Disable this message with "git config set advice.defaultBranchName false"
 2026-07-27T15:08:37.9343502Z Initialized empty Git repository in /home/runner/work/ermete-os/ermete-os/.git/
-2026-07-27T15:08:37.9345611Z [command]/usr/bin/git remote add origin https://github.com/patapem/ermete-os
+2026-07-27T15:08:37.9345611Z [command]/usr/bin/git remote add origin https://github.com/hr-mes/ermete-os
 2026-07-27T15:08:37.9626389Z ##[endgroup]
 2026-07-27T15:08:37.9627319Z ##[group]Disabling automatic garbage collection
 2026-07-27T15:08:37.9629196Z [command]/usr/bin/git config --local gc.auto 0
@@ -93,7 +93,7 @@
 2026-07-27T15:08:38.0722836Z ##[endgroup]
 2026-07-27T15:08:38.0724153Z ##[group]Fetching the repository
 2026-07-27T15:08:38.0733177Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +e8a1f2b06971a34ff345313f7b440b9309e30e17:refs/remotes/origin/main
-2026-07-27T15:08:49.2007887Z From https://github.com/patapem/ermete-os
+2026-07-27T15:08:49.2007887Z From https://github.com/hr-mes/ermete-os
 2026-07-27T15:08:49.2009220Z  * [new ref]         e8a1f2b06971a34ff345313f7b440b9309e30e17 -> origin/main
 2026-07-27T15:08:49.2027916Z ##[endgroup]
 2026-07-27T15:08:49.2028587Z ##[group]Determining the checkout info
@@ -141,8 +141,8 @@
 2026-07-27T15:08:51.9176903Z ##[endgroup]
 2026-07-27T15:08:51.9215326Z [command]/usr/bin/git log -1 --format=%H
 2026-07-27T15:08:51.9235472Z e8a1f2b06971a34ff345313f7b440b9309e30e17
-2026-07-27T15:08:51.9424837Z ##[group]Run podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v /home/runner/work/ermete-os/ermete-os:/workspace -w /workspace/forge ghcr.io/patapem/ermete-os-builder:latest bash scripts/check_idempotency.sh --package updater-rs --registry ghcr.io --owner patapem --image-name ermete-os-forge-updater-rs > idemp.out
-2026-07-27T15:08:51.9426896Z [36;1mpodman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v /home/runner/work/ermete-os/ermete-os:/workspace -w /workspace/forge ghcr.io/patapem/ermete-os-builder:latest bash scripts/check_idempotency.sh --package updater-rs --registry ghcr.io --owner patapem --image-name ermete-os-forge-updater-rs > idemp.out[0m
+2026-07-27T15:08:51.9424837Z ##[group]Run podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v /home/runner/work/ermete-os/ermete-os:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package updater-rs --registry ghcr.io --owner hr-mes --image-name ermete-os-forge-updater-rs > idemp.out
+2026-07-27T15:08:51.9426896Z [36;1mpodman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v /home/runner/work/ermete-os/ermete-os:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package updater-rs --registry ghcr.io --owner hr-mes --image-name ermete-os-forge-updater-rs > idemp.out[0m
 2026-07-27T15:08:51.9428048Z [36;1msource ./idemp.out[0m
 2026-07-27T15:08:51.9428395Z [36;1mecho "hash=$CONTENT_HASH" >> $GITHUB_OUTPUT[0m
 2026-07-27T15:08:51.9429002Z [36;1mif [ "$CACHE_HIT" = "true" ]; then echo "skip=true" >> $GITHUB_OUTPUT; else echo "skip=false" >> $GITHUB_OUTPUT; fi[0m
@@ -152,7 +152,7 @@
 2026-07-27T15:08:51.9460687Z   FEDORA_VERSION: 43
 2026-07-27T15:08:51.9463290Z   GITHUB_TOKEN: ***
 2026-07-27T15:08:51.9463543Z ##[endgroup]
-2026-07-27T15:09:02.4064913Z Trying to pull ghcr.io/patapem/ermete-os-builder:latest...
+2026-07-27T15:09:02.4064913Z Trying to pull ghcr.io/hr-mes/ermete-os-builder:latest...
 2026-07-27T15:09:03.1108087Z Getting image source signatures
 2026-07-27T15:09:03.1109595Z Copying blob sha256:e3b9006c957086d002d0808876d2a9c989044c836cf27f19bff374dfb37aafb5
 2026-07-27T15:09:03.1110889Z Copying blob sha256:03d994101826fdaf4cc14d01019ae27f086327d9923d71a9ebdbc28e2372f364
@@ -161,7 +161,7 @@
 2026-07-27T15:09:44.6131685Z Copying config sha256:af8755c663c1d4fd59aab1367159dc0c1cbe3c7a95a91801f5d348dd9d40220b
 2026-07-27T15:09:45.2820929Z Writing manifest to image destination
 2026-07-27T15:09:47.3599143Z >>> Content Hash calcolato per updater-rs: ad1bfedb04f61d6b4764c692b2d35ecaffc75d371bc604819c09eea12a43193a
-2026-07-27T15:09:47.3612978Z >>> Verifica esistenza su GHCR: docker://ghcr.io/patapem/ermete-os-forge-updater-rs:ad1bfedb04f61d6b4764c692b2d35ecaffc75d371bc604819c09eea12a43193a...
+2026-07-27T15:09:47.3612978Z >>> Verifica esistenza su GHCR: docker://ghcr.io/hr-mes/ermete-os-forge-updater-rs:ad1bfedb04f61d6b4764c692b2d35ecaffc75d371bc604819c09eea12a43193a...
 2026-07-27T15:09:47.9728273Z >>> Cache Miss. Procedo con la build.
 2026-07-27T15:09:50.0658912Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
 2026-07-27T15:09:50.0660480Z ##[group]Run actions/cache@v4
@@ -193,7 +193,7 @@
 2026-07-27T15:09:52.5057864Z [36;1mpodman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \[0m
 2026-07-27T15:09:52.5058410Z [36;1m  -v /home/runner/work/ermete-os/ermete-os:/workspace \[0m
 2026-07-27T15:09:52.5058761Z [36;1m  -w /workspace/forge \[0m
-2026-07-27T15:09:52.5059116Z [36;1m  ghcr.io/patapem/ermete-os-builder:latest \[0m
+2026-07-27T15:09:52.5059116Z [36;1m  ghcr.io/hr-mes/ermete-os-builder:latest \[0m
 2026-07-27T15:09:52.5059464Z [36;1m  bash <<'EOF'[0m
 2026-07-27T15:09:52.5059766Z [36;1m  sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf[0m
 2026-07-27T15:09:52.5060817Z [36;1m  dnf install -y rpm-build rpmdevtools gcc gcc-c++ cargo rust cmake mold tar xz curl pkgconf-pkg-config zlib-devel openssl-devel checkpolicy policycoreutils spdlog-devel systemd-devel nlohmann-json-devel fmt-devel which autoconf automake libtool cargo-rpm-macros clang clang-devel speech-dispatcher-devel[0m
@@ -969,10 +969,10 @@
 2026-07-27T15:12:19.5051525Z ##[group]Run export STORAGE_DRIVER=vfs
 2026-07-27T15:12:19.5052051Z [36;1mexport STORAGE_DRIVER=vfs[0m
 2026-07-27T15:12:19.5052412Z [36;1mexport BUILDAH_ISOLATION=chroot[0m
-2026-07-27T15:12:19.5055315Z [36;1mbuildah login -u patapem -p *** ghcr.io[0m
+2026-07-27T15:12:19.5055315Z [36;1mbuildah login -u hr-mes -p *** ghcr.io[0m
 2026-07-27T15:12:19.5055696Z [36;1mctr=$(buildah from scratch)[0m
 2026-07-27T15:12:19.5056009Z [36;1mbuildah copy $ctr RPMS/*.rpm /[0m
-2026-07-27T15:12:19.5056467Z [36;1mIMAGE_LOWER=$(echo "ghcr.io/patapem/ermete-os-forge-updater-rs" | tr '[:upper:]' '[:lower:]')[0m
+2026-07-27T15:12:19.5056467Z [36;1mIMAGE_LOWER=$(echo "ghcr.io/hr-mes/ermete-os-forge-updater-rs" | tr '[:upper:]' '[:lower:]')[0m
 2026-07-27T15:12:19.5057208Z [36;1mbuildah config --label tier.content.sha256="ad1bfedb04f61d6b4764c692b2d35ecaffc75d371bc604819c09eea12a43193a" $ctr[0m
 2026-07-27T15:12:19.5057868Z [36;1mbuildah commit --omit-timestamp $ctr $IMAGE_LOWER:latest[0m
 2026-07-27T15:12:19.5058458Z [36;1mbuildah tag $IMAGE_LOWER:latest $IMAGE_LOWER:ad1bfedb04f61d6b4764c692b2d35ecaffc75d371bc604819c09eea12a43193a[0m

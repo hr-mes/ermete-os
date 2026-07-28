@@ -33,7 +33,7 @@
 2026-07-27T15:08:37.0673393Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
 2026-07-27T15:08:37.0682474Z ##[group]Run actions/checkout@v4
 2026-07-27T15:08:37.0683187Z with:
-2026-07-27T15:08:37.0683658Z   repository: patapem/ermete-os
+2026-07-27T15:08:37.0683658Z   repository: hr-mes/ermete-os
 2026-07-27T15:08:37.0687501Z   token: ***
 2026-07-27T15:08:37.0687949Z   ssh-strict: true
 2026-07-27T15:08:37.0688407Z   ssh-user: git
@@ -51,7 +51,7 @@
 2026-07-27T15:08:37.0694423Z   REGISTRY: ghcr.io
 2026-07-27T15:08:37.0694881Z   FEDORA_VERSION: 43
 2026-07-27T15:08:37.0695330Z ##[endgroup]
-2026-07-27T15:08:37.1721183Z Syncing repository: patapem/ermete-os
+2026-07-27T15:08:37.1721183Z Syncing repository: hr-mes/ermete-os
 2026-07-27T15:08:37.1723646Z ##[group]Getting Git version info
 2026-07-27T15:08:37.1724840Z Working directory is '/home/runner/work/ermete-os/ermete-os'
 2026-07-27T15:08:37.1726181Z [command]/usr/bin/git version
@@ -77,7 +77,7 @@
 2026-07-27T15:08:37.2018196Z hint:
 2026-07-27T15:08:37.2019232Z hint: Disable this message with "git config set advice.defaultBranchName false"
 2026-07-27T15:08:37.2025453Z Initialized empty Git repository in /home/runner/work/ermete-os/ermete-os/.git/
-2026-07-27T15:08:37.2037042Z [command]/usr/bin/git remote add origin https://github.com/patapem/ermete-os
+2026-07-27T15:08:37.2037042Z [command]/usr/bin/git remote add origin https://github.com/hr-mes/ermete-os
 2026-07-27T15:08:37.2084819Z ##[endgroup]
 2026-07-27T15:08:37.2086085Z ##[group]Disabling automatic garbage collection
 2026-07-27T15:08:37.2089007Z [command]/usr/bin/git config --local gc.auto 0
@@ -93,7 +93,7 @@
 2026-07-27T15:08:37.3280101Z ##[endgroup]
 2026-07-27T15:08:37.3281054Z ##[group]Fetching the repository
 2026-07-27T15:08:37.3291232Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +e8a1f2b06971a34ff345313f7b440b9309e30e17:refs/remotes/origin/main
-2026-07-27T15:08:49.4959528Z From https://github.com/patapem/ermete-os
+2026-07-27T15:08:49.4959528Z From https://github.com/hr-mes/ermete-os
 2026-07-27T15:08:49.4960463Z  * [new ref]         e8a1f2b06971a34ff345313f7b440b9309e30e17 -> origin/main
 2026-07-27T15:08:49.4991958Z ##[endgroup]
 2026-07-27T15:08:49.4992542Z ##[group]Determining the checkout info
@@ -142,8 +142,8 @@
 2026-07-27T15:08:52.2923087Z ##[endgroup]
 2026-07-27T15:08:52.2982389Z [command]/usr/bin/git log -1 --format=%H
 2026-07-27T15:08:52.3017317Z e8a1f2b06971a34ff345313f7b440b9309e30e17
-2026-07-27T15:08:52.3270445Z ##[group]Run podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v /home/runner/work/ermete-os/ermete-os:/workspace -w /workspace/forge ghcr.io/patapem/ermete-os-builder:latest bash scripts/check_idempotency.sh --package desktop-ui --registry ghcr.io --owner patapem --image-name ermete-os-forge-desktop-ui > idemp.out
-2026-07-27T15:08:52.3273107Z [36;1mpodman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v /home/runner/work/ermete-os/ermete-os:/workspace -w /workspace/forge ghcr.io/patapem/ermete-os-builder:latest bash scripts/check_idempotency.sh --package desktop-ui --registry ghcr.io --owner patapem --image-name ermete-os-forge-desktop-ui > idemp.out[0m
+2026-07-27T15:08:52.3270445Z ##[group]Run podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v /home/runner/work/ermete-os/ermete-os:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package desktop-ui --registry ghcr.io --owner hr-mes --image-name ermete-os-forge-desktop-ui > idemp.out
+2026-07-27T15:08:52.3273107Z [36;1mpodman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v /home/runner/work/ermete-os/ermete-os:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package desktop-ui --registry ghcr.io --owner hr-mes --image-name ermete-os-forge-desktop-ui > idemp.out[0m
 2026-07-27T15:08:52.3274504Z [36;1msource ./idemp.out[0m
 2026-07-27T15:08:52.3274830Z [36;1mecho "hash=$CONTENT_HASH" >> $GITHUB_OUTPUT[0m
 2026-07-27T15:08:52.3275401Z [36;1mif [ "$CACHE_HIT" = "true" ]; then echo "skip=true" >> $GITHUB_OUTPUT; else echo "skip=false" >> $GITHUB_OUTPUT; fi[0m
@@ -153,7 +153,7 @@
 2026-07-27T15:08:52.3329712Z   FEDORA_VERSION: 43
 2026-07-27T15:08:52.3332260Z   GITHUB_TOKEN: ***
 2026-07-27T15:08:52.3332497Z ##[endgroup]
-2026-07-27T15:08:55.7704283Z Trying to pull ghcr.io/patapem/ermete-os-builder:latest...
+2026-07-27T15:08:55.7704283Z Trying to pull ghcr.io/hr-mes/ermete-os-builder:latest...
 2026-07-27T15:08:56.0776458Z Getting image source signatures
 2026-07-27T15:08:56.0778171Z Copying blob sha256:e3b9006c957086d002d0808876d2a9c989044c836cf27f19bff374dfb37aafb5
 2026-07-27T15:08:56.0779737Z Copying blob sha256:acd8b42f73ce3c867cc593ead04aeeaa3a76332d51a318a009e3ef7c20a7cd83
@@ -162,7 +162,7 @@
 2026-07-27T15:09:35.1044768Z Copying config sha256:af8755c663c1d4fd59aab1367159dc0c1cbe3c7a95a91801f5d348dd9d40220b
 2026-07-27T15:09:35.1057895Z Writing manifest to image destination
 2026-07-27T15:09:35.4215552Z >>> Content Hash calcolato per desktop-ui: 3c3ec55bc0f5d811266810b9ef809475fb6d766c7f5bbf02d5d28adfbcf3afa5
-2026-07-27T15:09:35.4232036Z >>> Verifica esistenza su GHCR: docker://ghcr.io/patapem/ermete-os-forge-desktop-ui:3c3ec55bc0f5d811266810b9ef809475fb6d766c7f5bbf02d5d28adfbcf3afa5...
+2026-07-27T15:09:35.4232036Z >>> Verifica esistenza su GHCR: docker://ghcr.io/hr-mes/ermete-os-forge-desktop-ui:3c3ec55bc0f5d811266810b9ef809475fb6d766c7f5bbf02d5d28adfbcf3afa5...
 2026-07-27T15:09:35.7180178Z >>> Cache Miss. Procedo con la build.
 2026-07-27T15:09:35.7922472Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
 2026-07-27T15:09:35.7924369Z ##[group]Run actions/cache@v4
@@ -187,7 +187,7 @@
 2026-07-27T15:09:35.9933639Z [36;1mpodman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \[0m
 2026-07-27T15:09:35.9934190Z [36;1m  -v /home/runner/work/ermete-os/ermete-os:/workspace \[0m
 2026-07-27T15:09:35.9934529Z [36;1m  -w /workspace/forge \[0m
-2026-07-27T15:09:35.9934832Z [36;1m  ghcr.io/patapem/ermete-os-builder:latest \[0m
+2026-07-27T15:09:35.9934832Z [36;1m  ghcr.io/hr-mes/ermete-os-builder:latest \[0m
 2026-07-27T15:09:35.9935140Z [36;1m  bash <<'EOF'[0m
 2026-07-27T15:09:35.9935403Z [36;1m  sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf[0m
 2026-07-27T15:09:35.9936585Z [36;1m  dnf install -y rpm-build rpmdevtools gcc gcc-c++ cargo rust cmake mold tar xz curl pkgconf-pkg-config zlib-devel openssl-devel checkpolicy policycoreutils spdlog-devel systemd-devel nlohmann-json-devel fmt-devel which autoconf automake libtool cargo-rpm-macros clang clang-devel speech-dispatcher-devel[0m
@@ -527,10 +527,10 @@
 2026-07-27T15:09:51.5328153Z ##[group]Run export STORAGE_DRIVER=vfs
 2026-07-27T15:09:51.5328809Z [36;1mexport STORAGE_DRIVER=vfs[0m
 2026-07-27T15:09:51.5329102Z [36;1mexport BUILDAH_ISOLATION=chroot[0m
-2026-07-27T15:09:51.5331722Z [36;1mbuildah login -u patapem -p *** ghcr.io[0m
+2026-07-27T15:09:51.5331722Z [36;1mbuildah login -u hr-mes -p *** ghcr.io[0m
 2026-07-27T15:09:51.5332068Z [36;1mctr=$(buildah from scratch)[0m
 2026-07-27T15:09:51.5332356Z [36;1mbuildah copy $ctr RPMS/*.rpm /[0m
-2026-07-27T15:09:51.5332834Z [36;1mIMAGE_LOWER=$(echo "ghcr.io/patapem/ermete-os-forge-desktop-ui" | tr '[:upper:]' '[:lower:]')[0m
+2026-07-27T15:09:51.5332834Z [36;1mIMAGE_LOWER=$(echo "ghcr.io/hr-mes/ermete-os-forge-desktop-ui" | tr '[:upper:]' '[:lower:]')[0m
 2026-07-27T15:09:51.5333604Z [36;1mbuildah config --label tier.content.sha256="3c3ec55bc0f5d811266810b9ef809475fb6d766c7f5bbf02d5d28adfbcf3afa5" $ctr[0m
 2026-07-27T15:09:51.5334220Z [36;1mbuildah commit --omit-timestamp $ctr $IMAGE_LOWER:latest[0m
 2026-07-27T15:09:51.5334812Z [36;1mbuildah tag $IMAGE_LOWER:latest $IMAGE_LOWER:3c3ec55bc0f5d811266810b9ef809475fb6d766c7f5bbf02d5d28adfbcf3afa5[0m

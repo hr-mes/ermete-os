@@ -4,7 +4,7 @@
  "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
 <policyconfig>
   <vendor>Ermete OS</vendor>
-  <vendor_url>https://github.com/patapem/ermete-forge</vendor_url>
+  <vendor_url>https://github.com/hr-mes/ermete-forge</vendor_url>
 
   <action id="os.ermete.mdm.wipe">
     <description>Trigger Cryptographic Device Wipe</description>

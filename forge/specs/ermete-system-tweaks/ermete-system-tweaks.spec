@@ -4,7 +4,7 @@ Version:        1.0.0
 Release:        3%{?dist}
 Summary:        Ermete OS ermete-system-tweaks
 License:        MIT
-URL:            https://github.com/patapem/ermete-forge
+URL:            https://github.com/hr-mes/ermete-forge
 BuildArch:      noarch
 
 %description
