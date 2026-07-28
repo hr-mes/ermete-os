@@ -101,7 +101,7 @@ make INSTALL_MOD_PATH=%{buildroot} modules_install
 KREL=$(make -s kernelrelease)
 
 cp arch/x86/boot/bzImage %{buildroot}/boot/vmlinuz-$KREL-chimera
-ln -snf /boot/vmlinuz-$KREL-chimera %{buildroot}/lib/modules/$KREL/vmlinuz
+ln -snf ../../../../boot/vmlinuz-$KREL-chimera %{buildroot}/lib/modules/$KREL/vmlinuz
 cp System.map %{buildroot}/boot/System.map-$KREL-chimera
 cp .config %{buildroot}/boot/config-$KREL-chimera
 
@@ -115,8 +115,8 @@ cp -a scripts %{buildroot}/usr/src/kernels/$KREL-chimera/
 # Fix the symlink in /lib/modules so it points to our new kernel-devel directory
 rm -f %{buildroot}/lib/modules/$KREL/build
 rm -f %{buildroot}/lib/modules/$KREL/source
-ln -snf /usr/src/kernels/$KREL-chimera %{buildroot}/lib/modules/$KREL/build
-ln -snf /usr/src/kernels/$KREL-chimera %{buildroot}/lib/modules/$KREL/source
+ln -snf ../../../../usr/src/kernels/$KREL-chimera %{buildroot}/lib/modules/$KREL/build
+ln -snf ../../../../usr/src/kernels/$KREL-chimera %{buildroot}/lib/modules/$KREL/source
 
 # Python shebangs are ignored by disabling bytecompile check globally
 
