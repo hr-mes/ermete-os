@@ -33,6 +33,7 @@
 %define _source_payload w1.zstdio
 
 Name:           %{pkg_name}
+Epoch:          99
 Version:        %{kernel_version}
 Release:        %{pkg_release}
 Summary:        The Ermete OS Chimera Kernel (CachyOS Base, BORE, NTSync, UKSM, LRNG, ThinLTO, -O3, x86-64-v3)
