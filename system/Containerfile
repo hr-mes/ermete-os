@@ -110,7 +110,8 @@ RUN systemctl enable systemd-sysext.service && systemd-sysusers && systemctl pre
 RUN dnf5 remove -y --no-autoremove \
         gcc make kernel-devel llvm-static rust-std-static mesa-dxil-devel \
         edk2-aarch64 qemu-user qemu-user-static distribution-gpg-keys-copr \
-        nodejs-docs glibc-all-langpacks python3-botocore && \
+        nodejs-docs glibc-all-langpacks python3-botocore kernel-debug kernel-debug-core kernel-debug-modules kernel-debug-modules-core kernel-debug-modules-extra && \
+    find /usr/lib/modules -mindepth 1 -maxdepth 1 ! -name "*-chimera" -exec rm -rf {} + && \
     rm -f /etc/machine-id && touch /etc/machine-id && \
     shopt -s nullglob && \
     rm -rf /boot/* /tmp/* /var/log/* /etc/NetworkManager/system-connections/* && \
