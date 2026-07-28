@@ -224,7 +224,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: nvidia_cache/
-          key: rpm-nvidia-bedrock5-${{ steps.kernel.outputs.kernel_ver }}-${{ steps.kernel.outputs.nvidia_ver }}
+          key: rpm-nvidia-bedrock6-${{ steps.kernel.outputs.kernel_ver }}-${{ steps.kernel.outputs.nvidia_ver }}
 
       - name: Install Dependencies and Build
         if: steps.cache.outputs['cache-hit'] != 'true'
