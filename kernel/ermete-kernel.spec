@@ -53,7 +53,12 @@ Requires:       dracut
 
 # Ensure kmod-nvidia and other modules resolve correctly when requiring exact uname -r
 Provides:       kernel-uname-r = %{krel}
-Provides:       kernel = %{krel}
+Provides:       kernel-core-uname-r = %{krel}
+Provides:       kernel-modules-uname-r = %{krel}
+Provides:       kernel = %{version}-%{release}
+Provides:       kernel-core = %{version}-%{release}
+Provides:       kernel-modules = %{version}-%{release}
+Provides:       kernel-modules-core = %{version}-%{release}
 
 %description
 The Ermete OS Chimera Kernel combines CachyOS kernel performance improvements
@@ -87,6 +92,7 @@ make -j$(nproc) bzImage modules
 %package devel
 Summary:        Development package for building kernel modules to match the %{version} kernel
 Provides:       kernel-devel = %{version}-%{release}
+Provides:       kernel-devel-matched = %{version}-%{release}
 Provides:       kernel-devel-uname-r = %{krel}
 Provides:       /bin/env
 
