@@ -188,6 +188,8 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
+      - name: Authenticate Podman to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: Resolve Kernel Version and Install Chimera Headers
         id: kernel
         run: |
