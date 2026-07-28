@@ -112,7 +112,7 @@ cp .config %{buildroot}/lib/modules/$KREL/config
 # Install kernel-devel source tree for module building
 mkdir -p %{buildroot}/usr/src/kernels/$KREL-chimera
 echo "Copying kernel headers and makefiles..."
-rsync -a --prune-empty-dirs --include '*/' --include '*.h' --include 'Makefile*' --include 'Kbuild*' --include 'Kconfig*' --include 'Module.symvers' --include '.config' --include 'scripts/***' --include 'tools/***' --exclude '*' ./ %{buildroot}/usr/src/kernels/$KREL-chimera/
+rsync -a --prune-empty-dirs --include '*/' --include '*.h' --include '*.conf' --include 'Makefile*' --include 'Kbuild*' --include 'Kconfig*' --include 'Module.symvers' --include '.config' --include 'scripts/***' --include 'tools/***' --exclude '*' ./ %{buildroot}/usr/src/kernels/$KREL-chimera/
 # Copy some missing binaries required by akmods
 cp -a scripts %{buildroot}/usr/src/kernels/$KREL-chimera/
 
