@@ -296,7 +296,7 @@ jobs:
               
               find ~/rpmbuild/RPMS -name "*.rpm" -exec cp {} /var/cache/akmods/nvidia/ \;
               
-              dnf download -y --resolve --disablerepo="rpmfusion*" --destdir=/var/cache/akmods/nvidia/ \
+              dnf download -y --disablerepo="rpmfusion*" --destdir=/var/cache/akmods/nvidia/ \
                 nvidia-driver \
                 nvidia-driver-libs \
                 nvidia-driver-cuda \
