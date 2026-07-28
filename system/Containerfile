@@ -52,6 +52,11 @@ RUN QUALIFIED_KERNEL="" && \
     done && \
     if [ -z "$QUALIFIED_KERNEL" ]; then echo "ERRORE: Nessun vmlinuz trovato in /lib/modules! Build abortita." && exit 1; fi && \
     echo "Found Chimera Kernel: ${QUALIFIED_KERNEL}" && \
+    if [ -L "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz" ]; then \
+        REAL_VMLINUZ=$(readlink -f "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz") && \
+        rm -f "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz" && \
+        cp "$REAL_VMLINUZ" "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz"; \
+    fi && \
     depmod "${QUALIFIED_KERNEL}" && \
     echo "Generazione Dinamica Initramfs per ${QUALIFIED_KERNEL}..." && \
     dracut --no-hostonly --kver "${QUALIFIED_KERNEL}" --reproducible --compress "zstd -T0 -15" -v \
