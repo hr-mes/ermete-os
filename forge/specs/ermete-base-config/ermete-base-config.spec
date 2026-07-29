@@ -29,8 +29,8 @@ find %{_sourcedir} -mindepth 1 -maxdepth 1 ! -name "*.spec" -exec cp -a {} %{bui
 /etc/pki/rpm-gpg/*
 /etc/selinux/config
 /etc/yum.repos.d/*
-/etc/systemd/system/*
-/etc/tmpfiles.d/*
+/usr/lib/systemd/system/*
+/usr/lib/tmpfiles.d/*
 /usr/bin/nvidia-sleep.sh
 /usr/lib/fedora-release
 /usr/lib/os-release

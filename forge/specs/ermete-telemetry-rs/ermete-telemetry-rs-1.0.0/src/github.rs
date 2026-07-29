@@ -35,7 +35,7 @@ impl GitHubReporter {
                 .strip_prefix("Command line:")
                 .unwrap_or("")
                 .trim();
-            let binary = cmd.split_whitespace().next().unwrap_or("unknown");
+            let binary = std::path::Path::new(cmd.split_whitespace().next().unwrap_or("unknown")).file_name().unwrap_or_default().to_string_lossy().into_owned();
             metadata.push(format!("Executable: {}", binary));
         }
         if metadata.is_empty() {

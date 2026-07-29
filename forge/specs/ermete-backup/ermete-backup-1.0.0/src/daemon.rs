@@ -2,7 +2,7 @@ use chrono::Local;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
-use std::process::Command;
+use tokio::process::Command;
 use zbus::interface;
 
 #[derive(Debug, Clone, Serialize, Deserialize, zbus::zvariant::Type)]

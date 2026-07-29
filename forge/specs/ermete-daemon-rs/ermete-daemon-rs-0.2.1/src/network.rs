@@ -158,7 +158,7 @@ impl Network {
         eap_method: String,
         ca_cert_path: String,
     ) -> fdo::Result<String> {
-        println!("[Bedrock Network] Enterprise Wi-Fi requested for SSID={}, identity={}, method={}", ssid, identity, eap_method);
+        println!("[Bedrock Network] Enterprise Wi-Fi requested for SSID={}, identity=[REDACTED], method={}", ssid, eap_method);
         let nm_settings = NmSettingsProxy::new(&self.sys_conn).await
             .map_err(|e| fdo::Error::Failed(format!("Failed to connect to NetworkManager Settings DBus: {}", e)))?;
         let dict = Self::build_enterprise_wifi_dict(&ssid, &identity, &eap_method, &ca_cert_path);

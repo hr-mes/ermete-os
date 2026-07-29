@@ -35,7 +35,7 @@ fetch_pinned() {
   echo ">>> Fetching $TARGET (Commit: $COMMIT)..."
   rm -rf "$TARGET"
   if [ "$COMMIT" = "HEAD" ]; then
-      git clone --depth 1 $BRANCH_TAG "$REPO" "$TARGET" || { echo "FATAL: Clone fallito per $REPO"; exit 1; }
+      git clone --depth 1 "$BRANCH_TAG" "$REPO" "$TARGET" || { echo "FATAL: Clone fallito per $REPO"; exit 1; }
   else
       git clone --depth 500 $BRANCH_TAG "$REPO" "$TARGET" || { echo "FATAL: Clone fallito per $REPO"; exit 1; }
       git -C "$TARGET" checkout -q "$COMMIT" || { echo "FATAL: Checkout fallito per $COMMIT"; exit 1; }

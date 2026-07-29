@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-PACKAGE=$1
+PACKAGE="${1:-}"
 if [ -z "$PACKAGE" ]; then
     echo "Uso: $0 <nome-pacchetto-forgia> (es. gatekeeper-rs, shell-rs)"
     exit 1

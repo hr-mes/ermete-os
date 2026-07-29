@@ -31,8 +31,8 @@ case "$1" in
             exit 0
         fi
 
-        echo "systemd version $systemd_version is too old to support suspend-then-hibernate with NVIDIA." 2>&1
-        echo "Please upgrade to systemd 248 or newer." 2>&1
+        echo "systemd version $systemd_version is too old to support suspend-then-hibernate with NVIDIA." >&2
+        echo "Please upgrade to systemd 248 or newer." >&2
         exit 1
         ;;
     suspend|hibernate)

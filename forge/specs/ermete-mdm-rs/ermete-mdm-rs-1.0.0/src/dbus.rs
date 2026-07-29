@@ -15,7 +15,7 @@ impl MdmIface {
         info!("Received D-Bus request to trigger LOCAL WIPE.");
 
         let sender = hdr.sender().ok_or(zbus::fdo::Error::Failed("No sender".into()))?;
-        let status = std::process::Command::new("pkcheck")
+        let status = tokio::process::Command::new("pkcheck")
             .arg("--system-bus-name")
             .arg(sender.as_str())
             .arg("--action-id")

@@ -30,7 +30,7 @@ impl GatekeeperManager {
         #[zbus(connection)] _conn: &zbus::Connection,
     ) -> zbus::fdo::Result<()> {
         let sender = hdr.sender().ok_or(zbus::fdo::Error::Failed("No sender".into()))?;
-        let status = std::process::Command::new("pkcheck")
+        let status = tokio::process::Command::new("pkcheck")
             .arg("--system-bus-name")
             .arg(sender.as_str())
             .arg("--action-id")
@@ -53,7 +53,7 @@ impl GatekeeperManager {
 
             // Spawn inside Bubblewrap sandbox, then DENY original unsandboxed execution
             let target_str = target_path.to_string_lossy().to_string();
-            let sandbox_result = std::process::Command::new("bwrap")
+            let sandbox_result = tokio::process::Command::new("bwrap")
                 .arg("--unshare-all")
                 .arg("--share-net")
                 .arg("--ro-bind").arg("/usr").arg("/usr")

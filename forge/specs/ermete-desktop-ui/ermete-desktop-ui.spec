@@ -37,22 +37,22 @@ and configures UDEV for i2c access.
 
 %install
 mkdir -p %{buildroot}/etc/skel/.config/niri
-mkdir -p %{buildroot}/etc/udev/rules.d
-mkdir -p %{buildroot}/etc/skel/.config/systemd/user
+mkdir -p %{buildroot}/usr/lib/udev/rules.d
+mkdir -p %{buildroot}/usr/lib/systemd/user
 
 # Copy systemd user services
-cp -p %{_sourcedir}/etc/skel/.config/systemd/user/* %{buildroot}/etc/skel/.config/systemd/user/ || true
+cp -p %{_sourcedir}/usr/lib/systemd/user/* %{buildroot}/usr/lib/systemd/user/ || true
 
 # Copy only relevant Niri files
 cp -p %{_sourcedir}/etc/skel/.config/niri/config.kdl %{buildroot}/etc/skel/.config/niri/
 
 # Copy UDEV rules
-cp -p %{_sourcedir}/etc/udev/rules.d/99-ddcutil-i2c.rules %{buildroot}/etc/udev/rules.d/
+cp -p %{_sourcedir}/usr/lib/udev/rules.d/99-ddcutil-i2c.rules %{buildroot}/usr/lib/udev/rules.d/
 
 %files
-/etc/skel/.config/systemd/user/*
+/usr/lib/systemd/user/*
 /etc/skel/.config/niri/config.kdl
-/etc/udev/rules.d/99-ddcutil-i2c.rules
+/usr/lib/udev/rules.d/99-ddcutil-i2c.rules
 
 %changelog
 * Wed Jul 15 2026 Ermete Forge <forge@ermete.os> - 1.0.0-5

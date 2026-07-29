@@ -1,7 +1,7 @@
 use zbus::{interface, Connection};
 use tracing::{info, warn, error};
 use std::collections::HashMap;
-use std::process::Command;
+use tokio::process::Command;
 
 pub struct ErmetePortal;
 

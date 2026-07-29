@@ -1,13 +1,13 @@
 #!/bin/bash
 set -euo pipefail
 
-if [ -z "$1" ]; then
+if [ $# -lt 1 ]; then
     echo "Uso: $0 <nome-pacchetto>"
     echo "Esempio: $0 niri"
     exit 1
 fi
 
-PACKAGE=$1
+PACKAGE="${1:-}"
 
 echo "========================================"
 echo "=== INIZIALIZZAZIONE AMBIENTE BEDROCK =="
@@ -27,7 +27,7 @@ echo "========================================"
 echo "=== DOWNLOAD SORGENTI ==="
 echo "========================================"
 cd "$RPMBUILD_DIR"/SRPMS
-dnf download --source $PACKAGE
+dnf download --source "$PACKAGE"
 
 echo "========================================"
 echo "=== INSTALLAZIONE DIPENDENZE E FIX ==="
@@ -59,7 +59,7 @@ find "$RPMBUILD_DIR"/RPMS -name "*.rpm"
 
 # Esportazione sulla macchina Host (se /work è montato)
 if [ -d "/work" ]; then
-    mkdir -p /work/output/$PACKAGE
+    mkdir -p /work/output/"$PACKAGE"
     cp "$RPMBUILD_DIR"/RPMS/*/*.rpm /work/output/$PACKAGE/
     echo "RPMs esportati in /work/output/$PACKAGE/"
 fi

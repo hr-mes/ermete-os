@@ -1,5 +1,5 @@
 use crate::github::GitHubReporter;
-use std::process::Command;
+use tokio::process::Command;
 use tracing::{info, warn};
 use zbus::interface;
 
