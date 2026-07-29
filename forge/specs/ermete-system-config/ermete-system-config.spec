@@ -2,14 +2,14 @@
 %global __requires_exclude ^kernel-rt$
 Name:           ermete-system-config
 Version:        1.0.0
-Release:        15%{?dist}
+Release:        16%{?dist}
 Summary:        Ermete OS ermete-system-config
 License:        MIT
 URL:            https://github.com/hr-mes/ermete-forge
 BuildArch:      noarch
 
-Requires:       cage greetd greenboot systemd-ukify usbguard
-# Core UI and Daemons
+Requires:       cage greetd greenboot systemd-ukify usbguard niri nodejs
+# Core UI andDaemons
 Requires:       ermete-shell-rs ermete-settings-rs ermete-daemon-rs
 Requires:       ermete-updater-rs ermete-store-rs ermete-telemetry-rs ermete-cloud-rs xdg-desktop-portal-ermete
 # Provide the usbguard daemon conf without RPM file conflict

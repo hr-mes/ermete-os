@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name:           ermete-system-tweaks
 Version:        1.0.0
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        Ermete OS ermete-system-tweaks
 License:        MIT
 URL:            https://github.com/hr-mes/ermete-forge
