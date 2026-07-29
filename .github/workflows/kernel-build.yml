@@ -27,10 +27,65 @@ jobs:
     - name: Checkout Source
       uses: actions/checkout@v4
       
-    - name: Build RPM Packages via Chimera Bedrock
+    - name: 🚀 Boot Isolator (Start Fedora 43 Container)
       run: |
-        chmod +x ../forge/specs/ermete-kernel/build-local.sh
-        bash ../forge/specs/ermete-kernel/build-local.sh
+        podman run -d --name chimera-builder \
+          --cap-add SYS_ADMIN \
+          --security-opt label=disable \
+          --security-opt seccomp=unconfined \
+          -v ${{ github.workspace }}:/forge \
+          -w /forge \
+          registry.fedoraproject.org/fedora:43 sleep infinity
+          
+    - name: 📦 Setup Build Environment & Toolchain
+      run: |
+        podman exec chimera-builder bash -c "
+          echo 'zchunk=False' >> /etc/dnf/dnf.conf
+          echo 'fastestmirror=True' >> /etc/dnf/dnf.conf
+          echo 'install_weak_deps=False' >> /etc/dnf/dnf.conf
+          sed -i '/tsflags=nodocs/d' /etc/dnf/dnf.conf
+          dnf install -y rpm-build rpmdevtools gcc gcc-c++ make cmake flex bison ncurses-devel elfutils-libelf-devel openssl-devel bc rsync tar wget curl cpio perl zstd git llvm clang lld ccache jq gnupg2 hostname skopeo elfutils-devel dwarves rust cargo rustfmt bindgen iproute fio
+        "
+        
+    - name: 🧬 Phase 1: Fetch, Validate & Chimera Merge
+      run: podman exec chimera-builder bash forge/specs/ermete-kernel/prepare-chimera.sh
+        
+    - name: ⚙️ Phase 2: LLVM/ThinLTO Macro Injection
+      run: |
+        podman exec chimera-builder bash -c "
+          export CCACHE_DIR=/forge/.ccache_local
+          export CCACHE_COMPRESS=1
+          export CCACHE_MAXSIZE=10G
+          cat << 'MACRO' >> ~/.rpmmacros
+        %_smp_mflags -j\$(nproc)
+        %toolchain clang
+        %__make /usr/bin/make LLVM=1 LLVM_IAS=1
+        %__cc clang
+        %__cxx clang++
+        %_build_cc clang
+        %_build_cxx clang++
+        %_host_cc clang
+        %_host_cxx clang++
+        %_ld ld.lld
+        %_ldflags -Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro -fuse-ld=lld
+        %optflags %{__global_compiler_flags} -march=x86-64-v3 -pipe -Wno-error
+        %kcflags -march=x86-64-v3 -pipe -Wno-error
+        MACRO
+        "
+        
+    - name: 🔥 Phase 3: RPMBuild (ThinLTO Absolute)
+      run: |
+        podman exec chimera-builder bash -c "
+          export PATH='/usr/lib64/ccache:/usr/lib/ccache:\$PATH'
+          cd ~/rpmbuild/SPECS
+          rpmbuild -bb --noprep kernel.spec --target x86_64 </dev/null
+          mkdir -p /forge/RPMS_OUT
+          cp ~/rpmbuild/RPMS/x86_64/*.rpm /forge/RPMS_OUT/
+        "
+        
+    - name: 🧹 Cleanup Isolator
+      if: always()
+      run: podman rm -f chimera-builder || true
           
     - name: Upload Binary RPMs
       uses: actions/upload-artifact@v4
