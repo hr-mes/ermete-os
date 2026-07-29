@@ -70,10 +70,10 @@ impl SecretEnrollerService {
                 p.push(".local/share/keyrings/tpm2.sealed");
                 p
             } else {
-                PathBuf::from(format!("/var/home/{}/.local/share/keyrings/tpm2.sealed", username))
+                PathBuf::from(format!("/home/{}/.local/share/keyrings/tpm2.sealed", username))
             }
         } else {
-            PathBuf::from(format!("/var/home/{}/.local/share/keyrings/tpm2.sealed", username))
+            PathBuf::from(format!("/home/{}/.local/share/keyrings/tpm2.sealed", username))
         }
     }
 

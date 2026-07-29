@@ -4,6 +4,11 @@ Documentation=https://github.com/hr-mes/ermete-forge
 PartOf=multi-user.target
 
 [Service]
+CPUWeight=20
+IOWeight=20
+MemoryHigh=384M
+MemoryMax=512M
+OOMScoreAdjust=300
 Type=simple
 ExecStart=/usr/bin/ermete-backup-daemon
 Restart=always

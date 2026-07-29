@@ -39,6 +39,9 @@ After=network-online.target dbus.service graphical.target
 Requires=dbus.service
 
 [Service]
+CPUWeight=20
+MemoryMax=256M
+OOMScoreAdjust=400
 Type=dbus
 BusName=os.ermete.Telemetry
 ExecStart=%{_bindir}/%{name}

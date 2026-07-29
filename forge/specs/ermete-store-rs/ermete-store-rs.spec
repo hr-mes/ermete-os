@@ -41,6 +41,10 @@ After=network-online.target dbus.service
 Requires=dbus.service
 
 [Service]
+CPUWeight=50
+MemoryHigh=512M
+MemoryMax=768M
+OOMScoreAdjust=200
 Type=dbus
 BusName=os.ermete.Store
 ExecStart=%{_bindir}/%{name}

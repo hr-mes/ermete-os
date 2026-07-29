@@ -3,6 +3,7 @@ Description=NVIDIA system suspend actions
 Before=systemd-suspend.service
 
 [Service]
+MemoryMax=128M
 Type=oneshot
 ExecStart=/usr/bin/logger -t suspend -s "nvidia-suspend.service"
 ExecStart=/usr/bin/nvidia-sleep.sh "suspend"

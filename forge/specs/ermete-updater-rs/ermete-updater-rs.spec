@@ -42,6 +42,11 @@ After=network-online.target dbus.service
 Requires=dbus.service
 
 [Service]
+CPUWeight=30
+IOWeight=30
+MemoryHigh=768M
+MemoryMax=1G
+OOMScoreAdjust=200
 Type=dbus
 BusName=os.ermete.Updater
 ExecStart=%{_bindir}/%{name}

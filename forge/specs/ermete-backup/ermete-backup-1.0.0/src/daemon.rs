@@ -20,7 +20,7 @@ pub struct BackupServer {
 
 impl BackupServer {
     pub fn new() -> Self {
-        let home = std::env::var("HOME").unwrap_or_else(|_| "/var/home/ermete".to_string());
+        let home = std::env::var("HOME").unwrap_or_else(|_| dirs::home_dir().unwrap_or(std::path::PathBuf::from("/home")).to_string_lossy().into_owned().to_string());
         let mut path = PathBuf::from(&home);
         path.push(".snapshots");
         let _ = fs::create_dir_all(&path);
@@ -41,7 +41,7 @@ impl BackupServer {
         let id = format!("snap-{}", now.format("%Y%m%d-%H%M%S"));
         let timestamp = now.format("%d/%m/%Y %H:%M:%S").to_string();
 
-        let home = std::env::var("HOME").unwrap_or_else(|_| "/var/home/ermete".to_string());
+        let home = std::env::var("HOME").unwrap_or_else(|_| dirs::home_dir().unwrap_or(std::path::PathBuf::from("/home")).to_string_lossy().into_owned().to_string());
         let mut target_dir = self.snapshot_dir.clone();
         target_dir.push(&id);
 
@@ -122,7 +122,7 @@ impl BackupServer {
             return false;
         }
 
-        let home = std::env::var("HOME").unwrap_or_else(|_| "/var/home/ermete".to_string());
+        let home = std::env::var("HOME").unwrap_or_else(|_| dirs::home_dir().unwrap_or(std::path::PathBuf::from("/home")).to_string_lossy().into_owned().to_string());
 
         let _del_status = Command::new("btrfs")
             .args(["subvolume", "delete", &home])

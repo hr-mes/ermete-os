@@ -3,6 +3,10 @@ Description=Ermete Generative UI Agent
 PartOf=graphical-session.target
 
 [Service]
+CPUWeight=60
+MemoryHigh=768M
+MemoryMax=1024M
+OOMScoreAdjust=200
 ExecStart=/usr/libexec/ermete-ui-agent/agent.py
 Restart=always
 

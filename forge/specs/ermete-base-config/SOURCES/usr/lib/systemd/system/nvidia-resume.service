@@ -5,6 +5,7 @@ After=systemd-hibernate.service
 After=systemd-suspend-then-hibernate.service
 
 [Service]
+MemoryMax=128M
 Type=oneshot
 ExecStart=/usr/bin/logger -t suspend -s "nvidia-resume.service"
 ExecStart=/usr/bin/nvidia-sleep.sh "resume"

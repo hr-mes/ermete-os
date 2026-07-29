@@ -6,6 +6,9 @@ After=graphical-session.target ermete-skel-sync.service
 PartOf=graphical-session.target
 
 [Service]
+CPUWeight=200
+MemoryMax=1024M
+OOMScoreAdjust=-500
 Type=simple
 Slice=session.slice
 ExecStart=/usr/bin/ermete-shell-rs

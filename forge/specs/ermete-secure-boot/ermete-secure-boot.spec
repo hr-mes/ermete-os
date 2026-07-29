@@ -32,6 +32,8 @@ Description=Ermete OS Measured Boot & UKI Signer
 ConditionPathExists=/etc/keys/ermete-secure-boot.key
 
 [Service]
+CPUWeight=50
+MemoryMax=512M
 Type=oneshot
 ExecStart=%{_libexecdir}/ermete-secure-boot-measure.sh
 RemainAfterExit=yes

@@ -5,6 +5,8 @@ Before=ermete-shell.service ermete-wallpaper.service niri-session.target
 DefaultDependencies=no
 
 [Service]
+CPUWeight=50
+MemoryMax=128M
 Type=oneshot
 ExecStart=/usr/bin/bash -c 'cp -n -R /etc/skel/. "$HOME/" 2>/dev/null || true'
 RemainAfterExit=yes

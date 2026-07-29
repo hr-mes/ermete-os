@@ -5,6 +5,9 @@ After=systemd-user-sessions.service plymouth-quit-wait.service
 Conflicts=getty@tty9.service
 
 [Service]
+CPUWeight=100
+MemoryMax=1024M
+OOMScoreAdjust=-100
 Type=simple
 ExecStart=/usr/bin/cage -s -m last -- /usr/bin/ermete-recovery-ui
 Restart=on-failure

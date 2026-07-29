@@ -44,7 +44,7 @@ fn get_snapshots() -> Vec<SnapshotInfo> {
         }
     }
     // Fallback: direct filesystem read if DBus service is offline
-    let home = std::env::var("HOME").unwrap_or_else(|_| "/var/home/ermete".to_string());
+    let home = std::env::var("HOME").unwrap_or_else(|_| dirs::home_dir().unwrap_or(std::path::PathBuf::from("/home")).to_string_lossy().into_owned().to_string());
     let mut path = PathBuf::from(&home);
     path.push(".snapshots");
     let mut list = Vec::new();

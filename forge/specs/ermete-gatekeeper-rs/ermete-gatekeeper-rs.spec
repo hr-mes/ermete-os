@@ -36,6 +36,9 @@ Description=Ermete OS Zero-Trust Gatekeeper
 After=network.target
 
 [Service]
+CPUWeight=150
+MemoryMax=256M
+OOMScoreAdjust=-200
 Type=simple
 ExecStart=%{_bindir}/%{name}
 Restart=on-failure

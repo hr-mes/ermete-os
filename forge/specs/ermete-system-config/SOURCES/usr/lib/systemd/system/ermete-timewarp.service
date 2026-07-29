@@ -4,5 +4,7 @@ Documentation=man:btrfs(8)
 ConditionPathExists=/usr/libexec/ermete-snapshot-trigger.sh
 
 [Service]
+CPUWeight=50
+MemoryMax=128M
 Type=oneshot
 ExecStart=/usr/libexec/ermete-snapshot-trigger.sh

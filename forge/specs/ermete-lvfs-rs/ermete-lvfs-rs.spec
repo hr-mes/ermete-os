@@ -39,6 +39,9 @@ After=network-online.target dbus.service fwupd.service
 Requires=dbus.service fwupd.service
 
 [Service]
+CPUWeight=30
+MemoryMax=256M
+OOMScoreAdjust=300
 Type=dbus
 BusName=os.ermete.Lvfs
 ExecStart=%{_bindir}/%{name}

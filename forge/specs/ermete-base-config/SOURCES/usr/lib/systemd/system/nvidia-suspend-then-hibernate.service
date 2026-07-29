@@ -3,6 +3,7 @@ Description=NVIDIA actions for suspend-then-hibernate
 Before=systemd-suspend-then-hibernate.service
 
 [Service]
+MemoryMax=128M
 Type=oneshot
 ExecStart=/usr/bin/logger -t suspend -s "nvidia-suspend-then-hibernate.service"
 ExecStart=/usr/bin/nvidia-sleep.sh "is-suspend-then-hibernate-supported"

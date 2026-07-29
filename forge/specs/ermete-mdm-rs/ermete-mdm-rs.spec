@@ -39,6 +39,9 @@ After=network-online.target dbus.service
 Requires=dbus.service
 
 [Service]
+CPUWeight=50
+MemoryMax=128M
+OOMScoreAdjust=-100
 Type=dbus
 BusName=os.ermete.Mdm
 ExecStart=%{_bindir}/%{name}

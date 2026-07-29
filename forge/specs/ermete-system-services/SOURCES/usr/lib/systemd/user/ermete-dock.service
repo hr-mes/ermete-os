@@ -6,6 +6,9 @@ After=graphical-session.target ermete-shell.service
 PartOf=graphical-session.target
 
 [Service]
+CPUWeight=150
+MemoryMax=512M
+OOMScoreAdjust=-300
 Type=simple
 Slice=session.slice
 ExecStart=/usr/bin/ermete-shell-rs --dock

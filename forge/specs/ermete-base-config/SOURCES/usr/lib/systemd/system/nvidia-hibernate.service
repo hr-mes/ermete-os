@@ -3,6 +3,7 @@ Description=NVIDIA system hibernate actions
 Before=systemd-hibernate.service
 
 [Service]
+MemoryMax=128M
 Type=oneshot
 ExecStart=/usr/bin/logger -t hibernate -s "nvidia-hibernate.service"
 ExecStart=/usr/bin/nvidia-sleep.sh "hibernate"

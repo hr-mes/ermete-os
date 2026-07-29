@@ -39,6 +39,9 @@ After=network-online.target dbus.service graphical.target
 Requires=dbus.service
 
 [Service]
+CPUWeight=50
+MemoryMax=512M
+OOMScoreAdjust=100
 Type=dbus
 BusName=os.ermete.Cloud
 ExecStart=%{_bindir}/%{name}
