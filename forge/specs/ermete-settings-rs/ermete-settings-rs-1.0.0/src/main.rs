@@ -87,7 +87,7 @@ impl SimpleComponent for AppModel {
             ("desktop", "Desktop & Dock", crate::pages::desktop::build_page),
             ("displays", "Schermi", crate::pages::displays::build_page),
             ("ecosystem", "Ecosistema", crate::pages::ecosystem::build_page),
-            ("labs", "Ermete Labs", crate::pages::labs::build_page),
+
             ("updates", "Aggiornamenti", crate::pages::updates::build_page),
             ("battery", "Batteria", crate::pages::battery::build_page),
             ("keyboard", "Tastiera", crate::pages::keyboard::build_page),

@@ -24,6 +24,9 @@ Systemd presets, custom Plymouth/GDM branding, Polkit rules, and GPG keys.
 %install
 mkdir -p %{buildroot}
 find %{_sourcedir} -mindepth 1 -maxdepth 1 ! -name "*.spec" -exec cp -a {} %{buildroot}/ \;
+mkdir -p %{buildroot}/usr/lib/tmpfiles.d
+mv %{buildroot}/etc/tmpfiles.d/* %{buildroot}/usr/lib/tmpfiles.d/
+rm -rf %{buildroot}/etc/tmpfiles.d
 
 %files
 /etc/pki/rpm-gpg/*

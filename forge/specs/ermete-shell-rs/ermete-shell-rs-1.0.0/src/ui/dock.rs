@@ -115,14 +115,13 @@ struct DockMonitorInstance {
     container: GtkBox,
     trigger_win: glib::WeakRef<ApplicationWindow>,
     state: Rc<RefCell<DockState>>,
-    spring: Rc<crate::core::spring::SpringAnimator>,
 }
 
 thread_local! {
     static DOCK_INSTANCES: RefCell<Vec<DockMonitorInstance>> = RefCell::new(Vec::new());
 }
 
-fn animate_dock_visibility(container: &GtkBox, _spring: &crate::core::spring::SpringAnimator, hide: bool) {
+fn animate_dock_visibility(container: &GtkBox, hide: bool) {
     if hide {
         if !container.has_css_class("dock-hidden") {
             container.add_css_class("dock-hidden");
@@ -337,17 +336,14 @@ fn create_dock_for_monitor(
         is_hovered: false,
     }));
 
-    let spring = Rc::new(crate::core::spring::SpringAnimator::new(0.0, crate::core::spring::SpringConfig::default()));
-
     let motion_trigger = EventControllerMotion::new();
     let container_weak = container.downgrade();
     let window_weak = window.downgrade();
     let state_trig = state.clone();
-    let spring_trig = spring.clone();
     motion_trigger.connect_enter(move |_, _, _| {
         state_trig.borrow_mut().is_hovered = true;
         if let Some(cont) = container_weak.upgrade() {
-            animate_dock_visibility(&cont, &spring_trig, false);
+            animate_dock_visibility(&cont, false);
         }
         if let Some(win) = window_weak.upgrade() {
             win.present();
@@ -359,11 +355,10 @@ fn create_dock_for_monitor(
     let container_weak_win = container.downgrade();
     let window_weak_win = window.downgrade();
     let state_trig_win = state.clone();
-    let spring_trig_win = spring.clone();
     motion_trig_win.connect_enter(move |_, _, _| {
         state_trig_win.borrow_mut().is_hovered = true;
         if let Some(cont) = container_weak_win.upgrade() {
-            animate_dock_visibility(&cont, &spring_trig_win, false);
+            animate_dock_visibility(&cont, false);
         }
         if let Some(win) = window_weak_win.upgrade() {
             win.present();
@@ -374,11 +369,10 @@ fn create_dock_for_monitor(
     let motion_dock_enter = EventControllerMotion::new();
     let container_weak_enter = container.downgrade();
     let state_enter = state.clone();
-    let spring_enter = spring.clone();
     motion_dock_enter.connect_enter(move |_, _, _| {
         state_enter.borrow_mut().is_hovered = true;
         if let Some(cont) = container_weak_enter.upgrade() {
-            animate_dock_visibility(&cont, &spring_enter, false);
+            animate_dock_visibility(&cont, false);
         }
     });
     container.add_controller(motion_dock_enter);
@@ -387,17 +381,15 @@ fn create_dock_for_monitor(
     let container_weak_leave = container.downgrade();
     let state_leave = state.clone();
     let connector_clone = connector.clone();
-    let spring_leave = spring.clone();
     motion_dock_leave.connect_leave(move |_| {
         state_leave.borrow_mut().is_hovered = false;
         let cont_weak = container_weak_leave.clone();
         let st = state_leave.clone();
         let conn = connector_clone.clone();
-        let spr = spring_leave.clone();
         glib::timeout_add_local(std::time::Duration::from_millis(300), move || {
             if let Some(cont) = cont_weak.upgrade() {
                 if !st.borrow().is_hovered && should_autohide_for_monitor(&st.borrow(), &conn, screen_height) {
-                    animate_dock_visibility(&cont, &spr, true);
+                    animate_dock_visibility(&cont, true);
                 }
             }
             glib::ControlFlow::Break
@@ -409,17 +401,15 @@ fn create_dock_for_monitor(
     let container_weak_trig_leave = container.downgrade();
     let state_trig_leave = state.clone();
     let connector_clone2 = connector.clone();
-    let spring_trig_leave = spring.clone();
     motion_trig_leave.connect_leave(move |_| {
         state_trig_leave.borrow_mut().is_hovered = false;
         let cont_weak = container_weak_trig_leave.clone();
         let st = state_trig_leave.clone();
         let conn = connector_clone2.clone();
-        let spr = spring_trig_leave.clone();
         glib::timeout_add_local(std::time::Duration::from_millis(300), move || {
             if let Some(cont) = cont_weak.upgrade() {
                 if !st.borrow().is_hovered && should_autohide_for_monitor(&st.borrow(), &conn, screen_height) {
-                    animate_dock_visibility(&cont, &spr, true);
+                    animate_dock_visibility(&cont, true);
                 }
             }
             glib::ControlFlow::Break
@@ -436,7 +426,6 @@ fn create_dock_for_monitor(
         container: container.clone(),
         trigger_win: trigger_win.downgrade(),
         state,
-        spring,
     };
     refresh_monitor_instance(&mut inst);
     window.present();
@@ -455,8 +444,8 @@ pub fn toggle_dock_visibility() {
             if let Some(win) = inst.window.upgrade() {
                 win.set_visible(true);
                 win.present();
-                let is_hidden = inst.spring.value() > 0.5 || inst.container.has_css_class("dock-hidden");
-                animate_dock_visibility(&inst.container, &inst.spring, !is_hidden);
+                let is_hidden = inst.container.has_css_class("dock-hidden");
+                animate_dock_visibility(&inst.container, !is_hidden);
             }
         }
     });
@@ -568,7 +557,7 @@ fn refresh_monitor_instance(inst: &mut DockMonitorInstance) {
     }
 
     let should_hide = !state.is_hovered && should_autohide_for_monitor(&state, &inst.monitor_connector, inst.screen_height);
-    animate_dock_visibility(&inst.container, &inst.spring, should_hide);
+    animate_dock_visibility(&inst.container, should_hide);
 }
 
 fn show_window_picker_popover(anchor: &Button, item: &DockItem) {

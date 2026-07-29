@@ -48,9 +48,9 @@ impl BackupServer {
         println!("[BackupDaemon] Creating Btrfs CoW snapshot of {} at {:?}", home, target_dir);
         let status = Command::new("btrfs")
             .args(["subvolume", "snapshot", "-r", &home, target_dir.to_str().unwrap_or("")])
-            .status();
+            .status().await;
 
-        if status.is_err() || !status.as_ref().unwrap().success() {
+        if status.is_err() || !status.unwrap().success() {
             println!("[BackupDaemon] Btrfs subvolume snapshot command failed or unsupported on current fs. Creating manifest snapshot dir.");
             let _ = fs::create_dir_all(&target_dir);
         }
@@ -98,9 +98,9 @@ impl BackupServer {
         println!("[BackupDaemon] Deleting Btrfs subvolume snapshot {:?}", target_dir);
         let status = Command::new("btrfs")
             .args(["subvolume", "delete", target_dir.to_str().unwrap_or("")])
-            .status();
+            .status().await;
 
-        if status.is_err() || !status.as_ref().unwrap().success() {
+        if status.is_err() || !status.unwrap().success() {
             let _ = fs::remove_dir_all(&target_dir);
         }
 
@@ -126,12 +126,12 @@ impl BackupServer {
 
         let _del_status = Command::new("btrfs")
             .args(["subvolume", "delete", &home])
-            .status();
+            .status().await;
         let status = Command::new("btrfs")
             .args(["subvolume", "snapshot", target_dir.to_str().unwrap_or(""), &home])
-            .status();
+            .status().await;
 
-        if status.is_err() || !status.as_ref().unwrap().success() {
+        if status.is_err() || !status.unwrap().success() {
             println!("[BackupDaemon] Btrfs subvolume restore failed.");
             return false;
         }

@@ -15,6 +15,7 @@ name = "ermete-backup-ui"
 path = "src/ui.rs"
 
 [dependencies]
+dirs = "5.0"
 gtk4 = "0.7"
 glib = "0.18"
 zbus = { version = "4.0", default-features = false, features = ["tokio"] }

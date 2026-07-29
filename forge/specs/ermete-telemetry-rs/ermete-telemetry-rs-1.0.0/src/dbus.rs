@@ -28,7 +28,7 @@ impl TelemetryIface {
             .arg(&crash_id)
             .output();
 
-        let dump_data = match output {
+        let dump_data = match output.await {
             Ok(out) if out.status.success() => String::from_utf8_lossy(&out.stdout).to_string(),
             Ok(out) => {
                 warn!(

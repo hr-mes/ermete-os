@@ -25,7 +25,7 @@ mkdir -p %{buildroot}/usr/lib/sysctl.d
 
 cp -a %{_sourcedir}/usr/lib/environment.d/10-ermete-wayland.conf %{buildroot}/usr/lib/environment.d/
 cp -a %{_sourcedir}/usr/share/pipewire/pipewire.conf.d/10-low-latency.conf %{buildroot}/usr/share/pipewire/pipewire.conf.d/
-cp -a %{_sourcedir}/usr/share/polkit-1/rules.d/10-ermete-wheel-admin.rules %{buildroot}/usr/share/polkit-1/rules.d/
+cp -a %{_sourcedir}/etc/polkit-1/rules.d/10-ermete-wheel-admin.rules %{buildroot}/usr/share/polkit-1/rules.d/
 cp -a %{_sourcedir}/usr/lib/sysctl.d/99-bore.conf %{buildroot}/usr/lib/sysctl.d/
 
 %post

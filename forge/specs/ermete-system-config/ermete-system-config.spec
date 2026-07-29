@@ -13,7 +13,7 @@ Requires: cage greetd greenboot systemd-ukify niri nodejs
 Requires: ermete-shell-rs ermete-settings-rs ermete-daemon-rs
 Requires: ermete-updater-rs ermete-store-rs ermete-telemetry-rs ermete-cloud-rs xdg-desktop-portal-ermete
 # Provide the usbguard daemon conf without RPM file conflict
-Requires:
+
 Requires:       btrfs-progs
 %description
 Provides ermete-system-config for Ermete OS.

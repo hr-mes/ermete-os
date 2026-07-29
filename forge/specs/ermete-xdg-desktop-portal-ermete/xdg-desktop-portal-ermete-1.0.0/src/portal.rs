@@ -19,7 +19,7 @@ impl ErmetePortal {
             .arg(format!("{}:{}", resource, app_id))
             .status();
 
-        match status {
+        match status.await {
             Ok(exit_status) => {
                 let granted = exit_status.success();
                 if granted {

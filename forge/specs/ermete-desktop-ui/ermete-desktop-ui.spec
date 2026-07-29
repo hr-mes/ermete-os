@@ -40,17 +40,13 @@ mkdir -p %{buildroot}/etc/skel/.config/niri
 mkdir -p %{buildroot}/usr/lib/udev/rules.d
 mkdir -p %{buildroot}/usr/lib/systemd/user
 
-# Copy systemd user services
-cp -p %{_sourcedir}/usr/lib/systemd/user/* %{buildroot}/usr/lib/systemd/user/ || true
-
 # Copy only relevant Niri files
 cp -p %{_sourcedir}/etc/skel/.config/niri/config.kdl %{buildroot}/etc/skel/.config/niri/
 
 # Copy UDEV rules
-cp -p %{_sourcedir}/usr/lib/udev/rules.d/99-ddcutil-i2c.rules %{buildroot}/usr/lib/udev/rules.d/
+cp -p %{_sourcedir}/etc/udev/rules.d/99-ddcutil-i2c.rules %{buildroot}/usr/lib/udev/rules.d/
 
 %files
-/usr/lib/systemd/user/*
 /etc/skel/.config/niri/config.kdl
 /usr/lib/udev/rules.d/99-ddcutil-i2c.rules
 
