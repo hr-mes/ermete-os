@@ -7,7 +7,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Print Env
         run: |
-          docker run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+          podman run --runtime=runc -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
             ghcr.io/hr-mes/ermete-os-builder:latest \
