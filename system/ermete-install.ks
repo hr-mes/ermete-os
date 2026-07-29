@@ -14,12 +14,11 @@ bootloader --append="quiet splash fastboot"
 ostreecontainer --url=ghcr.io/hr-mes/ermete-os-system:latest --transport=registry
 
 # Security Hardening: No cleartext root password, strictly SSH Keys
-# WARNING: Replace ALL placeholder values below before production deployment
+# Template variables: Must be substituted via envsubst or build script before production ISO creation
 rootpw --lock
-user --name=hermes --groups=wheel --password=$6$REPLACE_WITH_SECURE_HASH --iscrypted
-# TODO: Replace with actual SSH public keys
-sshkey --username hermes "ssh-ed25519 REPLACE_WITH_ACTUAL_SSH_PUBLIC_KEY"
-sshkey --username root "ssh-ed25519 REPLACE_WITH_ACTUAL_SSH_PUBLIC_KEY"
+user --name=hermes --groups=wheel --password=@HERMES_PASSWORD_HASH@ --iscrypted
+sshkey --username hermes "@HERMES_SSH_KEY@"
+sshkey --username root "@ROOT_SSH_KEY@"
 
 firewall --enabled --default=drop --service=ssh
 services --enabled=sshd

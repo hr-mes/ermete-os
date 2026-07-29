@@ -32,6 +32,45 @@
     "lvfs-rs",
     "ui-agent"
   ],
+  "custom_tier0": [
+    "base-config",
+    "selinux",
+    "nix-support",
+    "secure-boot"
+  ],
+  "custom_tier1": [
+    "starship",
+    "bat",
+    "ananicy",
+    "cliphist",
+    "ide-bootstrap",
+    "system-tweaks",
+    "niri"
+  ],
+  "custom_tier2": [
+    "bibata",
+    "matugen",
+    "dart-sass"
+  ],
+  "custom_tier3": [
+    "shell-rs",
+    "settings-rs",
+    "daemon-rs",
+    "store-rs",
+    "doctor",
+    "system-services",
+    "desktop-ui",
+    "system-config",
+    "backup",
+    "gatekeeper-rs",
+    "telemetry-rs",
+    "cloud-rs",
+    "mdm-rs",
+    "updater-rs",
+    "xdg-desktop-portal-ermete",
+    "lvfs-rs",
+    "ui-agent"
+  ],
   "cachyos_addons": [],
   "upstream_core": [
     "brightnessctl",

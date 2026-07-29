@@ -14,6 +14,14 @@ echo "=== INIZIALIZZAZIONE AMBIENTE BEDROCK =="
 echo "========================================"
 sudo dnf install -y rpm-build dnf-plugins-core rpmdevtools
 RPMBUILD_DIR=$(mktemp -d)
+RPMMACROS_BAK=$(mktemp)
+if [ -f ~/.rpmmacros ]; then
+    cp ~/.rpmmacros "$RPMMACROS_BAK"
+    trap 'rm -rf "$RPMBUILD_DIR"; cp "$RPMMACROS_BAK" ~/.rpmmacros; rm -f "$RPMMACROS_BAK"' EXIT
+else
+    trap 'rm -rf "$RPMBUILD_DIR"; rm -f ~/.rpmmacros; rm -f "$RPMMACROS_BAK"' EXIT
+fi
+
 echo "%_topdir $RPMBUILD_DIR" > ~/.rpmmacros
 cat "$(dirname "$0")/../config/rpmmacros" >> ~/.rpmmacros
 mkdir -p "$RPMBUILD_DIR"/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
@@ -34,8 +42,6 @@ echo "=== INSTALLAZIONE DIPENDENZE E FIX ==="
 echo "========================================"
 sudo dnf builddep -y *.src.rpm
 
-
-
 echo "========================================"
 echo "=== ESTRAZIONE E INIEZIONE PONYTAIL ==="
 echo "========================================"
@@ -54,13 +60,13 @@ rpmbuild -bb --nocheck "$RPMBUILD_DIR"/SPECS/*.spec
 
 echo "=================================================="
 echo "🎯 PACCHETTO ROLLING '$PACKAGE' COMPILATO CON SUCCESSO! 🎯"
-echo "I file RPM generati si trovano in "$RPMBUILD_DIR"/RPMS/"
+echo "I file RPM generati si trovano in \"$RPMBUILD_DIR\"/RPMS/"
 find "$RPMBUILD_DIR"/RPMS -name "*.rpm"
 
 # Esportazione sulla macchina Host (se /work è montato)
 if [ -d "/work" ]; then
-    mkdir -p /work/output/"$PACKAGE"
-    cp "$RPMBUILD_DIR"/RPMS/*/*.rpm /work/output/$PACKAGE/
+    mkdir -p "/work/output/$PACKAGE"
+    cp "$RPMBUILD_DIR"/RPMS/*/*.rpm "/work/output/$PACKAGE/"
     echo "RPMs esportati in /work/output/$PACKAGE/"
 fi
 echo "=================================================="

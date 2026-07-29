@@ -28,12 +28,6 @@ clean:
     rm -f output.env
     rm -f output/
 
-# Sudo Clean Repo
-[group('Utility')]
-[private]
-sudo-clean:
-    sudo just clean
-
 # Build the image using the specified parameters
 build $target_image=image_name $tag=default_tag:
     #!/usr/bin/env bash
@@ -63,7 +57,7 @@ _build-bib $target_image $tag $type:
     args+="--rootfs=btrfs "
     args+="--config /config.toml"
 
-    BUILDTMP=$(mktemp -p "$HOME" -d -t _build-bib.XXXXXXXXXX)
+    BUILDTMP=$(mktemp -d -t _build-bib.XXXXXXXXXX)
 
     sudo podman run \
       --rm \
@@ -169,3 +163,16 @@ format:
     fi
     # Run shfmt on all Bash scripts
     /usr/bin/find . -iname "*.sh" -type f -exec shfmt --write "{}" +
+
+# Runs cargo test on all Rust components
+[group('Utility')]
+test:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Running Rust unit tests across all forge specs..."
+    find ../forge/specs -name "Cargo.toml" -type f | while read -r cargo_file; do
+        dir=$(dirname "$cargo_file")
+        echo "Testing $dir..."
+        (cd "$dir" && cargo test --quiet) || exit 1
+    done
+    echo "All unit tests passed successfully."

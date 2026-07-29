@@ -49,7 +49,6 @@ jobs:
           update_spec "starship/starship" "specs/ermete-starship/ermete-starship.spec"
           update_spec "InioX/matugen" "specs/ermete-matugen/ermete-matugen.spec"
           update_spec "ful1e5/Bibata_Cursor" "specs/ermete-bibata/ermete-bibata.spec"
-          update_spec "Aylur/astal" "specs/ermete-astal/aylurs-gtk-shell2/aylurs-gtk-shell2.spec"
           
           if [ "$UPDATED" -eq 1 ]; then
             git config --global user.name "Ermete Forge Bot"

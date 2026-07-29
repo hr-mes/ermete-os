@@ -87,7 +87,6 @@ impl SimpleComponent for AppModel {
             ("desktop", "Desktop & Dock", crate::pages::desktop::build_page),
             ("displays", "Schermi", crate::pages::displays::build_page),
             ("ecosystem", "Ecosistema", crate::pages::ecosystem::build_page),
-
             ("updates", "Aggiornamenti", crate::pages::updates::build_page),
             ("battery", "Batteria", crate::pages::battery::build_page),
             ("keyboard", "Tastiera", crate::pages::keyboard::build_page),
@@ -96,10 +95,37 @@ impl SimpleComponent for AppModel {
             ("privacy", "Privacy & Sicurezza", crate::pages::privacy::build_page),
         ];
 
+        let target_page = model.initial_page.as_deref().unwrap_or("wifi");
+
+        // Lazy Loading Architecture: create wrapper containers for all tabs,
+        // build only active initial target page upfront
         for (id, title, build_fn) in pages {
-            let page_widget = build_fn();
-            widgets.stack.add_titled(&page_widget, Some(id), title);
+            let container = gtk4::Box::new(gtk4::Orientation::Vertical, 0);
+            container.set_hexpand(true);
+            container.set_vexpand(true);
+
+            if *id == target_page {
+                let page_widget = build_fn();
+                container.append(&page_widget);
+            }
+            widgets.stack.add_titled(&container, Some(id), title);
         }
+
+        // Connect lazy page builder on stack tab switch
+        widgets.stack.connect_visible_child_name_notify(move |stack| {
+            if let Some(name) = stack.visible_child_name() {
+                if let Some((_, _, build_fn)) = pages.iter().find(|(id, _, _)| *id == name.as_str()) {
+                    if let Some(child) = stack.child_by_name(&name) {
+                        if let Ok(container) = child.downcast::<gtk4::Box>() {
+                            if container.first_child().is_none() {
+                                let real_page = build_fn();
+                                container.append(&real_page);
+                            }
+                        }
+                    }
+                }
+            }
+        });
 
         // Selezione pagina iniziale da argomenti CLI (--page=...)
         if let Some(ref page_id) = model.initial_page {

@@ -32,6 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       custom_packages: ${{ steps.brain.outputs.custom_packages }}
+      upstream_packages: ${{ steps.brain.outputs.upstream_packages }}
       upstream_core: ${{ steps.brain.outputs.upstream_core }}
       upstream_desktop: ${{ steps.brain.outputs.upstream_desktop }}
       upstream_media: ${{ steps.brain.outputs.upstream_media }}
@@ -122,8 +123,6 @@ jobs:
             -w /workspace/forge \
             ghcr.io/hr-mes/ermete-os-builder:latest \
             bash <<'EOF'
-            sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
-            dnf install -y rpm-build rpmdevtools gcc gcc-c++ cargo rust cmake mold tar xz curl pkgconf-pkg-config zlib-devel openssl-devel checkpolicy policycoreutils spdlog-devel systemd-devel nlohmann-json-devel fmt-devel which autoconf automake libtool cargo-rpm-macros clang clang-devel speech-dispatcher-devel
             cp config/rpmmacros ~/.rpmmacros
             rpmdev-setuptree
           
@@ -342,16 +341,15 @@ jobs:
 
 
 
-  upstream-core:
+  upstream-packages:
     needs: [build-builder, orchestrator-brain]
-    if: needs.orchestrator-brain.outputs.upstream_core != '[]' && needs.orchestrator-brain.outputs.upstream_core != ''
-    name: 📦 Upstream Core
-
+    if: needs.orchestrator-brain.outputs.upstream_packages != '[]' && needs.orchestrator-brain.outputs.upstream_packages != ''
+    name: 📦 Upstream Packages
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        package: ${{ fromJson(needs.orchestrator-brain.outputs.upstream_core) }}
+        package: ${{ fromJson(needs.orchestrator-brain.outputs.upstream_packages) }}
     permissions:
       contents: read
       packages: write
@@ -365,7 +363,6 @@ jobs:
       - name: Calculate Hash
         id: hash
         run: echo "hash=${{ hashFiles('config/rpmmacros') }}" >> $GITHUB_OUTPUT
-        
 
       - name: Check Idempotency (Content Hash)
         id: check_idempotency
@@ -390,8 +387,6 @@ jobs:
             -w /workspace/forge \
             ghcr.io/hr-mes/ermete-os-builder:latest \
             bash <<'EOF'
-            sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
-            dnf install -y rpm-build dnf-plugins-core rpmdevtools mold gcc-c++ which autoconf automake libtool
             cp config/rpmmacros ~/.rpmmacros
             rpmdev-setuptree
             cd ~/rpmbuild/SRPMS
@@ -414,8 +409,10 @@ jobs:
             echo "--- Estrazione SRPM per applicare Ponytail Ultra ---"
             rpm -ivh *.src.rpm
           
-            echo "--- Patching ffmpeg spec per rimuovere noopenh264 ---"
-            sed -i -e 's/pkgconfig(openh264)/openh264-devel/g' -e 's/noopenh264-devel/openh264-devel/g' -e 's/noopenh264/openh264/g' ~/rpmbuild/SPECS/*.spec
+            if [ "${{ matrix.package }}" = "ffmpeg" ]; then
+              echo "--- Patching ffmpeg spec per rimuovere noopenh264 ---"
+              sed -i -e 's/pkgconfig(openh264)/openh264-devel/g' -e 's/noopenh264-devel/openh264-devel/g' -e 's/noopenh264/openh264/g' ~/rpmbuild/SPECS/*.spec
+            fi
           
             echo "--- Risoluzione Dipendenze Estrema (su SPEC) ---"
             dnf builddep -y --allowerasing ~/rpmbuild/SPECS/*.spec
@@ -456,355 +453,12 @@ jobs:
           buildah commit --omit-timestamp $ctr $IMAGE_LOWER:latest
           buildah tag $IMAGE_LOWER:latest $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
           buildah push $IMAGE_LOWER:latest
-          buildah push $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
-
-
-  upstream-desktop:
-    needs: [build-builder, orchestrator-brain]
-    if: needs.orchestrator-brain.outputs.upstream_desktop != '[]' && needs.orchestrator-brain.outputs.upstream_desktop != ''
-    name: 📦 Upstream Desktop
-
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        package: ${{ fromJson(needs.orchestrator-brain.outputs.upstream_desktop) }}
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-    env:
-      REGISTRY: ghcr.io
-      FEDORA_VERSION: 43
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Calculate Hash
-        id: hash
-        run: echo "hash=${{ hashFiles('config/rpmmacros') }}" >> $GITHUB_OUTPUT
-        
-
-      - name: Check Idempotency (Content Hash)
-        id: check_idempotency
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
-          source ./idemp.out
-          if [ "$CACHE_HIT" = "true" ]; then
-            echo "cache_hit=true" >> $GITHUB_OUTPUT
-          else
-            echo "cache_hit=false" >> $GITHUB_OUTPUT
-          fi
-          echo "content_hash=$CONTENT_HASH" >> $GITHUB_OUTPUT
-          
-      - name: Fetch, Patch and Build ${{ matrix.package }}
-        if: steps.check_idempotency.outputs.cache_hit != 'true'
-        run: |
-          mkdir -p RPMS
-          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
-            -v ${{ github.workspace }}:/workspace \
-            -w /workspace/forge \
-            ghcr.io/hr-mes/ermete-os-builder:latest \
-            bash <<'EOF'
-            sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
-            dnf install -y rpm-build dnf-plugins-core rpmdevtools mold gcc-c++ which autoconf automake libtool
-            cp config/rpmmacros ~/.rpmmacros
-            rpmdev-setuptree
-            cd ~/rpmbuild/SRPMS
-          
-            echo "--- Downloading Source RPM per ${{ matrix.package }} ---"
-            dnf download --source ${{ matrix.package }} || dnf download --source --disablerepo="rpmfusion*" ${{ matrix.package }}
-            
-            # Se vengono scaricati più SRPM, tieni solo il più recente
-            num_srcs=$(ls -1 *.src.rpm 2>/dev/null | wc -l)
-            if [ "$num_srcs" -gt 1 ]; then
-              echo "Warning: scaricati multipli src.rpm. Tengo solo il più recente..."
-              latest_src=$(ls -1v *.src.rpm | tail -n 1)
-              for f in *.src.rpm; do
-                if [ "$f" != "$latest_src" ]; then
-                  rm -f "$f"
-                fi
-              done
-            fi
-          
-            echo "--- Estrazione SRPM per applicare Ponytail Ultra ---"
-            rpm -ivh *.src.rpm
-          
-            echo "--- Risoluzione Dipendenze Estrema (su SPEC) ---"
-            sed -i -e 's/pkgconfig(openh264)/openh264-devel/g' -e 's/noopenh264-devel/openh264-devel/g' -e 's/noopenh264/openh264/g' ~/rpmbuild/SPECS/*.spec && dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SPECS/*.spec
-          
-            echo "--- Iniezione Dinamica Ponytail Ultra ---"
-            for spec in ~/rpmbuild/SPECS/*.spec; do
-              # Disattiva pacchetti di debug globalmente
-              if ! grep -q "debug_package %nil" "$spec"; then
-                awk '/^Name:/ { print "%global debug_package %nil"; print $0; next } 1' "$spec" > "$spec.tmp" && mv "$spec.tmp" "$spec"
-              fi
-            done
-          
-            echo "--- Ricompilazione estrema con macro Ermete e Ponytail ---"
-            if ! rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec; then
-              if ls ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm >/dev/null 2>&1; then
-                echo "--- Installazione Dipendenze Dinamiche (%generate_buildrequires) ---"
-                dnf builddep -y --nogpgcheck ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm
-                echo "--- Secondo tentativo di Ricompilazione Estrema ---"
-                rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec
-              else
-                exit 1
-              fi
-            fi
-          
-            mkdir -p /workspace/forge/RPMS
-            cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
-          EOF
-      - name: Publish Micro-Container OCI
-        if: steps.check_idempotency.outputs.cache_hit != 'true'
-        run: |
-          export STORAGE_DRIVER=vfs
-          export BUILDAH_ISOLATION=chroot
-          buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
-          ctr=$(buildah from scratch)
-          buildah copy $ctr RPMS/*.rpm /
-          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-rolling-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
-          buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
-          buildah commit --omit-timestamp $ctr $IMAGE_LOWER:latest
-          buildah tag $IMAGE_LOWER:latest $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
-          buildah push $IMAGE_LOWER:latest
-          buildah push $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
-
-
-  upstream-media:
-    needs: [build-builder, orchestrator-brain]
-    if: needs.orchestrator-brain.outputs.upstream_media != '[]' && needs.orchestrator-brain.outputs.upstream_media != ''
-    name: 📦 Upstream Media
-
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        package: ${{ fromJson(needs.orchestrator-brain.outputs.upstream_media) }}
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-    env:
-      REGISTRY: ghcr.io
-      FEDORA_VERSION: 43
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Calculate Hash
-        id: hash
-        run: echo "hash=${{ hashFiles('config/rpmmacros') }}" >> $GITHUB_OUTPUT
-        
-
-      - name: Check Idempotency (Content Hash)
-        id: check_idempotency
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
-          source ./idemp.out
-          if [ "$CACHE_HIT" = "true" ]; then
-            echo "cache_hit=true" >> $GITHUB_OUTPUT
-          else
-            echo "cache_hit=false" >> $GITHUB_OUTPUT
-          fi
-          echo "content_hash=$CONTENT_HASH" >> $GITHUB_OUTPUT
-          
-      - name: Fetch, Patch and Build ${{ matrix.package }}
-        if: steps.check_idempotency.outputs.cache_hit != 'true'
-        run: |
-          mkdir -p RPMS
-          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
-            -v ${{ github.workspace }}:/workspace \
-            -w /workspace/forge \
-            ghcr.io/hr-mes/ermete-os-builder:latest \
-            bash <<'EOF'
-            sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
-            dnf install -y rpm-build dnf-plugins-core rpmdevtools mold gcc-c++ which autoconf automake libtool
-            cp config/rpmmacros ~/.rpmmacros
-            rpmdev-setuptree
-            cd ~/rpmbuild/SRPMS
-          
-            echo "--- Downloading Source RPM per ${{ matrix.package }} ---"
-            dnf download --source ${{ matrix.package }} || dnf download --source --disablerepo="rpmfusion*" ${{ matrix.package }}
-            
-            # Se vengono scaricati più SRPM, tieni solo il più recente
-            num_srcs=$(ls -1 *.src.rpm 2>/dev/null | wc -l)
-            if [ "$num_srcs" -gt 1 ]; then
-              echo "Warning: scaricati multipli src.rpm. Tengo solo il più recente..."
-              latest_src=$(ls -1v *.src.rpm | tail -n 1)
-              for f in *.src.rpm; do
-                if [ "$f" != "$latest_src" ]; then
-                  rm -f "$f"
-                fi
-              done
-            fi
-          
-            echo "--- Estrazione SRPM per applicare Ponytail Ultra ---"
-            rpm -ivh *.src.rpm
-          
-            echo "--- Risoluzione Dipendenze Estrema (su SPEC) ---"
-            sed -i -e 's/pkgconfig(openh264)/openh264-devel/g' -e 's/noopenh264-devel/openh264-devel/g' -e 's/noopenh264/openh264/g' ~/rpmbuild/SPECS/*.spec && dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SPECS/*.spec
-          
-            echo "--- Iniezione Dinamica Ponytail Ultra ---"
-            for spec in ~/rpmbuild/SPECS/*.spec; do
-              # Disattiva pacchetti di debug globalmente
-              if ! grep -q "debug_package %nil" "$spec"; then
-                awk '/^Name:/ { print "%global debug_package %nil"; print $0; next } 1' "$spec" > "$spec.tmp" && mv "$spec.tmp" "$spec"
-              fi
-            done
-          
-            echo "--- Ricompilazione estrema con macro Ermete e Ponytail ---"
-            if ! rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec; then
-              if ls ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm >/dev/null 2>&1; then
-                echo "--- Installazione Dipendenze Dinamiche (%generate_buildrequires) ---"
-                dnf builddep -y --nogpgcheck ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm
-                echo "--- Secondo tentativo di Ricompilazione Estrema ---"
-                rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec
-              else
-                exit 1
-              fi
-            fi
-          
-            mkdir -p /workspace/forge/RPMS
-            cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
-          EOF
-      - name: Publish Micro-Container OCI
-        if: steps.check_idempotency.outputs.cache_hit != 'true'
-        run: |
-          export STORAGE_DRIVER=vfs
-          export BUILDAH_ISOLATION=chroot
-          buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
-          ctr=$(buildah from scratch)
-          buildah copy $ctr RPMS/*.rpm /
-          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-rolling-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
-          buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
-          buildah commit --omit-timestamp $ctr $IMAGE_LOWER:latest
-          buildah tag $IMAGE_LOWER:latest $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
-          buildah push $IMAGE_LOWER:latest
-          buildah push $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
-
-
-
-  upstream-cli:
-    needs: [build-builder, orchestrator-brain]
-    if: needs.orchestrator-brain.outputs.upstream_cli != '[]' && needs.orchestrator-brain.outputs.upstream_cli != ''
-    name: 📦 Upstream Cli
-
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        package: ${{ fromJson(needs.orchestrator-brain.outputs.upstream_cli) }}
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-    env:
-      REGISTRY: ghcr.io
-      FEDORA_VERSION: 43
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Calculate Hash
-        id: hash
-        run: echo "hash=${{ hashFiles('config/rpmmacros') }}" >> $GITHUB_OUTPUT
-        
-
-      - name: Check Idempotency (Content Hash)
-        id: check_idempotency
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
-          source ./idemp.out
-          if [ "$CACHE_HIT" = "true" ]; then
-            echo "cache_hit=true" >> $GITHUB_OUTPUT
-          else
-            echo "cache_hit=false" >> $GITHUB_OUTPUT
-          fi
-          echo "content_hash=$CONTENT_HASH" >> $GITHUB_OUTPUT
-          
-      - name: Fetch, Patch and Build ${{ matrix.package }}
-        if: steps.check_idempotency.outputs.cache_hit != 'true'
-        run: |
-          mkdir -p RPMS
-          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
-            -v ${{ github.workspace }}:/workspace \
-            -w /workspace/forge \
-            ghcr.io/hr-mes/ermete-os-builder:latest \
-            bash <<'EOF'
-            sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
-            dnf install -y rpm-build dnf-plugins-core rpmdevtools mold gcc-c++ which autoconf automake libtool
-            cp config/rpmmacros ~/.rpmmacros
-            rpmdev-setuptree
-            cd ~/rpmbuild/SRPMS
-          
-            echo "--- Downloading Source RPM per ${{ matrix.package }} ---"
-            dnf download --source ${{ matrix.package }} || dnf download --source --disablerepo="rpmfusion*" ${{ matrix.package }}
-            
-            # Se vengono scaricati più SRPM, tieni solo il più recente
-            num_srcs=$(ls -1 *.src.rpm 2>/dev/null | wc -l)
-            if [ "$num_srcs" -gt 1 ]; then
-              echo "Warning: scaricati multipli src.rpm. Tengo solo il più recente..."
-              latest_src=$(ls -1v *.src.rpm | tail -n 1)
-              for f in *.src.rpm; do
-                if [ "$f" != "$latest_src" ]; then
-                  rm -f "$f"
-                fi
-              done
-            fi
-          
-            echo "--- Estrazione SRPM per applicare Ponytail Ultra ---"
-            rpm -ivh *.src.rpm
-          
-            echo "--- Risoluzione Dipendenze Estrema (su SPEC) ---"
-            sed -i -e 's/pkgconfig(openh264)/openh264-devel/g' -e 's/noopenh264-devel/openh264-devel/g' -e 's/noopenh264/openh264/g' ~/rpmbuild/SPECS/*.spec && dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SPECS/*.spec
-          
-            echo "--- Iniezione Dinamica Ponytail Ultra ---"
-            for spec in ~/rpmbuild/SPECS/*.spec; do
-              # Disattiva pacchetti di debug globalmente
-              if ! grep -q "debug_package %nil" "$spec"; then
-                awk '/^Name:/ { print "%global debug_package %nil"; print $0; next } 1' "$spec" > "$spec.tmp" && mv "$spec.tmp" "$spec"
-              fi
-            done
-          
-            echo "--- Ricompilazione estrema con macro Ermete e Ponytail ---"
-            if ! rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec; then
-              if ls ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm >/dev/null 2>&1; then
-                echo "--- Installazione Dipendenze Dinamiche (%generate_buildrequires) ---"
-                dnf builddep -y --nogpgcheck ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm
-                echo "--- Secondo tentativo di Ricompilazione Estrema ---"
-                rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec
-              else
-                exit 1
-              fi
-            fi
-          
-            mkdir -p /workspace/forge/RPMS
-            cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
-          EOF
-      - name: Publish Micro-Container OCI
-        if: steps.check_idempotency.outputs.cache_hit != 'true'
-        run: |
-          export STORAGE_DRIVER=vfs
-          export BUILDAH_ISOLATION=chroot
-          buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
-          ctr=$(buildah from scratch)
-          buildah copy $ctr RPMS/*.rpm /
-          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-rolling-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
-          buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
-          buildah commit --omit-timestamp $ctr $IMAGE_LOWER:latest
-          buildah tag $IMAGE_LOWER:latest $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
-          buildah push $IMAGE_LOWER:latest
-          buildah push $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
+          buildah push $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}` + "\n",StartLine:344,TargetContent:
 
   build-repo:
     name: 📦 Build Repository
     if: ${{ always() && needs.orchestrator-brain.outputs.has_changes == 'true' && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
-    needs: [orchestrator-brain, custom-packages, build-nvidia, upstream-core, upstream-desktop, upstream-media, upstream-cli]
+    needs: [orchestrator-brain, custom-packages, build-nvidia, upstream-packages]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -926,8 +580,11 @@ jobs:
             git config --global --add safe.directory /workspace/pages_repo
             git checkout -b gh-pages
             
-            echo "🧹 Rimozione file > 49MB per rispettare i limiti e warnings di GitHub Pages..."
-            find /workspace/pages_repo -type f -name "*.rpm" -size +49M -exec rm -v {} \;
+            echo "🧹 Controllo dimensione pacchetti per GitHub Pages (<49MB)..."
+            for rpm_file in $(find /workspace/pages_repo -type f -name "*.rpm" -size +49M 2>/dev/null); do
+              echo "⚠️ WARNING: $(basename "$rpm_file") eccede il limite di 49MB di GitHub Pages. Esclusione dalla copia Pages (pacchetto completo disponibile via OCI container registry ghcr.io)."
+              rm -f "$rpm_file"
+            done
             
             echo "🔄 Rigenerazione metadata DNF per GitHub Pages..."
             for tier_dir in /workspace/pages_repo/tier*; do

@@ -29,19 +29,15 @@ RUN dnf5 -y remove --no-autoremove kernel kernel-core kernel-modules kernel-modu
 RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier0-repo:latest,source=/,target=/mnt/tier0-repo \
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/cache/libdnf5 \
     if ls /mnt/tier0-repo/ermete-base-config*.rpm 1> /dev/null 2>&1; then \
-        echo "Tier 0: Installing core Ermete Forge base configuration and repository definitions..." && \
+        echo "Tier 0: Installing core Ermete Forge base configuration..." && \
         rpm -Uvh --replacefiles --replacepkgs --nodeps /mnt/tier0-repo/ermete-base-config*.rpm; \
     fi && \
-    if ls /mnt/tier0-repo/*.rpm 1> /dev/null 2>&1; then \
+    RPM_LIST=$(ls /mnt/tier0-repo/*.rpm 2>/dev/null | grep -vE 'systemd-standalone-|.*-free-.*\.rpm|glibc32|kernel-debug|rpm-.*\.rpm' || true) && \
+    if [ -n "$RPM_LIST" ]; then \
         echo "Tier 0: Installing Bedrock hardware, kernel Chimera & NVIDIA dependencies..." && \
-        echo -e "[tier0]\nname=Tier 0\nbaseurl=file:///mnt/tier0-repo\nenabled=1\ngpgcheck=0" > /etc/yum.repos.d/tier0.repo && \
-        INSTALL_NAMES=$(ls /mnt/tier0-repo/*.rpm | grep -vE 'systemd-standalone-|.*-free-.*\.rpm|glibc32|kernel-debug|rpm-.*\.rpm' | xargs -n 100 rpm -qp --queryformat '%{NAME}\n' | sort -u | tr '\n' ' ') && \
-        if [ -n "$INSTALL_NAMES" ]; then dnf5 install -y --allowerasing --setopt=install_weak_deps=False --setopt=tsflags=nodocs $INSTALL_NAMES; fi && \
-        rm -f /etc/yum.repos.d/tier0.repo; \
+        dnf5 install -y --allowerasing --setopt=install_weak_deps=False --setopt=tsflags=nodocs $RPM_LIST; \
     fi && \
     rm -rf /usr/lib/firmware/{mellanox,qlogic,netronome,liquidio,cxgb4,bnx2x,cavium,dpaa2}
-
-
 
 # Dracut initramfs generation moved to AFTER Tier 1-3 installations to ensure all sysusers and configurations are captured.
 
@@ -50,10 +46,7 @@ RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier1-repo:latest,sour
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/cache/libdnf5 \
     if ls /mnt/tier1-repo/*.rpm 1> /dev/null 2>&1; then \
         echo "Tier 1: Installing Display Server & Core Userspace Services..." && \
-        echo -e "[tier1]\nname=Tier 1\nbaseurl=file:///mnt/tier1-repo\nenabled=1\ngpgcheck=0" > /etc/yum.repos.d/tier1.repo && \
-        INSTALL_NAMES=$(ls /mnt/tier1-repo/*.rpm | xargs -n 100 rpm -qp --queryformat '%{NAME}\n' | sort -u | tr '\n' ' ') && \
-        if [ -n "$INSTALL_NAMES" ]; then dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs $INSTALL_NAMES; fi && \
-        rm -f /etc/yum.repos.d/tier1.repo; \
+        dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs /mnt/tier1-repo/*.rpm; \
     fi
 
 # TIER 2: DESIGN SYSTEM & STATIC ASSETS (~18 MB)
@@ -61,10 +54,7 @@ RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier2-repo:latest,sour
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/cache/libdnf5 \
     if ls /mnt/tier2-repo/*.rpm 1> /dev/null 2>&1; then \
         echo "Tier 2: Installing Design System & Static Assets..." && \
-        echo -e "[tier2]\nname=Tier 2\nbaseurl=file:///mnt/tier2-repo\nenabled=1\ngpgcheck=0" > /etc/yum.repos.d/tier2.repo && \
-        INSTALL_NAMES=$(ls /mnt/tier2-repo/*.rpm | xargs -n 100 rpm -qp --queryformat '%{NAME}\n' | sort -u | tr '\n' ' ') && \
-        if [ -n "$INSTALL_NAMES" ]; then dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs $INSTALL_NAMES; fi && \
-        rm -f /etc/yum.repos.d/tier2.repo; \
+        dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs /mnt/tier2-repo/*.rpm; \
     fi
 
 # TIER 3: AGILE RUST SHELL & APPS (~8 MB - Instant Live Swap Layer)
@@ -72,10 +62,7 @@ RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier3-repo:latest,sour
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/cache/libdnf5 \
     if ls /mnt/tier3-repo/*.rpm 1> /dev/null 2>&1; then \
         echo "Tier 3: Installing Agile Rust Shell & Apps..." && \
-        echo -e "[tier3]\nname=Tier 3\nbaseurl=file:///mnt/tier3-repo\nenabled=1\ngpgcheck=0" > /etc/yum.repos.d/tier3.repo && \
-        INSTALL_NAMES=$(ls /mnt/tier3-repo/*.rpm | xargs -n 100 rpm -qp --queryformat '%{NAME}\n' | sort -u | tr '\n' ' ') && \
-        if [ -n "$INSTALL_NAMES" ]; then dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs $INSTALL_NAMES; fi && \
-        rm -f /etc/yum.repos.d/tier3.repo; \
+        dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs /mnt/tier3-repo/*.rpm; \
     fi
 
 ### BEDROCK SELINUX (Declarative Compilation)

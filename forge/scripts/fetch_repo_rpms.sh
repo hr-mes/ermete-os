@@ -20,62 +20,45 @@ trap "rm -rf $TMP_DIR" EXIT
 OWNER="${1:-hr-mes}"
 
 # Fetch package lists dynamically from Single Source of Truth
-readarray -t UPSTREAM_CORE < <(jq -r '.upstream_core[]' config/packages.json)
-readarray -t UPSTREAM_DESKTOP < <(jq -r '.upstream_desktop[]' config/packages.json)
-readarray -t UPSTREAM_MEDIA < <(jq -r '.upstream_media[]' config/packages.json)
-readarray -t UPSTREAM_CLI < <(jq -r '.upstream_cli[]' config/packages.json)
+readarray -t CUSTOM_TIER0 < <(jq -r '.custom_tier0[] // empty' config/packages.json)
+readarray -t CUSTOM_TIER1 < <(jq -r '.custom_tier1[] // empty' config/packages.json)
+readarray -t CUSTOM_TIER2 < <(jq -r '.custom_tier2[] // empty' config/packages.json)
+readarray -t CUSTOM_TIER3 < <(jq -r '.custom_tier3[] // empty' config/packages.json)
 
-# Define per-Tier micro-container images
+readarray -t UPSTREAM_CORE < <(jq -r '.upstream_core[] // empty' config/packages.json)
+readarray -t UPSTREAM_DESKTOP < <(jq -r '.upstream_desktop[] // empty' config/packages.json)
+readarray -t UPSTREAM_MEDIA < <(jq -r '.upstream_media[] // empty' config/packages.json)
+readarray -t UPSTREAM_CLI < <(jq -r '.upstream_cli[] // empty' config/packages.json)
+
+# Define per-Tier micro-container images dynamically
 TIER0_IMAGES=(
   "ermete-os-kernel"
   "ermete-os-forge-nvidia"
-  "ermete-os-forge-base-config"
-  "ermete-os-forge-selinux"
-  "ermete-os-forge-nix-support"
-  "ermete-os-forge-secure-boot"
 )
+for pkg in "${CUSTOM_TIER0[@]}"; do
+  [[ -n "$pkg" ]] && TIER0_IMAGES+=("ermete-os-forge-$pkg")
+done
 for pkg in "${UPSTREAM_CORE[@]}" "${UPSTREAM_MEDIA[@]}"; do
   [[ -n "$pkg" ]] && TIER0_IMAGES+=("ermete-os-forge-rolling-$pkg")
 done
 
-TIER1_IMAGES=(
-  "ermete-os-forge-starship"
-  "ermete-os-forge-bat"
-  "ermete-os-forge-ananicy"
-  "ermete-os-forge-cliphist"
-  "ermete-os-forge-ide-bootstrap"
-  "ermete-os-forge-system-tweaks"
-  "ermete-os-forge-niri"
-)
+TIER1_IMAGES=()
+for pkg in "${CUSTOM_TIER1[@]}"; do
+  [[ -n "$pkg" ]] && TIER1_IMAGES+=("ermete-os-forge-$pkg")
+done
 for pkg in "${UPSTREAM_DESKTOP[@]}" "${UPSTREAM_CLI[@]}"; do
   [[ -n "$pkg" ]] && TIER1_IMAGES+=("ermete-os-forge-rolling-$pkg")
 done
 
-TIER2_IMAGES=(
-  "ermete-os-forge-bibata"
-  "ermete-os-forge-matugen"
-  "ermete-os-forge-dart-sass"
-)
+TIER2_IMAGES=()
+for pkg in "${CUSTOM_TIER2[@]}"; do
+  [[ -n "$pkg" ]] && TIER2_IMAGES+=("ermete-os-forge-$pkg")
+done
 
-TIER3_IMAGES=(
-  "ermete-os-forge-shell-rs"
-  "ermete-os-forge-settings-rs"
-  "ermete-os-forge-daemon-rs"
-  "ermete-os-forge-store-rs"
-  "ermete-os-forge-doctor"
-  "ermete-os-forge-system-services"
-  "ermete-os-forge-desktop-ui"
-  "ermete-os-forge-system-config"
-  "ermete-os-forge-backup"
-  "ermete-os-forge-gatekeeper-rs"
-  "ermete-os-forge-telemetry-rs"
-  "ermete-os-forge-cloud-rs"
-  "ermete-os-forge-mdm-rs"
-  "ermete-os-forge-updater-rs"
-  "ermete-os-forge-xdg-desktop-portal-ermete"
-  "ermete-os-forge-lvfs-rs"
-  "ermete-os-forge-ui-agent"
-)
+TIER3_IMAGES=()
+for pkg in "${CUSTOM_TIER3[@]}"; do
+  [[ -n "$pkg" ]] && TIER3_IMAGES+=("ermete-os-forge-$pkg")
+done
 
 declare -A OLD_DIGESTS
 declare -A NEW_DIGESTS

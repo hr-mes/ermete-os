@@ -1,7 +1,7 @@
 use gtk4::prelude::*;
 use gtk4::{Align, Box, Button, Label, Orientation, ToggleButton};
 use crate::components::action_row::ActionRow;
-use crate::settings_proxy::SettingsProxy;
+use crate::settings_proxy::with_settings_proxy;
 
 pub fn build_page() -> Box {
     let container = Box::builder()
@@ -48,36 +48,24 @@ pub fn build_page() -> Box {
 
     btn_light.connect_toggled(|btn| {
         if btn.is_active() {
-            relm4::spawn_local(async move {
-                if let Ok(conn) = crate::get_connection().await {
-                    if let Ok(proxy) = SettingsProxy::new(&conn).await {
-                        let _ = proxy.set_color_scheme("prefer-light").await;
-                    }
-                }
+            with_settings_proxy(|proxy| async move {
+                let _ = proxy.set_color_scheme("prefer-light").await;
             });
         }
     });
 
     btn_dark.connect_toggled(|btn| {
         if btn.is_active() {
-            relm4::spawn_local(async move {
-                if let Ok(conn) = crate::get_connection().await {
-                    if let Ok(proxy) = SettingsProxy::new(&conn).await {
-                        let _ = proxy.set_color_scheme("prefer-dark").await;
-                    }
-                }
+            with_settings_proxy(|proxy| async move {
+                let _ = proxy.set_color_scheme("prefer-dark").await;
             });
         }
     });
 
     btn_auto.connect_toggled(|btn| {
         if btn.is_active() {
-            relm4::spawn_local(async move {
-                if let Ok(conn) = crate::get_connection().await {
-                    if let Ok(proxy) = SettingsProxy::new(&conn).await {
-                        let _ = proxy.set_color_scheme("default").await;
-                    }
-                }
+            with_settings_proxy(|proxy| async move {
+                let _ = proxy.set_color_scheme("default").await;
             });
         }
     });
@@ -120,12 +108,8 @@ pub fn build_page() -> Box {
         let hex_clone = hex_val.to_string();
         btn.connect_clicked(move |_| {
             let hex_c = hex_clone.clone();
-            relm4::spawn_local(async move {
-                if let Ok(conn) = crate::get_connection().await {
-                    if let Ok(proxy) = SettingsProxy::new(&conn).await {
-                        let _ = proxy.set_accent_color(&hex_c).await;
-                    }
-                }
+            with_settings_proxy(move |proxy| async move {
+                let _ = proxy.set_accent_color(&hex_c).await;
             });
         });
         accent_box.append(&btn);
@@ -144,16 +128,12 @@ pub fn build_page() -> Box {
     let bl = btn_light.clone();
     let bd = btn_dark.clone();
     let ba = btn_auto.clone();
-    relm4::spawn_local(async move {
-        if let Ok(conn) = crate::get_connection().await {
-            if let Ok(proxy) = SettingsProxy::new(&conn).await {
-                if let Ok(scheme) = proxy.color_scheme().await {
-                    match scheme.as_str() {
-                        "prefer-dark" => bd.set_active(true),
-                        "prefer-light" => bl.set_active(true),
-                        _ => ba.set_active(true),
-                    }
-                }
+    with_settings_proxy(move |proxy| async move {
+        if let Ok(scheme) = proxy.color_scheme().await {
+            match scheme.as_str() {
+                "prefer-dark" => bd.set_active(true),
+                "prefer-light" => bl.set_active(true),
+                _ => ba.set_active(true),
             }
         }
     });

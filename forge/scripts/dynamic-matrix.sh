@@ -113,12 +113,19 @@ J_U_MEDIA=$(process_array "rolling-" "${UPSTREAM_MEDIA[@]}")
 echo "Evaluating upstream_cli..." >&2
 J_U_CLI=$(process_array "rolling-" "${UPSTREAM_CLI[@]}")
 
+# Combine all upstream packages needing rebuild into a single array
+J_UPSTREAM=$(jq -c -s 'add' <(echo "$J_U_CORE") <(echo "$J_U_DESK") <(echo "$J_U_MEDIA") <(echo "$J_U_CLI"))
+
 # Determine if there are any changes across all packages
-# We force HAS_CHANGES=true to ensure Build Repository always runs and recovers from partial pipeline failures
-HAS_CHANGES="true"
+if [[ "$J_CUSTOM" != "[]" || "$J_UPSTREAM" != "[]" ]]; then
+  HAS_CHANGES="true"
+else
+  HAS_CHANGES="false"
+fi
 
 if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
   echo "custom_packages=${J_CUSTOM}" >> "$GITHUB_OUTPUT"
+  echo "upstream_packages=${J_UPSTREAM}" >> "$GITHUB_OUTPUT"
   echo "upstream_core=${J_U_CORE}" >> "$GITHUB_OUTPUT"
   echo "upstream_desktop=${J_U_DESK}" >> "$GITHUB_OUTPUT"
   echo "upstream_media=${J_U_MEDIA}" >> "$GITHUB_OUTPUT"
@@ -128,6 +135,7 @@ fi
 
 echo "JSON Outputs:"
 echo "custom_packages=${J_CUSTOM}"
+echo "upstream_packages=${J_UPSTREAM}"
 echo "upstream_core=${J_U_CORE}"
 echo "upstream_desktop=${J_U_DESK}"
 echo "upstream_media=${J_U_MEDIA}"

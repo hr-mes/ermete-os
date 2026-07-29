@@ -18,10 +18,8 @@ skopeo copy docker://ghcr.io/hr-mes/ermete-os-forge-$PACKAGE:latest dir:.
 
 echo "📦 Estrazione RPM dall'immagine..."
 mkdir -p extract
-for file in *; do
-  if [ -f "$file" ] && file "$file" | grep -qi "gzip compressed data"; then
-    tar -xzf "$file" -C extract/
-  fi
+for archive in *.tar* *layer*; do
+    [ -f "$archive" ] && tar -xzf "$archive" -C extract/ 2>/dev/null || true
 done
 
 RPM_FILE=$(find extract/ -name "*.rpm" -print -quit || true)

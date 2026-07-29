@@ -19,3 +19,18 @@ pub trait Settings {
     #[dbus_proxy(property, name = "Wallpaper")]
     fn set_wallpaper(&self, value: &str) -> zbus::Result<()>;
 }
+
+/// Consolidated helper for executing async operations on SettingsProxy without boilerplate
+pub fn with_settings_proxy<F, Fut>(f: F)
+where
+    F: FnOnce(SettingsProxy<'static>) -> Fut + 'static,
+    Fut: std::future::Future<Output = ()> + 'static,
+{
+    relm4::spawn_local(async move {
+        if let Ok(conn) = crate::get_connection().await {
+            if let Ok(proxy) = SettingsProxy::new(&conn).await {
+                f(proxy).await;
+            }
+        }
+    });
+}

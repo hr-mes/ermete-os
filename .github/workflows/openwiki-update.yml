@@ -1,9 +1,9 @@
-name: 📖 System Wiki Update
+name: 📖 OpenWiki Documentation Sync
 
 on:
   workflow_dispatch:
   schedule:
-    # GitHub schedules use UTC; 03:00 UTC di ogni giorno
+    # GitHub schedules use UTC; 03:00 UTC every day
     - cron: "0 3 * * *"
 
 permissions:

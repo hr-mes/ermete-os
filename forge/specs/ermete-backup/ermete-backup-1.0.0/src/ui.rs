@@ -6,7 +6,6 @@ use gtk4::{
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
-use std::sync::OnceLock;
 
 #[derive(Debug, Clone, Serialize, Deserialize, zbus::zvariant::Type)]
 struct SnapshotInfo {
@@ -29,16 +28,10 @@ trait Backup1 {
     fn restore_snapshot(&self, id: &str) -> zbus::Result<bool>;
 }
 
-static DBUS_CONN: OnceLock<Option<zbus::blocking::Connection>> = OnceLock::new();
-
-fn get_system_connection() -> Option<&'static zbus::blocking::Connection> {
-    DBUS_CONN.get_or_init(|| zbus::blocking::Connection::system().ok()).as_ref()
-}
-
-fn get_snapshots() -> Vec<SnapshotInfo> {
-    if let Some(conn) = get_system_connection() {
-        if let Ok(proxy) = Backup1ProxyBlocking::new(conn) {
-            if let Ok(snaps) = proxy.list_snapshots() {
+async fn get_snapshots_async() -> Vec<SnapshotInfo> {
+    if let Ok(conn) = zbus::Connection::system().await {
+        if let Ok(proxy) = Backup1Proxy::new(&conn).await {
+            if let Ok(snaps) = proxy.list_snapshots().await {
                 return snaps;
             }
         }
@@ -145,91 +138,101 @@ fn apply_css() {
 }
 
 fn populate_snapshot_list(list_box: &GtkBox) {
-    while let Some(child) = list_box.first_child() {
-        list_box.remove(&child);
-    }
+    let list_box_clone = list_box.clone();
+    glib::MainContext::default().spawn_local(async move {
+        let snapshots = get_snapshots_async().await;
+        while let Some(child) = list_box_clone.first_child() {
+            list_box_clone.remove(&child);
+        }
 
-    let snapshots = get_snapshots();
-    if snapshots.is_empty() {
-        let empty_lbl = Label::builder()
-            .label("Nessuna istantanea presente. Scatta la prima istantanea ora.")
-            .css_classes(["snap-meta"])
-            .margin_top(40)
-            .build();
-        list_box.append(&empty_lbl);
-        return;
-    }
+        if snapshots.is_empty() {
+            let empty_lbl = Label::builder()
+                .label("Nessuna istantanea presente. Scatta la prima istantanea ora.")
+                .css_classes(["snap-meta"])
+                .margin_top(40)
+                .build();
+            list_box_clone.append(&empty_lbl);
+            return;
+        }
 
-    for snap in &snapshots {
-        let card = GtkBox::builder()
-            .orientation(Orientation::Horizontal)
-            .spacing(12)
-            .css_classes(["card"])
-            .build();
+        for snap in &snapshots {
+            let card = GtkBox::builder()
+                .orientation(Orientation::Horizontal)
+                .spacing(12)
+                .css_classes(["card"])
+                .build();
 
-        let info_box = GtkBox::builder()
-            .orientation(Orientation::Vertical)
-            .spacing(4)
-            .hexpand(true)
-            .build();
+            let info_box = GtkBox::builder()
+                .orientation(Orientation::Vertical)
+                .spacing(4)
+                .hexpand(true)
+                .build();
 
-        let title_lbl = Label::builder()
-            .label(&format!("📸 {} ({})", snap.note, snap.id))
-            .css_classes(["snap-title"])
-            .halign(Align::Start)
-            .build();
+            let title_lbl = Label::builder()
+                .label(&format!("📸 {} ({})", snap.note, snap.id))
+                .css_classes(["snap-title"])
+                .halign(Align::Start)
+                .build();
 
-        let meta_lbl = Label::builder()
-            .label(&format!("Creato il: {} | Spazio stimato: {}", snap.timestamp, snap.size_estimate))
-            .css_classes(["snap-meta"])
-            .halign(Align::Start)
-            .build();
+            let meta_lbl = Label::builder()
+                .label(&format!("Creato il: {} | Spazio stimato: {}", snap.timestamp, snap.size_estimate))
+                .css_classes(["snap-meta"])
+                .halign(Align::Start)
+                .build();
 
-        info_box.append(&title_lbl);
-        info_box.append(&meta_lbl);
+            info_box.append(&title_lbl);
+            info_box.append(&meta_lbl);
 
-        let act_box = GtkBox::builder()
-            .orientation(Orientation::Horizontal)
-            .spacing(8)
-            .valign(Align::Center)
-            .build();
+            let act_box = GtkBox::builder()
+                .orientation(Orientation::Horizontal)
+                .spacing(8)
+                .valign(Align::Center)
+                .build();
 
-        let restore_btn = Button::builder()
-            .label("🔄 Ripristina")
-            .css_classes(["btn-restore"])
-            .build();
-        let snap_id = snap.id.clone();
-        restore_btn.connect_clicked(move |_| {
-            println!("[Time Machine] Restoring snapshot {}", snap_id);
-            if let Some(conn) = get_system_connection() {
-                if let Ok(proxy) = Backup1ProxyBlocking::new(conn) {
-                    let _ = proxy.restore_snapshot(&snap_id);
-                }
-            }
-        });
+            let restore_btn = Button::builder()
+                .label("🔄 Ripristina")
+                .css_classes(["btn-restore"])
+                .build();
+            let snap_id = snap.id.clone();
+            restore_btn.connect_clicked(move |_| {
+                println!("[Time Machine] Restoring snapshot {}", snap_id);
+                let snap_id = snap_id.clone();
+                glib::MainContext::default().spawn_local(async move {
+                    if let Ok(conn) = zbus::Connection::system().await {
+                        if let Ok(proxy) = Backup1Proxy::new(&conn).await {
+                            let _ = proxy.restore_snapshot(&snap_id).await;
+                        }
+                    }
+                });
+            });
 
-        let delete_btn = Button::builder()
-            .label("🗑️")
-            .css_classes(["btn-delete"])
-            .build();
-        let snap_id_del = snap.id.clone();
-        let list_box_clone = list_box.clone();
-        delete_btn.connect_clicked(move |_| {
-            if let Some(conn) = get_system_connection() {
-                if let Ok(proxy) = Backup1ProxyBlocking::new(conn) {
-                    let _ = proxy.delete_snapshot(&snap_id_del);
-                }
-            }
-            populate_snapshot_list(&list_box_clone);
-        });
+            let delete_btn = Button::builder()
+                .label("🗑️")
+                .css_classes(["btn-delete"])
+                .build();
+            let snap_id_del = snap.id.clone();
+            let list_box_del_clone = list_box_clone.clone();
+            delete_btn.connect_clicked(move |_| {
+                let snap_id_del = snap_id_del.clone();
+                let list_box_del_clone = list_box_del_clone.clone();
+                glib::MainContext::default().spawn_local(async move {
+                    if let Ok(conn) = zbus::Connection::system().await {
+                        if let Ok(proxy) = Backup1Proxy::new(&conn).await {
+                            let _ = proxy.delete_snapshot(&snap_id_del).await;
+                        }
+                    }
+                    populate_snapshot_list(&list_box_del_clone);
+                });
+            });
 
-        act_box.append(&restore_btn);
-        act_box.append(&delete_btn);
+            act_box.append(&restore_btn);
+            act_box.append(&delete_btn);
 
-        card.append(&info_box);
-        card.append(&act_box);
-        list_box.append(&card);
-    }
+            card.append(&info_box);
+            card.append(&act_box);
+            list_box_clone.append(&card);
+        }
+    });
 }
 
 fn build_ui(app: &Application) {
@@ -294,13 +297,17 @@ fn build_ui(app: &Application) {
         let note = entry_clone.text().to_string();
         let note = if note.is_empty() { "Snapshot manuale".to_string() } else { note };
         println!("[Time Machine] Requesting snapshot creation with note: {}", note);
-        if let Some(conn) = get_system_connection() {
-            if let Ok(proxy) = Backup1ProxyBlocking::new(conn) {
-                let _ = proxy.create_snapshot(&note);
+        let list_box_clone = list_box_clone.clone();
+        let entry_clone = entry_clone.clone();
+        glib::MainContext::default().spawn_local(async move {
+            if let Ok(conn) = zbus::Connection::system().await {
+                if let Ok(proxy) = Backup1Proxy::new(&conn).await {
+                    let _ = proxy.create_snapshot(&note).await;
+                }
             }
-        }
-        entry_clone.set_text("");
-        populate_snapshot_list(&list_box_clone);
+            entry_clone.set_text("");
+            populate_snapshot_list(&list_box_clone);
+        });
     });
 
     new_card.append(&note_entry);
