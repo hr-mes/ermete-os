@@ -8,10 +8,6 @@ mod secret_enroller;
 mod gatekeeper_listener;
 mod voiceover;
 mod qos;
-pub mod ai;
-pub mod gaze;
-pub mod audio_spatial;
-pub mod continuity;
 mod power;
 
 use std::error::Error;

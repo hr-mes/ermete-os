@@ -220,7 +220,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
                 if metadata.fd >= 0 {
                     let mut is_quarantined = false;
-                    let path = format!("/proc/self/fd/{}", metadata.fd);
+                    let path = std::path::PathBuf::from(format!("/proc/self/fd/{}", metadata.fd));
                     let target_path = std::fs::read_link(&path).unwrap_or_default();
                     let target_path_str = target_path.to_string_lossy().to_string();
 

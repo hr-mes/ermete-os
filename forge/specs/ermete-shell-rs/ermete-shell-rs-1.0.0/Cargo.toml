@@ -19,7 +19,6 @@ clap = { version = "4.6.1", features = ["derive"] }
 greetd_ipc = "0.10.3"
 meval = "0.2"
 futures-util = "0.3.32"
-tts = "0.26"
 relm4 = "0.7"
 libc = "0.2"
 
