@@ -11,7 +11,7 @@ CACHE_DIR="$FORGE_DIR/.ccache_local"
 mkdir -p "$CACHE_DIR"
 
 echo ">>> [BEDROCK] Esecuzione Container Fedora 43 (Privileged limitato)..."
-docker run --rm -i \
+podman run --runtime=runc --rm -i \
   --cap-add SYS_ADMIN \
   --security-opt label=disable \
   --security-opt seccomp=unconfined \
