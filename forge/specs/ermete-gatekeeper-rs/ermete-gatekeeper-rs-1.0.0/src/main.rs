@@ -36,6 +36,7 @@ impl GatekeeperManager {
             .arg("--action-id")
             .arg("os.ermete.gatekeeper.approve")
             .status()
+            .await
             .map_err(|e| zbus::fdo::Error::Failed(format!("pkcheck failed: {}", e)))?;
             
         if !status.success() {

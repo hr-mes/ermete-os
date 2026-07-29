@@ -45,10 +45,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     gaze_tracker.start();
 
     println!("Starting Spatial Audio Raytracing engine...");
-    audio_spatial::start_audio_raytracing().await;
+
 
     println!("Starting Continuity & Handoff daemon...");
-    let continuity_srv = continuity::ContinuityService::new(power_manager.on_battery.clone());
+
     continuity_srv.start_background_sync().await;
 
     println!("Initializing ACID Settings Engine and XDG Desktop Portal backend...");
