@@ -1,0 +1,33 @@
+# Archives & Logs
+*.zip
+*.tar
+*.tar.*
+*.gz
+*.log
+logs/
+logs_*/
+
+# Python & Caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Tooling & Analysis Artifacts
+.graphify_detect*.json
+graphify-out/
+**/graphify-out/
+.superpowers/
+**/.superpowers/
+
+# Build Artifacts & Worktrees
+target/
+**/target/
+RPMS_OUT/
+.ccache_local/
+.worktrees/
+output/
+_build*/
+
+# Security / Keys
+*.key
+*.pem

@@ -1,9 +1,0 @@
-2026-07-27T15:08:33.7090000Z Evaluating custom-packages.if
-2026-07-27T15:08:33.7090000Z Evaluating: (success() && (((needs.orchestrator-brain.outputs.custom_packages != '[]') && (needs.orchestrator-brain.outputs.custom_packages != ''))))
-2026-07-27T15:08:33.7090000Z Expanded: (true && (('["niri","base-config","desktop-ui","shell-rs","settings-rs","store-rs","updater-rs"]' != '[]') && ('["niri","base-config","desktop-ui","shell-rs","settings-rs","store-rs","updater-rs"]' != '')))
-2026-07-27T15:08:33.7090000Z Result: true
-2026-07-27T15:08:33.7260000Z Requested labels: ubuntu-latest
-2026-07-27T15:08:33.7260000Z Job defined at: hr-mes/ermete-os/.github/workflows/ermete-forge-orchestrator.yml@refs/heads/main
-2026-07-27T15:08:33.7260000Z Waiting for a runner to pick up this job...
-2026-07-27T15:08:34.0490000Z Job is waiting for a hosted runner to come online.
-2026-07-27T15:08:34.0500000Z Job is about to start running on the hosted runner: GitHub Actions 1000023873
