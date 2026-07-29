@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name:           ermete-backup
 Version:        1.0.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Ermete OS Time Machine & Btrfs Home Snapshot Manager
 
 License:        MIT

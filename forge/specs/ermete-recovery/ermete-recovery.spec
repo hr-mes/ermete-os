@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name:           ermete-recovery
 Version:        1.0.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Ermete OS Pre-Boot GUI Recovery Kiosk & Rollback Manager
 
 License:        MIT

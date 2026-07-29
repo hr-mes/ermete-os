@@ -4,4 +4,4 @@ Documentation=https://github.com/hr-mes/ermete-forge
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/dbus-send --session --dest=org.ermete.Backup1 --type=method_call /org/ermete/Backup1 org.ermete.Backup1.CreateSnapshot string:"Istantanea oraria automatica"
+ExecStart=/usr/bin/dbus-send --system --dest=org.ermete.Backup1 --type=method_call /org/ermete/Backup1 org.ermete.Backup1.CreateSnapshot string:"Istantanea oraria automatica"

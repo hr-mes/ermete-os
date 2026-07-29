@@ -15,7 +15,7 @@ echo "========================================"
 sudo dnf install -y rpm-build dnf-plugins-core rpmdevtools
 RPMBUILD_DIR=$(mktemp -d)
 echo "%_topdir $RPMBUILD_DIR" > ~/.rpmmacros
-cat config/rpmmacros >> ~/.rpmmacros
+cat "$(dirname "$0")/../config/rpmmacros" >> ~/.rpmmacros
 mkdir -p "$RPMBUILD_DIR"/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
 
 echo "========================================"

@@ -28,7 +28,7 @@ ProtectKernelTunables=yes
 ProtectKernelModules=yes
 ProtectControlGroups=yes
 RestrictNamespaces=yes
-MemoryDenyWriteExecute=yes
+MemoryDenyWriteExecute=no
 LockPersonality=yes
 SystemCallFilter=@system-service @mount
 

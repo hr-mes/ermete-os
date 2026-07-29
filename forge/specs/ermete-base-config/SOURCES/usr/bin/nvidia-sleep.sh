@@ -16,9 +16,9 @@ RestoreVT() {
     # attempt to switch back to this VT.
     #
     if [[ -f "${XORG_VT_FILE}" ]]; then
-        XORG_PID=$(cat "${XORG_VT_FILE}")
+        XORG_VT=$(cat "${XORG_VT_FILE}")
         rm "${XORG_VT_FILE}"
-        chvt "${XORG_PID}"
+        chvt "${XORG_VT}"
     fi
 }
 
