@@ -323,6 +323,22 @@ CONFIG_FUSE_FS=y
 CONFIG_VIRTIO_FS=y
 # CONFIG_DRM_NOUVEAU is not set
 
+# --- ERMETE FORGE: ESTENSIONI AVANZATE (Richieste dall'Utente) ---
+# [Punto 3] Polling GPU Estremo (Latenza Zero per DRM e code grafiche)
+CONFIG_DRM_AMDGPU_USERPTR=y
+CONFIG_DRM_I915_LOW_LEVEL_TRACEPOINTS=y
+
+# [Punto 5] UKSM (Ultra Kernel Samepage Merging - Gestione aggressiva RAM)
+CONFIG_KSM=y
+CONFIG_UKSM=y
+
+# [Punto 9] IOMMU Passthrough Forzato (Massimo throughput PCIe per GPU)
+CONFIG_IOMMU_DEFAULT_PASSTHROUGH=y
+
+# [Punto 11] OpenRGB / ACPI Un-restrict (Sblocco totale bus I2C/SMBus)
+CONFIG_ACPI_REV_OVERRIDE_POSSIBLE=y
+CONFIG_ACPI_CUSTOM_METHOD=y
+
 # --- ERMETE FORGE: 64 PILASTRI KSPP HARDENING ---
 # [BEDROCK DISARM] Rimosse le feature draconiane (INIT_ON_ALLOC, RANDOM_FREELIST) per liberare CPU/RAM.
 CONFIG_FORTIFY_SOURCE=y
