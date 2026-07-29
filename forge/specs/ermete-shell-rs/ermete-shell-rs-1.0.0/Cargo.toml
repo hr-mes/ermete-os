@@ -22,3 +22,11 @@ futures-util = "0.3.32"
 tts = "0.26"
 relm4 = "0.7"
 libc = "0.2"
+
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

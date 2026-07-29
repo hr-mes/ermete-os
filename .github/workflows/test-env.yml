@@ -10,5 +10,5 @@ jobs:
           podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
-            ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
+            ghcr.io/hr-mes/ermete-os-builder:latest \
             bash -c 'env'

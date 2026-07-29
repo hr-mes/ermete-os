@@ -15,6 +15,10 @@ permissions:
   contents: read
   packages: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build-rpm:
     name: Build Chimera Kernel RPM
@@ -35,7 +39,7 @@ jobs:
           dnf install -y rpm-build rpmdevtools clang lld llvm make cmake bison flex elfutils-libelf-devel openssl-devel ncurses-devel rsync tar bc cpio python3 zstd jq curl git ccache openssl perl dwarves kmod
           
           # Assicura il ripristino permessi anche in caso di fallimento
-          trap \"chown -R 0:0 /workspace /home/builder/.ccache\" EXIT
+          trap \"chown -R 1000:1000 /workspace /home/builder/.ccache\" EXIT
           
           # Setup utente non privilegiato interno
           useradd builder -m || true
@@ -64,6 +68,6 @@ jobs:
         buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
         ctr=$(buildah from scratch)
         buildah copy $ctr rpmbuild_out/RPMS/x86_64/*.rpm /
-        IMAGE_LOWER=$(echo "ghcr.io/${{ github.repository_owner }}/ermete-os-kernel:latest" | tr '[:upper:]' '[:lower:]')
+        IMAGE_LOWER=$(echo "ghcr.io/hr-mes/ermete-os-kernel:latest" | tr '[:upper:]' '[:lower:]')
         buildah commit --omit-timestamp $ctr $IMAGE_LOWER
         buildah push $IMAGE_LOWER

@@ -21,6 +21,10 @@ defaults:
   run:
     working-directory: forge
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   orchestrator-brain:
     name: 🧠 Orchestrator Brain
@@ -56,7 +60,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest bash scripts/check_idempotency.sh --package builder --registry ghcr.io --owner ${{ github.repository_owner }} --image-name ermete-os-builder > idemp.out
+          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package builder --registry ghcr.io --owner ${{ github.repository_owner }} --image-name ermete-os-builder > idemp.out
           source ./idemp.out
           if [ "$CACHE_HIT" = "true" ]; then
             echo "cache_hit=true" >> $GITHUB_OUTPUT
@@ -69,7 +73,7 @@ jobs:
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          IMAGE_LOWER=$(echo "ghcr.io/${{ github.repository_owner }}/ermete-os-builder" | tr '[:upper:]' '[:lower:]')
+          IMAGE_LOWER=$(echo "ghcr.io/hr-mes/ermete-os-builder" | tr '[:upper:]' '[:lower:]')
           docker build -t $IMAGE_LOWER:latest -f builder/Containerfile builder/
           docker tag $IMAGE_LOWER:latest $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
           docker push $IMAGE_LOWER:latest
@@ -95,7 +99,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-${{ matrix.package }} > idemp.out
+          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-${{ matrix.package }} > idemp.out
           source ./idemp.out
           echo "hash=$CONTENT_HASH" >> $GITHUB_OUTPUT
           if [ "$CACHE_HIT" = "true" ]; then echo "skip=true" >> $GITHUB_OUTPUT; else echo "skip=false" >> $GITHUB_OUTPUT; fi
@@ -116,7 +120,7 @@ jobs:
             -v ${{ github.workspace }}:/workspace \
             -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
             -w /workspace/forge \
-            ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
+            ghcr.io/hr-mes/ermete-os-builder:latest \
             bash <<'EOF'
             sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
             dnf install -y rpm-build rpmdevtools gcc gcc-c++ cargo rust cmake mold tar xz curl pkgconf-pkg-config zlib-devel openssl-devel checkpolicy policycoreutils spdlog-devel systemd-devel nlohmann-json-devel fmt-devel which autoconf automake libtool cargo-rpm-macros clang clang-devel speech-dispatcher-devel
@@ -196,7 +200,7 @@ jobs:
           podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
-            ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
+            ghcr.io/hr-mes/ermete-os-builder:latest \
             bash <<'EOF'
               set -euo pipefail
               curl -Lo /etc/yum.repos.d/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo
@@ -206,7 +210,7 @@ jobs:
               # No need to buildah pull if we just podman run, but we are inside podman!
               # Actually wait, we are inside podman running buildah? That requires --privileged.
               # Let us just use buildah to pull and extract.
-              buildah from ghcr.io/${{ github.repository_owner }}/ermete-os-kernel:latest > ctr_id
+              buildah from ghcr.io/hr-mes/ermete-os-kernel:latest > ctr_id
               ctr=$(cat ctr_id)
               mnt=$(buildah mount $ctr)
               find $mnt/ -name "*.rpm" ! -name "*debug*" -exec rpm -Uvh --oldpackage --replacepkgs --force --nodeps {} +
@@ -236,7 +240,7 @@ jobs:
             -w /workspace \
             -e MOK_PRIVATE_KEY="${{ secrets.MOK_PRIVATE_KEY }}" \
             -e MOK_PUBLIC_DER="${{ secrets.MOK_PUBLIC_DER }}" \
-            ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
+            ghcr.io/hr-mes/ermete-os-builder:latest \
             bash <<'EOF'
               # Setup repo again
               curl -Lo /etc/yum.repos.d/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo
@@ -244,7 +248,7 @@ jobs:
               dnf install -y buildah jq
               export STORAGE_DRIVER=vfs
               export BUILDAH_ISOLATION=chroot
-              ctr=$(buildah from ghcr.io/${{ github.repository_owner }}/ermete-os-kernel:latest)
+              ctr=$(buildah from ghcr.io/hr-mes/ermete-os-kernel:latest)
               mnt=$(buildah mount $ctr)
               find $mnt/ -name "*.rpm" ! -name "*debug*" -exec rpm -Uvh --oldpackage --replacepkgs --force --nodeps {} +
               buildah umount $ctr
@@ -374,7 +378,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
+          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
           source ./idemp.out
           if [ "$CACHE_HIT" = "true" ]; then
             echo "cache_hit=true" >> $GITHUB_OUTPUT
@@ -390,7 +394,7 @@ jobs:
           podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace/forge \
-            ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
+            ghcr.io/hr-mes/ermete-os-builder:latest \
             bash <<'EOF'
             sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
             dnf install -y rpm-build dnf-plugins-core rpmdevtools mold gcc-c++ which autoconf automake libtool
@@ -491,7 +495,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
+          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
           source ./idemp.out
           if [ "$CACHE_HIT" = "true" ]; then
             echo "cache_hit=true" >> $GITHUB_OUTPUT
@@ -507,7 +511,7 @@ jobs:
           podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace/forge \
-            ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
+            ghcr.io/hr-mes/ermete-os-builder:latest \
             bash <<'EOF'
             sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
             dnf install -y rpm-build dnf-plugins-core rpmdevtools mold gcc-c++ which autoconf automake libtool
@@ -605,7 +609,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
+          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
           source ./idemp.out
           if [ "$CACHE_HIT" = "true" ]; then
             echo "cache_hit=true" >> $GITHUB_OUTPUT
@@ -621,7 +625,7 @@ jobs:
           podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace/forge \
-            ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
+            ghcr.io/hr-mes/ermete-os-builder:latest \
             bash <<'EOF'
             sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
             dnf install -y rpm-build dnf-plugins-core rpmdevtools mold gcc-c++ which autoconf automake libtool
@@ -720,7 +724,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
+          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
           source ./idemp.out
           if [ "$CACHE_HIT" = "true" ]; then
             echo "cache_hit=true" >> $GITHUB_OUTPUT
@@ -736,7 +740,7 @@ jobs:
           podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace/forge \
-            ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
+            ghcr.io/hr-mes/ermete-os-builder:latest \
             bash <<'EOF'
             sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
             dnf install -y rpm-build dnf-plugins-core rpmdevtools mold gcc-c++ which autoconf automake libtool
@@ -819,7 +823,7 @@ jobs:
           podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace/forge \
-            ghcr.io/${{ github.repository_owner }}/ermete-os-builder:latest \
+            ghcr.io/hr-mes/ermete-os-builder:latest \
             bash <<'EOF'
             set -e
             export BUILDAH_ISOLATION=chroot
@@ -868,7 +872,7 @@ jobs:
                 img_name="ermete-os-forge-rolling-repo:latest"
               fi
               
-              IMAGE_LOWER=$(echo "ghcr.io/${{ github.repository_owner }}/$img_name" | tr '[:upper:]' '[:lower:]')
+              IMAGE_LOWER=$(echo "ghcr.io/hr-mes/$img_name" | tr '[:upper:]' '[:lower:]')
               NEW_HASH=$(find "$dir" -maxdepth 1 -name '*.rpm' -type f | sort | xargs -r sha256sum | sha256sum | awk '{print $1}')
               OLD_HASH=$(skopeo inspect --config "docker://$IMAGE_LOWER" 2>/dev/null | jq -r '.config.Labels["tier.content.sha256"] // ""' || echo "")
               if [ -n "$OLD_HASH" ] && [ "$NEW_HASH" = "$OLD_HASH" ]; then

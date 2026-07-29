@@ -11,7 +11,8 @@ UKI_IMAGE="/boot/efi/EFI/Linux/ermete-chimera.efi"
 OSREL="/etc/os-release"
 CMDLINE="/etc/kernel/cmdline"
 KERNEL="/lib/modules/$(uname -r)/vmlinuz"
-INITRD="/boot/initramfs-$(uname -r).img"
+INITRD="/usr/lib/modules/$(uname -r)/initramfs.img"
+[[ -f "$INITRD" ]] || INITRD="/boot/initramfs-$(uname -r).img"
 
 if [[ ! -f "$KERNEL" ]]; then
     echo "Kernel not found. Skipping."
@@ -44,6 +45,7 @@ echo ">>> Measuring UKI for TPM PCR 11 Sealing..."
 echo ">>> Signing UKI with sbsign..."
 sbsign --key /etc/keys/ermete-secure-boot.key \
        --cert /etc/keys/ermete-secure-boot.crt \
-       --output "$UKI_IMAGE" "$UKI_IMAGE"
+       --output "${UKI_IMAGE}.signed" "$UKI_IMAGE"
+    mv "${UKI_IMAGE}.signed" "$UKI_IMAGE"
 
 echo ">>> Secure Boot UKI generation complete and measured!"

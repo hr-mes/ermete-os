@@ -1,3 +1,4 @@
+%{!?krel: %define krel %{version}-1.chimera}
 # ===================================================================
 # Ermete OS Chimera Kernel Spec
 # Base: CachyOS Linux Tree + Ermete OS Bedrock Enhancements
@@ -105,9 +106,9 @@ against the %{pkg_name} package.
 make INSTALL_MOD_PATH=%{buildroot} modules_install
 KREL=$(make -s kernelrelease)
 
-cp arch/x86/boot/bzImage %{buildroot}/lib/modules/$KREL/vmlinuz
-cp System.map %{buildroot}/lib/modules/$KREL/System.map
-cp .config %{buildroot}/lib/modules/$KREL/config
+cp arch/x86/boot/bzImage %{buildroot}/usr/lib/modules/$KREL/vmlinuz
+cp System.map %{buildroot}/usr/lib/modules/$KREL/System.map
+cp .config %{buildroot}/usr/lib/modules/$KREL/config
 
 # Install kernel-devel source tree for module building
 mkdir -p %{buildroot}/usr/src/kernels/$KREL-chimera
@@ -117,10 +118,10 @@ rsync -a --prune-empty-dirs --include '*/' --include '*.h' --include '*.conf' --
 cp -a scripts %{buildroot}/usr/src/kernels/$KREL-chimera/
 
 # Fix the symlink in /lib/modules so it points to our new kernel-devel directory
-rm -f %{buildroot}/lib/modules/$KREL/build
-rm -f %{buildroot}/lib/modules/$KREL/source
-ln -snf ../../../../usr/src/kernels/$KREL-chimera %{buildroot}/lib/modules/$KREL/build
-ln -snf ../../../../usr/src/kernels/$KREL-chimera %{buildroot}/lib/modules/$KREL/source
+rm -f %{buildroot}/usr/lib/modules/$KREL/build
+rm -f %{buildroot}/usr/lib/modules/$KREL/source
+ln -snf ../../../src/kernels/$KREL-chimera %{buildroot}/usr/lib/modules/$KREL/build
+ln -snf ../../../src/kernels/$KREL-chimera %{buildroot}/usr/lib/modules/$KREL/source
 
 # Python shebangs are ignored by disabling bytecompile check globally
 
