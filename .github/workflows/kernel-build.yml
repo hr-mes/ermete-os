@@ -3,7 +3,7 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'kernel/**'
+      - 'forge/specs/ermete-kernel/**'
       - '.github/workflows/kernel-build.yml'
   workflow_dispatch:
 
