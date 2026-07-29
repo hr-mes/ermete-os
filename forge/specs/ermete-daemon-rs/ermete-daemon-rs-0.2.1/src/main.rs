@@ -20,7 +20,7 @@ use portal::PortalSettingsService;
 use portal_screencast::{PortalScreenCastService, PortalRemoteDesktopService};
 use secret_enroller::SecretEnrollerService;
 use voiceover::VoiceOverService;
-use ai::AiCore;
+
 use power::PowerManager;
 
 #[tokio::main]
@@ -35,21 +35,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
     println!("Starting Gatekeeper Listener...");
     let _ = gatekeeper_listener::start_gatekeeper_listener(sys_conn.clone()).await;
 
-    println!("Starting App Nap QoS Observer...");
-    qos::start_qos_observer().await;
 
-    let _ai_core = AiCore::new();
-
-    println!("Starting Gaze-Tracking Navigation module...");
-    let gaze_tracker = gaze::GazeTracker::new();
-    gaze_tracker.start();
 
     println!("Starting Spatial Audio Raytracing engine...");
 
 
     println!("Starting Continuity & Handoff daemon...");
 
-    continuity_srv.start_background_sync().await;
+
 
     println!("Initializing ACID Settings Engine and XDG Desktop Portal backend...");
     let settings_srv = SettingsService::new();

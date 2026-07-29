@@ -16,7 +16,7 @@ impl UpdaterIface {
             .arg(sender.as_str())
             .arg("--action-id")
             .arg("os.ermete.updater.apply")
-            .status()
+            .status().await
             .map_err(|e| zbus::fdo::Error::Failed(format!("pkcheck failed: {}", e)))?;
             
         if !status.success() {
