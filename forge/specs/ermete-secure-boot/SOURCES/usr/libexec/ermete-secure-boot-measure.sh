@@ -21,7 +21,7 @@ fi
 
 # 1. Generate UKI (Unified Kernel Image) using systemd-ukify
 echo ">>> Building UKI with ukify..."
-/usr/lib/systemd/ukify build \
+/usr/lib/systemd/ukify build --pcr-private-key=/etc/keys/ermete-secure-boot.key --pcr-public-key=/etc/keys/ermete-secure-boot.crt \
     --linux="$KERNEL" \
     --initrd="$INITRD" \
     --cmdline="@$CMDLINE" \
@@ -34,7 +34,7 @@ echo ">>> Measuring UKI for TPM PCR 11 Sealing..."
 /usr/lib/systemd/systemd-measure sign \
     --linux="$KERNEL" \
     --initrd="$INITRD" \
-    --cmdline="$CMDLINE" \
+    --cmdline="@$CMDLINE" \
     --os-release="$OSREL" \
     --private-key=/etc/keys/ermete-secure-boot.key \
     --public-key=/etc/keys/ermete-secure-boot.crt \
