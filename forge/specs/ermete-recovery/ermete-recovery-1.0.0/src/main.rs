@@ -99,60 +99,48 @@ fn apply_css() {
         }
         .deploy-hash {
             font-size: 13px;
-            font-family: monospace;
             color: #64748b;
+            font-family: monospace;
         }
         .badge-booted {
-            background-color: #059669;
-            color: #ffffff;
-            font-weight: 700;
+            background-color: #065f46;
+            color: #34d399;
             font-size: 12px;
+            font-weight: 700;
             padding: 4px 10px;
-            border-radius: 6px;
+            border-radius: 999px;
         }
         .badge-rollback {
-            background-color: #2563eb;
-            color: #ffffff;
-            font-weight: 700;
+            background-color: #1e3a8a;
+            color: #60a5fa;
             font-size: 12px;
+            font-weight: 700;
             padding: 4px 10px;
-            border-radius: 6px;
+            border-radius: 999px;
         }
         .btn-action {
-            background-color: #3b82f6;
+            background-color: #2563eb;
             color: #ffffff;
             font-weight: 700;
             font-size: 15px;
             padding: 12px 24px;
-            border-radius: 8px;
+            border-radius: 10px;
             border: none;
         }
         .btn-action:hover {
-            background-color: #2563eb;
+            background-color: #1d4ed8;
         }
         .btn-danger {
-            background-color: #ef4444;
+            background-color: #dc2626;
             color: #ffffff;
             font-weight: 700;
             font-size: 15px;
             padding: 12px 24px;
-            border-radius: 8px;
+            border-radius: 10px;
             border: none;
         }
         .btn-danger:hover {
-            background-color: #dc2626;
-        }
-        .btn-secondary {
-            background-color: #334155;
-            color: #f8fafc;
-            font-weight: 600;
-            font-size: 14px;
-            padding: 10px 20px;
-            border-radius: 8px;
-            border: none;
-        }
-        .btn-secondary:hover {
-            background-color: #475569;
+            background-color: #b91c1c;
         }
     "#;
     provider.load_from_data(css);
@@ -161,6 +149,74 @@ fn apply_css() {
         &provider,
         gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
     );
+}
+
+fn populate_deployments_async(list_box: &GtkBox) {
+    let list_box_clone = list_box.clone();
+    std::thread::spawn(move || {
+        let deployments = get_deployments();
+        gtk4::glib::idle_add_once(move || {
+            while let Some(child) = list_box_clone.first_child() {
+                list_box_clone.remove(&child);
+            }
+            for dep in &deployments {
+                let dep_card = GtkBox::builder()
+                    .orientation(Orientation::Vertical)
+                    .spacing(8)
+                    .css_classes(["card"])
+                    .build();
+
+                let top_row = GtkBox::builder()
+                    .orientation(Orientation::Horizontal)
+                    .spacing(12)
+                    .build();
+
+                let title_text = if dep.booted {
+                    format!("📦 Deployment Attuale: {} (v{})", dep.origin, dep.version)
+                } else {
+                    format!("📦 Rollback Disponibile: {} (v{})", dep.origin, dep.version)
+                };
+                let dep_lbl = Label::builder()
+                    .label(&title_text)
+                    .css_classes(["deploy-title"])
+                    .halign(Align::Start)
+                    .hexpand(true)
+                    .build();
+
+                top_row.append(&dep_lbl);
+
+                if dep.booted {
+                    let badge = Label::builder().label("ATTIVO (AVVIATO)").css_classes(["badge-booted"]).build();
+                    top_row.append(&badge);
+                } else {
+                    let badge = Label::builder().label("PRECEDENTE / ROLLBACK").css_classes(["badge-rollback"]).build();
+                    top_row.append(&badge);
+                }
+
+                dep_card.append(&top_row);
+
+                let hash_text = format!("Digest: {} | ID: {}", dep.checksum, dep.id);
+                let hash_lbl = Label::builder()
+                    .label(&hash_text)
+                    .css_classes(["deploy-hash"])
+                    .halign(Align::Start)
+                    .build();
+                dep_card.append(&hash_lbl);
+
+                if dep.checksum.contains(BEDROCK_STABLE_COMMIT) {
+                    let bedrock_lbl = Label::builder()
+                        .label("🛡️ COMMIT DI ROLLBACK STABILE CERTIFICATO (Bedrock Safe Point)")
+                        .halign(Align::Start)
+                        .css_classes(["badge-rollback"])
+                        .margin_top(4)
+                        .build();
+                    dep_card.append(&bedrock_lbl);
+                }
+
+                list_box_clone.append(&dep_card);
+            }
+        });
+    });
 }
 
 fn build_ui(app: &Application) {
@@ -223,63 +279,7 @@ fn build_ui(app: &Application) {
         .spacing(12)
         .build();
 
-    let deployments = get_deployments();
-    for dep in &deployments {
-        let dep_card = GtkBox::builder()
-            .orientation(Orientation::Vertical)
-            .spacing(8)
-            .css_classes(["card"])
-            .build();
-
-        let top_row = GtkBox::builder()
-            .orientation(Orientation::Horizontal)
-            .spacing(12)
-            .build();
-
-        let title_text = if dep.booted {
-            format!("📦 Deployment Attuale: {} (v{})", dep.origin, dep.version)
-        } else {
-            format!("📦 Rollback Disponibile: {} (v{})", dep.origin, dep.version)
-        };
-        let dep_lbl = Label::builder()
-            .label(&title_text)
-            .css_classes(["deploy-title"])
-            .halign(Align::Start)
-            .hexpand(true)
-            .build();
-
-        top_row.append(&dep_lbl);
-
-        if dep.booted {
-            let badge = Label::builder().label("ATTIVO (AVVIATO)").css_classes(["badge-booted"]).build();
-            top_row.append(&badge);
-        } else {
-            let badge = Label::builder().label("PRECEDENTE / ROLLBACK").css_classes(["badge-rollback"]).build();
-            top_row.append(&badge);
-        }
-
-        dep_card.append(&top_row);
-
-        let hash_text = format!("Digest: {} | ID: {}", dep.checksum, dep.id);
-        let hash_lbl = Label::builder()
-            .label(&hash_text)
-            .css_classes(["deploy-hash"])
-            .halign(Align::Start)
-            .build();
-        dep_card.append(&hash_lbl);
-
-        if dep.checksum.contains(BEDROCK_STABLE_COMMIT) {
-            let bedrock_lbl = Label::builder()
-                .label("🛡️ COMMIT DI ROLLBACK STABILE CERTIFICATO (Bedrock Safe Point)")
-                .halign(Align::Start)
-                .css_classes(["badge-rollback"])
-                .margin_top(4)
-                .build();
-            dep_card.append(&bedrock_lbl);
-        }
-
-        list_box.append(&dep_card);
-    }
+    populate_deployments_async(&list_box);
 
     scroll.set_child(Some(&list_box));
     main_box.append(&scroll);
@@ -375,18 +375,8 @@ fn build_ui(app: &Application) {
         dialog.present();
     });
 
-    let reboot_btn = Button::builder()
-        .label("Riavvia Normale")
-        .css_classes(["btn-secondary"])
-        .build();
-    reboot_btn.connect_clicked(|_| {
-        let _ = Command::new("systemctl").arg("reboot").spawn();
-    });
-
-    actions_box.append(&reboot_btn);
     actions_box.append(&bedrock_btn);
     actions_box.append(&rollback_btn);
-
     main_box.append(&actions_box);
 
     window.set_child(Some(&main_box));
@@ -395,7 +385,7 @@ fn build_ui(app: &Application) {
 
 fn main() {
     let app = Application::builder()
-        .application_id("org.ermete.RecoveryUI")
+        .application_id("os.ermete.Recovery")
         .build();
 
     app.connect_activate(build_ui);
