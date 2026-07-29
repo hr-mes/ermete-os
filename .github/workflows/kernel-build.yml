@@ -29,8 +29,8 @@ jobs:
       
     - name: Build RPM Packages via Chimera Bedrock
       run: |
-        chmod +x forge/specs/ermete-kernel/build-local.sh
-        bash forge/specs/ermete-kernel/build-local.sh
+        chmod +x ../forge/specs/ermete-kernel/build-local.sh
+        bash ../forge/specs/ermete-kernel/build-local.sh
           
     - name: Upload Binary RPMs
       uses: actions/upload-artifact@v4
