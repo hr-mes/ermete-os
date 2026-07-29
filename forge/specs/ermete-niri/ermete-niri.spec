@@ -1,6 +1,6 @@
 Name:           ermete-niri
 Version:        0.1.8
-Release:        2.fc43
+Release:        3.fc43
 Summary:        Ermete-patched version of the Niri scrollable tiling compositor
 License:        GPL-3.0-or-later
 

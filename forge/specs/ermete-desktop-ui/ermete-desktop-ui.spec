@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name:           ermete-desktop-ui
 Version:        1.0.0
-Release:        7%{?dist}
+Release:        8%{?dist}
 Summary:        Ermete OS Desktop UI configurations
 License:        MIT
 URL:            https://github.com/hr-mes/ermete-forge
@@ -12,16 +12,17 @@ Obsoletes:      ermete-ags-config < 1.0.1-3
 Provides:       ermete-niri-session = 1.0.0-3
 Obsoletes:      ermete-niri-session < 1.0.0-3
 
-Requires:       lxpolkit
-Requires:       cliphist
-Requires:       swayidle
-Requires:       ddcutil
-Requires:       foot
-Requires:       grim
-Requires:       slurp
-Requires:       wl-clipboard
-Requires:       brightnessctl
-Requires:       playerctl
+Requires: lxpolkit
+Requires: cliphist
+Requires: swayidle
+Requires: ddcutil
+Requires: foot
+Requires: grim
+Requires: slurp
+Requires: wl-clipboard
+Requires: brightnessctl
+Requires: playerctl
+Requires:       ermete-shell-rs ermete-settings-rs wireplumber nautilus firefox
 
 %description
 Provides the unified Desktop UI (Niri) configuration for Ermete OS.

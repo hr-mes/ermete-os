@@ -1,11 +1,12 @@
 %global debug_package %{nil}
 Name:           ermete-telemetry-rs
 Version:        1.0.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Ermete OS Crash & Telemetry Reporter
 
 License:        GPL-3.0-or-later
 URL:            https://github.com/hr-mes/ermete-forge
+Requires:       systemd
 Source0:        %{name}-%{version}.tar.gz
 
 BuildRequires:  rust cargo systemd-rpm-macros pkgconf-pkg-config openssl-devel

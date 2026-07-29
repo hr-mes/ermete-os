@@ -1,14 +1,15 @@
 %global debug_package %{nil}
 Name:           ermete-doctor
 Version:        0.1.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Ermete OS System Diagnostic CLI
 
 License:        MIT
 Source0:        ermete-doctor-%{version}.tar.gz
 
 BuildRequires:  rust cargo gcc
-Requires:       bash
+Requires: bash
+Requires:       iputils
 
 %description
 Diagnostic CLI tool for verifying Ermete OS system health and hardware configuration.

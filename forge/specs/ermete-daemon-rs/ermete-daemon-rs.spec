@@ -1,14 +1,15 @@
 %global debug_package %{nil}
 Name:           ermete-daemon-rs
 Version:        0.2.1
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Ermete OS Native D-Bus Bedrock, ACID Settings & Multimedia Portal Daemon
 
 License:        MIT
 Source0:        ermete-daemon-rs-%{version}.tar.gz
 
 BuildRequires:  rust cargo gcc gcc-c++ pkgconf-pkg-config
-Requires:       pipewire wireplumber
+Requires: pipewire wireplumber
+Requires:       ermete-shell-rs dconf ermete-matugen niri swww speech-dispatcher psmisc wlsunset
 
 %description
 Pure Rust native D-Bus IPC service for Ermete OS audio, system bedrock management, ACID settings database, and XDG Desktop Portal backend (Settings, ScreenCast, RemoteDesktop).

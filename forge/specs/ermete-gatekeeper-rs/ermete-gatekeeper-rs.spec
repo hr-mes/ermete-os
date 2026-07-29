@@ -1,11 +1,12 @@
 %global debug_package %{nil}
 Name:           ermete-gatekeeper-rs
 Version:        1.0.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Ermete OS Zero-Trust Gatekeeper (fanotify)
 
 License:        GPLv3+
 URL:            https://github.com/hr-mes/ermete-forge
+Requires:       polkit bubblewrap
 Source0:        %{name}-%{version}.tar.gz
 
 BuildRequires:  rust >= 1.83.0
