@@ -24,7 +24,7 @@ on:
       - '.github/workflows/system-build-disk.yml'
 
 env:
-  IMAGE_NAME: "ermete-os" # output of build.yml, keep in sync
+  IMAGE_NAME: "ermete-os-system" # output of build.yml, keep in sync
   IMAGE_REGISTRY: "ghcr.io/hr-mes"  # do not edit
   DEFAULT_TAG: "latest"
   # TODO: Pin to specific digest
@@ -41,7 +41,7 @@ defaults:
 jobs:
   build:
     name: Build disk images
-    runs-on: ${{ inputs.platform == 'amd64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
+    runs-on: ${{ (github.event_name != 'pull_request' && inputs.platform == 'amd64') && 'ubuntu-24.04' || (github.event_name == 'pull_request' && 'ubuntu-24.04' || 'ubuntu-24.04-arm') }}
     strategy:
       fail-fast: false
       matrix:
@@ -83,7 +83,7 @@ jobs:
           image: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
           chown: ${{ env.USER_UID }}:${{ env.USER_GID }}
           types: ${{ matrix.disk-type }}
-          additional-args: --use-librepo=True
+          additional-args: --use-librepo=True --rootfs=btrfs
 
       - name: Upload disk images and Checksum to Job Artifacts
         if: inputs.upload-to-s3 != true && github.event_name != 'pull_request'

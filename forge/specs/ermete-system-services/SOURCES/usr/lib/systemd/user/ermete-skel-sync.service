@@ -8,7 +8,7 @@ DefaultDependencies=no
 CPUWeight=50
 MemoryMax=128M
 Type=oneshot
-ExecStart=/usr/bin/bash -c 'cp -n -R /etc/skel/. "$HOME/" 2>/dev/null || true'
+ExecStart=/usr/bin/bash -c 'if [ ! -f "$HOME/.config/.skel_installed" ]; then cp -n -R /etc/skel/. "$HOME/" 2>/dev/null && mkdir -p "$HOME/.config" && touch "$HOME/.config/.skel_installed"; fi'
 RemainAfterExit=yes
 
 [Install]

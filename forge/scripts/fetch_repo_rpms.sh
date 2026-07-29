@@ -45,6 +45,7 @@ TIER1_IMAGES=(
   "ermete-os-forge-cliphist"
   "ermete-os-forge-ide-bootstrap"
   "ermete-os-forge-system-tweaks"
+  "ermete-os-forge-niri"
 )
 for pkg in "${UPSTREAM_DESKTOP[@]}" "${UPSTREAM_CLI[@]}"; do
   [[ -n "$pkg" ]] && TIER1_IMAGES+=("ermete-os-forge-rolling-$pkg")
@@ -100,7 +101,7 @@ pull_and_extract() {
   echo "$new_digest" > "$TMP_DIR/digest_$img"
 
   local ctr
-  ctr=$(buildah from "$IMAGE_LOWER" || true)
+  ctr=$(buildah from "$IMAGE_LOWER")
   if [ -n "$ctr" ]; then
     local mnt
     mnt=$(buildah mount "$ctr")

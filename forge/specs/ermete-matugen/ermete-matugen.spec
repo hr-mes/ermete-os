@@ -23,12 +23,10 @@ Compiled natively in Ermete Forge with extreme optimizations.
 
 %build
 %set_build_flags
-export RUSTFLAGS="%{rustflags}"
 export CARGO_PROFILE_RELEASE_LTO="thin"
 export CFLAGS="$(echo $CFLAGS | sed 's/-flto=auto//g')"
 export CXXFLAGS="$(echo $CXXFLAGS | sed 's/-flto=auto//g')"
 export LDFLAGS="$(echo $LDFLAGS | sed 's/-flto=auto//g')"
-%set_build_flags
 cargo build --release
 
 %install

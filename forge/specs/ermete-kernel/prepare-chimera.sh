@@ -319,6 +319,8 @@ CONFIG_VIRTIO_CONSOLE=y
 CONFIG_NET_9P=y
 CONFIG_NET_9P_VIRTIO=y
 CONFIG_9P_FS=y
+CONFIG_FUSE_FS=y
+CONFIG_VIRTIO_FS=y
 # CONFIG_DRM_NOUVEAU is not set
 
 # --- ERMETE FORGE: 64 PILASTRI KSPP HARDENING ---
@@ -405,8 +407,8 @@ pushd "$KERNEL_BUILD_DIR" > /dev/null
 for patch in "$WORKSPACE_DIR"/SOURCES/bedrock-*.patch; do
     if [ -f "$patch" ]; then
         echo "    -> Applicazione patch: $(basename "$patch")"
-        if patch -p1 -F2 --dry-run --silent < "$patch"; then
-            patch -p1 -F2 --no-backup-if-mismatch < "$patch"
+        if patch -p1 -F0 --dry-run --silent < "$patch"; then
+            patch -p1 -F0 --no-backup-if-mismatch < "$patch"
         else
             echo "    [WARN] Conflitto strutturale saltato: $(basename "$patch")"
         fi

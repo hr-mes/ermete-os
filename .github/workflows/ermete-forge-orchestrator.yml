@@ -151,13 +151,7 @@ jobs:
                 dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SRPMS/*.nosrc.rpm || true
             fi
           
-            # Workaround for Fedora 43 rust-sysinfo bug
-            if ls /usr/share/cargo/registry/sysinfo-*/src/lib.rs 1> /dev/null 2>&1; then
-                for sysinfo_dir in /usr/share/cargo/registry/sysinfo-*/; do
-                    touch "$sysinfo_dir/README.md"
-                done
-            fi
-          
+
             # Second attempt (actual build)
             rpmbuild -bb --nocheck specs/ermete-${{ matrix.package }}/*.spec
           
@@ -339,7 +333,7 @@ jobs:
       - name: Sign NVIDIA Micro-Container
         if: steps.cache.outputs['cache-hit'] != 'true'
         env:
-          COSIGN_EXPERIMENTAL: false
+          COSIGN_EXPERIMENTAL: true
         run: |
           cosign login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-nvidia:latest" | tr '[:upper:]' '[:lower:]')
@@ -885,7 +879,7 @@ jobs:
               
               # Sign the RPMs only if a GPG key is configured
               if [ -n "${{ secrets.RPM_GPG_KEY }}" ]; then
-                find "$dir" -name "*.rpm" -exec rpmsign --addsign {} + || true
+                find "$dir" -name "*.rpm" -exec rpmsign --addsign {} +
               fi
               
               (
@@ -908,6 +902,9 @@ jobs:
             # Aggrega i tier e pubblica su GitHub Pages (Rolling Release)
             echo "🌐 Pubblicazione dei repository DNF su GitHub Pages (gh-pages branch)..."
             mkdir -p /workspace/pages_repo
+            if [ -n "${{ secrets.RPM_GPG_KEY }}" ]; then
+              gpg --export --armor "%{_gpg_name}" > /workspace/pages_repo/RPM-GPG-KEY-ermete || true
+            fi
             cp -a repo-cache/repo-tier0 /workspace/pages_repo/tier0
             cp -a repo-cache/repo-tier1 /workspace/pages_repo/tier1
             cp -a repo-cache/repo-tier2 /workspace/pages_repo/tier2

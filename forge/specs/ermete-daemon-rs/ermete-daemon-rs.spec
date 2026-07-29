@@ -9,7 +9,7 @@ Source0:        ermete-daemon-rs-%{version}.tar.gz
 
 BuildRequires:  rust cargo gcc gcc-c++ pkgconf-pkg-config
 Requires: pipewire wireplumber
-Requires:       ermete-shell-rs dconf ermete-matugen niri speech-dispatcher psmisc wlsunset
+Requires:       dconf ermete-matugen niri speech-dispatcher psmisc wlsunset
 
 %description
 Pure Rust native D-Bus IPC service for Ermete OS audio, system bedrock management, ACID settings database, and XDG Desktop Portal backend (Settings, ScreenCast, RemoteDesktop).
@@ -19,7 +19,7 @@ Pure Rust native D-Bus IPC service for Ermete OS audio, system bedrock managemen
 
 %build
 %set_build_flags
-cargo build --release
+cargo build --release --locked
 
 %install
 mkdir -p %{buildroot}%{_bindir}

@@ -169,7 +169,7 @@ pub fn build_page() -> GtkBox {
         .build();
 
     let row_devices = ActionRow::builder("Dispositivi Hardware & GPU")
-        .subtitle("Accesso diretto alle risorse di accelerazione GPU e USB (--device=all)")
+        .subtitle("Accesso all'accelerazione grafica GPU (--device=dri)")
         .suffix(&chk_devices)
         .build();
 
@@ -291,8 +291,8 @@ pub fn build_page() -> GtkBox {
     cache_btn.connect_clicked(move |_| {
         let status = cache_status.clone();
         relm4::spawn_local(async move {
-            let _ = tokio::process::Command::new("rm")
-                .args(["-rf", "~/.cache/tmp/*"])
+            let _ = tokio::process::Command::new("sh")
+                .args(["-c", "rm -rf ~/.cache/tmp/*"])
                 .output()
                 .await;
             status.set_text("✅ Cache di sistema e file temporanei ripuliti con successo.");

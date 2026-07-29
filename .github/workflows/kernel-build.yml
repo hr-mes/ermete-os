@@ -27,47 +27,24 @@ jobs:
     - name: Checkout Source
       uses: actions/checkout@v4
       
-    - name: Build RPM Packages via Podman (Rootless)
+    - name: Build RPM Packages via Chimera Bedrock
       run: |
-          # Creazione della directory ccache persistente sull'SSD locale
-          mkdir -p /home/ermete/.ccache_chimera
-          
-          # Esecuzione isolata via Podman con eccezioni SELinux/Seccomp per le policy W^X di Ermete OS
-          podman run --rm --security-opt label=disable --security-opt seccomp=unconfined -v ${{ github.workspace }}:/workspace -v /home/ermete/.ccache_chimera:/home/builder/.ccache -w /workspace fedora:latest bash -c "
-          set -e
-          dnf update -y
-          dnf install -y rpm-build rpmdevtools clang lld llvm make cmake bison flex elfutils-libelf-devel openssl-devel ncurses-devel rsync tar bc cpio python3 zstd jq curl git ccache openssl perl dwarves kmod
-          
-          # Assicura il ripristino permessi anche in caso di fallimento
-          trap \"chown -R 1000:1000 /workspace /home/builder/.ccache\" EXIT
-          
-          # Setup utente non privilegiato interno
-          useradd builder -m || true
-          echo 'builder ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
-          chown -R builder:builder /workspace /home/builder
-          
-          # Avvio della compilazione
-          sudo -H -E -u builder bash -c \"export CCACHE_MAXSIZE='20G' && export CCACHE_COMPRESS=1 && export CC='ccache clang' && export CXX='ccache clang++' && cd kernel && ./build-kernel-rpm.sh\"
-          "
+        chmod +x forge/specs/ermete-kernel/build-local.sh
+        bash forge/specs/ermete-kernel/build-local.sh
           
     - name: Upload Binary RPMs
       uses: actions/upload-artifact@v4
       with:
         name: ermete-chimera-kernel-rpms
-        path: kernel/rpmbuild_out/RPMS/x86_64/*.rpm
+        path: RPMS_OUT/*.rpm
         
-    - name: Upload Source RPM
-      uses: actions/upload-artifact@v4
-      with:
-        name: ermete-chimera-kernel-srpm
-        path: kernel/rpmbuild_out/SRPMS/*.src.rpm
     - name: Publish Kernel Micro-Container OCI
       run: |
         export STORAGE_DRIVER=overlay
         export BUILDAH_ISOLATION=chroot
         buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
         ctr=$(buildah from scratch)
-        buildah copy $ctr rpmbuild_out/RPMS/x86_64/*.rpm /
+        buildah copy $ctr RPMS_OUT/*.rpm /
         IMAGE_LOWER=$(echo "ghcr.io/hr-mes/ermete-os-kernel:latest" | tr '[:upper:]' '[:lower:]')
         buildah commit --omit-timestamp $ctr $IMAGE_LOWER
         buildah push $IMAGE_LOWER

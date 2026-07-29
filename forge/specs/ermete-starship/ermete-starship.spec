@@ -25,14 +25,12 @@ Compiled natively in Ermete Forge with extreme optimizations.
 
 %build
 %set_build_flags
-export RUSTFLAGS="%{rustflags}"
 export CARGO_PROFILE_RELEASE_LTO="thin"
 # Disable GCC LTO in CFLAGS to prevent cc crate linkage errors with Rust LLVM
 export CFLAGS="$(echo $CFLAGS | sed 's/-flto=auto//g')"
 export CXXFLAGS="$(echo $CXXFLAGS | sed 's/-flto=auto//g')"
 export LDFLAGS="$(echo $LDFLAGS | sed 's/-flto=auto//g')"
 # The global rpmmacros will inject -C target-cpu=x86-64-v3 and mold linker
-%set_build_flags
 cargo build --release
 
 %install
