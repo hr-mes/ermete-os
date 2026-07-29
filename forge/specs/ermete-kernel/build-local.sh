@@ -33,7 +33,7 @@ podman run --rm -i \
     
     echo '>>> [FASE 1] Fetch, Validazione AST e Fusione Kconfig (Universal Matrix)...'
     # Questo script scarica il kernel, esegue le patch in Fuzz 1, scarta quelle rotte e imposta il LTO/BORE
-    bash specs/ermete-kernel/prepare-chimera.sh
+    bash forge/specs/ermete-kernel/prepare-chimera.sh
     
     KERNEL_DIR=$(cat ~/rpmbuild/BUILD/.kernel_version)
     cd ~/rpmbuild/BUILD/$KERNEL_DIR
