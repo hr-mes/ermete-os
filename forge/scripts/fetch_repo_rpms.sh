@@ -160,8 +160,8 @@ echo "=== Post-Processing: Deduplicating RPMs (Keeping Latest) ==="
 for tier in tier0 tier1 tier2 tier3; do
   # First pass: if ermete-kernel exists anywhere in this tier, purge all old 'kernel' packages
   for prefix in kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-modules-internal kernel-uki-virt kernel-uki-virt-addons kernel-devel kernel-devel-matched; do
-    if find repo-cache/repo-${tier}/ -type f -name "ermete-${prefix}-[0-9]*.rpm" | grep -q .; then
-      echo "    [DEDUPLICATION] Found ermete-${prefix}. Removing obsolete ${prefix}..."
+    if find repo-cache/repo-${tier}/ -type f -name "ermete-kernel-[0-9]*.rpm" | grep -q .; then
+      echo "    [DEDUPLICATION] Found ermete-kernel. Removing obsolete ${prefix}..."
       find repo-cache/repo-${tier}/ -type f -name "${prefix}-[0-9]*.rpm" -delete
     fi
   done
