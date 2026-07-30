@@ -226,8 +226,8 @@ jobs:
               echo "QUALIFIED_KERNEL=$QUALIFIED_KERNEL" > /workspace/kernel_info
               echo "QUALIFIED_NVIDIA=$QUALIFIED_NVIDIA" >> /workspace/kernel_info
           EOF
-          echo "kernel_ver=$(grep QUALIFIED_KERNEL kernel_info | cut -d= -f2)" >> $GITHUB_OUTPUT
-          echo "nvidia_ver=$(grep QUALIFIED_NVIDIA kernel_info | cut -d= -f2)" >> $GITHUB_OUTPUT
+          echo "kernel_ver=$(grep QUALIFIED_KERNEL ../kernel_info | cut -d= -f2)" >> $GITHUB_OUTPUT
+          echo "nvidia_ver=$(grep QUALIFIED_NVIDIA ../kernel_info | cut -d= -f2)" >> $GITHUB_OUTPUT
 
       - name: Cache RPMs
         id: cache
