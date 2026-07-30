@@ -158,36 +158,42 @@ done
 echo "=== Post-Processing: Deduplicating RPMs (Keeping Latest) ==="
 # In case of leftover duplicates from parallel jobs, keep only the latest version of each RPM
 for tier in tier0 tier1 tier2 tier3; do
-  # First pass: if ermete-kernel exists, purge the old 'kernel' packages
+  # First pass: if ermete-kernel exists anywhere in this tier, purge all old 'kernel' packages
   for prefix in kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-modules-internal kernel-uki-virt kernel-uki-virt-addons kernel-devel kernel-devel-matched; do
-    if ls repo-cache/repo-${tier}/ermete-${prefix}-[0-9]*.rpm 1> /dev/null 2>&1; then
+    if find repo-cache/repo-${tier}/ -type f -name "ermete-${prefix}-[0-9]*.rpm" | grep -q .; then
       echo "    [DEDUPLICATION] Found ermete-${prefix}. Removing obsolete ${prefix}..."
-      rm -f repo-cache/repo-${tier}/${prefix}-[0-9]*.rpm
+      find repo-cache/repo-${tier}/ -type f -name "${prefix}-[0-9]*.rpm" -delete
     fi
   done
 
-  for rpm_file in repo-cache/repo-${tier}/*.rpm; do
+  # Second pass: generic deduplication across subdirectories
+  # We group RPMs by package name, and if multiple versions exist, we keep the newest.
+  declare -A seen_pkgs
+  while IFS= read -r rpm_file; do
     [ -e "$rpm_file" ] || continue
     pkg_name=$(rpm -qp --queryformat '%{NAME}' "$rpm_file" 2>/dev/null || true)
     if [ -n "$pkg_name" ]; then
       if [[ "$pkg_name" == kmod-nvidia-* ]]; then
         pkg_name="kmod-nvidia"
       fi
-      
-      matching_rpms=(repo-cache/repo-${tier}/${pkg_name}-[0-9]*.rpm)
-      
-      if [ ${#matching_rpms[@]} -gt 1 ]; then
-        # Sort by version using ls -1v and keep the latest (last one)
-        latest_rpm=$(ls -1v "${matching_rpms[@]}" | tail -n 1)
-        for f in "${matching_rpms[@]}"; do
-          if [ "$f" != "$latest_rpm" ]; then
-            echo "    [DEDUPLICATION] Removing older duplicate: $f"
-            rm -f "$f"
-          fi
-        done
+      # Collect all RPMs matching this package name recursively
+      if [ -z "${seen_pkgs[$pkg_name]+x}" ]; then
+        seen_pkgs[$pkg_name]=1
+        readarray -t matching_rpms < <(find repo-cache/repo-${tier}/ -type f -name "${pkg_name}-[0-9]*.rpm")
+        
+        if [ ${#matching_rpms[@]} -gt 1 ]; then
+          latest_rpm=$(ls -1v "${matching_rpms[@]}" | tail -n 1)
+          for f in "${matching_rpms[@]}"; do
+            if [ "$f" != "$latest_rpm" ]; then
+              echo "    [DEDUPLICATION] Removing older duplicate: $f"
+              rm -f "$f"
+            fi
+          done
+        fi
       fi
     fi
-  done
+  done < <(find repo-cache/repo-${tier}/ -type f -name "*.rpm")
+  unset seen_pkgs
 done
 
 echo "=== Syncing tiered RPMs to aggregate repo ==="
