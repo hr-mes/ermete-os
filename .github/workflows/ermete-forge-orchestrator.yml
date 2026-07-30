@@ -460,7 +460,7 @@ jobs:
           buildah commit --omit-timestamp $ctr $IMAGE_LOWER:latest
           buildah tag $IMAGE_LOWER:latest $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
           buildah push $IMAGE_LOWER:latest
-          buildah push $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}` + "\n",StartLine:344,TargetContent:
+          buildah push $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
 
   build-repo:
     name: 📦 Build Repository

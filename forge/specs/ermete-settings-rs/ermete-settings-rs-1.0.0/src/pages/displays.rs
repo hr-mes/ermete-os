@@ -279,7 +279,7 @@ pub fn build_page() -> Box {
                 "Get",
                 &("org.ermete.Settings", "TrueToneEnabled")
             ).await {
-                if let Ok(val) = msg.body::<zbus::zvariant::OwnedValue>() {
+                if let Ok(val) = msg.body().deserialize::<zbus::zvariant::OwnedValue>() {
                     if let Ok(enabled) = bool::try_from(val) {
                         tt_sw_clone.set_active(enabled);
                     }
@@ -293,7 +293,7 @@ pub fn build_page() -> Box {
                 "Get",
                 &("org.ermete.Settings", "TrueToneTemperature")
             ).await {
-                if let Ok(val) = msg.body::<zbus::zvariant::OwnedValue>() {
+                if let Ok(val) = msg.body().deserialize::<zbus::zvariant::OwnedValue>() {
                     if let Ok(temp) = u32::try_from(val) {
                         temp_scale_clone.set_value(temp as f64);
                     }

@@ -1,4 +1,4 @@
-use crate::ui::notifications::NOTIFICATIONS;
+use crate::core::NOTIFICATIONS;
 use crate::ui::topbar::setup_popup_autoclose;
 use gtk4::prelude::*;
 use gtk4::{Align, Application, ApplicationWindow, Box as GtkBox, Button, Calendar, Label, Orientation, ScrolledWindow};

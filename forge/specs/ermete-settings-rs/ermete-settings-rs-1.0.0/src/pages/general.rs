@@ -103,7 +103,7 @@ pub fn build_page() -> Box {
                 "Get",
                 &("org.ermete.Settings", "VoiceOverEnabled")
             ).await {
-                if let Ok(val) = msg.body::<zbus::zvariant::OwnedValue>() {
+                if let Ok(val) = msg.body().deserialize::<zbus::zvariant::OwnedValue>() {
                     if let Ok(enabled) = bool::try_from(val) {
                         vo_sw_clone.set_active(enabled);
                     }

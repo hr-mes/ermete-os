@@ -152,70 +152,74 @@ fn apply_css() {
 }
 
 fn populate_deployments_async(list_box: &GtkBox) {
+    let (tx, rx) = glib::MainContext::channel::<Vec<OstreeDeployment>>(glib::Priority::default());
     let list_box_clone = list_box.clone();
+    rx.attach(None, move |deployments| {
+        while let Some(child) = list_box_clone.first_child() {
+            list_box_clone.remove(&child);
+        }
+        for dep in &deployments {
+            let dep_card = GtkBox::builder()
+                .orientation(Orientation::Vertical)
+                .spacing(8)
+                .css_classes(["card"])
+                .build();
+
+            let top_row = GtkBox::builder()
+                .orientation(Orientation::Horizontal)
+                .spacing(12)
+                .build();
+
+            let title_text = if dep.booted {
+                format!("📦 Deployment Attuale: {} (v{})", dep.origin, dep.version)
+            } else {
+                format!("📦 Rollback Disponibile: {} (v{})", dep.origin, dep.version)
+            };
+            let dep_lbl = Label::builder()
+                .label(&title_text)
+                .css_classes(["deploy-title"])
+                .halign(Align::Start)
+                .hexpand(true)
+                .build();
+
+            top_row.append(&dep_lbl);
+
+            if dep.booted {
+                let badge = Label::builder().label("ATTIVO (AVVIATO)").css_classes(["badge-booted"]).build();
+                top_row.append(&badge);
+            } else {
+                let badge = Label::builder().label("PRECEDENTE / ROLLBACK").css_classes(["badge-rollback"]).build();
+                top_row.append(&badge);
+            }
+
+            dep_card.append(&top_row);
+
+            let hash_text = format!("Digest: {} | ID: {}", dep.checksum, dep.id);
+            let hash_lbl = Label::builder()
+                .label(&hash_text)
+                .css_classes(["deploy-hash"])
+                .halign(Align::Start)
+                .build();
+            dep_card.append(&hash_lbl);
+
+            if dep.checksum.contains(BEDROCK_STABLE_COMMIT) {
+                let bedrock_lbl = Label::builder()
+                    .label("🛡️ COMMIT DI ROLLBACK STABILE CERTIFICATO (Bedrock Safe Point)")
+                    .halign(Align::Start)
+                    .css_classes(["badge-rollback"])
+                    .margin_top(4)
+                    .build();
+                dep_card.append(&bedrock_lbl);
+            }
+
+            list_box_clone.append(&dep_card);
+        }
+        glib::ControlFlow::Break
+    });
+
     std::thread::spawn(move || {
         let deployments = get_deployments();
-        gtk4::glib::idle_add_once(move || {
-            while let Some(child) = list_box_clone.first_child() {
-                list_box_clone.remove(&child);
-            }
-            for dep in &deployments {
-                let dep_card = GtkBox::builder()
-                    .orientation(Orientation::Vertical)
-                    .spacing(8)
-                    .css_classes(["card"])
-                    .build();
-
-                let top_row = GtkBox::builder()
-                    .orientation(Orientation::Horizontal)
-                    .spacing(12)
-                    .build();
-
-                let title_text = if dep.booted {
-                    format!("📦 Deployment Attuale: {} (v{})", dep.origin, dep.version)
-                } else {
-                    format!("📦 Rollback Disponibile: {} (v{})", dep.origin, dep.version)
-                };
-                let dep_lbl = Label::builder()
-                    .label(&title_text)
-                    .css_classes(["deploy-title"])
-                    .halign(Align::Start)
-                    .hexpand(true)
-                    .build();
-
-                top_row.append(&dep_lbl);
-
-                if dep.booted {
-                    let badge = Label::builder().label("ATTIVO (AVVIATO)").css_classes(["badge-booted"]).build();
-                    top_row.append(&badge);
-                } else {
-                    let badge = Label::builder().label("PRECEDENTE / ROLLBACK").css_classes(["badge-rollback"]).build();
-                    top_row.append(&badge);
-                }
-
-                dep_card.append(&top_row);
-
-                let hash_text = format!("Digest: {} | ID: {}", dep.checksum, dep.id);
-                let hash_lbl = Label::builder()
-                    .label(&hash_text)
-                    .css_classes(["deploy-hash"])
-                    .halign(Align::Start)
-                    .build();
-                dep_card.append(&hash_lbl);
-
-                if dep.checksum.contains(BEDROCK_STABLE_COMMIT) {
-                    let bedrock_lbl = Label::builder()
-                        .label("🛡️ COMMIT DI ROLLBACK STABILE CERTIFICATO (Bedrock Safe Point)")
-                        .halign(Align::Start)
-                        .css_classes(["badge-rollback"])
-                        .margin_top(4)
-                        .build();
-                    dep_card.append(&bedrock_lbl);
-                }
-
-                list_box_clone.append(&dep_card);
-            }
-        });
+        let _ = tx.send(deployments);
     });
 }
 

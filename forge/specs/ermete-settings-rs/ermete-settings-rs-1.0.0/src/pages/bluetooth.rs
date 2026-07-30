@@ -161,15 +161,15 @@ pub fn build_page() -> Box {
                                                         };
                                                         if let Ok(proxy) = builder.build().await {
                                                             if let Err(e) = proxy.pair().await {
-                                                                eprintln!("Error pairing with {}: {:?}", proxy.path(), e);
+                                                                eprintln!("Error pairing with {}: {:?}", path, e);
                                                             } else {
-                                                                println!("Successfully paired with {}", proxy.path());
+                                                                println!("Successfully paired with {}", path);
                                                             }
                                                             if let Err(e) = proxy.connect().await {
-                                                                eprintln!("Error connecting to {}: {:?}", proxy.path(), e);
+                                                                eprintln!("Error connecting to {}: {:?}", path, e);
                                                                 success = false;
                                                             } else {
-                                                                println!("Successfully connected to {}", proxy.path());
+                                                                println!("Successfully connected to {}", path);
                                                             }
                                                         } else {
                                                             eprintln!("Error building proxy for Device1");
