@@ -29,7 +29,7 @@ jobs:
   orchestrator-brain:
     name: 🧠 Orchestrator Brain
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     outputs:
       custom_packages: ${{ steps.brain.outputs.custom_packages }}
       upstream_packages: ${{ steps.brain.outputs.upstream_packages }}
@@ -49,7 +49,7 @@ jobs:
   build-builder:
     name: 🏗️ Build Base Builder
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       contents: read
       packages: write
@@ -84,7 +84,7 @@ jobs:
     needs: [build-builder, orchestrator-brain]
     if: needs.orchestrator-brain.outputs.custom_packages != '[]' && needs.orchestrator-brain.outputs.custom_packages != ''
     name: 📦 Custom Packages
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -345,7 +345,7 @@ jobs:
     needs: [build-builder, orchestrator-brain]
     if: needs.orchestrator-brain.outputs.upstream_packages != '[]' && needs.orchestrator-brain.outputs.upstream_packages != ''
     name: 📦 Upstream Packages
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -459,7 +459,7 @@ jobs:
     name: 📦 Build Repository
     if: ${{ always() && needs.orchestrator-brain.outputs.has_changes == 'true' && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
     needs: [orchestrator-brain, custom-packages, build-nvidia, upstream-packages]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       contents: write
       packages: write
