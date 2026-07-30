@@ -47,10 +47,10 @@ jobs:
           dnf install -y rpm-build rpmdevtools gcc gcc-c++ make cmake flex bison ncurses-devel elfutils-libelf-devel openssl-devel bc rsync tar wget curl cpio perl zstd git llvm clang lld ccache jq gnupg2 hostname skopeo elfutils-devel dwarves rust cargo rustfmt bindgen iproute fio
         "
         
-    - name: 🧬 Phase 1: Fetch, Validate & Chimera Merge
+    - name: "🧬 Phase 1: Fetch, Validate & Chimera Merge"
       run: podman exec chimera-builder bash forge/specs/ermete-kernel/prepare-chimera.sh
         
-    - name: ⚙️ Phase 2: LLVM/ThinLTO Macro Injection
+    - name: "⚙️ Phase 2: LLVM/ThinLTO Macro Injection"
       run: |
         podman exec chimera-builder bash -c "
           export CCACHE_DIR=/forge/.ccache_local
@@ -73,7 +73,7 @@ jobs:
         MACRO
         "
         
-    - name: 🔥 Phase 3: RPMBuild (ThinLTO Absolute)
+    - name: "🔥 Phase 3: RPMBuild (ThinLTO Absolute)"
       run: |
         podman exec chimera-builder bash -c "
           export PATH='/usr/lib64/ccache:/usr/lib/ccache:\$PATH'
