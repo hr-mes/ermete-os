@@ -162,6 +162,9 @@ for tier in tier0 tier1 tier2 tier3; do
     [ -e "$rpm_file" ] || continue
     pkg_name=$(rpm -qp --queryformat '%{NAME}' "$rpm_file" 2>/dev/null || true)
     if [ -n "$pkg_name" ]; then
+      if [[ "$pkg_name" == kmod-nvidia-* ]]; then
+        pkg_name="kmod-nvidia"
+      fi
       # Find all RPMs matching this package name in this tier
       matching_rpms=(repo-cache/repo-${tier}/${pkg_name}-[0-9]*.rpm)
       if [ ${#matching_rpms[@]} -gt 1 ]; then
