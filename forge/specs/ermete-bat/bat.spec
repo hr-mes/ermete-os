@@ -481,7 +481,8 @@ use the "wild" feature of the "%{crate}" crate.
 %cargo_generate_buildrequires
 
 %build
-cargo generate-lockfile
+sed -i 's/include_str!("..\/README.md")/""/' /usr/share/cargo/registry/sysinfo-*/src/lib.rs || true
+touch /usr/share/cargo/registry/sysinfo-0.33.1/README.md || true
 %cargo_build
 %{cargo_license_summary}
 %{cargo_license} > LICENSE.dependencies
