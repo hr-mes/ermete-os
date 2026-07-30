@@ -381,6 +381,9 @@ CONFIG_SCHED_STACK_END_CHECK=y
 CONFIG_PANIC_ON_OOPS=y
 CONFIG_SECURITY_YAMA=y
 # Rimosso LOCKDOWN invasivo per compatibilità massima con tool avanzati di power-user.
+# [BEDROCK FIX] Rimozione driver MSI WMI rotto (error: cannot jump from switch statement to this case label)
+# CONFIG_MSI_WMI is not set
+# CONFIG_MSI_WMI_PLATFORM is not set
 BEDROCK_CFG
 
 for conf in SOURCES/kernel-x86_64*.config; do
