@@ -61,7 +61,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package builder --registry ghcr.io --owner ${{ github.repository_owner }} --image-name ermete-os-builder > idemp.out
+          podman run -i --rm --pull=always --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package builder --registry ghcr.io --owner ${{ github.repository_owner }} --image-name ermete-os-builder > idemp.out
           source ./idemp.out
           if [ "$CACHE_HIT" = "true" ]; then
             echo "cache_hit=true" >> $GITHUB_OUTPUT
@@ -100,7 +100,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-${{ matrix.package }} > idemp.out
+          podman run -i --rm --pull=always --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-${{ matrix.package }} > idemp.out
           source ./idemp.out
           echo "hash=$CONTENT_HASH" >> $GITHUB_OUTPUT
           if [ "$CACHE_HIT" = "true" ]; then echo "skip=true" >> $GITHUB_OUTPUT; else echo "skip=false" >> $GITHUB_OUTPUT; fi
@@ -117,7 +117,7 @@ jobs:
         run: |
           mkdir -p RPMS
           mkdir -p ${{ github.workspace }}/.sccache
-          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+          podman run -i --rm --pull=always --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
             -w /workspace/forge \
@@ -190,7 +190,7 @@ jobs:
       - name: Resolve Kernel Version and Install Chimera Headers
         id: kernel
         run: |
-          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+          podman run -i --rm --pull=always --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
             ghcr.io/hr-mes/ermete-os-builder:latest \
@@ -227,7 +227,7 @@ jobs:
         if: steps.cache.outputs['cache-hit'] != 'true'
         run: |
           mkdir -p ${{ github.workspace }}/nvidia_cache
-          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+          podman run -i --rm --pull=always --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -v ${{ github.workspace }}/nvidia_cache:/var/cache/akmods/nvidia \
             -w /workspace \
@@ -369,7 +369,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
+          podman run -i --rm --pull=always --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
           source ./idemp.out
           if [ "$CACHE_HIT" = "true" ]; then
             echo "cache_hit=true" >> $GITHUB_OUTPUT
@@ -382,7 +382,7 @@ jobs:
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
           mkdir -p RPMS
-          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+          podman run -i --rm --pull=always --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace/forge \
             ghcr.io/hr-mes/ermete-os-builder:latest \
@@ -468,7 +468,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Create Repo and Push OCI
         run: |
-          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+          podman run -i --rm --pull=always --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace/forge \
             ghcr.io/hr-mes/ermete-os-builder:latest \
