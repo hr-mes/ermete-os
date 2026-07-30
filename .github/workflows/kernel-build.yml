@@ -69,7 +69,7 @@ jobs:
     - name: "🔥 Phase 3: RPMBuild (ThinLTO Absolute)"
       run: |
         podman exec chimera-builder bash -c "
-          export PATH='/usr/lib64/ccache:/usr/lib/ccache:\$PATH'
+          export PATH=/usr/lib64/ccache:/usr/lib/ccache:\$PATH
           cd ~/rpmbuild/SPECS
           rpmbuild -bb --noprep kernel.spec --target x86_64 </dev/null
           mkdir -p /forge/RPMS_OUT
