@@ -50,4 +50,24 @@ RUN dnf install -y \
     rpm-sign \
     gnupg2 \
     ipxe-bootimgs \
+    flex \
+    bison \
+    ncurses-devel \
+    elfutils-libelf-devel \
+    elfutils-devel \
+    bc \
+    rsync \
+    wget \
+    cpio \
+    perl \
+    zstd \
+    llvm \
+    lld \
+    ccache \
+    hostname \
+    dwarves \
+    rustfmt \
+    bindgen \
+    iproute \
+    fio \
     && dnf clean all

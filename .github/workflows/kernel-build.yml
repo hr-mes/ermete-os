@@ -27,25 +27,18 @@ jobs:
     - name: Checkout Source
       uses: actions/checkout@v4
       
-    - name: 🚀 Boot Isolator (Start Fedora 43 Container)
+    - name: 🚀 Boot Isolator (Start Ermete Builder Container)
       run: |
+        echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
         podman run -d --name chimera-builder \
           --cap-add SYS_ADMIN \
           --security-opt label=disable \
           --security-opt seccomp=unconfined \
           -v ${{ github.workspace }}:/forge \
           -w /forge \
-          registry.fedoraproject.org/fedora:43 sleep infinity
+          ghcr.io/hr-mes/ermete-os-builder:latest sleep infinity
           
-    - name: 📦 Setup Build Environment & Toolchain
-      run: |
-        podman exec chimera-builder bash -c "
-          echo 'zchunk=False' >> /etc/dnf/dnf.conf
-          echo 'fastestmirror=True' >> /etc/dnf/dnf.conf
-          echo 'install_weak_deps=False' >> /etc/dnf/dnf.conf
-          sed -i '/tsflags=nodocs/d' /etc/dnf/dnf.conf
-          dnf install -y rpm-build rpmdevtools gcc gcc-c++ make cmake flex bison ncurses-devel elfutils-libelf-devel openssl-devel bc rsync tar wget curl cpio perl zstd git llvm clang lld ccache jq gnupg2 hostname skopeo elfutils-devel dwarves rust cargo rustfmt bindgen iproute fio
-        "
+
         
     - name: "🧬 Phase 1: Fetch, Validate & Chimera Merge"
       run: podman exec chimera-builder bash forge/specs/ermete-kernel/prepare-chimera.sh
