@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name:           ermete-base-config
 Version:        1.0.0
-Release:        4%{?dist}
+Release: 5%{?dist}
 Summary:        Ermete OS Base Configuration (NVIDIA, Systemd, Branding, GPG)
 
 License:        MIT
@@ -53,6 +53,8 @@ rm -rf %{buildroot}/etc/tmpfiles.d
 /usr/lib/systemd/system/bootc-fetch-apply-updates.service.d/override.conf
 
 %changelog
+* Thu Jul 30 2026 Ermete <ermete@customer.mlnnita1.isp.starlink.com> - 1.0.0-5
+- Trigger rebuild to execute deduplication fix
 * Tue Jul 14 2026 Ermete Forge <forge@ermete.os> - 1.0.0-3
 - Require glibc-langpack-it and glibc-langpack-en to guarantee Bedrock locale availability across all apps when glibc-all-langpacks is pruned
 
