@@ -14,6 +14,9 @@ export XDG_CONFIG_HOME=/var/tmp
 export XDG_CACHE_HOME=/var/tmp
 export _CONTAINERS_USERNS_CONFIGURED=done
 
+# Clean up any legacy flat .rpm files from previous runs to prevent stale packages
+find repo-cache/ -maxdepth 2 -name "*.rpm" -type f -delete
+
 TMP_DIR=$(mktemp -d)
 trap "rm -rf $TMP_DIR" EXIT
 
@@ -90,16 +93,11 @@ pull_and_extract() {
     mnt=$(buildah mount "$ctr")
     (
       flock 200
-      # Prune old versions of the same package to avoid conflicting requests downstream
-      for new_rpm in "$mnt"/*.rpm; do
-        if [ -f "$new_rpm" ]; then
-          pkg_name=$(rpm -qp --queryformat '%{NAME}' "$new_rpm" 2>/dev/null || true)
-          if [ -n "$pkg_name" ]; then
-            rm -f "$target_dir/${pkg_name}"-[0-9]*.rpm 2>/dev/null || true
-          fi
-        fi
-      done
-      cp -a "$mnt"/*.rpm "$target_dir/" 2>/dev/null || true
+      # Prune old versions by wiping the image's dedicated subdirectory
+      rm -rf "$target_dir/$img" 2>/dev/null || true
+      mkdir -p "$target_dir/$img"
+      
+      cp -a "$mnt"/*.rpm "$target_dir/$img/" 2>/dev/null || true
     ) 200>"$target_dir/.lock"
     buildah umount "$ctr"
     buildah rm "$ctr"

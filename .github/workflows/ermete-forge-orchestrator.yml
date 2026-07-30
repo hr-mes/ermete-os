@@ -529,7 +529,7 @@ jobs:
               fi
               
               IMAGE_LOWER=$(echo "ghcr.io/hr-mes/$img_name" | tr '[:upper:]' '[:lower:]')
-              NEW_HASH=$(find "$dir" -maxdepth 1 -name '*.rpm' -type f | sort | xargs -r sha256sum | sha256sum | awk '{print $1}')
+              NEW_HASH=$(find "$dir" -name '*.rpm' -type f | sort | xargs -r sha256sum | sha256sum | awk '{print $1}')
               OLD_HASH=$(skopeo inspect --config "docker://$IMAGE_LOWER" 2>/dev/null | jq -r '.config.Labels["tier.content.sha256"] // ""' || echo "")
               if [ -n "$OLD_HASH" ] && [ "$NEW_HASH" = "$OLD_HASH" ]; then
                 echo "✅ Tier '$tier' ($img_name): RPM content hash unchanged ($NEW_HASH). Skipping createrepo_c & push to freeze Tier OCI cache!"
