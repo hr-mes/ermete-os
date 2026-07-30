@@ -458,7 +458,7 @@ for patch in "$WORKSPACE_DIR"/SOURCES/bedrock-*.patch; do
 done
 
 echo ">>> [BEDROCK] Normalizzazione AST e Flag Rust per compilatori moderni..."
-find . -type f \( -name "Makefile*" -o -name "Kbuild*" \) -exec sed -i -E 's/(^|[[:space:]])-Werror([[:space:]]|$)/\1\2/g; s/(^|[[:space:]])-Werror=/\1-Wno-error=/g; s/-Wrestrict//g; s/-Wpacked-not-aligned//g; s/-Wstringop-truncation//g; s/-Wmaybe-uninitialized//g' {} + || true
+find . -type f \( -name "Makefile*" -o -name "Kbuild*" \) ! -path "*/lib/test_fortify/*" -exec sed -i -E 's/(^|[[:space:]])-Werror([[:space:]]|$)/\1\2/g; s/(^|[[:space:]])-Werror=/\1-Wno-error=/g; s/-Wrestrict//g; s/-Wpacked-not-aligned//g; s/-Wstringop-truncation//g; s/-Wmaybe-uninitialized//g' {} + || true
 find . -type f -name "Makefile" -exec sed -i 's/-Zno-jump-tables/-Zunstable-options/g' {} + || true
 find . -type f -name "Makefile" -exec sed -i 's/-Z no-jump-tables/-Z unstable-options/g' {} + || true
 find . -type f -name "generate_rust_target.rs" -exec sed -i 's/"target-pointer-width", "64"/"target-pointer-width", 64/g' {} + || true
