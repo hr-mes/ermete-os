@@ -481,6 +481,7 @@ use the "wild" feature of the "%{crate}" crate.
 %cargo_generate_buildrequires
 
 %build
+cargo generate-lockfile
 %cargo_build
 %{cargo_license_summary}
 %{cargo_license} > LICENSE.dependencies
