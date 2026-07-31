@@ -17,6 +17,14 @@ Provides:       system-logos = %{version}-%{release}
 Obsoletes:      system-logos < 43
 Provides:       system-logos-httpd = %{version}-%{release}
 Obsoletes:      system-logos-httpd < 43
+Provides:       fedora-release = %{version}-%{release}
+Obsoletes:      fedora-release < 43
+Provides:       fedora-release-identity = %{version}-%{release}
+Obsoletes:      fedora-release-identity < 43
+Provides:       fedora-release-common = %{version}-%{release}
+Obsoletes:      fedora-release-common < 43
+Provides:       system-release = %{version}-%{release}
+Obsoletes:      system-release < 43
 %description
 This package provides the foundational configuration for Ermete Base.
 It includes NVIDIA sleep scripts, Dracut configurations, modprobe rules,
