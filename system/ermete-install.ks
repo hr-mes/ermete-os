@@ -4,17 +4,10 @@ keyboard it
 timezone Europe/Rome --isUtc
 bootloader --append="quiet splash fastboot"
 
-# Zero-Touch Partitioning (BTRFS + LUKS2)
-# [ATTENZIONE]: Direttive distruttive come "zerombr" e "clearpart --all" sono state rimosse
-# per preservare dati esistenti e configurazioni dual-boot avanzate.
-# L'installazione si fermerà sulla UI di partizionamento (o in via testuale) chiedendoti
-# di definire manualmente la Root BTRFS e il volume LUKS2 come richiesto dai Power User.
-
 # OCI Image Provisioning
 ostreecontainer --url=ghcr.io/hr-mes/ermete-os-system:latest --transport=registry
 
-# Security Hardening: No cleartext root password, strictly SSH Keys
-# Template variables: Must be substituted via envsubst or build script before production ISO creation
+# User & Security Provisioning
 rootpw --lock
 user --name=hermes --groups=wheel --password=@HERMES_PASSWORD_HASH@ --iscrypted
 sshkey --username hermes "@HERMES_SSH_KEY@"
