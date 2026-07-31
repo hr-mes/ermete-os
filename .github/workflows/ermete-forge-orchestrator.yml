@@ -330,7 +330,8 @@ jobs:
           ctr=$(buildah from scratch)
           buildah copy $ctr ${{ github.workspace }}/nvidia_cache/*.rpm /
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-nvidia:latest" | tr '[:upper:]' '[:lower:]')
-          buildah config --label tier.content.sha256="${{ steps.kernel.outputs.nvidia_ver }}" $ctr
+          RPM_HASH=$(sha256sum ${{ github.workspace }}/nvidia_cache/*.rpm | sha256sum | awk '{print $1}')
+          buildah config --label tier.content.sha256="$RPM_HASH" $ctr
           buildah commit --omit-timestamp $ctr $IMAGE_LOWER
           buildah push $IMAGE_LOWER
 
