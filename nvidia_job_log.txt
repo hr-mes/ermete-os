@@ -1,0 +1,246 @@
+﻿2026-07-30T20:54:39.6633597Z Current runner version: '2.336.0'
+2026-07-30T20:54:39.6639241Z Runner name: 'monorepo-runner-1'
+2026-07-30T20:54:39.6639956Z Runner group name: 'Default'
+2026-07-30T20:54:39.6640727Z Machine name: 'customer'
+2026-07-30T20:54:39.6643833Z ##[group]GITHUB_TOKEN Permissions
+2026-07-30T20:54:39.6645442Z Contents: read
+2026-07-30T20:54:39.6645977Z Metadata: read
+2026-07-30T20:54:39.6646480Z Packages: write
+2026-07-30T20:54:39.6646918Z ##[endgroup]
+2026-07-30T20:54:39.6648564Z Secret source: Actions
+2026-07-30T20:54:39.6649380Z Prepare workflow directory
+2026-07-30T20:54:39.7112390Z Prepare all required actions
+2026-07-30T20:54:39.7148479Z Getting action download info
+2026-07-30T20:54:40.5027332Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-07-30T20:54:41.1669083Z Download action repository 'actions/cache@v4' (SHA:0057852bfaa89a56745cba8c7296529d2fc39830)
+2026-07-30T20:54:41.9898108Z Download action repository 'sigstore/cosign-installer@v3' (SHA:398d4b0eeef1380460a10c8013a76f728fb906ac)
+2026-07-30T20:54:42.5760271Z Complete job name: 🎮 Build NVIDIA KMOD
+2026-07-30T20:54:42.6221705Z ##[warning]You are running out of disk space. The runner will stop working when the machine runs out of disk space. Free space left: 0 MB
+2026-07-30T20:54:42.6632951Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-30T20:54:42.6639196Z ##[group]Run actions/checkout@v4
+2026-07-30T20:54:42.6639639Z with:
+2026-07-30T20:54:42.6639944Z   repository: hr-mes/ermete-os
+2026-07-30T20:54:42.6641785Z   token: ***
+2026-07-30T20:54:42.6642099Z   ssh-strict: true
+2026-07-30T20:54:42.6642412Z   ssh-user: git
+2026-07-30T20:54:42.6642651Z   persist-credentials: true
+2026-07-30T20:54:42.6642885Z   clean: true
+2026-07-30T20:54:42.6643175Z   sparse-checkout-cone-mode: true
+2026-07-30T20:54:42.6643443Z   fetch-depth: 1
+2026-07-30T20:54:42.6643707Z   fetch-tags: false
+2026-07-30T20:54:42.6643940Z   show-progress: true
+2026-07-30T20:54:42.6644159Z   lfs: false
+2026-07-30T20:54:42.6644461Z   submodules: false
+2026-07-30T20:54:42.6644712Z   set-safe-directory: true
+2026-07-30T20:54:42.6644990Z   allow-unsafe-pr-checkout: false
+2026-07-30T20:54:42.6645458Z env:
+2026-07-30T20:54:42.6645671Z   REGISTRY: ghcr.io
+2026-07-30T20:54:42.6645959Z   FEDORA_VERSION: 43
+2026-07-30T20:54:42.6646180Z ##[endgroup]
+2026-07-30T20:54:42.7410429Z Syncing repository: hr-mes/ermete-os
+2026-07-30T20:54:42.7411719Z ##[group]Getting Git version info
+2026-07-30T20:54:42.7412390Z Working directory is '/var/home/ermete/actions-runner-monorepo/_work/ermete-os/ermete-os'
+2026-07-30T20:54:42.7413203Z [command]/usr/bin/git version
+2026-07-30T20:54:42.7413499Z git version 2.55.0
+2026-07-30T20:54:42.7414959Z ##[endgroup]
+2026-07-30T20:54:42.7418431Z Temporarily overriding HOME='/var/home/ermete/actions-runner-monorepo/_work/_temp/c1f03647-2215-48f8-88d5-253f3435f88b' before making global git config changes
+2026-07-30T20:54:42.7419287Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-30T20:54:42.7420073Z [command]/usr/bin/git config --global --add safe.directory /var/home/ermete/actions-runner-monorepo/_work/ermete-os/ermete-os
+2026-07-30T20:54:42.7439799Z [command]/usr/bin/git config --local --get remote.origin.url
+2026-07-30T20:54:42.7457046Z https://github.com/hr-mes/ermete-os
+2026-07-30T20:54:42.7465482Z ##[group]Removing previously created refs, to avoid conflicts
+2026-07-30T20:54:42.7467556Z [command]/usr/bin/git rev-parse --symbolic-full-name --verify --quiet HEAD
+2026-07-30T20:54:42.7483786Z refs/heads/main
+2026-07-30T20:54:42.7489401Z [command]/usr/bin/git checkout --detach
+2026-07-30T20:54:45.3232461Z HEAD si trova ora a d6d2b94 fix(forge): smart deduplication for ermete-kernel to prevent module collision
+2026-07-30T20:54:45.3269764Z [command]/usr/bin/git branch --delete --force main
+2026-07-30T20:54:45.3294530Z Branch main eliminato (era d6d2b94).
+2026-07-30T20:54:45.3322457Z ##[endgroup]
+2026-07-30T20:54:45.3323621Z [command]/usr/bin/git submodule status
+2026-07-30T20:54:45.3578026Z ##[group]Cleaning the repository
+2026-07-30T20:54:45.3580144Z [command]/usr/bin/git clean -ffdx
+2026-07-30T20:54:45.3655874Z Eliminazione di forge/idemp.out in corso
+2026-07-30T20:54:45.3662853Z [command]/usr/bin/git reset --hard HEAD
+2026-07-30T20:54:45.3754479Z HEAD ora si trova a d6d2b94 fix(forge): smart deduplication for ermete-kernel to prevent module collision
+2026-07-30T20:54:45.3757897Z ##[endgroup]
+2026-07-30T20:54:45.3759060Z ##[group]Disabling automatic garbage collection
+2026-07-30T20:54:45.3762200Z [command]/usr/bin/git config --local gc.auto 0
+2026-07-30T20:54:45.3782488Z ##[endgroup]
+2026-07-30T20:54:45.3783067Z ##[group]Setting up auth
+2026-07-30T20:54:45.3787077Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-30T20:54:45.3812731Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-30T20:54:45.4064659Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-30T20:54:45.4085294Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-30T20:54:45.4334605Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-30T20:54:45.4356469Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-30T20:54:45.4610488Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-07-30T20:54:45.4638179Z ##[endgroup]
+2026-07-30T20:54:45.4638787Z ##[group]Fetching the repository
+2026-07-30T20:54:45.4645168Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +d6d2b947c235b28369c2c7585434e725e84f5473:refs/remotes/origin/main
+2026-07-30T20:54:46.1529232Z ##[endgroup]
+2026-07-30T20:54:46.1529776Z ##[group]Determining the checkout info
+2026-07-30T20:54:46.1530316Z ##[endgroup]
+2026-07-30T20:54:46.1533862Z [command]/usr/bin/git sparse-checkout disable
+2026-07-30T20:54:46.1584693Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-07-30T20:54:46.1606232Z ##[group]Checking out the ref
+2026-07-30T20:54:46.1610521Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-07-30T20:54:46.1687607Z Si è passati a un nuovo branch 'main'
+2026-07-30T20:54:46.1689864Z branch 'main' set up to track 'origin/main'.
+2026-07-30T20:54:46.1694482Z ##[endgroup]
+2026-07-30T20:54:46.1721198Z [command]/usr/bin/git log -1 --format=%H
+2026-07-30T20:54:46.1740029Z d6d2b947c235b28369c2c7585434e725e84f5473
+2026-07-30T20:54:46.1928200Z ##[group]Run echo "***" | podman login ghcr.io -u hr-mes --password-stdin
+2026-07-30T20:54:46.1930443Z [36;1mecho "***" | podman login ghcr.io -u hr-mes --password-stdin[0m
+2026-07-30T20:54:46.1936156Z shell: /usr/bin/bash -e {0}
+2026-07-30T20:54:46.1936493Z env:
+2026-07-30T20:54:46.1936727Z   REGISTRY: ghcr.io
+2026-07-30T20:54:46.1936979Z   FEDORA_VERSION: 43
+2026-07-30T20:54:46.1937211Z ##[endgroup]
+2026-07-30T20:54:47.0964232Z Login Succeeded!
+2026-07-30T20:54:47.1039276Z ##[group]Run echo "***" | podman login ghcr.io -u hr-mes --password-stdin
+2026-07-30T20:54:47.1041581Z [36;1mecho "***" | podman login ghcr.io -u hr-mes --password-stdin[0m
+2026-07-30T20:54:47.1042242Z [36;1mpodman run -i --rm --pull=always --security-opt label=disable --security-opt seccomp=unconfined --privileged \[0m
+2026-07-30T20:54:47.1042858Z [36;1m  -v /var/home/ermete/actions-runner-monorepo/_work/ermete-os/ermete-os:/workspace \[0m
+2026-07-30T20:54:47.1043525Z [36;1m  -w /workspace \[0m
+2026-07-30T20:54:47.1043824Z [36;1m  ghcr.io/hr-mes/ermete-os-builder:latest \[0m
+2026-07-30T20:54:47.1044153Z [36;1m  bash <<'EOF'[0m
+2026-07-30T20:54:47.1044420Z [36;1m    set -euo pipefail[0m
+2026-07-30T20:54:47.1044855Z [36;1m    curl -Lo /etc/yum.repos.d/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo[0m
+2026-07-30T20:54:47.1045397Z [36;1m    dnf install -y buildah jq[0m
+2026-07-30T20:54:47.1045674Z [36;1m    export STORAGE_DRIVER=vfs[0m
+2026-07-30T20:54:47.1046052Z [36;1m    export BUILDAH_ISOLATION=chroot[0m
+2026-07-30T20:54:47.1046427Z [36;1m    # No need to buildah pull if we just docker run, but we are inside podman![0m
+2026-07-30T20:54:47.1046890Z [36;1m    # Actually wait, we are inside docker running buildah? That requires.[0m
+2026-07-30T20:54:47.1047344Z [36;1m    # Let us just use buildah to pull and extract.[0m
+2026-07-30T20:54:47.1047760Z [36;1m    buildah from ghcr.io/hr-mes/ermete-os-kernel:latest > ctr_id[0m
+2026-07-30T20:54:47.1048155Z [36;1m    ctr=$(cat ctr_id)[0m
+2026-07-30T20:54:47.1048410Z [36;1m    mnt=$(buildah mount $ctr)[0m
+2026-07-30T20:54:47.1048899Z [36;1m    find $mnt/ -name "*.rpm" ! -name "*debug*" -exec rpm -Uvh --noscripts --oldpackage --replacepkgs --force --nodeps {} +[0m
+2026-07-30T20:54:47.1049450Z [36;1m    buildah umount $ctr[0m
+2026-07-30T20:54:47.1049887Z [36;1m    QUALIFIED_KERNEL=$(rpm -q --queryformat "%{VERSION}-%{RELEASE}.%{ARCH}\n" kernel-devel | sort -V | tail -n 1)[0m
+2026-07-30T20:54:47.1050544Z [36;1m    QUALIFIED_NVIDIA=$(dnf repoquery --qf "%{VERSION}-%{RELEASE}\n" akmod-nvidia 2>/dev/null | sort -V | tail -n 1)[0m
+2026-07-30T20:54:47.1051117Z [36;1m    echo "QUALIFIED_KERNEL=$QUALIFIED_KERNEL" > /workspace/kernel_info[0m
+2026-07-30T20:54:47.1051589Z [36;1m    echo "QUALIFIED_NVIDIA=$QUALIFIED_NVIDIA" >> /workspace/kernel_info[0m
+2026-07-30T20:54:47.1052018Z [36;1mEOF[0m
+2026-07-30T20:54:47.1052378Z [36;1mecho "kernel_ver=$(grep QUALIFIED_KERNEL ../kernel_info | cut -d= -f2)" >> $GITHUB_OUTPUT[0m
+2026-07-30T20:54:47.1052909Z [36;1mecho "nvidia_ver=$(grep QUALIFIED_NVIDIA ../kernel_info | cut -d= -f2)" >> $GITHUB_OUTPUT[0m
+2026-07-30T20:54:47.1056783Z shell: /usr/bin/bash -e {0}
+2026-07-30T20:54:47.1057075Z env:
+2026-07-30T20:54:47.1057276Z   REGISTRY: ghcr.io
+2026-07-30T20:54:47.1057480Z   FEDORA_VERSION: 43
+2026-07-30T20:54:47.1057774Z ##[endgroup]
+2026-07-30T20:54:48.1041199Z Login Succeeded!
+2026-07-30T20:54:48.1287609Z Trying to pull ghcr.io/hr-mes/ermete-os-builder:latest...
+2026-07-30T20:54:49.4425728Z Getting image source signatures
+2026-07-30T20:54:49.4426652Z Copying blob sha256:0d936fd18db43f917127aa33347228b1d5cfd0348e2f7671708872b4525e5325
+2026-07-30T20:54:49.4427794Z Copying blob sha256:60d3fd1784076bdebf35eb5c75a76cdc6faf6eefe6e014a1c1e55aebbfe09ada
+2026-07-30T20:54:49.4428422Z Copying blob sha256:a3e836f5b18522b4c723d41589d8b1d9d6018b61f1cc95b6d4f27190c6b70063
+2026-07-30T20:54:49.4431393Z Copying config sha256:81adff7dab344029ec85226b62d11072e2f57d4eb1a66e6ef028198283257ded
+2026-07-30T20:54:49.4656018Z Writing manifest to image destination
+2026-07-30T20:54:49.5880943Z   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+2026-07-30T20:54:49.5881599Z                                  Dload  Upload   Total   Spent    Left  Speed
+2026-07-30T20:54:49.5881964Z 
+2026-07-30T20:54:50.0351900Z   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+2026-07-30T20:54:50.0352625Z 100   876  100   876    0     0   1957      0 --:--:-- --:--:-- --:--:--  1959
+2026-07-30T20:54:50.0703110Z Updating and loading repositories:
+2026-07-30T20:54:57.7217664Z  RPM Fusion for Fedora 43 - Nonfree     100% |  11.0 KiB/s |  84.3 KiB |  00m08s
+2026-07-30T20:54:57.9132829Z  RPM Fusion for Fedora 43 - Free - Upda 100% |  10.6 KiB/s |  74.5 KiB |  00m07s
+2026-07-30T20:54:58.1658181Z  RPM Fusion for Fedora 43 - Nonfree - U 100% |   5.6 KiB/s |  44.0 KiB |  00m08s
+2026-07-30T20:54:58.4686194Z  RPM Fusion for Fedora 43 - Free        100% |  21.9 KiB/s | 151.8 KiB |  00m07s
+2026-07-30T20:54:58.9144885Z  negativo17 - Nvidia                    100% |  17.3 KiB/s |  46.3 KiB |  00m03s
+2026-07-30T20:55:00.3056834Z  Fedora 43 - x86_64                     100% |   4.4 MiB/s |  35.7 MiB |  00m08s
+2026-07-30T20:55:00.5813707Z  Fedora 43 openh264 (From Cisco) - x86_ 100% |   1.0 KiB/s |   5.8 KiB |  00m06s
+2026-07-30T20:55:01.5633798Z  Fedora 43 - x86_64 - Updates           100% |   1.4 MiB/s |  11.8 MiB |  00m09s
+2026-07-30T20:55:01.5634388Z >>> Curl error (56): Failure when receiving data from the peer for https://mirro
+2026-07-30T20:55:03.4822911Z Repositories loaded.
+2026-07-30T20:55:05.1445473Z Package "buildah-2:1.43.2-1.fc43.x86_64" is already installed.
+2026-07-30T20:55:05.1445925Z Package "jq-1.8.1-3.fc43.x86_64" is already installed.
+2026-07-30T20:55:05.1446132Z 
+2026-07-30T20:55:05.1446228Z Nothing to do.
+2026-07-30T20:55:05.1843176Z Trying to pull ghcr.io/hr-mes/ermete-os-kernel:latest...
+2026-07-30T20:55:08.3763526Z Getting image source signatures
+2026-07-30T20:55:08.3764150Z Copying blob sha256:5da847a58839616dcfa4da56cd467690a143068953c7a6db5b64deace0aadd72
+2026-07-30T20:55:15.4298021Z Copying config sha256:c0dd69a41ba5641cbcec177e5d94dab909f3ef296cd36879e52e17df8fa3e1e1
+2026-07-30T20:55:15.4300017Z Writing manifest to image destination
+2026-07-30T20:55:16.1255387Z Verifying...                          ########################################
+2026-07-30T20:55:16.3869741Z Preparing...                          ########################################
+2026-07-30T20:55:16.3926483Z Updating / installing...
+2026-07-30T20:55:16.9465832Z kernel-modules-core-6.14.5-100.chimera########################################
+2026-07-30T20:55:17.3481567Z kernel-uki-virt-6.14.5-100.chimera.fc4########################################
+2026-07-30T20:55:17.9252680Z kernel-modules-6.14.5-100.chimera.fc43########################################
+2026-07-30T20:55:18.2105437Z kernel-core-6.14.5-100.chimera.fc43   ########################################
+2026-07-30T20:55:20.1861156Z kernel-devel-6.14.5-100.chimera.fc43  ########################################
+2026-07-30T20:55:21.1154716Z kernel-devel-matched-6.14.5-100.chimer########################################
+2026-07-30T20:55:21.1168989Z kernel-6.14.5-100.chimera.fc43        ########################################
+2026-07-30T20:55:21.1448588Z kernel-modules-extra-6.14.5-100.chimer########################################
+2026-07-30T20:55:21.1838301Z kernel-modules-internal-6.14.5-100.chi########################################
+2026-07-30T20:55:21.1961365Z kernel-uki-virt-addons-6.14.5-100.chim########################################
+2026-07-30T20:55:21.2432956Z ad910c9e5355e200d54bcb4c3f7cb429706f336748de39a4e2c545d09879879b
+2026-07-30T20:55:22.6689783Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-30T20:55:22.6690961Z ##[group]Run actions/cache@v4
+2026-07-30T20:55:22.6691140Z with:
+2026-07-30T20:55:22.6691277Z   path: nvidia_cache/
+2026-07-30T20:55:22.6691524Z   key: rpm-nvidia-bedrock6-6.14.5-100.chimera.fc43.x86_64-610.43.03-1.fc43
+2026-07-30T20:55:22.6691818Z   enableCrossOsArchive: false
+2026-07-30T20:55:22.6692072Z   fail-on-cache-miss: false
+2026-07-30T20:55:22.6692240Z   lookup-only: false
+2026-07-30T20:55:22.6692391Z   save-always: false
+2026-07-30T20:55:22.6692531Z env:
+2026-07-30T20:55:22.6692664Z   REGISTRY: ghcr.io
+2026-07-30T20:55:22.6692820Z   FEDORA_VERSION: 43
+2026-07-30T20:55:22.6692966Z ##[endgroup]
+2026-07-30T20:55:22.7512432Z (node:2541318) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-30T20:55:22.7513119Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-30T20:55:23.3739233Z Cache hit for: rpm-nvidia-bedrock6-6.14.5-100.chimera.fc43.x86_64-610.43.03-1.fc43
+2026-07-30T20:55:23.3809565Z (node:2541318) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-07-30T20:55:25.1627519Z Received 0 of 321464708 (0.0%), 0.0 MBs/sec
+2026-07-30T20:55:26.1631822Z Received 4194304 of 321464708 (1.3%), 2.0 MBs/sec
+2026-07-30T20:55:27.1625395Z Received 33554432 of 321464708 (10.4%), 10.7 MBs/sec
+2026-07-30T20:55:28.1626258Z Received 62914560 of 321464708 (19.6%), 15.0 MBs/sec
+2026-07-30T20:55:29.1633175Z Received 83886080 of 321464708 (26.1%), 16.0 MBs/sec
+2026-07-30T20:55:30.1642700Z Received 113246208 of 321464708 (35.2%), 18.0 MBs/sec
+2026-07-30T20:55:31.1635920Z Received 130023424 of 321464708 (40.4%), 17.7 MBs/sec
+2026-07-30T20:55:32.1635474Z Received 134217728 of 321464708 (41.8%), 16.0 MBs/sec
+2026-07-30T20:55:33.1636358Z Received 159383552 of 321464708 (49.6%), 16.9 MBs/sec
+2026-07-30T20:55:34.1637921Z Received 180355072 of 321464708 (56.1%), 17.2 MBs/sec
+2026-07-30T20:55:35.1637818Z Received 205520896 of 321464708 (63.9%), 17.8 MBs/sec
+2026-07-30T20:55:36.1636735Z Received 239075328 of 321464708 (74.4%), 19.0 MBs/sec
+2026-07-30T20:55:37.1637809Z Received 260046848 of 321464708 (80.9%), 19.1 MBs/sec
+2026-07-30T20:55:38.1637382Z Received 268435456 of 321464708 (83.5%), 18.3 MBs/sec
+2026-07-30T20:55:39.1637141Z Received 293601280 of 321464708 (91.3%), 18.7 MBs/sec
+2026-07-30T20:55:40.0843097Z Received 321464708 of 321464708 (100.0%), 19.3 MBs/sec
+2026-07-30T20:55:40.0845302Z Cache Size: ~307 MB (321464708 B)
+2026-07-30T20:55:40.0878682Z [command]/usr/bin/tar -xf /var/home/ermete/actions-runner-monorepo/_work/_temp/afce8c5b-13ce-43a9-aedb-7c1def471595/cache.tzst -P -C /var/home/ermete/actions-runner-monorepo/_work/ermete-os/ermete-os --use-compress-program unzstd
+2026-07-30T20:55:40.7557196Z Cache restored successfully
+2026-07-30T20:55:40.7624409Z Cache restored from key: rpm-nvidia-bedrock6-6.14.5-100.chimera.fc43.x86_64-610.43.03-1.fc43
+2026-07-30T20:55:40.7774490Z ##[group]Run chown -R 1000:1000 /var/home/ermete/actions-runner-monorepo/_work/ermete-os/ermete-os || true
+2026-07-30T20:55:40.7775128Z [36;1mchown -R 1000:1000 /var/home/ermete/actions-runner-monorepo/_work/ermete-os/ermete-os || true[0m
+2026-07-30T20:55:40.7780043Z shell: /usr/bin/bash -e {0}
+2026-07-30T20:55:40.7780237Z env:
+2026-07-30T20:55:40.7780386Z   REGISTRY: ghcr.io
+2026-07-30T20:55:40.7780554Z   FEDORA_VERSION: 43
+2026-07-30T20:55:40.7780721Z ##[endgroup]
+2026-07-30T20:55:40.7990512Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-30T20:55:40.7991451Z Post job cleanup.
+2026-07-30T20:55:40.8837472Z Cache hit occurred on the primary key rpm-nvidia-bedrock6-6.14.5-100.chimera.fc43.x86_64-610.43.03-1.fc43, not saving cache.
+2026-07-30T20:55:40.8838334Z (node:2541417) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-30T20:55:40.8838986Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-30T20:55:40.8954825Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-30T20:55:40.8955777Z Post job cleanup.
+2026-07-30T20:55:40.9544556Z [command]/usr/bin/git version
+2026-07-30T20:55:40.9600846Z git version 2.55.0
+2026-07-30T20:55:40.9629835Z Temporarily overriding HOME='/var/home/ermete/actions-runner-monorepo/_work/_temp/276a31f4-ee8c-406a-b626-4523295bc9dc' before making global git config changes
+2026-07-30T20:55:40.9630906Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-30T20:55:40.9633000Z [command]/usr/bin/git config --global --add safe.directory /var/home/ermete/actions-runner-monorepo/_work/ermete-os/ermete-os
+2026-07-30T20:55:40.9657907Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-30T20:55:40.9681096Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-30T20:55:40.9933351Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-30T20:55:40.9949126Z http.https://github.com/.extraheader
+2026-07-30T20:55:40.9955808Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-07-30T20:55:40.9977984Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-30T20:55:41.0226621Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-30T20:55:41.0250284Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-30T20:55:41.0607974Z Evaluate and set job outputs
+2026-07-30T20:55:41.0612862Z Set output 'rebuilt'
+2026-07-30T20:55:41.0614062Z Cleaning up orphan processes
+2026-07-30T20:55:41.1211357Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/cache@v4, actions/checkout@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

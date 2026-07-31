@@ -202,7 +202,6 @@ jobs:
       - name: Resolve Kernel Version and Install Chimera Headers
         id: kernel
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           podman run -i --rm --pull=always --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
@@ -213,9 +212,6 @@ jobs:
               dnf install -y buildah jq
               export STORAGE_DRIVER=vfs
               export BUILDAH_ISOLATION=chroot
-              # No need to buildah pull if we just docker run, but we are inside podman!
-              # Actually wait, we are inside docker running buildah? That requires.
-              # Let us just use buildah to pull and extract.
               buildah from ghcr.io/hr-mes/ermete-os-kernel:latest > ctr_id
               ctr=$(cat ctr_id)
               mnt=$(buildah mount $ctr)
@@ -240,7 +236,6 @@ jobs:
         if: steps.cache.outputs['cache-hit'] != 'true'
         run: |
           mkdir -p ${{ github.workspace }}/nvidia_cache
-          echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           podman run -i --rm --pull=always --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -v ${{ github.workspace }}/nvidia_cache:/var/cache/akmods/nvidia \
@@ -326,8 +321,8 @@ jobs:
                 exit 1; 
               }
           EOF
+
       - name: Publish Micro-Container OCI
-        if: steps.cache.outputs['cache-hit'] != 'true'
         run: |
           export STORAGE_DRIVER=vfs
           export BUILDAH_ISOLATION=chroot
@@ -340,20 +335,15 @@ jobs:
           buildah push $IMAGE_LOWER
 
       - name: Install Cosign
-        if: steps.cache.outputs['cache-hit'] != 'true'
         uses: sigstore/cosign-installer@v3
 
       - name: Sign NVIDIA Micro-Container
-        if: steps.cache.outputs['cache-hit'] != 'true'
         env:
           COSIGN_EXPERIMENTAL: true
         run: |
           cosign login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-nvidia:latest" | tr '[:upper:]' '[:lower:]')
           cosign sign --yes $IMAGE_LOWER
-
-
-
 
       - name: 🧹 Cleanup Workspace Permissions
         if: always()
