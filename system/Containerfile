@@ -9,7 +9,7 @@ ENV FEDORA_VERSION=$FEDORA_VERSION
 # Aggiornamento globale disabilitato temporaneamente per prevenire conflitti seccomp con glibc in GitHub Actions.
 
 # Epurazione Totale (Bedrock) del kernel Fedora upstream per impedire a dracut o dnf di intercettare versioni fantasma
-RUN dnf5 -y remove --no-autoremove kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-tools && \
+RUN dnf5 -y remove --no-autoremove kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-tools kernel-devel kernel-headers && \
     rm -rf /usr/lib/modules/*
 
 # SECURITY: ermete-install.ks contains placeholder SSH keys that MUST be replaced before production
@@ -30,41 +30,26 @@ RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier0-repo:latest,sour
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/cache/libdnf5 \
     if ls /mnt/tier0-repo/ermete-base-config*.rpm 1> /dev/null 2>&1; then \
         echo "Tier 0: Installing core Ermete Forge base configuration..." && \
+        rpm -e --nodeps fedora-logos || true && \
         rpm -Uvh --replacefiles --replacepkgs --nodeps /mnt/tier0-repo/ermete-base-config*.rpm; \
     fi && \
     RPM_LIST=$(find /mnt/tier0-repo -name "*.rpm" 2>/dev/null | grep -vE 'systemd-standalone-|.*-free-.*\.rpm|glibc32|kernel-debug|rpm-.*\.rpm' || true) && \
     if [ -n "$RPM_LIST" ]; then \
         echo "Tier 0: Installing Bedrock hardware, kernel Chimera & NVIDIA dependencies..." && \
-        TO_INSTALL="" && TO_UPGRADE="" && \
-        for rpm in $RPM_LIST; do \
-            pkg_name=$(rpm -qp --queryformat "%{NAME}\n" "$rpm" 2>/dev/null || true) && \
-            if rpm -q "$pkg_name" >/dev/null 2>&1; then \
-                TO_UPGRADE="$TO_UPGRADE $rpm"; \
-            else \
-                TO_INSTALL="$TO_INSTALL $rpm"; \
-            fi; \
-        done && \
-        if [ -n "$TO_UPGRADE" ]; then dnf5 upgrade -y $TO_UPGRADE || true; fi && \
-        if [ -n "$TO_INSTALL" ]; then dnf5 install -y --allowerasing --setopt=install_weak_deps=False --setopt=tsflags=nodocs $TO_INSTALL; fi; \
+        dnf5 install -y --allowerasing --setopt=install_weak_deps=False --setopt=tsflags=nodocs $RPM_LIST; \
     fi && \
     rm -rf /usr/lib/firmware/{mellanox,qlogic,netronome,liquidio,cxgb4,bnx2x,cavium,dpaa2}
 
 # Dracut initramfs generation moved to AFTER Tier 1-3 installations to ensure all sysusers and configurations are captured.
 
-# TIER 1: DISPLAY SERVER & CORE USERSPACE SERVICES (~34 MB)
+# TIER 1: CORE USERSERVICE, DBUS & POLICYKIT (~23 MB)
 RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier1-repo:latest,source=/,target=/mnt/tier1-repo \
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/cache/libdnf5 \
     if find /mnt/tier1-repo -name "*.rpm" 1> /dev/null 2>&1; then \
-        echo "Tier 1: Installing Display Server & Core Userspace Services..." && \
+        echo "Tier 1: Installing Core User Services, DBus & Policies..." && \
         RPM_LIST=$(find /mnt/tier1-repo -name "*.rpm" 2>/dev/null | grep -vE -- '-devel-|-doc-|debuginfo|debugsource' || true) && \
         if [ -n "$RPM_LIST" ]; then \
-            TO_INSTALL="" && TO_UPGRADE="" && \
-            for rpm in $RPM_LIST; do \
-                pkg_name=$(rpm -qp --queryformat "%{NAME}\n" "$rpm" 2>/dev/null || true) && \
-                if rpm -q "$pkg_name" >/dev/null 2>&1; then TO_UPGRADE="$TO_UPGRADE $rpm"; else TO_INSTALL="$TO_INSTALL $rpm"; fi; \
-            done && \
-            if [ -n "$TO_UPGRADE" ]; then dnf5 upgrade -y $TO_UPGRADE || true; fi && \
-            if [ -n "$TO_INSTALL" ]; then dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs $TO_INSTALL; fi; \
+            dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs $RPM_LIST; \
         fi; \
     fi
 
@@ -75,13 +60,7 @@ RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier2-repo:latest,sour
         echo "Tier 2: Installing Design System & Static Assets..." && \
         RPM_LIST=$(find /mnt/tier2-repo -name "*.rpm" 2>/dev/null | grep -vE -- '-devel-|-doc-|debuginfo|debugsource' || true) && \
         if [ -n "$RPM_LIST" ]; then \
-            TO_INSTALL="" && TO_UPGRADE="" && \
-            for rpm in $RPM_LIST; do \
-                pkg_name=$(rpm -qp --queryformat "%{NAME}\n" "$rpm" 2>/dev/null || true) && \
-                if rpm -q "$pkg_name" >/dev/null 2>&1; then TO_UPGRADE="$TO_UPGRADE $rpm"; else TO_INSTALL="$TO_INSTALL $rpm"; fi; \
-            done && \
-            if [ -n "$TO_UPGRADE" ]; then dnf5 upgrade -y $TO_UPGRADE || true; fi && \
-            if [ -n "$TO_INSTALL" ]; then dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs $TO_INSTALL; fi; \
+            dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs $RPM_LIST; \
         fi; \
     fi
 
@@ -92,13 +71,7 @@ RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier3-repo:latest,sour
         echo "Tier 3: Installing Agile Rust Shell & Apps..." && \
         RPM_LIST=$(find /mnt/tier3-repo -name "*.rpm" 2>/dev/null | grep -vE -- '-devel-|-doc-|debuginfo|debugsource' || true) && \
         if [ -n "$RPM_LIST" ]; then \
-            TO_INSTALL="" && TO_UPGRADE="" && \
-            for rpm in $RPM_LIST; do \
-                pkg_name=$(rpm -qp --queryformat "%{NAME}\n" "$rpm" 2>/dev/null || true) && \
-                if rpm -q "$pkg_name" >/dev/null 2>&1; then TO_UPGRADE="$TO_UPGRADE $rpm"; else TO_INSTALL="$TO_INSTALL $rpm"; fi; \
-            done && \
-            if [ -n "$TO_UPGRADE" ]; then dnf5 upgrade -y $TO_UPGRADE || true; fi && \
-            if [ -n "$TO_INSTALL" ]; then dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs $TO_INSTALL; fi; \
+            dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs $RPM_LIST; \
         fi; \
     fi
 
