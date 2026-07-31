@@ -1,0 +1,18 @@
+{
+  "ermete-os-forge-shell-rs": "0c6115691c6914e51f2f13de0ba4edb2c0ca961e73233c60d77e79bc8534fb4f",
+  "ermete-os-forge-settings-rs": "6bb692adbb1bfee7698cf611675647391c291550d687c9ab8a07340ce51b30be",
+  "ermete-os-forge-daemon-rs": "6c01c82989b6f7e428ca45644efa88c0ae5cc995de9b7616671fbe97c98b7474",
+  "ermete-os-forge-store-rs": "ba0c986e88d51001e647051c8e6a3e78c4546726242e7a8ac79a8f2ae630bf77",
+  "ermete-os-forge-doctor": "ef9ce505ff8ec0493cefbf5187356c4c3523f2ebb6e3ea90dd95f84a44414ec9",
+  "ermete-os-forge-system-services": "2daa75afb97087b80f86f68b12e5a8d930e2333f1efedc687b9a27621462bf58",
+  "ermete-os-forge-desktop-ui": "3cbf2b895453f9c6dc1adafe1a9ae354904a2ac966d02f9bc4a9b9a210ae08d7",
+  "ermete-os-forge-system-config": "f7c99b104640df3b5b076781e9c88aef984c765990b5dcbe0279ae9724abc1e9",
+  "ermete-os-forge-backup": "63b541a68f2ab763f58686b6b138aaeb1773e62466a7ccab2806e4c0ce1cbe1d",
+  "ermete-os-forge-gatekeeper-rs": "da00a0a6da0cadca2ccaef13825c7874a05e17e3e66ec280d7b39b6974d66f6a",
+  "ermete-os-forge-cloud-rs": "369588c1138a2f038ecf4e1a12f5960b51178157e2c85aea3f16bfdf9b835013",
+  "ermete-os-forge-mdm-rs": "f86d26d0601d98153c40f2822e849584715042c1c004ee5dbb61575ad7051d9f",
+  "ermete-os-forge-xdg-desktop-portal-ermete": "89067fb03e6df11c82c58e95ef303363793f29aca39ff88541b7aa5cd69c2e01",
+  "ermete-os-forge-lvfs-rs": "4d9f3a0f6a1337d1ef78dfba9660435a9d6ab92d790e849a1d8b44252b85b83d",
+  "ermete-os-forge-ui-agent": "281ca93530fac79c43c590a088e95b93fadf933bcfaf66703b6c4c98f04dd5bf",
+  "ermete-os-forge-qa": "0daea303f0bd661305c058cb305eec0ee4564c60a1f17b02ee1c269ba66246db"
+}

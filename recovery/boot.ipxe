@@ -1,0 +1,3 @@
+#!ipxe
+dhcp
+chain https://hr-mes.github.io/ermete-os/recovery/menu.ipxe || shell
