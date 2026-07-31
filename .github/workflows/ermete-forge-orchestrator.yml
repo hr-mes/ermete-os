@@ -568,46 +568,56 @@ jobs:
   
             # Aggrega i tier e pubblica su GitHub Pages (Rolling Release)
             echo "🌐 Pubblicazione dei repository DNF su GitHub Pages (gh-pages branch)..."
-            mkdir -p /workspace/pages_repo
-            if [ -n "${{ secrets.RPM_GPG_KEY }}" ]; then
-              gpg --export --armor "%{_gpg_name}" > /workspace/pages_repo/RPM-GPG-KEY-ermete || true
-            fi
-            cp -a repo-cache/repo-tier0 /workspace/pages_repo/tier0
-            cp -a repo-cache/repo-tier1 /workspace/pages_repo/tier1
-            cp -a repo-cache/repo-tier2 /workspace/pages_repo/tier2
-            cp -a repo-cache/repo-tier3 /workspace/pages_repo/tier3
-            
-            # Draft: Generazione payload UEFI HTTP Boot (iPXE) per Internet Recovery
-            echo "🌐 Generazione payload UEFI HTTP Boot Internet Recovery..."
+            echo "🌐 Pubblicazione dei repository DNF su GitHub Pages (gh-pages branch)..."
             dnf install -y ipxe-bootimgs git
-            mkdir -p /workspace/pages_repo/recovery
-            cp /usr/share/ipxe/ipxe-x86_64.efi /workspace/pages_repo/recovery/ipxe.efi
-            echo '#!ipxe' > /workspace/pages_repo/recovery/boot.ipxe
-            echo 'dhcp' >> /workspace/pages_repo/recovery/boot.ipxe
-            echo 'chain https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/recovery/menu.ipxe || shell' >> /workspace/pages_repo/recovery/boot.ipxe
-            
+            git clone --depth 1 -b gh-pages "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" /workspace/pages_repo || {
+              mkdir -p /workspace/pages_repo
+              cd /workspace/pages_repo
+              git init
+              git checkout -b gh-pages
+            }
             cd /workspace/pages_repo
-            git init
             git config --global user.name "Ermete Forge"
             git config --global user.email "forge@ermete.os"
             git config --global --add safe.directory /workspace/pages_repo
-            git checkout -b gh-pages
+
+            rm -rf tier0 tier1 tier2 tier3
+            if [ -n "${{ secrets.RPM_GPG_KEY }}" ]; then
+              gpg --export --armor "%{_gpg_name}" > RPM-GPG-KEY-ermete || true
+            fi
+            cp -a /workspace/forge/repo-cache/repo-tier0 tier0
+            cp -a /workspace/forge/repo-cache/repo-tier1 tier1
+            cp -a /workspace/forge/repo-cache/repo-tier2 tier2
+            cp -a /workspace/forge/repo-cache/repo-tier3 tier3
+            
+            # Draft: Generazione payload UEFI HTTP Boot (iPXE) per Internet Recovery
+            echo "🌐 Generazione payload UEFI HTTP Boot Internet Recovery..."
+            mkdir -p recovery
+            cp /usr/share/ipxe/ipxe-x86_64.efi recovery/ipxe.efi
+            echo '#!ipxe' > recovery/boot.ipxe
+            echo 'dhcp' >> recovery/boot.ipxe
+            echo 'chain https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/recovery/menu.ipxe || shell' >> recovery/boot.ipxe
             
             echo "🧹 Controllo dimensione pacchetti per GitHub Pages (<49MB)..."
-            for rpm_file in $(find /workspace/pages_repo -type f -name "*.rpm" -size +49M 2>/dev/null); do
-              echo "⚠️ WARNING: $(basename "$rpm_file") eccede il limite di 49MB di GitHub Pages. Esclusione dalla copia Pages (pacchetto completo disponibile via OCI container registry ghcr.io)."
+            for rpm_file in $(find . -type f -name "*.rpm" -size +49M 2>/dev/null); do
+              echo "⚠️ WARNING: $(basename "$rpm_file") eccede il limite di 49MB di GitHub Pages. Esclusione dalla copia Pages."
               rm -f "$rpm_file"
             done
             
-            echo "🔄 Rigenerazione metadata DNF per GitHub Pages..."
-            for tier_dir in /workspace/pages_repo/tier*; do
+            echo "🔄 Rigenerazione metadata DNF per GitHub Pages (In Parallelo)..."
+            for tier_dir in tier*; do
               if [ -d "$tier_dir" ]; then
-                createrepo_c "$tier_dir"
+                createrepo_c "$tier_dir" &
               fi
             done
+            wait
   
-            git add .
-            git commit -m "🚀 Deploy DNF repositories for Ermete OS Rolling Release"
+            git add -A
+            if git rev-parse HEAD >/dev/null 2>&1; then
+              git commit --amend -m "🚀 Deploy DNF repositories for Ermete OS Rolling Release"
+            else
+              git commit -m "🚀 Deploy DNF repositories for Ermete OS Rolling Release"
+            fi
             git push -f "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" gh-pages
             
           EOF
