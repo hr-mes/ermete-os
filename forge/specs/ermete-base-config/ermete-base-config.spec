@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name:           ermete-base-config
 Version:        1.0.0
-Release: 6%{?dist}
+Release: 7%{?dist}
 Summary:        Ermete OS Base Configuration (NVIDIA, Systemd, Branding, GPG)
 
 License:        MIT
@@ -13,6 +13,10 @@ Provides:       fedora-logos = %{version}-%{release}
 Obsoletes:      fedora-logos < 43
 Provides:       fedora-logos-httpd = %{version}-%{release}
 Obsoletes:      fedora-logos-httpd < 43
+Provides:       system-logos = %{version}-%{release}
+Obsoletes:      system-logos < 43
+Provides:       system-logos-httpd = %{version}-%{release}
+Obsoletes:      system-logos-httpd < 43
 %description
 This package provides the foundational configuration for Ermete Base.
 It includes NVIDIA sleep scripts, Dracut configurations, modprobe rules,
