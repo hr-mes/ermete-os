@@ -197,10 +197,10 @@ for tier in tier0 tier1 tier2 tier3; do
 done
 
 echo "=== Syncing tiered RPMs to aggregate repo ==="
-cp -a repo-cache/repo-tier0/*.rpm repo-cache/repo/ 2>/dev/null || true
-cp -a repo-cache/repo-tier1/*.rpm repo-cache/repo/ 2>/dev/null || true
-cp -a repo-cache/repo-tier2/*.rpm repo-cache/repo/ 2>/dev/null || true
-cp -a repo-cache/repo-tier3/*.rpm repo-cache/repo/ 2>/dev/null || true
+find repo-cache/repo-tier0/ -name "*.rpm" -exec cp -a {} repo-cache/repo/ \; 2>/dev/null || true
+find repo-cache/repo-tier1/ -name "*.rpm" -exec cp -a {} repo-cache/repo/ \; 2>/dev/null || true
+find repo-cache/repo-tier2/ -name "*.rpm" -exec cp -a {} repo-cache/repo/ \; 2>/dev/null || true
+find repo-cache/repo-tier3/ -name "*.rpm" -exec cp -a {} repo-cache/repo/ \; 2>/dev/null || true
 
 for img in "${TIER0_IMAGES[@]}" "${TIER1_IMAGES[@]}" "${TIER2_IMAGES[@]}" "${TIER3_IMAGES[@]}"; do
   if [ -f "$TMP_DIR/digest_$img" ]; then
@@ -223,8 +223,8 @@ for tier in tier0 tier1 tier2 tier3; do
 done
 
 echo "--- Extracted RPMs Summary ---"
-echo "Tier 0 count: $(ls -1 repo-cache/repo-tier0/*.rpm 2>/dev/null | wc -l || echo 0)"
-echo "Tier 1 count: $(ls -1 repo-cache/repo-tier1/*.rpm 2>/dev/null | wc -l || echo 0)"
-echo "Tier 2 count: $(ls -1 repo-cache/repo-tier2/*.rpm 2>/dev/null | wc -l || echo 0)"
-echo "Tier 3 count: $(ls -1 repo-cache/repo-tier3/*.rpm 2>/dev/null | wc -l || echo 0)"
-echo "Total repo count: $(ls -1 repo-cache/repo/*.rpm 2>/dev/null | wc -l || echo 0)"
+echo "Tier 0 count: $(find repo-cache/repo-tier0 -name '*.rpm' 2>/dev/null | wc -l || echo 0)"
+echo "Tier 1 count: $(find repo-cache/repo-tier1 -name '*.rpm' 2>/dev/null | wc -l || echo 0)"
+echo "Tier 2 count: $(find repo-cache/repo-tier2 -name '*.rpm' 2>/dev/null | wc -l || echo 0)"
+echo "Tier 3 count: $(find repo-cache/repo-tier3 -name '*.rpm' 2>/dev/null | wc -l || echo 0)"
+echo "Total repo count: $(find repo-cache/repo -name '*.rpm' 2>/dev/null | wc -l || echo 0)"

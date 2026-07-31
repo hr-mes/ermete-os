@@ -10,10 +10,11 @@ RUN dnf5 -y remove --no-autoremove kernel kernel-core kernel-modules kernel-modu
 # TIER 0: BEDROCK HARDWARE & KERNEL FOUNDATION
 RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier0-repo:latest,source=/,target=/mnt/tier0-repo \
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/cache/libdnf5 \
-    if ls /mnt/tier0-repo/ermete-base-config*.rpm 1> /dev/null 2>&1; then \
+    BASE_CONFIG=$(find /mnt/tier0-repo -name "ermete-base-config*.rpm" | head -n 1) && \
+    if [ -n "$BASE_CONFIG" ]; then \
         echo "Tier 0: Installing core Ermete Forge base configuration..." && \
         rpm -e --nodeps fedora-logos || true && \
-        rpm -Uvh --replacefiles --replacepkgs --nodeps /mnt/tier0-repo/ermete-base-config*.rpm; \
+        rpm -Uvh --replacefiles --replacepkgs --nodeps "$BASE_CONFIG"; \
     fi && \
     RPM_LIST=$(find /mnt/tier0-repo -name "*.rpm" 2>/dev/null | grep -vE 'systemd-standalone-|.*-free-.*\.rpm|glibc32|kernel-debug|rpm-.*\.rpm|fedora-release-|selinux-policy|ermete-base-config' || true) && \
     if [ -n "$RPM_LIST" ]; then \
