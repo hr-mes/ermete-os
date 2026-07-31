@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name:           ermete-base-config
 Version:        1.0.0
-Release: 5%{?dist}
+Release: 6%{?dist}
 Summary:        Ermete OS Base Configuration (NVIDIA, Systemd, Branding, GPG)
 
 License:        MIT
@@ -9,7 +9,10 @@ URL:            https://github.com/hr-mes/ermete-forge
 BuildArch:      noarch
 
 Requires:       glibc-langpack-it glibc-langpack-en
-
+Provides:       fedora-logos = %{version}-%{release}
+Obsoletes:      fedora-logos < 43
+Provides:       fedora-logos-httpd = %{version}-%{release}
+Obsoletes:      fedora-logos-httpd < 43
 %description
 This package provides the foundational configuration for Ermete Base.
 It includes NVIDIA sleep scripts, Dracut configurations, modprobe rules,
@@ -53,6 +56,8 @@ rm -rf %{buildroot}/etc/tmpfiles.d
 /usr/lib/systemd/system/bootc-fetch-apply-updates.service.d/override.conf
 
 %changelog
+* Fri Jul 31 2026 Ermete <ermete@customer.mlnnita1.isp.starlink.com> - 1.0.0-6
+- Add Provides and Obsoletes for fedora-logos to avoid conflicts during system image build
 * Thu Jul 30 2026 Ermete <ermete@customer.mlnnita1.isp.starlink.com> - 1.0.0-5
 - Trigger rebuild to execute deduplication fix
 * Tue Jul 14 2026 Ermete Forge <forge@ermete.os> - 1.0.0-3
