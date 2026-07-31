@@ -14,10 +14,6 @@ RUN dnf5 -y remove --no-autoremove kernel kernel-core kernel-modules kernel-modu
 
 # SECURITY: ermete-install.ks contains placeholder SSH keys that MUST be replaced before production
 
-# Estrazione pacchetti RPM dai Micro-Container OCI di Ermete Forge (Isolamento Totale per Tier)
-# I pacchetti vengono copiati chirurgicamente nei singoli Tier prima dell'installazione per evitare il cache-busting OCI.
-
-
 # Execute all modular scripts sequentially in a single transaction to prevent OCI layer bloat
 # and preserve atomicity of the RPM database.
 # FIX BEDROCK (Universal Package Resolution & Zero-Conflict Ordering):
@@ -108,10 +104,6 @@ RUN QUALIFIED_KERNEL="" && \
     chmod 0644 /usr/lib/modules/${QUALIFIED_KERNEL}/initramfs.img && \
     ldconfig
 
-
-
-
-
 ### HARDENING & OSTREE LINTING FIXES
 RUN shopt -s nullglob && \
     dnf5 remove -y --no-autoremove \
@@ -125,8 +117,8 @@ RUN shopt -s nullglob && \
     rm -rf /var/lib/dnf5/* /var/tmp/* /var/log/*
 
 ### LINTING
-## Verify final image and contents are correct.
 RUN ls -la /usr/lib/modules/ && bootc container lint
 
 # Strip SUID/SGID from unnecessary binaries
 RUN find /usr/bin /usr/sbin /usr/libexec -type f \( -perm -4000 -o -perm -2000 \) | grep -vE 'sudo|su|passwd|polkit-agent-helper-1|dbus-daemon-launch-helper|ssh-keysign' | xargs -r chmod u-s,g-s || true
+

@@ -20,13 +20,8 @@ fix:
 [group('Utility')]
 clean:
     #!/usr/bin/env bash
-    set -eoux pipefail
-    touch _build
-    find *_build* -exec rm -rf {} \;
-    rm -f previous.manifest.json
-    rm -f changelog.md
-    rm -f output.env
-    rm -f output/
+    set -euo pipefail
+    rm -rf *_build* previous.manifest.json changelog.md output.env output/
 
 # Build the image using the specified parameters
 build $target_image=image_name $tag=default_tag:
@@ -137,8 +132,6 @@ _run-vm $target_image $tag $type:
 # Run a virtual machine
 [group('Run Virtual Machine')]
 run-vm type="qcow2" target_image=("localhost/" + image_name) tag=default_tag: && (_run-vm target_image tag type)
-
-
 
 # Runs shell check on all Bash scripts
 lint:
