@@ -114,8 +114,8 @@ for tier in tier0 tier1 tier2 tier3; do
   ctr=$(buildah from "$IMAGE_LOWER" 2>/dev/null || true)
   if [ -n "$ctr" ]; then
     mnt=$(buildah mount "$ctr")
-    cp -a "$mnt"/*.rpm "repo-cache/repo-${tier}/" 2>/dev/null || true
-    cp -a "$mnt"/*.rpm "repo-cache/repo/" 2>/dev/null || true
+    find "$mnt" -name '*.rpm' -exec cp -a {} "repo-cache/repo-${tier}/" \; 2>/dev/null || true
+    find "$mnt" -name '*.rpm' -exec cp -a {} "repo-cache/repo/" \; 2>/dev/null || true
     if [ -f "$mnt/manifest.json" ]; then
       cp -a "$mnt/manifest.json" "repo-cache/repo-${tier}/" 2>/dev/null || true
     fi

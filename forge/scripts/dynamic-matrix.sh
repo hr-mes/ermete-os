@@ -120,7 +120,7 @@ J_UPSTREAM=$(jq -c -s 'add' <(echo "$J_U_CORE") <(echo "$J_U_DESK") <(echo "$J_U
 if [[ "$J_CUSTOM" != "[]" || "$J_UPSTREAM" != "[]" ]]; then
   HAS_CHANGES="true"
 else
-  HAS_CHANGES="false"
+  HAS_CHANGES="true" # FORCED to clear zombie cache
 fi
 
 if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
