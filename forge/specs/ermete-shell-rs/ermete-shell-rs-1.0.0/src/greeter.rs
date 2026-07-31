@@ -403,7 +403,10 @@ where
                     unlock_keyring_automatic(password, &username);
                     let req = Request::StartSession {
                         cmd: vec![session_cmd],
-                        env: vec![],
+                        env: vec![
+                            "XDG_SESSION_TYPE=wayland".to_string(),
+                            "XDG_CURRENT_DESKTOP=niri".to_string(),
+                        ],
                     };
                     let start_resp = send_request(&mut stream, &req)?;
                     match start_resp {

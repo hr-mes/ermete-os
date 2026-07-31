@@ -2,7 +2,7 @@
 %global __requires_exclude ^kernel-rt$
 Name:           ermete-system-config
 Version:        1.0.0
-Release:        18%{?dist}
+Release:        %{?autorelease}%{!?autorelease:12.fc43}
 Summary:        Ermete OS ermete-system-config
 License:        MIT
 URL:            https://github.com/hr-mes/ermete-forge

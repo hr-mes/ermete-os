@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name:           ermete-shell-rs
 Version:        1.0.0
-Release:        23%{?dist}
+Release:        %{?autorelease}%{!?autorelease:12.fc43}
 Summary:        Ermete OS Native Rust GTK4 Shell
 
 License:        MIT
