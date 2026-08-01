@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name:           ermete-base-config
-Version:        1.0.0
-Release: 7%{?dist}
+Version:        43.0.0
+Release:        1%{?dist}
 Summary:        Ermete OS Base Configuration (NVIDIA, Systemd, Branding, GPG)
 
 License:        MIT
@@ -9,21 +9,30 @@ URL:            https://github.com/hr-mes/ermete-forge
 BuildArch:      noarch
 
 Requires:       glibc-langpack-it glibc-langpack-en
+Provides:       fedora-logos = 43
 Provides:       fedora-logos = %{version}-%{release}
 Obsoletes:      fedora-logos < 43
+Provides:       fedora-logos-httpd = 43
 Provides:       fedora-logos-httpd = %{version}-%{release}
 Obsoletes:      fedora-logos-httpd < 43
+Provides:       system-logos = 43
 Provides:       system-logos = %{version}-%{release}
 Obsoletes:      system-logos < 43
+Provides:       system-logos-httpd = 43
 Provides:       system-logos-httpd = %{version}-%{release}
 Obsoletes:      system-logos-httpd < 43
+Provides:       fedora-release = 43
 Provides:       fedora-release = %{version}-%{release}
 Obsoletes:      fedora-release < 43
+Provides:       fedora-release-identity = 43
 Provides:       fedora-release-identity = %{version}-%{release}
 Obsoletes:      fedora-release-identity < 43
+Provides:       fedora-release-common = 43
 Provides:       fedora-release-common = %{version}-%{release}
 Obsoletes:      fedora-release-common < 43
+Provides:       system-release = 43
 Provides:       system-release = %{version}-%{release}
+Provides:       system-release(43)
 Obsoletes:      system-release < 43
 %description
 This package provides the foundational configuration for Ermete Base.
