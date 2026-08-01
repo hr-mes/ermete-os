@@ -3,7 +3,7 @@ set -euo pipefail
 # Ermete OS: The Ultimate Chimera Kernel Bedrock Builder (Fedora Upstream Zero-Trust)
 
 # --- BEDROCK MANIFEST (PINNED COMMITS) ---
-# Matrice Dominante Pura: CachyOS (Scheduler BORE) + ClearLinux (Math/CPU/Memory).
+# Matrice Dominante Pura: CachyOS (Scheduler BORE).
 # WARNING: HEAD is unpinned — should be pinned to a specific commit hash
 # Current: CACHYOS_COMMIT="HEAD"
 CACHYOS_COMMIT="ea739d734ec179864b21446856315bc49f7c52fa"
@@ -44,10 +44,7 @@ fetch_pinned() {
 
 fetch_pinned "https://github.com/CachyOS/kernel-patches.git" "/tmp/cachyos-patches" "" "$CACHYOS_COMMIT"
 
-# ClearLinux necessita di storia profonda (Time-Travel) per cercare i vecchi commit di kernel passati!
-echo ">>> Fetching /tmp/clearlinux-patches (Depth 1000 per Time-Travel)..."
-rm -rf /tmp/clearlinux-patches
-git clone --depth 1000 https://github.com/clearlinux-pkgs/linux.git /tmp/clearlinux-patches || { echo "FATAL: Clone fallito per ClearLinux"; exit 1; }
+
 
 echo ">>> [BEDROCK SECURE] Calcolo dinamico dello Scudo NVIDIA (Dynamic Ceiling)..."
 curl -sLo /etc/yum.repos.d/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo || true
@@ -65,7 +62,7 @@ if [[ -n "$NVIDIA_VER" ]]; then
 fi
 echo ">>> NVIDIA Driver rilevato: Serie ${NVIDIA_VER}.xx -> Massima versione kernel consentita: $MAX_KERNEL"
 
-echo ">>> Ricerca della migliore versione kernel supportata (Fedora -> NVIDIA Shield -> CachyOS -> ClearLinux)..."
+echo ">>> Ricerca della migliore versione kernel supportata (Fedora -> NVIDIA Shield -> CachyOS)..."
 TARGET_RELEASEVER=""
 TARGET_KERNEL_VER=""
 
@@ -98,55 +95,25 @@ for (( ver=$CURRENT_FVER; ver>=$MIN_FVER; ver-- )); do
         continue
     fi
     
-    # 2. Controllo Clear Linux
-    pushd /tmp/clearlinux-patches > /dev/null
-    F_VER_ESC="${F_VER//./\\.}"
-    CLEAR_COMMIT=$(git log --grep="update.*${F_VER_ESC}\\b" -n 1 --format="%H" || true)
-    popd > /dev/null
-    
-    if [ -z "$CLEAR_COMMIT" ]; then
-        echo "    Clear Linux NON ha patch per $F_VER. Passo al precedente..."
-        continue
-    fi
-    
-    echo ">>> MATCH PERFETTO! Fedora $ver fornisce kernel $F_VER, pienamente supportato da CachyOS e ClearLinux."
+    echo ">>> MATCH PERFETTO! Fedora $ver fornisce kernel $F_VER, pienamente supportato da CachyOS."
     TARGET_RELEASEVER=$ver
     TARGET_KERNEL_VER=$F_VER
     break
 done
 
 if [ -z "$TARGET_RELEASEVER" ]; then
-    echo "ERRORE FATALE: Nessun kernel compatibile trovato incrociando Fedora, NVIDIA Shield, CachyOS e Clear Linux." >&2
+    echo "ERRORE FATALE: Nessun kernel compatibile trovato incrociando Fedora, NVIDIA Shield e CachyOS." >&2
     exit 1
 fi
 
 if [[ "$MODE" == "meta" ]]; then
-    # Checkout ClearLinux per hashare i file esatti
-    pushd /tmp/clearlinux-patches > /dev/null
-    git checkout -q "$CLEAR_COMMIT"
-    popd > /dev/null
-
     # Hashiamo SOLO i file patch che verranno fusi nel kernel
     CACHY_PATCH_HASH=$(find "/tmp/cachyos-patches/$TARGET_KERNEL_VER/" -type f -name "*.patch" -exec sha256sum {} + | sort | sha256sum | awk '{print $1}')
-    
-    CLEAR_PATCH_HASH=""
-    for patch_name in \
-        "0001-sched-migrate.patch" \
-        "0001-sched-numa-Initialise-numa_migrate_retry.patch" \
-        "0001-mm-memcontrol-add-some-branch-hints-based-on-gcov-an.patch" \
-        "0002-sched-core-add-some-branch-hints-based-on-gcov-analy.patch" \
-        "0170-sched-Add-unlikey-branch-hints-to-several-system-cal.patch"; do
-        if [ -f "/tmp/clearlinux-patches/$patch_name" ]; then
-            CLEAR_PATCH_HASH+=$(sha256sum "/tmp/clearlinux-patches/$patch_name" | awk '{print $1}')
-        fi
-    done
-    CLEAR_PATCH_HASH=$(echo "$CLEAR_PATCH_HASH" | sha256sum | awk '{print $1}')
 
     # Output deterministic fingerprint data and exit
     echo "META_KERNEL_VER=$TARGET_KERNEL_VER"
     echo "META_RELEASE_VER=$TARGET_RELEASEVER"
     echo "META_CACHY_PATCHES=$CACHY_PATCH_HASH"
-    echo "META_CLEAR_PATCHES=$CLEAR_PATCH_HASH"
     exit 0
 fi
 
@@ -174,23 +141,18 @@ route_patch() {
     local domain="99"
     local priority="9"
     
-    # Riconosciamo solo CachyOS e ClearLinux per garantire zero deadlock semantici.
     if [[ "$lower_patch" =~ (bore|sched|eevdf|cfs|cpu|topology) ]]; then
         domain="02"
-        case "$source" in cachyos) priority="1" ;; clear) priority="2" ;; *) priority="5" ;; esac
     elif [[ "$lower_patch" =~ (bbr|tcp|net|wireguard|bpf) ]]; then
         domain="04"
-        case "$source" in cachyos) priority="1" ;; clear) priority="2" ;; *) priority="5" ;; esac
     elif [[ "$lower_patch" =~ (mglru|mm|lru|zswap|zram|page|memory|vm) ]]; then
         domain="03"
-        case "$source" in clear) priority="1" ;; cachyos) priority="2" ;; *) priority="5" ;; esac
     elif [[ "$lower_patch" =~ (fs|ext4|btrfs|xfs|zfs|io|block|nvme) ]]; then
         domain="05"
-        case "$source" in cachyos) priority="1" ;; clear) priority="2" ;; *) priority="5" ;; esac
     else
         domain="99"
-        case "$source" in cachyos) priority="1" ;; clear) priority="2" ;; *) priority="5" ;; esac
     fi
+    case "$source" in cachyos) priority="1" ;; *) priority="5" ;; esac
     local clean_patch=$(echo "$patch" | sed -E 's/^[0-9]+-//')
     echo "bedrock-${domain}_${priority}_${source}_${clean_patch}"
 }
@@ -207,33 +169,12 @@ if [ -d "$CACHY_PATCH_DIR" ]; then
     done
 fi
 
-echo ">>> Sincronizzazione dinamica Clear Linux con Kernel $KERNEL_VER..."
-pushd /tmp/clearlinux-patches > /dev/null
-KERNEL_VER_ESC="${KERNEL_VER//./\\.}"
-CLEAR_COMMIT=$(git log --grep="update.*${KERNEL_VER_ESC}\\b" -n 1 --format="%H" || true)
-if [ -n "$CLEAR_COMMIT" ]; then
-    echo ">>> Allineamento Clear Linux al commit: $CLEAR_COMMIT"
-    git checkout -q "$CLEAR_COMMIT"
-else
-    echo ">>> ATTENZIONE: Nessun commit specifico trovato per $KERNEL_VER. Utilizzo l'head di main."
-fi
-popd > /dev/null
-
 echo ">>> Pulizia patch obsolete (ntsync è upstream in 6.14)..."
 rm -f SOURCES/*ntsync*.patch || true
 
-echo ">>> Aggiunta patch chirurgiche Clear Linux..."
-for patch_name in \
-    "0001-sched-migrate.patch" \
-    "0001-sched-numa-Initialise-numa_migrate_retry.patch" \
-    "0001-mm-memcontrol-add-some-branch-hints-based-on-gcov-an.patch" \
-    "0002-sched-core-add-some-branch-hints-based-on-gcov-analy.patch" \
-    "0170-sched-Add-unlikey-branch-hints-to-several-system-cal.patch"; do
-    
-    if [ -f "/tmp/clearlinux-patches/$patch_name" ]; then
-        cp "/tmp/clearlinux-patches/$patch_name" "SOURCES/$(route_patch "$patch_name" "clear")"
-    fi
-done
+echo ">>> Download del profilo ChromeOS AFDO..."
+curl -sLo SOURCES/chromeos.afdo.xz https://storage.googleapis.com/chromeos-localmirror/distfiles/chromeos-kernel-5_15-afdo.prof.xz || { echo "FATAL: Download AFDO fallito"; exit 1; }
+xz -df SOURCES/chromeos.afdo.xz
 
 echo ">>> Normalizzazione kernel.spec con LLVM=1 LLVM_IAS=1..."
 sed -i 's/%make_build/%make_build LLVM=1 LLVM_IAS=1/g' SPECS/kernel.spec
@@ -402,7 +343,7 @@ cat << 'EOF' >> ~/.rpmmacros
 %_with_vanilla 1
 %buildid .chimera
 %toolchain clang
-%__make /usr/bin/make LLVM=1 LLVM_IAS=1 KCFLAGS="-Wno-error -Wno-unknown-warning-option" KBUILD_CFLAGS="-Wno-error -Wno-unknown-warning-option"
+%__make /usr/bin/make LLVM=1 LLVM_IAS=1 KCFLAGS="-Wno-error -Wno-unknown-warning-option -fprofile-sample-use=$RPMBUILD_DIR/SOURCES/chromeos.afdo" KBUILD_CFLAGS="-Wno-error -Wno-unknown-warning-option"
 %__cc clang
 %__cxx clang++
 %_build_cc clang
@@ -412,7 +353,7 @@ cat << 'EOF' >> ~/.rpmmacros
 %_ld ld.lld
 %_ldflags -Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro
 %optflags %{__global_compiler_flags} -O3 -march=x86-64-v3 -pipe -Wno-error -Wno-unknown-warning-option
-%kcflags -O3 -march=x86-64-v3 -pipe -Wno-error -Wno-unknown-warning-option
+%kcflags -O3 -march=x86-64-v3 -pipe -Wno-error -Wno-unknown-warning-option -fprofile-sample-use=$RPMBUILD_DIR/SOURCES/chromeos.afdo
 
 %_without_selftests 1
 %_without_tools 1
