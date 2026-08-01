@@ -429,3 +429,4 @@ fi
 echo "========================================================="
 echo " CONFIGURAZIONE CHIMERA BEDROCK COMPLETATA CON SUCCESSO  "
 echo "========================================================="
+# Trigger rebuild
