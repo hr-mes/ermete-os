@@ -171,7 +171,8 @@ for tier in tier0 tier1 tier2 tier3; do
   declare -A seen_pkgs
   while IFS= read -r rpm_file; do
     [ -e "$rpm_file" ] || continue
-    pkg_name=$(rpm -qp --queryformat '%{NAME}' "$rpm_file" 2>/dev/null || true)
+    file_basename=$(basename "$rpm_file")
+    pkg_name=$(echo "$file_basename" | sed -E 's/-[0-9].*//')
     if [ -n "$pkg_name" ]; then
       if [[ "$pkg_name" == kmod-nvidia-* ]]; then
         pkg_name="kmod-nvidia"
