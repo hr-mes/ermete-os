@@ -182,7 +182,23 @@ for tier in tier0 tier1 tier2 tier3; do
         readarray -t matching_rpms < <(find repo-cache/repo-${tier}/ -type f -name "${pkg_name}-[0-9]*.rpm")
         
         if [ ${#matching_rpms[@]} -gt 1 ]; then
-          latest_rpm=$(ls -1v "${matching_rpms[@]}" | tail -n 1)
+          # Sort by version first (ascending)
+          readarray -t sorted_rpms < <(ls -1v "${matching_rpms[@]}")
+          
+          latest_rpm="${sorted_rpms[${#sorted_rpms[@]}-1]}" # Default to highest version overall
+          
+          # If any RPMs are in subdirectories, they are fresh. Pick the highest version among fresh ones.
+          fresh_rpms=()
+          for f in "${sorted_rpms[@]}"; do
+            if echo "$f" | grep -q "repo-cache/repo-${tier}/[^/]\+/."; then
+              fresh_rpms+=("$f")
+            fi
+          done
+          
+          if [ ${#fresh_rpms[@]} -gt 0 ]; then
+            latest_rpm="${fresh_rpms[${#fresh_rpms[@]}-1]}"
+          fi
+
           for f in "${matching_rpms[@]}"; do
             if [ "$f" != "$latest_rpm" ]; then
               echo "    [DEDUPLICATION] Removing older duplicate: $f"
