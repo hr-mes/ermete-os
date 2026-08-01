@@ -16,14 +16,11 @@ RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier0-repo:latest,sour
         rpm -e --nodeps fedora-logos || true && \
         rpm -Uvh --replacefiles --replacepkgs --nodeps "$BASE_CONFIG"; \
     fi && \
-    RPM_LIST=$(find /mnt/tier0-repo -name "*.rpm" 2>/dev/null | grep -vE 'systemd-standalone-|.*-free-.*\.rpm|glibc32|kernel-debug|rpm-.*\.rpm|fedora-release-|selinux-policy|ermete-base-config|ermete-kernel' || true) && \
+    echo "excludepkgs=kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-devel kernel-headers kernel-debug kernel-debug-devel kernel-debug-core kernel-debug-modules kernel-debug-modules-core kernel-debug-modules-extra" >> /etc/dnf/dnf.conf && \
+    RPM_LIST=$(find /mnt/tier0-repo -name "*.rpm" 2>/dev/null | grep -vE 'systemd-standalone-|.*-free-.*\.rpm|glibc32|kernel-debug|kernel-headers|rpm-.*\.rpm|fedora-release-|selinux-policy|ermete-base-config' || true) && \
     if [ -n "$RPM_LIST" ]; then \
-        echo "Tier 0: Pre-installing Chimera kernel explicitly to prevent upstream override..." && \
-        KERNEL_RPMS=$(find /mnt/tier0-repo -name "kernel-*.rpm" | grep -vE "debug") && \
-        if [ -n "$KERNEL_RPMS" ]; then rpm -Uvh --replacefiles --replacepkgs --nodeps $KERNEL_RPMS; fi && \
-        echo "excludepkgs=kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-devel kernel-headers kernel-debug kernel-debug-devel kernel-debug-core kernel-debug-modules kernel-debug-modules-core kernel-debug-modules-extra" >> /etc/dnf/dnf.conf && \
-        echo "Tier 0: Installing Bedrock hardware & NVIDIA dependencies..." && \
-        dnf5 install -y --allowerasing --setopt=install_weak_deps=False --setopt=tsflags=nodocs --exclude="kernel*" --exclude="ermete-kernel*" $RPM_LIST; \
+        echo "Tier 0: Installing Bedrock hardware, kernel Chimera & NVIDIA dependencies..." && \
+        dnf5 install -y --allowerasing --setopt=install_weak_deps=False --setopt=tsflags=nodocs $RPM_LIST; \
     fi && \
     rm -rf /usr/lib/firmware/{mellanox,qlogic,netronome,liquidio,cxgb4,bnx2x,cavium,dpaa2}
 
