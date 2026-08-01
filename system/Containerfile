@@ -16,8 +16,15 @@ RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier0-repo:latest,sour
         rpm -e --nodeps fedora-logos || true && \
         rpm -Uvh --replacefiles --replacepkgs --nodeps "$BASE_CONFIG"; \
     fi && \
-    echo "excludepkgs=kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-devel kernel-headers kernel-debug kernel-debug-devel kernel-debug-core kernel-debug-modules kernel-debug-modules-core kernel-debug-modules-extra" >> /etc/dnf/dnf.conf && \
-    RPM_LIST=$(find /mnt/tier0-repo -name "*.rpm" 2>/dev/null | grep -vE 'systemd-standalone-|.*-free-.*\.rpm|glibc32|kernel-debug|kernel-headers|rpm-.*\.rpm|fedora-release-|selinux-policy|ermete-base-config' || true) && \
+    echo "excludepkgs=kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-devel kernel-debug kernel-debug-devel kernel-debug-core kernel-debug-modules kernel-debug-modules-core kernel-debug-modules-extra" >> /etc/dnf/dnf.conf && \
+    RAW_RPM_LIST=$(find /mnt/tier0-repo -name "*.rpm" 2>/dev/null | grep -vE 'systemd-standalone-|.*-free-.*\.rpm|glibc32|kernel-debug|rpm-.*\.rpm|fedora-release-|selinux-policy|ermete-base-config' || true) && \
+    RPM_LIST="" && \
+    for rpm in $RAW_RPM_LIST; do \
+        if [[ "$rpm" == *kmod-nvidia-* ]] && [[ "$rpm" != *chimera* ]]; then \
+            continue; \
+        fi; \
+        RPM_LIST="$RPM_LIST $rpm"; \
+    done && \
     if [ -n "$RPM_LIST" ]; then \
         echo "Tier 0: Installing Bedrock hardware, kernel Chimera & NVIDIA dependencies..." && \
         dnf5 install -y --allowerasing --setopt=install_weak_deps=False --setopt=tsflags=nodocs $RPM_LIST; \
