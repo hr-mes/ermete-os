@@ -173,8 +173,14 @@ echo ">>> Pulizia patch obsolete (ntsync è upstream in 6.14)..."
 rm -f SOURCES/*ntsync*.patch || true
 
 echo ">>> Download del profilo ChromeOS AFDO..."
-curl -sLo SOURCES/chromeos.afdo.xz https://storage.googleapis.com/chromeos-localmirror/distfiles/chromeos-kernel-5_15-afdo.prof.xz || { echo "FATAL: Download AFDO fallito"; exit 1; }
-xz -df SOURCES/chromeos.afdo.xz
+AFDO_URL="https://storage.googleapis.com/chromeos-localmirror/distfiles/chromeos-kernel-5_15-afdo.prof.xz"
+if curl -sfLo SOURCES/chromeos.afdo.xz "$AFDO_URL" && xz -df SOURCES/chromeos.afdo.xz; then
+    echo ">>> Profilo AFDO scaricato e decodificato con successo."
+else
+    echo ">>> ATTENZIONE: Download del profilo AFDO fallito (404/Not Found). Procedo senza AutoFDO per questa build."
+    # Il flag verrà rimosso dinamicamente nella fase di patching del file .spec
+    rm -f SOURCES/chromeos.afdo.xz SOURCES/chromeos.afdo
+fi
 
 echo ">>> Normalizzazione kernel.spec con LLVM=1 LLVM_IAS=1..."
 sed -i 's/%make_build/%make_build LLVM=1 LLVM_IAS=1/g' SPECS/kernel.spec
@@ -415,6 +421,11 @@ find . -type f -name "Makefile" -path "*/arch/x86/tools/Makefile" -exec sed -i '
 find . -type f -name "Makefile" -path "*/arch/x86/tools/Makefile" -exec sed -i 's/$(call cmd,sanitytest)/true/g' {} + || true
 
 popd > /dev/null
+if [ ! -f "SOURCES/chromeos.afdo" ]; then
+    echo ">>> Rimozione dei flag AutoFDO dal file spec in quanto il profilo non è presente..."
+    sed -i 's|-fprofile-sample-use=$RPMBUILD_DIR/SOURCES/chromeos.afdo||g' SPECS/kernel.spec
+fi
+
 echo "========================================================="
-echo " PREPARAZIONE CHIMERA COMPLETATA."
+echo " CONFIGURAZIONE CHIMERA BEDROCK COMPLETATA CON SUCCESSO  "
 echo "========================================================="
