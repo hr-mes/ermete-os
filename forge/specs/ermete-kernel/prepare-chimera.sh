@@ -349,7 +349,7 @@ cat << 'EOF' >> ~/.rpmmacros
 %_with_vanilla 1
 %buildid .chimera2
 %toolchain clang
-%__make /usr/bin/make LLVM=1 LLVM_IAS=1 KCFLAGS="-Wno-error -Wno-unknown-warning-option -Wno-ignored-optimization-argument -fprofile-sample-use=$RPMBUILD_DIR/SOURCES/chromeos.afdo" HOSTCFLAGS="-Wno-error -Wno-unknown-warning-option -Wno-ignored-optimization-argument"
+%__make /usr/bin/make LLVM=1 LLVM_IAS=1 KCFLAGS="-fprofile-sample-use=$RPMBUILD_DIR/SOURCES/chromeos.afdo"
 %__cc clang
 %__cxx clang++
 %_build_cc clang
@@ -358,8 +358,8 @@ cat << 'EOF' >> ~/.rpmmacros
 %_host_cxx clang++
 %_ld ld.lld
 %_ldflags -Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro
-%optflags %{__global_compiler_flags} -O3 -march=x86-64-v3 -pipe -Wno-error -Wno-unknown-warning-option -Wno-ignored-optimization-argument
-%kcflags -O3 -march=x86-64-v3 -pipe -Wno-error -Wno-unknown-warning-option -Wno-ignored-optimization-argument -fprofile-sample-use=$RPMBUILD_DIR/SOURCES/chromeos.afdo
+%optflags %{__global_compiler_flags} -O3 -march=x86-64-v3 -pipe
+%kcflags -O3 -march=x86-64-v3 -pipe -fprofile-sample-use=$RPMBUILD_DIR/SOURCES/chromeos.afdo
 
 %_without_selftests 1
 %_without_tools 1
@@ -379,9 +379,6 @@ spectool -g -R SPECS/kernel.spec
 dnf builddep -y SPECS/kernel.spec
 export LLVM=1
 export MAKEFLAGS="LLVM=1 LLVM_IAS=1"
-export KCFLAGS="-Wno-unknown-warning-option -Wno-ignored-optimization-argument"
-export KBUILD_CFLAGS="-Wno-unknown-warning-option -Wno-ignored-optimization-argument"
-export HOSTCFLAGS="-Wno-unknown-warning-option -Wno-ignored-optimization-argument"
 rpmbuild -bp SPECS/kernel.spec --target x86_64
 
 echo ">>> Rilevamento della directory di build del kernel preparata..."
