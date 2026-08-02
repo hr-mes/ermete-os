@@ -1,0 +1,15 @@
+﻿2026-07-31T19:28:03.3206850Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-31T19:28:03.3208142Z Post job cleanup.
+2026-07-31T19:28:03.3837782Z [command]/usr/bin/git version
+2026-07-31T19:28:03.3864289Z git version 2.55.0
+2026-07-31T19:28:03.3889560Z Temporarily overriding HOME='/var/home/ermete/actions-runner-monorepo/_work/_temp/fe9d6b0a-56fa-444d-b077-8dd2cb51b292' before making global git config changes
+2026-07-31T19:28:03.3890666Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-31T19:28:03.3892386Z [command]/usr/bin/git config --global --add safe.directory /var/home/ermete/actions-runner-monorepo/_work/ermete-os/ermete-os
+2026-07-31T19:28:03.3917001Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-31T19:28:03.3965946Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-31T19:28:03.4220858Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-31T19:28:03.4237675Z http.https://github.com/.extraheader
+2026-07-31T19:28:03.4243929Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-07-31T19:28:03.4268876Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-31T19:28:03.4523886Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-31T19:28:03.4547640Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url

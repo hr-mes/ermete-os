@@ -1,0 +1,16 @@
+﻿2026-07-31T19:25:41.5643267Z Current runner version: '2.336.0'
+2026-07-31T19:25:41.5648867Z Runner name: 'monorepo-runner-1'
+2026-07-31T19:25:41.5649478Z Runner group name: 'Default'
+2026-07-31T19:25:41.5650108Z Machine name: 'customer'
+2026-07-31T19:25:41.5652504Z ##[group]GITHUB_TOKEN Permissions
+2026-07-31T19:25:41.5653971Z Contents: read
+2026-07-31T19:25:41.5654555Z Metadata: read
+2026-07-31T19:25:41.5655024Z Packages: read
+2026-07-31T19:25:41.5655425Z ##[endgroup]
+2026-07-31T19:25:41.5656838Z Secret source: Actions
+2026-07-31T19:25:41.5657732Z Prepare workflow directory
+2026-07-31T19:25:41.6119012Z Prepare all required actions
+2026-07-31T19:25:41.6153820Z Getting action download info
+2026-07-31T19:25:42.3458173Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-07-31T19:25:43.0581415Z Complete job name: 🧠 Orchestrator Brain
+2026-07-31T19:25:43.1029190Z ##[warning]You are running out of disk space. The runner will stop working when the machine runs out of disk space. Free space left: 0 MB

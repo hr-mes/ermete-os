@@ -1,0 +1,44 @@
+﻿2026-08-01T02:07:57.9808309Z Current runner version: '2.336.0'
+2026-08-01T02:07:57.9845894Z ##[group]Runner Image Provisioner
+2026-08-01T02:07:57.9847296Z Hosted Compute Agent
+2026-08-01T02:07:57.9848161Z Version: 20260707.563
+2026-08-01T02:07:57.9849062Z Commit: 02667638d2b423fbc733a8e32a88b44996a3ba6e
+2026-08-01T02:07:57.9850423Z Build Date: 2026-07-07T19:33:50Z
+2026-08-01T02:07:57.9851454Z Worker ID: {bed7b5f1-46cf-4911-9b2d-ca52e0030afe}
+2026-08-01T02:07:57.9852719Z Azure Region: eastus2
+2026-08-01T02:07:57.9853642Z ##[endgroup]
+2026-08-01T02:07:57.9856181Z ##[group]Operating System
+2026-08-01T02:07:57.9857146Z Ubuntu
+2026-08-01T02:07:57.9857906Z 24.04.4
+2026-08-01T02:07:57.9858801Z LTS
+2026-08-01T02:07:57.9859556Z ##[endgroup]
+2026-08-01T02:07:57.9860337Z ##[group]Runner Image
+2026-08-01T02:07:57.9861332Z Image: ubuntu-24.04
+2026-08-01T02:07:57.9862230Z Version: 20260720.247.2
+2026-08-01T02:07:57.9864544Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260720.247/images/ubuntu/Ubuntu2404-Readme.md
+2026-08-01T02:07:57.9867248Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260720.247
+2026-08-01T02:07:57.9868881Z ##[endgroup]
+2026-08-01T02:07:57.9870804Z ##[group]GITHUB_TOKEN Permissions
+2026-08-01T02:07:57.9873788Z Contents: write
+2026-08-01T02:07:57.9874889Z Metadata: read
+2026-08-01T02:07:57.9875817Z Packages: write
+2026-08-01T02:07:57.9876652Z ##[endgroup]
+2026-08-01T02:07:57.9879722Z Secret source: Actions
+2026-08-01T02:07:57.9881489Z Prepare workflow directory
+2026-08-01T02:07:58.0434904Z Prepare all required actions
+2026-08-01T02:07:58.0505226Z Getting action download info
+2026-08-01T02:07:58.2756672Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-08-01T02:07:58.5562326Z Download action repository 'ublue-os/remove-unwanted-software@v9' (SHA:cc0becac701cf642c8f0a6613bbdaf5dc36b259e)
+2026-08-01T02:07:58.6619872Z Download action repository 'docker/metadata-action@v5' (SHA:c299e40c65443455700f0fdfc63efafe5b349051)
+2026-08-01T02:07:58.9957133Z Download action repository 'docker/login-action@v3' (SHA:c94ce9fb468520275223c153574b00df6fe4bcc9)
+2026-08-01T02:07:59.2721957Z Download action repository 'docker/setup-buildx-action@v3' (SHA:8d2750c68a42422c14e847fe6c8ac0403b4cbd6f)
+2026-08-01T02:07:59.5287059Z Download action repository 'docker/build-push-action@v6' (SHA:10e90e3645eae34f1e60eeb005ba3a3d33f178e8)
+2026-08-01T02:07:59.7765817Z Download action repository 'aquasecurity/trivy-action@master' (SHA:c07df6fec6fa692e6fd1200d50aaa1fdd66f03c8)
+2026-08-01T02:07:59.9173318Z Download action repository 'sigstore/cosign-installer@v3' (SHA:398d4b0eeef1380460a10c8013a76f728fb906ac)
+2026-08-01T02:08:00.1363228Z Getting action download info
+2026-08-01T02:08:00.2240168Z Download action repository 'aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567' (SHA:81e514348e19b6112ce2a7e3ecbafe19c1e1f567)
+2026-08-01T02:08:00.3218342Z Download action repository 'actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9' (SHA:55cc8345863c7cc4c66a329aec7e433d2d1c52a9)
+2026-08-01T02:08:00.5079237Z Getting action download info
+2026-08-01T02:08:00.5700899Z Download action repository 'actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb' (SHA:9255dc7a253b0ccc959486e2bca901246202afeb)
+2026-08-01T02:08:00.7729730Z Download action repository 'actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8' (SHA:8e8c483db84b4bee98b60c0593521ed34d9990e8)
+2026-08-01T02:08:00.9011306Z Complete job name: Build and push image

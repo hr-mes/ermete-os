@@ -1,0 +1,209 @@
+﻿2026-07-31T18:59:26.9246923Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-31T18:59:26.9249037Z ##[group]Run docker/metadata-action@v5
+2026-07-31T18:59:26.9249317Z with:
+2026-07-31T18:59:26.9249533Z   images: ghcr.io/hr-mes/ermete-os-system
+
+2026-07-31T18:59:26.9250161Z   tags: type=raw,value=latest
+type=raw,value=latest.{{date 'YYYYMMDD'}}
+type=raw,value={{date 'YYYYMMDD'}}
+type=sha,enable=false
+type=ref,event=pr
+
+2026-07-31T18:59:26.9254423Z   labels: io.artifacthub.package.readme-url=https://raw.githubusercontent.com/hr-mes/ermete-os/4f352297dfad7eae871fcc86c05b5845c81596c6/README.md
+org.opencontainers.image.created=2026-07-31T18:59:26Z
+org.opencontainers.image.description=Ermete OS - Immutable Cloud-Native System
+org.opencontainers.image.documentation=https://raw.githubusercontent.com/hr-mes/ermete-os/4f352297dfad7eae871fcc86c05b5845c81596c6/README.md
+org.opencontainers.image.source=https://github.com/hr-mes/ermete-os/blob/4f352297dfad7eae871fcc86c05b5845c81596c6/system/Containerfile
+org.opencontainers.image.title=ermete-os-system
+org.opencontainers.image.url=https://github.com/hr-mes/ermete-os/tree/4f352297dfad7eae871fcc86c05b5845c81596c6
+org.opencontainers.image.vendor=hr-mes
+org.opencontainers.image.version=latest.{{date 'YYYYMMDD'}}
+io.artifacthub.package.deprecated=false
+io.artifacthub.package.keywords=bootc,fedora,Ermete,immutable
+io.artifacthub.package.license=Apache-2.0
+io.artifacthub.package.logo-url=
+io.artifacthub.package.prerelease=false
+containers.bootc=1
+
+2026-07-31T18:59:26.9259031Z   context: workflow
+2026-07-31T18:59:26.9261328Z   github-token: ***
+2026-07-31T18:59:26.9261529Z env:
+2026-07-31T18:59:26.9261758Z   IMAGE_DESC: Ermete OS - Immutable Cloud-Native System
+2026-07-31T18:59:26.9262111Z   IMAGE_KEYWORDS: bootc,fedora,Ermete,immutable
+2026-07-31T18:59:26.9262404Z   IMAGE_LOGO_URL: 
+2026-07-31T18:59:26.9262606Z   IMAGE_NAME: ermete-os-system
+2026-07-31T18:59:26.9262847Z   IMAGE_REGISTRY: ghcr.io/hr-mes
+2026-07-31T18:59:26.9263084Z   DEFAULT_TAG: latest
+2026-07-31T18:59:26.9263281Z ##[endgroup]
+2026-07-31T18:59:27.3114453Z (node:15294) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-31T18:59:27.3115236Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-31T18:59:27.8417472Z ##[group]Context info
+2026-07-31T18:59:27.8417963Z eventName: workflow_run
+2026-07-31T18:59:27.8418601Z sha: 4f352297dfad7eae871fcc86c05b5845c81596c6
+2026-07-31T18:59:27.8419083Z ref: refs/heads/main
+2026-07-31T18:59:27.8419684Z workflow: 💿 System Image Build
+2026-07-31T18:59:27.8419945Z action: metadata
+2026-07-31T18:59:27.8420295Z actor: hr-mes
+2026-07-31T18:59:27.8420615Z runNumber: 242
+2026-07-31T18:59:27.8420927Z runId: 30657208906
+2026-07-31T18:59:27.8421504Z commitDate: Fri Jul 31 2026 18:34:22 GMT+0000 (Coordinated Universal Time)
+2026-07-31T18:59:27.8422453Z ##[endgroup]
+2026-07-31T18:59:27.8429679Z ##[group]Processing images input
+2026-07-31T18:59:27.8430205Z name=ghcr.io/hr-mes/ermete-os-system,enable=true
+2026-07-31T18:59:27.8430933Z ##[endgroup]
+2026-07-31T18:59:27.8451302Z ##[group]Processing tags input
+2026-07-31T18:59:27.8463040Z type=ref,event=pr,prefix=pr-,enable=true,priority=600
+2026-07-31T18:59:27.8463834Z type=raw,value=latest,enable=true,priority=200
+2026-07-31T18:59:27.8464515Z type=raw,value=latest.{{date 'YYYYMMDD'}},enable=true,priority=200
+2026-07-31T18:59:27.8465105Z type=raw,value={{date 'YYYYMMDD'}},enable=true,priority=200
+2026-07-31T18:59:27.8465520Z type=sha,enable=false,prefix=sha-,format=short,priority=100
+2026-07-31T18:59:27.8466673Z ##[endgroup]
+2026-07-31T18:59:27.8467415Z ##[group]Processing flavor input
+2026-07-31T18:59:27.8467858Z latest=auto
+2026-07-31T18:59:27.8468135Z prefix=
+2026-07-31T18:59:27.8468516Z prefixLatest=false
+2026-07-31T18:59:27.8469129Z suffix=
+2026-07-31T18:59:27.8469304Z suffixLatest=false
+2026-07-31T18:59:27.8469965Z ##[endgroup]
+2026-07-31T18:59:27.8550515Z ##[group]Docker image version
+2026-07-31T18:59:27.8550958Z latest
+2026-07-31T18:59:27.8551568Z ##[endgroup]
+2026-07-31T18:59:27.8556152Z ##[group]Docker tags
+2026-07-31T18:59:27.8556662Z ghcr.io/hr-mes/ermete-os-system:latest
+2026-07-31T18:59:27.8557258Z ghcr.io/hr-mes/ermete-os-system:latest.20260731
+2026-07-31T18:59:27.8557911Z ghcr.io/hr-mes/ermete-os-system:20260731
+2026-07-31T18:59:27.8558954Z ##[endgroup]
+2026-07-31T18:59:27.8660058Z ##[group]Docker labels
+2026-07-31T18:59:27.8660732Z containers.bootc=1
+2026-07-31T18:59:27.8661737Z io.artifacthub.package.deprecated=false
+2026-07-31T18:59:27.8662493Z io.artifacthub.package.keywords=bootc,fedora,Ermete,immutable
+2026-07-31T18:59:27.8663290Z io.artifacthub.package.license=Apache-2.0
+2026-07-31T18:59:27.8663866Z io.artifacthub.package.logo-url=
+2026-07-31T18:59:27.8664426Z io.artifacthub.package.prerelease=false
+2026-07-31T18:59:27.8665713Z io.artifacthub.package.readme-url=https://raw.githubusercontent.com/hr-mes/ermete-os/4f352297dfad7eae871fcc86c05b5845c81596c6/README.md
+2026-07-31T18:59:27.8667020Z org.opencontainers.image.created=2026-07-31T18:59:26Z
+2026-07-31T18:59:27.8668011Z org.opencontainers.image.description=Ermete OS - Immutable Cloud-Native System
+2026-07-31T18:59:27.8669861Z org.opencontainers.image.documentation=https://raw.githubusercontent.com/hr-mes/ermete-os/4f352297dfad7eae871fcc86c05b5845c81596c6/README.md
+2026-07-31T18:59:27.8671686Z org.opencontainers.image.licenses=
+2026-07-31T18:59:27.8672536Z org.opencontainers.image.revision=4f352297dfad7eae871fcc86c05b5845c81596c6
+2026-07-31T18:59:27.8674073Z org.opencontainers.image.source=https://github.com/hr-mes/ermete-os/blob/4f352297dfad7eae871fcc86c05b5845c81596c6/system/Containerfile
+2026-07-31T18:59:27.8675457Z org.opencontainers.image.title=ermete-os-system
+2026-07-31T18:59:27.8676596Z org.opencontainers.image.url=https://github.com/hr-mes/ermete-os/tree/4f352297dfad7eae871fcc86c05b5845c81596c6
+2026-07-31T18:59:27.8677735Z org.opencontainers.image.vendor=hr-mes
+2026-07-31T18:59:27.8678636Z org.opencontainers.image.version=latest.20260731
+2026-07-31T18:59:27.8679615Z ##[endgroup]
+2026-07-31T18:59:27.8680316Z ##[group]Annotations
+2026-07-31T18:59:27.8680959Z manifest:org.opencontainers.image.created=2026-07-31T18:59:27.845Z
+2026-07-31T18:59:27.8681839Z manifest:org.opencontainers.image.description=ermete-os
+2026-07-31T18:59:27.8682556Z manifest:org.opencontainers.image.licenses=
+2026-07-31T18:59:27.8683440Z manifest:org.opencontainers.image.revision=4f352297dfad7eae871fcc86c05b5845c81596c6
+2026-07-31T18:59:27.8684597Z manifest:org.opencontainers.image.source=https://github.com/hr-mes/ermete-os
+2026-07-31T18:59:27.8685516Z manifest:org.opencontainers.image.title=ermete-os
+2026-07-31T18:59:27.8686409Z manifest:org.opencontainers.image.url=https://github.com/hr-mes/ermete-os
+2026-07-31T18:59:27.8687313Z manifest:org.opencontainers.image.version=latest
+2026-07-31T18:59:27.8688197Z ##[endgroup]
+2026-07-31T18:59:27.8700533Z ##[group]JSON output
+2026-07-31T18:59:27.8701244Z {
+2026-07-31T18:59:27.8701827Z   "tags": [
+2026-07-31T18:59:27.8702460Z     "ghcr.io/hr-mes/ermete-os-system:latest",
+2026-07-31T18:59:27.8703277Z     "ghcr.io/hr-mes/ermete-os-system:latest.20260731",
+2026-07-31T18:59:27.8704175Z     "ghcr.io/hr-mes/ermete-os-system:20260731"
+2026-07-31T18:59:27.8704897Z   ],
+2026-07-31T18:59:27.8705371Z   "tag-names": [
+2026-07-31T18:59:27.8705989Z     "latest",
+2026-07-31T18:59:27.8706570Z     "latest.20260731",
+2026-07-31T18:59:27.8707221Z     "20260731"
+2026-07-31T18:59:27.8707821Z   ],
+2026-07-31T18:59:27.8708634Z   "labels": {
+2026-07-31T18:59:27.8709286Z     "containers.bootc": "1",
+2026-07-31T18:59:27.8710147Z     "io.artifacthub.package.deprecated": "false",
+2026-07-31T18:59:27.8711242Z     "io.artifacthub.package.keywords": "bootc,fedora,Ermete,immutable",
+2026-07-31T18:59:27.8712411Z     "io.artifacthub.package.license": "Apache-2.0",
+2026-07-31T18:59:27.8713733Z     "io.artifacthub.package.logo-url": "",
+2026-07-31T18:59:27.8714659Z     "io.artifacthub.package.prerelease": "false",
+2026-07-31T18:59:27.8716399Z     "io.artifacthub.package.readme-url": "https://raw.githubusercontent.com/hr-mes/ermete-os/4f352297dfad7eae871fcc86c05b5845c81596c6/README.md",
+2026-07-31T18:59:27.8718196Z     "org.opencontainers.image.created": "2026-07-31T18:59:26Z",
+2026-07-31T18:59:27.8719719Z     "org.opencontainers.image.description": "Ermete OS - Immutable Cloud-Native System",
+2026-07-31T18:59:27.8721700Z     "org.opencontainers.image.documentation": "https://raw.githubusercontent.com/hr-mes/ermete-os/4f352297dfad7eae871fcc86c05b5845c81596c6/README.md",
+2026-07-31T18:59:27.8723471Z     "org.opencontainers.image.licenses": "",
+2026-07-31T18:59:27.8724613Z     "org.opencontainers.image.revision": "4f352297dfad7eae871fcc86c05b5845c81596c6",
+2026-07-31T18:59:27.8726538Z     "org.opencontainers.image.source": "https://github.com/hr-mes/ermete-os/blob/4f352297dfad7eae871fcc86c05b5845c81596c6/system/Containerfile",
+2026-07-31T18:59:27.8728645Z     "org.opencontainers.image.title": "ermete-os-system",
+2026-07-31T18:59:27.8730235Z     "org.opencontainers.image.url": "https://github.com/hr-mes/ermete-os/tree/4f352297dfad7eae871fcc86c05b5845c81596c6",
+2026-07-31T18:59:27.8731759Z     "org.opencontainers.image.vendor": "hr-mes",
+2026-07-31T18:59:27.8732796Z     "org.opencontainers.image.version": "latest.20260731"
+2026-07-31T18:59:27.8733975Z   },
+2026-07-31T18:59:27.8734514Z   "annotations": [
+2026-07-31T18:59:27.8735384Z     "manifest:org.opencontainers.image.created=2026-07-31T18:59:27.845Z",
+2026-07-31T18:59:27.8736532Z     "manifest:org.opencontainers.image.description=ermete-os",
+2026-07-31T18:59:27.8737628Z     "manifest:org.opencontainers.image.licenses=",
+2026-07-31T18:59:27.8739044Z     "manifest:org.opencontainers.image.revision=4f352297dfad7eae871fcc86c05b5845c81596c6",
+2026-07-31T18:59:27.8740515Z     "manifest:org.opencontainers.image.source=https://github.com/hr-mes/ermete-os",
+2026-07-31T18:59:27.8741698Z     "manifest:org.opencontainers.image.title=ermete-os",
+2026-07-31T18:59:27.8742925Z     "manifest:org.opencontainers.image.url=https://github.com/hr-mes/ermete-os",
+2026-07-31T18:59:27.8744187Z     "manifest:org.opencontainers.image.version=latest"
+2026-07-31T18:59:27.8745109Z   ]
+2026-07-31T18:59:27.8745685Z }
+2026-07-31T18:59:27.8746664Z ##[endgroup]
+2026-07-31T18:59:27.8747640Z ##[group]Bake file definition (tags)
+2026-07-31T18:59:27.8748677Z {
+2026-07-31T18:59:27.8749318Z   "target": {
+2026-07-31T18:59:27.8749992Z     "docker-metadata-action": {
+2026-07-31T18:59:27.8750752Z       "tags": [
+2026-07-31T18:59:27.8751484Z         "ghcr.io/hr-mes/ermete-os-system:latest",
+2026-07-31T18:59:27.8752404Z         "ghcr.io/hr-mes/ermete-os-system:latest.20260731",
+2026-07-31T18:59:27.8753341Z         "ghcr.io/hr-mes/ermete-os-system:20260731"
+2026-07-31T18:59:27.8754153Z       ],
+2026-07-31T18:59:27.8754772Z       "args": {
+2026-07-31T18:59:27.8755544Z         "DOCKER_META_IMAGES": "ghcr.io/hr-mes/ermete-os-system",
+2026-07-31T18:59:27.8756478Z         "DOCKER_META_VERSION": "latest"
+2026-07-31T18:59:27.8757237Z       }
+2026-07-31T18:59:27.8757834Z     }
+2026-07-31T18:59:27.8758626Z   }
+2026-07-31T18:59:27.8758878Z }
+2026-07-31T18:59:27.8761267Z ##[endgroup]
+2026-07-31T18:59:27.8761744Z ##[group]Bake file definition (labels)
+2026-07-31T18:59:27.8762022Z {
+2026-07-31T18:59:27.8762216Z   "target": {
+2026-07-31T18:59:27.8762449Z     "docker-metadata-action": {
+2026-07-31T18:59:27.8762788Z       "labels": {
+2026-07-31T18:59:27.8763215Z         "containers.bootc": "1",
+2026-07-31T18:59:27.8763858Z         "io.artifacthub.package.deprecated": "false",
+2026-07-31T18:59:27.8764695Z         "io.artifacthub.package.keywords": "bootc,fedora,Ermete,immutable",
+2026-07-31T18:59:27.8765518Z         "io.artifacthub.package.license": "Apache-2.0",
+2026-07-31T18:59:27.8766162Z         "io.artifacthub.package.logo-url": "",
+2026-07-31T18:59:27.8766796Z         "io.artifacthub.package.prerelease": "false",
+2026-07-31T18:59:27.8767923Z         "io.artifacthub.package.readme-url": "https://raw.githubusercontent.com/hr-mes/ermete-os/4f352297dfad7eae871fcc86c05b5845c81596c6/README.md",
+2026-07-31T18:59:27.8769320Z         "org.opencontainers.image.created": "2026-07-31T18:59:26Z",
+2026-07-31T18:59:27.8770203Z         "org.opencontainers.image.description": "Ermete OS - Immutable Cloud-Native System",
+2026-07-31T18:59:27.8771673Z         "org.opencontainers.image.documentation": "https://raw.githubusercontent.com/hr-mes/ermete-os/4f352297dfad7eae871fcc86c05b5845c81596c6/README.md",
+2026-07-31T18:59:27.8772862Z         "org.opencontainers.image.licenses": "",
+2026-07-31T18:59:27.8773548Z         "org.opencontainers.image.revision": "4f352297dfad7eae871fcc86c05b5845c81596c6",
+2026-07-31T18:59:27.8774827Z         "org.opencontainers.image.source": "https://github.com/hr-mes/ermete-os/blob/4f352297dfad7eae871fcc86c05b5845c81596c6/system/Containerfile",
+2026-07-31T18:59:27.8775972Z         "org.opencontainers.image.title": "ermete-os-system",
+2026-07-31T18:59:27.8776993Z         "org.opencontainers.image.url": "https://github.com/hr-mes/ermete-os/tree/4f352297dfad7eae871fcc86c05b5845c81596c6",
+2026-07-31T18:59:27.8777986Z         "org.opencontainers.image.vendor": "hr-mes",
+2026-07-31T18:59:27.8778834Z         "org.opencontainers.image.version": "latest.20260731"
+2026-07-31T18:59:27.8779379Z       }
+2026-07-31T18:59:27.8779675Z     }
+2026-07-31T18:59:27.8779948Z   }
+2026-07-31T18:59:27.8780478Z }
+2026-07-31T18:59:27.8781037Z ##[endgroup]
+2026-07-31T18:59:27.8781831Z ##[group]Bake file definition (annotations)
+2026-07-31T18:59:27.8782295Z {
+2026-07-31T18:59:27.8782574Z   "target": {
+2026-07-31T18:59:27.8782906Z     "docker-metadata-action": {
+2026-07-31T18:59:27.8783313Z       "annotations": [
+2026-07-31T18:59:27.8783867Z         "manifest:org.opencontainers.image.created=2026-07-31T18:59:27.845Z",
+2026-07-31T18:59:27.8784654Z         "manifest:org.opencontainers.image.description=ermete-os",
+2026-07-31T18:59:27.8785338Z         "manifest:org.opencontainers.image.licenses=",
+2026-07-31T18:59:27.8786176Z         "manifest:org.opencontainers.image.revision=4f352297dfad7eae871fcc86c05b5845c81596c6",
+2026-07-31T18:59:27.8787215Z         "manifest:org.opencontainers.image.source=https://github.com/hr-mes/ermete-os",
+2026-07-31T18:59:27.8788057Z         "manifest:org.opencontainers.image.title=ermete-os",
+2026-07-31T18:59:27.8789116Z         "manifest:org.opencontainers.image.url=https://github.com/hr-mes/ermete-os",
+2026-07-31T18:59:27.8789835Z         "manifest:org.opencontainers.image.version=latest"
+2026-07-31T18:59:27.8790139Z       ]
+2026-07-31T18:59:27.8790303Z     }
+2026-07-31T18:59:27.8790463Z   }
+2026-07-31T18:59:27.8790620Z }
+2026-07-31T18:59:27.8790990Z ##[endgroup]

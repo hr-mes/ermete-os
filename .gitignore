@@ -31,3 +31,5 @@ _build*/
 # Security / Keys
 *.key
 *.pem
+.tmp_repo/
+tier0_extracted/

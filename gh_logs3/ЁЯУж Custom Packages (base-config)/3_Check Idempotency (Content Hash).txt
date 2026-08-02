@@ -1,0 +1,23 @@
+﻿2026-07-31T19:29:52.9490386Z ##[group]Run echo "***" | podman login ghcr.io -u hr-mes --password-stdin
+2026-07-31T19:29:52.9493366Z [36;1mecho "***" | podman login ghcr.io -u hr-mes --password-stdin[0m
+2026-07-31T19:29:52.9495097Z [36;1mpodman run -i --rm --pull=always --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v /var/home/ermete/actions-runner-monorepo/_work/ermete-os/ermete-os:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package base-config --registry ghcr.io --owner hr-mes --image-name ermete-os-forge-base-config > idemp.out[0m
+2026-07-31T19:29:52.9496455Z [36;1msource ./idemp.out[0m
+2026-07-31T19:29:52.9496732Z [36;1mecho "hash=$CONTENT_HASH" >> $GITHUB_OUTPUT[0m
+2026-07-31T19:29:52.9497219Z [36;1mif [ "$CACHE_HIT" = "true" ]; then echo "skip=true" >> $GITHUB_OUTPUT; else echo "skip=false" >> $GITHUB_OUTPUT; fi[0m
+2026-07-31T19:29:52.9502934Z shell: /usr/bin/bash -e {0}
+2026-07-31T19:29:52.9503465Z env:
+2026-07-31T19:29:52.9503670Z   REGISTRY: ghcr.io
+2026-07-31T19:29:52.9503974Z   FEDORA_VERSION: 43
+2026-07-31T19:29:52.9506156Z   GITHUB_TOKEN: ***
+2026-07-31T19:29:52.9506420Z ##[endgroup]
+2026-07-31T19:29:54.4318970Z Login Succeeded!
+2026-07-31T19:29:54.4592987Z Trying to pull ghcr.io/hr-mes/ermete-os-builder:latest...
+2026-07-31T19:29:55.7000500Z Getting image source signatures
+2026-07-31T19:29:55.7001168Z Copying blob sha256:0d936fd18db43f917127aa33347228b1d5cfd0348e2f7671708872b4525e5325
+2026-07-31T19:29:55.7001824Z Copying blob sha256:a3e836f5b18522b4c723d41589d8b1d9d6018b61f1cc95b6d4f27190c6b70063
+2026-07-31T19:29:55.7002511Z Copying blob sha256:60d3fd1784076bdebf35eb5c75a76cdc6faf6eefe6e014a1c1e55aebbfe09ada
+2026-07-31T19:29:55.7004971Z Copying config sha256:81adff7dab344029ec85226b62d11072e2f57d4eb1a66e6ef028198283257ded
+2026-07-31T19:29:55.7232094Z Writing manifest to image destination
+2026-07-31T19:29:55.8325097Z >>> Content Hash calcolato per base-config: b7929992c160d91430ea5525e07fe8b942de91fbcff43fda4a8ac3acaa3002a2
+2026-07-31T19:29:55.8332988Z >>> Verifica esistenza su GHCR: docker://ghcr.io/hr-mes/ermete-os-forge-base-config:b7929992c160d91430ea5525e07fe8b942de91fbcff43fda4a8ac3acaa3002a2...
+2026-07-31T19:29:56.6258588Z >>> Cache Miss. Procedo con la build.

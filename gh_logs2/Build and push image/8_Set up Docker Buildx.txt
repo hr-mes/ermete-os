@@ -1,0 +1,288 @@
+﻿2026-07-31T19:44:52.9261176Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-31T19:44:52.9262422Z ##[group]Run docker/setup-buildx-action@v3
+2026-07-31T19:44:52.9262725Z with:
+2026-07-31T19:44:52.9262956Z   driver: docker-container
+2026-07-31T19:44:52.9263414Z   use: true
+2026-07-31T19:44:52.9263613Z   keep-state: false
+2026-07-31T19:44:52.9263827Z   cache-binary: true
+2026-07-31T19:44:52.9264038Z   cleanup: true
+2026-07-31T19:44:52.9264233Z   install: false
+2026-07-31T19:44:52.9264424Z env:
+2026-07-31T19:44:52.9264663Z   IMAGE_DESC: Ermete OS - Immutable Cloud-Native System
+2026-07-31T19:44:52.9265008Z   IMAGE_KEYWORDS: bootc,fedora,Ermete,immutable
+2026-07-31T19:44:52.9265294Z   IMAGE_LOGO_URL: 
+2026-07-31T19:44:52.9265506Z   IMAGE_NAME: ermete-os-system
+2026-07-31T19:44:52.9265798Z   IMAGE_REGISTRY: ghcr.io/hr-mes
+2026-07-31T19:44:52.9266040Z   DEFAULT_TAG: latest
+2026-07-31T19:44:52.9266269Z   DOCKER_METADATA_OUTPUT_VERSION: latest
+2026-07-31T19:44:52.9266920Z   DOCKER_METADATA_OUTPUT_TAGS: ghcr.io/hr-mes/ermete-os-system:latest
+ghcr.io/hr-mes/ermete-os-system:latest.20260731
+ghcr.io/hr-mes/ermete-os-system:20260731
+2026-07-31T19:44:52.9267642Z   DOCKER_METADATA_OUTPUT_TAG_NAMES: latest
+latest.20260731
+20260731
+2026-07-31T19:44:52.9272113Z   DOCKER_METADATA_OUTPUT_LABELS: containers.bootc=1
+io.artifacthub.package.deprecated=false
+io.artifacthub.package.keywords=bootc,fedora,Ermete,immutable
+io.artifacthub.package.license=Apache-2.0
+io.artifacthub.package.logo-url=
+io.artifacthub.package.prerelease=false
+io.artifacthub.package.readme-url=https://raw.githubusercontent.com/hr-mes/ermete-os/e611a38e5e100ce77605ab35337d82e9270fe70b/README.md
+org.opencontainers.image.created=2026-07-31T19:44:51Z
+org.opencontainers.image.description=Ermete OS - Immutable Cloud-Native System
+org.opencontainers.image.documentation=https://raw.githubusercontent.com/hr-mes/ermete-os/e611a38e5e100ce77605ab35337d82e9270fe70b/README.md
+org.opencontainers.image.licenses=
+org.opencontainers.image.revision=e611a38e5e100ce77605ab35337d82e9270fe70b
+org.opencontainers.image.source=https://github.com/hr-mes/ermete-os/blob/e611a38e5e100ce77605ab35337d82e9270fe70b/system/Containerfile
+org.opencontainers.image.title=ermete-os-system
+org.opencontainers.image.url=https://github.com/hr-mes/ermete-os/tree/e611a38e5e100ce77605ab35337d82e9270fe70b
+org.opencontainers.image.vendor=hr-mes
+org.opencontainers.image.version=latest.20260731
+2026-07-31T19:44:52.9278488Z   DOCKER_METADATA_OUTPUT_ANNOTATIONS: manifest:org.opencontainers.image.created=2026-07-31T19:44:52.312Z
+manifest:org.opencontainers.image.description=ermete-os
+manifest:org.opencontainers.image.licenses=
+manifest:org.opencontainers.image.revision=e611a38e5e100ce77605ab35337d82e9270fe70b
+manifest:org.opencontainers.image.source=https://github.com/hr-mes/ermete-os
+manifest:org.opencontainers.image.title=ermete-os
+manifest:org.opencontainers.image.url=https://github.com/hr-mes/ermete-os
+manifest:org.opencontainers.image.version=latest
+2026-07-31T19:44:52.9286779Z   DOCKER_METADATA_OUTPUT_JSON: {"tags":["ghcr.io/hr-mes/ermete-os-system:latest","ghcr.io/hr-mes/ermete-os-system:latest.20260731","ghcr.io/hr-mes/ermete-os-system:20260731"],"tag-names":["latest","latest.20260731","20260731"],"labels":{"containers.bootc":"1","io.artifacthub.package.deprecated":"false","io.artifacthub.package.keywords":"bootc,fedora,Ermete,immutable","io.artifacthub.package.license":"Apache-2.0","io.artifacthub.package.logo-url":"","io.artifacthub.package.prerelease":"false","io.artifacthub.package.readme-url":"https://raw.githubusercontent.com/hr-mes/ermete-os/e611a38e5e100ce77605ab35337d82e9270fe70b/README.md","org.opencontainers.image.created":"2026-07-31T19:44:51Z","org.opencontainers.image.description":"Ermete OS - Immutable Cloud-Native System","org.opencontainers.image.documentation":"https://raw.githubusercontent.com/hr-mes/ermete-os/e611a38e5e100ce77605ab35337d82e9270fe70b/README.md","org.opencontainers.image.licenses":"","org.opencontainers.image.revision":"e611a38e5e100ce77605ab35337d82e9270fe70b","org.opencontainers.image.source":"https://github.com/hr-mes/ermete-os/blob/e611a38e5e100ce77605ab35337d82e9270fe70b/system/Containerfile","org.opencontainers.image.title":"ermete-os-system","org.opencontainers.image.url":"https://github.com/hr-mes/ermete-os/tree/e611a38e5e100ce77605ab35337d82e9270fe70b","org.opencontainers.image.vendor":"hr-mes","org.opencontainers.image.version":"latest.20260731"},"annotations":["manifest:org.opencontainers.image.created=2026-07-31T19:44:52.312Z","manifest:org.opencontainers.image.description=ermete-os","manifest:org.opencontainers.image.licenses=","manifest:org.opencontainers.image.revision=e611a38e5e100ce77605ab35337d82e9270fe70b","manifest:org.opencontainers.image.source=https://github.com/hr-mes/ermete-os","manifest:org.opencontainers.image.title=ermete-os","manifest:org.opencontainers.image.url=https://github.com/hr-mes/ermete-os","manifest:org.opencontainers.image.version=latest"]}
+2026-07-31T19:44:52.9294479Z   DOCKER_METADATA_OUTPUT_BAKE_FILE_TAGS: /home/runner/work/_temp/docker-actions-toolkit-avVG0U/docker-metadata-action-bake-tags.json
+2026-07-31T19:44:52.9295397Z   DOCKER_METADATA_OUTPUT_BAKE_FILE_LABELS: /home/runner/work/_temp/docker-actions-toolkit-avVG0U/docker-metadata-action-bake-labels.json
+2026-07-31T19:44:52.9296365Z   DOCKER_METADATA_OUTPUT_BAKE_FILE_ANNOTATIONS: /home/runner/work/_temp/docker-actions-toolkit-avVG0U/docker-metadata-action-bake-annotations.json
+2026-07-31T19:44:52.9297271Z   DOCKER_METADATA_OUTPUT_BAKE_FILE: /home/runner/work/_temp/docker-actions-toolkit-avVG0U/docker-metadata-action-bake.json
+2026-07-31T19:44:52.9298006Z ##[endgroup]
+2026-07-31T19:44:53.1782013Z (node:15414) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-31T19:44:53.1783224Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-31T19:44:53.1869858Z ##[group]Docker info
+2026-07-31T19:44:53.1878240Z [command]/usr/bin/docker version
+2026-07-31T19:44:53.2153635Z Client: Docker Engine - Community
+2026-07-31T19:44:53.2178532Z  Version:           28.0.4
+2026-07-31T19:44:53.2189174Z  API version:       1.48
+2026-07-31T19:44:53.2189715Z  Go version:        go1.23.7
+2026-07-31T19:44:53.2190162Z  Git commit:        b8034c0
+2026-07-31T19:44:53.2190663Z  Built:             Tue Mar 25 15:07:16 2025
+2026-07-31T19:44:53.2191172Z  OS/Arch:           linux/amd64
+2026-07-31T19:44:53.2191589Z  Context:           default
+2026-07-31T19:44:53.2191871Z 
+2026-07-31T19:44:53.2192143Z Server: Docker Engine - Community
+2026-07-31T19:44:53.2192571Z  Engine:
+2026-07-31T19:44:53.2192866Z   Version:          28.0.4
+2026-07-31T19:44:53.2193248Z   API version:      1.48 (minimum version 1.24)
+2026-07-31T19:44:53.2193654Z   Go version:       go1.23.7
+2026-07-31T19:44:53.2194119Z   Git commit:       6430e49
+2026-07-31T19:44:53.2194500Z   Built:            Tue Mar 25 15:07:16 2025
+2026-07-31T19:44:53.2195030Z   OS/Arch:          linux/amd64
+2026-07-31T19:44:53.2195459Z   Experimental:     false
+2026-07-31T19:44:53.2195700Z  containerd:
+2026-07-31T19:44:53.2195903Z   Version:          v2.2.6
+2026-07-31T19:44:53.2196247Z   GitCommit:        11ce9d5f3c68c941867e82890e93e815c1304f1b
+2026-07-31T19:44:53.2196606Z  runc:
+2026-07-31T19:44:53.2196805Z   Version:          1.3.6
+2026-07-31T19:44:53.2197091Z   GitCommit:        v1.3.6-0-g491b69ba
+2026-07-31T19:44:53.2197406Z  docker-init:
+2026-07-31T19:44:53.2197613Z   Version:          0.19.0
+2026-07-31T19:44:53.2198180Z   GitCommit:        de40ad0
+2026-07-31T19:44:53.2217525Z [command]/usr/bin/docker info
+2026-07-31T19:44:55.4331854Z Client: Docker Engine - Community
+2026-07-31T19:44:55.4332565Z  Version:    28.0.4
+2026-07-31T19:44:55.4333159Z  Context:    default
+2026-07-31T19:44:55.4333779Z  Debug Mode: false
+2026-07-31T19:44:55.4334078Z  Plugins:
+2026-07-31T19:44:55.4334750Z   buildx: Docker Buildx (Docker Inc.)
+2026-07-31T19:44:55.4335024Z     Version:  v0.35.0
+2026-07-31T19:44:55.4335305Z     Path:     /usr/libexec/docker/cli-plugins/docker-buildx
+2026-07-31T19:44:55.4335643Z   compose: Docker Compose (Docker Inc.)
+2026-07-31T19:44:55.4335901Z     Version:  v2.38.2
+2026-07-31T19:44:55.4336168Z     Path:     /usr/libexec/docker/cli-plugins/docker-compose
+2026-07-31T19:44:55.4336401Z 
+2026-07-31T19:44:55.4336485Z Server:
+2026-07-31T19:44:55.4336825Z  Containers: 0
+2026-07-31T19:44:55.4337018Z   Running: 0
+2026-07-31T19:44:55.4337221Z   Paused: 0
+2026-07-31T19:44:55.4337405Z   Stopped: 0
+2026-07-31T19:44:55.4337587Z  Images: 0
+2026-07-31T19:44:55.4338041Z  Server Version: 28.0.4
+2026-07-31T19:44:55.4338266Z  Storage Driver: overlay2
+2026-07-31T19:44:55.4338497Z   Backing Filesystem: extfs
+2026-07-31T19:44:55.4338737Z   Supports d_type: true
+2026-07-31T19:44:55.4338954Z   Using metacopy: false
+2026-07-31T19:44:55.4339167Z   Native Overlay Diff: false
+2026-07-31T19:44:55.4339406Z   userxattr: false
+2026-07-31T19:44:55.4339615Z  Logging Driver: json-file
+2026-07-31T19:44:55.4339835Z  Cgroup Driver: systemd
+2026-07-31T19:44:55.4340038Z  Cgroup Version: 2
+2026-07-31T19:44:55.4340228Z  Plugins:
+2026-07-31T19:44:55.4340414Z   Volume: local
+2026-07-31T19:44:55.4340651Z   Network: bridge host ipvlan macvlan null overlay
+2026-07-31T19:44:55.4341051Z   Log: awslogs fluentd gcplogs gelf journald json-file local splunk syslog
+2026-07-31T19:44:55.4341453Z  Swarm: inactive
+2026-07-31T19:44:55.4341677Z  Runtimes: runc io.containerd.runc.v2
+2026-07-31T19:44:55.4341937Z  Default Runtime: runc
+2026-07-31T19:44:55.4342156Z  Init Binary: docker-init
+2026-07-31T19:44:55.4342449Z  containerd version: 11ce9d5f3c68c941867e82890e93e815c1304f1b
+2026-07-31T19:44:55.4342779Z  runc version: v1.3.6-0-g491b69ba
+2026-07-31T19:44:55.4343024Z  init version: de40ad0
+2026-07-31T19:44:55.4343226Z  Security Options:
+2026-07-31T19:44:55.4343422Z   apparmor
+2026-07-31T19:44:55.4343598Z   seccomp
+2026-07-31T19:44:55.4343780Z    Profile: builtin
+2026-07-31T19:44:55.4343975Z   cgroupns
+2026-07-31T19:44:55.4344232Z  Kernel Version: 6.17.0-1020-azure
+2026-07-31T19:44:55.4344618Z  Operating System: Ubuntu 24.04.4 LTS
+2026-07-31T19:44:55.4345005Z  OSType: linux
+2026-07-31T19:44:55.4345312Z  Architecture: x86_64
+2026-07-31T19:44:55.4345609Z  CPUs: 4
+2026-07-31T19:44:55.4345882Z  Total Memory: 15.61GiB
+2026-07-31T19:44:55.4346196Z  Name: runnervmvrwv9
+2026-07-31T19:44:55.4346564Z  ID: dce1e4a9-fc26-4218-aaf0-feee5194c8cb
+2026-07-31T19:44:55.4346998Z  Docker Root Dir: /var/lib/docker
+2026-07-31T19:44:55.4347361Z  Debug Mode: false
+2026-07-31T19:44:55.4347836Z  Username: githubactions
+2026-07-31T19:44:55.4348156Z  Experimental: false
+2026-07-31T19:44:55.4348462Z  Insecure Registries:
+2026-07-31T19:44:55.4355111Z   ::1/128
+2026-07-31T19:44:55.4355421Z   127.0.0.0/8
+2026-07-31T19:44:55.4355733Z  Live Restore Enabled: false
+2026-07-31T19:44:55.4355967Z 
+2026-07-31T19:44:55.4356491Z ##[endgroup]
+2026-07-31T19:44:55.5469849Z ##[group]Buildx version
+2026-07-31T19:44:55.5497485Z [command]/usr/bin/docker buildx version
+2026-07-31T19:44:55.6189331Z github.com/docker/buildx v0.35.0 a319e5b15052cf6557ceb666eb8ff6e32380b782
+2026-07-31T19:44:55.6221005Z ##[endgroup]
+2026-07-31T19:44:55.6382613Z ##[group]Inspecting default docker context
+2026-07-31T19:44:55.6531994Z [
+2026-07-31T19:44:55.6532343Z   {
+2026-07-31T19:44:55.6532604Z     "Name": "default",
+2026-07-31T19:44:55.6532976Z     "Metadata": {},
+2026-07-31T19:44:55.6533331Z     "Endpoints": {
+2026-07-31T19:44:55.6533683Z       "docker": {
+2026-07-31T19:44:55.6534047Z         "Host": "unix:///var/run/docker.sock",
+2026-07-31T19:44:55.6534510Z         "SkipTLSVerify": false
+2026-07-31T19:44:55.6534891Z       }
+2026-07-31T19:44:55.6535156Z     },
+2026-07-31T19:44:55.6535436Z     "TLSMaterial": {},
+2026-07-31T19:44:55.6535772Z     "Storage": {
+2026-07-31T19:44:55.6536090Z       "MetadataPath": "<IN MEMORY>",
+2026-07-31T19:44:55.6536516Z       "TLSPath": "<IN MEMORY>"
+2026-07-31T19:44:55.6537325Z     }
+2026-07-31T19:44:55.6537577Z   }
+2026-07-31T19:44:55.6538017Z ]
+2026-07-31T19:44:55.6538571Z ##[endgroup]
+2026-07-31T19:44:55.6539189Z ##[group]Creating a new builder instance
+2026-07-31T19:44:55.7795620Z [command]/usr/bin/docker buildx create --name builder-257d1ca7-9e80-4181-87bd-1dc27a4cd432 --driver docker-container --buildkitd-flags --allow-insecure-entitlement security.insecure --allow-insecure-entitlement network.host --use
+2026-07-31T19:44:55.8982919Z builder-257d1ca7-9e80-4181-87bd-1dc27a4cd432
+2026-07-31T19:44:55.9035025Z ##[endgroup]
+2026-07-31T19:44:55.9036236Z ##[group]Booting builder
+2026-07-31T19:44:55.9067628Z [command]/usr/bin/docker buildx inspect --bootstrap --builder builder-257d1ca7-9e80-4181-87bd-1dc27a4cd432
+2026-07-31T19:44:55.9806909Z #1 [internal] booting buildkit
+2026-07-31T19:44:56.1312048Z #1 pulling image moby/buildkit:buildx-stable-1
+2026-07-31T19:44:58.2020900Z #1 pulling image moby/buildkit:buildx-stable-1 2.2s done
+2026-07-31T19:44:58.3525161Z #1 creating container buildx_buildkit_builder-257d1ca7-9e80-4181-87bd-1dc27a4cd4320
+2026-07-31T19:44:58.5411289Z #1 creating container buildx_buildkit_builder-257d1ca7-9e80-4181-87bd-1dc27a4cd4320 0.3s done
+2026-07-31T19:44:58.5494476Z #1 DONE 2.6s
+2026-07-31T19:44:58.5879026Z Name:          builder-257d1ca7-9e80-4181-87bd-1dc27a4cd432
+2026-07-31T19:44:58.5880111Z Driver:        docker-container
+2026-07-31T19:44:58.5880727Z Last Activity: 2026-07-31 19:44:55 +0000 UTC
+2026-07-31T19:44:58.5881290Z 
+2026-07-31T19:44:58.5881704Z Nodes:
+2026-07-31T19:44:58.5882374Z Name:                  builder-257d1ca7-9e80-4181-87bd-1dc27a4cd4320
+2026-07-31T19:44:58.5882964Z Endpoint:              unix:///var/run/docker.sock
+2026-07-31T19:44:58.5883287Z Status:                running
+2026-07-31T19:44:58.5883811Z BuildKit daemon flags: --allow-insecure-entitlement security.insecure --allow-insecure-entitlement network.host
+2026-07-31T19:44:58.5884364Z BuildKit version:      v0.31.2
+2026-07-31T19:44:58.5884715Z Platforms:             linux/amd64, linux/amd64/v2, linux/amd64/v3, linux/386
+2026-07-31T19:44:58.5885103Z Labels:
+2026-07-31T19:44:58.5885359Z  org.mobyproject.buildkit.worker.executor:         oci
+2026-07-31T19:44:58.5885766Z  org.mobyproject.buildkit.worker.hostname:         9deb7081e9f1
+2026-07-31T19:44:58.5886186Z  org.mobyproject.buildkit.worker.network:          host
+2026-07-31T19:44:58.5886584Z  org.mobyproject.buildkit.worker.oci.process-mode: sandbox
+2026-07-31T19:44:58.5886994Z  org.mobyproject.buildkit.worker.selinux.enabled:  false
+2026-07-31T19:44:58.5887486Z  org.mobyproject.buildkit.worker.snapshotter:      overlayfs
+2026-07-31T19:44:58.5888061Z GC Policy rule#0:
+2026-07-31T19:44:58.5888266Z  All:            false
+2026-07-31T19:44:58.5888599Z  Filters:        type==source.local type==exec.cachemount type==source.git.checkout
+2026-07-31T19:44:58.5888992Z  Keep Duration:  48h0m0s
+2026-07-31T19:44:58.5889217Z  Max Used Space: 488.3MiB
+2026-07-31T19:44:58.5889441Z GC Policy rule#1:
+2026-07-31T19:44:58.5889635Z  All:            false
+2026-07-31T19:44:58.5889860Z  Keep Duration:  1440h0m0s
+2026-07-31T19:44:58.5890084Z  Reserved Space: 9.313GiB
+2026-07-31T19:44:58.5890300Z  Max Used Space: 93.13GiB
+2026-07-31T19:44:58.5890507Z  Min Free Space: 27.01GiB
+2026-07-31T19:44:58.5890713Z GC Policy rule#2:
+2026-07-31T19:44:58.5890900Z  All:            false
+2026-07-31T19:44:58.5891100Z  Reserved Space: 9.313GiB
+2026-07-31T19:44:58.5891308Z  Max Used Space: 93.13GiB
+2026-07-31T19:44:58.5891511Z  Min Free Space: 27.01GiB
+2026-07-31T19:44:58.5891724Z GC Policy rule#3:
+2026-07-31T19:44:58.5891919Z  All:            true
+2026-07-31T19:44:58.5892124Z  Reserved Space: 9.313GiB
+2026-07-31T19:44:58.5892339Z  Max Used Space: 93.13GiB
+2026-07-31T19:44:58.5892547Z  Min Free Space: 27.01GiB
+2026-07-31T19:44:58.5928831Z ##[endgroup]
+2026-07-31T19:44:58.6819840Z ##[group]Inspect builder
+2026-07-31T19:44:58.6820325Z {
+2026-07-31T19:44:58.6820569Z   "nodes": [
+2026-07-31T19:44:58.6820836Z     {
+2026-07-31T19:44:58.6821197Z       "name": "builder-257d1ca7-9e80-4181-87bd-1dc27a4cd4320",
+2026-07-31T19:44:58.6822055Z       "endpoint": "unix:///var/run/docker.sock",
+2026-07-31T19:44:58.6822472Z       "status": "running",
+2026-07-31T19:44:58.6823297Z       "buildkitd-flags": "--allow-insecure-entitlement security.insecure --allow-insecure-entitlement network.host",
+2026-07-31T19:44:58.6824092Z       "buildkit": "v0.31.2",
+2026-07-31T19:44:58.6824551Z       "platforms": "linux/amd64,linux/amd64/v2,linux/amd64/v3,linux/386",
+2026-07-31T19:44:58.6825365Z       "features": {
+2026-07-31T19:44:58.6825920Z         "Automatically load images to the Docker Engine image store": true,
+2026-07-31T19:44:58.6826516Z         "Cache export": true,
+2026-07-31T19:44:58.6826890Z         "Direct push": true,
+2026-07-31T19:44:58.6827261Z         "Docker exporter": true,
+2026-07-31T19:44:58.6827834Z         "Multi-platform build": true,
+2026-07-31T19:44:58.6828240Z         "OCI exporter": true
+2026-07-31T19:44:58.6828566Z       },
+2026-07-31T19:44:58.6828830Z       "labels": {
+2026-07-31T19:44:58.6829249Z         "org.mobyproject.buildkit.worker.executor": "oci",
+2026-07-31T19:44:58.6829878Z         "org.mobyproject.buildkit.worker.hostname": "9deb7081e9f1",
+2026-07-31T19:44:58.6830536Z         "org.mobyproject.buildkit.worker.network": "host",
+2026-07-31T19:44:58.6831253Z         "org.mobyproject.buildkit.worker.oci.process-mode": "sandbox",
+2026-07-31T19:44:58.6831994Z         "org.mobyproject.buildkit.worker.selinux.enabled": "false",
+2026-07-31T19:44:58.6832665Z         "org.mobyproject.buildkit.worker.snapshotter": "overlayfs"
+2026-07-31T19:44:58.6833208Z       },
+2026-07-31T19:44:58.6833506Z       "gcPolicy": [
+2026-07-31T19:44:58.6833844Z         {
+2026-07-31T19:44:58.6834186Z           "all": false,
+2026-07-31T19:44:58.6834519Z           "filter": [
+2026-07-31T19:44:58.6835051Z             "type==source.local type==exec.cachemount type==source.git.checkout"
+2026-07-31T19:44:58.6835627Z           ],
+2026-07-31T19:44:58.6835939Z           "keepDuration": "48h0m0s",
+2026-07-31T19:44:58.6836350Z           "maxUsedSpace": "488.3MiB"
+2026-07-31T19:44:58.6836723Z         },
+2026-07-31T19:44:58.6837007Z         {
+2026-07-31T19:44:58.6837298Z           "all": false,
+2026-07-31T19:44:58.6837630Z           "keepDuration": "1440h0m0s",
+2026-07-31T19:44:58.6838647Z           "reservedSpace": "9.313GiB",
+2026-07-31T19:44:58.6839045Z           "maxUsedSpace": "93.13GiB",
+2026-07-31T19:44:58.6839442Z           "minFreeSpace": "27.01GiB"
+2026-07-31T19:44:58.6839802Z         },
+2026-07-31T19:44:58.6840050Z         {
+2026-07-31T19:44:58.6840333Z           "all": false,
+2026-07-31T19:44:58.6840666Z           "reservedSpace": "9.313GiB",
+2026-07-31T19:44:58.6841058Z           "maxUsedSpace": "93.13GiB",
+2026-07-31T19:44:58.6841451Z           "minFreeSpace": "27.01GiB"
+2026-07-31T19:44:58.6841820Z         },
+2026-07-31T19:44:58.6842066Z         {
+2026-07-31T19:44:58.6842351Z           "all": true,
+2026-07-31T19:44:58.6842696Z           "reservedSpace": "9.313GiB",
+2026-07-31T19:44:58.6843107Z           "maxUsedSpace": "93.13GiB",
+2026-07-31T19:44:58.6843514Z           "minFreeSpace": "27.01GiB"
+2026-07-31T19:44:58.6843878Z         }
+2026-07-31T19:44:58.6844149Z       ]
+2026-07-31T19:44:58.6844422Z     }
+2026-07-31T19:44:58.6844747Z   ],
+2026-07-31T19:44:58.6845175Z   "name": "builder-257d1ca7-9e80-4181-87bd-1dc27a4cd432",
+2026-07-31T19:44:58.6845762Z   "driver": "docker-container",
+2026-07-31T19:44:58.6846238Z   "lastActivity": "2026-07-31T19:44:55.000Z"
+2026-07-31T19:44:58.6846681Z }
+2026-07-31T19:44:58.6847208Z ##[endgroup]
+2026-07-31T19:44:58.6847891Z ##[group]BuildKit version
+2026-07-31T19:44:58.6848316Z builder-257d1ca7-9e80-4181-87bd-1dc27a4cd4320: v0.31.2
+2026-07-31T19:44:58.6848984Z ##[endgroup]

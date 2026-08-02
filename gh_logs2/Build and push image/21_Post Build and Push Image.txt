@@ -1,0 +1,26 @@
+﻿2026-07-31T19:52:38.9361550Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-31T19:52:38.9362846Z Post job cleanup.
+2026-07-31T19:52:39.2359719Z ##[group]Generating build summary
+2026-07-31T19:52:39.2366787Z exporting build record to /home/runner/work/_temp/docker-actions-toolkit-k69OPa/export
+2026-07-31T19:52:39.2380448Z (node:60178) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-31T19:52:39.2381172Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-31T19:52:39.4437623Z [command]/usr/bin/docker buildx history export --builder builder-257d1ca7-9e80-4181-87bd-1dc27a4cd432 --output /home/runner/work/_temp/docker-actions-toolkit-k69OPa/export/hr-mes~ermete-os~8XNV45.dockerbuild 8xnv459y0qt9nrunqr819dlir --finalize
+2026-07-31T19:52:40.0494065Z Build record written to /home/runner/work/_temp/docker-actions-toolkit-k69OPa/export/hr-mes~ermete-os~8XNV45.dockerbuild (187.8 KB)
+2026-07-31T19:52:40.0524365Z Uploading hr-mes~ermete-os~8XNV45.dockerbuild to blob storage
+2026-07-31T19:52:40.2059295Z Beginning upload of artifact content to blob storage
+2026-07-31T19:52:40.2151853Z (node:60178) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-07-31T19:52:40.2161207Z Uploaded bytes 65536
+2026-07-31T19:52:40.2163513Z Uploaded bytes 131072
+2026-07-31T19:52:40.2269003Z Uploaded bytes 192303
+2026-07-31T19:52:40.2398625Z Finished uploading artifact content to blob storage!
+2026-07-31T19:52:40.2404464Z SHA256 hash of uploaded artifact is 27e05d2fd297a2a1de50852965b4f1a709733f4ed67d22fc18acbcc344479ba9
+2026-07-31T19:52:40.2406279Z Finalizing artifact upload
+2026-07-31T19:52:40.4575145Z Artifact successfully finalized (8805038839)
+2026-07-31T19:52:40.4576471Z Artifact download URL: https://github.com/hr-mes/ermete-os/actions/runs/30660099744/artifacts/8805038839
+2026-07-31T19:52:40.4607859Z Writing summary
+2026-07-31T19:52:40.4620400Z ##[endgroup]
+2026-07-31T19:52:40.4621175Z ##[group]Removing temp folder /home/runner/work/_temp/docker-actions-toolkit-NrQOpD
+2026-07-31T19:52:40.4622971Z ##[endgroup]
+2026-07-31T19:52:40.4623435Z ##[group]Post cache
+2026-07-31T19:52:40.4624975Z State not set
+2026-07-31T19:52:40.4625630Z ##[endgroup]

@@ -1,0 +1,123 @@
+﻿2026-07-31T18:57:20.1129634Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-31T18:57:20.1139594Z ##[group]Run actions/checkout@v4
+2026-07-31T18:57:20.1140623Z with:
+2026-07-31T18:57:20.1148723Z   token: ***
+2026-07-31T18:57:20.1149580Z   repository: hr-mes/ermete-os
+2026-07-31T18:57:20.1150536Z   ssh-strict: true
+2026-07-31T18:57:20.1151367Z   ssh-user: git
+2026-07-31T18:57:20.1152215Z   persist-credentials: true
+2026-07-31T18:57:20.1153164Z   clean: true
+2026-07-31T18:57:20.1154025Z   sparse-checkout-cone-mode: true
+2026-07-31T18:57:20.1155019Z   fetch-depth: 1
+2026-07-31T18:57:20.1155827Z   fetch-tags: false
+2026-07-31T18:57:20.1156664Z   show-progress: true
+2026-07-31T18:57:20.1157511Z   lfs: false
+2026-07-31T18:57:20.1158417Z   submodules: false
+2026-07-31T18:57:20.1159316Z   set-safe-directory: true
+2026-07-31T18:57:20.1160279Z   allow-unsafe-pr-checkout: false
+2026-07-31T18:57:20.1161252Z env:
+2026-07-31T18:57:20.1162158Z   IMAGE_DESC: Ermete OS - Immutable Cloud-Native System
+2026-07-31T18:57:20.1163579Z   IMAGE_KEYWORDS: bootc,fedora,Ermete,immutable
+2026-07-31T18:57:20.1164713Z   IMAGE_LOGO_URL: 
+2026-07-31T18:57:20.1165564Z   IMAGE_NAME: ermete-os-system
+2026-07-31T18:57:20.1166532Z   IMAGE_REGISTRY: ghcr.io/hr-mes
+2026-07-31T18:57:20.1167510Z   DEFAULT_TAG: latest
+2026-07-31T18:57:20.1168478Z ##[endgroup]
+2026-07-31T18:57:20.2227839Z Syncing repository: hr-mes/ermete-os
+2026-07-31T18:57:20.2232272Z ##[group]Getting Git version info
+2026-07-31T18:57:20.2234885Z Working directory is '/home/runner/work/ermete-os/ermete-os'
+2026-07-31T18:57:20.2236900Z [command]/usr/bin/git version
+2026-07-31T18:57:20.2327127Z git version 2.54.0
+2026-07-31T18:57:20.2352399Z ##[endgroup]
+2026-07-31T18:57:20.2369021Z Temporarily overriding HOME='/home/runner/work/_temp/9cd92a89-c564-4da2-ad35-1b2d0b5568b5' before making global git config changes
+2026-07-31T18:57:20.2373815Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-31T18:57:20.2377751Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/ermete-os/ermete-os
+2026-07-31T18:57:20.2429897Z Deleting the contents of '/home/runner/work/ermete-os/ermete-os'
+2026-07-31T18:57:20.2434901Z ##[group]Initializing the repository
+2026-07-31T18:57:20.2440183Z [command]/usr/bin/git init /home/runner/work/ermete-os/ermete-os
+2026-07-31T18:57:20.2560898Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-07-31T18:57:20.2564419Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-07-31T18:57:20.2567566Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-07-31T18:57:20.2570239Z hint: call:
+2026-07-31T18:57:20.2571501Z hint:
+2026-07-31T18:57:20.2573082Z hint: 	git config --global init.defaultBranch <name>
+2026-07-31T18:57:20.2575078Z hint:
+2026-07-31T18:57:20.2576994Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-07-31T18:57:20.2580370Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-07-31T18:57:20.2582853Z hint:
+2026-07-31T18:57:20.2584033Z hint: 	git branch -m <name>
+2026-07-31T18:57:20.2585048Z hint:
+2026-07-31T18:57:20.2587451Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-07-31T18:57:20.2591085Z Initialized empty Git repository in /home/runner/work/ermete-os/ermete-os/.git/
+2026-07-31T18:57:20.2596573Z [command]/usr/bin/git remote add origin https://github.com/hr-mes/ermete-os
+2026-07-31T18:57:20.2632600Z ##[endgroup]
+2026-07-31T18:57:20.2635009Z ##[group]Disabling automatic garbage collection
+2026-07-31T18:57:20.2637155Z [command]/usr/bin/git config --local gc.auto 0
+2026-07-31T18:57:20.2688208Z ##[endgroup]
+2026-07-31T18:57:20.2691054Z ##[group]Setting up auth
+2026-07-31T18:57:20.2696422Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-31T18:57:20.2741854Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-31T18:57:20.3181507Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-31T18:57:20.3218921Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-31T18:57:20.3442239Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-31T18:57:20.3479695Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-31T18:57:20.3726407Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-07-31T18:57:20.3765077Z ##[endgroup]
+2026-07-31T18:57:20.3766507Z ##[group]Fetching the repository
+2026-07-31T18:57:20.3775644Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +4f352297dfad7eae871fcc86c05b5845c81596c6:refs/remotes/origin/main
+2026-07-31T18:57:35.9962768Z From https://github.com/hr-mes/ermete-os
+2026-07-31T18:57:35.9963864Z  * [new ref]         4f352297dfad7eae871fcc86c05b5845c81596c6 -> origin/main
+2026-07-31T18:57:35.9989439Z ##[endgroup]
+2026-07-31T18:57:35.9990274Z ##[group]Determining the checkout info
+2026-07-31T18:57:35.9992730Z ##[endgroup]
+2026-07-31T18:57:35.9999810Z [command]/usr/bin/git sparse-checkout disable
+2026-07-31T18:57:36.0056594Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-07-31T18:57:36.0087769Z ##[group]Checking out the ref
+2026-07-31T18:57:36.0093480Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-07-31T18:57:37.0155851Z Updating files:  61% (1063/1727)
+2026-07-31T18:57:37.0551673Z Updating files:  62% (1071/1727)
+2026-07-31T18:57:37.2240733Z Updating files:  63% (1089/1727)
+2026-07-31T18:57:37.6397784Z Updating files:  64% (1106/1727)
+2026-07-31T18:57:38.0465428Z Updating files:  65% (1123/1727)
+2026-07-31T18:57:38.1322923Z Updating files:  65% (1130/1727)
+2026-07-31T18:57:38.2238210Z Updating files:  66% (1140/1727)
+2026-07-31T18:57:38.2805587Z Updating files:  67% (1158/1727)
+2026-07-31T18:57:38.3907543Z Updating files:  68% (1175/1727)
+2026-07-31T18:57:38.4867526Z Updating files:  69% (1192/1727)
+2026-07-31T18:57:38.5228762Z Updating files:  70% (1209/1727)
+2026-07-31T18:57:38.5235708Z Updating files:  71% (1227/1727)
+2026-07-31T18:57:38.7191233Z Updating files:  72% (1244/1727)
+2026-07-31T18:57:38.7209306Z Updating files:  73% (1261/1727)
+2026-07-31T18:57:38.7230310Z Updating files:  74% (1278/1727)
+2026-07-31T18:57:38.7249103Z Updating files:  75% (1296/1727)
+2026-07-31T18:57:38.7273328Z Updating files:  76% (1313/1727)
+2026-07-31T18:57:38.7293602Z Updating files:  77% (1330/1727)
+2026-07-31T18:57:38.7316109Z Updating files:  78% (1348/1727)
+2026-07-31T18:57:38.7352572Z Updating files:  79% (1365/1727)
+2026-07-31T18:57:38.7666379Z Updating files:  80% (1382/1727)
+2026-07-31T18:57:38.7770722Z Updating files:  81% (1399/1727)
+2026-07-31T18:57:38.7785592Z Updating files:  82% (1417/1727)
+2026-07-31T18:57:38.7803247Z Updating files:  83% (1434/1727)
+2026-07-31T18:57:38.7820653Z Updating files:  84% (1451/1727)
+2026-07-31T18:57:38.7842038Z Updating files:  85% (1468/1727)
+2026-07-31T18:57:38.7857990Z Updating files:  86% (1486/1727)
+2026-07-31T18:57:38.7877151Z Updating files:  87% (1503/1727)
+2026-07-31T18:57:38.7896686Z Updating files:  88% (1520/1727)
+2026-07-31T18:57:38.7946668Z Updating files:  89% (1538/1727)
+2026-07-31T18:57:38.7974842Z Updating files:  90% (1555/1727)
+2026-07-31T18:57:38.7987183Z Updating files:  91% (1572/1727)
+2026-07-31T18:57:38.7999561Z Updating files:  92% (1589/1727)
+2026-07-31T18:57:38.8014124Z Updating files:  93% (1607/1727)
+2026-07-31T18:57:38.8030716Z Updating files:  94% (1624/1727)
+2026-07-31T18:57:38.8043886Z Updating files:  95% (1641/1727)
+2026-07-31T18:57:38.8054847Z Updating files:  96% (1658/1727)
+2026-07-31T18:57:38.8380758Z Updating files:  97% (1676/1727)
+2026-07-31T18:57:38.8394466Z Updating files:  98% (1693/1727)
+2026-07-31T18:57:38.8401378Z Updating files:  99% (1710/1727)
+2026-07-31T18:57:38.8401802Z Updating files: 100% (1727/1727)
+2026-07-31T18:57:38.8402106Z Updating files: 100% (1727/1727), done.
+2026-07-31T18:57:38.8437482Z Switched to a new branch 'main'
+2026-07-31T18:57:38.8441184Z branch 'main' set up to track 'origin/main'.
+2026-07-31T18:57:38.8554673Z ##[endgroup]
+2026-07-31T18:57:38.8611115Z [command]/usr/bin/git log -1 --format=%H
+2026-07-31T18:57:38.8639910Z 4f352297dfad7eae871fcc86c05b5845c81596c6

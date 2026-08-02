@@ -1,0 +1,8 @@
+﻿2026-07-31T19:30:27.8427897Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-31T19:30:27.8428811Z Post job cleanup.
+2026-07-31T19:30:27.9286389Z (node:68068) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-07-31T19:30:27.9287091Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-07-31T19:30:27.9380144Z [command]/usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /var/home/ermete/actions-runner-monorepo/_work/ermete-os/ermete-os --files-from manifest.txt --use-compress-program zstdmt
+2026-07-31T19:30:28.5560087Z (node:68068) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-07-31T19:30:29.3420648Z Sent 192 of 192 (100.0%), 0.0 MBs/sec
+2026-07-31T19:30:29.6206868Z Cache saved with key: sccache-base-config-e611a38e5e100ce77605ab35337d82e9270fe70b

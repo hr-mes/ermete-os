@@ -1,0 +1,8 @@
+﻿2026-07-31T19:28:20.2724052Z ##[group]Run echo "***" | podman login ghcr.io -u hr-mes --password-stdin
+2026-07-31T19:28:20.2726403Z [36;1mecho "***" | podman login ghcr.io -u hr-mes --password-stdin[0m
+2026-07-31T19:28:20.2731866Z shell: /usr/bin/bash -e {0}
+2026-07-31T19:28:20.2732218Z env:
+2026-07-31T19:28:20.2732466Z   REGISTRY: ghcr.io
+2026-07-31T19:28:20.2732686Z   FEDORA_VERSION: 43
+2026-07-31T19:28:20.2732955Z ##[endgroup]
+2026-07-31T19:28:21.1356524Z Login Succeeded!

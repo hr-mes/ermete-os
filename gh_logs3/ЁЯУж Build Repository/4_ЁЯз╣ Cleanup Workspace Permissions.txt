@@ -1,0 +1,9 @@
+﻿2026-07-31T19:41:57.8071131Z ##[group]Run # Use rootless podman to remove root-owned files from the workspace
+2026-07-31T19:41:57.8071649Z [36;1m# Use rootless podman to remove root-owned files from the workspace[0m
+2026-07-31T19:41:57.8072550Z [36;1mpodman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -v "/var/home/ermete/actions-runner-monorepo/_work/ermete-os/ermete-os:/workspace:rw" -w /workspace docker.io/library/alpine:latest rm -rf /workspace/var-tmp || true[0m
+2026-07-31T19:41:57.8073520Z [36;1mchown -R 1000:1000 /var/home/ermete/actions-runner-monorepo/_work/ermete-os/ermete-os || true[0m
+2026-07-31T19:41:57.8080727Z shell: /usr/bin/bash -e {0}
+2026-07-31T19:41:57.8080984Z env:
+2026-07-31T19:41:57.8081161Z   REGISTRY: ghcr.io
+2026-07-31T19:41:57.8081357Z   FEDORA_VERSION: 43
+2026-07-31T19:41:57.8081548Z ##[endgroup]

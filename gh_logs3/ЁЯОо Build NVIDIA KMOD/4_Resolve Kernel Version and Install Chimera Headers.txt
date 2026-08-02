@@ -1,0 +1,74 @@
+﻿2026-07-31T19:28:21.1436811Z ##[group]Run podman run -i --rm --pull=always --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+2026-07-31T19:28:21.1437734Z [36;1mpodman run -i --rm --pull=always --security-opt label=disable --security-opt seccomp=unconfined --privileged \[0m
+2026-07-31T19:28:21.1438423Z [36;1m  -v /var/home/ermete/actions-runner-monorepo/_work/ermete-os/ermete-os:/workspace \[0m
+2026-07-31T19:28:21.1438856Z [36;1m  -w /workspace \[0m
+2026-07-31T19:28:21.1439269Z [36;1m  ghcr.io/hr-mes/ermete-os-builder:latest \[0m
+2026-07-31T19:28:21.1439656Z [36;1m  bash <<'EOF'[0m
+2026-07-31T19:28:21.1439906Z [36;1m    set -euo pipefail[0m
+2026-07-31T19:28:21.1440350Z [36;1m    curl -Lo /etc/yum.repos.d/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo[0m
+2026-07-31T19:28:21.1440812Z [36;1m    dnf install -y buildah jq[0m
+2026-07-31T19:28:21.1441093Z [36;1m    export STORAGE_DRIVER=vfs[0m
+2026-07-31T19:28:21.1441410Z [36;1m    export BUILDAH_ISOLATION=chroot[0m
+2026-07-31T19:28:21.1441872Z [36;1m    buildah from ghcr.io/hr-mes/ermete-os-kernel:latest > ctr_id[0m
+2026-07-31T19:28:21.1442249Z [36;1m    ctr=$(cat ctr_id)[0m
+2026-07-31T19:28:21.1442507Z [36;1m    mnt=$(buildah mount $ctr)[0m
+2026-07-31T19:28:21.1442960Z [36;1m    find $mnt/ -name "*.rpm" ! -name "*debug*" -exec rpm -Uvh --noscripts --oldpackage --replacepkgs --force --nodeps {} +[0m
+2026-07-31T19:28:21.1443514Z [36;1m    buildah umount $ctr[0m
+2026-07-31T19:28:21.1443961Z [36;1m    QUALIFIED_KERNEL=$(rpm -q --queryformat "%{VERSION}-%{RELEASE}.%{ARCH}\n" kernel-devel | sort -V | tail -n 1)[0m
+2026-07-31T19:28:21.1444730Z [36;1m    QUALIFIED_NVIDIA=$(dnf repoquery --qf "%{VERSION}-%{RELEASE}\n" akmod-nvidia 2>/dev/null | sort -V | tail -n 1)[0m
+2026-07-31T19:28:21.1445280Z [36;1m    echo "QUALIFIED_KERNEL=$QUALIFIED_KERNEL" > /workspace/kernel_info[0m
+2026-07-31T19:28:21.1445716Z [36;1m    echo "QUALIFIED_NVIDIA=$QUALIFIED_NVIDIA" >> /workspace/kernel_info[0m
+2026-07-31T19:28:21.1446208Z [36;1mEOF[0m
+2026-07-31T19:28:21.1446571Z [36;1mecho "kernel_ver=$(grep QUALIFIED_KERNEL ../kernel_info | cut -d= -f2)" >> $GITHUB_OUTPUT[0m
+2026-07-31T19:28:21.1447131Z [36;1mecho "nvidia_ver=$(grep QUALIFIED_NVIDIA ../kernel_info | cut -d= -f2)" >> $GITHUB_OUTPUT[0m
+2026-07-31T19:28:21.1450769Z shell: /usr/bin/bash -e {0}
+2026-07-31T19:28:21.1451111Z env:
+2026-07-31T19:28:21.1451323Z   REGISTRY: ghcr.io
+2026-07-31T19:28:21.1451538Z   FEDORA_VERSION: 43
+2026-07-31T19:28:21.1451810Z ##[endgroup]
+2026-07-31T19:28:21.1691198Z Trying to pull ghcr.io/hr-mes/ermete-os-builder:latest...
+2026-07-31T19:28:22.4162648Z Getting image source signatures
+2026-07-31T19:28:22.4163647Z Copying blob sha256:0d936fd18db43f917127aa33347228b1d5cfd0348e2f7671708872b4525e5325
+2026-07-31T19:28:22.4164766Z Copying blob sha256:60d3fd1784076bdebf35eb5c75a76cdc6faf6eefe6e014a1c1e55aebbfe09ada
+2026-07-31T19:28:22.4165503Z Copying blob sha256:a3e836f5b18522b4c723d41589d8b1d9d6018b61f1cc95b6d4f27190c6b70063
+2026-07-31T19:28:22.4168400Z Copying config sha256:81adff7dab344029ec85226b62d11072e2f57d4eb1a66e6ef028198283257ded
+2026-07-31T19:28:22.4315473Z Writing manifest to image destination
+2026-07-31T19:28:22.5580050Z   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+2026-07-31T19:28:22.5580578Z                                  Dload  Upload   Total   Spent    Left  Speed
+2026-07-31T19:28:22.5580812Z 
+2026-07-31T19:28:23.8169774Z   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+2026-07-31T19:28:23.8720149Z   0     0    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0
+2026-07-31T19:28:23.8720626Z 100   876  100   876    0     0    666      0  0:00:01  0:00:01 --:--:--   666
+2026-07-31T19:28:23.9070381Z Updating and loading repositories:
+2026-07-31T19:28:30.0286603Z  RPM Fusion for Fedora 43 - Nonfree - U 100% |   8.2 KiB/s |  44.6 KiB |  00m05s
+2026-07-31T19:28:30.1767737Z  RPM Fusion for Fedora 43 - Nonfree     100% |  15.8 KiB/s |  99.1 KiB |  00m06s
+2026-07-31T19:28:30.8009055Z  RPM Fusion for Fedora 43 - Free - Upda 100% |  12.6 KiB/s |  75.1 KiB |  00m06s
+2026-07-31T19:28:31.0823091Z  RPM Fusion for Fedora 43 - Free        100% |  26.6 KiB/s | 151.8 KiB |  00m06s
+2026-07-31T19:28:31.7908323Z  negativo17 - Nvidia                    100% |  13.3 KiB/s |  46.3 KiB |  00m03s
+2026-07-31T19:28:33.3706940Z  Fedora 43 - x86_64                     100% |   4.6 MiB/s |  35.7 MiB |  00m08s
+2026-07-31T19:28:34.2200772Z  Fedora 43 openh264 (From Cisco) - x86_ 100% | 831.0   B/s |   5.8 KiB |  00m07s
+2026-07-31T19:28:34.7469157Z  Fedora 43 - x86_64 - Updates           100% |   1.7 MiB/s |  14.4 MiB |  00m08s
+2026-07-31T19:28:36.5793937Z Repositories loaded.
+2026-07-31T19:28:38.1656127Z Package "buildah-2:1.43.2-1.fc43.x86_64" is already installed.
+2026-07-31T19:28:38.1656597Z Nothing to do.
+2026-07-31T19:28:38.1656883Z Package "jq-1.8.1-3.fc43.x86_64" is already installed.
+2026-07-31T19:28:38.1657096Z 
+2026-07-31T19:28:38.2109492Z Trying to pull ghcr.io/hr-mes/ermete-os-kernel:latest...
+2026-07-31T19:28:39.4994668Z Getting image source signatures
+2026-07-31T19:28:39.4995237Z Copying blob sha256:5da847a58839616dcfa4da56cd467690a143068953c7a6db5b64deace0aadd72
+2026-07-31T19:28:51.5049012Z Copying config sha256:c0dd69a41ba5641cbcec177e5d94dab909f3ef296cd36879e52e17df8fa3e1e1
+2026-07-31T19:28:51.5050923Z Writing manifest to image destination
+2026-07-31T19:28:52.1821811Z Verifying...                          ########################################
+2026-07-31T19:28:52.4675465Z Preparing...                          ########################################
+2026-07-31T19:28:52.4742958Z Updating / installing...
+2026-07-31T19:28:53.0336182Z kernel-modules-core-6.14.5-100.chimera########################################
+2026-07-31T19:28:53.4337611Z kernel-uki-virt-6.14.5-100.chimera.fc4########################################
+2026-07-31T19:28:54.0100969Z kernel-modules-6.14.5-100.chimera.fc43########################################
+2026-07-31T19:28:54.2948137Z kernel-core-6.14.5-100.chimera.fc43   ########################################
+2026-07-31T19:28:56.2497312Z kernel-devel-6.14.5-100.chimera.fc43  ########################################
+2026-07-31T19:28:57.1718619Z kernel-devel-matched-6.14.5-100.chimer########################################
+2026-07-31T19:28:57.1733045Z kernel-6.14.5-100.chimera.fc43        ########################################
+2026-07-31T19:28:57.2012261Z kernel-modules-extra-6.14.5-100.chimer########################################
+2026-07-31T19:28:57.2405871Z kernel-modules-internal-6.14.5-100.chi########################################
+2026-07-31T19:28:57.2530044Z kernel-uki-virt-addons-6.14.5-100.chim########################################
+2026-07-31T19:28:57.2991413Z 866972afb2fcabdc110b22f95f9401e09ed497bc8f2b70e512cfae6851c0782a

@@ -1,0 +1,56 @@
+﻿2026-08-01T02:11:15.6482658Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-08-01T02:11:15.6484160Z ##[group]Run docker/login-action@v3
+2026-08-01T02:11:15.6484424Z with:
+2026-08-01T02:11:15.6484623Z   registry: ghcr.io
+2026-08-01T02:11:15.6484841Z   username: hr-mes
+2026-08-01T02:11:15.6487768Z   password: ***
+2026-08-01T02:11:15.6488016Z   logout: true
+2026-08-01T02:11:15.6488212Z env:
+2026-08-01T02:11:15.6488460Z   IMAGE_DESC: Ermete OS - Immutable Cloud-Native System
+2026-08-01T02:11:15.6488814Z   IMAGE_KEYWORDS: bootc,fedora,Ermete,immutable
+2026-08-01T02:11:15.6489103Z   IMAGE_LOGO_URL: 
+2026-08-01T02:11:15.6489314Z   IMAGE_NAME: ermete-os-system
+2026-08-01T02:11:15.6489564Z   IMAGE_REGISTRY: ghcr.io/hr-mes
+2026-08-01T02:11:15.6489806Z   DEFAULT_TAG: latest
+2026-08-01T02:11:15.6490075Z   DOCKER_METADATA_OUTPUT_VERSION: latest
+2026-08-01T02:11:15.6490733Z   DOCKER_METADATA_OUTPUT_TAGS: ghcr.io/hr-mes/ermete-os-system:latest
+ghcr.io/hr-mes/ermete-os-system:latest.20260801
+ghcr.io/hr-mes/ermete-os-system:20260801
+2026-08-01T02:11:15.6491452Z   DOCKER_METADATA_OUTPUT_TAG_NAMES: latest
+latest.20260801
+20260801
+2026-08-01T02:11:15.6495959Z   DOCKER_METADATA_OUTPUT_LABELS: containers.bootc=1
+io.artifacthub.package.deprecated=false
+io.artifacthub.package.keywords=bootc,fedora,Ermete,immutable
+io.artifacthub.package.license=Apache-2.0
+io.artifacthub.package.logo-url=
+io.artifacthub.package.prerelease=false
+io.artifacthub.package.readme-url=https://raw.githubusercontent.com/hr-mes/ermete-os/b7a178c841e0c069dfd0bb9f6e03f4836cd9d4fd/README.md
+org.opencontainers.image.created=2026-08-01T02:11:14Z
+org.opencontainers.image.description=Ermete OS - Immutable Cloud-Native System
+org.opencontainers.image.documentation=https://raw.githubusercontent.com/hr-mes/ermete-os/b7a178c841e0c069dfd0bb9f6e03f4836cd9d4fd/README.md
+org.opencontainers.image.licenses=
+org.opencontainers.image.revision=b7a178c841e0c069dfd0bb9f6e03f4836cd9d4fd
+org.opencontainers.image.source=https://github.com/hr-mes/ermete-os/blob/b7a178c841e0c069dfd0bb9f6e03f4836cd9d4fd/system/Containerfile
+org.opencontainers.image.title=ermete-os-system
+org.opencontainers.image.url=https://github.com/hr-mes/ermete-os/tree/b7a178c841e0c069dfd0bb9f6e03f4836cd9d4fd
+org.opencontainers.image.vendor=hr-mes
+org.opencontainers.image.version=latest.20260801
+2026-08-01T02:11:15.6502068Z   DOCKER_METADATA_OUTPUT_ANNOTATIONS: manifest:org.opencontainers.image.created=2026-08-01T02:11:15.598Z
+manifest:org.opencontainers.image.description=ermete-os
+manifest:org.opencontainers.image.licenses=
+manifest:org.opencontainers.image.revision=b7a178c841e0c069dfd0bb9f6e03f4836cd9d4fd
+manifest:org.opencontainers.image.source=https://github.com/hr-mes/ermete-os
+manifest:org.opencontainers.image.title=ermete-os
+manifest:org.opencontainers.image.url=https://github.com/hr-mes/ermete-os
+manifest:org.opencontainers.image.version=latest
+2026-08-01T02:11:15.6511005Z   DOCKER_METADATA_OUTPUT_JSON: {"tags":["ghcr.io/hr-mes/ermete-os-system:latest","ghcr.io/hr-mes/ermete-os-system:latest.20260801","ghcr.io/hr-mes/ermete-os-system:20260801"],"tag-names":["latest","latest.20260801","20260801"],"labels":{"containers.bootc":"1","io.artifacthub.package.deprecated":"false","io.artifacthub.package.keywords":"bootc,fedora,Ermete,immutable","io.artifacthub.package.license":"Apache-2.0","io.artifacthub.package.logo-url":"","io.artifacthub.package.prerelease":"false","io.artifacthub.package.readme-url":"https://raw.githubusercontent.com/hr-mes/ermete-os/b7a178c841e0c069dfd0bb9f6e03f4836cd9d4fd/README.md","org.opencontainers.image.created":"2026-08-01T02:11:14Z","org.opencontainers.image.description":"Ermete OS - Immutable Cloud-Native System","org.opencontainers.image.documentation":"https://raw.githubusercontent.com/hr-mes/ermete-os/b7a178c841e0c069dfd0bb9f6e03f4836cd9d4fd/README.md","org.opencontainers.image.licenses":"","org.opencontainers.image.revision":"b7a178c841e0c069dfd0bb9f6e03f4836cd9d4fd","org.opencontainers.image.source":"https://github.com/hr-mes/ermete-os/blob/b7a178c841e0c069dfd0bb9f6e03f4836cd9d4fd/system/Containerfile","org.opencontainers.image.title":"ermete-os-system","org.opencontainers.image.url":"https://github.com/hr-mes/ermete-os/tree/b7a178c841e0c069dfd0bb9f6e03f4836cd9d4fd","org.opencontainers.image.vendor":"hr-mes","org.opencontainers.image.version":"latest.20260801"},"annotations":["manifest:org.opencontainers.image.created=2026-08-01T02:11:15.598Z","manifest:org.opencontainers.image.description=ermete-os","manifest:org.opencontainers.image.licenses=","manifest:org.opencontainers.image.revision=b7a178c841e0c069dfd0bb9f6e03f4836cd9d4fd","manifest:org.opencontainers.image.source=https://github.com/hr-mes/ermete-os","manifest:org.opencontainers.image.title=ermete-os","manifest:org.opencontainers.image.url=https://github.com/hr-mes/ermete-os","manifest:org.opencontainers.image.version=latest"]}
+2026-08-01T02:11:15.6518643Z   DOCKER_METADATA_OUTPUT_BAKE_FILE_TAGS: /home/runner/work/_temp/docker-actions-toolkit-11lhWn/docker-metadata-action-bake-tags.json
+2026-08-01T02:11:15.6519601Z   DOCKER_METADATA_OUTPUT_BAKE_FILE_LABELS: /home/runner/work/_temp/docker-actions-toolkit-11lhWn/docker-metadata-action-bake-labels.json
+2026-08-01T02:11:15.6520552Z   DOCKER_METADATA_OUTPUT_BAKE_FILE_ANNOTATIONS: /home/runner/work/_temp/docker-actions-toolkit-11lhWn/docker-metadata-action-bake-annotations.json
+2026-08-01T02:11:15.6521445Z   DOCKER_METADATA_OUTPUT_BAKE_FILE: /home/runner/work/_temp/docker-actions-toolkit-11lhWn/docker-metadata-action-bake.json
+2026-08-01T02:11:15.6521975Z ##[endgroup]
+2026-08-01T02:11:15.9717473Z Logging into ghcr.io...
+2026-08-01T02:11:15.9739226Z (node:15446) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-08-01T02:11:15.9740426Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-08-01T02:11:16.1843783Z Login Succeeded!

@@ -1,0 +1,307 @@
+﻿2026-07-31T19:29:58.4409475Z ##[group]Run mkdir -p RPMS
+2026-07-31T19:29:58.4409775Z [36;1mmkdir -p RPMS[0m
+2026-07-31T19:29:58.4410123Z [36;1mmkdir -p /var/home/ermete/actions-runner-monorepo/_work/ermete-os/ermete-os/.sccache[0m
+2026-07-31T19:29:58.4412532Z [36;1mecho "***" | podman login ghcr.io -u hr-mes --password-stdin[0m
+2026-07-31T19:29:58.4413045Z [36;1mpodman run -i --rm --pull=always --security-opt label=disable --security-opt seccomp=unconfined --privileged \[0m
+2026-07-31T19:29:58.4413625Z [36;1m  -v /var/home/ermete/actions-runner-monorepo/_work/ermete-os/ermete-os:/workspace \[0m
+2026-07-31T19:29:58.4414356Z [36;1m  -v /var/home/ermete/actions-runner-monorepo/_work/ermete-os/ermete-os/.sccache:/root/.cache/sccache \[0m
+2026-07-31T19:29:58.4414768Z [36;1m  -w /workspace/forge \[0m
+2026-07-31T19:29:58.4415010Z [36;1m  ghcr.io/hr-mes/ermete-os-builder:latest \[0m
+2026-07-31T19:29:58.4415257Z [36;1m  bash <<'EOF'[0m
+2026-07-31T19:29:58.4415460Z [36;1m  cp config/rpmmacros ~/.rpmmacros[0m
+2026-07-31T19:29:58.4415725Z [36;1m  rpmdev-setuptree[0m
+2026-07-31T19:29:58.4415910Z [36;1m[0m
+2026-07-31T19:29:58.4416112Z [36;1m  if [ -d "specs/ermete-base-config/SOURCES" ]; then [0m
+2026-07-31T19:29:58.4416472Z [36;1m    cp -a specs/ermete-base-config/SOURCES/* ~/rpmbuild/SOURCES/ || true[0m
+2026-07-31T19:29:58.4416772Z [36;1m  fi[0m
+2026-07-31T19:29:58.4416926Z [36;1m[0m
+2026-07-31T19:29:58.4417160Z [36;1m  # Auto-pack any source directory into tarball for RPM Source0[0m
+2026-07-31T19:29:58.4417494Z [36;1m  for dir in specs/ermete-base-config/*-*/ ; do[0m
+2026-07-31T19:29:58.4417747Z [36;1m    if [ -d "$dir" ]; then[0m
+2026-07-31T19:29:58.4417964Z [36;1m      pkg_dir=$(basename "$dir")[0m
+2026-07-31T19:29:58.4418292Z [36;1m      echo "Packing $pkg_dir into ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz..."[0m
+2026-07-31T19:29:58.4418752Z [36;1m      tar -czf ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz -C "specs/ermete-base-config" "$pkg_dir"[0m
+2026-07-31T19:29:58.4419119Z [36;1m    fi[0m
+2026-07-31T19:29:58.4419288Z [36;1m  done[0m
+2026-07-31T19:29:58.4419441Z [36;1m[0m
+2026-07-31T19:29:58.4419661Z [36;1m  dnf builddep -y specs/ermete-base-config/*.spec || true[0m
+2026-07-31T19:29:58.4419996Z [36;1m  spectool -g -R specs/ermete-base-config/*.spec || true[0m
+2026-07-31T19:29:58.4420335Z [36;1m[0m
+2026-07-31T19:29:58.4420607Z [36;1m  # First attempt (generates buildreqs.nosrc.rpm for Rust packages)[0m
+2026-07-31T19:29:58.4420984Z [36;1m  rpmbuild -bb --nocheck specs/ermete-base-config/*.spec || true[0m
+2026-07-31T19:29:58.4421267Z [36;1m[0m
+2026-07-31T19:29:58.4421455Z [36;1m  # Install dynamic dependencies if generated[0m
+2026-07-31T19:29:58.4421758Z [36;1m  if ls ~/rpmbuild/SRPMS/*.nosrc.rpm 1> /dev/null 2>&1; then[0m
+2026-07-31T19:29:58.4422142Z [36;1m      dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SRPMS/*.nosrc.rpm || true[0m
+2026-07-31T19:29:58.4422464Z [36;1m  fi[0m
+2026-07-31T19:29:58.4422616Z [36;1m[0m
+2026-07-31T19:29:58.4422757Z [36;1m[0m
+2026-07-31T19:29:58.4422917Z [36;1m  # Second attempt (actual build)[0m
+2026-07-31T19:29:58.4423201Z [36;1m  rpmbuild -bb --nocheck specs/ermete-base-config/*.spec[0m
+2026-07-31T19:29:58.4423460Z [36;1m[0m
+2026-07-31T19:29:58.4423621Z [36;1m  mkdir -p /workspace/forge/RPMS[0m
+2026-07-31T19:29:58.4423884Z [36;1m  cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/[0m
+2026-07-31T19:29:58.4424185Z [36;1mEOF[0m
+2026-07-31T19:29:58.4428957Z shell: /usr/bin/bash -e {0}
+2026-07-31T19:29:58.4429156Z env:
+2026-07-31T19:29:58.4429314Z   REGISTRY: ghcr.io
+2026-07-31T19:29:58.4429473Z   FEDORA_VERSION: 43
+2026-07-31T19:29:58.4429631Z ##[endgroup]
+2026-07-31T19:29:59.2710686Z Login Succeeded!
+2026-07-31T19:29:59.2967812Z Trying to pull ghcr.io/hr-mes/ermete-os-builder:latest...
+2026-07-31T19:30:00.6732881Z Getting image source signatures
+2026-07-31T19:30:00.6733795Z Copying blob sha256:0d936fd18db43f917127aa33347228b1d5cfd0348e2f7671708872b4525e5325
+2026-07-31T19:30:00.6734609Z Copying blob sha256:a3e836f5b18522b4c723d41589d8b1d9d6018b61f1cc95b6d4f27190c6b70063
+2026-07-31T19:30:00.6735765Z Copying blob sha256:60d3fd1784076bdebf35eb5c75a76cdc6faf6eefe6e014a1c1e55aebbfe09ada
+2026-07-31T19:30:00.6738318Z Copying config sha256:81adff7dab344029ec85226b62d11072e2f57d4eb1a66e6ef028198283257ded
+2026-07-31T19:30:00.6986318Z Writing manifest to image destination
+2026-07-31T19:30:00.9069357Z Updating and loading repositories:
+2026-07-31T19:30:07.3639797Z  RPM Fusion for Fedora 43 - Nonfree - U 100% |   7.6 KiB/s |  44.6 KiB |  00m06s
+2026-07-31T19:30:07.9015127Z  RPM Fusion for Fedora 43 - Free - Upda 100% |  12.2 KiB/s |  75.1 KiB |  00m06s
+2026-07-31T19:30:08.0621293Z  RPM Fusion for Fedora 43 - Free        100% |  26.4 KiB/s | 151.8 KiB |  00m06s
+2026-07-31T19:30:10.1998793Z  Fedora 43 - x86_64 - Updates           100% |   1.7 MiB/s |  12.6 MiB |  00m08s
+2026-07-31T19:30:10.8736742Z  RPM Fusion for Fedora 43 - Nonfree     100% |   8.5 KiB/s |  84.3 KiB |  00m10s
+2026-07-31T19:30:11.4165482Z  Fedora 43 openh264 (From Cisco) - x86_ 100% | 808.0   B/s |   5.8 KiB |  00m07s
+2026-07-31T19:30:12.9639866Z  Fedora 43 - x86_64                     100% |   4.2 MiB/s |  41.2 MiB |  00m10s
+2026-07-31T19:30:14.9044871Z Repositories loaded.
+2026-07-31T19:30:16.4460271Z Nothing to do.
+2026-07-31T19:30:16.6838420Z Building target platforms: noarch
+2026-07-31T19:30:16.6838788Z Building for target noarch
+2026-07-31T19:30:16.7002450Z setting SOURCE_DATE_EPOCH=1785456000
+2026-07-31T19:30:16.7020863Z Executing(%mkbuilddir): /bin/sh -e /var/tmp/rpm-tmp.Vj00on
+2026-07-31T19:30:16.7093374Z Executing(%prep): /bin/sh -e /var/tmp/rpm-tmp.js7YWD
+2026-07-31T19:30:16.7109695Z + umask 022
+2026-07-31T19:30:16.7110072Z + cd /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build
+2026-07-31T19:30:16.7110433Z + RPM_EC=0
+2026-07-31T19:30:16.7112059Z ++ jobs -p
+2026-07-31T19:30:16.7113636Z + exit 0
+2026-07-31T19:30:16.7136531Z Executing(%build): /bin/sh -e /var/tmp/rpm-tmp.f63KMj
+2026-07-31T19:30:16.7150532Z + umask 022
+2026-07-31T19:30:16.7151041Z + cd /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build
+2026-07-31T19:30:16.7151946Z + export 'RUSTFLAGS=-C target-cpu=x86-64-v3 -C opt-level=3 -C codegen-units=1 -C link-arg=-fuse-ld=mold'
+2026-07-31T19:30:16.7152740Z + RUSTFLAGS='-C target-cpu=x86-64-v3 -C opt-level=3 -C codegen-units=1 -C link-arg=-fuse-ld=mold'
+2026-07-31T19:30:16.7153423Z + export CARGO_PROFILE_RELEASE_LTO=thin
+2026-07-31T19:30:16.7153900Z + CARGO_PROFILE_RELEASE_LTO=thin
+2026-07-31T19:30:16.7154352Z + export RUSTC_WRAPPER=sccache
+2026-07-31T19:30:16.7154850Z + RUSTC_WRAPPER=sccache
+2026-07-31T19:30:16.7155345Z + RPM_EC=0
+2026-07-31T19:30:16.7155712Z ++ jobs -p
+2026-07-31T19:30:16.7156024Z + exit 0
+2026-07-31T19:30:16.7197754Z Executing(%install): /bin/sh -e /var/tmp/rpm-tmp.nPz4XZ
+2026-07-31T19:30:16.7211530Z + umask 022
+2026-07-31T19:30:16.7211866Z + cd /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build
+2026-07-31T19:30:16.7212423Z + '[' /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build/BUILDROOT '!=' / ']'
+2026-07-31T19:30:16.7212961Z + rm -rf /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build/BUILDROOT
+2026-07-31T19:30:16.7222555Z ++ dirname /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build/BUILDROOT
+2026-07-31T19:30:16.7233251Z + mkdir -p /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build
+2026-07-31T19:30:16.7247710Z + mkdir /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build/BUILDROOT
+2026-07-31T19:30:16.7264896Z + CFLAGS='-O3 -march=x86-64-v3 -mtune=generic -pipe -fno-semantic-interposition -falign-functions=32 -fno-math-errno -fno-trapping-math -mprefer-vector-width=256 -fPIC -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -flto=auto -ffat-lto-objects -fno-semantic-interposition -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer  '
+2026-07-31T19:30:16.7266847Z + export CFLAGS
+2026-07-31T19:30:16.7268971Z + CXXFLAGS='-O3 -march=x86-64-v3 -mtune=generic -pipe -fno-semantic-interposition -falign-functions=32 -fno-math-errno -fno-trapping-math -mprefer-vector-width=256 -fPIC -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -flto=auto -ffat-lto-objects -fno-semantic-interposition -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer  '
+2026-07-31T19:30:16.7271132Z + export CXXFLAGS
+2026-07-31T19:30:16.7273267Z + FFLAGS='-O3 -march=x86-64-v3 -mtune=generic -pipe -fno-semantic-interposition -falign-functions=32 -fno-math-errno -fno-trapping-math -mprefer-vector-width=256 -fPIC -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -flto=auto -ffat-lto-objects -fno-semantic-interposition -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -I/usr/lib/gfortran/modules  '
+2026-07-31T19:30:16.7275336Z + export FFLAGS
+2026-07-31T19:30:16.7277480Z + FCFLAGS='-O3 -march=x86-64-v3 -mtune=generic -pipe -fno-semantic-interposition -falign-functions=32 -fno-math-errno -fno-trapping-math -mprefer-vector-width=256 -fPIC -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -flto=auto -ffat-lto-objects -fno-semantic-interposition -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -I/usr/lib/gfortran/modules  '
+2026-07-31T19:30:16.7279572Z + export FCFLAGS
+2026-07-31T19:30:16.7279849Z + VALAFLAGS=-g
+2026-07-31T19:30:16.7280098Z + export VALAFLAGS
+2026-07-31T19:30:16.7280677Z + RUSTFLAGS='-Copt-level=3 -Cdebuginfo=2 -Ccodegen-units=1 -Cstrip=none -Cforce-frame-pointers=yes --cap-lints=warn'
+2026-07-31T19:30:16.7281230Z + export RUSTFLAGS
+2026-07-31T19:30:16.7282128Z + LDFLAGS='-Wl,-z,relro -Wl,--as-needed   -Wl,-z,now -specs=/usr/lib/rpm/redhat/redhat-hardened-ld -specs=/usr/lib/rpm/redhat/redhat-hardened-ld-errors -specs=/usr/lib/rpm/redhat/redhat-annobin-cc1  -Wl,--build-id=sha1   '
+2026-07-31T19:30:16.7282901Z + export LDFLAGS
+2026-07-31T19:30:16.7283164Z + LT_SYS_LIBRARY_PATH=/usr/lib:
+2026-07-31T19:30:16.7283550Z + export LT_SYS_LIBRARY_PATH
+2026-07-31T19:30:16.7283822Z + CC=gcc
+2026-07-31T19:30:16.7284082Z + export CC
+2026-07-31T19:30:16.7284445Z + CXX=g++
+2026-07-31T19:30:16.7284683Z + export CXX
+2026-07-31T19:30:16.7285138Z + mkdir -p /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build/BUILDROOT
+2026-07-31T19:30:16.7285899Z + find /root/rpmbuild/SOURCES -mindepth 1 -maxdepth 1 '!' -name '*.spec' -exec cp -a '{}' /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build/BUILDROOT/ ';'
+2026-07-31T19:30:16.7401874Z + mkdir -p /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build/BUILDROOT/usr/lib/tmpfiles.d
+2026-07-31T19:30:16.7415408Z + mv /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build/BUILDROOT/etc/tmpfiles.d/selinux-policy.conf /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build/BUILDROOT/usr/lib/tmpfiles.d/
+2026-07-31T19:30:16.7432885Z + rm -rf /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build/BUILDROOT/etc/tmpfiles.d
+2026-07-31T19:30:16.7442379Z + '[' '%{buildarch}' = noarch ']'
+2026-07-31T19:30:16.7442697Z + QA_CHECK_RPATHS=1
+2026-07-31T19:30:16.7443041Z + case "${QA_CHECK_RPATHS:-}" in
+2026-07-31T19:30:16.7443367Z + /usr/lib/rpm/check-rpaths
+2026-07-31T19:30:16.9009306Z + /usr/lib/rpm/check-buildroot
+2026-07-31T19:30:16.9082459Z + /usr/lib/rpm/redhat/brp-ldconfig
+2026-07-31T19:30:16.9141884Z + /usr/lib/rpm/brp-compress
+2026-07-31T19:30:16.9159525Z + /usr/lib/rpm/brp-strip /usr/bin/strip
+2026-07-31T19:30:16.9444753Z + /usr/lib/rpm/brp-strip-comment-note /usr/bin/strip /usr/bin/objdump
+2026-07-31T19:30:16.9549316Z + /usr/lib/rpm/redhat/brp-strip-lto /usr/bin/strip
+2026-07-31T19:30:16.9592218Z + /usr/lib/rpm/check-rpaths
+2026-07-31T19:30:17.1145053Z + /usr/lib/rpm/redhat/brp-mangle-shebangs
+2026-07-31T19:30:17.1382495Z + /usr/lib/rpm/brp-remove-la-files
+2026-07-31T19:30:17.1475510Z + /usr/lib/rpm/redhat/brp-python-rpm-in-distinfo
+2026-07-31T19:30:17.1509643Z + env /usr/lib/rpm/redhat/brp-python-bytecompile '' 1 0 -j16
+2026-07-31T19:30:17.1555087Z + /usr/lib/rpm/redhat/brp-python-hardlink
+2026-07-31T19:30:17.1590885Z + /usr/bin/add-determinism --brp -j16 /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build/BUILDROOT
+2026-07-31T19:30:17.1639443Z Scanned 36 directories and 46 files,
+2026-07-31T19:30:17.1639849Z                processed 0 inodes,
+2026-07-31T19:30:17.1640301Z                0 modified (0 replaced + 0 rewritten),
+2026-07-31T19:30:17.1640664Z                0 unsupported format, 0 errors
+2026-07-31T19:30:17.1645841Z Processing files: ermete-base-config-1.0.0-7.fc43.noarch
+2026-07-31T19:30:17.1664012Z warning: File listed twice: /usr/lib/systemd/system/bootc-fetch-apply-updates.service.d/override.conf
+2026-07-31T19:30:17.1664947Z warning: File listed twice: /usr/lib/systemd/system/nvidia-hibernate.service
+2026-07-31T19:30:17.1665725Z warning: File listed twice: /usr/lib/systemd/system/nvidia-powerd.service.d
+2026-07-31T19:30:17.1666445Z warning: File listed twice: /usr/lib/systemd/system/nvidia-powerd.service.d/laptop-only.conf
+2026-07-31T19:30:17.1667529Z warning: File listed twice: /usr/lib/systemd/system/nvidia-resume.service
+2026-07-31T19:30:17.1668837Z warning: File listed twice: /usr/lib/systemd/system/nvidia-suspend-then-hibernate.service
+2026-07-31T19:30:17.1670173Z warning: File listed twice: /usr/lib/systemd/system/nvidia-suspend.service
+2026-07-31T19:30:17.1671017Z warning: File listed twice: /usr/lib/systemd/system/scx_loader.service.d/10-ermete.conf
+2026-07-31T19:30:17.2116543Z Provides: ermete-base-config = 1.0.0-7.fc43 fedora-logos = 1.0.0-7.fc43 fedora-logos-httpd = 1.0.0-7.fc43 fedora-release = 1.0.0-7.fc43 fedora-release-common = 1.0.0-7.fc43 fedora-release-identity = 1.0.0-7.fc43 group(adm) = ZyBhZG0gNCAt group(akmods) group(akmods) = ZyBha21vZHMgLSAt group(audio) = ZyBhdWRpbyA2MyAt group(disk) = ZyBkaXNrIDYgLQAA group(input) = ZyBpbnB1dCAxMDQgLQAA group(kvm) = ZyBrdm0gMzYgLQAA group(nvidia-persistenced) group(nvidia-persistenced) = ZyBudmlkaWEtcGVyc2lzdGVuY2VkIC0gLQAA group(render) = ZyByZW5kZXIgMzI2IC0A group(sgx) = ZyBzZ3ggLSAt group(utmp) = ZyB1dG1wIDIyIC0A group(video) = ZyB2aWRlbyAzOSAt system-logos = 1.0.0-7.fc43 system-logos-httpd = 1.0.0-7.fc43 system-release = 1.0.0-7.fc43 user(akmods) = dSBha21vZHMgLSAiVXNlciBmb3IgYWttb2RzIiAvdmFyL2NhY2hlL2FrbW9kcyAvc2Jpbi9ub2xvZ2lu user(nvidia-persistenced) = dSBudmlkaWEtcGVyc2lzdGVuY2VkIC0gIk5WSURJQSBkYWVtb24iIC92YXIvcnVuL252aWRpYS1wZXJzaXN0ZW5jZWQgL3NiaW4vbm9sb2dpbgAA
+2026-07-31T19:30:17.2119641Z Requires(rpmlib): rpmlib(CompressedFileNames) <= 3.0.4-1 rpmlib(FileDigests) <= 4.6.0-1 rpmlib(PayloadFilesHavePrefix) <= 4.0-1
+2026-07-31T19:30:17.2120166Z Requires: /usr/bin/sh
+2026-07-31T19:30:17.2120899Z Obsoletes: fedora-logos < 43 fedora-logos-httpd < 43 fedora-release < 43 fedora-release-common < 43 fedora-release-identity < 43 system-logos < 43 system-logos-httpd < 43 system-release < 43
+2026-07-31T19:30:17.2121823Z Checking for unpackaged file(s): /usr/lib/rpm/check-files /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build/BUILDROOT
+2026-07-31T19:30:17.2205127Z warning: Installed (but unpackaged) file(s) found:
+2026-07-31T19:30:17.2224653Z    /etc/systemd/system/akmods-keygen@.service
+2026-07-31T19:30:17.2225217Z    /etc/systemd/system/akmods-keygen@akmods-keygen.service
+2026-07-31T19:30:17.2225653Z    /etc/systemd/system/akmods@.service
+2026-07-31T19:30:17.2226086Z    /etc/systemd/system/dkms.service
+2026-07-31T19:30:17.2726898Z Wrote: /root/rpmbuild/RPMS/noarch/ermete-base-config-1.0.0-7.fc43.noarch.rpm
+2026-07-31T19:30:17.2779045Z Executing(rmbuild): /bin/sh -e /var/tmp/rpm-tmp.rXmWuO
+2026-07-31T19:30:17.2801604Z + umask 022
+2026-07-31T19:30:17.2806134Z + cd /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build
+2026-07-31T19:30:17.2806691Z + test -d /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build
+2026-07-31T19:30:17.2807175Z + /usr/bin/chmod -Rf a+rX,u+w,g-w,o-w /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build
+2026-07-31T19:30:17.2817570Z + rm -rf /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build
+2026-07-31T19:30:17.2850342Z + RPM_EC=0
+2026-07-31T19:30:17.2852313Z ++ jobs -p
+2026-07-31T19:30:17.2853775Z + exit 0
+2026-07-31T19:30:17.2855952Z 
+2026-07-31T19:30:17.2856145Z RPM build warnings:
+2026-07-31T19:30:17.2856740Z     File listed twice: /usr/lib/systemd/system/bootc-fetch-apply-updates.service.d/override.conf
+2026-07-31T19:30:17.2857450Z     File listed twice: /usr/lib/systemd/system/nvidia-hibernate.service
+2026-07-31T19:30:17.2858065Z     File listed twice: /usr/lib/systemd/system/nvidia-powerd.service.d
+2026-07-31T19:30:17.2858721Z     File listed twice: /usr/lib/systemd/system/nvidia-powerd.service.d/laptop-only.conf
+2026-07-31T19:30:17.2859326Z     File listed twice: /usr/lib/systemd/system/nvidia-resume.service
+2026-07-31T19:30:17.2859931Z     File listed twice: /usr/lib/systemd/system/nvidia-suspend-then-hibernate.service
+2026-07-31T19:30:17.2860574Z     File listed twice: /usr/lib/systemd/system/nvidia-suspend.service
+2026-07-31T19:30:17.2861157Z     File listed twice: /usr/lib/systemd/system/scx_loader.service.d/10-ermete.conf
+2026-07-31T19:30:17.2861708Z     Installed (but unpackaged) file(s) found:
+2026-07-31T19:30:17.2862106Z    /etc/systemd/system/akmods-keygen@.service
+2026-07-31T19:30:17.2862554Z    /etc/systemd/system/akmods-keygen@akmods-keygen.service
+2026-07-31T19:30:17.2863028Z    /etc/systemd/system/akmods@.service
+2026-07-31T19:30:17.2863469Z    /etc/systemd/system/dkms.service
+2026-07-31T19:30:17.3180987Z Building target platforms: noarch
+2026-07-31T19:30:17.3181515Z Building for target noarch
+2026-07-31T19:30:17.3328863Z setting SOURCE_DATE_EPOCH=1785456000
+2026-07-31T19:30:17.3346260Z Executing(%mkbuilddir): /bin/sh -e /var/tmp/rpm-tmp.CjTvsC
+2026-07-31T19:30:17.3408401Z Executing(%prep): /bin/sh -e /var/tmp/rpm-tmp.Oimtlx
+2026-07-31T19:30:17.3422537Z + umask 022
+2026-07-31T19:30:17.3422925Z + cd /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build
+2026-07-31T19:30:17.3423287Z + RPM_EC=0
+2026-07-31T19:30:17.3424955Z ++ jobs -p
+2026-07-31T19:30:17.3426397Z + exit 0
+2026-07-31T19:30:17.3446387Z Executing(%build): /bin/sh -e /var/tmp/rpm-tmp.i51DDG
+2026-07-31T19:30:17.3460837Z + umask 022
+2026-07-31T19:30:17.3461112Z + cd /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build
+2026-07-31T19:30:17.3461698Z + export 'RUSTFLAGS=-C target-cpu=x86-64-v3 -C opt-level=3 -C codegen-units=1 -C link-arg=-fuse-ld=mold'
+2026-07-31T19:30:17.3462295Z + RUSTFLAGS='-C target-cpu=x86-64-v3 -C opt-level=3 -C codegen-units=1 -C link-arg=-fuse-ld=mold'
+2026-07-31T19:30:17.3462686Z + export CARGO_PROFILE_RELEASE_LTO=thin
+2026-07-31T19:30:17.3462934Z + CARGO_PROFILE_RELEASE_LTO=thin
+2026-07-31T19:30:17.3463178Z + export RUSTC_WRAPPER=sccache
+2026-07-31T19:30:17.3463439Z + RUSTC_WRAPPER=sccache
+2026-07-31T19:30:17.3463647Z + RPM_EC=0
+2026-07-31T19:30:17.3463813Z ++ jobs -p
+2026-07-31T19:30:17.3465847Z + exit 0
+2026-07-31T19:30:17.3505752Z Executing(%install): /bin/sh -e /var/tmp/rpm-tmp.TVGfeA
+2026-07-31T19:30:17.3520182Z + umask 022
+2026-07-31T19:30:17.3520528Z + cd /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build
+2026-07-31T19:30:17.3521095Z + '[' /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build/BUILDROOT '!=' / ']'
+2026-07-31T19:30:17.3521802Z + rm -rf /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build/BUILDROOT
+2026-07-31T19:30:17.3531469Z ++ dirname /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build/BUILDROOT
+2026-07-31T19:30:17.3537811Z + mkdir -p /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build
+2026-07-31T19:30:17.3550463Z + mkdir /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build/BUILDROOT
+2026-07-31T19:30:17.3567546Z + CFLAGS='-O3 -march=x86-64-v3 -mtune=generic -pipe -fno-semantic-interposition -falign-functions=32 -fno-math-errno -fno-trapping-math -mprefer-vector-width=256 -fPIC -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -flto=auto -ffat-lto-objects -fno-semantic-interposition -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer  '
+2026-07-31T19:30:17.3570470Z + export CFLAGS
+2026-07-31T19:30:17.3572933Z + CXXFLAGS='-O3 -march=x86-64-v3 -mtune=generic -pipe -fno-semantic-interposition -falign-functions=32 -fno-math-errno -fno-trapping-math -mprefer-vector-width=256 -fPIC -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -flto=auto -ffat-lto-objects -fno-semantic-interposition -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer  '
+2026-07-31T19:30:17.3575222Z + export CXXFLAGS
+2026-07-31T19:30:17.3577744Z + FFLAGS='-O3 -march=x86-64-v3 -mtune=generic -pipe -fno-semantic-interposition -falign-functions=32 -fno-math-errno -fno-trapping-math -mprefer-vector-width=256 -fPIC -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -flto=auto -ffat-lto-objects -fno-semantic-interposition -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -I/usr/lib/gfortran/modules  '
+2026-07-31T19:30:17.3580681Z + export FFLAGS
+2026-07-31T19:30:17.3584457Z + FCFLAGS='-O3 -march=x86-64-v3 -mtune=generic -pipe -fno-semantic-interposition -falign-functions=32 -fno-math-errno -fno-trapping-math -mprefer-vector-width=256 -fPIC -Wp,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -flto=auto -ffat-lto-objects -fno-semantic-interposition -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -I/usr/lib/gfortran/modules  '
+2026-07-31T19:30:17.3587796Z + export FCFLAGS
+2026-07-31T19:30:17.3588011Z + VALAFLAGS=-g
+2026-07-31T19:30:17.3588195Z + export VALAFLAGS
+2026-07-31T19:30:17.3588988Z + RUSTFLAGS='-Copt-level=3 -Cdebuginfo=2 -Ccodegen-units=1 -Cstrip=none -Cforce-frame-pointers=yes --cap-lints=warn'
+2026-07-31T19:30:17.3589464Z + export RUSTFLAGS
+2026-07-31T19:30:17.3590508Z + LDFLAGS='-Wl,-z,relro -Wl,--as-needed   -Wl,-z,now -specs=/usr/lib/rpm/redhat/redhat-hardened-ld -specs=/usr/lib/rpm/redhat/redhat-hardened-ld-errors -specs=/usr/lib/rpm/redhat/redhat-annobin-cc1  -Wl,--build-id=sha1   '
+2026-07-31T19:30:17.3591949Z + export LDFLAGS
+2026-07-31T19:30:17.3592401Z + LT_SYS_LIBRARY_PATH=/usr/lib:
+2026-07-31T19:30:17.3592808Z + export LT_SYS_LIBRARY_PATH
+2026-07-31T19:30:17.3593224Z + CC=gcc
+2026-07-31T19:30:17.3593502Z + export CC
+2026-07-31T19:30:17.3593781Z + CXX=g++
+2026-07-31T19:30:17.3594072Z + export CXX
+2026-07-31T19:30:17.3594665Z + mkdir -p /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build/BUILDROOT
+2026-07-31T19:30:17.3595711Z + find /root/rpmbuild/SOURCES -mindepth 1 -maxdepth 1 '!' -name '*.spec' -exec cp -a '{}' /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build/BUILDROOT/ ';'
+2026-07-31T19:30:17.3689532Z + mkdir -p /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build/BUILDROOT/usr/lib/tmpfiles.d
+2026-07-31T19:30:17.3703994Z + mv /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build/BUILDROOT/etc/tmpfiles.d/selinux-policy.conf /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build/BUILDROOT/usr/lib/tmpfiles.d/
+2026-07-31T19:30:17.3717723Z + rm -rf /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build/BUILDROOT/etc/tmpfiles.d
+2026-07-31T19:30:17.3728342Z + '[' '%{buildarch}' = noarch ']'
+2026-07-31T19:30:17.3728573Z + QA_CHECK_RPATHS=1
+2026-07-31T19:30:17.3728781Z + case "${QA_CHECK_RPATHS:-}" in
+2026-07-31T19:30:17.3729003Z + /usr/lib/rpm/check-rpaths
+2026-07-31T19:30:17.5243698Z + /usr/lib/rpm/check-buildroot
+2026-07-31T19:30:17.5307276Z + /usr/lib/rpm/redhat/brp-ldconfig
+2026-07-31T19:30:17.5354427Z + /usr/lib/rpm/brp-compress
+2026-07-31T19:30:17.5370378Z + /usr/lib/rpm/brp-strip /usr/bin/strip
+2026-07-31T19:30:17.5606706Z + /usr/lib/rpm/brp-strip-comment-note /usr/bin/strip /usr/bin/objdump
+2026-07-31T19:30:17.5711449Z + /usr/lib/rpm/redhat/brp-strip-lto /usr/bin/strip
+2026-07-31T19:30:17.5759390Z + /usr/lib/rpm/check-rpaths
+2026-07-31T19:30:17.7283683Z + /usr/lib/rpm/redhat/brp-mangle-shebangs
+2026-07-31T19:30:17.7457157Z + /usr/lib/rpm/brp-remove-la-files
+2026-07-31T19:30:17.7547390Z + /usr/lib/rpm/redhat/brp-python-rpm-in-distinfo
+2026-07-31T19:30:17.7583069Z + env /usr/lib/rpm/redhat/brp-python-bytecompile '' 1 0 -j16
+2026-07-31T19:30:17.7627798Z + /usr/lib/rpm/redhat/brp-python-hardlink
+2026-07-31T19:30:17.7662731Z + /usr/bin/add-determinism --brp -j16 /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build/BUILDROOT
+2026-07-31T19:30:17.7704728Z Scanned 36 directories and 46 files,
+2026-07-31T19:30:17.7705021Z                processed 0 inodes,
+2026-07-31T19:30:17.7705297Z                0 modified (0 replaced + 0 rewritten),
+2026-07-31T19:30:17.7705595Z                0 unsupported format, 0 errors
+2026-07-31T19:30:17.7712006Z Processing files: ermete-base-config-1.0.0-7.fc43.noarch
+2026-07-31T19:30:17.7730966Z warning: File listed twice: /usr/lib/systemd/system/bootc-fetch-apply-updates.service.d/override.conf
+2026-07-31T19:30:17.7731803Z warning: File listed twice: /usr/lib/systemd/system/nvidia-hibernate.service
+2026-07-31T19:30:17.7732381Z warning: File listed twice: /usr/lib/systemd/system/nvidia-powerd.service.d
+2026-07-31T19:30:17.7733018Z warning: File listed twice: /usr/lib/systemd/system/nvidia-powerd.service.d/laptop-only.conf
+2026-07-31T19:30:17.7733620Z warning: File listed twice: /usr/lib/systemd/system/nvidia-resume.service
+2026-07-31T19:30:17.7734501Z warning: File listed twice: /usr/lib/systemd/system/nvidia-suspend-then-hibernate.service
+2026-07-31T19:30:17.7735147Z warning: File listed twice: /usr/lib/systemd/system/nvidia-suspend.service
+2026-07-31T19:30:17.7735738Z warning: File listed twice: /usr/lib/systemd/system/scx_loader.service.d/10-ermete.conf
+2026-07-31T19:30:17.8109625Z Provides: ermete-base-config = 1.0.0-7.fc43 fedora-logos = 1.0.0-7.fc43 fedora-logos-httpd = 1.0.0-7.fc43 fedora-release = 1.0.0-7.fc43 fedora-release-common = 1.0.0-7.fc43 fedora-release-identity = 1.0.0-7.fc43 group(adm) = ZyBhZG0gNCAt group(akmods) group(akmods) = ZyBha21vZHMgLSAt group(audio) = ZyBhdWRpbyA2MyAt group(disk) = ZyBkaXNrIDYgLQAA group(input) = ZyBpbnB1dCAxMDQgLQAA group(kvm) = ZyBrdm0gMzYgLQAA group(nvidia-persistenced) group(nvidia-persistenced) = ZyBudmlkaWEtcGVyc2lzdGVuY2VkIC0gLQAA group(render) = ZyByZW5kZXIgMzI2IC0A group(sgx) = ZyBzZ3ggLSAt group(utmp) = ZyB1dG1wIDIyIC0A group(video) = ZyB2aWRlbyAzOSAt system-logos = 1.0.0-7.fc43 system-logos-httpd = 1.0.0-7.fc43 system-release = 1.0.0-7.fc43 user(akmods) = dSBha21vZHMgLSAiVXNlciBmb3IgYWttb2RzIiAvdmFyL2NhY2hlL2FrbW9kcyAvc2Jpbi9ub2xvZ2lu user(nvidia-persistenced) = dSBudmlkaWEtcGVyc2lzdGVuY2VkIC0gIk5WSURJQSBkYWVtb24iIC92YXIvcnVuL252aWRpYS1wZXJzaXN0ZW5jZWQgL3NiaW4vbm9sb2dpbgAA
+2026-07-31T19:30:17.8112973Z Requires(rpmlib): rpmlib(CompressedFileNames) <= 3.0.4-1 rpmlib(FileDigests) <= 4.6.0-1 rpmlib(PayloadFilesHavePrefix) <= 4.0-1
+2026-07-31T19:30:17.8113457Z Requires: /usr/bin/sh
+2026-07-31T19:30:17.8114201Z Obsoletes: fedora-logos < 43 fedora-logos-httpd < 43 fedora-release < 43 fedora-release-common < 43 fedora-release-identity < 43 system-logos < 43 system-logos-httpd < 43 system-release < 43
+2026-07-31T19:30:17.8115088Z Checking for unpackaged file(s): /usr/lib/rpm/check-files /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build/BUILDROOT
+2026-07-31T19:30:17.8187049Z warning: Installed (but unpackaged) file(s) found:
+2026-07-31T19:30:17.8187740Z    /etc/systemd/system/akmods-keygen@.service
+2026-07-31T19:30:17.8191236Z    /etc/systemd/system/akmods-keygen@akmods-keygen.service
+2026-07-31T19:30:17.8191898Z    /etc/systemd/system/akmods@.service
+2026-07-31T19:30:17.8192576Z    /etc/systemd/system/dkms.service
+2026-07-31T19:30:17.8734958Z Wrote: /root/rpmbuild/RPMS/noarch/ermete-base-config-1.0.0-7.fc43.noarch.rpm
+2026-07-31T19:30:17.8754670Z Executing(rmbuild): /bin/sh -e /var/tmp/rpm-tmp.2kS1EN
+2026-07-31T19:30:17.8775492Z + umask 022
+2026-07-31T19:30:17.8775961Z + cd /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build
+2026-07-31T19:30:17.8776631Z + test -d /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build
+2026-07-31T19:30:17.8777328Z + /usr/bin/chmod -Rf a+rX,u+w,g-w,o-w /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build
+2026-07-31T19:30:17.8791876Z + rm -rf /root/rpmbuild/BUILD/ermete-base-config-1.0.0-build
+2026-07-31T19:30:17.8822549Z + RPM_EC=0
+2026-07-31T19:30:17.8825045Z ++ jobs -p
+2026-07-31T19:30:17.8826334Z + exit 0
+2026-07-31T19:30:17.8828578Z 
+2026-07-31T19:30:17.8828718Z RPM build warnings:
+2026-07-31T19:30:17.8829379Z     File listed twice: /usr/lib/systemd/system/bootc-fetch-apply-updates.service.d/override.conf
+2026-07-31T19:30:17.8829963Z     File listed twice: /usr/lib/systemd/system/nvidia-hibernate.service
+2026-07-31T19:30:17.8830431Z     File listed twice: /usr/lib/systemd/system/nvidia-powerd.service.d
+2026-07-31T19:30:17.8830972Z     File listed twice: /usr/lib/systemd/system/nvidia-powerd.service.d/laptop-only.conf
+2026-07-31T19:30:17.8831495Z     File listed twice: /usr/lib/systemd/system/nvidia-resume.service
+2026-07-31T19:30:17.8831989Z     File listed twice: /usr/lib/systemd/system/nvidia-suspend-then-hibernate.service
+2026-07-31T19:30:17.8832479Z     File listed twice: /usr/lib/systemd/system/nvidia-suspend.service
+2026-07-31T19:30:17.8832959Z     File listed twice: /usr/lib/systemd/system/scx_loader.service.d/10-ermete.conf
+2026-07-31T19:30:17.8833379Z     Installed (but unpackaged) file(s) found:
+2026-07-31T19:30:17.8833692Z    /etc/systemd/system/akmods-keygen@.service
+2026-07-31T19:30:17.8834034Z    /etc/systemd/system/akmods-keygen@akmods-keygen.service
+2026-07-31T19:30:17.8834459Z    /etc/systemd/system/akmods@.service
+2026-07-31T19:30:17.8834733Z    /etc/systemd/system/dkms.service

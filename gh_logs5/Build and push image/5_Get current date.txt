@@ -1,0 +1,11 @@
+﻿2026-08-01T02:11:14.7628359Z ##[group]Run echo "date=$(date -u +%Y\-%m\-%d\T%H\:%M\:%S\Z)" >> $GITHUB_OUTPUT
+2026-08-01T02:11:14.7628924Z [36;1mecho "date=$(date -u +%Y\-%m\-%d\T%H\:%M\:%S\Z)" >> $GITHUB_OUTPUT[0m
+2026-08-01T02:11:14.7658397Z shell: /usr/bin/bash -e {0}
+2026-08-01T02:11:14.7658658Z env:
+2026-08-01T02:11:14.7658916Z   IMAGE_DESC: Ermete OS - Immutable Cloud-Native System
+2026-08-01T02:11:14.7659278Z   IMAGE_KEYWORDS: bootc,fedora,Ermete,immutable
+2026-08-01T02:11:14.7659573Z   IMAGE_LOGO_URL: 
+2026-08-01T02:11:14.7659796Z   IMAGE_NAME: ermete-os-system
+2026-08-01T02:11:14.7660048Z   IMAGE_REGISTRY: ghcr.io/hr-mes
+2026-08-01T02:11:14.7660299Z   DEFAULT_TAG: latest
+2026-08-01T02:11:14.7660510Z ##[endgroup]
