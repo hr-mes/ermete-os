@@ -172,13 +172,19 @@ fi
 echo ">>> Pulizia patch obsolete (ntsync è upstream in 6.14)..."
 rm -f SOURCES/*ntsync*.patch || true
 
-echo ">>> Download del profilo ChromeOS AFDO..."
-AFDO_URL="https://storage.googleapis.com/chromeos-localmirror/distfiles/chromeos-kernel-5_15-afdo.prof.xz"
-if curl -sfLo SOURCES/chromeos.afdo.xz "$AFDO_URL" && xz -df SOURCES/chromeos.afdo.xz; then
-    echo ">>> Profilo AFDO scaricato e decodificato con successo."
+echo ">>> Download del profilo ChromeOS AFDO (Risoluzione Dinamica)..."
+AFDO_VER=$(echo "$TARGET_KERNEL_VER" | tr '.' '_')
+AFDO_URL="https://storage.googleapis.com/chromeos-localmirror/distfiles/chromeos-kernel-${AFDO_VER}-afdo.prof.xz"
+if ! curl -sfLo SOURCES/chromeos.afdo.xz "$AFDO_URL"; then
+    echo "    [WARN] Profilo AFDO ${AFDO_VER} non trovato. Fallback su 5.15..."
+    AFDO_URL="https://storage.googleapis.com/chromeos-localmirror/distfiles/chromeos-kernel-5_15-afdo.prof.xz"
+    curl -sfLo SOURCES/chromeos.afdo.xz "$AFDO_URL" || true
+fi
+
+if [ -f SOURCES/chromeos.afdo.xz ] && xz -df SOURCES/chromeos.afdo.xz; then
+    echo "    -> Profilo AFDO scaricato e decompresso in SOURCES/chromeos.afdo"
 else
-    echo ">>> ATTENZIONE: Download del profilo AFDO fallito (404/Not Found). Procedo senza AutoFDO per questa build."
-    # Il flag verrà rimosso dinamicamente nella fase di patching del file .spec
+    echo "    [WARN] Fallito il download del profilo AFDO. Procedo senza PGO."
     rm -f SOURCES/chromeos.afdo.xz SOURCES/chromeos.afdo
 fi
 
@@ -190,8 +196,8 @@ sed -i 's/\(.*\)make ARCH/\1make LLVM=1 LLVM_IAS=1 ARCH/g' SPECS/kernel.spec
 echo "========================================================="
 echo " FASE 3: TUNING KCONFIG (Bedrock Kbuild Merge_Config)"
 echo "========================================================="
-# [BEDROCK FIX] Utilizzo di Kconfig Fragment formale invece di `sed` per validare le dipendenze
-cat << 'BEDROCK_CFG' > SOURCES/ermete-bedrock.cfg
+# [BEDROCK FIX] Utilizzo di kernel-local nativo (Fedora-Way) invece di hacking manuale
+cat << 'BEDROCK_CFG' > SOURCES/kernel-local
 # --- ERMETE FORGE: ZEN/LIQUORIX TUNING ---
 CONFIG_HZ_1000=y
 CONFIG_HZ=1000
@@ -225,10 +231,12 @@ CONFIG_LRU_GEN_ENABLED=y
 CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3=y
 # CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE is not set
 
-# [BEDROCK FIX] ThinLTO Riattivato in modalità Furia.
-CONFIG_LTO_CLANG_THIN=y
+# [BEDROCK FIX] Upgrade estremo: FullLTO abilitato come richiesto.
+CONFIG_LTO_CLANG_FULL=y
 CONFIG_LTO_CLANG=y
 CONFIG_LTO=y
+# Disabilitiamo ThinLTO per evitare conflitti con FullLTO
+# CONFIG_LTO_CLANG_THIN is not set
 
 CONFIG_AUTOFDO_CLANG=y
 
@@ -312,6 +320,13 @@ CONFIG_DAMON_RECLAIM=y
 CONFIG_BCACHEFS_FS=y
 CONFIG_BCACHEFS_QUOTA=y
 
+# 5. Compressione Memoria ZSTD (Massima densità e velocità RAM)
+CONFIG_ZRAM_DEF_COMP_ZSTD=y
+# CONFIG_ZRAM_DEF_COMP_LZORLE is not set
+CONFIG_ZSWAP_COMPRESSOR_DEFAULT_ZSTD=y
+# CONFIG_ZSWAP_COMPRESSOR_DEFAULT_LZO is not set
+CONFIG_CFI_CLANG=y
+
 # --- ERMETE FORGE: 64 PILASTRI KSPP HARDENING ---
 # [BEDROCK DISARM] Rimosse le feature draconiane (INIT_ON_ALLOC, RANDOM_FREELIST) per liberare CPU/RAM.
 CONFIG_FORTIFY_SOURCE=y
@@ -332,10 +347,6 @@ CONFIG_SECURITY_YAMA=y
 # CONFIG_MSI_WMI is not set
 # CONFIG_MSI_WMI_PLATFORM is not set
 BEDROCK_CFG
-
-for conf in SOURCES/kernel-x86_64*.config; do
-    cat SOURCES/ermete-bedrock.cfg >> "$conf"
-done
 
 
 echo ">>> Generazione ~/.rpmmacros locale esclusivo per KERNEL..."
