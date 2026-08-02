@@ -2,7 +2,7 @@
 lang en_US.UTF-8
 keyboard it
 timezone Europe/Rome --isUtc
-bootloader --append="quiet splash fastboot"
+bootloader --append="quiet splash fastboot mitigations=off iommu=pt zswap.enabled=1 zswap.compressor=zstd rootflags=noatime"
 
 # OCI Image Provisioning
 ostreecontainer --url=ghcr.io/hr-mes/ermete-os-system:latest --transport=registry
