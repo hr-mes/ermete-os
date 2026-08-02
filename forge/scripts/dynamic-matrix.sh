@@ -141,3 +141,4 @@ echo "upstream_desktop=${J_U_DESK}"
 echo "upstream_media=${J_U_MEDIA}"
 echo "upstream_cli=${J_U_CLI}"
 echo "has_changes=${HAS_CHANGES}"
+# Trigger Orchestrator again
