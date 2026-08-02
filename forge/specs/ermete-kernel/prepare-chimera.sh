@@ -347,7 +347,7 @@ fi
 
 cat << 'EOF' >> ~/.rpmmacros
 %_with_vanilla 1
-%buildid .chimera
+%buildid .chimera2
 %toolchain clang
 %__make /usr/bin/make LLVM=1 LLVM_IAS=1 KCFLAGS="-Wno-error -Wno-unknown-warning-option -fprofile-sample-use=$RPMBUILD_DIR/SOURCES/chromeos.afdo" KBUILD_CFLAGS="-Wno-error -Wno-unknown-warning-option"
 %__cc clang
