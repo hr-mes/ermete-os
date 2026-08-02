@@ -158,6 +158,9 @@ done
 echo "=== Post-Processing: Deduplicating RPMs (Keeping Latest) ==="
 # In case of leftover duplicates from parallel jobs, keep only the latest version of each RPM
 for tier in tier0 tier1 tier2 tier3; do
+  # Prima passata speciale: eliminiamo esplicitamente il kernel 7.0.0-rc5 che è rimasto bloccato nella cache
+  find repo-cache/repo-${tier}/ -type f -name "*kernel*-7.0.0*.rpm" -delete
+
   # First pass: if ermete-kernel exists anywhere in this tier, purge all old 'kernel' packages
   for prefix in kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-modules-internal kernel-uki-virt kernel-uki-virt-addons kernel-devel kernel-devel-matched; do
     if find repo-cache/repo-${tier}/ -type f -name "ermete-kernel-[0-9]*.rpm" | grep -q .; then
