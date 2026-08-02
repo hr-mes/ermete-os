@@ -106,6 +106,26 @@ if [ -z "$TARGET_RELEASEVER" ]; then
     exit 1
 fi
 
+echo ">>> [BEDROCK SECURE] Scansione PGO: Ricerca dell'AFDO Profile matematicamente più vicino..."
+TARGET_AFDO_URL=""
+AFDO_MAJOR=$(echo "$TARGET_KERNEL_VER" | cut -d. -f1)
+AFDO_MINOR=$(echo "$TARGET_KERNEL_VER" | cut -d. -f2)
+
+# Scansione a ritroso per trovare l'AFDO più recente disponibile
+for (( m=$AFDO_MINOR; m>=0; m-- )); do
+    TRY_URL="https://storage.googleapis.com/chromeos-localmirror/distfiles/chromeos-kernel-${AFDO_MAJOR}_${m}-afdo.prof.xz"
+    if curl -sI "$TRY_URL" | head -n 1 | grep -q "200 OK"; then
+        TARGET_AFDO_URL="$TRY_URL"
+        echo "    -> MATCH AFDO TROVATO: ${AFDO_MAJOR}.${m}"
+        break
+    fi
+done
+
+if [ -z "$TARGET_AFDO_URL" ]; then
+    echo "    [WARN] Nessun profilo AFDO della serie ${AFDO_MAJOR}.x trovato. Fallback assoluto su 5.15..."
+    TARGET_AFDO_URL="https://storage.googleapis.com/chromeos-localmirror/distfiles/chromeos-kernel-5_15-afdo.prof.xz"
+fi
+
 if [[ "$MODE" == "meta" ]]; then
     # Hashiamo SOLO i file patch che verranno fusi nel kernel
     CACHY_PATCH_HASH=$(find "/tmp/cachyos-patches/$TARGET_KERNEL_VER/" -type f -name "*.patch" -exec sha256sum {} + | sort | sha256sum | awk '{print $1}')
@@ -172,13 +192,11 @@ fi
 echo ">>> Pulizia patch obsolete (ntsync è upstream in 6.14)..."
 rm -f SOURCES/*ntsync*.patch || true
 
-echo ">>> Download del profilo ChromeOS AFDO (Risoluzione Dinamica)..."
-AFDO_VER=$(echo "$TARGET_KERNEL_VER" | tr '.' '_')
-AFDO_URL="https://storage.googleapis.com/chromeos-localmirror/distfiles/chromeos-kernel-${AFDO_VER}-afdo.prof.xz"
-if ! curl -sfLo SOURCES/chromeos.afdo.xz "$AFDO_URL"; then
-    echo "    [WARN] Profilo AFDO ${AFDO_VER} non trovato. Fallback su 5.15..."
-    AFDO_URL="https://storage.googleapis.com/chromeos-localmirror/distfiles/chromeos-kernel-5_15-afdo.prof.xz"
-    curl -sfLo SOURCES/chromeos.afdo.xz "$AFDO_URL" || true
+echo ">>> Download del profilo ChromeOS AFDO..."
+if ! curl -sfLo SOURCES/chromeos.afdo.xz "$TARGET_AFDO_URL"; then
+    echo "    [WARN] Fallito il download dall'URL confermato. Riprovo con 5.15..."
+    TARGET_AFDO_URL="https://storage.googleapis.com/chromeos-localmirror/distfiles/chromeos-kernel-5_15-afdo.prof.xz"
+    curl -sfLo SOURCES/chromeos.afdo.xz "$TARGET_AFDO_URL" || true
 fi
 
 if [ -f SOURCES/chromeos.afdo.xz ] && xz -df SOURCES/chromeos.afdo.xz; then
