@@ -106,25 +106,7 @@ if [ -z "$TARGET_RELEASEVER" ]; then
     exit 1
 fi
 
-echo ">>> [BEDROCK SECURE] Scansione PGO: Ricerca dell'AFDO Profile matematicamente più vicino..."
-TARGET_AFDO_URL=""
-AFDO_MAJOR=$(echo "$TARGET_KERNEL_VER" | cut -d. -f1)
-AFDO_MINOR=$(echo "$TARGET_KERNEL_VER" | cut -d. -f2)
-
-# Scansione a ritroso per trovare l'AFDO più recente disponibile
-for (( m=$AFDO_MINOR; m>=0; m-- )); do
-    TRY_URL="https://storage.googleapis.com/chromeos-localmirror/distfiles/chromeos-kernel-${AFDO_MAJOR}_${m}-afdo.prof.xz"
-    if curl -sI "$TRY_URL" | head -n 1 | grep -q "200 OK"; then
-        TARGET_AFDO_URL="$TRY_URL"
-        echo "    -> MATCH AFDO TROVATO: ${AFDO_MAJOR}.${m}"
-        break
-    fi
-done
-
-if [ -z "$TARGET_AFDO_URL" ]; then
-    echo "    [WARN] Nessun profilo AFDO della serie ${AFDO_MAJOR}.x trovato. Fallback assoluto su 5.15..."
-    TARGET_AFDO_URL="https://storage.googleapis.com/chromeos-localmirror/distfiles/chromeos-kernel-5_15-afdo.prof.xz"
-fi
+# AFDO Profile URL lookup is now fully dynamic via ChromiumOS ebuild scraping in FASE 2
 
 if [[ "$MODE" == "meta" ]]; then
     # Hashiamo SOLO i file patch che verranno fusi nel kernel
@@ -192,11 +174,30 @@ fi
 echo ">>> Pulizia patch obsolete (ntsync è upstream in 6.14)..."
 rm -f SOURCES/*ntsync*.patch || true
 
-echo ">>> Download del profilo ChromeOS AFDO..."
-if ! curl -sfLo SOURCES/chromeos.afdo.xz "$TARGET_AFDO_URL"; then
-    echo "    [WARN] Fallito il download dall'URL confermato. Riprovo con 5.15..."
-    TARGET_AFDO_URL="https://storage.googleapis.com/chromeos-localmirror/distfiles/chromeos-kernel-5_15-afdo.prof.xz"
-    curl -sfLo SOURCES/chromeos.afdo.xz "$TARGET_AFDO_URL" || true
+echo ">>> Download del profilo ChromeOS AFDO dinamico (da ChromiumOS Tree)..."
+TARGET_AFDO_URL=""
+for KVER in 6_12 6_6 6_1 5_15; do
+    echo "    Controllo repository ChromiumOS per kernel $KVER..."
+    EBUILD_FILE=$(curl -sL "https://chromium.googlesource.com/chromiumos/overlays/chromiumos-overlay/+/main/sys-kernel/chromeos-kernel-${KVER}/?format=TEXT" | base64 -d | grep -Eo "chromeos-kernel-${KVER}-[0-9\.\-r]+\.ebuild" | grep -v 9999 | head -n 1 || true)
+    
+    if [ -n "$EBUILD_FILE" ]; then
+        AFDO_VER=$(curl -sL "https://chromium.googlesource.com/chromiumos/overlays/chromiumos-overlay/+/main/sys-kernel/chromeos-kernel-${KVER}/${EBUILD_FILE}?format=TEXT" | base64 -d | grep -i '^AFDO_PROFILE_VERSION=' | cut -d'"' -f2 || true)
+        if [ -n "$AFDO_VER" ]; then
+            KVER_DOT="${KVER/_/.}"
+            TARGET_AFDO_URL="https://storage.googleapis.com/chromeos-prebuilt/afdo-job/cwp/kernel/amd64/${KVER_DOT}/${AFDO_VER}.afdo.xz"
+            echo "    -> Trovato URL valido: $TARGET_AFDO_URL"
+            break
+        fi
+    fi
+done
+
+if [ -n "$TARGET_AFDO_URL" ]; then
+    if ! curl -sfLo SOURCES/chromeos.afdo.xz "$TARGET_AFDO_URL"; then
+        echo "    [WARN] Fallito il download dall'URL generato. Procedo senza PGO."
+        rm -f SOURCES/chromeos.afdo.xz
+    fi
+else
+    echo "    [WARN] Nessun URL AFDO trovato. Procedo senza PGO."
 fi
 
 if [ -f SOURCES/chromeos.afdo.xz ] && xz -df SOURCES/chromeos.afdo.xz; then
@@ -249,12 +250,12 @@ CONFIG_LRU_GEN_ENABLED=y
 CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3=y
 # CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE is not set
 
-# [BEDROCK FIX] Upgrade estremo: FullLTO abilitato come richiesto.
-CONFIG_LTO_CLANG_FULL=y
+# [BEDROCK FIX] Rollback a ThinLTO per evitare incompatibilità Kconfig con Objtool e Fedora defaults.
+CONFIG_LTO_CLANG_THIN=y
 CONFIG_LTO_CLANG=y
 CONFIG_LTO=y
-# Disabilitiamo ThinLTO per evitare conflitti con FullLTO
-# CONFIG_LTO_CLANG_THIN is not set
+# Disabilitiamo FullLTO per evitare conflitti con Objtool e Retpoline
+# CONFIG_LTO_CLANG_FULL is not set
 
 CONFIG_AUTOFDO_CLANG=y
 
