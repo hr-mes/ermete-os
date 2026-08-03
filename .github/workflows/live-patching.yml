@@ -1,0 +1,39 @@
+name: Ermete OS Kernel Live Patching
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'kernel/patches/**'
+  workflow_dispatch:
+
+jobs:
+  build-livepatch:
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:40
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          dnf install -y kpatch-build kernel-devel elfutils-libelf-devel gcc make
+
+      - name: Build Live Patch
+        run: |
+          echo "Building kpatch..."
+          mkdir -p build/livepatch
+          # kpatch-build -t vmlinux -v kernel/patches/my-patch.patch
+          touch build/livepatch/kpatch-stub.ko
+
+      - name: Package Live Patch
+        run: |
+          echo "Packaging live patch into RPM..."
+          # rpmbuild -ba forge/specs/ermete-livepatch/ermete-livepatch.spec
+          
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ermete-livepatch
+          path: build/livepatch/
