@@ -6,6 +6,14 @@
 # Disable debug subpackages globally for Ermete Forge builds
 %debug_package %{nil}
 
+# DIET PACKAGE AUDIT - RPM PAYLOAD & DOC EXCLUSION
+# Massima compressione Payload RPM tramite ZSTD Level 19 (con multi-threading T0)
+%_binary_payload w19T0.zstdio
+%_source_payload w19T0.zstdio
+
+# Disabilitazione assoluta di documentazione, man pages e info pages nei pacchetti RPM
+%_excludedocs 1
+
 # Ignora i file decompressi ma non pacchettizzati (necessario per Ponytail Ultra che rimuove %doc)
 %_unpackaged_files_terminate_build 0
 
@@ -43,7 +51,7 @@
 # lto=thin: ThinLTO per bilanciare tempi di link e performance
 # codegen-units=1: Piattaforma singola per max LTO puro (lento ma potente)
 # link-arg=-fuse-ld=mold: Linker mold anche su Rust
-%rustflags -C target-cpu=x86-64-v3 -C opt-level=3 -C codegen-units=16 -C link-arg=-fuse-ld=mold
+%rustflags -C target-cpu=x86-64-v3 -C opt-level=3 -C codegen-units=16 -C strip=symbols -C link-arg=-fuse-ld=mold
 
 # =========================================================================
 # MULTITHREADING
@@ -58,6 +66,8 @@
 %__spec_build_pre %{___build_pre}\
   export RUSTFLAGS="%{rustflags}"\
   export CARGO_PROFILE_RELEASE_LTO="thin"\
+  export CARGO_PROFILE_RELEASE_PANIC="abort"\
+  export CARGO_PROFILE_RELEASE_STRIP="symbols"\
   export RUSTC_WRAPPER=sccache\
   export SCCACHE_DIRECT=true\
   export SCCACHE_CACHE_SIZE="10G"
