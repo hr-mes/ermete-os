@@ -16,6 +16,7 @@ members = [
     "forge/specs/ermete-store-rs/ermete-store-rs-1.0.0",
     "forge/specs/ermete-telemetry-rs/ermete-telemetry-rs-1.0.0",
     "forge/specs/ermete-updater-rs/ermete-updater-rs-1.0.0",
-    "forge/specs/ermete-xdg-desktop-portal-ermete/xdg-desktop-portal-ermete-1.0.0"
+    "forge/specs/ermete-xdg-desktop-portal-ermete/xdg-desktop-portal-ermete-1.0.0",
+    "forge/specs/ermete-style"
 ]
 resolver = "2"
