@@ -4,7 +4,7 @@ use crate::ui::control_center::bluetooth::show_bluetooth_popover;
 use crate::ui::control_center::sysmon::show_system_monitor_modal;
 use crate::ui::control_center::widgets::{build_cc_compact_tile, build_cc_row, build_cc_row_content};
 use crate::ui::control_center::wifi::show_wifi_popover;
-use crate::ui::topbar::setup_popup_autoclose;
+use crate::ui::popup_manager::setup_popup_autoclose;
 use glib::clone;
 use gtk4::prelude::*;
 use gtk4::{Align, Application, ApplicationWindow, Box as GtkBox, Button, Label, Orientation, Scale};

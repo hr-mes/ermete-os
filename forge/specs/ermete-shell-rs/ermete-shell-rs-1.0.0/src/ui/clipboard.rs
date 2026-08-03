@@ -136,7 +136,7 @@ pub fn show_clipboard_modal(app: &Application) {
     container.append(&scroll);
     window.set_child(Some(&container));
 
-    crate::ui::topbar::setup_popup_autoclose(&window, "clipboard");
+    crate::ui::popup_manager::setup_popup_autoclose(&window, "clipboard");
 
     window.present();
 }

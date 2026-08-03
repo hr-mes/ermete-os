@@ -1,7 +1,7 @@
 use gtk4::prelude::*;
 use gtk4::{Align, Application, ApplicationWindow, Box as GtkBox, Button, Entry, Image, Label, Orientation, ScrolledWindow};
 use gtk4_layer_shell::{Edge, Layer, LayerShell};
-use crate::ui::topbar::setup_popup_autoclose;
+use crate::ui::popup_manager::setup_popup_autoclose;
 use gtk4::gio::AppInfo;
 use std::cell::RefCell;
 use std::time::Instant;

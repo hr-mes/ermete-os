@@ -11,3 +11,4 @@ pub mod privacy_prompt;
 pub mod mission_control;
 pub mod desktop_widgets;
 pub mod store;
+pub mod popup_manager;

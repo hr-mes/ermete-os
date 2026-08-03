@@ -3,7 +3,7 @@ use gtk4::prelude::*;
 use gtk4::{Align, Application, ApplicationWindow, Box as GtkBox, Button, FlowBox, Image, Label, Orientation, ScrolledWindow, Widget};
 use gtk4_layer_shell::{Edge, Layer, LayerShell};
 use crate::core::dock_watcher::{fetch_current_niri_windows, fetch_current_workspaces};
-use crate::ui::topbar::setup_popup_autoclose;
+use crate::ui::popup_manager::setup_popup_autoclose;
 
 fn get_icon_for_app_id(app_id: &str) -> String {
     let clean = app_id.trim_end_matches(".desktop").to_lowercase();

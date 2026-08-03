@@ -136,7 +136,7 @@ pub fn show_powermenu_modal(app: &Application) {
     container.append(&btn_box);
     window.set_child(Some(&container));
 
-    crate::ui::topbar::setup_popup_autoclose(&window, "powermenu");
+    crate::ui::popup_manager::setup_popup_autoclose(&window, "powermenu");
 
     window.present();
 }
