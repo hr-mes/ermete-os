@@ -1,0 +1,83 @@
+# ==============================================================================
+# 🌋 Ermete Forge - Task Runner (Justfile)
+# Centralized command runner for build pipelines, kernel engineering, and CI/CD
+# ==============================================================================
+
+[private]
+default:
+    @just --list
+
+# Compiles an upstream RPM package locally in a rolling build environment with dnf and custom rpmmacros
+[group('Package Build')]
+build-rolling package:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    bash scripts/build_rolling_local.sh "{{ package }}"
+
+# Checks if a package OCI container image already exists on GHCR using deterministic SHA-256 hashing
+[group('CI/CD Pipeline')]
+check-idempotency package registry="ghcr.io" owner="hr-mes" image_name="" base_digest="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    ARGS=("--package" "{{ package }}" "--registry" "{{ registry }}" "--owner" "{{ owner }}")
+    if [ -n "{{ image_name }}" ]; then ARGS+=("--image-name" "{{ image_name }}"); fi
+    if [ -n "{{ base_digest }}" ]; then ARGS+=("--base-digest" "{{ base_digest }}"); fi
+    bash scripts/check_idempotency.sh "${ARGS[@]}"
+
+# Evaluates package arrays from config/packages.json and outputs dynamic GitHub Actions build matrix JSON
+[group('CI/CD Pipeline')]
+dynamic-matrix:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    bash scripts/dynamic-matrix.sh
+
+# Downloads and extracts micro-container RPM images (Tier 0-3) from GHCR, deduplicating versions
+[group('CI/CD Pipeline')]
+fetch-repo-rpms owner="hr-mes":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    bash scripts/fetch_repo_rpms.sh "{{ owner }}"
+
+# Fetches upstream kernel SRPM, applies CachyOS BORE patches, computes NVIDIA shield ceiling, and merges Kconfig tuning
+[group('Kernel Build')]
+kernel-prepare mode="full":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ "{{ mode }}" = "meta" ]; then
+        bash specs/ermete-kernel/prepare-chimera.sh --meta
+    else
+        bash specs/ermete-kernel/prepare-chimera.sh
+    fi
+
+# Runs containerized local build of Chimera kernel with Clang/ThinLTO inside a privileged Fedora 43 OCI container
+[group('Kernel Build')]
+kernel-build-local:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    bash specs/ermete-kernel/build-local.sh
+
+# Validates NVIDIA kernel module loading (nvidia, uvm, drm, modeset) and GPU device nodes
+[group('QA & Validation')]
+test-nvidia-modules:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    bash specs/ermete-qa/SOURCES/test-nvidia-modules.sh
+
+# Runs shellcheck on all Bash scripts in forge/
+[group('Utility')]
+lint:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    find . -iname "*.sh" -type f -exec shellcheck "{}" +
+
+# Runs shfmt on all Bash scripts in forge/
+[group('Utility')]
+format:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    find . -iname "*.sh" -type f -exec shfmt --write "{}" +
+
+# Validates Justfile syntax
+[group('Utility')]
+check-syntax:
+    just --unstable --fmt --check -f Justfile
