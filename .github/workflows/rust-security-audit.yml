@@ -11,7 +11,7 @@ jobs:
     name: Enforce Safety & Cargo Vet Audit
     runs-on: ubuntu-latest
     container:
-      image: fedora:41
+      image: fedora:43
     steps:
       - name: Install System Dependencies
         run: dnf install -y git gcc gcc-c++ gtk4-devel glib2-devel gtk4-layer-shell-devel pkgconf-pkg-config

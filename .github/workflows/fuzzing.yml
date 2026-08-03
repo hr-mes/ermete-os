@@ -35,7 +35,7 @@ jobs:
   fuzz:
     name: 🎯 Fuzz ${{ matrix.component }}
     runs-on: ubuntu-24.04
-    container: fedora:41
+    container: fedora:43
     permissions:
       contents: read
       security-events: write
