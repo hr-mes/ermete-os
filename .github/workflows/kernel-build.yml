@@ -32,9 +32,9 @@ jobs:
       uses: actions/cache@v4
       with:
         path: .ccache_local
-        key: kernel-ccache-${{ github.sha }}
+        key: kernel-ccache-${{ runner.os }}-${{ hashFiles('forge/specs/ermete-kernel/**') }}
         restore-keys: |
-          kernel-ccache-
+          kernel-ccache-${{ runner.os }}-
 
     - name: 🚀 Boot Isolator (Start Ermete Builder Container)
       run: |
@@ -43,6 +43,7 @@ jobs:
           --cap-add SYS_ADMIN \
           --security-opt label=disable \
           --security-opt seccomp=unconfined \
+          --userns=keep-id \
           -v ${{ github.workspace }}:/forge \
           -w /forge \
           ghcr.io/hr-mes/ermete-os-builder:latest sleep infinity
@@ -90,7 +91,6 @@ jobs:
       if: always()
       run: |
         podman rm -f chimera-builder || true
-        sudo chown -R $USER:$USER .ccache_local || true
           
     - name: Upload Binary RPMs
       uses: actions/upload-artifact@v4

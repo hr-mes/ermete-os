@@ -41,7 +41,7 @@ defaults:
 jobs:
   build:
     name: Build disk images
-    runs-on: ${{ (github.event_name != 'pull_request' && inputs.platform == 'amd64') && 'ubuntu-24.04' || (github.event_name == 'pull_request' && 'ubuntu-24.04' || 'ubuntu-24.04-arm') }}
+    runs-on: ${{ (github.event_name == 'workflow_dispatch' && inputs.platform == 'arm64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     strategy:
       fail-fast: false
       matrix:
@@ -91,7 +91,7 @@ jobs:
         with:
           path: ${{ steps.build.outputs.output-directory }}
           if-no-files-found: error
-          retention-days: 0
+          retention-days: 7
           compression-level: 0
           overwrite: true
       

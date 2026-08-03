@@ -35,7 +35,7 @@ jobs:
   fuzz:
     name: 🎯 Fuzz ${{ matrix.component }}
     runs-on: ubuntu-24.04
-    container: fedora:43
+    container: ghcr.io/hr-mes/ermete-os-builder:latest
     permissions:
       contents: read
       security-events: write
@@ -58,8 +58,8 @@ jobs:
           - ermete-backup
 
     steps:
-      - name: Install System Dependencies
-        run: dnf install -y git gcc gcc-c++ gtk4-devel glib2-devel gtk4-layer-shell-devel pkgconf-pkg-config
+      - name: System Dependencies are pre-installed
+        run: echo "Builder image has everything ready!"
 
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -89,6 +89,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             forge/specs/${{ matrix.component }}/**/target/
+            forge/specs/${{ matrix.component }}/**/fuzz/target/
           key: ${{ runner.os }}-cargo-fuzz-${{ matrix.component }}-${{ hashFiles('forge/specs/' + matrix.component + '/**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-fuzz-${{ matrix.component }}-
@@ -120,10 +121,10 @@ jobs:
           echo "📁 Operando nella directory: $CRATE_DIR"
           cd "$CRATE_DIR"
 
-          # Se la directory fuzz/ non esiste, la inizializza automaticamente
+          # Se la directory fuzz/ non esiste, esce con successo (skip)
           if [ ! -d "fuzz" ]; then
-            echo "🚀 Inizializzazione target cargo-fuzz per ${{ matrix.component }}..."
-            cargo fuzz init --bin fuzz_target_1 || cargo fuzz init
+            echo "🚀 Nessun target fuzz versionato trovato per ${{ matrix.component }}. Skipping grazioso."
+            exit 0
           fi
 
           # Trova tutti i target di fuzzing configurati

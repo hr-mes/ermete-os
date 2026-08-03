@@ -51,10 +51,17 @@ jobs:
           update_spec "ful1e5/Bibata_Cursor" "specs/ermete-bibata/ermete-bibata.spec"
           
           if [ "$UPDATED" -eq 1 ]; then
-            git config --global user.name "Ermete Forge Bot"
-            git config --global user.email "bot@ermete.forge"
-            git commit -am "chore(deps): auto-update spec versions to latest upstream"
-            git push
+            echo "updates=true" >> $GITHUB_ENV
           else
-            echo "No updates needed."
+            echo "updates=false" >> $GITHUB_ENV
           fi
+
+      - name: Create Pull Request
+        if: env.updates == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.PAT_TOKEN || github.token }}
+          commit-message: "chore(deps): auto-update spec versions to latest upstream"
+          title: "chore(deps): auto-update spec versions"
+          branch: "chore/update-specs"
+          base: "main"
