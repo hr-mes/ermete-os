@@ -335,6 +335,7 @@ CONFIG_ZRAM_DEF_COMP_ZSTD=y
 CONFIG_ZSWAP_COMPRESSOR_DEFAULT_ZSTD=y
 # CONFIG_ZSWAP_COMPRESSOR_DEFAULT_LZO is not set
 CONFIG_CFI_CLANG=y
+CONFIG_SHADOW_CALL_STACK=y
 
 # 6. Latenza I/O NVMe Estrema (Bypass Interrupt)
 CONFIG_BLK_DEV_IO_TRACE=n
@@ -357,7 +358,10 @@ CONFIG_BUG_ON_DATA_CORRUPTION=y
 CONFIG_SCHED_STACK_END_CHECK=y
 CONFIG_PANIC_ON_OOPS=y
 CONFIG_SECURITY_YAMA=y
-# Rimosso LOCKDOWN invasivo per compatibilità massima con tool avanzati di power-user.
+# Ripristinato LOCKDOWN in modalità Integrity: blocca manomissioni kernel senza impedire l'uso di eBPF/power-tools.
+CONFIG_SECURITY_LOCKDOWN_LSM=y
+CONFIG_SECURITY_LOCKDOWN_LSM_EARLY=y
+CONFIG_LOCK_DOWN_KERNEL_FORCE_INTEGRITY=y
 # [BEDROCK FIX] Rimozione driver MSI WMI rotto (error: cannot jump from switch statement to this case label)
 # CONFIG_MSI_WMI is not set
 # CONFIG_MSI_WMI_PLATFORM is not set
