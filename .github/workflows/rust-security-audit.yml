@@ -37,6 +37,7 @@ jobs:
             -D warnings
 
       - name: Verify Cryptographic Supply-Chain Audits (cargo-vet)
+        run: |
           cargo vet check || true
 
       - name: Check Dependencies & Vulnerabilities (cargo-deny)

@@ -90,7 +90,7 @@ jobs:
             ~/.cargo/git/db/
             forge/specs/${{ matrix.component }}/**/target/
             forge/specs/${{ matrix.component }}/**/fuzz/target/
-          key: ${{ runner.os }}-cargo-fuzz-${{ matrix.component }}-${{ hashFiles('forge/specs/' + matrix.component + '/**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-fuzz-${{ matrix.component }}-${{ hashFiles(format('forge/specs/{0}/**/Cargo.lock', matrix.component)) }}
           restore-keys: |
             ${{ runner.os }}-cargo-fuzz-${{ matrix.component }}-
             ${{ runner.os }}-cargo-fuzz-
