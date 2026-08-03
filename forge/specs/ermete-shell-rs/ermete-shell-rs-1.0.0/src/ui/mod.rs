@@ -1,5 +1,5 @@
 pub mod topbar;
-pub mod dock;
+pub use ermete_dock::ui as dock;
 pub mod control_center;
 pub mod notifications;
 pub mod osd;

@@ -202,28 +202,125 @@ pub enum ControllerBackend {
     Mock(Arc<Mutex<MockState>>),
 }
 
-#[derive(Clone, Debug)]
-pub struct SystemController {
-    backend: ControllerBackend,
-    cached_volume: Arc<Mutex<f64>>,
-    cached_mpris: Arc<Mutex<Option<crate::core::mpris::MprisState>>>,
-    active_wifi_ssid: Arc<Mutex<Option<String>>>,
+#[derive(Debug, Clone)]
+pub enum SystemEvent {
+    VolumeChanged(f64),
+    MuteToggled(bool),
+    WifiToggled(bool),
+    BluetoothToggled(bool),
+    BrightnessChanged(f64),
+    MprisUpdated(Option<crate::core::mpris::MprisState>),
+    NetworkUpdated(String),
 }
 
-impl SystemController {
-    pub async fn new() -> zbus::Result<Self> {
-        let session = Connection::session().await?;
-        let system = Connection::system().await?;
-        Ok(Self {
-            backend: ControllerBackend::Dbus { session, system },
-            cached_volume: Arc::new(Mutex::new(0.8)),
-            cached_mpris: Arc::new(Mutex::new(None)),
-            active_wifi_ssid: Arc::new(Mutex::new(None)),
-        })
+type EventListener = Box<dyn Fn(&SystemEvent) + Send + Sync>;
+
+#[derive(Clone)]
+pub struct SystemEventBus {
+    listeners: Arc<Mutex<Vec<EventListener>>>,
+}
+
+impl Default for SystemEventBus {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl SystemEventBus {
+    pub fn new() -> Self {
+        Self {
+            listeners: Arc::new(Mutex::new(Vec::new())),
+        }
     }
 
-    pub fn new_mock() -> Self {
-        let state = MockState {
+    pub fn subscribe<F>(&self, listener: F)
+    where
+        F: Fn(&SystemEvent) + Send + Sync + 'static,
+    {
+        if let Ok(mut listeners) = self.listeners.lock() {
+            listeners.push(Box::new(listener));
+        }
+    }
+
+    pub fn emit(&self, event: SystemEvent) {
+        if let Ok(listeners) = self.listeners.lock() {
+            for listener in listeners.iter() {
+                listener(&event);
+            }
+        }
+    }
+}
+
+impl std::fmt::Debug for SystemEventBus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SystemEventBus").finish()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct SettingsState {
+    pub wifi_enabled: bool,
+    pub bluetooth_enabled: bool,
+    pub mute: bool,
+    pub source_mute: bool,
+    pub volume: f64,
+    pub source_volume: f64,
+    pub brightness: f64,
+    pub active_wifi_ssid: Option<String>,
+    pub mpris_state: Option<crate::core::mpris::MprisState>,
+}
+
+impl Default for SettingsState {
+    fn default() -> Self {
+        Self {
+            wifi_enabled: true,
+            bluetooth_enabled: true,
+            mute: false,
+            source_mute: false,
+            volume: 0.5,
+            source_volume: 0.5,
+            brightness: 0.5,
+            active_wifi_ssid: Some("Ermete-5G".to_string()),
+            mpris_state: None,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct SettingsStateStore {
+    state: Arc<Mutex<SettingsState>>,
+    event_bus: SystemEventBus,
+}
+
+impl SettingsStateStore {
+    pub fn new(event_bus: SystemEventBus) -> Self {
+        Self {
+            state: Arc::new(Mutex::new(SettingsState::default())),
+            event_bus,
+        }
+    }
+
+    pub fn get_state(&self) -> SettingsState {
+        self.state.lock().unwrap_or_else(|e| e.into_inner()).clone()
+    }
+
+    pub fn update<F>(&self, f: F)
+    where
+        F: FnOnce(&mut SettingsState),
+    {
+        if let Ok(mut lock) = self.state.lock() {
+            f(&mut lock);
+        }
+    }
+
+    pub fn event_bus(&self) -> &SystemEventBus {
+        &self.event_bus
+    }
+}
+
+impl MockState {
+    pub fn default_mock() -> Self {
+        Self {
             wifi_enabled: true,
             bt_enabled: true,
             mute: false,
@@ -246,70 +343,58 @@ impl SystemController {
                     connected: true,
                 },
             ],
-        };
+        }
+    }
+}
+
+// ==========================================
+// SPECIALIZED CONTROLLERS (Decoupled Nodes)
+// ==========================================
+
+#[derive(Clone, Debug)]
+pub struct AudioController {
+    backend: ControllerBackend,
+    cached_volume: Arc<Mutex<f64>>,
+    event_bus: SystemEventBus,
+}
+
+impl AudioController {
+    pub fn new(backend: ControllerBackend, event_bus: SystemEventBus) -> Self {
         Self {
-            backend: ControllerBackend::Mock(Arc::new(Mutex::new(state))),
+            backend,
             cached_volume: Arc::new(Mutex::new(0.5)),
-            cached_mpris: Arc::new(Mutex::new(None)),
-            active_wifi_ssid: Arc::new(Mutex::new(Some("Ermete-5G".to_string()))),
+            event_bus,
         }
     }
 
-    pub async fn toggle_wifi(&self) -> zbus::Result<bool> {
-        match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
-                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
-                    let current = proxy.wireless_enabled().await.unwrap_or(true);
-                    let new_state = !current;
-                    proxy.set_wireless_enabled(new_state).await?;
-                    return Ok(new_state);
-                }
-                Ok(true)
-            }
-            ControllerBackend::Mock(state) => {
-                let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
-                s.wifi_enabled = !s.wifi_enabled;
-                Ok(s.wifi_enabled)
-            }
-        }
-    }
-
-    pub async fn toggle_bluetooth(&self) -> zbus::Result<bool> {
-        match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
-                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BlueZProxy::new(system)).await {
-                    let current = proxy.powered().await.unwrap_or(false);
-                    let new_state = !current;
-                    proxy.set_powered(new_state).await?;
-                    return Ok(new_state);
-                }
-                Ok(true)
-            }
-            ControllerBackend::Mock(state) => {
-                let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
-                s.bt_enabled = !s.bt_enabled;
-                Ok(s.bt_enabled)
-            }
+    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: SystemEventBus) -> Self {
+        Self {
+            backend: ControllerBackend::Mock(state),
+            cached_volume: Arc::new(Mutex::new(0.5)),
+            event_bus,
         }
     }
 
     pub async fn toggle_mute(&self) -> zbus::Result<bool> {
-        match &self.backend {
+        let new_state = match &self.backend {
             ControllerBackend::Dbus { session, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BedrockAudioProxy::new(session)).await {
                     let current = proxy.muted().await.unwrap_or(false);
-                    let new_state = !current;
-                    proxy.set_muted(new_state).await?;
-                    return Ok(new_state);
+                    let new_st = !current;
+                    proxy.set_muted(new_st).await?;
+                    new_st
+                } else {
+                    true
                 }
-                Ok(true)
             }
             ControllerBackend::Mock(state) => {
                 let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
                 s.mute = !s.mute;
-                Ok(s.mute)
+                s.mute
             }
-        }
+        };
+        self.event_bus.emit(SystemEvent::MuteToggled(new_state));
+        Ok(new_state)
     }
 
     pub async fn toggle_source_mute(&self) -> zbus::Result<bool> {
@@ -340,7 +425,6 @@ impl SystemController {
                         *c = volume;
                     }
                 }
-                Ok(())
             }
             ControllerBackend::Mock(state) => {
                 if let Ok(mut c) = self.cached_volume.lock() {
@@ -348,9 +432,10 @@ impl SystemController {
                 }
                 let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
                 s.volume = volume;
-                Ok(())
             }
         }
+        self.event_bus.emit(SystemEvent::VolumeChanged(volume));
+        Ok(())
     }
 
     pub async fn set_source_volume(&self, volume: f64) -> zbus::Result<()> {
@@ -366,94 +451,6 @@ impl SystemController {
                 s.source_volume = volume;
                 Ok(())
             }
-        }
-    }
-
-    pub async fn set_brightness(&self, brightness: f64) -> zbus::Result<()> {
-        match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
-                let val = (brightness * 100.0) as u32;
-                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), LogindSessionProxy::new(system)).await {
-                    proxy.set_brightness("backlight", "intel_backlight", val).await?;
-                } else if let Ok(entries) = std::fs::read_dir("/sys/class/backlight") {
-                    for entry in entries.flatten() {
-                        let path = entry.path();
-                        if let Ok(max_str) = std::fs::read_to_string(path.join("max_brightness")) {
-                            if let Ok(max_val) = max_str.trim().parse::<f64>() {
-                                let target = (brightness * max_val).round() as u64;
-                                let _ = std::fs::write(path.join("brightness"), target.to_string());
-                            }
-                        }
-                    }
-                }
-                Ok(())
-            }
-            ControllerBackend::Mock(state) => {
-                let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
-                s.brightness = brightness;
-                Ok(())
-            }
-        }
-    }
-
-    pub async fn player_command(&self, cmd: &str) -> zbus::Result<()> {
-        match &self.backend {
-            ControllerBackend::Dbus { session, .. } => {
-                if let Ok(dbus) = zbus::fdo::DBusProxy::new(session).await {
-                    if let Ok(names) = dbus.list_names().await {
-                        for name in names {
-                            if name.as_str().starts_with("org.mpris.MediaPlayer2.") {
-                                if let Ok(player) = MprisPlayerProxy::builder(session)
-                                    .destination(name.as_str())?
-                                    .path("/org/mpris/MediaPlayer2")?
-                                    .build().await
-                                {
-                                    match cmd {
-                                        "play-pause" => { let _ = player.play_pause().await; }
-                                        "next" => { let _ = player.next().await; }
-                                        "previous" => { let _ = player.previous().await; }
-                                        "play" => { let _ = player.play().await; }
-                                        "pause" => { let _ = player.pause().await; }
-                                        _ => {}
-                                    }
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-                let _ = self.refresh_mpris().await;
-                Ok(())
-            }
-            ControllerBackend::Mock(state) => {
-                state.lock().unwrap_or_else(|e| e.into_inner()).last_player_command = Some(cmd.to_string());
-                let _ = self.refresh_mpris().await;
-                Ok(())
-            }
-        }
-    }
-
-    pub async fn is_wifi_enabled(&self) -> zbus::Result<bool> {
-        match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
-                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
-                    return Ok(proxy.wireless_enabled().await.unwrap_or(true));
-                }
-                Ok(true)
-            }
-            ControllerBackend::Mock(state) => Ok(state.lock().unwrap_or_else(|e| e.into_inner()).wifi_enabled),
-        }
-    }
-
-    pub async fn is_bluetooth_enabled(&self) -> zbus::Result<bool> {
-        match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
-                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BlueZProxy::new(system)).await {
-                    return Ok(proxy.powered().await.unwrap_or(true));
-                }
-                Ok(true)
-            }
-            ControllerBackend::Mock(state) => Ok(state.lock().unwrap_or_else(|e| e.into_inner()).bt_enabled),
         }
     }
 
@@ -474,6 +471,461 @@ impl SystemController {
         }
     }
 
+    pub fn get_cached_volume(&self) -> f64 {
+        *self.cached_volume.lock().unwrap_or_else(|e| e.into_inner())
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct NetworkController {
+    backend: ControllerBackend,
+    active_wifi_ssid: Arc<Mutex<Option<String>>>,
+    event_bus: SystemEventBus,
+}
+
+impl NetworkController {
+    pub fn new(backend: ControllerBackend, event_bus: SystemEventBus) -> Self {
+        Self {
+            backend,
+            active_wifi_ssid: Arc::new(Mutex::new(None)),
+            event_bus,
+        }
+    }
+
+    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: SystemEventBus) -> Self {
+        Self {
+            backend: ControllerBackend::Mock(state),
+            active_wifi_ssid: Arc::new(Mutex::new(Some("Ermete-5G".to_string()))),
+            event_bus,
+        }
+    }
+
+    pub async fn toggle_wifi(&self) -> zbus::Result<bool> {
+        let new_state = match &self.backend {
+            ControllerBackend::Dbus { system, .. } => {
+                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
+                    let current = proxy.wireless_enabled().await.unwrap_or(true);
+                    let new_state = !current;
+                    proxy.set_wireless_enabled(new_state).await?;
+                    new_state
+                } else {
+                    true
+                }
+            }
+            ControllerBackend::Mock(state) => {
+                let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
+                s.wifi_enabled = !s.wifi_enabled;
+                s.wifi_enabled
+            }
+        };
+        self.event_bus.emit(SystemEvent::WifiToggled(new_state));
+        Ok(new_state)
+    }
+
+    pub async fn is_wifi_enabled(&self) -> zbus::Result<bool> {
+        match &self.backend {
+            ControllerBackend::Dbus { system, .. } => {
+                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
+                    return Ok(proxy.wireless_enabled().await.unwrap_or(true));
+                }
+                Ok(true)
+            }
+            ControllerBackend::Mock(state) => Ok(state.lock().unwrap_or_else(|e| e.into_inner()).wifi_enabled),
+        }
+    }
+
+    pub async fn set_wifi_powered(&self, powered: bool) -> zbus::Result<()> {
+        match &self.backend {
+            ControllerBackend::Dbus { system, .. } => {
+                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
+                    proxy.set_wireless_enabled(powered).await?;
+                }
+            }
+            ControllerBackend::Mock(state) => {
+                state.lock().unwrap_or_else(|e| e.into_inner()).wifi_enabled = powered;
+            }
+        }
+        self.event_bus.emit(SystemEvent::WifiToggled(powered));
+        Ok(())
+    }
+
+    pub async fn list_wifi_networks(&self) -> zbus::Result<Vec<WifiNetworkInfo>> {
+        match &self.backend {
+            ControllerBackend::Dbus { system, .. } => {
+                let mut results = Vec::new();
+                if let Ok(Ok(nm_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
+                    if let Ok(devices) = nm_proxy.get_devices().await {
+                        for dev_path in devices {
+                            if let Ok(dev_proxy) = NmDeviceProxy::builder(system).path(dev_path.clone())?.build().await {
+                                if let Ok(dev_type) = dev_proxy.device_type().await {
+                                    if dev_type == 2 {
+                                        if let Ok(wifi_proxy) = NmWirelessProxy::builder(system).path(dev_path)?.build().await {
+                                            if let Ok(aps) = wifi_proxy.get_access_points().await {
+                                                for ap_path in aps {
+                                                    if let Ok(ap_proxy) = NmAccessPointProxy::builder(system).path(ap_path)?.build().await {
+                                                        if let Ok(ssid_bytes) = ap_proxy.ssid().await {
+                                                            let ssid = String::from_utf8_lossy(&ssid_bytes).trim().to_string();
+                                                            if !ssid.is_empty() {
+                                                                let strength = ap_proxy.strength().await.unwrap_or(50) as i32;
+                                                                results.push(WifiNetworkInfo {
+                                                                    ssid,
+                                                                    signal: strength,
+                                                                    active: false,
+                                                                    saved: false,
+                                                                });
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                Ok(results)
+            }
+            ControllerBackend::Mock(state) => Ok(state.lock().unwrap_or_else(|e| e.into_inner()).wifi_networks.clone()),
+        }
+    }
+
+    fn extract_ssid(val: &zbus::zvariant::Value) -> Option<String> {
+        if let zbus::zvariant::Value::Array(arr) = val {
+            let bytes: std::vec::Vec<u8> = arr.iter().filter_map(|v| match v {
+                zbus::zvariant::Value::U8(b) => Some(*b),
+                _ => None,
+            }).collect();
+            Some(String::from_utf8_lossy(&bytes).to_string())
+        } else if let zbus::zvariant::Value::Str(s) = val {
+            Some(s.as_str().to_string())
+        } else {
+            None
+        }
+    }
+
+    pub async fn connect_wifi(&self, ssid: &str, _password: &str) -> zbus::Result<()> {
+        match &self.backend {
+            ControllerBackend::Dbus { system, .. } => {
+                if let Ok(Ok(settings_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NmSettingsProxy::new(system)).await {
+                    if let Ok(conns) = settings_proxy.list_connections().await {
+                        for conn_path in conns {
+                            if let Ok(conn_proxy) = NmSettingsConnectionProxy::builder(system).path(conn_path.clone())?.build().await {
+                                if let Ok(settings) = conn_proxy.get_settings().await {
+                                    if let Some(wifi_sec) = settings.get("802-11-wireless") {
+                                        if let Some(ssid_val) = wifi_sec.get("ssid") {
+                                            if let Some(s) = Self::extract_ssid(ssid_val) {
+                                                if s == ssid {
+                                                    if let Ok(Ok(nm_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
+                                                        let _ = nm_proxy.activate_connection(&conn_path, &zbus::zvariant::ObjectPath::from_str_unchecked("/"), &zbus::zvariant::ObjectPath::from_str_unchecked("/")).await?;
+                                                        if let Ok(mut l) = self.active_wifi_ssid.lock() {
+                                                            *l = Some(ssid.to_string());
+                                                        }
+                                                        self.event_bus.emit(SystemEvent::NetworkUpdated(ssid.to_string()));
+                                                        return Ok(());
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                Ok(())
+            }
+            ControllerBackend::Mock(state) => {
+                let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
+                for net in &mut s.wifi_networks {
+                    net.active = net.ssid == ssid;
+                }
+                self.event_bus.emit(SystemEvent::NetworkUpdated(ssid.to_string()));
+                Ok(())
+            }
+        }
+    }
+
+    pub async fn disconnect_wifi(&self, ssid: &str) -> zbus::Result<()> {
+        match &self.backend {
+            ControllerBackend::Dbus { system, .. } => {
+                if let Ok(Ok(nm_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
+                    if let Ok(active_conns) = nm_proxy.active_connections().await {
+                        for path in active_conns {
+                            if let Ok(ac_proxy) = NmActiveConnectionProxy::builder(system).path(path.clone())?.build().await {
+                                if let Ok(id) = ac_proxy.id().await {
+                                    if id == ssid {
+                                        nm_proxy.deactivate_connection(&path).await?;
+                                        if let Ok(mut l) = self.active_wifi_ssid.lock() {
+                                            *l = None;
+                                        }
+                                        self.event_bus.emit(SystemEvent::NetworkUpdated("Disconnected".to_string()));
+                                        return Ok(());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                Ok(())
+            }
+            ControllerBackend::Mock(state) => {
+                let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
+                for net in &mut s.wifi_networks {
+                    if net.ssid == ssid {
+                        net.active = false;
+                    }
+                }
+                self.event_bus.emit(SystemEvent::NetworkUpdated("Disconnected".to_string()));
+                Ok(())
+            }
+        }
+    }
+
+    pub async fn delete_wifi(&self, ssid: &str) -> zbus::Result<()> {
+        match &self.backend {
+            ControllerBackend::Dbus { system, .. } => {
+                if let Ok(Ok(settings_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NmSettingsProxy::new(system)).await {
+                    if let Ok(conns) = settings_proxy.list_connections().await {
+                        for conn_path in conns {
+                            if let Ok(conn_proxy) = NmSettingsConnectionProxy::builder(system).path(conn_path)?.build().await {
+                                if let Ok(settings) = conn_proxy.get_settings().await {
+                                    if let Some(wifi_sec) = settings.get("802-11-wireless") {
+                                        if let Some(ssid_val) = wifi_sec.get("ssid") {
+                                            if let Some(s) = Self::extract_ssid(ssid_val) {
+                                                if s == ssid {
+                                                    conn_proxy.delete().await?;
+                                                    return Ok(());
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                Ok(())
+            }
+            ControllerBackend::Mock(state) => {
+                let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
+                s.wifi_networks.retain(|net| net.ssid != ssid);
+                Ok(())
+            }
+        }
+    }
+
+    pub async fn modify_wifi(&self, _ssid: &str, _dhcp: bool, _ip: &str, _gw: &str, _dns: &str, _auto: bool) -> zbus::Result<()> {
+        Ok(())
+    }
+
+    pub async fn get_wifi_details(&self, _ssid: &str) -> zbus::Result<(String, String, String, String, bool)> {
+        Ok(("auto".to_string(), "192.168.1.100".to_string(), "192.168.1.1".to_string(), "8.8.8.8".to_string(), true))
+    }
+
+    pub async fn refresh_network_status(&self) -> zbus::Result<()> {
+        match &self.backend {
+            ControllerBackend::Dbus { system, .. } => {
+                if let Ok(Ok(nm_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
+                    if let Ok(active_conns) = nm_proxy.active_connections().await {
+                        for path in active_conns {
+                            if let Ok(ac_proxy) = NmActiveConnectionProxy::builder(system).path(path)?.build().await {
+                                if let Ok(id) = ac_proxy.id().await {
+                                    if let Ok(mut l) = self.active_wifi_ssid.lock() {
+                                        *l = Some(id);
+                                    }
+                                    return Ok(());
+                                }
+                            }
+                        }
+                    }
+                }
+                if let Ok(mut l) = self.active_wifi_ssid.lock() {
+                    *l = None;
+                }
+                Ok(())
+            }
+            ControllerBackend::Mock(_) => Ok(()),
+        }
+    }
+
+    pub fn get_cached_network_status(&self) -> (String, String, String) {
+        if let ControllerBackend::Mock(state) = &self.backend {
+            let s = state.lock().unwrap_or_else(|e| e.into_inner());
+            if !s.wifi_enabled {
+                return ("󰖪".to_string(), "Rete Wi-Fi".to_string(), "Disattivato".to_string());
+            }
+            let active_ssid = s.wifi_networks.iter().find(|w| w.active).map(|w| w.ssid.clone()).unwrap_or_else(|| "Non connesso".to_string());
+            let icon = if active_ssid == "Non connesso" { "󰖪" } else { "" };
+            return (icon.to_string(), "Rete Wi-Fi".to_string(), active_ssid);
+        }
+
+        if let Ok(entries) = std::fs::read_dir("/sys/class/net") {
+            for entry in entries.flatten() {
+                let name = entry.file_name().to_string_lossy().to_string();
+                if name == "lo" {
+                    continue;
+                }
+                if let Ok(state) = std::fs::read_to_string(entry.path().join("operstate")) {
+                    if state.trim() == "up" {
+                        if name.starts_with("eth") || name.starts_with("en") {
+                            return ("󰈀".to_string(), "Ethernet".to_string(), "Connesso via cavo".to_string());
+                        } else if name.starts_with("wl") {
+                            let ssid = self.active_wifi_ssid.lock().unwrap_or_else(|e| e.into_inner()).clone().unwrap_or_else(|| "Connesso".to_string());
+                            return ("".to_string(), "Rete Wi-Fi".to_string(), ssid);
+                        }
+                    }
+                }
+            }
+        }
+        ("󰖪".to_string(), "Rete Wi-Fi".to_string(), "Non connesso".to_string())
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct BluetoothController {
+    backend: ControllerBackend,
+    event_bus: SystemEventBus,
+}
+
+impl BluetoothController {
+    pub fn new(backend: ControllerBackend, event_bus: SystemEventBus) -> Self {
+        Self { backend, event_bus }
+    }
+
+    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: SystemEventBus) -> Self {
+        Self {
+            backend: ControllerBackend::Mock(state),
+            event_bus,
+        }
+    }
+
+    pub async fn toggle_bluetooth(&self) -> zbus::Result<bool> {
+        let new_state = match &self.backend {
+            ControllerBackend::Dbus { system, .. } => {
+                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BlueZProxy::new(system)).await {
+                    let current = proxy.powered().await.unwrap_or(false);
+                    let new_st = !current;
+                    proxy.set_powered(new_st).await?;
+                    new_st
+                } else {
+                    true
+                }
+            }
+            ControllerBackend::Mock(state) => {
+                let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
+                s.bt_enabled = !s.bt_enabled;
+                s.bt_enabled
+            }
+        };
+        self.event_bus.emit(SystemEvent::BluetoothToggled(new_state));
+        Ok(new_state)
+    }
+
+    pub async fn is_bluetooth_enabled(&self) -> zbus::Result<bool> {
+        match &self.backend {
+            ControllerBackend::Dbus { system, .. } => {
+                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BlueZProxy::new(system)).await {
+                    return Ok(proxy.powered().await.unwrap_or(true));
+                }
+                Ok(true)
+            }
+            ControllerBackend::Mock(state) => Ok(state.lock().unwrap_or_else(|e| e.into_inner()).bt_enabled),
+        }
+    }
+
+    pub async fn set_bluetooth_powered(&self, powered: bool) -> zbus::Result<()> {
+        match &self.backend {
+            ControllerBackend::Dbus { system, .. } => {
+                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BlueZProxy::new(system)).await {
+                    proxy.set_powered(powered).await?;
+                }
+            }
+            ControllerBackend::Mock(state) => {
+                state.lock().unwrap_or_else(|e| e.into_inner()).bt_enabled = powered;
+            }
+        }
+        self.event_bus.emit(SystemEvent::BluetoothToggled(powered));
+        Ok(())
+    }
+
+    pub async fn list_bluetooth_devices(&self) -> zbus::Result<Vec<BluetoothDeviceInfo>> {
+        match &self.backend {
+            ControllerBackend::Dbus { system, .. } => {
+                let mut results = Vec::new();
+                if let Ok(obj_mgr) = zbus::fdo::ObjectManagerProxy::builder(system)
+                    .destination("org.bluez")?
+                    .path("/")?
+                    .build().await
+                {
+                    if let Ok(objects) = obj_mgr.get_managed_objects().await {
+                        for (path, interfaces) in objects {
+                            if let Some(dev_props) = interfaces.get("org.bluez.Device1") {
+                                let name = dev_props.get("Alias")
+                                    .or_else(|| dev_props.get("Name"))
+                                    .and_then(|v| String::try_from(&**v).ok())
+                                    .unwrap_or_else(|| path.to_string());
+                                let connected = dev_props.get("Connected")
+                                    .and_then(|v| bool::try_from(&**v).ok())
+                                    .unwrap_or(false);
+                                results.push(BluetoothDeviceInfo { name, connected });
+                            }
+                        }
+                    }
+                }
+                Ok(results)
+            }
+            ControllerBackend::Mock(state) => Ok(state.lock().unwrap_or_else(|e| e.into_inner()).bt_devices.clone()),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct DisplayController {
+    backend: ControllerBackend,
+    event_bus: SystemEventBus,
+}
+
+impl DisplayController {
+    pub fn new(backend: ControllerBackend, event_bus: SystemEventBus) -> Self {
+        Self { backend, event_bus }
+    }
+
+    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: SystemEventBus) -> Self {
+        Self {
+            backend: ControllerBackend::Mock(state),
+            event_bus,
+        }
+    }
+
+    pub async fn set_brightness(&self, brightness: f64) -> zbus::Result<()> {
+        match &self.backend {
+            ControllerBackend::Dbus { system, .. } => {
+                let val = (brightness * 100.0) as u32;
+                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), LogindSessionProxy::new(system)).await {
+                    proxy.set_brightness("backlight", "intel_backlight", val).await?;
+                } else if let Ok(entries) = std::fs::read_dir("/sys/class/backlight") {
+                    for entry in entries.flatten() {
+                        let path = entry.path();
+                        if let Ok(max_str) = std::fs::read_to_string(path.join("max_brightness")) {
+                            if let Ok(max_val) = max_str.trim().parse::<f64>() {
+                                let target = (brightness * max_val).round() as u64;
+                                let _ = std::fs::write(path.join("brightness"), target.to_string());
+                            }
+                        }
+                    }
+                }
+            }
+            ControllerBackend::Mock(state) => {
+                let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
+                s.brightness = brightness;
+            }
+        }
+        self.event_bus.emit(SystemEvent::BrightnessChanged(brightness));
+        Ok(())
+    }
+
     pub async fn get_brightness(&self) -> zbus::Result<f64> {
         match &self.backend {
             ControllerBackend::Dbus { .. } => {
@@ -483,11 +935,23 @@ impl SystemController {
             ControllerBackend::Mock(state) => Ok(state.lock().unwrap_or_else(|e| e.into_inner()).brightness),
         }
     }
+}
 
-    pub fn get_last_player_command(&self) -> Option<String> {
-        match &self.backend {
-            ControllerBackend::Dbus { .. } => None,
-            ControllerBackend::Mock(state) => state.lock().unwrap_or_else(|e| e.into_inner()).last_player_command.clone(),
+#[derive(Clone, Debug)]
+pub struct PowerController {
+    backend: ControllerBackend,
+    event_bus: SystemEventBus,
+}
+
+impl PowerController {
+    pub fn new(backend: ControllerBackend, event_bus: SystemEventBus) -> Self {
+        Self { backend, event_bus }
+    }
+
+    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: SystemEventBus) -> Self {
+        Self {
+            backend: ControllerBackend::Mock(state),
+            event_bus,
         }
     }
 
@@ -538,256 +1002,78 @@ impl SystemController {
             ControllerBackend::Mock(_) => Ok(()),
         }
     }
+}
 
-    pub async fn set_wifi_powered(&self, powered: bool) -> zbus::Result<()> {
-        match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
-                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
-                    proxy.set_wireless_enabled(powered).await?;
-                }
-                Ok(())
-            }
-            ControllerBackend::Mock(state) => {
-                state.lock().unwrap_or_else(|e| e.into_inner()).wifi_enabled = powered;
-                Ok(())
-            }
+#[derive(Clone, Debug)]
+pub struct MprisController {
+    backend: ControllerBackend,
+    cached_mpris: Arc<Mutex<Option<crate::core::mpris::MprisState>>>,
+    event_bus: SystemEventBus,
+}
+
+impl MprisController {
+    pub fn new(backend: ControllerBackend, event_bus: SystemEventBus) -> Self {
+        Self {
+            backend,
+            cached_mpris: Arc::new(Mutex::new(None)),
+            event_bus,
         }
     }
 
-    pub async fn set_bluetooth_powered(&self, powered: bool) -> zbus::Result<()> {
-        match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
-                if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BlueZProxy::new(system)).await {
-                    proxy.set_powered(powered).await?;
-                }
-                Ok(())
-            }
-            ControllerBackend::Mock(state) => {
-                state.lock().unwrap_or_else(|e| e.into_inner()).bt_enabled = powered;
-                Ok(())
-            }
+    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: SystemEventBus) -> Self {
+        Self {
+            backend: ControllerBackend::Mock(state),
+            cached_mpris: Arc::new(Mutex::new(None)),
+            event_bus,
         }
     }
 
-    pub async fn list_wifi_networks(&self) -> zbus::Result<Vec<WifiNetworkInfo>> {
+    pub async fn player_command(&self, cmd: &str) -> zbus::Result<()> {
         match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
-                let mut results = Vec::new();
-                if let Ok(Ok(nm_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
-                    if let Ok(devices) = nm_proxy.get_devices().await {
-                        for dev_path in devices {
-                            if let Ok(dev_proxy) = NmDeviceProxy::builder(system).path(dev_path.clone())?.build().await {
-                                if let Ok(dev_type) = dev_proxy.device_type().await {
-                                    if dev_type == 2 {
-                                        if let Ok(wifi_proxy) = NmWirelessProxy::builder(system).path(dev_path)?.build().await {
-                                            if let Ok(aps) = wifi_proxy.get_access_points().await {
-                                                for ap_path in aps {
-                                                    if let Ok(ap_proxy) = NmAccessPointProxy::builder(system).path(ap_path)?.build().await {
-                                                        if let Ok(ssid_bytes) = ap_proxy.ssid().await {
-                                                            let ssid = String::from_utf8_lossy(&ssid_bytes).trim().to_string();
-                                                            if !ssid.is_empty() {
-                                                                let strength = ap_proxy.strength().await.unwrap_or(50) as i32;
-                                                                results.push(WifiNetworkInfo {
-                                                                    ssid,
-                                                                    signal: strength,
-                                                                    active: false,
-                                                                    saved: false,
-                                                                });
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
+            ControllerBackend::Dbus { session, .. } => {
+                if let Ok(dbus) = zbus::fdo::DBusProxy::new(session).await {
+                    if let Ok(names) = dbus.list_names().await {
+                        for name in names {
+                            if name.as_str().starts_with("org.mpris.MediaPlayer2.") {
+                                if let Ok(player) = MprisPlayerProxy::builder(session)
+                                    .destination(name.as_str())?
+                                    .path("/org/mpris/MediaPlayer2")?
+                                    .build().await
+                                {
+                                    match cmd {
+                                        "play-pause" => { let _ = player.play_pause().await; }
+                                        "next" => { let _ = player.next().await; }
+                                        "previous" => { let _ = player.previous().await; }
+                                        "play" => { let _ = player.play().await; }
+                                        "pause" => { let _ = player.pause().await; }
+                                        _ => {}
                                     }
+                                    break;
                                 }
                             }
                         }
                     }
                 }
-                Ok(results)
-            }
-            ControllerBackend::Mock(state) => Ok(state.lock().unwrap_or_else(|e| e.into_inner()).wifi_networks.clone()),
-        }
-    }
-
-    pub async fn list_bluetooth_devices(&self) -> zbus::Result<Vec<BluetoothDeviceInfo>> {
-        match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
-                let mut results = Vec::new();
-                if let Ok(obj_mgr) = zbus::fdo::ObjectManagerProxy::builder(system)
-                    .destination("org.bluez")?
-                    .path("/")?
-                    .build().await
-                {
-                    if let Ok(objects) = obj_mgr.get_managed_objects().await {
-                        for (path, interfaces) in objects {
-                            if let Some(dev_props) = interfaces.get("org.bluez.Device1") {
-                                let name = dev_props.get("Alias")
-                                    .or_else(|| dev_props.get("Name"))
-                                    .and_then(|v| String::try_from(&**v).ok())
-                                    .unwrap_or_else(|| path.to_string());
-                                let connected = dev_props.get("Connected")
-                                    .and_then(|v| bool::try_from(&**v).ok())
-                                    .unwrap_or(false);
-                                results.push(BluetoothDeviceInfo { name, connected });
-                            }
-                        }
-                    }
-                }
-                Ok(results)
-            }
-            ControllerBackend::Mock(state) => Ok(state.lock().unwrap_or_else(|e| e.into_inner()).bt_devices.clone()),
-        }
-    }
-
-    fn extract_ssid(val: &zbus::zvariant::Value) -> Option<String> {
-        if let zbus::zvariant::Value::Array(arr) = val {
-            let bytes: std::vec::Vec<u8> = arr.iter().filter_map(|v| match v {
-                zbus::zvariant::Value::U8(b) => Some(*b),
-                _ => None,
-            }).collect();
-            Some(String::from_utf8_lossy(&bytes).to_string())
-        } else if let zbus::zvariant::Value::Str(s) = val {
-            Some(s.as_str().to_string())
-        } else {
-            None
-        }
-    }
-
-    pub async fn connect_wifi(&self, ssid: &str, _password: &str) -> zbus::Result<()> {
-        match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
-                if let Ok(Ok(settings_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NmSettingsProxy::new(system)).await {
-                    if let Ok(conns) = settings_proxy.list_connections().await {
-                        for conn_path in conns {
-                            if let Ok(conn_proxy) = NmSettingsConnectionProxy::builder(system).path(conn_path.clone())?.build().await {
-                                if let Ok(settings) = conn_proxy.get_settings().await {
-                                    if let Some(wifi_sec) = settings.get("802-11-wireless") {
-                                        if let Some(ssid_val) = wifi_sec.get("ssid") {
-                                            if let Some(s) = Self::extract_ssid(ssid_val) {
-                                                if s == ssid {
-                                                    if let Ok(Ok(nm_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
-                                                        let _ = nm_proxy.activate_connection(&conn_path, &zbus::zvariant::ObjectPath::from_str_unchecked("/"), &zbus::zvariant::ObjectPath::from_str_unchecked("/")).await?;
-                                                        if let Ok(mut l) = self.active_wifi_ssid.lock() {
-                                                            *l = Some(ssid.to_string());
-                                                        }
-                                                        return Ok(());
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                Ok(())
+                let _ = self.refresh_mpris().await;
             }
             ControllerBackend::Mock(state) => {
-                let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
-                for net in &mut s.wifi_networks {
-                    net.active = net.ssid == ssid;
-                }
-                Ok(())
+                state.lock().unwrap_or_else(|e| e.into_inner()).last_player_command = Some(cmd.to_string());
+                let _ = self.refresh_mpris().await;
             }
         }
-    }
-
-    pub async fn disconnect_wifi(&self, ssid: &str) -> zbus::Result<()> {
-        match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
-                if let Ok(Ok(nm_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
-                    if let Ok(active_conns) = nm_proxy.active_connections().await {
-                        for path in active_conns {
-                            if let Ok(ac_proxy) = NmActiveConnectionProxy::builder(system).path(path.clone())?.build().await {
-                                if let Ok(id) = ac_proxy.id().await {
-                                    if id == ssid {
-                                        nm_proxy.deactivate_connection(&path).await?;
-                                        if let Ok(mut l) = self.active_wifi_ssid.lock() {
-                                            *l = None;
-                                        }
-                                        return Ok(());
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                Ok(())
-            }
-            ControllerBackend::Mock(state) => {
-                let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
-                for net in &mut s.wifi_networks {
-                    if net.ssid == ssid {
-                        net.active = false;
-                    }
-                }
-                Ok(())
-            }
-        }
-    }
-
-    pub async fn delete_wifi(&self, ssid: &str) -> zbus::Result<()> {
-        match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
-                if let Ok(Ok(settings_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NmSettingsProxy::new(system)).await {
-                    if let Ok(conns) = settings_proxy.list_connections().await {
-                        for conn_path in conns {
-                            if let Ok(conn_proxy) = NmSettingsConnectionProxy::builder(system).path(conn_path)?.build().await {
-                                if let Ok(settings) = conn_proxy.get_settings().await {
-                                    if let Some(wifi_sec) = settings.get("802-11-wireless") {
-                                        if let Some(ssid_val) = wifi_sec.get("ssid") {
-                                            if let Some(s) = Self::extract_ssid(ssid_val) {
-                                                if s == ssid {
-                                                    conn_proxy.delete().await?;
-                                                    return Ok(());
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                Ok(())
-            }
-            ControllerBackend::Mock(state) => {
-                let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
-                s.wifi_networks.retain(|net| net.ssid != ssid);
-                Ok(())
-            }
-        }
-    }
-
-    pub async fn modify_wifi(&self, _ssid: &str, _dhcp: bool, _ip: &str, _gw: &str, _dns: &str, _auto: bool) -> zbus::Result<()> {
-        match &self.backend {
-            ControllerBackend::Dbus { system: _, .. } => {
-                Ok(())
-            }
-            ControllerBackend::Mock(_) => Ok(()),
-        }
-    }
-
-    pub async fn get_wifi_details(&self, _ssid: &str) -> zbus::Result<(String, String, String, String, bool)> {
-        match &self.backend {
-            ControllerBackend::Dbus { system: _, .. } => {
-                Ok(("auto".to_string(), "192.168.1.100".to_string(), "192.168.1.1".to_string(), "8.8.8.8".to_string(), true))
-            }
-            ControllerBackend::Mock(_) => {
-                Ok(("auto".to_string(), "192.168.1.100".to_string(), "192.168.1.1".to_string(), "8.8.8.8".to_string(), true))
-            }
-        }
-    }
-
-    pub fn get_cached_volume(&self) -> f64 {
-        *self.cached_volume.lock().unwrap_or_else(|e| e.into_inner())
+        self.event_bus.emit(SystemEvent::MprisUpdated(self.get_cached_mpris_state()));
+        Ok(())
     }
 
     pub fn get_cached_mpris_state(&self) -> Option<crate::core::mpris::MprisState> {
         self.cached_mpris.lock().unwrap_or_else(|e| e.into_inner()).clone()
+    }
+
+    pub fn get_last_player_command(&self) -> Option<String> {
+        match &self.backend {
+            ControllerBackend::Dbus { .. } => None,
+            ControllerBackend::Mock(state) => state.lock().unwrap_or_else(|e| e.into_inner()).last_player_command.clone(),
+        }
     }
 
     pub async fn refresh_mpris(&self) -> zbus::Result<()> {
@@ -873,76 +1159,184 @@ impl SystemController {
             }
         }
     }
-
-    pub async fn refresh_network_status(&self) -> zbus::Result<()> {
-        match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
-                if let Ok(Ok(nm_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
-                    if let Ok(active_conns) = nm_proxy.active_connections().await {
-                        for path in active_conns {
-                            if let Ok(ac_proxy) = NmActiveConnectionProxy::builder(system).path(path)?.build().await {
-                                if let Ok(id) = ac_proxy.id().await {
-                                    if let Ok(mut l) = self.active_wifi_ssid.lock() {
-                                        *l = Some(id);
-                                    }
-                                    return Ok(());
-                                }
-                            }
-                        }
-                    }
-                }
-                if let Ok(mut l) = self.active_wifi_ssid.lock() {
-                    *l = None;
-                }
-                Ok(())
-            }
-            ControllerBackend::Mock(_) => Ok(()),
-        }
-    }
-
-    pub fn get_cached_network_status(&self) -> (String, String, String) {
-        if let ControllerBackend::Mock(state) = &self.backend {
-            let s = state.lock().unwrap_or_else(|e| e.into_inner());
-            if !s.wifi_enabled {
-                return ("󰖪".to_string(), "Rete Wi-Fi".to_string(), "Disattivato".to_string());
-            }
-            let active_ssid = s.wifi_networks.iter().find(|w| w.active).map(|w| w.ssid.clone()).unwrap_or_else(|| "Non connesso".to_string());
-            let icon = if active_ssid == "Non connesso" { "󰖪" } else { "" };
-            return (icon.to_string(), "Rete Wi-Fi".to_string(), active_ssid);
-        }
-
-        if let Ok(entries) = std::fs::read_dir("/sys/class/net") {
-            for entry in entries.flatten() {
-                let name = entry.file_name().to_string_lossy().to_string();
-                if name == "lo" {
-                    continue;
-                }
-                if let Ok(state) = std::fs::read_to_string(entry.path().join("operstate")) {
-                    if state.trim() == "up" {
-                        if name.starts_with("eth") || name.starts_with("en") {
-                            return ("󰈀".to_string(), "Ethernet".to_string(), "Connesso via cavo".to_string());
-                        } else if name.starts_with("wl") {
-                            let ssid = self.active_wifi_ssid.lock().unwrap_or_else(|e| e.into_inner()).clone().unwrap_or_else(|| "Connesso".to_string());
-                            return ("".to_string(), "Rete Wi-Fi".to_string(), ssid);
-                        }
-                    }
-                }
-            }
-        }
-        ("󰖪".to_string(), "Rete Wi-Fi".to_string(), "Non connesso".to_string())
-    }
 }
 
+// ==========================================
+// SYSTEM CONTROLLER FACADE & COMPATIBILITY
+// ==========================================
+
+#[derive(Clone, Debug)]
+pub struct SystemController {
+    pub audio: Arc<AudioController>,
+    pub network: Arc<NetworkController>,
+    pub bluetooth: Arc<BluetoothController>,
+    pub display: Arc<DisplayController>,
+    pub power: Arc<PowerController>,
+    pub mpris: Arc<MprisController>,
+    pub state_store: Arc<SettingsStateStore>,
+}
+
+impl SystemController {
+    pub async fn new() -> zbus::Result<Self> {
+        let session = Connection::session().await?;
+        let system = Connection::system().await?;
+        let event_bus = SystemEventBus::new();
+        let state_store = Arc::new(SettingsStateStore::new(event_bus.clone()));
+        
+        let backend = ControllerBackend::Dbus { session, system };
+        let audio = Arc::new(AudioController::new(backend.clone(), event_bus.clone()));
+        let network = Arc::new(NetworkController::new(backend.clone(), event_bus.clone()));
+        let bluetooth = Arc::new(BluetoothController::new(backend.clone(), event_bus.clone()));
+        let display = Arc::new(DisplayController::new(backend.clone(), event_bus.clone()));
+        let power = Arc::new(PowerController::new(backend.clone(), event_bus.clone()));
+        let mpris = Arc::new(MprisController::new(backend, event_bus));
+
+        Ok(Self {
+            audio,
+            network,
+            bluetooth,
+            display,
+            power,
+            mpris,
+            state_store,
+        })
+    }
+
+    pub fn new_mock() -> Self {
+        let state = Arc::new(Mutex::new(MockState::default_mock()));
+        let event_bus = SystemEventBus::new();
+        let state_store = Arc::new(SettingsStateStore::new(event_bus.clone()));
+
+        let audio = Arc::new(AudioController::new_mock(state.clone(), event_bus.clone()));
+        let network = Arc::new(NetworkController::new_mock(state.clone(), event_bus.clone()));
+        let bluetooth = Arc::new(BluetoothController::new_mock(state.clone(), event_bus.clone()));
+        let display = Arc::new(DisplayController::new_mock(state.clone(), event_bus.clone()));
+        let power = Arc::new(PowerController::new_mock(state.clone(), event_bus.clone()));
+        let mpris = Arc::new(MprisController::new_mock(state, event_bus));
+
+        Self {
+            audio,
+            network,
+            bluetooth,
+            display,
+            power,
+            mpris,
+            state_store,
+        }
+    }
+
+    // Forwarded methods for backward compatibility
+    pub async fn toggle_wifi(&self) -> zbus::Result<bool> { self.network.toggle_wifi().await }
+    pub async fn toggle_bluetooth(&self) -> zbus::Result<bool> { self.bluetooth.toggle_bluetooth().await }
+    pub async fn toggle_mute(&self) -> zbus::Result<bool> { self.audio.toggle_mute().await }
+    pub async fn toggle_source_mute(&self) -> zbus::Result<bool> { self.audio.toggle_source_mute().await }
+    pub async fn set_volume(&self, volume: f64) -> zbus::Result<()> { self.audio.set_volume(volume).await }
+    pub async fn set_source_volume(&self, volume: f64) -> zbus::Result<()> { self.audio.set_source_volume(volume).await }
+    pub async fn set_brightness(&self, brightness: f64) -> zbus::Result<()> { self.display.set_brightness(brightness).await }
+    pub async fn player_command(&self, cmd: &str) -> zbus::Result<()> { self.mpris.player_command(cmd).await }
+    pub async fn is_wifi_enabled(&self) -> zbus::Result<bool> { self.network.is_wifi_enabled().await }
+    pub async fn is_bluetooth_enabled(&self) -> zbus::Result<bool> { self.bluetooth.is_bluetooth_enabled().await }
+    pub async fn get_volume(&self) -> zbus::Result<f64> { self.audio.get_volume().await }
+    pub async fn get_brightness(&self) -> zbus::Result<f64> { self.display.get_brightness().await }
+    pub fn get_last_player_command(&self) -> Option<String> { self.mpris.get_last_player_command() }
+    pub async fn lock_screen(&self) -> zbus::Result<()> { self.power.lock_screen().await }
+    pub async fn power_off(&self) -> zbus::Result<()> { self.power.power_off().await }
+    pub async fn reboot(&self) -> zbus::Result<()> { self.power.reboot().await }
+    pub async fn suspend(&self) -> zbus::Result<()> { self.power.suspend().await }
+    pub async fn set_wifi_powered(&self, powered: bool) -> zbus::Result<()> { self.network.set_wifi_powered(powered).await }
+    pub async fn set_bluetooth_powered(&self, powered: bool) -> zbus::Result<()> { self.bluetooth.set_bluetooth_powered(powered).await }
+    pub async fn list_wifi_networks(&self) -> zbus::Result<Vec<WifiNetworkInfo>> { self.network.list_wifi_networks().await }
+    pub async fn list_bluetooth_devices(&self) -> zbus::Result<Vec<BluetoothDeviceInfo>> { self.bluetooth.list_bluetooth_devices().await }
+    pub async fn connect_wifi(&self, ssid: &str, password: &str) -> zbus::Result<()> { self.network.connect_wifi(ssid, password).await }
+    pub async fn disconnect_wifi(&self, ssid: &str) -> zbus::Result<()> { self.network.disconnect_wifi(ssid).await }
+    pub async fn delete_wifi(&self, ssid: &str) -> zbus::Result<()> { self.network.delete_wifi(ssid).await }
+    pub async fn modify_wifi(&self, ssid: &str, dhcp: bool, ip: &str, gw: &str, dns: &str, auto: bool) -> zbus::Result<()> { self.network.modify_wifi(ssid, dhcp, ip, gw, dns, auto).await }
+    pub async fn get_wifi_details(&self, ssid: &str) -> zbus::Result<(String, String, String, String, bool)> { self.network.get_wifi_details(ssid).await }
+    pub fn get_cached_volume(&self) -> f64 { self.audio.get_cached_volume() }
+    pub fn get_cached_mpris_state(&self) -> Option<crate::core::mpris::MprisState> { self.mpris.get_cached_mpris_state() }
+    pub async fn refresh_mpris(&self) -> zbus::Result<()> { self.mpris.refresh_mpris().await }
+    pub async fn refresh_network_status(&self) -> zbus::Result<()> { self.network.refresh_network_status().await }
+    pub fn get_cached_network_status(&self) -> (String, String, String) { self.network.get_cached_network_status() }
+}
+
+static GLOBAL_AUDIO_CONTROLLER: std::sync::OnceLock<Arc<AudioController>> = std::sync::OnceLock::new();
+static GLOBAL_NETWORK_CONTROLLER: std::sync::OnceLock<Arc<NetworkController>> = std::sync::OnceLock::new();
+static GLOBAL_BLUETOOTH_CONTROLLER: std::sync::OnceLock<Arc<BluetoothController>> = std::sync::OnceLock::new();
+static GLOBAL_DISPLAY_CONTROLLER: std::sync::OnceLock<Arc<DisplayController>> = std::sync::OnceLock::new();
+static GLOBAL_POWER_CONTROLLER: std::sync::OnceLock<Arc<PowerController>> = std::sync::OnceLock::new();
+static GLOBAL_MPRIS_CONTROLLER: std::sync::OnceLock<Arc<MprisController>> = std::sync::OnceLock::new();
+static GLOBAL_STATE_STORE: std::sync::OnceLock<Arc<SettingsStateStore>> = std::sync::OnceLock::new();
 static GLOBAL_CONTROLLER: std::sync::OnceLock<Arc<SystemController>> = std::sync::OnceLock::new();
 
 pub fn init_system_controller() {
     glib::MainContext::default().spawn_local(async {
         if let Ok(controller) = SystemController::new().await {
-            let _ = controller.refresh_mpris().await;
-            let _ = controller.refresh_network_status().await;
+            let _ = controller.mpris.refresh_mpris().await;
+            let _ = controller.network.refresh_network_status().await;
+            let _ = GLOBAL_AUDIO_CONTROLLER.set(controller.audio.clone());
+            let _ = GLOBAL_NETWORK_CONTROLLER.set(controller.network.clone());
+            let _ = GLOBAL_BLUETOOTH_CONTROLLER.set(controller.bluetooth.clone());
+            let _ = GLOBAL_DISPLAY_CONTROLLER.set(controller.display.clone());
+            let _ = GLOBAL_POWER_CONTROLLER.set(controller.power.clone());
+            let _ = GLOBAL_MPRIS_CONTROLLER.set(controller.mpris.clone());
+            let _ = GLOBAL_STATE_STORE.set(controller.state_store.clone());
             let _ = GLOBAL_CONTROLLER.set(Arc::new(controller));
         }
     });
+}
+
+pub fn get_audio_controller() -> Arc<AudioController> {
+    GLOBAL_AUDIO_CONTROLLER.get().cloned().unwrap_or_else(|| {
+        let bus = SystemEventBus::new();
+        let state = Arc::new(Mutex::new(MockState::default_mock()));
+        Arc::new(AudioController::new_mock(state, bus))
+    })
+}
+
+pub fn get_network_controller() -> Arc<NetworkController> {
+    GLOBAL_NETWORK_CONTROLLER.get().cloned().unwrap_or_else(|| {
+        let bus = SystemEventBus::new();
+        let state = Arc::new(Mutex::new(MockState::default_mock()));
+        Arc::new(NetworkController::new_mock(state, bus))
+    })
+}
+
+pub fn get_bluetooth_controller() -> Arc<BluetoothController> {
+    GLOBAL_BLUETOOTH_CONTROLLER.get().cloned().unwrap_or_else(|| {
+        let bus = SystemEventBus::new();
+        let state = Arc::new(Mutex::new(MockState::default_mock()));
+        Arc::new(BluetoothController::new_mock(state, bus))
+    })
+}
+
+pub fn get_display_controller() -> Arc<DisplayController> {
+    GLOBAL_DISPLAY_CONTROLLER.get().cloned().unwrap_or_else(|| {
+        let bus = SystemEventBus::new();
+        let state = Arc::new(Mutex::new(MockState::default_mock()));
+        Arc::new(DisplayController::new_mock(state, bus))
+    })
+}
+
+pub fn get_power_controller() -> Arc<PowerController> {
+    GLOBAL_POWER_CONTROLLER.get().cloned().unwrap_or_else(|| {
+        let bus = SystemEventBus::new();
+        let state = Arc::new(Mutex::new(MockState::default_mock()));
+        Arc::new(PowerController::new_mock(state, bus))
+    })
+}
+
+pub fn get_mpris_controller() -> Arc<MprisController> {
+    GLOBAL_MPRIS_CONTROLLER.get().cloned().unwrap_or_else(|| {
+        let bus = SystemEventBus::new();
+        let state = Arc::new(Mutex::new(MockState::default_mock()));
+        Arc::new(MprisController::new_mock(state, bus))
+    })
+}
+
+pub fn get_state_store() -> Arc<SettingsStateStore> {
+    GLOBAL_STATE_STORE.get().cloned().unwrap_or_else(|| {
+        Arc::new(SettingsStateStore::new(SystemEventBus::new()))
+    })
 }
 
 pub fn get_global_controller() -> Arc<SystemController> {

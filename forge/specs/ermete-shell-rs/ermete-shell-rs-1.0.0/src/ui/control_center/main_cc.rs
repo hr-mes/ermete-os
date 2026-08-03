@@ -127,7 +127,7 @@ pub fn show_control_center_popover(app: &Application) {
     bt_btn.set_hexpand(true);
     let bt_btn_clone_init = bt_btn.clone();
     glib::MainContext::default().spawn_local(async move {
-        let ctrl = crate::core::system_proxies::get_global_controller();
+        let ctrl = crate::core::system_proxies::get_bluetooth_controller();
         if let Ok(enabled) = ctrl.is_bluetooth_enabled().await {
             if enabled {
                 bt_btn_clone_init.add_css_class("cc-btn-active");
@@ -190,7 +190,7 @@ pub fn show_control_center_popover(app: &Application) {
     lock_tile.connect_clicked(move |_| {
         pop_lock.close();
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_global_controller();
+            let ctrl = crate::core::system_proxies::get_power_controller();
             let _ = ctrl.lock_screen().await;
         });
     });
@@ -217,7 +217,7 @@ pub fn show_control_center_popover(app: &Application) {
     bright_slider.connect_value_changed(move |s| {
         let val = s.value() / 100.0;
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_global_controller();
+            let ctrl = crate::core::system_proxies::get_display_controller();
             let _ = ctrl.set_brightness(val).await;
         });
     });
@@ -301,7 +301,7 @@ pub fn show_control_center_popover(app: &Application) {
     audio_slider.connect_value_changed(move |s| {
         let val = s.value() / 100.0;
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_global_controller();
+            let ctrl = crate::core::system_proxies::get_audio_controller();
             let _ = ctrl.set_volume(val).await;
         });
     });
@@ -311,11 +311,12 @@ pub fn show_control_center_popover(app: &Application) {
     let bright_slider_clone_init = bright_slider.clone();
     let audio_slider_clone_init = audio_slider.clone();
     glib::MainContext::default().spawn_local(async move {
-        let ctrl = crate::core::system_proxies::get_global_controller();
-        if let Ok(b) = ctrl.get_brightness().await {
+        let disp_ctrl = crate::core::system_proxies::get_display_controller();
+        let audio_ctrl = crate::core::system_proxies::get_audio_controller();
+        if let Ok(b) = disp_ctrl.get_brightness().await {
             bright_slider_clone_init.set_value(b * 100.0);
         }
-        if let Ok(v) = ctrl.get_volume().await {
+        if let Ok(v) = audio_ctrl.get_volume().await {
             audio_slider_clone_init.set_value(v * 100.0);
         }
     });
@@ -347,19 +348,19 @@ pub fn show_control_center_popover(app: &Application) {
     
     prev_btn.connect_clicked(|_| {
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_global_controller();
+            let ctrl = crate::core::system_proxies::get_mpris_controller();
             let _ = ctrl.player_command("previous").await;
         });
     });
     play_btn.connect_clicked(|_| {
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_global_controller();
+            let ctrl = crate::core::system_proxies::get_mpris_controller();
             let _ = ctrl.player_command("play-pause").await;
         });
     });
     next_btn.connect_clicked(|_| {
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_global_controller();
+            let ctrl = crate::core::system_proxies::get_mpris_controller();
             let _ = ctrl.player_command("next").await;
         });
     });
@@ -401,7 +402,7 @@ pub fn show_control_center_popover(app: &Application) {
         pop_std.close();
         crate::core::niri_client::power_off_monitors();
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_global_controller();
+            let ctrl = crate::core::system_proxies::get_power_controller();
             let _ = ctrl.suspend().await;
         });
     });
@@ -491,7 +492,7 @@ pub fn show_control_center_popover(app: &Application) {
 
         let bt_btn_clone_timer = bt_btn_clone.clone();
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_global_controller();
+            let ctrl = crate::core::system_proxies::get_bluetooth_controller();
             if let Ok(enabled) = ctrl.is_bluetooth_enabled().await {
                 if enabled {
                     bt_btn_clone_timer.add_css_class("cc-btn-active");

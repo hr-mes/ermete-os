@@ -1,6 +1,6 @@
-use crate::core::dock_config::{get_dock_config_path, load_dock_config, DockConfig};
-use crate::core::dock_data::{NiriWindowInfo, NiriWorkspaceInfo};
-use crate::core::niri_client;
+use crate::dock_config::{get_dock_config_path, load_dock_config, DockConfig};
+use crate::dock_data::{NiriWindowInfo, NiriWorkspaceInfo};
+use crate::niri_client;
 use notify::{RecursiveMode, Watcher};
 
 pub fn fetch_current_niri_windows() -> Vec<NiriWindowInfo> {
@@ -67,27 +67,7 @@ pub fn spawn_dock_watchers(
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    struct HomeGuard {
-        original: Option<String>,
-    }
-
-    impl HomeGuard {
-        fn set(new_home: &std::path::Path) -> Self {
-            let original = std::env::var("HOME").ok();
-            std::env::set_var("HOME", new_home.to_str().unwrap());
-            Self { original }
-        }
-    }
-
-    impl Drop for HomeGuard {
-        fn drop(&mut self) {
-            match &self.original {
-                Some(val) => std::env::set_var("HOME", val),
-                None => std::env::remove_var("HOME"),
-            }
-        }
-    }
+    use ermete_auth::HomeGuard;
 
     #[test]
     fn test_fetch_current_niri_windows_does_not_panic() {
@@ -97,7 +77,7 @@ mod tests {
 
     #[test]
     fn test_spawn_dock_watchers_initial_send() {
-        let _lock = crate::core::dock_config::TEST_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+        let _lock = crate::dock_config::TEST_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
         let tmp_dir = std::env::temp_dir().join("ermete_test_dock_watcher");
         let _ = std::fs::remove_dir_all(&tmp_dir);
         let _home_guard = HomeGuard::set(&tmp_dir);

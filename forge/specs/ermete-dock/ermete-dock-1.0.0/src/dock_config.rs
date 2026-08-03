@@ -84,27 +84,7 @@ pub(crate) static TEST_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    struct HomeGuard {
-        original: Option<String>,
-    }
-
-    impl HomeGuard {
-        fn set(new_home: &std::path::Path) -> Self {
-            let original = std::env::var("HOME").ok();
-            std::env::set_var("HOME", new_home.to_str().unwrap_or("/tmp"));
-            Self { original }
-        }
-    }
-
-    impl Drop for HomeGuard {
-        fn drop(&mut self) {
-            match &self.original {
-                Some(val) => std::env::set_var("HOME", val),
-                None => std::env::remove_var("HOME"),
-            }
-        }
-    }
+    use ermete_auth::HomeGuard;
 
     #[test]
     fn test_add_and_remove_pin_logic() {

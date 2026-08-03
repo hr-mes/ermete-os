@@ -1,7 +1,7 @@
-pub mod dock_config;
+pub use ermete_dock::dock_config;
+pub use ermete_dock::dock_data;
+pub use ermete_dock::dock_watcher;
 pub mod sandbox;
-pub mod dock_data;
-pub mod dock_watcher;
 pub mod network;
 pub mod mpris;
 pub mod niri_state;
@@ -211,7 +211,7 @@ pub fn get_cpu_load() -> (String, f64) {
 
 
 pub fn get_network_status() -> (String, String, String) {
-    crate::core::system_proxies::get_global_controller().get_cached_network_status()
+    crate::core::system_proxies::get_network_controller().get_cached_network_status()
 }
 
 pub fn speak_text(text: String) {

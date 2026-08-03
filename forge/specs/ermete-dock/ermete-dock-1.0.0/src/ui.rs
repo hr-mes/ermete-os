@@ -1,6 +1,7 @@
-use crate::core::dock_config::{add_pin, load_dock_config, remove_pin, DockConfig};
-use crate::core::dock_data::{reconcile_dock_items, DockItem, NiriWindowInfo, NiriWorkspaceInfo};
-use crate::core::dock_watcher::{fetch_current_niri_windows, fetch_current_workspaces, spawn_dock_watchers};
+use crate::dock_config::{add_pin, load_dock_config, remove_pin, DockConfig};
+use crate::dock_data::{reconcile_dock_items, DockItem, NiriWindowInfo, NiriWorkspaceInfo};
+use crate::dock_watcher::{fetch_current_niri_windows, fetch_current_workspaces, spawn_dock_watchers};
+use crate::niri_client;
 use gtk4::glib;
 use gtk4::prelude::*;
 use gtk4::{
@@ -165,6 +166,21 @@ fn should_autohide_for_monitor(state: &DockState, monitor_connector: &str, scree
         }
         w.is_focused
     })
+}
+
+fn speak_text(text: String) {
+    glib::MainContext::default().spawn_local(async move {
+        // VoiceOver integration
+    });
+}
+
+fn attach_voiceover_hover<W: gtk4::prelude::IsA<gtk4::Widget>>(widget: &W, text: &str) {
+    let ctrl = EventControllerMotion::new();
+    let text_clone = text.to_string();
+    ctrl.connect_enter(move |_, _, _| {
+        speak_text(text_clone.clone());
+    });
+    widget.add_controller(ctrl);
 }
 
 #[allow(dead_code)]
@@ -509,14 +525,14 @@ fn refresh_monitor_instance(inst: &mut DockMonitorInstance) {
         } else {
             format!("{}, {} finestre aperte", item.key_id.replace(".desktop", "").replace("org.", "").replace("com.", "").replace("gnome.", ""), item.window_ids.len())
         };
-        crate::core::attach_voiceover_hover(&btn, &voice_text);
+        attach_voiceover_hover(&btn, &voice_text);
 
         let item_clone = item.clone();
         let btn_clone = btn.clone();
         btn.connect_clicked(move |_| {
             if item_clone.window_ids.len() == 1 {
                 let win_id = item_clone.window_ids[0];
-                crate::core::niri_client::focus_window(win_id);
+                niri_client::focus_window(win_id);
             } else if item_clone.window_ids.len() > 1 {
                 show_window_picker_popover(&btn_clone, &item_clone);
             } else {
@@ -547,7 +563,7 @@ fn refresh_monitor_instance(inst: &mut DockMonitorInstance) {
             if !win_ids.is_empty() {
                 let idx = if dy > 0.0 { 0 } else { win_ids.len() - 1 };
                 let win_id = win_ids[idx];
-                crate::core::niri_client::focus_window(win_id);
+                niri_client::focus_window(win_id);
             }
             glib::Propagation::Stop
         });
@@ -580,7 +596,7 @@ fn show_window_picker_popover(anchor: &Button, item: &DockItem) {
             .build();
         let pop_close = popover.clone();
         btn.connect_clicked(move |_| {
-            crate::core::niri_client::focus_window(win_id);
+            niri_client::focus_window(win_id);
             pop_close.popdown();
         });
         box_inner.append(&btn);
@@ -645,7 +661,7 @@ fn show_dock_context_menu(anchor: &Button, item: &DockItem) {
         let pop_close3 = popover.clone();
         btn_close.connect_clicked(move |_| {
             for id in &win_ids {
-                crate::core::niri_client::close_window_by_id(*id);
+                niri_client::close_window_by_id(*id);
             }
             pop_close3.popdown();
         });

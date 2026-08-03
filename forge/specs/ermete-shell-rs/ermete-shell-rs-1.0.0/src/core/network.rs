@@ -14,7 +14,7 @@ trait NetworkManager {
 
 #[allow(dead_code)]
 pub async fn get_network_status_dbus() -> (String, String, String) {
-    let ctrl = crate::core::system_proxies::get_global_controller();
+    let ctrl = crate::core::system_proxies::get_network_controller();
     let _ = ctrl.refresh_network_status().await;
     ctrl.get_cached_network_status()
 }

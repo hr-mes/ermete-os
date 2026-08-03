@@ -24,8 +24,8 @@ impl Default for LiveState {
 pub fn get_live_state() -> LiveState {
     let mut state = LiveState::default();
 
-    // Volume from SystemController D-Bus proxy cache
-    state.volume = crate::core::system_proxies::get_global_controller().get_cached_volume() * 100.0;
+    // Volume from AudioController D-Bus proxy cache
+    state.volume = crate::core::system_proxies::get_audio_controller().get_cached_volume() * 100.0;
 
     // Brightness via sysfs natively in pure Rust
     if let Ok(entries) = fs::read_dir("/sys/class/backlight") {

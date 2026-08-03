@@ -109,7 +109,7 @@ pub fn show_start_menu_popover(app: &Application) {
         .build();
     off_btn.connect_clicked(move |_| {
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_global_controller();
+            let ctrl = crate::core::system_proxies::get_power_controller();
             let _ = ctrl.power_off().await;
         });
     });
@@ -121,7 +121,7 @@ pub fn show_start_menu_popover(app: &Application) {
         .build();
     reb_btn.connect_clicked(move |_| {
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_global_controller();
+            let ctrl = crate::core::system_proxies::get_power_controller();
             let _ = ctrl.reboot().await;
         });
     });
@@ -133,7 +133,7 @@ pub fn show_start_menu_popover(app: &Application) {
         .build();
     susp_btn.connect_clicked(move |_| {
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_global_controller();
+            let ctrl = crate::core::system_proxies::get_power_controller();
             let _ = ctrl.suspend().await;
         });
     });

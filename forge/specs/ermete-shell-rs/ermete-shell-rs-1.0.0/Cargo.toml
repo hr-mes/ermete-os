@@ -23,6 +23,9 @@ relm4 = "0.7"
 libc = "0.2"
 landlock = "0.4"
 
+# Decoupled domain crates
+ermete-dock = { path = "../../ermete-dock/ermete-dock-1.0.0" }
+ermete-auth = { path = "../../ermete-auth/ermete-auth-1.0.0" }
 
 [profile.release]
 opt-level = 3

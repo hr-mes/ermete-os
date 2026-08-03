@@ -6,5 +6,5 @@ pub struct MprisState {
 }
 
 pub fn get_mpris_state() -> Option<MprisState> {
-    crate::core::system_proxies::get_global_controller().get_cached_mpris_state()
+    crate::core::system_proxies::get_mpris_controller().get_cached_mpris_state()
 }

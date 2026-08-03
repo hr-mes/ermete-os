@@ -55,7 +55,7 @@ pub fn show_audio_mixer_popover(app: &Application) {
     let mute_out_btn = Button::builder().label("Muto").css_classes(["cc-quick-btn"]).build();
     mute_out_btn.connect_clicked(move |_| {
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_global_controller();
+            let ctrl = crate::core::system_proxies::get_audio_controller();
             let _ = ctrl.toggle_mute().await;
         });
     });
@@ -69,7 +69,7 @@ pub fn show_audio_mixer_popover(app: &Application) {
     out_slider.connect_value_changed(move |s| {
         let val = s.value() / 100.0;
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_global_controller();
+            let ctrl = crate::core::system_proxies::get_audio_controller();
             let _ = ctrl.set_volume(val).await;
         });
     });
@@ -87,7 +87,7 @@ pub fn show_audio_mixer_popover(app: &Application) {
     let mute_in_btn = Button::builder().label("Muto").css_classes(["cc-quick-btn"]).build();
     mute_in_btn.connect_clicked(move |_| {
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_global_controller();
+            let ctrl = crate::core::system_proxies::get_audio_controller();
             let _ = ctrl.toggle_source_mute().await;
         });
     });
@@ -101,7 +101,7 @@ pub fn show_audio_mixer_popover(app: &Application) {
     in_slider.connect_value_changed(move |s| {
         let val = s.value() / 100.0;
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_global_controller();
+            let ctrl = crate::core::system_proxies::get_audio_controller();
             let _ = ctrl.set_source_volume(val).await;
         });
     });
