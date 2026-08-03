@@ -197,8 +197,7 @@ else
     rm -f SOURCES/chromeos.afdo.xz SOURCES/chromeos.afdo
 fi
 
-echo ">>> Normalizzazione kernel.spec con LLVM=1 LLVM_IAS=1 e macro %with_clang..."
-sed -i '1i %define with_clang 1' SPECS/kernel.spec
+echo ">>> Normalizzazione kernel.spec con LLVM=1 LLVM_IAS=1..."
 sed -i 's/%make_build/%make_build LLVM=1 LLVM_IAS=1/g' SPECS/kernel.spec
 sed -i 's/make -s/make -s LLVM=1 LLVM_IAS=1/g' SPECS/kernel.spec
 sed -i 's/\(.*\)make ARCH/\1make LLVM=1 LLVM_IAS=1 ARCH/g' SPECS/kernel.spec
@@ -406,7 +405,7 @@ spectool -g -R SPECS/kernel.spec
 dnf builddep -y SPECS/kernel.spec
 export LLVM=1
 export MAKEFLAGS="LLVM=1 LLVM_IAS=1"
-rpmbuild -bp SPECS/kernel.spec --target x86_64
+rpmbuild -bp --with toolchain_clang --with clang_lto SPECS/kernel.spec --target x86_64
 
 echo ">>> Rilevamento della directory di build del kernel preparata..."
 KERNEL_BUILD_DIR=$(find "$WORKSPACE_DIR/BUILD" -maxdepth 6 -name "Makefile" -exec grep -l "^VERSION =" {} + 2>/dev/null | head -n 1 | xargs -r dirname)

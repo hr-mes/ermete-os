@@ -71,7 +71,7 @@ jobs:
         podman exec chimera-builder bash -c "
           export PATH=/usr/lib64/ccache:/usr/lib/ccache:\$PATH
           cd ~/rpmbuild/SPECS
-          rpmbuild -bb --noprep kernel.spec --target x86_64 </dev/null
+          rpmbuild -bb --with toolchain_clang --with clang_lto --noprep kernel.spec --target x86_64 </dev/null
           mkdir -p /forge/RPMS_OUT
           cp ~/rpmbuild/RPMS/x86_64/*.rpm /forge/RPMS_OUT/
         "
