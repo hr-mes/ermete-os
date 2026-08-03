@@ -69,7 +69,7 @@ impl SimpleComponent for AppModel {
         };
         let widgets = view_output!();
 
-        style::load_global_css();
+        ermete_style::load_glass_theme();
 
         // Collega la StackSidebar alla Stack GTK4
         widgets.sidebar.set_stack(&widgets.stack);

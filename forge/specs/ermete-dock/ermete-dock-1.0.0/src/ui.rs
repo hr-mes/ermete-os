@@ -186,23 +186,7 @@ fn attach_voiceover_hover<W: gtk4::prelude::IsA<gtk4::Widget>>(widget: &W, text:
 #[allow(dead_code)]
 pub fn build_ui(app: &Application) -> ApplicationWindow {
     let display = gtk4::gdk::Display::default().expect("Display default");
-    let provider = CssProvider::new();
-    let home = std::env::var("HOME").unwrap_or_else(|_| "/root".to_string());
-    let colors_path = format!("{}/.config/ermete-shell/colors.css", home);
-    let colors_css = std::fs::read_to_string(&colors_path).unwrap_or_else(|_| "".to_string());
-    let fallback = r#"
-        @define-color shell_bg alpha(#1e1e20, 0.85);
-        @define-color shell_fg #f8fafc;
-        @define-color shell_primary #0a84ff;
-        @define-color shell_border alpha(white, 0.1);
-    "#;
-    let full_css = format!("{}\n{}\n{}", colors_css, fallback, DOCK_CSS);
-    provider.load_from_data(&full_css);
-    gtk4::style_context_add_provider_for_display(
-        &display,
-        &provider,
-        gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
-    );
+    ermete_style::load_glass_theme();
 
     let (tx_win, rx_win) = glib::MainContext::channel::<Vec<NiriWindowInfo>>(glib::Priority::DEFAULT);
     let (tx_cfg, rx_cfg) = glib::MainContext::channel::<DockConfig>(glib::Priority::DEFAULT);

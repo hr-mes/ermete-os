@@ -2,7 +2,6 @@ use gtk4::prelude::*;
 use relm4::{Component, ComponentController, ComponentParts, ComponentSender, Controller, RelmApp, SimpleComponent};
 
 use crate::ui::showcase::ShowcaseModel;
-use crate::ui::style::load_glass_css;
 
 /// Modello principale della finestra Root per Ermete Store
 pub struct AppModel {
@@ -141,7 +140,7 @@ impl SimpleComponent for AppModel {
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         // Applica le regole CSS Glassmorphism
-        load_glass_css();
+        ermete_style::load_glass_theme();
 
         // Inizializza il sub-componente Showcase (Homepage)
         let showcase_controller = ShowcaseModel::builder().launch(()).detach();
