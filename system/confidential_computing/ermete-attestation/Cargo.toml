@@ -1,0 +1,14 @@
+[package]
+name = "ermete-attestation"
+version = "0.1.0"
+edition = "2021"
+description = "Ermete OS Confidential Computing Attestation Tool"
+authors = ["ermete-kernel-developer"]
+
+[dependencies]
+# Dependencies for hardware attestation and TPM interactions
+anyhow = "1.0"
+log = "0.4"
+env_logger = "0.11"
+# sev = "1.2" # For AMD SEV-SNP
+# tss-esapi = "7.3.0" # For vTPM interactions
