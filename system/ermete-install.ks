@@ -9,10 +9,32 @@ ostreecontainer --url=ghcr.io/hr-mes/ermete-os-system:latest --transport=registr
 
 # User & Security Provisioning
 rootpw --lock
-user --name=hermes --groups=wheel --password=@HERMES_PASSWORD_HASH@ --iscrypted
-sshkey --username hermes "@HERMES_SSH_KEY@"
 
 firewall --enabled --default=drop --service=ssh
-services --enabled=sshd
+services --enabled=sshd,systemd-homed
 
 reboot
+
+%post --erroronfail
+# Abilita il modulo pam_systemd_home e la risoluzione NSS via authselect
+authselect enable-feature with-systemd-homed
+
+# Avvia temporaneamente dbus e systemd-homed per consentire l'esecuzione di homectl
+mkdir -p /run/dbus
+dbus-daemon --system --fork --nopidfile
+/usr/lib/systemd/systemd-homed &
+HOMED_PID=$!
+sleep 2
+
+# Creazione dell'utente hermes con Home cifrata LUKS2 loopback, TPM2/FIDO2 e chiave SSH
+homectl create hermes \
+    --storage=luks \
+    --fs-type=ext4 \
+    --member-of=wheel \
+    --password="@HERMES_PASSWORD@" \
+    --tpm2-device=auto \
+    --fido2-device=auto \
+    --ssh-authorized-keys="@HERMES_SSH_KEY@"
+
+kill $HOMED_PID || true
+%end

@@ -20,6 +20,8 @@ Provides ermete-system-tweaks for Ermete OS.
 mkdir -p %{buildroot}/usr/share/ermete-system-tweaks
 mkdir -p %{buildroot}/usr/lib/environment.d
 mkdir -p %{buildroot}/usr/share/pipewire/pipewire.conf.d
+mkdir -p %{buildroot}/etc/NetworkManager/conf.d
+mkdir -p %{buildroot}/etc/systemd/resolved.conf.d
 mkdir -p %{buildroot}/usr/share/polkit-1/rules.d
 mkdir -p %{buildroot}/usr/lib/sysctl.d
 mkdir -p %{buildroot}/usr/lib/tmpfiles.d
@@ -29,10 +31,15 @@ cp -a %{_sourcedir}/etc/polkit-1/rules.d/10-ermete-wheel-admin.rules %{buildroot
 cp -a %{_sourcedir}/usr/lib/sysctl.d/99-bore.conf %{buildroot}/usr/lib/sysctl.d/
 cp -a %{_sourcedir}/usr/lib/sysctl.d/99-network-security.conf %{buildroot}/usr/lib/sysctl.d/
 cp -a %{_sourcedir}/usr/lib/tmpfiles.d/99-ermete-kernel-sysfs.conf %{buildroot}/usr/lib/tmpfiles.d/
+cp -a %{_sourcedir}/etc/NetworkManager/conf.d/99-mac-randomization.conf %{buildroot}/etc/NetworkManager/conf.d/
+cp -a %{_sourcedir}/etc/systemd/resolved.conf.d/99-dns-tls.conf %{buildroot}/etc/systemd/resolved.conf.d/
+
 %post
 
 %files
 %dir /usr/share/ermete-system-tweaks
+%config(noreplace) /etc/NetworkManager/conf.d/99-mac-randomization.conf
+%config(noreplace) /etc/systemd/resolved.conf.d/99-dns-tls.conf
 /usr/lib/environment.d/10-ermete-wayland.conf
 /usr/share/pipewire/pipewire.conf.d/10-low-latency.conf
 /usr/share/polkit-1/rules.d/10-ermete-wheel-admin.rules

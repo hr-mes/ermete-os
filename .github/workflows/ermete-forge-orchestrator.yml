@@ -181,6 +181,22 @@ jobs:
           buildah push $IMAGE_LOWER:latest
           buildah push $IMAGE_LOWER:${{ steps.check.outputs.hash }}
 
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Generate SBOM (Syft)
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-${{ matrix.package }}:latest
+          format: spdx-json
+          output-file: sbom-${{ matrix.package }}.spdx.json
+
+      - name: Sign & Attest Custom Micro-Container
+        run: |
+          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-${{ matrix.package }}:latest" | tr '[:upper:]' '[:lower:]')
+          cosign sign --yes $IMAGE_LOWER
+          cosign attest --yes --type spdxjson --predicate sbom-${{ matrix.package }}.spdx.json $IMAGE_LOWER
+
       - name: 🧹 Cleanup Workspace Permissions
         if: always()
         run: chown -R 1000:1000 ${{ github.workspace }} || true
@@ -338,13 +354,21 @@ jobs:
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3
 
-      - name: Sign NVIDIA Micro-Container
+      - name: Generate NVIDIA Micro-Container SBOM (Syft)
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-nvidia:latest
+          format: spdx-json
+          output-file: sbom-nvidia.spdx.json
+
+      - name: Sign & Attest NVIDIA Micro-Container
         env:
           COSIGN_EXPERIMENTAL: true
         run: |
           cosign login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-nvidia:latest" | tr '[:upper:]' '[:lower:]')
           cosign sign --yes $IMAGE_LOWER
+          cosign attest --yes --type spdxjson --predicate sbom-nvidia.spdx.json $IMAGE_LOWER
 
       - name: 🧹 Cleanup Workspace Permissions
         if: always()

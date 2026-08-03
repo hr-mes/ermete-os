@@ -14,6 +14,7 @@ defaults:
 permissions:
   contents: read
   packages: write
+  id-token: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -95,4 +96,29 @@ jobs:
         buildah copy $ctr RPMS_OUT/*.rpm /
         IMAGE_LOWER=$(echo "ghcr.io/hr-mes/ermete-os-kernel:latest" | tr '[:upper:]' '[:lower:]')
         buildah commit --omit-timestamp $ctr $IMAGE_LOWER
-        buildah push $IMAGE_LOWER
+        buildah push --digestfile kernel_digest.txt $IMAGE_LOWER
+        echo "KERNEL_DIGEST=$(cat kernel_digest.txt)" >> $GITHUB_ENV
+
+    - name: Install Cosign
+      uses: sigstore/cosign-installer@v3
+
+    - name: Generate Kernel SBOM (Syft)
+      uses: anchore/sbom-action@v0
+      with:
+        image: "ghcr.io/hr-mes/ermete-os-kernel@${{ env.KERNEL_DIGEST }}"
+        format: "spdx-json"
+        output-file: "kernel-sbom.spdx.json"
+
+    - name: Sign & Attest Kernel Micro-Container OCI
+      env:
+        COSIGN_EXPERIMENTAL: 1
+      run: |
+        IMAGE_REF="ghcr.io/hr-mes/ermete-os-kernel@${{ env.KERNEL_DIGEST }}"
+        cosign sign -y "${IMAGE_REF}"
+        cosign attest -y --type spdxjson --predicate kernel-sbom.spdx.json "${IMAGE_REF}"
+
+    - name: Verify Kernel Image Signature & Attestation
+      run: |
+        IMAGE_REF="ghcr.io/hr-mes/ermete-os-kernel@${{ env.KERNEL_DIGEST }}"
+        cosign verify --certificate-identity-regexp "^https://github.com/${{ github.repository_owner }}/" --certificate-oidc-issuer "https://token.actions.githubusercontent.com" "${IMAGE_REF}"
+        cosign verify-attestation --type spdxjson --certificate-identity-regexp "^https://github.com/${{ github.repository_owner }}/" --certificate-oidc-issuer "https://token.actions.githubusercontent.com" "${IMAGE_REF}"

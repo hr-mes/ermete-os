@@ -1,0 +1,11 @@
+# Ermete OS IMA/EVM Strict Integrity Enforcement Arguments
+kargs = [
+    "ima_appraise=enforce",
+    "ima_policy=tcb",
+    "ima_policy=appraise_tcb",
+    "ima_hash=sha256",
+    "ima_template=ima-sig",
+    "evm=enforce",
+    "evm_hash=sha256"
+]
+match-architectures = ["x86_64", "aarch64"]
