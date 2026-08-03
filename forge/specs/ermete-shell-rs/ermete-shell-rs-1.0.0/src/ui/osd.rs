@@ -14,6 +14,27 @@ pub fn spawn_osd(app: &Application) {
     window.init_layer_shell();
     window.set_namespace("osd");
     window.set_layer(Layer::Overlay);
+
+    // Apply Glassmorphism
+    let provider = gtk4::CssProvider::new();
+    provider.load_from_data(
+        "
+        .osd-window {
+            background-color: alpha(#1e1e20, 0.80);
+            border-radius: 24px;
+            border: 1px solid alpha(white, 0.15);
+            box-shadow: 0 10px 40px alpha(black, 0.5);
+            backdrop-filter: blur(20px);
+        }
+        "
+    );
+    if let Some(display) = gtk4::gdk::Display::default() {
+        gtk4::style_context_add_provider_for_display(
+            &display,
+            &provider,
+            gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
+        );
+    }
     window.set_margin(Edge::Bottom, 100);
     // Center at the bottom horizontally
     // By not setting Left/Right anchors, it naturally centers if we don't expand.

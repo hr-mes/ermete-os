@@ -144,6 +144,40 @@ impl SimpleComponent for TopbarModel {
                         set_spacing: 2,
                         set_valign: gtk::Align::Center,
                         
+                        #[name = "morphic_pill"]
+                        gtk::Box {
+                            set_orientation: gtk::Orientation::Horizontal,
+                            add_css_class: "macos-status-item",
+                            add_css_class: "morphic-pill",
+                            
+                            gtk::Label {
+                                set_label: "✨",
+                                set_margin_start: 4,
+                                set_margin_end: 4,
+                            },
+                            
+                            #[name = "pill_revealer"]
+                            gtk::Revealer {
+                                set_transition_type: gtk::RevealerTransitionType::SlideLeft,
+                                set_transition_duration: 300,
+                                
+                                gtk::Label {
+                                    set_label: "AI Tasks bg...",
+                                    set_margin_end: 8,
+                                    add_css_class: "pill-text",
+                                }
+                            },
+                            
+                            add_controller = gtk::EventControllerMotion {
+                                connect_enter [pill_revealer] => move |_, _, _| {
+                                    pill_revealer.set_reveal_child(true);
+                                },
+                                connect_leave [pill_revealer] => move |_| {
+                                    pill_revealer.set_reveal_child(false);
+                                }
+                            }
+                        },
+                        
                         gtk::Button {
                             #[watch]
                             set_visible: model.has_battery,
