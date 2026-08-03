@@ -25,6 +25,7 @@ pub struct AppModel {
 #[derive(Debug)]
 pub enum AppMsg {
     SelectPage(String),
+    RouteAi(String),
 }
 
 #[relm4::component(pub)]
@@ -40,12 +41,22 @@ impl SimpleComponent for AppModel {
             set_default_height: 720,
 
             gtk4::Box {
-                set_orientation: gtk4::Orientation::Horizontal,
+                set_orientation: gtk4::Orientation::Vertical,
+                set_spacing: 16,
 
-                #[name = "sidebar"]
-                gtk4::StackSidebar {
-                    set_width_request: 240,
-                    add_css_class: "sidebar-container",
+                gtk4::Box {
+                    set_halign: gtk4::Align::Center,
+                    set_margin_top: 24,
+
+                    #[name = "omnibox"]
+                    gtk4::Entry {
+                        set_placeholder_text: Some("Cosa vuoi configurare o risolvere? (es: 'Il mio audio non va')"),
+                        set_width_request: 600,
+                        add_css_class: "omnibox-input",
+                        connect_activate[sender] => move |entry| {
+                            sender.input(AppMsg::RouteAi(entry.text().to_string()));
+                        }
+                    }
                 },
 
                 #[name = "stack"]
@@ -53,7 +64,7 @@ impl SimpleComponent for AppModel {
                     set_transition_type: gtk4::StackTransitionType::Crossfade,
                     set_hexpand: true,
                     set_vexpand: true,
-                    add_css_class: "stack-container",
+                    add_css_class: "flat-canvas-container",
                 }
             }
         }
@@ -70,9 +81,6 @@ impl SimpleComponent for AppModel {
         let widgets = view_output!();
 
         ermete_style::load_glass_theme();
-
-        // Collega la StackSidebar alla Stack GTK4
-        widgets.sidebar.set_stack(&widgets.stack);
 
         // Registro delle pagine delle impostazioni
         let pages: &[(&str, &str, fn() -> gtk4::Box)] = &[
@@ -135,10 +143,20 @@ impl SimpleComponent for AppModel {
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, msg: Self::Input, _sender: relm4::ComponentSender<Self>) {
+    fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
         match msg {
             AppMsg::SelectPage(_page_id) => {
                 // Gestione messaggi dinamici di cambio pagina se necessari
+            }
+            AppMsg::RouteAi(query) => {
+                // Chiamata all'AI Daemon per il natural language routing
+                println!("AI Daemon Routing: analizzo l'intento '{}'", query);
+                
+                // TODO: in base alla risposta, navigare direttamente al widget/fix corretto
+                // es: show_audio_panel_with_autofix
+                if query.to_lowercase().contains("audio") {
+                    sender.input(AppMsg::SelectPage("audio".to_string()));
+                }
             }
         }
     }

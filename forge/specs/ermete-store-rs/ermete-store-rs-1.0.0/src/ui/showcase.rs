@@ -190,12 +190,22 @@ impl SimpleComponent for ShowcaseModel {
                 self.active_category = cat;
             }
             ShowcaseMsg::Install(app_id) => {
+                println!("[OverlayFS/Nix] 🚀 Lancio immediato overlay fittizio per '{}'...", app_id);
+                println!("[Demone] ⬇️ Avvio download in background per '{}' (Lazy Loading)...", app_id);
+                
                 if let Some(app) = self.apps.iter_mut().find(|a| a.id == app_id) {
-                    app.installed = !app.installed;
+                    app.installed = true; // Disponibile istantaneamente
                 }
+                
+                // Simulazione asincrona del download in background
+                let id_clone = app_id.clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(std::time::Duration::from_secs(3));
+                    println!("[Demone] ✅ Download completato per '{}'. Overlay sincronizzato e reso persistente.", id_clone);
+                });
             }
-            ShowcaseMsg::OpenApp(_app_id) => {
-                // Notifica o avvio app
+            ShowcaseMsg::OpenApp(app_id) => {
+                println!("[Store] Apertura applicazione '{}'", app_id);
             }
         }
     }
@@ -287,7 +297,7 @@ fn build_app_card(app: &AppItem, sender: &ComponentSender<ShowcaseModel>) -> gtk
         action_btn.set_label("Apri");
         action_btn.add_css_class("btn-installed");
     } else {
-        action_btn.set_label("Ottieni");
+        action_btn.set_label("Usa Istantaneamente");
         action_btn.add_css_class("btn-install");
     }
 
@@ -299,6 +309,8 @@ fn build_app_card(app: &AppItem, sender: &ComponentSender<ShowcaseModel>) -> gtk
             sender_clone.input(ShowcaseMsg::OpenApp(app_id.clone()));
         } else {
             sender_clone.input(ShowcaseMsg::Install(app_id.clone()));
+            // Simula anche qui l'apertura immediata
+            sender_clone.input(ShowcaseMsg::OpenApp(app_id.clone()));
         }
     });
 
