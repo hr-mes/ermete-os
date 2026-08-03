@@ -91,7 +91,7 @@ echo ">>> Verifica esistenza su GHCR: ${IMAGE_URL_LOWER}..." >&2
 # Verifica con skopeo (se skopeo non è installato, tenta di installarlo o usa fallback)
 if ! command -v skopeo >/dev/null 2>&1; then
   if command -v dnf >/dev/null 2>&1; then
-    sudo dnf install -y skopeo >&2 || dnf install -y skopeo >&2 || :
+    sudo -n dnf install -y skopeo >&2 || dnf install -y skopeo >&2 || :
   fi
 fi
 
