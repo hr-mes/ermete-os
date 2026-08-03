@@ -454,10 +454,16 @@ jobs:
             echo "--- Risoluzione Dipendenze Estrema (su SPEC) ---"
             dnf builddep -y --allowerasing ~/rpmbuild/SPECS/*.spec
           
-            # Workaround for Fedora rust-hybrid-array missing README.md issue
-            mkdir -p /usr/share/cargo/registry/hybrid-array-0.4.13 || true
-            touch /usr/share/cargo/registry/hybrid-array-0.4.13/README.md || true
-          
+            # Workaround for Fedora missing README.md issue in rust packaging
+            if [ -d /usr/share/cargo/registry ]; then
+              for crate in /usr/share/cargo/registry/*; do
+                if [ -d "$crate" ]; then
+                  touch "$crate/README.md" || true
+                  touch "$crate/Readme.md" || true
+                fi
+              done
+            fi
+
             echo "--- Iniezione Dinamica Ponytail Ultra ---"
             for spec in ~/rpmbuild/SPECS/*.spec; do
               # Disattiva pacchetti di debug globalmente
