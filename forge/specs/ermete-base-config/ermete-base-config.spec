@@ -58,6 +58,7 @@ rm -rf %{buildroot}/etc/tmpfiles.d
 /etc/yum.repos.d/*
 /usr/lib/systemd/system/*
 /usr/lib/tmpfiles.d/*
+/usr/lib/systemd/journald.conf.d/*
 /usr/bin/nvidia-sleep.sh
 /usr/lib/fedora-release
 /usr/lib/os-release

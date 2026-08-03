@@ -34,12 +34,26 @@ RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier0-repo:latest,sour
 # TIER 1: CORE USERSERVICE, DBUS & POLICYKIT
 RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier1-repo:latest,source=/,target=/mnt/tier1-repo \
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/cache/libdnf5 \
+    echo "Tier 1: Installing Scudo Hardened Allocator (compiler-rt)..." && \
+    dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs compiler-rt && \
     if find /mnt/tier1-repo -name "*.rpm" 1> /dev/null 2>&1; then \
         echo "Tier 1: Installing Core User Services, DBus & Policies..." && \
         RPM_LIST=$(find /mnt/tier1-repo -name "*.rpm" 2>/dev/null | grep -vE -- '-devel-|-doc-|debuginfo|debugsource' || true) && \
         if [ -n "$RPM_LIST" ]; then \
             dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs $RPM_LIST; \
         fi; \
+    fi && \
+    SCUDO_LIB=$(find /usr/lib/clang/ -name "libclang_rt.scudo_standalone.so" 2>/dev/null | head -n 1) && \
+    if [ -n "$SCUDO_LIB" ]; then \
+        ln -sf "$SCUDO_LIB" /usr/lib64/libscudo.so && \
+        echo "/usr/lib64/libscudo.so" > /etc/ld.so.preload && \
+        echo 'SCUDO_OPTIONS="allocator_may_return_null=true:zero_contents=false:dealloc_type_mismatch=false:quarantine_size_kb=0"' >> /etc/environment && \
+        mkdir -p /etc/systemd/system/greetd.service.d /etc/systemd/system/ermete-llm.service.d && \
+        echo -e "[Service]\nEnvironment=\"LD_PRELOAD=\"" > /etc/systemd/system/greetd.service.d/override.conf && \
+        echo -e "[Service]\nEnvironment=\"LD_PRELOAD=\"" > /etc/systemd/system/ermete-llm.service.d/override.conf && \
+        echo "Tier 1: Scudo Allocator enabled globally via /etc/ld.so.preload ($SCUDO_LIB)"; \
+    else \
+        echo "ERROR: libclang_rt.scudo_standalone.so not found!" && exit 1; \
     fi
 
 # TIER 2: DESIGN SYSTEM & STATIC ASSETS

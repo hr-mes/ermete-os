@@ -1,5 +1,6 @@
 enable nvidia-powerd.service
 enable nvidia-persistenced.service
+enable ermete-journal-seal.service
 
 disable NetworkManager-wait-online.service
 disable systemd-networkd-wait-online.service

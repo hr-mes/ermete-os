@@ -1,0 +1,17 @@
+[Unit]
+Description=Ermete OS - Initial Forward Secure Sealing (FSS) Key Setup
+Documentation=man:journalctl(1) man:systemd-journald.service(8)
+DefaultDependencies=no
+After=systemd-journald.service
+Before=sysinit.target
+ConditionPathExistsGlob=!/var/log/journal/*/fss.key
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/usr/bin/journalctl --setup-keys
+ExecStartPost=/usr/bin/systemctl restart systemd-journald.service
+ExecStartPost=/usr/bin/systemctl disable ermete-journal-seal.service
+
+[Install]
+WantedBy=sysinit.target multi-user.target
