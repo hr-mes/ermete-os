@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "ebpf-core",
+    "ebpf-loader",
+]
+resolver = "2"
