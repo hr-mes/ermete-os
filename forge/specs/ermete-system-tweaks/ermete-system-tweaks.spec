@@ -27,6 +27,7 @@ cp -a %{_sourcedir}/usr/lib/environment.d/10-ermete-wayland.conf %{buildroot}/us
 cp -a %{_sourcedir}/usr/share/pipewire/pipewire.conf.d/10-low-latency.conf %{buildroot}/usr/share/pipewire/pipewire.conf.d/
 cp -a %{_sourcedir}/etc/polkit-1/rules.d/10-ermete-wheel-admin.rules %{buildroot}/usr/share/polkit-1/rules.d/
 cp -a %{_sourcedir}/usr/lib/sysctl.d/99-bore.conf %{buildroot}/usr/lib/sysctl.d/
+cp -a %{_sourcedir}/usr/lib/sysctl.d/99-network-security.conf %{buildroot}/usr/lib/sysctl.d/
 cp -a %{_sourcedir}/usr/lib/tmpfiles.d/99-ermete-kernel-sysfs.conf %{buildroot}/usr/lib/tmpfiles.d/
 %post
 
@@ -36,6 +37,7 @@ cp -a %{_sourcedir}/usr/lib/tmpfiles.d/99-ermete-kernel-sysfs.conf %{buildroot}/
 /usr/share/pipewire/pipewire.conf.d/10-low-latency.conf
 /usr/share/polkit-1/rules.d/10-ermete-wheel-admin.rules
 /usr/lib/sysctl.d/99-bore.conf
+/usr/lib/sysctl.d/99-network-security.conf
 /usr/lib/tmpfiles.d/99-ermete-kernel-sysfs.conf
 %changelog
 * Fri Jul 10 2026 Ermete Forge <forge@ermete.os> - 1.0.0-3

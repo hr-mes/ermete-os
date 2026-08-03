@@ -56,6 +56,7 @@ rm -rf %{buildroot}/etc/tmpfiles.d
 /etc/pki/rpm-gpg/*
 /etc/selinux/config
 /etc/yum.repos.d/*
+/etc/ssh/sshd_config.d/*
 /usr/lib/systemd/system/*
 /usr/lib/tmpfiles.d/*
 /usr/lib/systemd/journald.conf.d/*
@@ -63,6 +64,8 @@ rm -rf %{buildroot}/etc/tmpfiles.d
 /usr/lib/fedora-release
 /usr/lib/os-release
 /usr/lib/bootc/kargs.d/01-nvidia.toml
+/usr/lib/bootc/kargs.d/02-hardening.toml
+/etc/grub.d/01_ermete_grub_auth
 /usr/lib/dracut/dracut.conf.d/*
 /usr/lib/modprobe.d/*
 /usr/lib/modules-load.d/*
