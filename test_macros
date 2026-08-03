@@ -1,0 +1,3 @@
+%optflags_aarch64 -O3 -march=armv8.5-a
+%optflags_x86_64 -O3 -march=x86-64-v3
+%_optflags %{expand:%{optflags_%{_arch}}}
