@@ -48,9 +48,9 @@
 # codegen-units=1: Piattaforma singola per max LTO puro (lento ma potente)
 # link-arg=-fuse-ld=mold: Linker mold anche su Rust
 %ifarch aarch64
-%rustflags -C target-feature=+mte -C opt-level=3 -C codegen-units=1 -C link-arg=-fuse-ld=mold
+%rustflags -C target-feature=+mte -C opt-level=3 -C codegen-units=16 -C link-arg=-fuse-ld=mold
 %else
-%rustflags -C target-cpu=x86-64-v3 -C opt-level=3 -C codegen-units=1 -C link-arg=-fuse-ld=mold
+%rustflags -C target-cpu=x86-64-v3 -C opt-level=3 -C codegen-units=16 -C link-arg=-fuse-ld=mold
 %endif
 
 # =========================================================================
@@ -66,4 +66,6 @@
 %__spec_build_pre %{___build_pre}\
   export RUSTFLAGS="%{rustflags}"\
   export CARGO_PROFILE_RELEASE_LTO="thin"\
-  export RUSTC_WRAPPER=sccache
+  export RUSTC_WRAPPER=sccache\
+  export SCCACHE_DIRECT=true\
+  export SCCACHE_CACHE_SIZE="10G"

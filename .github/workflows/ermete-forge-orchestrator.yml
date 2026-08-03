@@ -65,7 +65,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
-          podman run -i --rm --pull=always --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package builder --registry ghcr.io --owner ${{ github.repository_owner }} --image-name ermete-os-builder > idemp.out
+          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package builder --registry ghcr.io --owner ${{ github.repository_owner }} --image-name ermete-os-builder > idemp.out
           source ./idemp.out
           if [ "$CACHE_HIT" = "true" ]; then
             echo "cache_hit=true" >> $GITHUB_OUTPUT
@@ -108,7 +108,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
-          podman run -i --rm --pull=always --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-${{ matrix.package }} > idemp.out
+          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-${{ matrix.package }} > idemp.out
           source ./idemp.out
           echo "hash=$CONTENT_HASH" >> $GITHUB_OUTPUT
           if [ "$CACHE_HIT" = "true" ]; then echo "skip=true" >> $GITHUB_OUTPUT; else echo "skip=false" >> $GITHUB_OUTPUT; fi
@@ -117,16 +117,17 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .sccache
-          key: sccache-${{ matrix.package }}-${{ github.sha }}
+          key: sccache-${{ matrix.package }}-${{ runner.os }}-${{ hashFiles('**/Cargo.lock', 'specs/**') }}
           restore-keys: |
             sccache-${{ matrix.package }}-
       - name: Install Dependencies and Build
         if: steps.check.outputs.skip != 'true'
         run: |
           mkdir -p RPMS
+          mkdir -p RPMS
           mkdir -p ${{ github.workspace }}/.sccache
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
-          podman run -i --rm --pull=always --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
             -w /workspace/forge \
@@ -170,7 +171,6 @@ jobs:
       - name: Publish Micro-Container OCI
         if: steps.check.outputs.skip != 'true'
         run: |
-          export STORAGE_DRIVER=vfs
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
@@ -221,7 +221,7 @@ jobs:
       - name: Resolve Kernel Version and Install Chimera Headers
         id: kernel
         run: |
-          podman run -i --rm --pull=always --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
             ghcr.io/hr-mes/ermete-os-builder:latest \
@@ -229,7 +229,6 @@ jobs:
               set -euo pipefail
               curl -Lo /etc/yum.repos.d/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo
               dnf install -y buildah jq
-              export STORAGE_DRIVER=vfs
               export BUILDAH_ISOLATION=chroot
               buildah from ghcr.io/hr-mes/ermete-os-kernel:latest > ctr_id
               ctr=$(cat ctr_id)
@@ -255,7 +254,7 @@ jobs:
         if: steps.cache.outputs['cache-hit'] != 'true'
         run: |
           mkdir -p ${{ github.workspace }}/nvidia_cache
-          podman run -i --rm --pull=always --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -v ${{ github.workspace }}/nvidia_cache:/var/cache/akmods/nvidia \
             -w /workspace \
@@ -267,7 +266,6 @@ jobs:
               curl -Lo /etc/yum.repos.d/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo
               # Extract kernel headers again (since this is a new container)
               dnf install -y buildah jq
-              export STORAGE_DRIVER=vfs
               export BUILDAH_ISOLATION=chroot
               ctr=$(buildah from ghcr.io/hr-mes/ermete-os-kernel:latest)
               mnt=$(buildah mount $ctr)
@@ -304,7 +302,7 @@ jobs:
               popd
 
               rpm -ivh /usr/src/akmods/nvidia-kmod*.src.rpm
-              sed -i "s/make %{?_smp_mflags}/export CCACHE_DISABLE=1 SCCACHE_DISABLE=1 IGNORE_CC_MISMATCH=1 KCFLAGS=\\"-Wno-error -fno-lto\\"; make LLVM=1 LLVM_IAS=1 CC=clang LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf STRIP=llvm-strip %{?_smp_mflags}/g" ~/rpmbuild/SPECS/nvidia-kmod.spec
+              sed -i "s/make %{?_smp_mflags}/IGNORE_CC_MISMATCH=1 KCFLAGS=\\"-Wno-error -fno-lto\\"; make LLVM=1 LLVM_IAS=1 CC=clang LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf STRIP=llvm-strip %{?_smp_mflags}/g" ~/rpmbuild/SPECS/nvidia-kmod.spec
               
               # Strip problematic dynamically-generated kernel dependencies from kmodtool
               sed -i -E '/^(Provides|Requires|Conflicts|Obsoletes|BuildRequires):.*(kernel_uname_r|kernel >|kernel <|kernel-devel)/d' /usr/bin/kmodtool
@@ -343,7 +341,6 @@ jobs:
 
       - name: Publish Micro-Container OCI
         run: |
-          export STORAGE_DRIVER=vfs
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
@@ -405,7 +402,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
-          podman run -i --rm --pull=always --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
+          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name ermete-os-forge-rolling-${{ matrix.package }} > idemp.out
           source ./idemp.out
           if [ "$CACHE_HIT" = "true" ]; then
             echo "cache_hit=true" >> $GITHUB_OUTPUT
@@ -414,13 +411,29 @@ jobs:
           fi
           echo "content_hash=$CONTENT_HASH" >> $GITHUB_OUTPUT
           
+      - name: Cache sccache and cargo
+        if: steps.check_idempotency.outputs.cache_hit != 'true'
+        uses: actions/cache@v4
+        with:
+          path: |
+            .sccache
+            .cargo-cache
+          key: sccache-${{ matrix.package }}-${{ runner.os }}-${{ hashFiles('**/Cargo.lock', 'specs/**') }}
+          restore-keys: |
+            sccache-${{ matrix.package }}-${{ runner.os }}-
+            sccache-${{ matrix.package }}-
+
       - name: Fetch, Patch and Build ${{ matrix.package }}
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
           mkdir -p RPMS
+          mkdir -p RPMS
+          mkdir -p ${{ github.workspace }}/.sccache ${{ github.workspace }}/.cargo-cache
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
-          podman run -i --rm --pull=always --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
+            -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
+            -v ${{ github.workspace }}/.cargo-cache:/root/.cargo \
             -w /workspace/forge \
             ghcr.io/hr-mes/ermete-os-builder:latest \
             bash <<'EOF'
@@ -499,7 +512,6 @@ jobs:
       - name: Publish Micro-Container OCI
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
-          export STORAGE_DRIVER=vfs
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
@@ -528,7 +540,7 @@ jobs:
       - name: Create Repo and Push OCI
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
-          podman run -i --rm --pull=always --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace/forge \
             ghcr.io/hr-mes/ermete-os-builder:latest \
