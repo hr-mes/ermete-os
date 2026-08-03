@@ -1,0 +1,14 @@
+[cargo-vet]
+version = 1
+
+[imports.mozilla]
+url = "https://raw.githubusercontent.com/mozilla/cargo-vet/main/src/imports/mozilla.toml"
+
+[imports.google]
+url = "https://raw.githubusercontent.com/google/cargo-vet-config/main/imports/google.toml"
+
+[policy.ermete-gatekeeper-rs]
+audit-as-crates-io = false
+
+[policy.ermete-daemon-rs]
+audit-as-crates-io = false

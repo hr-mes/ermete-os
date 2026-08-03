@@ -1,0 +1,152 @@
+name: 🛡️ Rust Security & Buffer Overflow Fuzzing
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'forge/specs/*-rs/**'
+      - 'forge/specs/ermete-backup/**'
+      - '.github/workflows/fuzzing.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'forge/specs/*-rs/**'
+      - 'forge/specs/ermete-backup/**'
+      - '.github/workflows/fuzzing.yml'
+  schedule:
+    # Esecuzione settimanale ogni domenica alle 03:00 UTC per fuzzing approfondito
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+    inputs:
+      fuzz_seconds:
+        description: 'Tempo di fuzzing per ciascun target (in secondi)'
+        required: false
+        default: '60'
+      target_component:
+        description: 'Componente specifico da testare (oppure "all")'
+        required: false
+        default: 'all'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fuzz:
+    name: 🎯 Fuzz ${{ matrix.component }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        component:
+          - ermete-shell-rs
+          - ermete-daemon-rs
+          - ermete-cloud-rs
+          - ermete-gatekeeper-rs
+          - ermete-settings-rs
+          - ermete-store-rs
+          - ermete-updater-rs
+          - ermete-telemetry-rs
+          - ermete-mdm-rs
+          - ermete-lvfs-rs
+          - ermete-backup
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Check Component Filter
+        id: filter
+        run: |
+          SELECTED_COMPONENT="${{ github.event.inputs.target_component }}"
+          if [ -n "$SELECTED_COMPONENT" ] && [ "$SELECTED_COMPONENT" != "all" ] && [ "$SELECTED_COMPONENT" != "${{ matrix.component }}" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 🛠️ Install Rust Nightly & LLVM Tools
+        if: steps.filter.outputs.skip != 'true'
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: llvm-tools-preview, rust-src
+
+      - name: ⚡ Cache Cargo Dependencies & Fuzz Build
+        if: steps.filter.outputs.skip != 'true'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            forge/specs/${{ matrix.component }}/**/target/
+          key: ${{ runner.os }}-cargo-fuzz-${{ matrix.component }}-${{ hashFiles('forge/specs/' + matrix.component + '/**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-fuzz-${{ matrix.component }}-
+            ${{ runner.os }}-cargo-fuzz-
+
+      - name: 📦 Install cargo-fuzz
+        if: steps.filter.outputs.skip != 'true'
+        uses: taiki-e/install-action@cargo-fuzz
+
+      - name: 🔍 Locate Crate Path & Run Cargo Fuzz (ASan)
+        if: steps.filter.outputs.skip != 'true'
+        run: |
+          set -e
+          
+          # Calcola durata fuzzing: input manuale oppure default 60s per PR/push
+          FUZZ_TIME="${{ github.event.inputs.fuzz_seconds }}"
+          if [ -z "$FUZZ_TIME" ]; then
+            FUZZ_TIME="60"
+          fi
+          
+          # Individua la directory del crate Rust che contiene Cargo.toml
+          CRATE_DIR=$(find forge/specs/${{ matrix.component }} -maxdepth 2 -name "Cargo.toml" -exec dirname {} \; | head -n 1)
+          
+          if [ -z "$CRATE_DIR" ]; then
+            echo "⚠️ Nessun Cargo.toml trovato in forge/specs/${{ matrix.component }}"
+            exit 0
+          fi
+          
+          echo "📁 Operando nella directory: $CRATE_DIR"
+          cd "$CRATE_DIR"
+
+          # Se la directory fuzz/ non esiste, la inizializza automaticamente
+          if [ ! -d "fuzz" ]; then
+            echo "🚀 Inizializzazione target cargo-fuzz per ${{ matrix.component }}..."
+            cargo fuzz init --bin fuzz_target_1 || cargo fuzz init
+          fi
+
+          # Trova tutti i target di fuzzing configurati
+          TARGETS=$(cargo fuzz list 2>/dev/null || true)
+          if [ -z "$TARGETS" ]; then
+            # Se la lista è vuota, scansiona fuzz/fuzz_targets/
+            TARGETS=$(ls fuzz/fuzz_targets/*.rs 2>/dev/null | xargs -n 1 basename | sed 's/\.rs$//' || true)
+          fi
+
+          if [ -z "$TARGETS" ]; then
+            TARGETS="fuzz_target_1"
+          fi
+
+          echo "🎯 Target di Fuzzing individuati: $TARGETS"
+          
+          # Esegue cargo fuzz su ciascun target con AddressSanitizer abilitato
+          for target in $TARGETS; do
+            echo "🔥 Running cargo fuzz su target '$target' per ${FUZZ_TIME}s con AddressSanitizer..."
+            cargo fuzz run "$target" -- -max_total_time="$FUZZ_TIME" -sanitizer=address
+          done
+
+      - name: 🚨 Upload Fuzzing Crash Artifacts
+        if: (failure() || always()) && steps.filter.outputs.skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-artifacts-${{ matrix.component }}
+          path: |
+            forge/specs/${{ matrix.component }}/**/fuzz/artifacts/
+            forge/specs/${{ matrix.component }}/**/fuzz/corpus/
+          if-no-files-found: ignore

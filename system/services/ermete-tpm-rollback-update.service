@@ -1,0 +1,11 @@
+[Unit]
+Description=Ermete OS TPM2 Monotonic Counter Update on Successful Boot
+After=boot-complete.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/ermete/ermete-tpm-rollback-update.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

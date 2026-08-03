@@ -1,0 +1,14 @@
+[Unit]
+Description=Ermete OS TPM2 Monotonic Counter Rollback Check
+DefaultDependencies=no
+Before=systemd-pcrphase-sysinit.service sysinit.target
+After=tpm2-abrmd.service local-fs.target
+Wants=tpm2-abrmd.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/ermete/ermete-tpm-rollback-check.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=sysinit.target

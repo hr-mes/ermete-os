@@ -1,0 +1,7 @@
+# Ermete OS Confidential Computing Arguments (AMD SME/SEV & Intel TDX)
+kargs = [
+    "mem_encrypt=on",
+    "kvm_amd.sev=1",
+    "kvm_intel.tdx=1"
+]
+match-architectures = ["x86_64"]
