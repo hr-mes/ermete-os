@@ -75,11 +75,9 @@ pub fn build_ui(app: &Application, app_path: &str) {
         .css_classes(["suggested-action", "gatekeeper-btn"])
         .build();
         
-    let app_cancel = app.clone();
     btn_cancel.connect_clicked(move |_btn| {
         // Exit with code 1 to deny
         std::process::exit(1);
-        app_cancel.quit();
     });
 
     let btn_approve = Button::builder()
@@ -87,12 +85,10 @@ pub fn build_ui(app: &Application, app_path: &str) {
         .css_classes(["destructive-action", "gatekeeper-btn"])
         .build();
 
-    let app_approve = app.clone();
     btn_approve.connect_clicked(move |_btn| {
         // Future: PAM Authentication here!
         // For now, exit 0 to approve
         std::process::exit(0);
-        app_approve.quit();
     });
 
     hbox.append(&btn_cancel);

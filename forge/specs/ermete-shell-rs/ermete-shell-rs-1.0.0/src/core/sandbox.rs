@@ -1,4 +1,6 @@
-use landlock::{AccessFs, PathBeneath, PathFd, Ruleset, ABI};
+use landlock::{
+    Access, AccessFs, PathBeneath, PathFd, Ruleset, RulesetAttr, RulesetError, RulesetStatus, ABI,
+};
 use std::env;
 use std::path::Path;
 
