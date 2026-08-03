@@ -56,9 +56,8 @@ fn main() -> glib::ExitCode {
         );
     }
 
-    if let Err(err) = crate::core::sandbox::apply_landlock_sandbox() {
-        eprintln!("[Sandboxing] Avviso: Impossibile applicare il sandbox Landlock: {err}");
-    }
+    crate::core::sandbox::apply_landlock_sandbox()
+        .expect("[Sandboxing] Errore fatale: Impossibile applicare la policy Landlock");
 
     let args = Args::parse();
     crate::core::system_proxies::init_system_controller();

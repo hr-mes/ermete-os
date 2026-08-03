@@ -57,8 +57,8 @@ COPY tetragon.tp.d/sys_execve.yaml /etc/tetragon/tetragon.tp.d/sys_execve.yaml
 # TIER 1: CORE USERSERVICE, DBUS & POLICYKIT
 RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier1-repo:latest,source=/,target=/mnt/tier1-repo \
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/cache/libdnf5 \
-    echo "Tier 1: Installing Scudo Hardened Allocator (compiler-rt)..." && \
-    dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs compiler-rt && \
+    echo "Tier 1: Installing Scudo Hardened Allocator (compiler-rt) & Keylime..." && \
+    dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs compiler-rt keylime-tenant keylime-agent && \
     if find /mnt/tier1-repo -name "*.rpm" 1> /dev/null 2>&1; then \
         echo "Tier 1: Installing Core User Services, DBus & Policies..." && \
         RPM_LIST=$(find /mnt/tier1-repo -name "*.rpm" 2>/dev/null | grep -vE -- '-devel-|-doc-|debuginfo|debugsource' || true) && \
@@ -111,7 +111,7 @@ COPY services/10-rollback-check.conf /usr/lib/systemd/system/systemd-pcrphase-sy
 # Declarative Systemd presets & sysusers
 RUN authselect enable-feature with-systemd-homed && \
     chmod 0755 /usr/libexec/ermete/ermete-tpm-rollback-*.sh && \
-    systemctl enable tetragon.service systemd-sysext.service systemd-homed.service ermete-tpm-rollback-check.service ermete-tpm-rollback-update.service && systemd-sysusers && systemctl preset-all && systemctl --global preset-all
+    systemctl enable tetragon.service systemd-sysext.service systemd-homed.service keylime_agent.service ermete-tpm-rollback-check.service ermete-tpm-rollback-update.service && systemd-sysusers && systemctl preset-all && systemctl --global preset-all
 
 # Initramfs generation
 RUN QUALIFIED_KERNEL="" && \

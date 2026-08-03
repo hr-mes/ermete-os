@@ -69,6 +69,7 @@ rm -rf %{buildroot}/etc/tmpfiles.d
 /usr/lib/bootc/kargs.d/03-ima-evm.toml
 /usr/lib/bootc/kargs.d/04-confidential-compute.toml
 /usr/lib/bootc/kargs.d/05-dma-protection.toml
+/usr/lib/bootc/kargs.d/06-mte-lam.toml
 /etc/grub.d/01_ermete_grub_auth
 /usr/lib/dracut/dracut.conf.d/*
 /usr/lib/modprobe.d/*
