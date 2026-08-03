@@ -166,6 +166,7 @@ jobs:
             mkdir -p /workspace/forge/RPMS
             cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
           EOF
+
       - name: Publish Micro-Container OCI
         if: steps.check.outputs.skip != 'true'
         run: |
@@ -452,6 +453,10 @@ jobs:
           
             echo "--- Risoluzione Dipendenze Estrema (su SPEC) ---"
             dnf builddep -y --allowerasing ~/rpmbuild/SPECS/*.spec
+          
+            # Workaround for Fedora rust-hybrid-array missing README.md issue
+            mkdir -p /usr/share/cargo/registry/hybrid-array-0.4.13 || true
+            touch /usr/share/cargo/registry/hybrid-array-0.4.13/README.md || true
           
             echo "--- Iniezione Dinamica Ponytail Ultra ---"
             for spec in ~/rpmbuild/SPECS/*.spec; do
