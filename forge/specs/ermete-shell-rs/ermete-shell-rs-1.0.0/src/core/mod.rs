@@ -1,4 +1,5 @@
 pub mod dock_config;
+pub mod sandbox;
 pub mod dock_data;
 pub mod dock_watcher;
 pub mod network;

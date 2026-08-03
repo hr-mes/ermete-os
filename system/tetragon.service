@@ -1,0 +1,19 @@
+[Unit]
+Description=Cilium Tetragon eBPF Runtime Security Daemon
+Documentation=https://github.com/cilium/tetragon
+After=network.target local-fs.target
+Wants=local-fs.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/tetragon --config-dir=/etc/tetragon/tetragon.tp.d --export-filename=/var/log/tetragon/tetragon.log
+Restart=always
+RestartSec=5s
+KillMode=process
+LimitMEMLOCK=infinity
+CapabilityBoundingSet=CAP_SYS_ADMIN CAP_SYS_RESOURCE CAP_SYS_PTRACE CAP_NET_ADMIN CAP_PERFMON CAP_BPF CAP_DAC_OVERRIDE CAP_SETUID CAP_SETGID
+ProtectHome=read-only
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

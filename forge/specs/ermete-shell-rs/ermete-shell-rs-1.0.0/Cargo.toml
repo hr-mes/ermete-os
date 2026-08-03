@@ -21,6 +21,7 @@ meval = "0.2"
 futures-util = "0.3.30"
 relm4 = "0.7"
 libc = "0.2"
+landlock = "0.4"
 
 
 [profile.release]
