@@ -32,51 +32,19 @@ RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier0-repo:latest,sour
     echo "excludepkgs=kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-devel kernel-debug kernel-debug-devel kernel-debug-core kernel-debug-modules kernel-debug-modules-core kernel-debug-modules-extra" >> /etc/dnf/dnf.conf && \
     rm -rf /usr/lib/firmware/{mellanox,qlogic,netronome,liquidio,cxgb4,bnx2x,cavium,dpaa2}
 
-# Tier 0: Install Cilium Tetragon eBPF Runtime Security
-RUN echo "Tier 0: Installing Cilium Tetragon eBPF Runtime Security (${TETRAGON_VERSION})..." && \
-    ARCH=$(uname -m) && \
-    case "${ARCH}" in \
-        x86_64)  TETRAGON_ARCH="amd64" ;; \
-        aarch64) TETRAGON_ARCH="arm64" ;; \
-        *)       TETRAGON_ARCH="${ARCH}" ;; \
-    esac && \
-    curl -sSL "https://github.com/cilium/tetragon/releases/download/${TETRAGON_VERSION}/tetragon-${TETRAGON_VERSION}-${TETRAGON_ARCH}.tar.gz" -o /tmp/tetragon.tar.gz && \
-    mkdir -p /tmp/tetragon && \
-    tar -xzf /tmp/tetragon.tar.gz -C /tmp/tetragon && \
-    cp /tmp/tetragon/tetragon /usr/bin/tetragon && \
-    cp /tmp/tetragon/tetra /usr/bin/tetra && \
-    chmod 0755 /usr/bin/tetragon /usr/bin/tetra && \
-    mkdir -p /var/lib/tetragon /var/log/tetragon /etc/tetragon/tetragon.tp.d && \
-    if [ -d /tmp/tetragon/bpf ]; then cp -r /tmp/tetragon/bpf /var/lib/tetragon/; fi && \
-    rm -rf /tmp/tetragon*
-
-COPY tetragon.service /usr/lib/systemd/system/tetragon.service
-COPY tetragon.yaml /etc/tetragon/tetragon.yaml
-COPY tetragon.tp.d/sys_execve.yaml /etc/tetragon/tetragon.tp.d/sys_execve.yaml
+# Tier 0: Install Cilium Tetragon eBPF Runtime Security is now delegated to ermete-tetragon RPM
 
 # TIER 1: CORE USERSERVICE, DBUS & POLICYKIT
 RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier1-repo:latest,source=/,target=/mnt/tier1-repo \
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/cache/libdnf5 \
     echo "Tier 1: Installing Scudo Hardened Allocator (compiler-rt) & Keylime..." && \
-    dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs compiler-rt keylime-tenant keylime-agent && \
+    dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs compiler-rt keylime-tenant keylime-agent ermete-scudo && \
     if find /mnt/tier1-repo -name "*.rpm" 1> /dev/null 2>&1; then \
         echo "Tier 1: Installing Core User Services, DBus & Policies..." && \
         RPM_LIST=$(find /mnt/tier1-repo -name "*.rpm" 2>/dev/null | grep -vE -- '-devel-|-doc-|debuginfo|debugsource' || true) && \
         if [ -n "$RPM_LIST" ]; then \
             dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs $RPM_LIST; \
         fi; \
-    fi && \
-    SCUDO_LIB=$(find /usr/lib/clang/ -name "libclang_rt.scudo_standalone.so" 2>/dev/null | head -n 1) && \
-    if [ -n "$SCUDO_LIB" ]; then \
-        ln -sf "$SCUDO_LIB" /usr/lib64/libscudo.so && \
-        echo "/usr/lib64/libscudo.so" > /etc/ld.so.preload && \
-        echo 'SCUDO_OPTIONS="allocator_may_return_null=true:zero_contents=false:dealloc_type_mismatch=false:quarantine_size_kb=0"' >> /etc/environment && \
-        mkdir -p /etc/systemd/system/greetd.service.d /etc/systemd/system/ermete-llm.service.d && \
-        echo -e "[Service]\nEnvironment=\"LD_PRELOAD=\"" > /etc/systemd/system/greetd.service.d/override.conf && \
-        echo -e "[Service]\nEnvironment=\"LD_PRELOAD=\"" > /etc/systemd/system/ermete-llm.service.d/override.conf && \
-        echo "Tier 1: Scudo Allocator enabled globally via /etc/ld.so.preload ($SCUDO_LIB)"; \
-    else \
-        echo "ERROR: libclang_rt.scudo_standalone.so not found!" && exit 1; \
     fi
 
 # TIER 2: DESIGN SYSTEM & STATIC ASSETS
@@ -101,16 +69,8 @@ RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier3-repo:latest,sour
         fi; \
     fi
 
-# Copy Rollback Protection Scripts and Systemd Services
-COPY scripts/ermete-tpm-rollback-check.sh /usr/libexec/ermete/ermete-tpm-rollback-check.sh
-COPY scripts/ermete-tpm-rollback-update.sh /usr/libexec/ermete/ermete-tpm-rollback-update.sh
-COPY services/ermete-tpm-rollback-check.service /usr/lib/systemd/system/ermete-tpm-rollback-check.service
-COPY services/ermete-tpm-rollback-update.service /usr/lib/systemd/system/ermete-tpm-rollback-update.service
-COPY services/10-rollback-check.conf /usr/lib/systemd/system/systemd-pcrphase-sysinit.service.d/10-rollback-check.conf
-
 # Declarative Systemd presets & sysusers
 RUN authselect enable-feature with-systemd-homed && \
-    chmod 0755 /usr/libexec/ermete/ermete-tpm-rollback-*.sh && \
     systemctl enable tetragon.service systemd-sysext.service systemd-homed.service keylime_agent.service ermete-tpm-rollback-check.service ermete-tpm-rollback-update.service && systemd-sysusers && systemctl preset-all && systemctl --global preset-all
 
 # Initramfs generation
@@ -148,5 +108,4 @@ RUN dnf5 remove -y --no-autoremove \
     rm -rf /var/lib/dnf5/* /var/tmp/* /var/log/*
 
 # Image Validation & Linting
-COPY test-nvidia-modules.sh /usr/bin/test-nvidia-modules.sh
 RUN ls -la /usr/lib/modules/ && bootc container lint && /usr/bin/test-nvidia-modules.sh

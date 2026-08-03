@@ -21,11 +21,19 @@ UEFI Secure Boot signing, and TPM 2.0 PCR 11 measurement/sealing.
 # Nothing to build
 
 %install
-mkdir -p %{buildroot}%{_libexecdir}
+mkdir -p %{buildroot}%{_libexecdir}/ermete
 install -m 0755 %{_sourcedir}/usr/libexec/ermete-secure-boot-measure.sh %{buildroot}%{_libexecdir}/ermete-secure-boot-measure.sh
+install -m 0755 %{_sourcedir}/usr/libexec/ermete/ermete-tpm-rollback-check.sh %{buildroot}%{_libexecdir}/ermete/ermete-tpm-rollback-check.sh
+install -m 0755 %{_sourcedir}/usr/libexec/ermete/ermete-tpm-rollback-update.sh %{buildroot}%{_libexecdir}/ermete/ermete-tpm-rollback-update.sh
 
 # Install a systemd service that triggers on kernel install
 mkdir -p %{buildroot}%{_unitdir}
+install -m 0644 %{_sourcedir}/usr/lib/systemd/system/ermete-tpm-rollback-check.service %{buildroot}%{_unitdir}/ermete-tpm-rollback-check.service
+install -m 0644 %{_sourcedir}/usr/lib/systemd/system/ermete-tpm-rollback-update.service %{buildroot}%{_unitdir}/ermete-tpm-rollback-update.service
+
+mkdir -p %{buildroot}%{_unitdir}/systemd-pcrphase-sysinit.service.d
+install -m 0644 %{_sourcedir}/usr/lib/systemd/system/systemd-pcrphase-sysinit.service.d/10-rollback-check.conf %{buildroot}%{_unitdir}/systemd-pcrphase-sysinit.service.d/10-rollback-check.conf
+
 cat <<EOF > %{buildroot}%{_unitdir}/ermete-secure-boot.service
 [Unit]
 Description=Ermete OS Measured Boot & UKI Signer
@@ -50,7 +58,12 @@ EOF
 
 %files
 %{_libexecdir}/ermete-secure-boot-measure.sh
+%{_libexecdir}/ermete/ermete-tpm-rollback-check.sh
+%{_libexecdir}/ermete/ermete-tpm-rollback-update.sh
 %{_unitdir}/ermete-secure-boot.service
+%{_unitdir}/ermete-tpm-rollback-check.service
+%{_unitdir}/ermete-tpm-rollback-update.service
+%{_unitdir}/systemd-pcrphase-sysinit.service.d/10-rollback-check.conf
 
 %changelog
 * Thu Jul 16 2026 Ermete <ermete@ermete.os> - 1.0.0-1

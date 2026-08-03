@@ -30,13 +30,17 @@
     "xdg-desktop-portal-ermete",
     "secure-boot",
     "lvfs-rs",
-    "ui-agent"
+    "ui-agent",
+    "tetragon",
+    "scudo",
+    "qa"
   ],
   "custom_tier0": [
     "base-config",
     "selinux",
     "nix-support",
-    "secure-boot"
+    "secure-boot",
+    "tetragon"
   ],
   "custom_tier1": [
     "starship",
@@ -45,7 +49,8 @@
     "cliphist",
     "ide-bootstrap",
     "system-tweaks",
-    "niri"
+    "niri",
+    "scudo"
   ],
   "custom_tier2": [
     "bibata",
@@ -69,7 +74,8 @@
     "updater-rs",
     "xdg-desktop-portal-ermete",
     "lvfs-rs",
-    "ui-agent"
+    "ui-agent",
+    "qa"
   ],
   "cachyos_addons": [],
   "upstream_core": [
