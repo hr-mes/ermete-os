@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "forge/specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0",
     "forge/specs/ermete-auth/ermete-auth-1.0.0",
     "forge/specs/ermete-backup/ermete-backup-1.0.0",
     "forge/specs/ermete-cloud-rs/ermete-cloud-rs-1.0.0",
