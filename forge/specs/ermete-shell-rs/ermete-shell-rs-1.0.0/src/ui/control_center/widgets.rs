@@ -1,8 +1,7 @@
 use gtk4::prelude::*;
 use gtk4::{Align, Box as GtkBox, Button, Label, Orientation};
 
-pub(crate) fn build_cc_row(badge_class: &str, icon_glyph: &str, title: &str, sub: &str) -> Button {
-    let btn = Button::builder().css_classes(["cc-tile-row"]).build();
+pub(crate) fn build_cc_row_content(badge_class: &str, icon_glyph: &str, title: &str, sub: &str) -> GtkBox {
     let row_box = GtkBox::builder()
         .orientation(Orientation::Horizontal)
         .spacing(14)
@@ -42,7 +41,12 @@ pub(crate) fn build_cc_row(badge_class: &str, icon_glyph: &str, title: &str, sub
 
     row_box.append(&badge);
     row_box.append(&text_box);
-    btn.set_child(Some(&row_box));
+    row_box
+}
+
+pub(crate) fn build_cc_row(badge_class: &str, icon_glyph: &str, title: &str, sub: &str) -> Button {
+    let btn = Button::builder().css_classes(["cc-tile-row"]).build();
+    btn.set_child(Some(&build_cc_row_content(badge_class, icon_glyph, title, sub)));
     btn
 }
 

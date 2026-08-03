@@ -2,7 +2,7 @@ use crate::core::*;
 use crate::ui::control_center::audio::show_audio_mixer_popover;
 use crate::ui::control_center::bluetooth::show_bluetooth_popover;
 use crate::ui::control_center::sysmon::show_system_monitor_modal;
-use crate::ui::control_center::widgets::{build_cc_compact_tile, build_cc_row};
+use crate::ui::control_center::widgets::{build_cc_compact_tile, build_cc_row, build_cc_row_content};
 use crate::ui::control_center::wifi::show_wifi_popover;
 use crate::ui::topbar::setup_popup_autoclose;
 use glib::clone;
@@ -83,13 +83,22 @@ pub fn show_control_center_popover(app: &Application) {
         .hexpand(true)
         .build();
 
-    let (net_icon, net_title, net_sub) = get_network_status();
-    let wifi_btn = build_cc_row("cc-circle-blue", &net_icon, &net_title, &net_sub);
+    let wifi_btn = build_cc_row("cc-circle-blue", "󰖪", "Rete Wi-Fi", "Caricamento...");
     wifi_btn.set_hexpand(true);
-    let net_connected = net_sub != "Disattivato" && net_sub != "Non connesso" && net_sub != "Off" && net_sub != "Disconnected";
-    if net_connected {
-        wifi_btn.add_css_class("cc-btn-active");
-    }
+    let wifi_btn_clone_init = wifi_btn.clone();
+    glib::MainContext::default().spawn_local(async move {
+        let (net_icon, net_title, net_sub) = tokio::task::spawn_blocking(move || {
+            crate::core::get_network_status()
+        }).await.unwrap_or_else(|_| ("󰖪".to_string(), "Rete Wi-Fi".to_string(), "Errore".to_string()));
+        
+        let net_connected = net_sub != "Disattivato" && net_sub != "Non connesso" && net_sub != "Off" && net_sub != "Disconnected";
+        if net_connected {
+            wifi_btn_clone_init.add_css_class("cc-btn-active");
+        } else {
+            wifi_btn_clone_init.remove_css_class("cc-btn-active");
+        }
+        wifi_btn_clone_init.set_child(Some(&build_cc_row_content("cc-circle-blue", &net_icon, &net_title, &net_sub)));
+    });
     let app_wifi = app.clone();
     let pop_wifi = pop.clone();
     wifi_btn.connect_clicked(move |_| {
@@ -465,13 +474,20 @@ pub fn show_control_center_popover(app: &Application) {
             mpris_p.set_label("▶");
         }
 
-        let (_, _, net_sub) = get_network_status();
-        let net_connected = net_sub != "Disattivato" && net_sub != "Non connesso" && net_sub != "Off" && net_sub != "Disconnected";
-        if net_connected {
-            wifi_btn_clone.add_css_class("cc-btn-active");
-        } else {
-            wifi_btn_clone.remove_css_class("cc-btn-active");
-        }
+        let wifi_btn_clone_async = wifi_btn_clone.clone();
+        glib::MainContext::default().spawn_local(async move {
+            let (net_icon, net_title, net_sub) = tokio::task::spawn_blocking(move || {
+                crate::core::get_network_status()
+            }).await.unwrap_or_else(|_| ("󰖪".to_string(), "Rete Wi-Fi".to_string(), "Errore".to_string()));
+            
+            let net_connected = net_sub != "Disattivato" && net_sub != "Non connesso" && net_sub != "Off" && net_sub != "Disconnected";
+            if net_connected {
+                wifi_btn_clone_async.add_css_class("cc-btn-active");
+            } else {
+                wifi_btn_clone_async.remove_css_class("cc-btn-active");
+            }
+            wifi_btn_clone_async.set_child(Some(&build_cc_row_content("cc-circle-blue", &net_icon, &net_title, &net_sub)));
+        });
 
         let bt_btn_clone_timer = bt_btn_clone.clone();
         glib::MainContext::default().spawn_local(async move {
