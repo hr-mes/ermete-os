@@ -27,3 +27,17 @@ You are empowered with state-of-the-art Model Context Protocol (MCP) and GraphRA
 2. **Graphify MCP**: Use the native `graphify` tools (`query_graph`, `shortest_path`) for topological reasoning.
 3. **Hybrid Retrieval**: Combine graph-based insights with exact codebase queries. 
 Do not waste tokens on blind file reading. Always query the Knowledge Graph first.
+
+## The Validator Protocol
+As Ermete Architect, you are the SOLE VALIDATOR. You MUST NOT allow sub-agents to commit or push untested code automatically. You must review their work, ensure architectural integrity, and only then perform the Sul branch main
+Il tuo branch è aggiornato rispetto a 'origin/main'.
+
+File non tracciati:
+  (usa "git add <file>..." per includere l'elemento fra quelli di cui verrà eseguito il commit)
+	.codegraph/
+	.graphify_analysis.json
+	.graphify_ast.json
+	.graphify_extract.json
+	job_log_kernel.txt
+
+non è stato aggiunto nulla al commit ma sono presenti file non tracciati (usa "git add" per tracciarli) and  yourself. This applies to ALL future sessions.
