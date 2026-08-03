@@ -48,7 +48,7 @@ jobs:
 
       - name: 🧹 Cleanup Workspace Permissions
         if: always()
-        run: chown -R 1000:1000 ${{ github.workspace }} || true
+        run: sudo sudo chown -R 1000:1000 ${{ github.workspace }} || true
   build-builder:
     name: 🏗️ Build Base Builder
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
@@ -86,7 +86,7 @@ jobs:
 
       - name: 🧹 Cleanup Workspace Permissions
         if: always()
-        run: chown -R 1000:1000 ${{ github.workspace }} || true
+        run: sudo sudo chown -R 1000:1000 ${{ github.workspace }} || true
   custom-packages:
     needs: [build-builder, orchestrator-brain]
     if: needs.orchestrator-brain.outputs.custom_packages != '[]' && needs.orchestrator-brain.outputs.custom_packages != ''
@@ -202,7 +202,7 @@ jobs:
 
       - name: 🧹 Cleanup Workspace Permissions
         if: always()
-        run: chown -R 1000:1000 ${{ github.workspace }} || true
+        run: sudo sudo chown -R 1000:1000 ${{ github.workspace }} || true
   build-nvidia:
     needs: [build-builder]
     name: 🎮 Build NVIDIA KMOD
@@ -375,7 +375,7 @@ jobs:
 
       - name: 🧹 Cleanup Workspace Permissions
         if: always()
-        run: chown -R 1000:1000 ${{ github.workspace }} || true
+        run: sudo sudo chown -R 1000:1000 ${{ github.workspace }} || true
   upstream-packages:
     needs: [build-builder, orchestrator-brain]
     if: needs.orchestrator-brain.outputs.upstream_packages != '[]' && needs.orchestrator-brain.outputs.upstream_packages != ''
@@ -498,7 +498,7 @@ jobs:
 
       - name: 🧹 Cleanup Workspace Permissions
         if: always()
-        run: chown -R 1000:1000 ${{ github.workspace }} || true
+        run: sudo sudo chown -R 1000:1000 ${{ github.workspace }} || true
   build-repo:
     name: 📦 Build Repository
     if: ${{ always() && needs.orchestrator-brain.outputs.has_changes == 'true' && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
@@ -658,4 +658,4 @@ jobs:
         run: |
           # Use rootless podman to remove root-owned files from the workspace
           podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -v "${{ github.workspace }}:/workspace:rw" -w /workspace docker.io/library/alpine:latest rm -rf /workspace/var-tmp || true
-          chown -R 1000:1000 ${{ github.workspace }} || true
+          sudo chown -R 1000:1000 ${{ github.workspace }} || true
