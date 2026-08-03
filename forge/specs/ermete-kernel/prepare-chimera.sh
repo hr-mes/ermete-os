@@ -50,9 +50,8 @@ echo ">>> [BEDROCK SECURE] Calcolo dinamico dello Scudo NVIDIA (Dynamic Ceiling)
 curl -sLo /etc/yum.repos.d/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo || true
 EXPECTED_SHA="9126880310a20437de6ba1a83d299ee9a2119f8a1ef1e40de601676054320fc5"
 if [ -f /etc/yum.repos.d/fedora-nvidia.repo ]; then
-    echo "$EXPECTED_SHA  /etc/yum.repos.d/fedora-nvidia.repo" | sha256sum -c - || { echo "FATAL: Checksum mismatch per fedora-nvidia.repo"; exit 1; }
+    echo "$EXPECTED_SHA  /etc/yum.repos.d/fedora-nvidia.repo" | sha256sum -c || { echo "FATAL: Checksum mismatch per fedora-nvidia.repo"; exit 1; }
 fi
-# TODO: Add SHA256 checksum verification for fedora-nvidia.repo
 NVIDIA_VER=$(dnf repoquery --qf '%{VERSION}\n' akmod-nvidia 2>/dev/null | sort -V | tail -n 1 | awk -F. '{print $1}' || true)
 MAX_KERNEL="6.18" # Default
 if [[ -n "$NVIDIA_VER" ]]; then
@@ -174,26 +173,45 @@ fi
 echo ">>> Pulizia patch obsolete (ntsync è upstream in 6.14)..."
 rm -f SOURCES/*ntsync*.patch || true
 
-echo ">>> Download del profilo ChromeOS AFDO (Fallback a link statico blindato)..."
+echo ">>> Download del profilo ChromeOS AFDO (Fallback a link statico blindato con SHA256)..."
 # A causa del rate-limiting estremo degli IP GitHub Actions da parte di Google Source,
 # lo scraping dinamico fallisce. Usiamo l'ultimo link statico 6.6 testato matematicamente.
 TARGET_AFDO_URL="https://storage.googleapis.com/chromeos-prebuilt/afdo-job/cwp/kernel/amd64/6.6/R152-16718.0-1783300616.afdo.xz"
+PRIMARY_AFDO_SHA256="a8cfc6f59c8284aa11107db42dc36e0a14f738cb700e63fe2762912cbb0c455d"
+
+FALLBACK_AFDO_URL="https://storage.googleapis.com/chromeos-localmirror/distfiles/chromeos-kernel-5_15-afdo.prof.xz"
+FALLBACK_AFDO_SHA256="133171a860f7acf586c604d9ef4dfff1e7ddaa357d85431661a25e06aa717491"
+
 echo "    -> URL AFDO statico: $TARGET_AFDO_URL"
 
+AFDO_VALIDATED=false
 if [ -n "$TARGET_AFDO_URL" ]; then
-    if ! curl -sfLo SOURCES/chromeos.afdo.xz "$TARGET_AFDO_URL"; then
-        echo "    [WARN] Fallito il download dall'URL statico 6.6. Fallback a 5.15..."
-        TARGET_AFDO_URL="https://storage.googleapis.com/chromeos-localmirror/distfiles/chromeos-kernel-5_15-afdo.prof.xz"
-        curl -sfLo SOURCES/chromeos.afdo.xz "$TARGET_AFDO_URL" || true
+    if curl -sfLo SOURCES/chromeos.afdo.xz "$TARGET_AFDO_URL"; then
+        if echo "$PRIMARY_AFDO_SHA256  SOURCES/chromeos.afdo.xz" | sha256sum -c; then
+            echo "    -> Profilo AFDO 6.6 scaricato e verificato con SHA256 ($PRIMARY_AFDO_SHA256)."
+            AFDO_VALIDATED=true
+        else
+            echo "ERRORE FATALE: Checksum SHA256 non corrispondente per il profilo AFDO 6.6!" >&2
+            exit 1
+        fi
+    else
+        echo "    [WARN] Fallito il download dall'URL statico 6.6. Tentativo fallback a 5.15..."
+        if curl -sfLo SOURCES/chromeos.afdo.xz "$FALLBACK_AFDO_URL"; then
+            if echo "$FALLBACK_AFDO_SHA256  SOURCES/chromeos.afdo.xz" | sha256sum -c; then
+                echo "    -> Profilo AFDO 5.15 scaricato e verificato con SHA256 ($FALLBACK_AFDO_SHA256)."
+                AFDO_VALIDATED=true
+            else
+                echo "ERRORE FATALE: Checksum SHA256 non corrispondente per il profilo AFDO fallback 5.15!" >&2
+                exit 1
+            fi
+        fi
     fi
-else
-    echo "    [WARN] Nessun URL AFDO trovato. Procedo senza PGO."
 fi
 
-if [ -f SOURCES/chromeos.afdo.xz ] && xz -df SOURCES/chromeos.afdo.xz; then
+if [ "$AFDO_VALIDATED" = true ] && [ -f SOURCES/chromeos.afdo.xz ] && xz -df SOURCES/chromeos.afdo.xz; then
     echo "    -> Profilo AFDO scaricato e decompresso in SOURCES/chromeos.afdo"
 else
-    echo "    [WARN] Fallito il download del profilo AFDO. Procedo senza PGO."
+    echo "    [WARN] Nessun profilo AFDO scaricato o decompression fallita. Procedo senza PGO."
     rm -f SOURCES/chromeos.afdo.xz SOURCES/chromeos.afdo
 fi
 
