@@ -1,5 +1,8 @@
+
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 pub mod components;
-pub mod niri_client;
 pub mod pages;
 pub mod settings_proxy;
 pub mod style;
@@ -163,6 +166,12 @@ impl SimpleComponent for AppModel {
 }
 
 fn main() {
+    // Forza il renderer GTK4 NGL (New GL) ad altissime prestazioni / Vulkan e backend puramente Wayland
+    std::env::set_var("GSK_RENDERER", "ngl");
+    std::env::set_var("GDK_BACKEND", "wayland");
+    // Disabilita lo scaling X11 frazionario per evitare blur
+    std::env::set_var("GDK_SCALE", "1");
+
     let mut page_id = None;
     let args: Vec<String> = std::env::args().collect();
     let mut iter = args.iter().skip(1);

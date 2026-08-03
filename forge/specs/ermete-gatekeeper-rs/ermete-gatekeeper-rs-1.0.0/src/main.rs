@@ -1,3 +1,7 @@
+
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 use std::collections::HashMap;
 use std::error::Error;
 use std::os::unix::io::{AsRawFd, FromRawFd, RawFd};

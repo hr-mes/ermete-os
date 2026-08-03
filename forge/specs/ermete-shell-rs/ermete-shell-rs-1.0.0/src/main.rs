@@ -1,3 +1,7 @@
+
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 use clap::Parser;
 use gtk4::prelude::*;
 use gtk4::{gio, Application};
@@ -45,6 +49,12 @@ struct Args {
 const APP_ID: &str = "os.ermete.Shell";
 
 fn main() -> glib::ExitCode {
+    // Forza il renderer GTK4 NGL (New GL) ad altissime prestazioni / Vulkan e backend puramente Wayland
+    std::env::set_var("GSK_RENDERER", "ngl");
+    std::env::set_var("GDK_BACKEND", "wayland");
+    // Disabilita lo scaling X11 frazionario per evitare blur
+    std::env::set_var("GDK_SCALE", "1");
+
     // SAFETY: Called at the very start of main(), before user Rust threads are created.
     // Uses C-level setenv to avoid UB concerns with Rust's set_var in multithreaded contexts.
     // Workaround for Vulkan swapchain resizing panic (VK_ERROR_OUT_OF_DATE_KHR) on Wayland.
@@ -68,6 +78,7 @@ fn main() -> glib::ExitCode {
             .build();
         let req_clone = req_info.clone();
         app.connect_activate(move |app| {
+        crate::core::init_css();
             crate::ui::privacy_prompt::build_ui(app, &req_clone);
         });
         return app.run_with_args(&Vec::<String>::new());
@@ -79,6 +90,7 @@ fn main() -> glib::ExitCode {
             .build();
         let path_clone = app_path.clone();
         app.connect_activate(move |app| {
+        crate::core::init_css();
             crate::ui::gatekeeper_prompt::build_ui(app, &path_clone);
         });
         return app.run_with_args(&Vec::<String>::new());
@@ -89,6 +101,7 @@ fn main() -> glib::ExitCode {
             .application_id("os.ermete.MissionControl")
             .build();
         app.connect_activate(|app| {
+        crate::core::init_css();
             crate::ui::mission_control::build_ui(app);
         });
         return app.run_with_args(&Vec::<String>::new());
@@ -99,6 +112,7 @@ fn main() -> glib::ExitCode {
             .application_id("os.ermete.StoreUI")
             .build();
         app.connect_activate(|app| {
+        crate::core::init_css();
             crate::ui::store::show_store_modal(app);
         });
         return app.run_with_args(&Vec::<String>::new());
@@ -112,6 +126,7 @@ fn main() -> glib::ExitCode {
             .application_id(app_id)
             .build();
         app.connect_activate(move |app| {
+        crate::core::init_css();
             greeter::build_ui(app, is_lock);
         });
         return app.run_with_args(&Vec::<String>::new());
@@ -123,6 +138,7 @@ fn main() -> glib::ExitCode {
             .flags(gio::ApplicationFlags::HANDLES_COMMAND_LINE)
             .build();
         app.connect_activate(|app| {
+        crate::core::init_css();
             static ACTIVATED_DOCK: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
             if !ACTIVATED_DOCK.swap(true, std::sync::atomic::Ordering::SeqCst) {
                 ui::dock::build_ui(app);
@@ -143,6 +159,7 @@ fn main() -> glib::ExitCode {
         .build();
 
     app.connect_activate(move |app| {
+        crate::core::init_css();
         static ACTIVATED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
         if !ACTIVATED.swap(true, std::sync::atomic::Ordering::SeqCst) {
             use relm4::Component;

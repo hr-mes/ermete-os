@@ -61,11 +61,10 @@ pub fn show_control_center_popover(app: &Application) {
         .css_classes(["cc-quick-btn"])
         .tooltip_text("Impostazioni di Sistema")
         .build();
-    let pop_settings = pop.clone();
-    settings_btn.connect_clicked(move |_| {
-        pop_settings.close();
+    settings_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
+        pop.close();
         let _ = gtk4::glib::spawn_command_line_async("ermete-settings-rs");
-    });
+    }));
     header_box.append(&cc_title_lbl);
     header_box.append(&settings_btn);
 
@@ -99,12 +98,10 @@ pub fn show_control_center_popover(app: &Application) {
         }
         wifi_btn_clone_init.set_child(Some(&build_cc_row_content("cc-circle-blue", &net_icon, &net_title, &net_sub)));
     });
-    let app_wifi = app.clone();
-    let pop_wifi = pop.clone();
-    wifi_btn.connect_clicked(move |_| {
-        pop_wifi.close();
-        show_wifi_popover(&app_wifi);
-    });
+    wifi_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
+        pop.close();
+        show_wifi_popover(&app);
+    }));
     let wifi_row_box = GtkBox::builder()
         .orientation(Orientation::Horizontal)
         .spacing(6)
@@ -115,11 +112,10 @@ pub fn show_control_center_popover(app: &Application) {
         .valign(Align::Center)
         .tooltip_text("Impostazioni Wi-Fi")
         .build();
-    let pop_wifi_s = pop.clone();
-    wifi_settings_btn.connect_clicked(move |_| {
-        pop_wifi_s.close();
+    wifi_settings_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
+        pop.close();
         let _ = gtk4::glib::spawn_command_line_async(format!("ermete-settings-rs --page {}", "wifi"));
-    });
+    }));
     wifi_row_box.append(&wifi_btn);
     wifi_row_box.append(&wifi_settings_btn);
 
@@ -134,12 +130,10 @@ pub fn show_control_center_popover(app: &Application) {
             }
         }
     });
-    let app_bt = app.clone();
-    let pop_bt = pop.clone();
-    bt_btn.connect_clicked(move |_| {
-        pop_bt.close();
-        show_bluetooth_popover(&app_bt);
-    });
+    bt_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
+        pop.close();
+        show_bluetooth_popover(&app);
+    }));
     let bt_row_box = GtkBox::builder()
         .orientation(Orientation::Horizontal)
         .spacing(6)
@@ -150,21 +144,18 @@ pub fn show_control_center_popover(app: &Application) {
         .valign(Align::Center)
         .tooltip_text("Impostazioni Bluetooth")
         .build();
-    let pop_bt_s = pop.clone();
-    bt_settings_btn.connect_clicked(move |_| {
-        pop_bt_s.close();
+    bt_settings_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
+        pop.close();
         let _ = gtk4::glib::spawn_command_line_async(format!("ermete-settings-rs --page {}", "bluetooth"));
-    });
+    }));
     bt_row_box.append(&bt_btn);
     bt_row_box.append(&bt_settings_btn);
 
     let sys_btn = build_cc_row("cc-circle-blue", "⚙", "Risorse", "Monitor Live");
-    let app_sys = app.clone();
-    let pop_sys = pop.clone();
-    sys_btn.connect_clicked(move |_| {
-        pop_sys.close();
-        show_system_monitor_modal(&app_sys);
-    });
+    sys_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
+        pop.close();
+        show_system_monitor_modal(&app);
+    }));
 
     conn_box.append(&wifi_row_box);
     conn_box.append(&bt_row_box);
@@ -179,21 +170,19 @@ pub fn show_control_center_popover(app: &Application) {
         .build();
 
     let screenshot_tile = build_cc_compact_tile("cc-circle-indigo", "📷", "Screenshot");
-    let pop_shot = pop.clone();
-    screenshot_tile.connect_clicked(move |_| {
-        pop_shot.close();
+    screenshot_tile.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
+        pop.close();
         crate::core::niri_client::screenshot();
-    });
+    }));
 
     let lock_tile = build_cc_compact_tile("cc-circle-blue", "🔒", "Blocca");
-    let pop_lock = pop.clone();
-    lock_tile.connect_clicked(move |_| {
-        pop_lock.close();
+    lock_tile.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
+        pop.close();
         glib::MainContext::default().spawn_local(async move {
             let ctrl = crate::core::system_proxies::get_power_controller();
             let _ = ctrl.lock_screen().await;
         });
-    });
+    }));
 
     right_col.append(&screenshot_tile);
     right_col.append(&lock_tile);
@@ -229,11 +218,10 @@ pub fn show_control_center_popover(app: &Application) {
         .valign(Align::Center)
         .tooltip_text("Impostazioni Schermi")
         .build();
-    let pop_disp_s = pop.clone();
-    disp_settings_btn.connect_clicked(move |_| {
-        pop_disp_s.close();
+    disp_settings_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
+        pop.close();
         let _ = gtk4::glib::spawn_command_line_async(format!("ermete-settings-rs --page {}", "displays"));
-    });
+    }));
 
     let tt_btn = Button::builder()
         .label("☾")
@@ -242,7 +230,7 @@ pub fn show_control_center_popover(app: &Application) {
         .tooltip_text("True Tone")
         .build();
     let tt_btn_clone_click = tt_btn.clone();
-    tt_btn.connect_clicked(move |_| {
+    tt_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
         let is_active = tt_btn_clone_click.has_css_class("cc-btn-active");
         let new_state = !is_active;
         if new_state {
@@ -261,7 +249,7 @@ pub fn show_control_center_popover(app: &Application) {
                 ).await;
             }
         });
-    });
+    }));
     let tt_btn_clone_init = tt_btn.clone();
     glib::MainContext::default().spawn_local(async move {
         if let Ok(connection) = zbus::Connection::session().await {
@@ -326,11 +314,10 @@ pub fn show_control_center_popover(app: &Application) {
         .valign(Align::Center)
         .tooltip_text("Impostazioni Audio")
         .build();
-    let pop_audio_s = pop.clone();
-    audio_settings_btn.connect_clicked(move |_| {
-        pop_audio_s.close();
+    audio_settings_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
+        pop.close();
         let _ = gtk4::glib::spawn_command_line_async(format!("ermete-settings-rs --page {}", "audio"));
-    });
+    }));
     audio_card.append(&audio_settings_btn);
 
     // 3. MEDIA CONTROL (MPRIS)
@@ -346,24 +333,24 @@ pub fn show_control_center_popover(app: &Application) {
     let play_btn = Button::builder().label("▶").css_classes(["cc-quick-btn"]).build();
     let next_btn = Button::builder().label("⏭").css_classes(["cc-quick-btn"]).build();
     
-    prev_btn.connect_clicked(|_| {
+    prev_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
         glib::MainContext::default().spawn_local(async move {
             let ctrl = crate::core::system_proxies::get_mpris_controller();
             let _ = ctrl.player_command("previous").await;
         });
-    });
-    play_btn.connect_clicked(|_| {
+    }));
+    play_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
         glib::MainContext::default().spawn_local(async move {
             let ctrl = crate::core::system_proxies::get_mpris_controller();
             let _ = ctrl.player_command("play-pause").await;
         });
-    });
-    next_btn.connect_clicked(|_| {
+    }));
+    next_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
         glib::MainContext::default().spawn_local(async move {
             let ctrl = crate::core::system_proxies::get_mpris_controller();
             let _ = ctrl.player_command("next").await;
         });
-    });
+    }));
 
     mpris_ctrl_box.append(&prev_btn);
     mpris_ctrl_box.append(&play_btn);
@@ -386,10 +373,10 @@ pub fn show_control_center_popover(app: &Application) {
     dark_btn.set_child(Some(&build_quick_toggle_content("☾", "Scuro")));
     crate::core::attach_voiceover_hover(&dark_btn, "Attiva o disattiva la modalità scura");
 
-    dark_btn.connect_clicked(move |_| {
+    dark_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
         let settings = gtk4::gio::Settings::new("org.gnome.desktop.interface");
         let _ = settings.set_string("color-scheme", "prefer-dark");
-    });
+    }));
 
     let standby_btn = Button::builder()
         .css_classes(["cc-quick-btn"])
@@ -397,15 +384,14 @@ pub fn show_control_center_popover(app: &Application) {
     standby_btn.set_child(Some(&build_quick_toggle_content("🖥", "Standby")));
     crate::core::attach_voiceover_hover(&standby_btn, "Sospendi il computer");
 
-    let pop_std = pop.clone();
-    standby_btn.connect_clicked(move |_| {
-        pop_std.close();
+    standby_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
+        pop.close();
         crate::core::niri_client::power_off_monitors();
         glib::MainContext::default().spawn_local(async move {
             let ctrl = crate::core::system_proxies::get_power_controller();
             let _ = ctrl.suspend().await;
         });
-    });
+    }));
 
     let mixer_btn = Button::builder()
         .css_classes(["cc-quick-btn"])
@@ -413,12 +399,10 @@ pub fn show_control_center_popover(app: &Application) {
     mixer_btn.set_child(Some(&build_quick_toggle_content("🎚️", "Mixer")));
     crate::core::attach_voiceover_hover(&mixer_btn, "Apri il mixer audio avanzato");
 
-    let app_mixer = app.clone();
-    let pop_mixer = pop.clone();
-    mixer_btn.connect_clicked(move |_| {
-        pop_mixer.close();
-        show_audio_mixer_popover(&app_mixer);
-    });
+    mixer_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
+        pop.close();
+        show_audio_mixer_popover(&app);
+    }));
 
     let term_btn = Button::builder()
         .css_classes(["cc-quick-btn"])
@@ -426,11 +410,10 @@ pub fn show_control_center_popover(app: &Application) {
     term_btn.set_child(Some(&build_quick_toggle_content("", "Shell")));
     crate::core::attach_voiceover_hover(&term_btn, "Apri un terminale");
 
-    let pop_term = pop.clone();
-    term_btn.connect_clicked(move |_| {
-        pop_term.close();
+    term_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
+        pop.close();
         let _ = Command::new("foot").spawn();
-    });
+    }));
 
     bottom_grid.append(&dark_btn);
     bottom_grid.append(&standby_btn);
@@ -506,10 +489,9 @@ pub fn show_control_center_popover(app: &Application) {
     }));
 
     let key_ctrl = gtk4::EventControllerKey::new();
-    let pop_esc = pop.clone();
     key_ctrl.connect_key_pressed(move |_, keyval, _, _| {
         if keyval == gtk4::gdk::Key::Escape {
-            pop_esc.close();
+            pop.close();
             glib::Propagation::Stop
         } else {
             glib::Propagation::Proceed

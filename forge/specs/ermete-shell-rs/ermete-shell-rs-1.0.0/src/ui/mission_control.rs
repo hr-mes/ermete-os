@@ -180,21 +180,7 @@ pub fn build_ui(app: &Application) {
     window.set_child(Some(&main_box));
 
     // Basic CSS
-    let provider = gtk4::CssProvider::new();
-    provider.load_from_data("
-        .mission-control-window { background-color: rgba(17, 17, 27, 0.85); }
-        .mc-ws-btn { padding: 8px 24px; border-radius: 12px; font-weight: bold; background-color: rgba(255, 255, 255, 0.1); color: #cdd6f4; }
-        .mc-ws-btn.active { background-color: rgba(10, 132, 255, 0.8); color: white; border: 2px solid #89b4fa; }
-        .mc-ws-btn:hover { background-color: rgba(255, 255, 255, 0.2); }
-        .mc-window-card { background-color: rgba(30, 30, 46, 0.7); border-radius: 24px; border: 1px solid #313244; transition: all 200ms ease; }
-        .mc-window-card:hover { background-color: rgba(49, 50, 68, 0.9); border: 1px solid #89b4fa; }
-        .mc-window-title { font-size: 16px; font-weight: bold; color: #cdd6f4; margin-top: 8px; }
-    ");
-    gtk4::style_context_add_provider_for_display(
-        &gtk4::gdk::Display::default().unwrap(),
-        &provider,
-        gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
-    );
+    
 
     window.present();
 }

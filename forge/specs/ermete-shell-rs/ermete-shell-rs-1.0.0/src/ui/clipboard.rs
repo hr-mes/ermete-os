@@ -46,13 +46,7 @@ pub fn show_clipboard_modal(app: &Application) {
     window.set_anchor(gtk4_layer_shell::Edge::Top, true);
     window.set_margin(gtk4_layer_shell::Edge::Top, 45);
 
-    let provider = CssProvider::new();
-    provider.load_from_data(CLIPBOARD_CSS);
-    gtk4::style_context_add_provider_for_display(
-        &gtk4::gdk::Display::default().expect("Display default"),
-        &provider,
-        gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
-    );
+    
 
     let key_controller = EventControllerKey::new();
     let win_weak = window.downgrade();
@@ -80,57 +74,59 @@ pub fn show_clipboard_modal(app: &Application) {
         .build();
     let list_box = GtkBox::new(Orientation::Vertical, 6);
 
-    // Read cliphist list
-    if let Ok(output) = Command::new("cliphist").arg("list").output() {
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        for line in stdout.lines().take(30) {
-            let line_str = line.to_string();
-            let mut parts = line.splitn(2, '\t');
-            if let (Some(_id), Some(content)) = (parts.next(), parts.next()) {
-                let display_text = if content.len() > 60 {
-                    format!("{}...", &content[..60])
-                } else {
-                    content.to_string()
-                };
+    glib::MainContext::default().spawn_local(async move {
+        let list_box_clone = list_box.clone();
+        let window_clone = window.clone();
+        if let Ok(output) = tokio::process::Command::new("cliphist").arg("list").output().await {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            for line in stdout.lines().take(30) {
+                let line_str = line.to_string();
+                let mut parts = line.splitn(2, '\t');
+                if let (Some(_id), Some(content)) = (parts.next(), parts.next()) {
+                    let display_text = if content.len() > 60 {
+                        format!("{}...", &content[..60])
+                    } else {
+                        content.to_string()
+                    };
 
-                let btn = Button::with_label(&display_text);
-                btn.add_css_class("clipboard-item-btn");
-                btn.set_halign(Align::Fill);
+                    let btn = Button::with_label(&display_text);
+                    btn.add_css_class("clipboard-item-btn");
+                    btn.set_halign(Align::Fill);
 
-                let win_close = window.downgrade();
-                let line_capture = line_str.clone();
-                btn.connect_clicked(move |_| {
-                    // cliphist decode | wl-copy
-                    if let Ok(mut decode_proc) = Command::new("cliphist")
-                        .arg("decode")
-                        .stdin(Stdio::piped())
-                        .stdout(Stdio::piped())
-                        .spawn()
-                    {
-                        if let Some(mut stdin) = decode_proc.stdin.take() {
-                            let _ = stdin.write_all(line_capture.as_bytes());
-                        }
-                        if let Ok(dec_out) = decode_proc.wait_with_output() {
-                            if let Ok(mut wl_proc) = Command::new("wl-copy")
+                    let line_capture = line_str.clone();
+                    btn.connect_clicked(glib::clone!(@weak window_clone => move |_| {
+                        glib::MainContext::default().spawn_local(async move {
+                            if let Ok(mut decode_proc) = tokio::process::Command::new("cliphist")
+                                .arg("decode")
                                 .stdin(Stdio::piped())
+                                .stdout(Stdio::piped())
                                 .spawn()
                             {
-                                if let Some(mut wl_in) = wl_proc.stdin.take() {
-                                    let _ = wl_in.write_all(&dec_out.stdout);
+                                if let Some(mut stdin) = decode_proc.stdin.take() {
+                                    use tokio::io::AsyncWriteExt;
+                                    let _ = stdin.write_all(line_capture.as_bytes()).await;
+                                }
+                                if let Ok(dec_out) = decode_proc.wait_with_output().await {
+                                    if let Ok(mut wl_proc) = tokio::process::Command::new("wl-copy")
+                                        .stdin(Stdio::piped())
+                                        .spawn()
+                                    {
+                                        if let Some(mut wl_in) = wl_proc.stdin.take() {
+                                            use tokio::io::AsyncWriteExt;
+                                            let _ = wl_in.write_all(&dec_out.stdout).await;
+                                        }
+                                    }
                                 }
                             }
-                        }
-                    }
+                            window_clone.close();
+                        });
+                    }));
 
-                    if let Some(w) = win_close.upgrade() {
-                        w.close();
-                    }
-                });
-
-                list_box.append(&btn);
+                    list_box_clone.append(&btn);
+                }
             }
         }
-    }
+    });
 
     scroll.set_child(Some(&list_box));
     container.append(&scroll);

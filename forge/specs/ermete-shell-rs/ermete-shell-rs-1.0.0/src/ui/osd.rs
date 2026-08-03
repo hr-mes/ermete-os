@@ -16,25 +16,7 @@ pub fn spawn_osd(app: &Application) {
     window.set_layer(Layer::Overlay);
 
     // Apply Glassmorphism
-    let provider = gtk4::CssProvider::new();
-    provider.load_from_data(
-        "
-        .osd-window {
-            background-color: alpha(#1e1e20, 0.80);
-            border-radius: 24px;
-            border: 1px solid alpha(white, 0.15);
-            box-shadow: 0 10px 40px alpha(black, 0.5);
-            backdrop-filter: blur(20px);
-        }
-        "
-    );
-    if let Some(display) = gtk4::gdk::Display::default() {
-        gtk4::style_context_add_provider_for_display(
-            &display,
-            &provider,
-            gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
-        );
-    }
+    
     window.set_margin(Edge::Bottom, 100);
     // Center at the bottom horizontally
     // By not setting Left/Right anchors, it naturally centers if we don't expand.
@@ -68,49 +50,67 @@ pub fn spawn_osd(app: &Application) {
     
     let last_state = Rc::new(RefCell::new(get_live_state()));
     let hide_timeout_id = Rc::new(RefCell::new(None::<glib::SourceId>));
-    
     let window_rc = window.clone();
     
-    glib::timeout_add_local(Duration::from_millis(100), move || {
-        let current_state = get_live_state();
-        let mut last = last_state.borrow_mut();
-        
-        let vol_diff = (current_state.volume * 100.0 - last.volume * 100.0).abs();
-        let bright_diff = (current_state.brightness - last.brightness).abs();
-        
-        // The condition "changes by > 1.0"
-        let vol_changed = vol_diff > 1.0 || (current_state.volume - last.volume).abs() > 1.0;
-        let bright_changed = bright_diff > 1.0;
-        
-        if vol_changed || bright_changed {
-            if vol_changed {
-                icon.set_icon_name(Some("audio-volume-high-symbolic"));
-                progress.set_fraction(current_state.volume.clamp(0.0, 1.0));
-            } else {
-                icon.set_icon_name(Some("display-brightness-symbolic"));
-                progress.set_fraction((current_state.brightness / 100.0).clamp(0.0, 1.0));
+    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
+    let controller = crate::core::system_proxies::get_global_controller();
+    controller.state_store.event_bus().subscribe(move |ev| {
+        let _ = tx.send(ev.clone());
+    });
+
+    glib::MainContext::default().spawn_local(async move {
+        while let Some(event) = rx.recv().await {
+            let mut last = last_state.borrow_mut();
+            let mut update = false;
+            let mut is_vol = false;
+            let mut current_val = 0.0;
+            
+            match event {
+                crate::core::system_proxies::SystemEvent::VolumeChanged(v) => {
+                    let diff = (v * 100.0 - last.volume * 100.0).abs();
+                    if diff > 1.0 || (v - last.volume).abs() > 1.0 {
+                        last.volume = v;
+                        update = true;
+                        is_vol = true;
+                        current_val = v;
+                    }
+                }
+                crate::core::system_proxies::SystemEvent::BrightnessChanged(b) => {
+                    if (b - last.brightness).abs() > 1.0 {
+                        last.brightness = b;
+                        update = true;
+                        is_vol = false;
+                        current_val = b;
+                    }
+                }
+                _ => {}
             }
             
-            window_rc.set_visible(true);
-            
-            let win_clone = window_rc.clone();
-            let hide_timeout_clone = hide_timeout_id.clone();
-            let mut timeout_guard = hide_timeout_id.borrow_mut();
-            if let Some(id) = timeout_guard.take() {
-                // Ignore errors if the source was already removed (but it shouldn't be since we clear it on fire)
-                let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                    id.remove(); // Safely remove to cancel the timeout
+            if update {
+                if is_vol {
+                    icon.set_icon_name(Some("audio-volume-high-symbolic"));
+                    progress.set_fraction(current_val.clamp(0.0, 1.0));
+                } else {
+                    icon.set_icon_name(Some("display-brightness-symbolic"));
+                    progress.set_fraction((current_val / 100.0).clamp(0.0, 1.0));
+                }
+                
+                window_rc.set_visible(true);
+                
+                let win_clone = window_rc.clone();
+                let hide_timeout_clone = hide_timeout_id.clone();
+                let mut timeout_guard = hide_timeout_id.borrow_mut();
+                if let Some(id) = timeout_guard.take() {
+                    let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                        id.remove();
+                    }));
+                }
+                
+                *timeout_guard = Some(glib::timeout_add_local_once(Duration::from_secs(2), move || {
+                    win_clone.set_visible(false);
+                    *hide_timeout_clone.borrow_mut() = None;
                 }));
             }
-            
-            *timeout_guard = Some(glib::timeout_add_local_once(Duration::from_secs(2), move || {
-                win_clone.set_visible(false);
-                *hide_timeout_clone.borrow_mut() = None;
-            }));
-            
-            *last = current_state;
         }
-        
-        glib::ControlFlow::Continue
     });
 }

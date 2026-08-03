@@ -120,12 +120,11 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
             vbox.append(&desc_lbl);
             hbox.append(&vbox);
             row.set_child(Some(&hbox));
-            let pop_clone = pop.clone();
-            row.connect_clicked(move |_| {
-                let clipboard = pop_clone.clipboard();
+            row.connect_clicked(glib::clone!(@weak pop => move |_| {
+                let clipboard = pop.clipboard();
                 clipboard.set_text(&res_str);
-                pop_clone.close();
-            });
+                pop.close();
+            }));
             list_box.append(&row);
         }
         return;
@@ -144,12 +143,11 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
         vbox.append(&desc_lbl);
         hbox.append(&vbox);
         row.set_child(Some(&hbox));
-        let pop_clone = pop.clone();
         let cmd_clone = cmd.to_string();
-        row.connect_clicked(move |_| {
+        row.connect_clicked(glib::clone!(@weak pop => move |_| {
             let _ = std::process::Command::new("foot").arg("-e").arg("sh").arg("-c").arg(&format!("{}; read -p '\nPremi Invio per chiudere...'", cmd_clone)).spawn();
-            pop_clone.close();
-        });
+            pop.close();
+        }));
         list_box.append(&row);
         return;
     }
@@ -168,16 +166,15 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
             vbox.append(&desc_lbl);
             hbox.append(&vbox);
             row.set_child(Some(&hbox));
-            let pop_clone = pop.clone();
             let query_str = query.to_string();
-            row.connect_clicked(move |_| {
+            row.connect_clicked(glib::clone!(@weak pop => move |_| {
                 let json_query = format!(r#"{{"text": "{}", "intent": "auto"}}"#, query_str.replace('"', "\\\""));
                 let _ = std::process::Command::new("ermete-ai-daemon")
                     .arg("--query")
                     .arg(&json_query)
                     .spawn();
-                pop_clone.close();
-            });
+                pop.close();
+            }));
             list_box.append(&row);
         }
         return;
@@ -197,13 +194,12 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
             vbox.append(&desc_lbl);
             hbox.append(&vbox);
             row.set_child(Some(&hbox));
-            let pop_clone = pop.clone();
             let query_encoded = query.replace(" ", "+");
             let search_url = format!("https://duckduckgo.com/?q={}", query_encoded);
-            row.connect_clicked(move |_| {
+            row.connect_clicked(glib::clone!(@weak pop => move |_| {
                 let _ = std::process::Command::new("xdg-open").arg(&search_url).spawn();
-                pop_clone.close();
-            });
+                pop.close();
+            }));
             list_box.append(&row);
         }
         return;
@@ -212,44 +208,48 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
     if is_spotlight && filter_lower.starts_with('/') {
         let query = filter_text.trim_start_matches('/').trim();
         if !query.is_empty() {
-            if let Ok(output) = std::process::Command::new("plocate")
-                .arg("-l")
-                .arg("5")
-                .arg(&query)
-                .output()
-            {
-                let stdout = String::from_utf8_lossy(&output.stdout);
-                let mut count = 0;
-                for line in stdout.lines() {
-                    if line.trim().is_empty() { continue; }
-                    if count >= 5 { break; }
-                    let row = Button::builder().css_classes(["spotlight-item"]).build();
-                    let hbox = GtkBox::builder().orientation(Orientation::Horizontal).spacing(16).build();
-                    let img = Image::builder().icon_name("text-x-generic").pixel_size(40).build();
-                    hbox.append(&img);
-                    let vbox = GtkBox::builder().orientation(Orientation::Vertical).valign(Align::Center).build();
-                    let path = std::path::Path::new(line);
-                    let name = path.file_name().unwrap_or_default().to_string_lossy();
-                    let name_lbl = Label::builder().label(&name.to_string()).halign(Align::Start).css_classes(["spotlight-item-title"]).build();
-                    vbox.append(&name_lbl);
-                    let desc_lbl = Label::builder().label(line).halign(Align::Start).css_classes(["spotlight-item-desc"]).ellipsize(gtk4::pango::EllipsizeMode::Middle).build();
-                    vbox.append(&desc_lbl);
-                    hbox.append(&vbox);
-                    row.set_child(Some(&hbox));
-                    let pop_clone = pop.clone();
-                    let file_path = line.to_string();
-                    row.connect_clicked(move |_| {
-                        let _ = std::process::Command::new("xdg-open").arg(&file_path).spawn();
-                        pop_clone.close();
-                    });
-                    list_box.append(&row);
-                    count += 1;
+            let query_str = query.to_string();
+            let list_box_clone = list_box.clone();
+            let pop_clone = pop.clone();
+            glib::MainContext::default().spawn_local(async move {
+                if let Ok(output) = tokio::process::Command::new("plocate")
+                    .arg("-l")
+                    .arg("5")
+                    .arg(&query_str)
+                    .output().await
+                {
+                    let stdout = String::from_utf8_lossy(&output.stdout);
+                    let mut count = 0;
+                    for line in stdout.lines() {
+                        if line.trim().is_empty() { continue; }
+                        if count >= 5 { break; }
+                        let row = Button::builder().css_classes(["spotlight-item"]).build();
+                        let hbox = GtkBox::builder().orientation(Orientation::Horizontal).spacing(16).build();
+                        let img = Image::builder().icon_name("text-x-generic").pixel_size(40).build();
+                        hbox.append(&img);
+                        let vbox = GtkBox::builder().orientation(Orientation::Vertical).valign(Align::Center).build();
+                        let path = std::path::Path::new(line);
+                        let name = path.file_name().unwrap_or_default().to_string_lossy();
+                        let name_lbl = Label::builder().label(&name.to_string()).halign(Align::Start).css_classes(["spotlight-item-title"]).build();
+                        vbox.append(&name_lbl);
+                        let desc_lbl = Label::builder().label(line).halign(Align::Start).css_classes(["spotlight-item-desc"]).ellipsize(gtk4::pango::EllipsizeMode::Middle).build();
+                        vbox.append(&desc_lbl);
+                        hbox.append(&vbox);
+                        row.set_child(Some(&hbox));
+                        let file_path = line.to_string();
+                        row.connect_clicked(glib::clone!(@weak pop_clone => move |_| {
+                            let _ = std::process::Command::new("xdg-open").arg(&file_path).spawn();
+                            pop_clone.close();
+                        }));
+                        list_box_clone.append(&row);
+                        count += 1;
+                    }
+                    if count == 0 {
+                        let no_res = Label::builder().label("Nessun file trovato.").css_classes(["cc-label-sub"]).margin_top(20).build();
+                        list_box_clone.append(&no_res);
+                    }
                 }
-                if count == 0 {
-                    let no_res = Label::builder().label("Nessun file trovato.").css_classes(["cc-label-sub"]).margin_top(20).build();
-                    list_box.append(&no_res);
-                }
-            }
+            });
         }
         return;
     }
@@ -294,8 +294,7 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
             row.set_child(Some(&hbox));
 
             let action_clone = item.exec_action.clone();
-            let pop_clone = pop.clone();
-            row.connect_clicked(move |_| {
+            row.connect_clicked(glib::clone!(@weak pop => move |_| {
                 match &action_clone {
                     SpotlightAction::LaunchApp(app_info) => {
                         let _ = app_info.launch(&[], gtk4::gio::AppLaunchContext::NONE);
@@ -304,8 +303,8 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
                         let _ = gtk4::glib::spawn_command_line_async(format!("ermete-settings-rs --page {}", page));
                     }
                 }
-                pop_clone.close();
-            });
+                pop.close();
+            }));
             list_box.append(&row);
             count += 1;
 
@@ -325,62 +324,7 @@ pub fn show_spotlight_modal(app: &Application) {
     ensure_index_loaded();
 
     // Inietta lo stile Premium Seelen UI (Glassmorphism e Typography)
-    let provider = gtk4::CssProvider::new();
-    provider.load_from_data(
-        "
-        window.spotlight-window {
-            background-color: transparent;
-        }
-        .spotlight-card {
-            background-color: alpha(#1e1e20, 0.90);
-            border-radius: 16px;
-            border: 1px solid alpha(white, 0.15);
-            box-shadow: 0 16px 48px alpha(black, 0.6);
-            padding: 12px;
-        }
-        .spotlight-input {
-            font-size: 26px;
-            font-weight: 500;
-            background: transparent;
-            border: none;
-            box-shadow: none;
-            color: white;
-            padding: 12px;
-            caret-color: white;
-        }
-        .spotlight-input:focus {
-            outline: none;
-            box-shadow: none;
-        }
-        .spotlight-item {
-            background: transparent;
-            border: none;
-            border-radius: 12px;
-            padding: 12px;
-            transition: all 0.2s ease-in-out;
-        }
-        .spotlight-item:hover, .spotlight-item:focus {
-            background-color: rgba(255, 255, 255, 0.15);
-        }
-        .spotlight-item-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: white;
-        }
-        .spotlight-item-desc {
-            font-size: 14px;
-            font-weight: 400;
-            color: rgba(255, 255, 255, 0.6);
-        }
-        "
-    );
-    if let Some(display) = gtk4::gdk::Display::default() {
-        gtk4::style_context_add_provider_for_display(
-            &display,
-            &provider,
-            gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
-        );
-    }
+    
 
     let pop = ApplicationWindow::builder()
         .application(app)
@@ -426,10 +370,9 @@ pub fn show_spotlight_modal(app: &Application) {
     populate_launcher_list(&list_box, "", "", true, &pop);
 
     let list_clone = list_box.clone();
-    let pop_clone2 = pop.clone();
-    entry.connect_changed(move |e| {
-        populate_launcher_list(&list_clone, &e.text(), "", true, &pop_clone2);
-    });
+    entry.connect_changed(glib::clone!(@weak pop => move |e| {
+        populate_launcher_list(&list_clone, &e.text(), "", true, &pop);
+    }));
 
     // Navigazione tastiera (Freccia Giù) per saltare ai risultati
     let key_controller = gtk4::EventControllerKey::new();

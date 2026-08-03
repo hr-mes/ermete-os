@@ -5,6 +5,7 @@ edition = "2021"
 description = "Ermete OS Continuity & Local P2P Sync Daemon"
 
 [dependencies]
+mimalloc = { version = "0.1", default-features = false }
 tokio = { version = "1.36", features = ["full"] }
 zbus = "4.4.0"
 anyhow = "1.0"

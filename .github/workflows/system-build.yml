@@ -18,9 +18,9 @@ on:
 env:
   IMAGE_DESC: "Ermete OS - Immutable Cloud-Native System"
   IMAGE_KEYWORDS: "bootc,fedora,Ermete,immutable"
-  IMAGE_LOGO_URL: ""  # Lasciato vuoto o inserisci l'URL del tuo futuro logo
+  IMAGE_LOGO_URL: ""
   IMAGE_NAME: "ermete-os-system"
-  IMAGE_REGISTRY: "ghcr.io/hr-mes"  # do not edit
+  IMAGE_REGISTRY: "ghcr.io/hr-mes"
   DEFAULT_TAG: "latest"
 
 concurrency:
@@ -28,44 +28,40 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build_push:
-    name: Build and push image
+  build_container:
+    name: 🏗️ Build System Image
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
-
+    outputs:
+      digest: ${{ steps.build_push.outputs.digest }}
     permissions:
       contents: write
       packages: write
-      id-token: write # FONDAMENTALE: Requisito per OIDC / Cosign Keyless
+      id-token: write
 
     steps:
-      - name: Prepare environment
+      - name: ⚙️ Prepare environment
         run: |
-          # Lowercase the image uri
           echo "IMAGE_REGISTRY=${IMAGE_REGISTRY,,}" >> ${GITHUB_ENV}
           echo "IMAGE_NAME=${IMAGE_NAME,,}" >> ${GITHUB_ENV}
 
-      # These stage versions are pinned by https://github.com/renovatebot/renovate
-      - name: Checkout
+      - name: 📥 Checkout Repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # This is optional, but if you see that your builds are way too big for the runners, you can enable this by uncommenting the following lines:
-      - name: Maximize build space
+      - name: 🧹 Maximize build space
         uses: ublue-os/remove-unwanted-software@v9
 
-      - name: Get current date
+      - name: 📅 Get current date
         id: date
-        run: |
-          echo "date=$(date -u +%Y\-%m\-%d\T%H\:%M\:%S\Z)" >> $GITHUB_OUTPUT
+        run: echo "date=$(date -u +%Y\-%m\-%d\T%H\:%M\:%S\Z)" >> $GITHUB_OUTPUT
 
-      - name: Image Metadata
+      - name: 🏷️ Generate Metadata
         uses: docker/metadata-action@v5
         id: metadata
         with:
-          images: |
-            ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=${{ env.DEFAULT_TAG }}
             type=raw,value=${{ env.DEFAULT_TAG }}.{{date 'YYYYMMDD'}}
@@ -73,33 +69,22 @@ jobs:
             type=sha,enable=${{ github.event_name == 'pull_request' }}
             type=ref,event=pr
           labels: |
-            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/README.md
             org.opencontainers.image.created=${{ steps.date.outputs.date }}
             org.opencontainers.image.description=${{ env.IMAGE_DESC }}
-            org.opencontainers.image.documentation=https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/README.md
-            org.opencontainers.image.source=https://github.com/${{ github.repository }}/blob/${{ github.sha }}/system/Containerfile
             org.opencontainers.image.title=${{ env.IMAGE_NAME }}
-            org.opencontainers.image.url=https://github.com/${{ github.repository }}/tree/${{ github.sha }}
-            org.opencontainers.image.vendor=${{ github.repository_owner }}
-            org.opencontainers.image.version=${{ env.DEFAULT_TAG }}.{{date 'YYYYMMDD'}}
-            io.artifacthub.package.deprecated=false
-            io.artifacthub.package.keywords=${{ env.IMAGE_KEYWORDS }}
-            io.artifacthub.package.license=Apache-2.0
-            io.artifacthub.package.logo-url=${{ env.IMAGE_LOGO_URL }}
-            io.artifacthub.package.prerelease=false
             containers.bootc=1
 
-      - name: Login to GitHub Container Registry
+      - name: 🔑 Login to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Docker Buildx
+      - name: 🛠️ Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and Push Image
+      - name: 🐳 Build and Push Image
         id: build_push
         uses: docker/build-push-action@v6
         with:
@@ -111,12 +96,19 @@ jobs:
           pull: true
           outputs: type=image,push=${{ github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }},compression=zstd,force-compression=true,oci-mediatypes=true
 
-      - name: Run Trivy vulnerability scanner
+  security_scan:
+    name: 🛡️ Security Audit
+    needs: build_container
+    if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: 🔎 Run Trivy Scanner
         uses: aquasecurity/trivy-action@master
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
         continue-on-error: true
         with:
-          image-ref: '${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build_push.outputs.digest }}'
+          image-ref: '${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.build_container.outputs.digest }}'
           format: 'table'
           exit-code: '0'
           ignore-unfixed: true
@@ -124,36 +116,50 @@ jobs:
           severity: 'CRITICAL,HIGH'
           timeout: '2m0s'
 
-      - name: Install Cosign
+  sbom_sign:
+    name: ✍️ SLSA Attestation & Signing
+    needs: [build_container, security_scan]
+    if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-24.04
+    permissions:
+      packages: write
+      id-token: write
+    steps:
+      - name: 🔑 Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔐 Install Cosign
         uses: sigstore/cosign-installer@v3
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
         with:
           cosign-release: 'v2.6.1'
 
-      - name: Setup Syft
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+      - name: 📦 Setup Syft
         uses: anchore/sbom-action/download-syft@v0
 
-      - name: Generate SBOM
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+      - name: 📜 Generate SBOM
+        env:
+          IMAGE_DIGEST: ${{ needs.build_container.outputs.digest }}
         run: |
-          syft packages "ghcr.io/hr-mes/ermete-os-system@${{ env.IMAGE_DIGEST }}" -o spdx-json=system-sbom.spdx.json
+          syft packages "ghcr.io/hr-mes/ermete-os-system@${IMAGE_DIGEST}" -o spdx-json=system-sbom.spdx.json
 
-      - name: Sign & Attest System OCI Image
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+      - name: ✍️ Sign & Attest OCI Image
         env:
           COSIGN_EXPERIMENTAL: 1
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE_DIGEST: ${{ needs.build_container.outputs.digest }}
         run: |
-          cosign login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-          IMAGE_REF="ghcr.io/hr-mes/ermete-os-system@${{ env.IMAGE_DIGEST }}"
+          IMAGE_REF="ghcr.io/hr-mes/ermete-os-system@${IMAGE_DIGEST}"
           cosign sign -y "${IMAGE_REF}"
           cosign attest -y --type spdxjson --predicate system-sbom.spdx.json "${IMAGE_REF}"
 
-      - name: Verify Signature & Attestation (SLSA Level 4)
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+      - name: ✅ Verify SLSA Level 4
+        env:
+          IMAGE_DIGEST: ${{ needs.build_container.outputs.digest }}
         run: |
-          IMAGE_REF="${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build_push.outputs.digest }}"
+          IMAGE_REF="ghcr.io/hr-mes/ermete-os-system@${IMAGE_DIGEST}"
           cosign verify \
             --certificate-identity-regexp "^https://github.com/${{ github.repository_owner }}/" \
             --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \

@@ -40,6 +40,22 @@ impl UpdaterIface {
     /// Checks for updates (dry run without apply)
     async fn check_updates(&self) -> std::result::Result<String, zbus::fdo::Error> {
         info!("Received D-Bus request to check updates.");
-        Ok("Funzionalità check_updates da implementare...".into())
+        
+        let output = tokio::process::Command::new("rpm-ostree")
+            .arg("upgrade")
+            .arg("--preview")
+            .output()
+            .await
+            .map_err(|e| zbus::fdo::Error::Failed(format!("rpm-ostree failed: {}", e)))?;
+            
+        let out_str = String::from_utf8_lossy(&output.stdout);
+        
+        if out_str.contains("No upgrade available") || out_str.contains("No upgrades available") {
+            return Ok("0".into());
+        }
+        
+        // Count lines that contain " -> " as a simple heuristic for updated packages
+        let count = out_str.lines().filter(|l| l.contains(" -> ")).count();
+        Ok(count.to_string())
     }
 }

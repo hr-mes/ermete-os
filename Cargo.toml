@@ -18,5 +18,5 @@ members = [
     "forge/specs/ermete-updater-rs/ermete-updater-rs-1.0.0",
     "forge/specs/ermete-xdg-desktop-portal-ermete/xdg-desktop-portal-ermete-1.0.0",
     "forge/specs/ermete-style"
-]
+, "forge/specs/ermete-niri-ipc"]
 resolver = "2"

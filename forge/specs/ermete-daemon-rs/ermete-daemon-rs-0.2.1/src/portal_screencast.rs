@@ -30,7 +30,11 @@ impl PortalScreenCastService {
             sessions: Arc::new(Mutex::new(HashMap::new())),
         }
     }
+}
 
+pub struct OutputDiscovery;
+
+impl OutputDiscovery {
     /// Query physical outputs from Niri compositor via UNIX socket ($NIRI_SOCKET)
     pub async fn query_niri_outputs() -> Vec<(String, String)> {
         let socket_path = match std::env::var("NIRI_SOCKET") {
@@ -60,7 +64,11 @@ impl PortalScreenCastService {
         }
         vec![("eDP-1".to_string(), "Ermete Built-in Display".to_string())]
     }
+}
 
+pub struct PipeWireStreamManager;
+
+impl PipeWireStreamManager {
     /// Dynamically resolve PipeWire stream/node ID from Niri IPC or deterministic stream configuration
     pub async fn resolve_pipewire_node(output_name: &str, source_type: u32) -> u32 {
         if let Ok(socket_path) = std::env::var("NIRI_SOCKET") {
@@ -108,12 +116,12 @@ impl PortalScreenCastService {
     ) -> zbus::fdo::Result<(u32, HashMap<String, OwnedValue>)> {
         println!("[ScreenCast Portal] CreateSession requested: req={}, session={}, app_id={}", request_handle, session_handle, app_id);
         
-        let outputs = Self::query_niri_outputs().await;
+        let outputs = OutputDiscovery::query_niri_outputs().await;
         let (selected_monitor, selected_title) = outputs.first().cloned()
             .unwrap_or_else(|| ("eDP-1".to_string(), "Ermete Built-in Display".to_string()));
         let source_types = 1; // Default Monitor
         let cursor_mode = 2;  // Embedded cursor
-        let pipewire_node_id = Self::resolve_pipewire_node(&selected_monitor, source_types).await;
+        let pipewire_node_id = PipeWireStreamManager::resolve_pipewire_node(&selected_monitor, source_types).await;
 
         let session_str = session_handle.to_string();
         let session = ScreenCastSession {
@@ -161,12 +169,12 @@ impl PortalScreenCastService {
                 }
             }
 
-            let outputs = Self::query_niri_outputs().await;
+            let outputs = OutputDiscovery::query_niri_outputs().await;
             if let Some((first_name, first_title)) = outputs.first() {
                 session.selected_monitor = first_name.clone();
                 session.selected_title = first_title.clone();
             }
-            session.pipewire_node_id = Self::resolve_pipewire_node(&session.selected_monitor, session.source_types).await;
+            session.pipewire_node_id = PipeWireStreamManager::resolve_pipewire_node(&session.selected_monitor, session.source_types).await;
         }
 
         Ok((0, HashMap::new()))
@@ -191,7 +199,7 @@ impl PortalScreenCastService {
             }
         };
 
-        session.pipewire_node_id = Self::resolve_pipewire_node(&session.selected_monitor, session.source_types).await;
+        session.pipewire_node_id = PipeWireStreamManager::resolve_pipewire_node(&session.selected_monitor, session.source_types).await;
 
         let mut stream_props: HashMap<String, OwnedValue> = HashMap::new();
         if let Ok(ov) = Value::from(session.selected_monitor.clone()).try_into() {

@@ -97,7 +97,7 @@ pub fn build_page() -> GtkBox {
         let prof_res_c = prof_res_clone.clone();
 
         relm4::spawn_local(async move {
-            crate::niri_client::update_niri_kdl_setting("focus-profile", &name_str).await;
+            ermete_niri_ipc::async_client::update_niri_kdl_setting("focus-profile", &name_str).await;
             prof_res_c.set_text(&format!("✅ Profilo '{}' attivato su ermete-shell-rs e Niri IPC.", name_str));
         });
     });
@@ -129,7 +129,7 @@ pub fn build_page() -> GtkBox {
     toggle.connect_state_set(move |_, state| {
         let val = if state { "true" } else { "false" };
         relm4::spawn_local(async move {
-            crate::niri_client::update_niri_kdl_setting("hide-bar-on-fullscreen", val).await;
+            ermete_niri_ipc::async_client::update_niri_kdl_setting("hide-bar-on-fullscreen", val).await;
         });
         glib::Propagation::Proceed
     });

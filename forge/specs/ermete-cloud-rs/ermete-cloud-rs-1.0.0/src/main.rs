@@ -1,3 +1,7 @@
+
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 use anyhow::Result;
 use std::time::Duration;
 use tokio::time::sleep;

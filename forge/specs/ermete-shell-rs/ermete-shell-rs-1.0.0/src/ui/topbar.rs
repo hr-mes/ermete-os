@@ -50,7 +50,7 @@ impl FactoryComponent for WorkspaceItem {
     fn update(&mut self, msg: Self::Input, _sender: FactorySender<Self>) {
         match msg {
             WorkspaceMsg::Focus => {
-                crate::core::niri_client::focus_workspace_by_id(self.ws.id);
+                ermete_niri_ipc::sync_client::focus_workspace_by_id(self.ws.id);
             }
         }
     }
@@ -279,18 +279,34 @@ impl SimpleComponent for TopbarModel {
             glib::ControlFlow::Continue
         });
 
-        let sender_fast = sender.clone();
-        glib::timeout_add_local(std::time::Duration::from_millis(200), move || {
-            sender_fast.input(TopbarInput::TickFast);
-            glib::ControlFlow::Continue
+        let sender_ws = sender.clone();
+        let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
+        let controller = crate::core::system_proxies::get_global_controller();
+        controller.state_store.event_bus().subscribe(move |ev| {
+            let _ = tx.send(ev.clone());
+        });
+
+        glib::MainContext::default().spawn_local(async move {
+            while let Some(event) = rx.recv().await {
+                match event {
+                    crate::core::system_proxies::SystemEvent::NetworkUpdated(_) |
+                    crate::core::system_proxies::SystemEvent::VolumeChanged(_) |
+                    crate::core::system_proxies::SystemEvent::WifiToggled(_) |
+                    crate::core::system_proxies::SystemEvent::BluetoothToggled(_) => {
+                        sender_ws.input(TopbarInput::TickSecond);
+                    },
+                    _ => {}
+                }
+            }
         });
 
         let (niri_tx, niri_rx) = glib::MainContext::channel(glib::Priority::DEFAULT);
         crate::core::spawn_niri_workspace_watcher(niri_tx);
         
-        let sender_ws = sender.clone();
+        let sender_ws_niri = sender.clone();
         niri_rx.attach(None, move |workspaces_data| {
-            sender_ws.input(TopbarInput::UpdateWorkspaces(workspaces_data));
+            sender_ws_niri.input(TopbarInput::TickFast);
+            sender_ws_niri.input(TopbarInput::UpdateWorkspaces(workspaces_data));
             glib::ControlFlow::Continue
         });
 

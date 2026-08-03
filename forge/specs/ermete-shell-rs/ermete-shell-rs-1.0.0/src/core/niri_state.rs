@@ -1,4 +1,4 @@
-use crate::core::niri_client;
+use ermete_niri_ipc::sync_client;
 
 #[derive(Debug, Default, Clone)]
 pub struct NiriState {
@@ -11,7 +11,7 @@ pub fn get_niri_state() -> NiriState {
     let mut state = NiriState::default();
 
     // Fetch workspaces natively over UNIX socket
-    if let Some(resp) = niri_client::niri_request("Workspaces") {
+    if let Some(resp) = ermete_niri_ipc::sync_client::niri_request("Workspaces") {
         if let Some(workspaces) = resp.get("Ok").and_then(|ok| ok.get("Workspaces")).and_then(|w| w.as_array()) {
             state.total_workspaces = workspaces.len() as u64;
             for ws in workspaces {
@@ -24,7 +24,7 @@ pub fn get_niri_state() -> NiriState {
     }
 
     // Fetch windows natively over UNIX socket
-    if let Some(resp) = niri_client::niri_request("Windows") {
+    if let Some(resp) = ermete_niri_ipc::sync_client::niri_request("Windows") {
         if let Some(windows) = resp.get("Ok").and_then(|ok| ok.get("Windows")).and_then(|w| w.as_array()) {
             for win in windows {
                 if win.get("is_focused").and_then(|v| v.as_bool()).unwrap_or(false) {

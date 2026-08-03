@@ -101,62 +101,7 @@ pub fn build_ui(app: &Application, request_info: &str) {
     window.set_child(Some(&vbox));
 
     // Basic CSS
-    let provider = gtk4::CssProvider::new();
-    provider.load_from_data("
-        .privacy-window { background-color: transparent; }
-        .privacy-card { 
-            background: rgba(24, 27, 36, 0.75); 
-            border-radius: 24px; 
-            border: 1px solid rgba(255,255,255,0.25); 
-            box-shadow: 0 24px 64px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.15);
-            padding: 32px;
-        }
-        .privacy-title { 
-            font-family: 'Inter', 'SF Pro Display', sans-serif;
-            font-size: 18px; 
-            font-weight: 800; 
-            color: #ffffff; 
-            margin-bottom: 8px;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.4);
-        }
-        .privacy-desc { 
-            font-family: 'Inter', 'SF Pro Text', sans-serif;
-            font-size: 14px; 
-            color: rgba(255,255,255,0.8); 
-            line-height: 1.4;
-        }
-        .privacy-icon { 
-            color: #f9e2af; 
-            margin-bottom: 16px;
-            text-shadow: 0 4px 12px rgba(249, 226, 175, 0.4);
-        }
-        .privacy-btn { 
-            font-family: 'Inter', 'SF Pro Text', sans-serif;
-            padding: 10px 28px; 
-            font-weight: 700; 
-            border-radius: 999px; 
-            font-size: 14px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-        }
-        .privacy-btn:hover {
-            background-color: rgba(255, 255, 255, 0.2);
-        }
-        .suggested-action.privacy-btn {
-            background-color: rgba(110, 168, 254, 0.85);
-            color: #000000;
-            border: 1px solid rgba(110, 168, 254, 1.0);
-        }
-        .suggested-action.privacy-btn:hover {
-            background-color: rgba(110, 168, 254, 1.0);
-            box-shadow: 0 6px 20px rgba(110, 168, 254, 0.5);
-        }
-    ");
-    gtk4::style_context_add_provider_for_display(
-        &gtk4::gdk::Display::default().unwrap(),
-        &provider,
-        gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
-    );
+    
 
     window.present();
 }

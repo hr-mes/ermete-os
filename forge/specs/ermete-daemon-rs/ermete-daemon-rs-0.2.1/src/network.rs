@@ -179,9 +179,10 @@ impl Network {
         }
 
         println!("[Bedrock Network] Staging VPN Tunnel: name={}, type={}, path={}", name, vpn_type, config_path);
+        let content = tokio::fs::read_to_string(&config_path).await.unwrap_or_default();
         let nm_settings = NmSettingsProxy::new(&self.sys_conn).await
             .map_err(|e| fdo::Error::Failed(format!("Failed to connect to NetworkManager Settings DBus: {}", e)))?;
-        let dict = Self::build_vpn_tunnel_dict(&name, &vpn_type, &config_path);
+        let dict = Self::build_vpn_tunnel_dict(&name, &vpn_type, &config_path, &content);
         let path = nm_settings.add_connection(dict).await
             .map_err(|e| fdo::Error::Failed(format!("Failed to add connection: {}", e)))?;
         Ok(path.to_string())
@@ -234,6 +235,7 @@ impl Network {
         name: &str,
         vpn_type: &str,
         config_path: &str,
+        content: &str,
     ) -> HashMap<&'static str, HashMap<&'static str, zbus::zvariant::Value<'static>>> {
         let mut dict = HashMap::new();
 
@@ -251,17 +253,15 @@ impl Network {
         vpn.insert("service-type", zbus::zvariant::Value::from(service_type));
 
         let mut data_map: HashMap<String, String> = HashMap::new();
-        if let Ok(content) = std::fs::read_to_string(config_path) {
-            for line in content.lines() {
-                let trimmed = line.trim();
-                if trimmed.is_empty() || trimmed.starts_with('#') || trimmed.starts_with(';') || trimmed.starts_with('[') {
-                    continue;
-                }
-                if let Some((k, v)) = trimmed.split_once('=') {
-                    data_map.insert(k.trim().to_string(), v.trim().to_string());
-                } else if let Some((k, v)) = trimmed.split_once(' ') {
-                    data_map.insert(k.trim().to_string(), v.trim().to_string());
-                }
+        for line in content.lines() {
+            let trimmed = line.trim();
+            if trimmed.is_empty() || trimmed.starts_with('#') || trimmed.starts_with(';') || trimmed.starts_with('[') {
+                continue;
+            }
+            if let Some((k, v)) = trimmed.split_once('=') {
+                data_map.insert(k.trim().to_string(), v.trim().to_string());
+            } else if let Some((k, v)) = trimmed.split_once(' ') {
+                data_map.insert(k.trim().to_string(), v.trim().to_string());
             }
         }
         if data_map.is_empty() {
@@ -315,8 +315,9 @@ mod tests {
     #[test]
     fn test_build_vpn_tunnel_dict_from_file() {
         let tmp_path = "/tmp/test_ermete_vpn.conf";
-        let _ = std::fs::write(tmp_path, "remote = vpn.ermete.os\nport = 1194\n");
-        let dict = Network::build_vpn_tunnel_dict("Ermete-VPN", "openvpn", tmp_path);
+        let content = "remote = vpn.ermete.os\nport = 1194\n";
+        let _ = std::fs::write(tmp_path, content);
+        let dict = Network::build_vpn_tunnel_dict("Ermete-VPN", "openvpn", tmp_path, content);
 
         let conn = dict.get("connection").expect("missing 'connection' setting");
         assert_eq!(conn.get("id").unwrap(), &Value::from("Ermete-VPN"));

@@ -23,7 +23,10 @@ pub async fn start_gatekeeper_listener(sys_conn: Connection) -> zbus::Result<()>
     tokio::spawn(async move {
         use futures_util::StreamExt;
         while let Some(signal) = stream.next().await {
-            let args = signal.args().expect("Failed to parse signal args");
+            let Ok(args) = signal.args() else {
+                eprintln!("Failed to parse signal args");
+                continue;
+            };
             let fd_id = args.fd_id;
             let app_name = args.app_name.to_string();
             let proxy_clone = proxy.clone();

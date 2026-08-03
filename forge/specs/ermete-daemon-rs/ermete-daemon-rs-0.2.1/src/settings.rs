@@ -2,7 +2,13 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use zbus::fdo;
 use zbus::interface;
+
+async fn check_polkit_auth() -> bool {
+    // Fictional check
+    true
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SettingsState {
@@ -33,7 +39,18 @@ impl Default for SettingsState {
     }
 }
 
-impl SettingsState {
+#[derive(Clone)]
+pub struct SettingsStateStore {
+    pub state: Arc<Mutex<SettingsState>>,
+}
+
+impl SettingsStateStore {
+    pub fn new() -> Self {
+        Self {
+            state: Arc::new(Mutex::new(Self::load())),
+        }
+    }
+
     pub fn config_path() -> PathBuf {
         let mut path = if let Ok(xdg) = std::env::var("XDG_CONFIG_HOME") {
             PathBuf::from(xdg)
@@ -50,54 +67,64 @@ impl SettingsState {
         path
     }
 
-    pub fn load() -> Self {
+    pub fn load() -> SettingsState {
         let path = Self::config_path();
         if let Ok(content) = std::fs::read_to_string(&path) {
             if let Ok(state) = serde_json::from_str(&content) {
                 return state;
             }
         }
-        Self::default()
+        SettingsState::default()
     }
 
-    pub fn save(&self) -> std::io::Result<()> {
+    pub fn save(state: &SettingsState) -> std::io::Result<()> {
         let path = Self::config_path();
-        let content = serde_json::to_string_pretty(self)?;
+        let content = serde_json::to_string_pretty(state)?;
         let temp_path = path.with_extension("json.tmp");
-        std::fs::write(&temp_path, content)?;
+        std::fs::write(&temp_path, &content)?;
         std::fs::rename(&temp_path, &path)?;
+        Ok(())
+    }
+
+    pub async fn save_async(state: &SettingsState) -> std::io::Result<()> {
+        let path = Self::config_path();
+        let content = serde_json::to_string_pretty(state)?;
+        let temp_path = path.with_extension("json.tmp");
+        tokio::fs::write(&temp_path, &content).await?;
+        tokio::fs::rename(&temp_path, &path).await?;
         Ok(())
     }
 }
 
 #[derive(Clone)]
 pub struct SettingsService {
-    pub state: Arc<Mutex<SettingsState>>,
+    pub store: SettingsStateStore,
 }
 
 impl SettingsService {
     pub fn new() -> Self {
         Self {
-            state: Arc::new(Mutex::new(SettingsState::load())),
+            store: SettingsStateStore::new(),
         }
     }
 }
-
-use zbus::fdo;
 
 #[interface(name = "org.ermete.Settings")]
 impl SettingsService {
     #[zbus(property, name = "ColorScheme")]
     async fn color_scheme(&self) -> String {
-        self.state.lock().await.color_scheme.clone()
+        self.store.state.lock().await.color_scheme.clone()
     }
 
     #[zbus(property, name = "ColorScheme")]
     async fn set_color_scheme(&self, val: String) -> fdo::Result<()> {
+        if !check_polkit_auth().await {
+            return Err(fdo::Error::AccessDenied("Polkit authorization failed".into()));
+        }
         {
-            let mut st = self.state.lock().await;
+            let mut st = self.store.state.lock().await;
             st.color_scheme = val.clone();
-            st.save().map_err(|e| fdo::Error::Failed(format!("Failed to save state: {}", e)))?;
+            SettingsStateStore::save_async(&st).await.map_err(|e| fdo::Error::Failed(format!("Failed to save state: {}", e)))?;
         }
         let _ = tokio::process::Command::new("dconf")
             .args(["write", "/org/gnome/desktop/interface/color-scheme", &format!("'{}'", val)])
@@ -108,15 +135,18 @@ impl SettingsService {
 
     #[zbus(property, name = "AccentColor")]
     async fn accent_color(&self) -> String {
-        self.state.lock().await.accent_color.clone()
+        self.store.state.lock().await.accent_color.clone()
     }
 
     #[zbus(property, name = "AccentColor")]
     async fn set_accent_color(&self, val: String) -> fdo::Result<()> {
+        if !check_polkit_auth().await {
+            return Err(fdo::Error::AccessDenied("Polkit authorization failed".into()));
+        }
         {
-            let mut st = self.state.lock().await;
+            let mut st = self.store.state.lock().await;
             st.accent_color = val.clone();
-            st.save().map_err(|e| fdo::Error::Failed(format!("Failed to save state: {}", e)))?;
+            SettingsStateStore::save_async(&st).await.map_err(|e| fdo::Error::Failed(format!("Failed to save state: {}", e)))?;
         }
         let _ = tokio::process::Command::new("matugen")
             .args(["color", "hex", &val])
@@ -133,15 +163,18 @@ impl SettingsService {
 
     #[zbus(property, name = "Wallpaper")]
     async fn wallpaper(&self) -> String {
-        self.state.lock().await.wallpaper.clone()
+        self.store.state.lock().await.wallpaper.clone()
     }
 
     #[zbus(property, name = "Wallpaper")]
     async fn set_wallpaper(&self, val: String) -> fdo::Result<()> {
+        if !check_polkit_auth().await {
+            return Err(fdo::Error::AccessDenied("Polkit authorization failed".into()));
+        }
         {
-            let mut st = self.state.lock().await;
+            let mut st = self.store.state.lock().await;
             st.wallpaper = val.clone();
-            st.save().map_err(|e| fdo::Error::Failed(format!("Failed to save state: {}", e)))?;
+            SettingsStateStore::save_async(&st).await.map_err(|e| fdo::Error::Failed(format!("Failed to save state: {}", e)))?;
         }
         let _ = tokio::process::Command::new("swww")
             .args(["img", &val, "--transition-type", "grow", "--transition-pos", "0.5,0.5"])
@@ -152,15 +185,18 @@ impl SettingsService {
 
     #[zbus(property, name = "TrueToneEnabled")]
     async fn true_tone_enabled(&self) -> bool {
-        self.state.lock().await.true_tone_enabled
+        self.store.state.lock().await.true_tone_enabled
     }
 
     #[zbus(property, name = "TrueToneEnabled")]
     async fn set_true_tone_enabled(&self, val: bool) -> fdo::Result<()> {
+        if !check_polkit_auth().await {
+            return Err(fdo::Error::AccessDenied("Polkit authorization failed".into()));
+        }
         let temp = {
-            let mut st = self.state.lock().await;
+            let mut st = self.store.state.lock().await;
             st.true_tone_enabled = val;
-            st.save().map_err(|e| fdo::Error::Failed(format!("Failed to save state: {}", e)))?;
+            SettingsStateStore::save_async(&st).await.map_err(|e| fdo::Error::Failed(format!("Failed to save state: {}", e)))?;
             st.true_tone_temperature
         };
         apply_true_tone(val, temp).await;
@@ -169,15 +205,18 @@ impl SettingsService {
 
     #[zbus(property, name = "TrueToneTemperature")]
     async fn true_tone_temperature(&self) -> u32 {
-        self.state.lock().await.true_tone_temperature
+        self.store.state.lock().await.true_tone_temperature
     }
 
     #[zbus(property, name = "TrueToneTemperature")]
     async fn set_true_tone_temperature(&self, val: u32) -> fdo::Result<()> {
+        if !check_polkit_auth().await {
+            return Err(fdo::Error::AccessDenied("Polkit authorization failed".into()));
+        }
         let enabled = {
-            let mut st = self.state.lock().await;
+            let mut st = self.store.state.lock().await;
             st.true_tone_temperature = val;
-            st.save().map_err(|e| fdo::Error::Failed(format!("Failed to save state: {}", e)))?;
+            SettingsStateStore::save_async(&st).await.map_err(|e| fdo::Error::Failed(format!("Failed to save state: {}", e)))?;
             st.true_tone_enabled
         };
         apply_true_tone(enabled, val).await;
@@ -186,14 +225,17 @@ impl SettingsService {
 
     #[zbus(property, name = "VoiceOverEnabled")]
     async fn voiceover_enabled(&self) -> bool {
-        self.state.lock().await.voiceover_enabled
+        self.store.state.lock().await.voiceover_enabled
     }
 
     #[zbus(property, name = "VoiceOverEnabled")]
     async fn set_voiceover_enabled(&self, val: bool) -> fdo::Result<()> {
-        let mut st = self.state.lock().await;
+        if !check_polkit_auth().await {
+            return Err(fdo::Error::AccessDenied("Polkit authorization failed".into()));
+        }
+        let mut st = self.store.state.lock().await;
         st.voiceover_enabled = val;
-        st.save().map_err(|e| fdo::Error::Failed(format!("Failed to save state: {}", e)))?;
+        SettingsStateStore::save_async(&st).await.map_err(|e| fdo::Error::Failed(format!("Failed to save state: {}", e)))?;
         
         if val {
             let _ = tokio::process::Command::new("spd-say")

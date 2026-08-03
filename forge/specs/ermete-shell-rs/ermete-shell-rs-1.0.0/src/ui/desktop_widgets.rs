@@ -97,10 +97,10 @@ fn update_widget_position(target_id: &str, new_x: f64, new_y: f64) {
 
 // --- OS Stats Readers ---
 
-fn get_memory_usage() -> (u64, u64) {
+async fn get_memory_usage() -> (u64, u64) {
     let mut total: u64 = 0;
     let mut available: u64 = 0;
-    if let Ok(content) = fs::read_to_string("/proc/meminfo") {
+    if let Ok(content) = tokio::fs::read_to_string("/proc/meminfo").await {
         for line in content.lines() {
             if line.starts_with("MemTotal:") {
                 let parts: Vec<&str> = line.split_whitespace().collect();
@@ -115,8 +115,8 @@ fn get_memory_usage() -> (u64, u64) {
     (used, total / 1024)
 }
 
-fn get_cpu_times() -> (u64, u64) {
-    if let Ok(content) = fs::read_to_string("/proc/stat") {
+async fn get_cpu_times() -> (u64, u64) {
+    if let Ok(content) = tokio::fs::read_to_string("/proc/stat").await {
         if let Some(line) = content.lines().next() {
             if line.starts_with("cpu ") {
                 let parts: Vec<&str> = line.split_whitespace().collect();
@@ -168,28 +168,33 @@ fn build_system_widget() -> Box {
     container.append(&cpu_label);
     container.append(&ram_label);
 
-    let prev_cpu = Rc::new(Cell::new(get_cpu_times()));
+    let prev_cpu = Rc::new(Cell::new((0, 0)));
     
     let update_sys = {
         let cpu_label = cpu_label.clone();
         let ram_label = ram_label.clone();
         let prev_cpu = prev_cpu.clone();
         move || {
-            let (mem_used, mem_total) = get_memory_usage();
-            let mem_percent = if mem_total > 0 { (mem_used as f64 / mem_total as f64) * 100.0 } else { 0.0 };
-            ram_label.set_label(&format!("RAM: {:.1}% ({}/{} MB)", mem_percent, mem_used, mem_total));
+            let cpu_lbl = cpu_label.clone();
+            let ram_lbl = ram_label.clone();
+            let p_cpu = prev_cpu.clone();
+            glib::MainContext::default().spawn_local(async move {
+                let (mem_used, mem_total) = get_memory_usage().await;
+                let mem_percent = if mem_total > 0 { (mem_used as f64 / mem_total as f64) * 100.0 } else { 0.0 };
+                ram_lbl.set_label(&format!("RAM: {:.1}% ({}/{} MB)", mem_percent, mem_used, mem_total));
 
-            let (idle, total) = get_cpu_times();
-            let (prev_idle, prev_total) = prev_cpu.get();
-            let total_diff = total.saturating_sub(prev_total);
-            let idle_diff = idle.saturating_sub(prev_idle);
-            let cpu_usage = if total_diff > 0 {
-                100.0 * (total_diff as f64 - idle_diff as f64) / total_diff as f64
-            } else {
-                0.0
-            };
-            cpu_label.set_label(&format!("CPU: {:.1}%", cpu_usage));
-            prev_cpu.set((idle, total));
+                let (idle, total) = get_cpu_times().await;
+                let (prev_idle, prev_total) = p_cpu.get();
+                let total_diff = total.saturating_sub(prev_total);
+                let idle_diff = idle.saturating_sub(prev_idle);
+                let cpu_usage = if total_diff > 0 {
+                    100.0 * (total_diff as f64 - idle_diff as f64) / total_diff as f64
+                } else {
+                    0.0
+                };
+                cpu_lbl.set_label(&format!("CPU: {:.1}%", cpu_usage));
+                p_cpu.set((idle, total));
+            });
 
             glib::ControlFlow::Continue
         }
@@ -297,40 +302,7 @@ fn reload_widgets(canvas: &Fixed) {
 }
 
 pub fn build_desktop_widgets(app: &Application) {
-    let provider = CssProvider::new();
-    provider.load_from_data(
-        "
-        window.desktop-overlay {
-            background-color: transparent;
-        }
-        .desktop-widget {
-            background-color: rgba(20, 20, 20, 0.45);
-            border-radius: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            padding: 24px;
-            color: white;
-            font-family: 'Inter', sans-serif;
-        }
-        .desktop-widget .title-1 {
-            font-size: 48px;
-            font-weight: 800;
-        }
-        .desktop-widget .subtitle {
-            font-size: 18px;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.8);
-        }
-        "
-    );
     
-    if let Some(display) = gtk4::gdk::Display::default() {
-        gtk4::style_context_add_provider_for_display(
-            &display,
-            &provider,
-            gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
-        );
-    }
 
     let window = ApplicationWindow::builder()
         .application(app)
@@ -354,12 +326,11 @@ pub fn build_desktop_widgets(app: &Application) {
 
     let file = gtk4::gio::File::for_path(get_config_path());
     if let Ok(monitor) = file.monitor_file(gtk4::gio::FileMonitorFlags::NONE, gtk4::gio::Cancellable::NONE) {
-        let canvas_clone = canvas.clone();
-        monitor.connect_changed(move |_, _, _, event_type| {
+        monitor.connect_changed(glib::clone!(@weak canvas => move |_, _, _, event_type| {
             if event_type == gtk4::gio::FileMonitorEvent::Changed || event_type == gtk4::gio::FileMonitorEvent::Created {
-                reload_widgets(&canvas_clone);
+                reload_widgets(&canvas);
             }
-        });
+        }));
         std::boxed::Box::leak(std::boxed::Box::new(monitor));
     }
 

@@ -6,6 +6,7 @@ authors = ["Ermete Forge <forge@ermete.os>"]
 description = "Pure Rust native shell for Ermete OS"
 
 [dependencies]
+mimalloc = { version = "0.1", default-features = false }
 gtk4 = "0.7"
 gtk4-layer-shell = "0.2"
 glib = "0.18"
@@ -27,6 +28,7 @@ landlock = "0.4"
 ermete-dock = { path = "../../ermete-dock/ermete-dock-1.0.0" }
 ermete-auth = { path = "../../ermete-auth/ermete-auth-1.0.0" }
 ermete-style = { path = "../../ermete-style" }
+ermete-niri-ipc = { version = "0.1.0", path = "../../ermete-niri-ipc" }
 
 [profile.release]
 opt-level = 3

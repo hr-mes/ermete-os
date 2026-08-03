@@ -19,21 +19,30 @@ pub fn build_page() -> Box {
         .build();
     container.append(&title);
 
-    let kernel_version = match std::fs::read_to_string("/proc/sys/kernel/osrelease") {
-        Ok(o) => o.trim().to_string(),
-        Err(_) => "6.12.0-chimera".to_string(),
-    };
+    let kernel_subtitle = gtk4::Label::builder()
+        .label("Caricamento...")
+        .halign(Align::End)
+        .build();
+    let row_kernel = ActionRow::builder("Versione Kernel")
+        .suffix(&kernel_subtitle)
+        .build();
+    container.append(&row_kernel);
+
+    let kernel_sub_clone = kernel_subtitle.clone();
+    relm4::spawn_local(async move {
+        let ver = match tokio::fs::read_to_string("/proc/sys/kernel/osrelease").await {
+            Ok(o) => o.trim().to_string(),
+            Err(_) => "6.12.0-chimera".to_string(),
+        };
+        kernel_sub_clone.set_label(&ver);
+    });
+
     let arch = std::env::consts::ARCH.to_string();
 
     let row_os = ActionRow::builder("Sistema Operativo")
         .subtitle("Ermete OS")
         .build();
     container.append(&row_os);
-
-    let row_kernel = ActionRow::builder("Versione Kernel")
-        .subtitle(&kernel_version)
-        .build();
-    container.append(&row_kernel);
 
     let row_arch = ActionRow::builder("Architettura")
         .subtitle(&arch)

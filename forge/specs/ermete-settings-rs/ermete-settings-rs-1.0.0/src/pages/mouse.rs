@@ -28,7 +28,7 @@ pub fn build_page() -> Box {
     switch1.connect_state_set(move |_, state| {
         let val = if state { "true" } else { "false" };
         relm4::spawn_local(async move {
-            crate::niri_client::update_niri_kdl_setting("natural-scroll", val).await;
+            ermete_niri_ipc::async_client::update_niri_kdl_setting("natural-scroll", val).await;
         });
         glib::Propagation::Proceed
     });
@@ -47,7 +47,7 @@ pub fn build_page() -> Box {
     switch2.connect_state_set(move |_, state| {
         let val = if state { "true" } else { "false" };
         relm4::spawn_local(async move {
-            crate::niri_client::update_niri_kdl_setting("tap-to-click", val).await;
+            ermete_niri_ipc::async_client::update_niri_kdl_setting("tap-to-click", val).await;
         });
         glib::Propagation::Proceed
     });
@@ -69,7 +69,7 @@ pub fn build_page() -> Box {
         if let Some(txt) = combo.active_text() {
             let prof = if txt.contains("Piatto") { "flat" } else { "adaptive" };
             relm4::spawn_local(async move {
-                crate::niri_client::update_niri_kdl_setting("accel-profile", prof).await;
+                ermete_niri_ipc::async_client::update_niri_kdl_setting("accel-profile", prof).await;
             });
         }
     });
@@ -89,7 +89,7 @@ pub fn build_page() -> Box {
     scale_scroll.connect_value_changed(|s| {
         let val = format!("{:.1}", s.value());
         relm4::spawn_local(async move {
-            crate::niri_client::update_niri_kdl_setting("scroll-factor", &val).await;
+            ermete_niri_ipc::async_client::update_niri_kdl_setting("scroll-factor", &val).await;
         });
     });
 
@@ -108,7 +108,7 @@ pub fn build_page() -> Box {
     switch5.connect_state_set(move |_, state| {
         let val = if state { "true" } else { "false" };
         relm4::spawn_local(async move {
-            crate::niri_client::update_niri_kdl_setting("enable-gestures", val).await;
+            ermete_niri_ipc::async_client::update_niri_kdl_setting("enable-gestures", val).await;
         });
         glib::Propagation::Proceed
     });

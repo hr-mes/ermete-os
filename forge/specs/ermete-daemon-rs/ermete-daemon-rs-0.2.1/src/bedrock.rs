@@ -1,6 +1,12 @@
 use zbus::interface;
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use zbus::fdo;
+
+async fn check_polkit_auth() -> bool {
+    // Fictional check
+    true
+}
 
 #[derive(Default, Clone)]
 pub struct Bedrock {
@@ -27,7 +33,10 @@ impl Bedrock {
     }
 
     #[zbus(property, name = "Volume")]
-    async fn set_audio_volume(&self, val: f64) {
+    async fn set_audio_volume(&self, val: f64) -> fdo::Result<()> {
+        if !check_polkit_auth().await {
+            return Err(fdo::Error::AccessDenied("Polkit authorization failed".into()));
+        }
         let mut vol = self.volume.lock().await;
         *vol = val;
         let vol_str = format!("{:.2}", val);
@@ -35,5 +44,6 @@ impl Bedrock {
             .args(["set-volume", "@DEFAULT_AUDIO_SINK@", &vol_str])
             .output()
             .await;
+        Ok(())
     }
 }

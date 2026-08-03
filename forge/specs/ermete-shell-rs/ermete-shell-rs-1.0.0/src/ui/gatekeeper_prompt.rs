@@ -98,20 +98,7 @@ pub fn build_ui(app: &Application, app_path: &str) {
     window.set_child(Some(&vbox));
 
     // Basic CSS
-    let provider = gtk4::CssProvider::new();
-    provider.load_from_data("
-        .gatekeeper-window { background-color: rgba(0, 0, 0, 0.5); }
-        .gatekeeper-card { background-color: #1e1e2e; border-radius: 16px; border: 1px solid #f38ba8; }
-        .gatekeeper-title { font-size: 20px; font-weight: bold; color: #f38ba8; }
-        .gatekeeper-desc { font-size: 14px; color: #a6adc8; }
-        .gatekeeper-icon { color: #f38ba8; }
-        .gatekeeper-btn { padding: 10px 24px; font-weight: bold; border-radius: 8px; }
-    ");
-    gtk4::style_context_add_provider_for_display(
-        &gtk4::gdk::Display::default().unwrap(),
-        &provider,
-        gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
-    );
+    
 
     window.present();
 }

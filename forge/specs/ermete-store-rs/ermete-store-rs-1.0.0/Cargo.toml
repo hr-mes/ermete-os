@@ -5,6 +5,7 @@ edition = "2021"
 description = "Ermete OS Universal App Store Daemon (Flatpak/OCI)"
 
 [dependencies]
+mimalloc = { version = "0.1", default-features = false }
 ermete-style = { path = "../../ermete-style" }
 tokio = { version = "1.36", features = ["full"] }
 anyhow = "1.0"

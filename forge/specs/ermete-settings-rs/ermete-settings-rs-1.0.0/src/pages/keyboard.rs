@@ -29,7 +29,7 @@ pub fn build_page() -> Box {
     layout_combo.connect_changed(|combo| {
         if let Some(idx) = combo.active() {
             relm4::spawn_local(async move {
-                crate::niri_client::set_keyboard_layout_by_index(idx as usize).await;
+                ermete_niri_ipc::async_client::set_keyboard_layout_by_index(idx as usize).await;
             });
         }
     });
@@ -54,7 +54,7 @@ pub fn build_page() -> Box {
         let val = scale.value() as u32;
         let val_str = val.to_string();
         relm4::spawn_local(async move {
-            crate::niri_client::update_niri_kdl_setting("repeat-rate", &val_str).await;
+            ermete_niri_ipc::async_client::update_niri_kdl_setting("repeat-rate", &val_str).await;
         });
     });
 
@@ -78,7 +78,7 @@ pub fn build_page() -> Box {
         let val = scale.value() as u32;
         let val_str = val.to_string();
         relm4::spawn_local(async move {
-            crate::niri_client::update_niri_kdl_setting("repeat-delay", &val_str).await;
+            ermete_niri_ipc::async_client::update_niri_kdl_setting("repeat-delay", &val_str).await;
         });
     });
 

@@ -89,7 +89,7 @@ pub fn build_page() -> Box {
     let outputs_store_async = outputs_store.clone();
 
     relm4::spawn_local(async move {
-        let outputs = crate::niri_client::get_outputs().await;
+        let outputs = ermete_niri_ipc::async_client::get_outputs().await;
         {
             let mut store = outputs_store_async.borrow_mut();
             *store = outputs.clone();
@@ -124,7 +124,7 @@ pub fn build_page() -> Box {
         };
         let val = s.value();
         relm4::spawn_local(async move {
-            crate::niri_client::set_output_scale(&selected_output, val).await;
+            ermete_niri_ipc::async_client::set_output_scale(&selected_output, val).await;
         });
     });
 
@@ -154,7 +154,7 @@ pub fn build_page() -> Box {
                 None => "1920x1080".to_string(),
             };
             relm4::spawn_local(async move {
-                crate::niri_client::set_output_mode(&out, &clean_mode).await;
+                ermete_niri_ipc::async_client::set_output_mode(&out, &clean_mode).await;
             });
         }
     });
@@ -190,7 +190,7 @@ pub fn build_page() -> Box {
             None => "eDP-1".to_string(),
         };
         relm4::spawn_local(async move {
-            crate::niri_client::set_output_vrr(&out, state).await;
+            ermete_niri_ipc::async_client::set_output_vrr(&out, state).await;
         });
         glib::Propagation::Proceed
     });
@@ -211,7 +211,7 @@ pub fn build_page() -> Box {
             None => "eDP-1".to_string(),
         };
         relm4::spawn_local(async move {
-            crate::niri_client::set_output_hdr(&out, state).await;
+            ermete_niri_ipc::async_client::set_output_hdr(&out, state).await;
         });
         glib::Propagation::Proceed
     });

@@ -62,13 +62,7 @@ pub fn show_powermenu_modal(app: &Application) {
     window.set_anchor(gtk4_layer_shell::Edge::Left, true);
     window.set_anchor(gtk4_layer_shell::Edge::Right, true);
 
-    let provider = CssProvider::new();
-    provider.load_from_data(POWERMENU_CSS);
-    gtk4::style_context_add_provider_for_display(
-        &gtk4::gdk::Display::default().expect("Display default"),
-        &provider,
-        gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
-    );
+    
 
     let key_controller = EventControllerKey::new();
     let win_weak = window.downgrade();
@@ -122,7 +116,7 @@ pub fn show_powermenu_modal(app: &Application) {
                 w.close();
             }
             if cmd_str == "niri msg action quit" {
-                crate::core::niri_client::quit_niri();
+                ermete_niri_ipc::sync_client::quit_niri();
             } else {
                 let mut parts = cmd_str.split_whitespace();
                 if let Some(prog) = parts.next() {

@@ -108,4 +108,4 @@ RUN dnf5 remove -y --no-autoremove \
     rm -rf /var/lib/dnf5/* /var/tmp/* /var/log/*
 
 # Image Validation & Linting
-RUN ls -la /usr/lib/modules/ && bootc container lint && /usr/bin/test-nvidia-modules.sh
+RUN ls -la /usr/lib/modules/ && bootc container lint

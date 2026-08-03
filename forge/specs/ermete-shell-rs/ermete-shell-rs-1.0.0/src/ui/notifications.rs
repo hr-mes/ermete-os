@@ -110,50 +110,7 @@ pub fn show_toast_popup(app: &Application, notif: &NotificationData) {
 }
 
 pub fn spawn_notification_daemon(app: &Application) {
-    let provider = gtk4::CssProvider::new();
-    provider.load_from_data(r#"
-        .premium-notification {
-            background: radial-gradient(circle, alpha(@surface_darker, 0.9), alpha(@surface_dim, 0.9));
-            border-radius: 12px;
-            box-shadow: inset 1px 2px 2px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(0,0,0,0.5);
-            margin: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .toast-slide-in {
-            animation: slide-in-toast 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-        }
-        .toast-slide-out {
-            animation: slide-out-toast 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-        }
-        @keyframes slide-in-toast {
-            0% { transform: translateX(100%); opacity: 0; }
-            100% { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes slide-out-toast {
-            0% { transform: translateX(0); opacity: 1; }
-            100% { transform: translateX(100%); opacity: 0; }
-        }
-        
-        .notification-center-window {
-            background-color: rgba(30, 30, 30, 0.65);
-            border-radius: 20px;
-            box-shadow: -5px 0 30px rgba(0, 0, 0, 0.5);
-            border-left: 1px solid rgba(255, 255, 255, 0.1);
-            animation: slide-in-nc 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-        }
-        @keyframes slide-in-nc {
-            0% { transform: translateX(100%); opacity: 0; }
-            100% { transform: translateX(0); opacity: 1; }
-        }
-        .transparent-window {
-            background-color: transparent;
-        }
-    "#);
-    gtk4::style_context_add_provider_for_display(
-        &gtk4::gdk::Display::default().unwrap(),
-        &provider,
-        gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
-    );
+    
 
     load_notification_history();
     let (sender, receiver) = glib::MainContext::channel::<NotificationData>(glib::Priority::DEFAULT);
@@ -161,35 +118,55 @@ pub fn spawn_notification_daemon(app: &Application) {
     let (action_tx, mut action_rx) = tokio::sync::mpsc::unbounded_channel::<(u32, String)>();
     ACTION_SENDER.with(|s| *s.borrow_mut() = Some(action_tx));
 
-    std::thread::spawn(move || {
-        let rt = tokio::runtime::Runtime::new().unwrap();
-        rt.block_on(async {
-            let server = NotificationServer {
-                sender,
-                counter: std::sync::atomic::AtomicU32::new(1),
-            };
-            let conn = zbus::connection::Builder::session()
-                .unwrap()
-                .name("org.freedesktop.Notifications")
-                .unwrap()
-                .serve_at("/org/freedesktop/Notifications", server)
-                .unwrap()
-                .build()
-                .await
-                .unwrap();
-                
-            while let Some((id, action_key)) = action_rx.recv().await {
-                if let Err(e) = conn.emit_signal(
-                    None::<()>,
-                    "/org/freedesktop/Notifications",
-                    "org.freedesktop.Notifications",
-                    "ActionInvoked",
-                    &(id, action_key),
-                ).await {
-                    eprintln!("Failed to emit ActionInvoked: {}", e);
-                }
+    glib::MainContext::default().spawn_local(async move {
+        let server = NotificationServer {
+            sender,
+            counter: std::sync::atomic::AtomicU32::new(1),
+        };
+
+        let builder = match zbus::connection::Builder::session() {
+            Ok(b) => b,
+            Err(e) => {
+                eprintln!("Failed to get session bus: {}", e);
+                return;
             }
-        });
+        };
+
+        let builder = match builder.name("org.freedesktop.Notifications") {
+            Ok(b) => b,
+            Err(e) => {
+                eprintln!("Failed to request DBus name: {}", e);
+                return;
+            }
+        };
+
+        let builder = match builder.serve_at("/org/freedesktop/Notifications", server) {
+            Ok(b) => b,
+            Err(e) => {
+                eprintln!("Failed to serve DBus object: {}", e);
+                return;
+            }
+        };
+
+        let conn = match builder.build().await {
+            Ok(c) => c,
+            Err(e) => {
+                eprintln!("Failed to build DBus connection: {}", e);
+                return;
+            }
+        };
+            
+        while let Some((id, action_key)) = action_rx.recv().await {
+            if let Err(e) = conn.emit_signal(
+                None::<()>,
+                "/org/freedesktop/Notifications",
+                "org.freedesktop.Notifications",
+                "ActionInvoked",
+                &(id, action_key),
+            ).await {
+                eprintln!("Failed to emit ActionInvoked: {}", e);
+            }
+        }
     });
 
     let app_clone = app.clone();

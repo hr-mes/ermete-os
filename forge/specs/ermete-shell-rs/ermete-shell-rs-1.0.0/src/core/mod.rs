@@ -6,7 +6,6 @@ pub mod network;
 pub mod mpris;
 pub mod niri_state;
 pub mod live_state;
-pub mod niri_client;
 
 pub mod system_proxies;
 pub mod audio_proxy;
@@ -32,13 +31,13 @@ pub struct NiriWorkspace {
 }
 
 pub fn spawn_niri_workspace_watcher(sender: glib::Sender<Vec<NiriWorkspace>>) {
-    if let Some(workspaces) = niri_client::fetch_niri_data::<Vec<NiriWorkspace>>("Workspaces", "Workspaces") {
+    if let Some(workspaces) = ermete_niri_ipc::sync_client::fetch_niri_data::<Vec<NiriWorkspace>>("Workspaces", "Workspaces") {
         let _ = sender.send(workspaces);
     }
 
-    niri_client::watch_niri_event_stream(move |line| {
+    ermete_niri_ipc::sync_client::watch_niri_event_stream(move |line| {
         if line.contains("Workspace") {
-            if let Some(workspaces) = niri_client::fetch_niri_data::<Vec<NiriWorkspace>>("Workspaces", "Workspaces") {
+            if let Some(workspaces) = ermete_niri_ipc::sync_client::fetch_niri_data::<Vec<NiriWorkspace>>("Workspaces", "Workspaces") {
                 let _ = sender.send(workspaces);
             }
         }
@@ -99,7 +98,29 @@ pub static DND_ACTIVE: std::sync::atomic::AtomicBool = std::sync::atomic::Atomic
 
 thread_local! {
     pub static NOTIFICATIONS: std::cell::RefCell<Vec<NotificationData>> = std::cell::RefCell::new(Vec::new());
-    pub static CSS_PROVIDER: std::cell::RefCell<Option<CssProvider>> = std::cell::RefCell::new(None);
+    pub static CSS_PROVIDER: std::cell::RefCell<Option<gtk4::CssProvider>> = std::cell::RefCell::new(None);
+}
+
+pub fn init_css() {
+    CSS_PROVIDER.with(|provider_ref| {
+        let mut p = provider_ref.borrow_mut();
+        if p.is_none() {
+            if let Some(display) = gtk4::gdk::Display::default() {
+                let provider = gtk4::CssProvider::new();
+                // Load from a global path or fallback
+                let path = "/usr/share/ermete/style.css";
+                if std::path::Path::new(path).exists() {
+                    provider.load_from_path(path);
+                }
+                gtk4::style_context_add_provider_for_display(
+                    &display,
+                    &provider,
+                    gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
+                );
+                *p = Some(provider);
+            }
+        }
+    });
 }
 
 pub struct NotificationServer {

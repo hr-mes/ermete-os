@@ -6,6 +6,7 @@ authors = ["Ermete Forge <forge@ermete.os>"]
 description = "Pure Rust native System Settings for Ermete OS"
 
 [dependencies]
+mimalloc = { version = "0.1", default-features = false }
 gtk4 = "0.7"
 glib = "0.18"
 serde = { version = "1.0.228", features = ["derive"] }
@@ -15,6 +16,7 @@ tokio = { version = "1.28", features = ["full"] }
 libc = "0.2.155"
 relm4 = "0.7"
 ermete-style = { path = "../../ermete-style" }
+ermete-niri-ipc = { version = "0.1.0", path = "../../ermete-niri-ipc" }
 
 
 [profile.release]
