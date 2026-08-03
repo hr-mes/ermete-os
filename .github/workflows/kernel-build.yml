@@ -108,11 +108,15 @@ jobs:
         image: "ghcr.io/hr-mes/ermete-os-kernel@${{ env.KERNEL_DIGEST }}"
         format: "spdx-json"
         output-file: "kernel-sbom.spdx.json"
+        registry-username: ${{ github.actor }}
+        registry-password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Sign & Attest Kernel Micro-Container OCI
       env:
         COSIGN_EXPERIMENTAL: 1
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
+        cosign login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
         IMAGE_REF="ghcr.io/hr-mes/ermete-os-kernel@${{ env.KERNEL_DIGEST }}"
         cosign sign -y "${IMAGE_REF}"
         cosign attest -y --type spdxjson --predicate kernel-sbom.spdx.json "${IMAGE_REF}"
