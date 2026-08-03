@@ -48,7 +48,7 @@ jobs:
 
       - name: 🧹 Cleanup Workspace Permissions
         if: always()
-        run: sudo sudo chown -R 1000:1000 ${{ github.workspace }} || true
+        run: podman unshare chown -R $USER:$USER ${{ github.workspace }} || true
   build-builder:
     name: 🏗️ Build Base Builder
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
@@ -86,7 +86,7 @@ jobs:
 
       - name: 🧹 Cleanup Workspace Permissions
         if: always()
-        run: sudo sudo chown -R 1000:1000 ${{ github.workspace }} || true
+        run: podman unshare chown -R $USER:$USER ${{ github.workspace }} || true
   custom-packages:
     needs: [build-builder, orchestrator-brain]
     if: needs.orchestrator-brain.outputs.custom_packages != '[]' && needs.orchestrator-brain.outputs.custom_packages != ''
@@ -117,7 +117,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .sccache
-          key: sccache-${{ matrix.package }}-${{ runner.os }}-${{ hashFiles('forge/specs/**/Cargo.lock', 'forge/specs/**/*.spec') }}
+          key: sccache-${{ matrix.package }}-${{ runner.os }}-${{ hashFiles(format('forge/specs/ermete-{0}/**', matrix.package)) }}
           restore-keys: |
             sccache-${{ matrix.package }}-
       - name: Install Dependencies and Build
@@ -127,7 +127,7 @@ jobs:
           mkdir -p RPMS
           mkdir -p ${{ github.workspace }}/.sccache
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
-          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+          podman run -i --rm \
             -v ${{ github.workspace }}:/workspace \
             -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
             -w /workspace/forge \
@@ -151,6 +151,15 @@ jobs:
           
             dnf builddep -y specs/ermete-${{ matrix.package }}/*.spec || true
             spectool -g -R specs/ermete-${{ matrix.package }}/*.spec || true
+
+            if [ -f "specs/ermete-${{ matrix.package }}/sources.hash" ]; then
+              echo "🔒 Validating SHA256 checksums from sources.hash..."
+              cd ~/rpmbuild/SOURCES/
+              sha256sum -c /workspace/forge/specs/ermete-${{ matrix.package }}/sources.hash || exit 1
+              cd -
+            else
+              echo "⚠️ WARNING: No sources.hash found for ${{ matrix.package }}. Proceeding without verification (Legacy Mode)."
+            fi
           
             # First attempt (generates buildreqs.nosrc.rpm for Rust packages)
             rpmbuild -bb --nocheck specs/ermete-${{ matrix.package }}/*.spec || true
@@ -202,7 +211,7 @@ jobs:
 
       - name: 🧹 Cleanup Workspace Permissions
         if: always()
-        run: sudo sudo chown -R 1000:1000 ${{ github.workspace }} || true
+        run: podman unshare chown -R $USER:$USER ${{ github.workspace }} || true
   build-nvidia:
     needs: [build-builder]
     name: 🎮 Build NVIDIA KMOD
@@ -372,7 +381,7 @@ jobs:
 
       - name: 🧹 Cleanup Workspace Permissions
         if: always()
-        run: sudo sudo chown -R 1000:1000 ${{ github.workspace }} || true
+        run: podman unshare chown -R $USER:$USER ${{ github.workspace }} || true
   upstream-packages:
     needs: [build-builder, orchestrator-brain]
     if: needs.orchestrator-brain.outputs.upstream_packages != '[]' && needs.orchestrator-brain.outputs.upstream_packages != ''
@@ -418,7 +427,7 @@ jobs:
           path: |
             .sccache
             .cargo-cache
-          key: sccache-${{ matrix.package }}-${{ runner.os }}-${{ hashFiles('forge/specs/**/Cargo.lock', 'forge/specs/**/*.spec') }}
+          key: sccache-${{ matrix.package }}-${{ runner.os }}-${{ hashFiles(format('forge/specs/ermete-{0}/**', matrix.package)) }}
           restore-keys: |
             sccache-${{ matrix.package }}-${{ runner.os }}-
             sccache-${{ matrix.package }}-
@@ -525,7 +534,7 @@ jobs:
 
       - name: 🧹 Cleanup Workspace Permissions
         if: always()
-        run: sudo sudo chown -R 1000:1000 ${{ github.workspace }} || true
+        run: podman unshare chown -R $USER:$USER ${{ github.workspace }} || true
   build-repo:
     name: 📦 Build Repository
     if: ${{ always() && needs.orchestrator-brain.outputs.has_changes == 'true' && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
