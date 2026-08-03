@@ -174,27 +174,17 @@ fi
 echo ">>> Pulizia patch obsolete (ntsync è upstream in 6.14)..."
 rm -f SOURCES/*ntsync*.patch || true
 
-echo ">>> Download del profilo ChromeOS AFDO dinamico (da ChromiumOS Tree)..."
-TARGET_AFDO_URL=""
-for KVER in 6_12 6_6 6_1 5_15; do
-    echo "    Controllo repository ChromiumOS per kernel $KVER..."
-    EBUILD_FILE=$(curl -sL "https://chromium.googlesource.com/chromiumos/overlays/chromiumos-overlay/+/main/sys-kernel/chromeos-kernel-${KVER}/?format=TEXT" | base64 -d | grep -Eo "chromeos-kernel-${KVER}-[0-9\.\-r]+\.ebuild" | grep -v 9999 | head -n 1 || true)
-    
-    if [ -n "$EBUILD_FILE" ]; then
-        AFDO_VER=$(curl -sL "https://chromium.googlesource.com/chromiumos/overlays/chromiumos-overlay/+/main/sys-kernel/chromeos-kernel-${KVER}/${EBUILD_FILE}?format=TEXT" | base64 -d | grep -i '^AFDO_PROFILE_VERSION=' | cut -d'"' -f2 || true)
-        if [ -n "$AFDO_VER" ]; then
-            KVER_DOT="${KVER/_/.}"
-            TARGET_AFDO_URL="https://storage.googleapis.com/chromeos-prebuilt/afdo-job/cwp/kernel/amd64/${KVER_DOT}/${AFDO_VER}.afdo.xz"
-            echo "    -> Trovato URL valido: $TARGET_AFDO_URL"
-            break
-        fi
-    fi
-done
+echo ">>> Download del profilo ChromeOS AFDO (Fallback a link statico blindato)..."
+# A causa del rate-limiting estremo degli IP GitHub Actions da parte di Google Source,
+# lo scraping dinamico fallisce. Usiamo l'ultimo link statico 6.6 testato matematicamente.
+TARGET_AFDO_URL="https://storage.googleapis.com/chromeos-prebuilt/afdo-job/cwp/kernel/amd64/6.6/R152-16718.0-1783300616.afdo.xz"
+echo "    -> URL AFDO statico: $TARGET_AFDO_URL"
 
 if [ -n "$TARGET_AFDO_URL" ]; then
     if ! curl -sfLo SOURCES/chromeos.afdo.xz "$TARGET_AFDO_URL"; then
-        echo "    [WARN] Fallito il download dall'URL generato. Procedo senza PGO."
-        rm -f SOURCES/chromeos.afdo.xz
+        echo "    [WARN] Fallito il download dall'URL statico 6.6. Fallback a 5.15..."
+        TARGET_AFDO_URL="https://storage.googleapis.com/chromeos-localmirror/distfiles/chromeos-kernel-5_15-afdo.prof.xz"
+        curl -sfLo SOURCES/chromeos.afdo.xz "$TARGET_AFDO_URL" || true
     fi
 else
     echo "    [WARN] Nessun URL AFDO trovato. Procedo senza PGO."
@@ -207,7 +197,8 @@ else
     rm -f SOURCES/chromeos.afdo.xz SOURCES/chromeos.afdo
 fi
 
-echo ">>> Normalizzazione kernel.spec con LLVM=1 LLVM_IAS=1..."
+echo ">>> Normalizzazione kernel.spec con LLVM=1 LLVM_IAS=1 e macro %with_clang..."
+sed -i '1i %define with_clang 1' SPECS/kernel.spec
 sed -i 's/%make_build/%make_build LLVM=1 LLVM_IAS=1/g' SPECS/kernel.spec
 sed -i 's/make -s/make -s LLVM=1 LLVM_IAS=1/g' SPECS/kernel.spec
 sed -i 's/\(.*\)make ARCH/\1make LLVM=1 LLVM_IAS=1 ARCH/g' SPECS/kernel.spec
