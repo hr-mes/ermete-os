@@ -185,13 +185,10 @@ jobs:
         uses: sigstore/cosign-installer@v3
 
       - name: Generate SBOM (Syft)
-        uses: anchore/sbom-action@v0
-        with:
-          image: ${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-${{ matrix.package }}:latest
-          format: spdx-json
-          output-file: sbom-${{ matrix.package }}.spdx.json
-          registry-username: ${{ github.actor }}
-          registry-password: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-${{ matrix.package }}:latest" | tr "[:upper:]" "[:lower:]")
+          syft packages $IMAGE_LOWER -o spdx-json=sbom-${{ matrix.package }}.spdx.json
 
       - name: Sign & Attest Custom Micro-Container
         env:
@@ -360,13 +357,10 @@ jobs:
         uses: sigstore/cosign-installer@v3
 
       - name: Generate NVIDIA Micro-Container SBOM (Syft)
-        uses: anchore/sbom-action@v0
-        with:
-          image: ${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-nvidia:latest
-          format: spdx-json
-          output-file: sbom-nvidia.spdx.json
-          registry-username: ${{ github.actor }}
-          registry-password: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-nvidia:latest" | tr "[:upper:]" "[:lower:]")
+          syft packages $IMAGE_LOWER -o spdx-json=sbom-nvidia.spdx.json
 
       - name: Sign & Attest NVIDIA Micro-Container
         env:
