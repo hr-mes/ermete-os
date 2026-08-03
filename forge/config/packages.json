@@ -123,6 +123,8 @@
     "thunar",
     "thunar-archive-plugin",
     "thunar-volman",
+    "usbguard",
+    "bolt",
     "wayland-utils",
     "xdg-desktop-portal-gnome",
     "xdg-desktop-portal-gtk",

@@ -8,4 +8,7 @@ systemctl --user reset-failed 2>/dev/null || true
 # Esporta le variabili vitali della sessione logind (necessarie per libseat su NVIDIA)
 systemctl --user import-environment XDG_SESSION_ID XDG_SESSION_TYPE XDG_VTNR WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
 
+# Imposta la policy USBGuard per la sessione sbloccata dell'utente
+/usr/bin/ermete-usbguard-hook unlock 2>/dev/null || true
+
 exec /usr/bin/niri-session "$@"
