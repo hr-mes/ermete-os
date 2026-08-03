@@ -28,6 +28,14 @@ jobs:
     - name: Checkout Source
       uses: actions/checkout@v4
       
+    - name: ⚡ Restore/Save Kernel CCache
+      uses: actions/cache@v4
+      with:
+        path: .ccache_local
+        key: kernel-ccache-${{ github.sha }}
+        restore-keys: |
+          kernel-ccache-
+
     - name: 🚀 Boot Isolator (Start Ermete Builder Container)
       run: |
         echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
@@ -49,7 +57,7 @@ jobs:
         podman exec chimera-builder bash -c "
           export CCACHE_DIR=/forge/.ccache_local
           export CCACHE_COMPRESS=1
-          export CCACHE_MAXSIZE=10G
+          export CCACHE_MAXSIZE=3G
           cat << 'MACRO' >> ~/.rpmmacros
         %_smp_mflags -j\$(nproc)
         %toolchain clang
@@ -79,7 +87,9 @@ jobs:
         
     - name: 🧹 Cleanup Isolator
       if: always()
-      run: podman rm -f chimera-builder || true
+      run: |
+        podman rm -f chimera-builder || true
+        sudo chown -R $USER:$USER .ccache_local || true
           
     - name: Upload Binary RPMs
       uses: actions/upload-artifact@v4
