@@ -478,6 +478,15 @@ jobs:
                 echo "--- Installazione Dipendenze Dinamiche (%generate_buildrequires) ---"
                 dnf builddep -y --nogpgcheck --allowerasing ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm
                 echo "--- Secondo tentativo di Ricompilazione Estrema ---"
+                # Workaround again because %generate_buildrequires just downloaded new crates
+                if [ -d /usr/share/cargo/registry ]; then
+                  for crate in /usr/share/cargo/registry/*; do
+                    if [ -d "$crate" ]; then
+                      touch "$crate/README.md" || true
+                      touch "$crate/Readme.md" || true
+                    fi
+                  done
+                fi
                 rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec
               else
                 exit 1

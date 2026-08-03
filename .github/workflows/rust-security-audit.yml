@@ -10,12 +10,14 @@ jobs:
   security-audit:
     name: Enforce Safety & Cargo Vet Audit
     runs-on: ubuntu-latest
+    container:
+      image: fedora:41
     steps:
+      - name: Install System Dependencies
+        run: dnf install -y git gcc gcc-c++ gtk4-devel glib2-devel gtk4-layer-shell-devel pkgconf-pkg-config
+
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Install System Dependencies
-        run: sudo apt-get update && sudo apt-get install -y libgtk-4-dev libglib2.0-dev libgtk4-layer-shell-dev
 
       - name: Install Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
