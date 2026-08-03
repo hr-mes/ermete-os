@@ -5,7 +5,7 @@ use crate::niri_client;
 use gtk4::glib;
 use gtk4::prelude::*;
 use gtk4::{
-    Align, Application, ApplicationWindow, Box as GtkBox, Button, CssProvider, EventControllerMotion,
+    Align, Application, ApplicationWindow, Box as GtkBox, Button, CssProvider, DropControllerMotion, EventControllerMotion,
     EventControllerScroll, EventControllerScrollFlags, GestureClick, Image, Orientation, Popover,
 };
 use gtk4_layer_shell::{Edge, Layer, LayerShell};
@@ -520,7 +520,11 @@ fn refresh_monitor_instance(inst: &mut DockMonitorInstance) {
             } else if item_clone.window_ids.len() > 1 {
                 show_window_picker_popover(&btn_clone, &item_clone);
             } else {
-                let _ = Command::new("gtk-launch").arg(&item_clone.key_id).spawn();
+                let _ = niri_client::niri_action(serde_json::json!({
+                    "Action": {
+                        "Spawn": { "command": ["gtk-launch", &item_clone.key_id] }
+                    }
+                }));
             }
         });
 
@@ -537,7 +541,11 @@ fn refresh_monitor_instance(inst: &mut DockMonitorInstance) {
         gesture_middle.set_button(2);
         let key_id_mid = item.key_id.clone();
         gesture_middle.connect_released(move |_, _, _, _| {
-            let _ = Command::new("gtk-launch").arg(&key_id_mid).spawn();
+            let _ = niri_client::niri_action(serde_json::json!({
+                "Action": {
+                    "Spawn": { "command": ["gtk-launch", &key_id_mid] }
+                }
+            }));
         });
         btn.add_controller(gesture_middle);
 
@@ -552,6 +560,17 @@ fn refresh_monitor_instance(inst: &mut DockMonitorInstance) {
             glib::Propagation::Stop
         });
         btn.add_controller(scroll_ctrl);
+
+        let drop_ctrl = DropControllerMotion::new();
+        let btn_clone_drop_enter = btn.clone();
+        drop_ctrl.connect_enter(move |_, _, _| {
+            btn_clone_drop_enter.add_css_class("aura-active");
+        });
+        let btn_clone_drop_leave = btn.clone();
+        drop_ctrl.connect_leave(move |_| {
+            btn_clone_drop_leave.remove_css_class("aura-active");
+        });
+        btn.add_controller(drop_ctrl);
 
         inst.container.append(&btn);
     }
@@ -631,7 +650,11 @@ fn show_dock_context_menu(anchor: &Button, item: &DockItem) {
     let key_id2 = item.key_id.clone();
     let pop_close2 = popover.clone();
     btn_new.connect_clicked(move |_| {
-        let _ = Command::new("gtk-launch").arg(&key_id2).spawn();
+        let _ = niri_client::niri_action(serde_json::json!({
+            "Action": {
+                "Spawn": { "command": ["gtk-launch", &key_id2] }
+            }
+        }));
         pop_close2.popdown();
     });
     box_inner.append(&btn_new);
@@ -663,7 +686,11 @@ fn show_dock_context_menu(anchor: &Button, item: &DockItem) {
         .build();
     let pop_close_s = popover.clone();
     btn_settings.connect_clicked(move |_| {
-        let _ = Command::new("gtk-launch").arg("os.ermete.Settings.desktop").spawn();
+        let _ = niri_client::niri_action(serde_json::json!({
+            "Action": {
+                "Spawn": { "command": ["gtk-launch", "os.ermete.Settings.desktop"] }
+            }
+        }));
         pop_close_s.popdown();
     });
     box_inner.append(&btn_settings);
@@ -674,7 +701,11 @@ fn show_dock_context_menu(anchor: &Button, item: &DockItem) {
         .build();
     let pop_close_sm = popover.clone();
     btn_sysmon.connect_clicked(move |_| {
-        let _ = Command::new("gtk-launch").arg("missioncenter.desktop").spawn();
+        let _ = niri_client::niri_action(serde_json::json!({
+            "Action": {
+                "Spawn": { "command": ["gtk-launch", "missioncenter.desktop"] }
+            }
+        }));
         pop_close_sm.popdown();
     });
     box_inner.append(&btn_sysmon);
