@@ -78,8 +78,8 @@ jobs:
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
-          IMAGE_LOWER=$(echo "ghcr.io/hr-mes/ermete-os-builder" | tr '[:upper:]' '[:lower:]')
-          podman build -t $IMAGE_LOWER:latest -f builder/Containerfile builder/
+          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-builder" | tr '[:upper:]' '[:lower:]')
+          podman build --security-opt seccomp=unconfined -t $IMAGE_LOWER:latest -f builder/Containerfile builder/
           podman tag $IMAGE_LOWER:latest $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
           podman push $IMAGE_LOWER:latest
           podman push $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
