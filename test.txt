@@ -1,1 +1,0 @@
-/mnt/tier0-repo/kernel-devel-6.14.5-100.chimera.fc43.x86_64.rpm

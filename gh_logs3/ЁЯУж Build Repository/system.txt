@@ -1,8 +1,0 @@
-2026-07-31T19:30:35.2440000Z Job is about to start running on the runner: monorepo-runner-1
-2026-07-31T19:30:35.2210000Z Evaluating build-repo.if
-2026-07-31T19:30:35.2210000Z Evaluating: (always() && (needs.orchestrator-brain.outputs.has_changes == 'true') && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled'))
-2026-07-31T19:30:35.2210000Z Expanded: (true && ('true' == 'true') && !contains(Array, 'failure') && !contains(Array, 'cancelled'))
-2026-07-31T19:30:35.2210000Z Result: true
-2026-07-31T19:30:35.2290000Z Requested labels: self-hosted
-2026-07-31T19:30:35.2290000Z Job defined at: hr-mes/ermete-os/.github/workflows/ermete-forge-orchestrator.yml@refs/heads/main
-2026-07-31T19:30:35.2290000Z Waiting for a runner to pick up this job...

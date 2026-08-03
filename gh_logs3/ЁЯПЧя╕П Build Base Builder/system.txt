@@ -1,8 +1,0 @@
-2026-07-31T19:25:20.0940000Z Requested labels: self-hosted
-2026-07-31T19:25:20.0940000Z Job defined at: hr-mes/ermete-os/.github/workflows/ermete-forge-orchestrator.yml@refs/heads/main
-2026-07-31T19:25:20.0940000Z Waiting for a runner to pick up this job...
-2026-07-31T19:25:20.0840000Z Evaluating build-builder.if
-2026-07-31T19:25:20.0840000Z Evaluating: (success() && (((github.event_name != 'workflow_run') || (github.event.workflow_run.conclusion == 'success'))))
-2026-07-31T19:25:20.0840000Z Expanded: (true && (('push' != 'workflow_run') || (github.event.workflow_run.conclusion == 'success')))
-2026-07-31T19:25:20.0840000Z Result: true
-2026-07-31T19:25:20.3880000Z Job is about to start running on the runner: monorepo-runner-1

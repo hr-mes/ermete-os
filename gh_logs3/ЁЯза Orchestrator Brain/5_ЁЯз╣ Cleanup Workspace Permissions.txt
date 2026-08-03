@@ -1,7 +1,0 @@
-﻿2026-07-31T19:28:03.2933283Z ##[group]Run chown -R 1000:1000 /var/home/ermete/actions-runner-monorepo/_work/ermete-os/ermete-os || true
-2026-07-31T19:28:03.2934022Z [36;1mchown -R 1000:1000 /var/home/ermete/actions-runner-monorepo/_work/ermete-os/ermete-os || true[0m
-2026-07-31T19:28:03.2940858Z shell: /usr/bin/bash -e {0}
-2026-07-31T19:28:03.2941171Z env:
-2026-07-31T19:28:03.2941490Z   REGISTRY: ghcr.io
-2026-07-31T19:28:03.2941771Z   FEDORA_VERSION: 43
-2026-07-31T19:28:03.2942022Z ##[endgroup]

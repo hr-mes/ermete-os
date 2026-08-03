@@ -1,9 +1,0 @@
-2026-07-31T20:54:58.3690000Z Evaluating build_push.if
-2026-07-31T20:54:58.3690000Z Evaluating: (success() && (((github.event_name != 'workflow_run') || (github.event.workflow_run.conclusion == 'success'))))
-2026-07-31T20:54:58.3690000Z Expanded: (true && (('workflow_run' != 'workflow_run') || ('success' == 'success')))
-2026-07-31T20:54:58.3690000Z Result: true
-2026-07-31T20:54:58.8300000Z Job is waiting for a hosted runner to come online.
-2026-07-31T20:54:58.8160000Z Requested labels: ubuntu-24.04
-2026-07-31T20:54:58.8160000Z Job defined at: hr-mes/ermete-os/.github/workflows/system-build.yml@refs/heads/main
-2026-07-31T20:54:58.8160000Z Waiting for a runner to pick up this job...
-2026-07-31T20:54:58.8310000Z Job is about to start running on the hosted runner: GitHub Actions 1000025336
