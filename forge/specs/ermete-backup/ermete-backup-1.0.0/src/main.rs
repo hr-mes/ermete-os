@@ -11,7 +11,7 @@ struct BackupService;
 impl BackupService {
     /// Esegue il backup chiamando borg create in background, emettendo segnali di progresso
     #[zbus(name = "PerformBackup")]
-    async fn perform_backup(&self, #[zbus(signal_context)] ctxt: SignalContext<'_>) -> FdoResult<()> {
+    async fn perform_backup(&self, #[zbus(signal_context)] ctxt: SignalContext<'_>) {
         let ctxt = ctxt.into_owned();
 
         // Spawn asincrono per l'esecuzione di borg
@@ -62,8 +62,6 @@ impl BackupService {
                 }
             }
         });
-
-        Ok(())
     }
 
     /// Segnale DBus per il progresso del backup

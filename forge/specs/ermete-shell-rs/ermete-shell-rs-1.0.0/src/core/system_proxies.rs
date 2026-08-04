@@ -411,6 +411,9 @@ pub fn get_state_store() -> Arc<SettingsStateStore> {
     })
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
     #[tokio::test]
     async fn test_system_controller_state_updates() {
         let bus = SystemEventBus::new();

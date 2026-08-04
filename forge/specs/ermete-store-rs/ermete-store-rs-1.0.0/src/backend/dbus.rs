@@ -45,10 +45,11 @@ impl StoreService {
 
         if let Some(stdout) = child.stdout.take() {
             let mut reader = BufReader::new(stdout).lines();
+            let pkg_name = package.clone();
             tokio::spawn(async move {
                 while let Ok(Some(line)) = reader.next_line().await {
                     // Piping percentage or output
-                    info!("Install Output [{}]: {}", package, line);
+                    info!("Install Output [{}]: {}", pkg_name, line);
                 }
             });
         }
