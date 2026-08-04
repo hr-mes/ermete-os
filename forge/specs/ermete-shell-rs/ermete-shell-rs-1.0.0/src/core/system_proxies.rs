@@ -317,99 +317,7 @@ pub use crate::core::mpris_proxy::MprisController;
 // SYSTEM CONTROLLER FACADE & COMPATIBILITY
 // ==========================================
 
-#[derive(Clone, Debug)]
-pub struct SystemController {
-    pub audio: Arc<AudioController>,
-    pub network: Arc<NetworkController>,
-    pub bluetooth: Arc<BluetoothController>,
-    pub display: Arc<DisplayController>,
-    pub power: Arc<PowerController>,
-    pub mpris: Arc<MprisController>,
-    pub state_store: Arc<SettingsStateStore>,
-}
 
-impl SystemController {
-    pub async fn new() -> zbus::Result<Self> {
-        let session = Connection::session().await?;
-        let system = Connection::system().await?;
-        let event_bus = SystemEventBus::new();
-        let state_store = Arc::new(SettingsStateStore::new(event_bus.clone()));
-        
-        let backend = ControllerBackend::Dbus { session, system };
-        let audio = Arc::new(AudioController::new(backend.clone(), event_bus.clone()));
-        let network = Arc::new(NetworkController::new(backend.clone(), event_bus.clone()));
-        let bluetooth = Arc::new(BluetoothController::new(backend.clone(), event_bus.clone()));
-        let display = Arc::new(DisplayController::new(backend.clone(), event_bus.clone()));
-        let power = Arc::new(PowerController::new(backend.clone(), event_bus.clone()));
-        let mpris = Arc::new(MprisController::new(backend, event_bus));
-
-        Ok(Self {
-            audio,
-            network,
-            bluetooth,
-            display,
-            power,
-            mpris,
-            state_store,
-        })
-    }
-
-    pub fn new_mock() -> Self {
-        let state = Arc::new(Mutex::new(MockState::default_mock()));
-        let event_bus = SystemEventBus::new();
-        let state_store = Arc::new(SettingsStateStore::new(event_bus.clone()));
-
-        let audio = Arc::new(AudioController::new_mock(state.clone(), event_bus.clone()));
-        let network = Arc::new(NetworkController::new_mock(state.clone(), event_bus.clone()));
-        let bluetooth = Arc::new(BluetoothController::new_mock(state.clone(), event_bus.clone()));
-        let display = Arc::new(DisplayController::new_mock(state.clone(), event_bus.clone()));
-        let power = Arc::new(PowerController::new_mock(state.clone(), event_bus.clone()));
-        let mpris = Arc::new(MprisController::new_mock(state, event_bus));
-
-        Self {
-            audio,
-            network,
-            bluetooth,
-            display,
-            power,
-            mpris,
-            state_store,
-        }
-    }
-
-    // Forwarded methods for backward compatibility
-    pub async fn toggle_wifi(&self) -> zbus::Result<bool> { self.network.toggle_wifi().await }
-    pub async fn toggle_bluetooth(&self) -> zbus::Result<bool> { self.bluetooth.toggle_bluetooth().await }
-    pub async fn toggle_mute(&self) -> zbus::Result<bool> { self.audio.toggle_mute().await }
-    pub async fn toggle_source_mute(&self) -> zbus::Result<bool> { self.audio.toggle_source_mute().await }
-    pub async fn set_volume(&self, volume: f64) -> zbus::Result<()> { self.audio.set_volume(volume).await }
-    pub async fn set_source_volume(&self, volume: f64) -> zbus::Result<()> { self.audio.set_source_volume(volume).await }
-    pub async fn set_brightness(&self, brightness: f64) -> zbus::Result<()> { self.display.set_brightness(brightness).await }
-    pub async fn player_command(&self, cmd: &str) -> zbus::Result<()> { self.mpris.player_command(cmd).await }
-    pub async fn is_wifi_enabled(&self) -> zbus::Result<bool> { self.network.is_wifi_enabled().await }
-    pub async fn is_bluetooth_enabled(&self) -> zbus::Result<bool> { self.bluetooth.is_bluetooth_enabled().await }
-    pub async fn get_volume(&self) -> zbus::Result<f64> { self.audio.get_volume().await }
-    pub async fn get_brightness(&self) -> zbus::Result<f64> { self.display.get_brightness().await }
-    pub fn get_last_player_command(&self) -> Option<String> { self.mpris.get_last_player_command() }
-    pub async fn lock_screen(&self) -> zbus::Result<()> { self.power.lock_screen().await }
-    pub async fn power_off(&self) -> zbus::Result<()> { self.power.power_off().await }
-    pub async fn reboot(&self) -> zbus::Result<()> { self.power.reboot().await }
-    pub async fn suspend(&self) -> zbus::Result<()> { self.power.suspend().await }
-    pub async fn set_wifi_powered(&self, powered: bool) -> zbus::Result<()> { self.network.set_wifi_powered(powered).await }
-    pub async fn set_bluetooth_powered(&self, powered: bool) -> zbus::Result<()> { self.bluetooth.set_bluetooth_powered(powered).await }
-    pub async fn list_wifi_networks(&self) -> zbus::Result<Vec<WifiNetworkInfo>> { self.network.list_wifi_networks().await }
-    pub async fn list_bluetooth_devices(&self) -> zbus::Result<Vec<BluetoothDeviceInfo>> { self.bluetooth.list_bluetooth_devices().await }
-    pub async fn connect_wifi(&self, ssid: &str, password: &str) -> zbus::Result<()> { self.network.connect_wifi(ssid, password).await }
-    pub async fn disconnect_wifi(&self, ssid: &str) -> zbus::Result<()> { self.network.disconnect_wifi(ssid).await }
-    pub async fn delete_wifi(&self, ssid: &str) -> zbus::Result<()> { self.network.delete_wifi(ssid).await }
-    pub async fn modify_wifi(&self, ssid: &str, dhcp: bool, ip: &str, gw: &str, dns: &str, auto: bool) -> zbus::Result<()> { self.network.modify_wifi(ssid, dhcp, ip, gw, dns, auto).await }
-    pub async fn get_wifi_details(&self, ssid: &str) -> zbus::Result<(String, String, String, String, bool)> { self.network.get_wifi_details(ssid).await }
-    pub fn get_cached_volume(&self) -> f64 { self.audio.get_cached_volume() }
-    pub fn get_cached_mpris_state(&self) -> Option<crate::core::mpris::MprisState> { self.mpris.get_cached_mpris_state() }
-    pub async fn refresh_mpris(&self) -> zbus::Result<()> { self.mpris.refresh_mpris().await }
-    pub async fn refresh_network_status(&self) -> zbus::Result<()> { self.network.refresh_network_status().await }
-    pub fn get_cached_network_status(&self) -> (String, String, String) { self.network.get_cached_network_status() }
-}
 
 static GLOBAL_AUDIO_CONTROLLER: std::sync::OnceLock<Arc<AudioController>> = std::sync::OnceLock::new();
 static GLOBAL_NETWORK_CONTROLLER: std::sync::OnceLock<Arc<NetworkController>> = std::sync::OnceLock::new();
@@ -418,21 +326,33 @@ static GLOBAL_DISPLAY_CONTROLLER: std::sync::OnceLock<Arc<DisplayController>> = 
 static GLOBAL_POWER_CONTROLLER: std::sync::OnceLock<Arc<PowerController>> = std::sync::OnceLock::new();
 static GLOBAL_MPRIS_CONTROLLER: std::sync::OnceLock<Arc<MprisController>> = std::sync::OnceLock::new();
 static GLOBAL_STATE_STORE: std::sync::OnceLock<Arc<SettingsStateStore>> = std::sync::OnceLock::new();
-static GLOBAL_CONTROLLER: std::sync::OnceLock<Arc<SystemController>> = std::sync::OnceLock::new();
-
 pub fn init_system_controller() {
     glib::MainContext::default().spawn_local(async {
-        if let Ok(controller) = SystemController::new().await {
-            let _ = controller.mpris.refresh_mpris().await;
-            let _ = controller.network.refresh_network_status().await;
-            let _ = GLOBAL_AUDIO_CONTROLLER.set(controller.audio.clone());
-            let _ = GLOBAL_NETWORK_CONTROLLER.set(controller.network.clone());
-            let _ = GLOBAL_BLUETOOTH_CONTROLLER.set(controller.bluetooth.clone());
-            let _ = GLOBAL_DISPLAY_CONTROLLER.set(controller.display.clone());
-            let _ = GLOBAL_POWER_CONTROLLER.set(controller.power.clone());
-            let _ = GLOBAL_MPRIS_CONTROLLER.set(controller.mpris.clone());
-            let _ = GLOBAL_STATE_STORE.set(controller.state_store.clone());
-            let _ = GLOBAL_CONTROLLER.set(Arc::new(controller));
+        if let (Ok(session), Ok(system)) = (Connection::session().await, Connection::system().await) {
+            let event_bus = SystemEventBus::new();
+            let state_store = Arc::new(SettingsStateStore::new(event_bus.clone()));
+            let backend = ControllerBackend::Dbus { session, system };
+            
+            let audio = Arc::new(AudioController::new(backend.clone(), event_bus.clone()));
+            let network = Arc::new(NetworkController::new(backend.clone(), event_bus.clone()));
+            let bluetooth = Arc::new(BluetoothController::new(backend.clone(), event_bus.clone()));
+            let display = Arc::new(DisplayController::new(backend.clone(), event_bus.clone()));
+            let power = Arc::new(PowerController::new(backend.clone(), event_bus.clone()));
+            let mpris = Arc::new(MprisController::new(backend, event_bus));
+
+            let _ = mpris.refresh_mpris().await;
+            let _ = network.refresh_network_status().await;
+
+            // Start eBPF push notification hooks to bypass DBus polling
+            crate::core::ebpf_hooks::start_ebpf_dbus_listener(event_bus.clone()).await;
+
+            let _ = GLOBAL_AUDIO_CONTROLLER.set(audio);
+            let _ = GLOBAL_NETWORK_CONTROLLER.set(network);
+            let _ = GLOBAL_BLUETOOTH_CONTROLLER.set(bluetooth);
+            let _ = GLOBAL_DISPLAY_CONTROLLER.set(display);
+            let _ = GLOBAL_POWER_CONTROLLER.set(power);
+            let _ = GLOBAL_MPRIS_CONTROLLER.set(mpris);
+            let _ = GLOBAL_STATE_STORE.set(state_store);
         }
     });
 }
@@ -491,114 +411,118 @@ pub fn get_state_store() -> Arc<SettingsStateStore> {
     })
 }
 
-pub fn get_global_controller() -> Arc<SystemController> {
-    GLOBAL_CONTROLLER.get().cloned().unwrap_or_else(|| Arc::new(SystemController::new_mock()))
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
     #[tokio::test]
     async fn test_system_controller_state_updates() {
-        let controller = SystemController::new_mock();
-        assert_eq!(controller.is_wifi_enabled().await.unwrap(), true);
+        let bus = SystemEventBus::new();
+        let state = Arc::new(Mutex::new(MockState::default_mock()));
+        let network = Arc::new(NetworkController::new_mock(state.clone(), bus.clone()));
+        let bluetooth = Arc::new(BluetoothController::new_mock(state.clone(), bus.clone()));
+        let audio = Arc::new(AudioController::new_mock(state.clone(), bus.clone()));
+        let display = Arc::new(DisplayController::new_mock(state.clone(), bus.clone()));
+        let mpris = Arc::new(MprisController::new_mock(state.clone(), bus.clone()));
 
-        let new_wifi = controller.toggle_wifi().await.unwrap();
+        assert_eq!(network.is_wifi_enabled().await.unwrap(), true);
+
+        let new_wifi = network.toggle_wifi().await.unwrap();
         assert_eq!(new_wifi, false);
-        assert_eq!(controller.is_wifi_enabled().await.unwrap(), false);
+        assert_eq!(network.is_wifi_enabled().await.unwrap(), false);
 
-        controller.set_wifi_powered(true).await.unwrap();
-        assert_eq!(controller.is_wifi_enabled().await.unwrap(), true);
+        network.set_wifi_powered(true).await.unwrap();
+        assert_eq!(network.is_wifi_enabled().await.unwrap(), true);
 
-        let new_bt = controller.toggle_bluetooth().await.unwrap();
+        let new_bt = bluetooth.toggle_bluetooth().await.unwrap();
         assert_eq!(new_bt, false);
-        assert_eq!(controller.is_bluetooth_enabled().await.unwrap(), false);
+        assert_eq!(bluetooth.is_bluetooth_enabled().await.unwrap(), false);
 
-        controller.set_bluetooth_powered(true).await.unwrap();
-        assert_eq!(controller.is_bluetooth_enabled().await.unwrap(), true);
+        bluetooth.set_bluetooth_powered(true).await.unwrap();
+        assert_eq!(bluetooth.is_bluetooth_enabled().await.unwrap(), true);
 
-        let new_mute = controller.toggle_mute().await.unwrap();
+        let new_mute = audio.toggle_mute().await.unwrap();
         assert_eq!(new_mute, true);
 
-        let new_src_mute = controller.toggle_source_mute().await.unwrap();
+        let new_src_mute = audio.toggle_source_mute().await.unwrap();
         assert_eq!(new_src_mute, true);
 
-        controller.set_volume(0.75).await.unwrap();
-        assert_eq!(controller.get_volume().await.unwrap(), 0.75);
-        assert_eq!(controller.get_cached_volume(), 0.75);
+        audio.set_volume(0.75).await.unwrap();
+        assert_eq!(audio.get_volume().await.unwrap(), 0.75);
+        assert_eq!(audio.get_cached_volume(), 0.75);
 
-        controller.set_source_volume(0.60).await.unwrap();
-        assert_eq!(controller.get_brightness().await.unwrap(), 0.5); // default brightness
+        audio.set_source_volume(0.60).await.unwrap();
+        assert_eq!(display.get_brightness().await.unwrap(), 0.5);
 
-        controller.set_brightness(0.80).await.unwrap();
-        assert_eq!(controller.get_brightness().await.unwrap(), 0.80);
+        display.set_brightness(0.80).await.unwrap();
+        assert_eq!(display.get_brightness().await.unwrap(), 0.80);
 
-        controller.player_command("play-pause").await.unwrap();
-        assert_eq!(controller.get_last_player_command(), Some("play-pause".to_string()));
+        mpris.player_command("play-pause").await.unwrap();
+        assert_eq!(mpris.get_last_player_command(), Some("play-pause".to_string()));
     }
 
     #[tokio::test]
     async fn test_system_controller_ui_network_and_bt_methods() {
-        let controller = SystemController::new_mock();
+        let bus = SystemEventBus::new();
+        let state = Arc::new(Mutex::new(MockState::default_mock()));
+        let network = Arc::new(NetworkController::new_mock(state.clone(), bus.clone()));
+        let bluetooth = Arc::new(BluetoothController::new_mock(state.clone(), bus.clone()));
 
-        let wifi_list = controller.list_wifi_networks().await.unwrap();
+        let wifi_list = network.list_wifi_networks().await.unwrap();
         assert_eq!(wifi_list.len(), 1);
         assert_eq!(wifi_list[0].ssid, "Ermete-5G");
 
-        assert!(controller.connect_wifi("Ermete-5G", "secret").await.is_ok());
-        assert!(controller.disconnect_wifi("Ermete-5G").await.is_ok());
-        assert!(controller.delete_wifi("Ermete-5G").await.is_ok());
-        assert!(controller.modify_wifi("Ermete-5G", true, "192.168.1.50", "192.168.1.1", "8.8.8.8", true).await.is_ok());
+        assert!(network.connect_wifi("Ermete-5G", "secret").await.is_ok());
+        assert!(network.disconnect_wifi("Ermete-5G").await.is_ok());
+        assert!(network.delete_wifi("Ermete-5G").await.is_ok());
+        assert!(network.modify_wifi("Ermete-5G", true, "192.168.1.50", "192.168.1.1", "8.8.8.8", true).await.is_ok());
 
-        let details = controller.get_wifi_details("Ermete-5G").await.unwrap();
+        let details = network.get_wifi_details("Ermete-5G").await.unwrap();
         assert_eq!(details.0, "auto");
         assert_eq!(details.4, true);
 
-        let bt_list = controller.list_bluetooth_devices().await.unwrap();
+        let bt_list = bluetooth.list_bluetooth_devices().await.unwrap();
         assert_eq!(bt_list.len(), 1);
         assert_eq!(bt_list[0].name, "Ermete Headphones");
     }
 
     #[tokio::test]
     async fn test_system_controller_power_and_global_methods() {
-        let controller = SystemController::new_mock();
-        assert!(controller.lock_screen().await.is_ok());
-        assert!(controller.power_off().await.is_ok());
-        assert!(controller.reboot().await.is_ok());
-        assert!(controller.suspend().await.is_ok());
+        let bus = SystemEventBus::new();
+        let state = Arc::new(Mutex::new(MockState::default_mock()));
+        let power = Arc::new(PowerController::new_mock(state.clone(), bus.clone()));
+        let mpris = Arc::new(MprisController::new_mock(state.clone(), bus.clone()));
+        let network = Arc::new(NetworkController::new_mock(state.clone(), bus.clone()));
 
-        assert!(controller.get_cached_mpris_state().is_none());
-        let (icon, label, sub) = controller.get_cached_network_status();
+        assert!(power.lock_screen().await.is_ok());
+        assert!(power.power_off().await.is_ok());
+        assert!(power.reboot().await.is_ok());
+        assert!(power.suspend().await.is_ok());
+
+        assert!(mpris.get_cached_mpris_state().is_none());
+        let (icon, label, sub) = network.get_cached_network_status();
         assert!(!icon.is_empty() && !label.is_empty() && !sub.is_empty());
-
-        let global = get_global_controller();
-        assert_eq!(global.get_cached_volume(), 0.5);
     }
 
     #[tokio::test]
     async fn test_review_findings_compliance() {
-        let controller = SystemController::new_mock();
+        let bus = SystemEventBus::new();
+        let state = Arc::new(Mutex::new(MockState::default_mock()));
+        let network = Arc::new(NetworkController::new_mock(state.clone(), bus.clone()));
+        let mpris = Arc::new(MprisController::new_mock(state.clone(), bus.clone()));
         
-        // Check connect/disconnect updates mock state
-        controller.connect_wifi("Ermete-5G", "secret").await.unwrap();
-        let list = controller.list_wifi_networks().await.unwrap();
+        network.connect_wifi("Ermete-5G", "secret").await.unwrap();
+        let list = network.list_wifi_networks().await.unwrap();
         assert_eq!(list[0].active, true);
         
-        // Check get_cached_network_status returns connected SSID instead of hardcoded "Connesso"
-        let (icon, title, sub) = controller.get_cached_network_status();
+        let (icon, title, sub) = network.get_cached_network_status();
         assert_eq!(icon, "");
         assert_eq!(title, "Rete Wi-Fi");
         assert_eq!(sub, "Ermete-5G");
 
-        controller.disconnect_wifi("Ermete-5G").await.unwrap();
-        let list = controller.list_wifi_networks().await.unwrap();
+        network.disconnect_wifi("Ermete-5G").await.unwrap();
+        let list = network.list_wifi_networks().await.unwrap();
         assert_eq!(list[0].active, false);
 
-        // Check get_cached_mpris_state is populated after player_command
-        assert!(controller.get_cached_mpris_state().is_none());
-        controller.player_command("play-pause").await.unwrap();
-        let mpris = controller.get_cached_mpris_state().expect("cached_mpris should be populated");
-        assert_eq!(mpris.status, "Playing");
+        assert!(mpris.get_cached_mpris_state().is_none());
+        mpris.player_command("play-pause").await.unwrap();
+        let mpris_state = mpris.get_cached_mpris_state().expect("cached_mpris should be populated");
+        assert_eq!(mpris_state.status, "Playing");
     }
 }

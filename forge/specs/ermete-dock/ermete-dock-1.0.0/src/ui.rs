@@ -1,7 +1,7 @@
 use crate::dock_config::{add_pin, load_dock_config, remove_pin, DockConfig};
 use crate::dock_data::{reconcile_dock_items, DockItem, NiriWindowInfo, NiriWorkspaceInfo};
 use crate::dock_watcher::{fetch_current_niri_windows, fetch_current_workspaces, spawn_dock_watchers};
-use crate::niri_client;
+use crate::controller::DockController;
 use gtk4::glib;
 use gtk4::prelude::*;
 use gtk4::{
@@ -516,15 +516,11 @@ fn refresh_monitor_instance(inst: &mut DockMonitorInstance) {
         btn.connect_clicked(move |_| {
             if item_clone.window_ids.len() == 1 {
                 let win_id = item_clone.window_ids[0];
-                niri_client::focus_window(win_id);
+                DockController::focus_window(win_id);
             } else if item_clone.window_ids.len() > 1 {
                 show_window_picker_popover(&btn_clone, &item_clone);
             } else {
-                let _ = niri_client::niri_action(serde_json::json!({
-                    "Action": {
-                        "Spawn": { "command": ["gtk-launch", &item_clone.key_id] }
-                    }
-                }));
+                DockController::launch_app(&item_clone.key_id);
             }
         });
 
@@ -541,11 +537,7 @@ fn refresh_monitor_instance(inst: &mut DockMonitorInstance) {
         gesture_middle.set_button(2);
         let key_id_mid = item.key_id.clone();
         gesture_middle.connect_released(move |_, _, _, _| {
-            let _ = niri_client::niri_action(serde_json::json!({
-                "Action": {
-                    "Spawn": { "command": ["gtk-launch", &key_id_mid] }
-                }
-            }));
+            DockController::launch_app(&key_id_mid);
         });
         btn.add_controller(gesture_middle);
 
@@ -555,7 +547,7 @@ fn refresh_monitor_instance(inst: &mut DockMonitorInstance) {
             if !win_ids.is_empty() {
                 let idx = if dy > 0.0 { 0 } else { win_ids.len() - 1 };
                 let win_id = win_ids[idx];
-                niri_client::focus_window(win_id);
+                DockController::focus_window(win_id);
             }
             glib::Propagation::Stop
         });
@@ -599,7 +591,7 @@ fn show_window_picker_popover(anchor: &Button, item: &DockItem) {
             .build();
         let pop_close = popover.clone();
         btn.connect_clicked(move |_| {
-            niri_client::focus_window(win_id);
+            DockController::focus_window(win_id);
             pop_close.popdown();
         });
         box_inner.append(&btn);
@@ -650,11 +642,7 @@ fn show_dock_context_menu(anchor: &Button, item: &DockItem) {
     let key_id2 = item.key_id.clone();
     let pop_close2 = popover.clone();
     btn_new.connect_clicked(move |_| {
-        let _ = niri_client::niri_action(serde_json::json!({
-            "Action": {
-                "Spawn": { "command": ["gtk-launch", &key_id2] }
-            }
-        }));
+        DockController::launch_app(&key_id2);
         pop_close2.popdown();
     });
     box_inner.append(&btn_new);
@@ -668,7 +656,7 @@ fn show_dock_context_menu(anchor: &Button, item: &DockItem) {
         let pop_close3 = popover.clone();
         btn_close.connect_clicked(move |_| {
             for id in &win_ids {
-                niri_client::close_window_by_id(*id);
+                DockController::close_window(*id);
             }
             pop_close3.popdown();
         });
@@ -686,11 +674,7 @@ fn show_dock_context_menu(anchor: &Button, item: &DockItem) {
         .build();
     let pop_close_s = popover.clone();
     btn_settings.connect_clicked(move |_| {
-        let _ = niri_client::niri_action(serde_json::json!({
-            "Action": {
-                "Spawn": { "command": ["gtk-launch", "os.ermete.Settings.desktop"] }
-            }
-        }));
+        DockController::launch_app("os.ermete.Settings.desktop");
         pop_close_s.popdown();
     });
     box_inner.append(&btn_settings);
@@ -701,11 +685,7 @@ fn show_dock_context_menu(anchor: &Button, item: &DockItem) {
         .build();
     let pop_close_sm = popover.clone();
     btn_sysmon.connect_clicked(move |_| {
-        let _ = niri_client::niri_action(serde_json::json!({
-            "Action": {
-                "Spawn": { "command": ["gtk-launch", "missioncenter.desktop"] }
-            }
-        }));
+        DockController::launch_app("missioncenter.desktop");
         pop_close_sm.popdown();
     });
     box_inner.append(&btn_sysmon);

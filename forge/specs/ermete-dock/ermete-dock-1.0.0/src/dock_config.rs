@@ -84,7 +84,7 @@ pub(crate) static TEST_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ermete_auth::HomeGuard;
+
 
     #[test]
     fn test_add_and_remove_pin_logic() {
@@ -116,7 +116,7 @@ mod tests {
         let _lock = TEST_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
         let tmp_dir = std::env::temp_dir().join("ermete_test_dock_config_api");
         let _ = fs::remove_dir_all(&tmp_dir);
-        let _home_guard = HomeGuard::set(&tmp_dir);
+
 
         // Initial load should create default config
         let initial = load_dock_config();

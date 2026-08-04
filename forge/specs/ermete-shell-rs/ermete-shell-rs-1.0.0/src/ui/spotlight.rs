@@ -153,31 +153,7 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
     }
 
     if is_spotlight && filter_lower.starts_with("ai:") {
-        let query = filter_text.trim_start_matches("ai:").trim();
-        if !query.is_empty() {
-            let row = Button::builder().css_classes(["spotlight-item"]).build();
-            let hbox = GtkBox::builder().orientation(Orientation::Horizontal).spacing(16).build();
-            let img = Image::builder().icon_name("system-run").pixel_size(40).build();
-            hbox.append(&img);
-            let vbox = GtkBox::builder().orientation(Orientation::Vertical).valign(Align::Center).build();
-            let name_lbl = Label::builder().label(&format!("AI Task: {}", query)).halign(Align::Start).css_classes(["spotlight-item-title"]).build();
-            vbox.append(&name_lbl);
-            let desc_lbl = Label::builder().label("Invia intent strutturato a ermete-ai-daemon").halign(Align::Start).css_classes(["spotlight-item-desc"]).build();
-            vbox.append(&desc_lbl);
-            hbox.append(&vbox);
-            row.set_child(Some(&hbox));
-            let query_str = query.to_string();
-            row.connect_clicked(glib::clone!(@weak pop => move |_| {
-                let json_query = format!(r#"{{"text": "{}", "intent": "auto"}}"#, query_str.replace('"', "\\\""));
-                let _ = std::process::Command::new("ermete-ai-daemon")
-                    .arg("--query")
-                    .arg(&json_query)
-                    .spawn();
-                pop.close();
-            }));
-            list_box.append(&row);
-        }
-        return;
+        // Keeps backwards compatibility with explicit 'ai:' prefix
     }
 
     if is_spotlight && filter_lower.starts_with('?') {
@@ -252,6 +228,33 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
             });
         }
         return;
+    }
+
+    // AI Daemon Integration for Natural Language (Omni-Spotlight Feature)
+    if is_spotlight && !filter_lower.is_empty() && !filter_lower.starts_with('/') && !filter_lower.starts_with('?') && !filter_lower.starts_with('=') && !filter_lower.starts_with('>') {
+        let query = filter_text.trim_start_matches("ai:").trim();
+        let row = Button::builder().css_classes(["spotlight-item"]).build();
+        let hbox = GtkBox::builder().orientation(Orientation::Horizontal).spacing(16).build();
+        let img = Image::builder().icon_name("system-run").pixel_size(40).build();
+        hbox.append(&img);
+        let vbox = GtkBox::builder().orientation(Orientation::Vertical).valign(Align::Center).build();
+        let name_lbl = Label::builder().label(&format!("Chiedi ad AI: {}", query)).halign(Align::Start).css_classes(["spotlight-item-title"]).build();
+        vbox.append(&name_lbl);
+        let desc_lbl = Label::builder().label("Ermete AI capirà l'intento e aprirà il pannello corretto").halign(Align::Start).css_classes(["spotlight-item-desc"]).build();
+        vbox.append(&desc_lbl);
+        hbox.append(&vbox);
+        row.set_child(Some(&hbox));
+        let query_str = query.to_string();
+        row.connect_clicked(glib::clone!(@weak pop => move |_| {
+            let json_query = format!(r#"{{"text": "{}", "intent": "auto"}}"#, query_str.replace('"', "\\\""));
+            let _ = std::process::Command::new("ermete-ai-daemon")
+                .arg("--query")
+                .arg(&json_query)
+                .spawn();
+            pop.close();
+        }));
+        list_box.append(&row);
+        // We still show the static apps below the AI suggestion
     }
 
     ensure_index_loaded();

@@ -53,8 +53,8 @@ pub fn spawn_osd(app: &Application) {
     let window_rc = window.clone();
     
     let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
-    let controller = crate::core::system_proxies::get_global_controller();
-    controller.state_store.event_bus().subscribe(move |ev| {
+    let state_store = crate::core::system_proxies::get_state_store();
+    state_store.event_bus().subscribe(move |ev| {
         let _ = tx.send(ev.clone());
     });
 

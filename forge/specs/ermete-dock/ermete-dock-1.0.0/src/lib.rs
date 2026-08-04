@@ -1,7 +1,7 @@
 pub mod dock_config;
 pub mod dock_data;
 pub mod dock_watcher;
-pub mod niri_client;
+pub mod controller;
 pub mod ui;
 
 pub use dock_config::*;

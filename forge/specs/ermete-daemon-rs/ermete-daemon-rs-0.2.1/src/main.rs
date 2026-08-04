@@ -8,7 +8,7 @@ mod bluetooth;
 mod settings;
 mod portal;
 mod portal_screencast;
-mod secret_enroller;
+
 mod gatekeeper_listener;
 mod voiceover;
 mod qos;
@@ -22,7 +22,7 @@ use bluetooth::Bluetooth;
 use settings::SettingsService;
 use portal::PortalSettingsService;
 use portal_screencast::{PortalScreenCastService, PortalRemoteDesktopService};
-use secret_enroller::SecretEnrollerService;
+
 use voiceover::VoiceOverService;
 
 use power::PowerManager;
@@ -64,7 +64,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .serve_at("/os/ermete/Bedrock", Bedrock::new())?
         .serve_at("/os/ermete/Bedrock/Network", Network::new(sys_conn.clone()))?
         .serve_at("/os/ermete/Bedrock/Bluetooth", Bluetooth::new(sys_conn.clone()))?
-        .serve_at("/os/ermete/Bedrock/SecretEnroller", SecretEnrollerService::new())?
         .serve_at("/org/ermete/Settings", settings_srv.clone())?
         .serve_at("/os/ermete/Bedrock/Settings", settings_srv)?
         .serve_at("/os/ermete/VoiceOver", voiceover_srv)?

@@ -96,16 +96,147 @@ impl SettingsStateStore {
     }
 }
 
+use tokio::sync::{mpsc, oneshot};
+
+pub enum SettingsCommand {
+    GetColorScheme(oneshot::Sender<String>),
+    SetColorScheme(String, oneshot::Sender<fdo::Result<()>>),
+    GetAccentColor(oneshot::Sender<String>),
+    SetAccentColor(String, oneshot::Sender<fdo::Result<()>>),
+    GetWallpaper(oneshot::Sender<String>),
+    SetWallpaper(String, oneshot::Sender<fdo::Result<()>>),
+    GetTrueToneEnabled(oneshot::Sender<bool>),
+    SetTrueToneEnabled(bool, oneshot::Sender<fdo::Result<()>>),
+    GetTrueToneTemperature(oneshot::Sender<u32>),
+    SetTrueToneTemperature(u32, oneshot::Sender<fdo::Result<()>>),
+    GetVoiceoverEnabled(oneshot::Sender<bool>),
+    SetVoiceoverEnabled(bool, oneshot::Sender<fdo::Result<()>>),
+}
+
 #[derive(Clone)]
 pub struct SettingsService {
-    pub store: SettingsStateStore,
+    tx: mpsc::Sender<SettingsCommand>,
 }
 
 impl SettingsService {
     pub fn new() -> Self {
-        Self {
-            store: SettingsStateStore::new(),
-        }
+        let (tx, mut rx) = mpsc::channel::<SettingsCommand>(32);
+        
+        tokio::spawn(async move {
+            let mut state = SettingsStateStore::load();
+            
+            while let Some(cmd) = rx.recv().await {
+                match cmd {
+                    SettingsCommand::GetColorScheme(reply) => {
+                        let _ = reply.send(state.color_scheme.clone());
+                    }
+                    SettingsCommand::SetColorScheme(val, reply) => {
+                        if !check_polkit_auth().await {
+                            let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
+                            continue;
+                        }
+                        state.color_scheme = val.clone();
+                        let res = SettingsStateStore::save_async(&state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
+                        if res.is_ok() {
+                            let _ = tokio::process::Command::new("dconf")
+                                .args(["write", "/org/gnome/desktop/interface/color-scheme", &format!("'{}'", val)])
+                                .output()
+                                .await;
+                        }
+                        let _ = reply.send(res);
+                    }
+                    SettingsCommand::GetAccentColor(reply) => {
+                        let _ = reply.send(state.accent_color.clone());
+                    }
+                    SettingsCommand::SetAccentColor(val, reply) => {
+                        if !check_polkit_auth().await {
+                            let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
+                            continue;
+                        }
+                        state.accent_color = val.clone();
+                        let res = SettingsStateStore::save_async(&state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
+                        if res.is_ok() {
+                            let _ = tokio::process::Command::new("matugen")
+                                .args(["color", "hex", &val])
+                                .output()
+                                .await;
+                            let _ = tokio::process::Command::new("niri")
+                                .args(["msg", "action", "do-screen-transition"])
+                                .output()
+                                .await;
+                        }
+                        let _ = reply.send(res);
+                    }
+                    SettingsCommand::GetWallpaper(reply) => {
+                        let _ = reply.send(state.wallpaper.clone());
+                    }
+                    SettingsCommand::SetWallpaper(val, reply) => {
+                        if !check_polkit_auth().await {
+                            let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
+                            continue;
+                        }
+                        state.wallpaper = val.clone();
+                        let res = SettingsStateStore::save_async(&state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
+                        if res.is_ok() {
+                            let _ = tokio::process::Command::new("swww")
+                                .args(["img", &val, "--transition-type", "grow", "--transition-pos", "0.5,0.5"])
+                                .output()
+                                .await;
+                        }
+                        let _ = reply.send(res);
+                    }
+                    SettingsCommand::GetTrueToneEnabled(reply) => {
+                        let _ = reply.send(state.true_tone_enabled);
+                    }
+                    SettingsCommand::SetTrueToneEnabled(val, reply) => {
+                        if !check_polkit_auth().await {
+                            let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
+                            continue;
+                        }
+                        state.true_tone_enabled = val;
+                        let res = SettingsStateStore::save_async(&state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
+                        if res.is_ok() {
+                            apply_true_tone(state.true_tone_enabled, state.true_tone_temperature).await;
+                        }
+                        let _ = reply.send(res);
+                    }
+                    SettingsCommand::GetTrueToneTemperature(reply) => {
+                        let _ = reply.send(state.true_tone_temperature);
+                    }
+                    SettingsCommand::SetTrueToneTemperature(val, reply) => {
+                        if !check_polkit_auth().await {
+                            let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
+                            continue;
+                        }
+                        state.true_tone_temperature = val;
+                        let res = SettingsStateStore::save_async(&state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
+                        if res.is_ok() {
+                            apply_true_tone(state.true_tone_enabled, state.true_tone_temperature).await;
+                        }
+                        let _ = reply.send(res);
+                    }
+                    SettingsCommand::GetVoiceoverEnabled(reply) => {
+                        let _ = reply.send(state.voiceover_enabled);
+                    }
+                    SettingsCommand::SetVoiceoverEnabled(val, reply) => {
+                        if !check_polkit_auth().await {
+                            let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
+                            continue;
+                        }
+                        state.voiceover_enabled = val;
+                        let res = SettingsStateStore::save_async(&state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
+                        if res.is_ok() && val {
+                            let _ = tokio::process::Command::new("spd-say")
+                                .arg("Voice Over attivato. Accessibilità sistema pronta.")
+                                .spawn();
+                        }
+                        let _ = reply.send(res);
+                    }
+                }
+            }
+        });
+
+        Self { tx }
     }
 }
 
@@ -113,136 +244,86 @@ impl SettingsService {
 impl SettingsService {
     #[zbus(property, name = "ColorScheme")]
     async fn color_scheme(&self) -> String {
-        self.store.state.lock().await.color_scheme.clone()
+        let (reply, rx) = oneshot::channel();
+        let _ = self.tx.send(SettingsCommand::GetColorScheme(reply)).await;
+        rx.await.unwrap_or_default()
     }
 
     #[zbus(property, name = "ColorScheme")]
     async fn set_color_scheme(&self, val: String) -> fdo::Result<()> {
-        if !check_polkit_auth().await {
-            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
-        }
-        {
-            let mut st = self.store.state.lock().await;
-            st.color_scheme = val.clone();
-            SettingsStateStore::save_async(&st).await.map_err(|e| fdo::Error::Failed(format!("Failed to save state: {}", e)))?;
-        }
-        let _ = tokio::process::Command::new("dconf")
-            .args(["write", "/org/gnome/desktop/interface/color-scheme", &format!("'{}'", val)])
-            .output()
-            .await;
-        Ok(())
+        let (reply, rx) = oneshot::channel();
+        let _ = self.tx.send(SettingsCommand::SetColorScheme(val, reply)).await;
+        rx.await.unwrap_or(Err(fdo::Error::Failed("Actor dead".into())))
     }
 
     #[zbus(property, name = "AccentColor")]
     async fn accent_color(&self) -> String {
-        self.store.state.lock().await.accent_color.clone()
+        let (reply, rx) = oneshot::channel();
+        let _ = self.tx.send(SettingsCommand::GetAccentColor(reply)).await;
+        rx.await.unwrap_or_default()
     }
 
     #[zbus(property, name = "AccentColor")]
     async fn set_accent_color(&self, val: String) -> fdo::Result<()> {
-        if !check_polkit_auth().await {
-            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
-        }
-        {
-            let mut st = self.store.state.lock().await;
-            st.accent_color = val.clone();
-            SettingsStateStore::save_async(&st).await.map_err(|e| fdo::Error::Failed(format!("Failed to save state: {}", e)))?;
-        }
-        let _ = tokio::process::Command::new("matugen")
-            .args(["color", "hex", &val])
-            .output()
-            .await;
-            
-        let _ = tokio::process::Command::new("niri")
-            .args(["msg", "action", "do-screen-transition"])
-            .output()
-            .await;
-            
-        Ok(())
+        let (reply, rx) = oneshot::channel();
+        let _ = self.tx.send(SettingsCommand::SetAccentColor(val, reply)).await;
+        rx.await.unwrap_or(Err(fdo::Error::Failed("Actor dead".into())))
     }
 
     #[zbus(property, name = "Wallpaper")]
     async fn wallpaper(&self) -> String {
-        self.store.state.lock().await.wallpaper.clone()
+        let (reply, rx) = oneshot::channel();
+        let _ = self.tx.send(SettingsCommand::GetWallpaper(reply)).await;
+        rx.await.unwrap_or_default()
     }
 
     #[zbus(property, name = "Wallpaper")]
     async fn set_wallpaper(&self, val: String) -> fdo::Result<()> {
-        if !check_polkit_auth().await {
-            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
-        }
-        {
-            let mut st = self.store.state.lock().await;
-            st.wallpaper = val.clone();
-            SettingsStateStore::save_async(&st).await.map_err(|e| fdo::Error::Failed(format!("Failed to save state: {}", e)))?;
-        }
-        let _ = tokio::process::Command::new("swww")
-            .args(["img", &val, "--transition-type", "grow", "--transition-pos", "0.5,0.5"])
-            .output()
-            .await;
-        Ok(())
+        let (reply, rx) = oneshot::channel();
+        let _ = self.tx.send(SettingsCommand::SetWallpaper(val, reply)).await;
+        rx.await.unwrap_or(Err(fdo::Error::Failed("Actor dead".into())))
     }
 
     #[zbus(property, name = "TrueToneEnabled")]
     async fn true_tone_enabled(&self) -> bool {
-        self.store.state.lock().await.true_tone_enabled
+        let (reply, rx) = oneshot::channel();
+        let _ = self.tx.send(SettingsCommand::GetTrueToneEnabled(reply)).await;
+        rx.await.unwrap_or_default()
     }
 
     #[zbus(property, name = "TrueToneEnabled")]
     async fn set_true_tone_enabled(&self, val: bool) -> fdo::Result<()> {
-        if !check_polkit_auth().await {
-            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
-        }
-        let temp = {
-            let mut st = self.store.state.lock().await;
-            st.true_tone_enabled = val;
-            SettingsStateStore::save_async(&st).await.map_err(|e| fdo::Error::Failed(format!("Failed to save state: {}", e)))?;
-            st.true_tone_temperature
-        };
-        apply_true_tone(val, temp).await;
-        Ok(())
+        let (reply, rx) = oneshot::channel();
+        let _ = self.tx.send(SettingsCommand::SetTrueToneEnabled(val, reply)).await;
+        rx.await.unwrap_or(Err(fdo::Error::Failed("Actor dead".into())))
     }
 
     #[zbus(property, name = "TrueToneTemperature")]
     async fn true_tone_temperature(&self) -> u32 {
-        self.store.state.lock().await.true_tone_temperature
+        let (reply, rx) = oneshot::channel();
+        let _ = self.tx.send(SettingsCommand::GetTrueToneTemperature(reply)).await;
+        rx.await.unwrap_or_default()
     }
 
     #[zbus(property, name = "TrueToneTemperature")]
     async fn set_true_tone_temperature(&self, val: u32) -> fdo::Result<()> {
-        if !check_polkit_auth().await {
-            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
-        }
-        let enabled = {
-            let mut st = self.store.state.lock().await;
-            st.true_tone_temperature = val;
-            SettingsStateStore::save_async(&st).await.map_err(|e| fdo::Error::Failed(format!("Failed to save state: {}", e)))?;
-            st.true_tone_enabled
-        };
-        apply_true_tone(enabled, val).await;
-        Ok(())
+        let (reply, rx) = oneshot::channel();
+        let _ = self.tx.send(SettingsCommand::SetTrueToneTemperature(val, reply)).await;
+        rx.await.unwrap_or(Err(fdo::Error::Failed("Actor dead".into())))
     }
 
     #[zbus(property, name = "VoiceOverEnabled")]
     async fn voiceover_enabled(&self) -> bool {
-        self.store.state.lock().await.voiceover_enabled
+        let (reply, rx) = oneshot::channel();
+        let _ = self.tx.send(SettingsCommand::GetVoiceoverEnabled(reply)).await;
+        rx.await.unwrap_or_default()
     }
 
     #[zbus(property, name = "VoiceOverEnabled")]
     async fn set_voiceover_enabled(&self, val: bool) -> fdo::Result<()> {
-        if !check_polkit_auth().await {
-            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
-        }
-        let mut st = self.store.state.lock().await;
-        st.voiceover_enabled = val;
-        SettingsStateStore::save_async(&st).await.map_err(|e| fdo::Error::Failed(format!("Failed to save state: {}", e)))?;
-        
-        if val {
-            let _ = tokio::process::Command::new("spd-say")
-                .arg("Voice Over attivato. Accessibilità sistema pronta.")
-                .spawn();
-        }
-        Ok(())
+        let (reply, rx) = oneshot::channel();
+        let _ = self.tx.send(SettingsCommand::SetVoiceoverEnabled(val, reply)).await;
+        rx.await.unwrap_or(Err(fdo::Error::Failed("Actor dead".into())))
     }
 }
 

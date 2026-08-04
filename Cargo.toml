@@ -1,7 +1,5 @@
 [workspace]
 members = [
-    "forge/specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0",
-    "forge/specs/ermete-auth/ermete-auth-1.0.0",
     "forge/specs/ermete-backup/ermete-backup-1.0.0",
     "forge/specs/ermete-cloud-rs/ermete-cloud-rs-1.0.0",
     "forge/specs/ermete-daemon-rs/ermete-daemon-rs-0.2.1",
@@ -15,8 +13,6 @@ members = [
     "forge/specs/ermete-settings-rs/ermete-settings-rs-1.0.0",
     "forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0",
     "forge/specs/ermete-store-rs/ermete-store-rs-1.0.0",
-    "forge/specs/ermete-telemetry-rs/ermete-telemetry-rs-1.0.0",
-    "forge/specs/ermete-updater-rs/ermete-updater-rs-1.0.0",
     "forge/specs/ermete-xdg-desktop-portal-ermete/xdg-desktop-portal-ermete-1.0.0",
     "forge/specs/ermete-style",
     "forge/specs/ermete-niri-ipc"

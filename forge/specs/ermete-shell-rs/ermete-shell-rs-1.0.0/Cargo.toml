@@ -26,7 +26,7 @@ landlock = "0.4"
 
 # Decoupled domain crates
 ermete-dock = { path = "../../ermete-dock/ermete-dock-1.0.0" }
-ermete-auth = { path = "../../ermete-auth/ermete-auth-1.0.0" }
+
 ermete-style = { path = "../../ermete-style" }
 ermete-niri-ipc = { version = "0.1.0", path = "../../ermete-niri-ipc" }
 

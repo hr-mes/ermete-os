@@ -19,5 +19,5 @@ sha2 = "0.10"
 tracing = "0.1"
 
 # Decoupled domain crates
-ermete-auth = { path = "../../ermete-auth/ermete-auth-1.0.0" }
+
 

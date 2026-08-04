@@ -2,6 +2,8 @@ pub use ermete_dock::dock_config;
 pub use ermete_dock::dock_data;
 pub use ermete_dock::dock_watcher;
 pub mod sandbox;
+pub mod ebpf_hooks;
+pub mod auth;
 pub mod network;
 pub mod mpris;
 pub mod niri_state;

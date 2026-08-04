@@ -1,6 +1,6 @@
 use crate::dock_config::{get_dock_config_path, load_dock_config, DockConfig};
 use crate::dock_data::{NiriWindowInfo, NiriWorkspaceInfo};
-use crate::niri_client;
+use ermete_niri_ipc as niri_client;
 use notify::{RecursiveMode, Watcher};
 
 pub fn fetch_current_niri_windows() -> Vec<NiriWindowInfo> {
@@ -67,7 +67,7 @@ pub fn spawn_dock_watchers(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ermete_auth::HomeGuard;
+
 
     #[test]
     fn test_fetch_current_niri_windows_does_not_panic() {
@@ -80,7 +80,7 @@ mod tests {
         let _lock = crate::dock_config::TEST_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
         let tmp_dir = std::env::temp_dir().join("ermete_test_dock_watcher");
         let _ = std::fs::remove_dir_all(&tmp_dir);
-        let _home_guard = HomeGuard::set(&tmp_dir);
+
 
         let (win_tx, win_rx) = glib::MainContext::channel(glib::Priority::DEFAULT);
         let (cfg_tx, cfg_rx) = glib::MainContext::channel(glib::Priority::DEFAULT);
