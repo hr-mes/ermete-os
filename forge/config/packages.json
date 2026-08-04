@@ -99,9 +99,11 @@
     "mokutil",
     "nftables",
     "openssl",
+    "qemu-kvm",
     "sbsigntools",
     "squashfuse",
     "upower",
+    "virt-manager",
     "systemd",
     "wayland"
   ],
