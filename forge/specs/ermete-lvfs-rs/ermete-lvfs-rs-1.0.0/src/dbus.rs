@@ -1,5 +1,5 @@
 use zbus::interface;
-use tracing::info;
+use tracing::{info, error};
 use crate::firmware::FirmwareEngine;
 
 pub struct LvfsIface;
@@ -12,9 +12,14 @@ impl LvfsIface {
         
         let engine = FirmwareEngine::new();
         
-        match engine.check_and_update().await {
-            Ok(_) => Ok("Firmware update staged for next reboot.".into()),
-            Err(e) => Ok(format!("Error: {}", e)),
-        }
+        // Spawn the update process in the background so we don't block the D-Bus loop
+        tokio::spawn(async move {
+            match engine.check_and_update().await {
+                Ok(_) => info!("Firmware update staged successfully in the background."),
+                Err(e) => error!("Failed to stage firmware update: {}", e),
+            }
+        });
+        
+        Ok("Firmware update process started in the background.".into())
     }
 }

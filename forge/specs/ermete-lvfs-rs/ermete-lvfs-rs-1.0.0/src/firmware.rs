@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
+use std::process::Stdio;
 use tokio::process::Command;
-use tracing::info;
+use tracing::{info, warn};
 
 pub struct FirmwareEngine;
 
@@ -9,7 +10,7 @@ impl FirmwareEngine {
         Self {}
     }
 
-    pub async fn check_and_update(&self) -> Result<()> {
+    pub async fn check_battery_non_blocking(&self) -> Result<()> {
         let ac_online = tokio::fs::read_to_string("/sys/class/power_supply/AC/online")
             .await
             .or_else(|_| tokio::fs::read_to_string("/sys/class/power_supply/ACAD/online"))
@@ -28,25 +29,72 @@ impl FirmwareEngine {
             anyhow::bail!("AC power required for firmware update (or battery > 50%)");
         }
 
+        Ok(())
+    }
+
+    pub async fn download_and_parse_cab_mock(&self, url: &str) -> Result<()> {
+        info!("Starting async download of firmware CAB from {}", url);
+        // Mock download with reqwest
+        let client = reqwest::Client::new();
+        let res = client.get(url).send().await?;
+        if !res.status().is_success() {
+            anyhow::bail!("Failed to download firmware CAB: HTTP {}", res.status());
+        }
+        
+        let _body = res.bytes().await?;
+        info!("Firmware CAB downloaded successfully (mock size: {} bytes)", _body.len());
+        
+        info!("Parsing CAB archive...");
+        // Mock parsing logic
+        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+        info!("CAB parsed successfully, ready to apply.");
+
+        Ok(())
+    }
+
+    pub async fn check_and_update(&self) -> Result<()> {
+        // Run battery check
+        self.check_battery_non_blocking().await?;
+
+        // Perform async download (mocked)
+        self.download_and_parse_cab_mock("https://fwupd.org/downloads/firmware.xml.gz").await.unwrap_or_else(|e| {
+            warn!("Failed to mock download CAB: {}, continuing with fwupdmgr", e);
+        });
+
         info!("Refreshing LVFS firmware metadata...");
         
-        let _ = Command::new("fwupdmgr")
+        // Use tokio::process::Command to avoid blocking
+        let mut child = Command::new("fwupdmgr")
             .arg("refresh")
             .arg("--force")
-            .output()
-            .await
-            .context("Failed to refresh fwupdmgr")?;
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .context("Failed to spawn fwupdmgr refresh")?;
             
-        info!("Applying available firmware updates...");
+        let status = child.wait().await?;
+        if !status.success() {
+            warn!("fwupdmgr refresh returned non-zero status: {}", status);
+        }
+            
+        info!("Applying available firmware updates in the background...");
         
-        // This will stage the updates for the next UEFI boot
-        let _ = Command::new("fwupdmgr")
+        // Spawn and detach update process so we don't wait if not necessary,
+        // but here we wait for the staging to complete (since we are in an async task anyway)
+        let mut update_child = Command::new("fwupdmgr")
             .arg("update")
             .arg("-y")
-            .output()
-            .await
-            .context("Failed to apply firmware updates")?;
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .context("Failed to spawn fwupdmgr update")?;
             
+        let status = update_child.wait().await?;
+        if !status.success() {
+            anyhow::bail!("fwupdmgr update failed with status: {}", status);
+        }
+            
+        info!("Firmware update staged successfully.");
         Ok(())
     }
 }

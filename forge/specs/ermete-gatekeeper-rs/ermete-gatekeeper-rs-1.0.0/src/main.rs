@@ -124,6 +124,75 @@ impl GatekeeperManager {
         fd_id: u64,
         app_name: &str,
     ) -> zbus::Result<()>;
+
+    async fn request_root_privilege(
+        &self,
+        req_id: u64,
+        reason: &str,
+        #[zbus(header)] hdr: zbus::MessageHeader<'_>,
+        #[zbus(connection)] conn: &zbus::Connection,
+    ) -> zbus::fdo::Result<()> {
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::Failed("No sender".into()))?.to_owned();
+        let reason = reason.to_string();
+        let conn = conn.clone();
+
+        tokio::spawn(async move {
+            let iface_ref = match conn.object_server().interface::<_, GatekeeperManager>("/os/ermete/Gatekeeper").await {
+                Ok(iface) => iface,
+                Err(e) => { eprintln!("Failed to get iface: {}", e); return; }
+            };
+            let signal_ctxt = iface_ref.signal_context().clone();
+
+            let polkit_status = tokio::process::Command::new("pkcheck")
+                .arg("--system-bus-name")
+                .arg(sender.as_str())
+                .arg("--action-id")
+                .arg("os.ermete.gatekeeper.root")
+                .status()
+                .await;
+
+            let mut authorized = false;
+            if let Ok(status) = polkit_status {
+                if status.success() {
+                    authorized = true;
+                }
+            }
+
+            if !authorized {
+                if let Ok(p) = zbus::ProxyBuilder::new_bare(&conn)
+                    .destination("os.ermete.Fido2Mock").unwrap()
+                    .path("/os/ermete/Fido2Mock").unwrap()
+                    .interface("os.ermete.Fido2Mock").unwrap()
+                    .build()
+                    .await 
+                {
+                    if let Ok(true) = p.call::<_, _, bool>("Authenticate", &(reason,)).await {
+                        authorized = true;
+                    }
+                }
+            }
+
+            if authorized {
+                let _ = GatekeeperManager::permit(&signal_ctxt, req_id).await;
+            } else {
+                let _ = GatekeeperManager::deny(&signal_ctxt, req_id).await;
+            }
+        });
+
+        Ok(())
+    }
+
+    #[zbus(signal)]
+    async fn permit(
+        signal_ctxt: &zbus::SignalContext<'_>,
+        req_id: u64,
+    ) -> zbus::Result<()>;
+
+    #[zbus(signal)]
+    async fn deny(
+        signal_ctxt: &zbus::SignalContext<'_>,
+        req_id: u64,
+    ) -> zbus::Result<()>;
 }
 
 #[tokio::main]

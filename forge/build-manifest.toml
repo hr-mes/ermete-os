@@ -1,0 +1,18 @@
+# Ermete Forge - Nix-Paradigm Deterministic Build Manifest
+
+[toolchain]
+channel = "stable"
+components = ["rustc", "cargo", "clippy", "rustfmt"]
+profile = "minimal"
+# Enforce a specific rust compiler version for bit-for-bit reproducibility
+version = "1.77.0"
+
+[build]
+# Disable incremental compilation globally to prevent diverging build artifacts
+incremental = false
+
+[env]
+# Guarantee consistent reproducible builds (reproducible-builds.org)
+SOURCE_DATE_EPOCH = "1704067200" # 2024-01-01T00:00:00Z
+RUSTFLAGS = "-C target-feature=+crt-static -D warnings"
+CARGO_NET_OFFLINE = "true" # Enforce pre-vendored offline builds

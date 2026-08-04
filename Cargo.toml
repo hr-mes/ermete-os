@@ -7,14 +7,19 @@ members = [
     "forge/specs/ermete-doctor/ermete-doctor-0.1.0",
     "forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0",
     "forge/specs/ermete-lvfs-rs/ermete-lvfs-rs-1.0.0",
-    "forge/specs/ermete-mdm-rs/ermete-mdm-rs-1.0.0", 
+    "forge/specs/ermete-mdm-rs/ermete-mdm-rs-1.0.0",
+    "forge/specs/ermete-mesh-sync/ermete-mesh-sync-1.0.0",
     "forge/specs/ermete-recovery/ermete-recovery-1.0.0",
     "forge/specs/ermete-settings-rs/ermete-settings-rs-1.0.0",
     "forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0",
     "forge/specs/ermete-store-rs/ermete-store-rs-1.0.0",
+    "forge/specs/ermete-sysmon-ebpf/ermete-sysmon-ebpf-1.0.0",
     "forge/specs/ermete-xdg-desktop-portal-ermete/xdg-desktop-portal-ermete-1.0.0",
+    "forge/specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0",
+    "forge/specs/ermete-attestation/ermete-attestation-1.0.0",
     "forge/specs/ermete-style",
-    "forge/specs/ermete-niri-ipc"
+    "forge/specs/ermete-niri-ipc",
+    "forge/specs/ermete-live-patcher/ermete-live-patcher-1.0.0"
 ]
 resolver = "2"
 
