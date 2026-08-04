@@ -76,7 +76,7 @@ impl SimpleComponent for AppModel {
     fn init(
         init: Self::Init,
         root: Self::Root,
-        _sender: relm4::ComponentSender<Self>,
+        sender: relm4::ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let model = AppModel {
             initial_page: init.clone(),
