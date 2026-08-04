@@ -11,19 +11,23 @@ impl FirmwareEngine {
     }
 
     pub async fn check_battery_non_blocking(&self) -> Result<()> {
-        let ac_online = tokio::fs::read_to_string("/sys/class/power_supply/AC/online")
-            .await
-            .or_else(|_| tokio::fs::read_to_string("/sys/class/power_supply/ACAD/online"))
-            .or_else(|_| tokio::fs::read_to_string("/sys/class/power_supply/AC0/online"))
-            .map(|s| s.trim() == "1")
-            .unwrap_or(true);
+        let mut ac_online = true;
+        for path in ["/sys/class/power_supply/AC/online", "/sys/class/power_supply/ACAD/online", "/sys/class/power_supply/AC0/online"] {
+            if let Ok(s) = tokio::fs::read_to_string(path).await {
+                ac_online = s.trim() == "1";
+                break;
+            }
+        }
 
-        let bat_capacity: u8 = tokio::fs::read_to_string("/sys/class/power_supply/BAT0/capacity")
-            .await
-            .or_else(|_| tokio::fs::read_to_string("/sys/class/power_supply/BAT1/capacity"))
-            .ok()
-            .and_then(|s| s.trim().parse().ok())
-            .unwrap_or(100);
+        let mut bat_capacity: u8 = 100;
+        for path in ["/sys/class/power_supply/BAT0/capacity", "/sys/class/power_supply/BAT1/capacity"] {
+            if let Ok(s) = tokio::fs::read_to_string(path).await {
+                if let Ok(val) = s.trim().parse() {
+                    bat_capacity = val;
+                    break;
+                }
+            }
+        }
 
         if !ac_online && bat_capacity <= 50 {
             anyhow::bail!("AC power required for firmware update (or battery > 50%)");

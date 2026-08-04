@@ -159,7 +159,7 @@ impl GatekeeperManager {
             }
 
             if !authorized {
-                if let Ok(p) = zbus::ProxyBuilder::new_bare(&conn)
+                if let Ok(p) = zbus::ProxyBuilder::<'_, zbus::Proxy>::new(&conn)
                     .destination("os.ermete.Fido2Mock").unwrap()
                     .path("/os/ermete/Fido2Mock").unwrap()
                     .interface("os.ermete.Fido2Mock").unwrap()

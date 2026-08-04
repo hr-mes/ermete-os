@@ -248,8 +248,10 @@ pub fn build_ui(app: &Application, is_lockscreen: bool) {
     window.set_anchor(Edge::Right, true);
 
     if let Some(display) = gtk4::gdk::Display::default() {
-        
-
+        let provider = gtk4::CssProvider::new();
+        provider.load_from_data(GREETER_CSS);
+        gtk4::style_context_add_provider_for_display(&display, &provider, gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION);
+    }
     let root_vbox = Box::builder()
         .orientation(Orientation::Vertical)
         .css_classes(["greeter-backdrop"])

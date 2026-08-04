@@ -1,5 +1,6 @@
 use zbus::{interface, ConnectionBuilder, SignalContext};
-use zbus::Result;
+use zbus::fdo::Result as FdoResult;
+use zbus::Result as ZbusResult;
 use std::process::Stdio;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
@@ -10,7 +11,7 @@ struct BackupService;
 impl BackupService {
     /// Esegue il backup chiamando borg create in background, emettendo segnali di progresso
     #[zbus(name = "PerformBackup")]
-    async fn perform_backup(&self, #[zbus(signal_context)] ctxt: SignalContext<'_>) -> Result<()> {
+    async fn perform_backup(&self, #[zbus(signal_context)] ctxt: SignalContext<'_>) -> FdoResult<()> {
         let ctxt = ctxt.into_owned();
 
         // Spawn asincrono per l'esecuzione di borg
@@ -67,7 +68,7 @@ impl BackupService {
 
     /// Segnale DBus per il progresso del backup
     #[zbus(signal)]
-    async fn backup_progress(ctxt: &SignalContext<'_>, log_line: String) -> Result<()>;
+    async fn backup_progress(ctxt: &SignalContext<'_>, log_line: String) -> ZbusResult<()>;
 }
 
 #[tokio::main]
