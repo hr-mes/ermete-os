@@ -36,6 +36,7 @@ retaining full upstream compatibility.
 
 %build
 %set_build_flags
+cargo generate-lockfile
 cargo build --release --locked
 
 %install

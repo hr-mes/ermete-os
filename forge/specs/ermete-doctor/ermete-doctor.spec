@@ -19,6 +19,7 @@ Diagnostic CLI tool for verifying Ermete OS system health and hardware configura
 
 %build
 %set_build_flags
+cargo generate-lockfile
 cargo build --release --locked
 
 %install

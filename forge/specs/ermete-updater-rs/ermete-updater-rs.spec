@@ -22,6 +22,7 @@ Ermete OS Over-The-Air Update Daemon for Dual-Layer OTA updates (bootc and rpm-o
 
 %build
 %set_build_flags
+cargo generate-lockfile
 cargo build --release --locked
 
 %install

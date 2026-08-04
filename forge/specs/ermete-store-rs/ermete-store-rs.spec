@@ -21,6 +21,7 @@ Ermete OS Universal App Store Daemon for Flatpak and OCI container management.
 
 %build
 %set_build_flags
+cargo generate-lockfile
 cargo build --release --locked
 
 %install

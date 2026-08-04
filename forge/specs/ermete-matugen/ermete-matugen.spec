@@ -27,6 +27,7 @@ export CARGO_PROFILE_RELEASE_LTO="thin"
 export CFLAGS="$(echo $CFLAGS | sed 's/-flto=auto//g')"
 export CXXFLAGS="$(echo $CXXFLAGS | sed 's/-flto=auto//g')"
 export LDFLAGS="$(echo $LDFLAGS | sed 's/-flto=auto//g')"
+cargo generate-lockfile
 cargo build --release
 
 %install
