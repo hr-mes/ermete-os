@@ -768,6 +768,7 @@ name = "ermete-cloud-rs"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "mimalloc",
  "serde",
  "serde_json",
  "tokio",
@@ -785,6 +786,7 @@ dependencies = [
  "futures-util",
  "hkdf",
  "libc",
+ "mimalloc",
  "rand 0.8.7",
  "serde",
  "serde_json",
@@ -792,6 +794,7 @@ dependencies = [
  "tokio",
  "tracing",
  "zbus 5.18.0",
+ "zbus_polkit",
 ]
 
 [[package]]
@@ -821,6 +824,7 @@ version = "1.0.0"
 dependencies = [
  "gtk4",
  "libc",
+ "mimalloc",
  "tokio",
  "xattr",
  "zbus 4.4.0",
@@ -831,6 +835,7 @@ name = "ermete-lvfs-rs"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "mimalloc",
  "serde",
  "serde_json",
  "tokio",
@@ -844,6 +849,7 @@ name = "ermete-mdm-rs"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "mimalloc",
  "reqwest",
  "serde",
  "serde_json",
@@ -894,6 +900,7 @@ dependencies = [
  "glib 0.18.5",
  "gtk4",
  "libc",
+ "mimalloc",
  "relm4",
  "serde",
  "serde_json",
@@ -919,6 +926,7 @@ dependencies = [
  "landlock",
  "libc",
  "meval",
+ "mimalloc",
  "notify",
  "relm4",
  "serde",
@@ -934,6 +942,7 @@ dependencies = [
  "anyhow",
  "ermete-style",
  "gtk4",
+ "mimalloc",
  "relm4",
  "serde",
  "serde_json",
@@ -954,6 +963,7 @@ name = "ermete-telemetry-rs"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "mimalloc",
  "reqwest",
  "serde",
  "serde_json",
@@ -968,6 +978,7 @@ name = "ermete-updater-rs"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "mimalloc",
  "serde",
  "serde_json",
  "tokio",
@@ -2162,6 +2173,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981"
 
 [[package]]
+name = "libmimalloc-sys"
+version = "0.1.49"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6a45a52f43e1c16f667ccfe4dd8c85b7f7c204fd5e3bf46c5b0db9a5c3c0b8e9"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "libredox"
 version = "0.1.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2236,6 +2256,15 @@ checksum = "f79496a5651c8d57cd033c5add8ca7ee4e3d5f7587a4777484640d9cb60392d9"
 dependencies = [
  "fnv",
  "nom",
+]
+
+[[package]]
+name = "mimalloc"
+version = "0.1.52"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2d4139bb28d14ad1facf21d5eb8825051b326e172d216b39f6d31df53cc97862"
+dependencies = [
+ "libmimalloc-sys",
 ]
 
 [[package]]
@@ -4371,6 +4400,19 @@ dependencies = [
  "serde",
  "winnow 1.0.4",
  "zvariant 5.13.1",
+]
+
+[[package]]
+name = "zbus_polkit"
+version = "5.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ad23d5c4d198c7e2641b33e6e0d1f866f117408ba66fe80bbe52e289eeb77c52"
+dependencies = [
+ "enumflags2",
+ "serde",
+ "serde_repr",
+ "static_assertions",
+ "zbus 5.18.0",
 ]
 
 [[package]]

@@ -15,9 +15,3 @@ notify = "6.1.1"
 ermete-auth = { path = "../../ermete-auth/ermete-auth-1.0.0" }
 ermete-style = { path = "../../ermete-style" }
 
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1
-panic = "abort"
-strip = true

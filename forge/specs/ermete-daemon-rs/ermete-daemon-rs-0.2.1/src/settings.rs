@@ -119,7 +119,7 @@ impl SettingsService {
     #[zbus(property, name = "ColorScheme")]
     async fn set_color_scheme(&self, val: String) -> fdo::Result<()> {
         if !check_polkit_auth().await {
-            return Err(fdo::Error::AccessDenied("Polkit authorization failed".into()));
+            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
         }
         {
             let mut st = self.store.state.lock().await;
@@ -141,7 +141,7 @@ impl SettingsService {
     #[zbus(property, name = "AccentColor")]
     async fn set_accent_color(&self, val: String) -> fdo::Result<()> {
         if !check_polkit_auth().await {
-            return Err(fdo::Error::AccessDenied("Polkit authorization failed".into()));
+            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
         }
         {
             let mut st = self.store.state.lock().await;
@@ -169,7 +169,7 @@ impl SettingsService {
     #[zbus(property, name = "Wallpaper")]
     async fn set_wallpaper(&self, val: String) -> fdo::Result<()> {
         if !check_polkit_auth().await {
-            return Err(fdo::Error::AccessDenied("Polkit authorization failed".into()));
+            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
         }
         {
             let mut st = self.store.state.lock().await;
@@ -191,7 +191,7 @@ impl SettingsService {
     #[zbus(property, name = "TrueToneEnabled")]
     async fn set_true_tone_enabled(&self, val: bool) -> fdo::Result<()> {
         if !check_polkit_auth().await {
-            return Err(fdo::Error::AccessDenied("Polkit authorization failed".into()));
+            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
         }
         let temp = {
             let mut st = self.store.state.lock().await;
@@ -211,7 +211,7 @@ impl SettingsService {
     #[zbus(property, name = "TrueToneTemperature")]
     async fn set_true_tone_temperature(&self, val: u32) -> fdo::Result<()> {
         if !check_polkit_auth().await {
-            return Err(fdo::Error::AccessDenied("Polkit authorization failed".into()));
+            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
         }
         let enabled = {
             let mut st = self.store.state.lock().await;
@@ -231,7 +231,7 @@ impl SettingsService {
     #[zbus(property, name = "VoiceOverEnabled")]
     async fn set_voiceover_enabled(&self, val: bool) -> fdo::Result<()> {
         if !check_polkit_auth().await {
-            return Err(fdo::Error::AccessDenied("Polkit authorization failed".into()));
+            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
         }
         let mut st = self.store.state.lock().await;
         st.voiceover_enabled = val;

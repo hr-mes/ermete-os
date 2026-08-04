@@ -19,9 +19,3 @@ ermete-style = { path = "../../ermete-style" }
 ermete-niri-ipc = { version = "0.1.0", path = "../../ermete-niri-ipc" }
 
 
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1
-panic = "abort"
-strip = true

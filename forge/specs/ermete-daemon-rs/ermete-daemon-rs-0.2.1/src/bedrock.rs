@@ -35,7 +35,7 @@ impl Bedrock {
     #[zbus(property, name = "Volume")]
     async fn set_audio_volume(&self, val: f64) -> fdo::Result<()> {
         if !check_polkit_auth().await {
-            return Err(fdo::Error::AccessDenied("Polkit authorization failed".into()));
+            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
         }
         let mut vol = self.volume.lock().await;
         *vol = val;
