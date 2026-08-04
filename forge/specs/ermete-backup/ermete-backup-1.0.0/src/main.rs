@@ -1,6 +1,5 @@
 use zbus::{interface, ConnectionBuilder, SignalContext};
 use zbus::fdo::Result as FdoResult;
-use zbus::Result as ZbusResult;
 use std::process::Stdio;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
@@ -66,7 +65,7 @@ impl BackupService {
 
     /// Segnale DBus per il progresso del backup
     #[zbus(signal)]
-    async fn backup_progress(ctxt: &SignalContext<'_>, log_line: String) -> ZbusResult<()>;
+    async fn backup_progress(ctxt: &SignalContext<'_>, log_line: String) -> zbus::Result<()>;
 }
 
 #[tokio::main]

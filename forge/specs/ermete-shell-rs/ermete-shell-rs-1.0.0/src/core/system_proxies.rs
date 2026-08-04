@@ -338,7 +338,7 @@ pub fn init_system_controller() {
             let bluetooth = Arc::new(BluetoothController::new(backend.clone(), event_bus.clone()));
             let display = Arc::new(DisplayController::new(backend.clone(), event_bus.clone()));
             let power = Arc::new(PowerController::new(backend.clone(), event_bus.clone()));
-            let mpris = Arc::new(MprisController::new(backend, event_bus));
+            let mpris = Arc::new(MprisController::new(backend, event_bus.clone()));
 
             let _ = mpris.refresh_mpris().await;
             let _ = network.refresh_network_status().await;
