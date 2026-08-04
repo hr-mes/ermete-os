@@ -82,11 +82,8 @@
     "brightnessctl",
     "btrfs-progs",
     "dbus-tools",
-    "dbus-x11",
     "distribution-gpg-keys",
     "drm_info",
-    "file-roller",
-    "firewalld",
     "fuse",
     "fwupd",
     "glibc-langpack-en",
@@ -102,12 +99,9 @@
     "mokutil",
     "nftables",
     "openssl",
-    "qemu-kvm",
     "sbsigntools",
     "squashfuse",
-    "sysstat",
     "upower",
-    "virt-manager",
     "systemd",
     "wayland"
   ],
@@ -132,11 +126,8 @@
     "usbguard",
     "bolt",
     "wayland-utils",
-    "xdg-desktop-portal-gnome",
-    "xdg-desktop-portal-gtk",
     "xdg-user-dirs",
-    "xdg-user-dirs-gtk",
-    "xorg-x11-server-Xwayland"
+    "xdg-user-dirs-gtk"
   ],
   "upstream_media": [
     "pipewire",
