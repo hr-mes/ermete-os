@@ -22,55 +22,78 @@ fn load_css() {
     let provider = CssProvider::new();
     provider.load_from_data("
         window {
-            background-color: #1a1a1a;
-            border: 4px solid #00ff00; /* YubiKey detection visual cue */
-            border-radius: 12px;
+            background-color: rgba(26, 26, 26, 0.4);
+            border: 4px solid rgba(0, 255, 0, 0.5); /* YubiKey detection visual cue */
+            border-radius: 16px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
         .flowchart-box {
-            background-color: #2a2a2a;
-            border-radius: 12px;
-            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -gtk-backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 24px;
             color: #ffffff;
             font-weight: bold;
             font-size: 14pt;
-            border: 1px solid #444444;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+        .flowchart-box:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(0, 255, 0, 0.5);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
         }
         .arrow {
-            color: #888888;
-            font-size: 28pt;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 32pt;
             font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
         }
         .allow {
-            background-color: #198754;
+            background-color: rgba(25, 135, 84, 0.6);
+            backdrop-filter: blur(15px);
+            -gtk-backdrop-filter: blur(15px);
             color: white;
             font-weight: bold;
-            border-radius: 8px;
+            border-radius: 12px;
             padding: 12px 30px;
             font-size: 14pt;
+            border: 1px solid rgba(25, 135, 84, 0.9);
+            box-shadow: 0 4px 15px rgba(25, 135, 84, 0.3);
         }
         .allow:hover {
-            background-color: #157347;
+            background-color: rgba(25, 135, 84, 0.9);
+            box-shadow: 0 6px 20px rgba(25, 135, 84, 0.5);
         }
         .deny {
-            background-color: #dc3545;
+            background-color: rgba(220, 53, 69, 0.6);
+            backdrop-filter: blur(15px);
+            -gtk-backdrop-filter: blur(15px);
             color: white;
             font-weight: bold;
-            border-radius: 8px;
+            border-radius: 12px;
             padding: 12px 30px;
             font-size: 14pt;
+            border: 1px solid rgba(220, 53, 69, 0.9);
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
         }
         .deny:hover {
-            background-color: #bb2d3b;
+            background-color: rgba(220, 53, 69, 0.9);
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.5);
         }
         .status {
             color: #00ff00;
             font-weight: bold;
-            font-size: 12pt;
+            font-size: 14pt;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.4);
         }
         .title {
             color: #ffffff;
             font-weight: bold;
-            font-size: 20pt;
+            font-size: 24pt;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
         }
     ");
     gtk::style_context_add_provider_for_display(

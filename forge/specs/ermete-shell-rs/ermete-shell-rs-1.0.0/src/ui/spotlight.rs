@@ -327,12 +327,12 @@ pub fn show_spotlight_modal(app: &Application) {
     ensure_index_loaded();
 
     // Inietta lo stile Premium Seelen UI (Glassmorphism e Typography)
-    
+    ermete_style::load_glass_theme();
 
     let pop = ApplicationWindow::builder()
         .application(app)
         .title("Spotlight")
-        .css_classes(["spotlight-window"])
+        .css_classes(["spotlight-window", "transparent"])
         .default_width(620)
         .default_height(420)
         .build();
@@ -346,7 +346,7 @@ pub fn show_spotlight_modal(app: &Application) {
     let card = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(0)
-        .css_classes(["spotlight-card"])
+        .css_classes(["spotlight-card", "popover"])
         .build();
 
     let entry = Entry::builder()

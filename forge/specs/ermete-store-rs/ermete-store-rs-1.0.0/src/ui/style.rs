@@ -3,15 +3,25 @@ use gtk4::prelude::*;
 /// CSS embedded per lo stile Glassmorphism elegante dello Store
 pub const STORE_GLASS_CSS: &str = r#"
 .window-glass {
-    background-color: rgba(18, 18, 26, 0.95);
+    background-color: rgba(18, 18, 26, 0.70);
+    backdrop-filter: blur(40px);
     color: #e2e8f0;
 }
 
 .store-sidebar {
-    background-color: rgba(26, 27, 38, 0.65);
-    border-radius: 16px;
+    background-color: rgba(26, 27, 38, 0.50);
+    border-radius: 24px;
+    backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.central-stack {
+    background-color: rgba(30, 41, 59, 0.3);
+    border-radius: 24px;
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.05);
 }
 
 .store-brand-title {
@@ -129,18 +139,20 @@ pub const STORE_GLASS_CSS: &str = r#"
 }
 
 .store-card {
-    background: rgba(30, 41, 59, 0.45);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    padding: 16px;
-    backdrop-filter: blur(12px);
-    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 18px;
+    backdrop-filter: blur(24px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
 }
 
 .store-card:hover {
-    background: rgba(51, 65, 85, 0.6);
-    border-color: rgba(96, 165, 250, 0.4);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(96, 165, 250, 0.5);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+    transform: translateY(-4px);
 }
 
 .app-card-title {

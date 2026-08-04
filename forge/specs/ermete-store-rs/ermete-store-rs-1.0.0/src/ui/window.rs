@@ -128,6 +128,9 @@ impl SimpleComponent for AppModel {
                     set_transition_duration: 220,
                     set_hexpand: true,
                     set_vexpand: true,
+                    set_margin_top: 16,
+                    set_margin_bottom: 16,
+                    set_margin_end: 16,
                     add_css_class: "central-stack",
                 }
             }

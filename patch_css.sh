@@ -1,1 +1,0 @@
-sed -i 's/pub static CSS_PROVIDER: std::cell::RefCell<Option<CssProvider>> = std::cell::RefCell::new(None);/pub static CSS_PROVIDER: std::cell::RefCell<Option<gtk4::CssProvider>> = std::cell::RefCell::new(None);/g' /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0/src/core/mod.rs

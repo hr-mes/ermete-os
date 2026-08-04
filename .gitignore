@@ -13,6 +13,7 @@ __pycache__/
 *$py.class
 
 # Tooling & Analysis Artifacts
+.graphify*.json
 .graphify_detect*.json
 graphify-out/
 **/graphify-out/
