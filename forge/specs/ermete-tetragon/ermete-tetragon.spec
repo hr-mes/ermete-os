@@ -28,11 +28,11 @@ mkdir -p %{buildroot}%{_sysconfdir}/tetragon/tetragon.tp.d
 mkdir -p %{buildroot}%{_unitdir}
 
 # Copy binaries
-install -m 0755 tetragon-v%{version}-amd64/tetragon %{buildroot}%{_bindir}/tetragon
-install -m 0755 tetragon-v%{version}-amd64/tetra %{buildroot}%{_bindir}/tetra
+install -m 0755 tetragon-v%{version}-amd64/usr/local/bin/tetragon %{buildroot}%{_bindir}/tetragon
+install -m 0755 tetragon-v%{version}-amd64/usr/local/bin/tetra %{buildroot}%{_bindir}/tetra
 
 # Copy bpf bytecode
-cp -r tetragon-v%{version}-amd64/bpf %{buildroot}%{_sharedstatedir}/tetragon/
+cp -r tetragon-v%{version}-amd64/usr/local/lib/tetragon/bpf %{buildroot}%{_sharedstatedir}/tetragon/
 
 # Copy services and configs from SOURCES
 install -m 0644 %{_sourcedir}/tetragon.service %{buildroot}%{_unitdir}/tetragon.service
