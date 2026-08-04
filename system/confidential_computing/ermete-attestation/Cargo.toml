@@ -12,3 +12,5 @@ log = "0.4"
 env_logger = "0.11"
 # sev = "1.2" # For AMD SEV-SNP
 # tss-esapi = "7.3.0" # For vTPM interactions
+
+[workspace]

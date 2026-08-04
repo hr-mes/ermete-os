@@ -172,7 +172,7 @@ pub fn show_control_center_popover(app: &Application) {
     let screenshot_tile = build_cc_compact_tile("cc-circle-indigo", "📷", "Screenshot");
     screenshot_tile.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
         pop.close();
-        crate::core::niri_client::screenshot();
+        ermete_niri_ipc::sync_client::screenshot();
     }));
 
     let lock_tile = build_cc_compact_tile("cc-circle-blue", "🔒", "Blocca");
@@ -386,7 +386,7 @@ pub fn show_control_center_popover(app: &Application) {
 
     standby_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
         pop.close();
-        crate::core::niri_client::power_off_monitors();
+        ermete_niri_ipc::sync_client::power_off_monitors();
         glib::MainContext::default().spawn_local(async move {
             let ctrl = crate::core::system_proxies::get_power_controller();
             let _ = ctrl.suspend().await;

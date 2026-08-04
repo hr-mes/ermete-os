@@ -1,0 +1,23 @@
+[package]
+name = "ermete-dock"
+version = "1.0.0"
+edition = "2021"
+authors = ["Ermete Forge <forge@ermete.os>"]
+description = "Visual Dock and taskbar application logic for Ermete OS"
+
+[dependencies]
+gtk4 = "0.7"
+gtk4-layer-shell = "0.2"
+glib = "0.18"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.120"
+notify = "6.1.1"
+ermete-auth = { path = "../../ermete-auth/ermete-auth-1.0.0" }
+ermete-style = { path = "../../ermete-style" }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
