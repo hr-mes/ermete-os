@@ -19,6 +19,7 @@ async fn main() -> Result<()> {
         .serve_at("/org/freedesktop/portal/desktop", portal::CameraPortal)?
         .serve_at("/org/freedesktop/portal/desktop", portal::LocationPortal)?
         .serve_at("/org/freedesktop/portal/desktop", portal::MicrophonePortal)?
+        .serve_at("/org/freedesktop/portal/desktop", portal::FileChooserPortal)?
         .build()
         .await?;
 

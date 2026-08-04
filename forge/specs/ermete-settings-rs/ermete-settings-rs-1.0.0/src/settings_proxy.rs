@@ -21,16 +21,14 @@ pub trait Settings {
 }
 
 /// Consolidated helper for executing async operations on SettingsProxy without boilerplate
-pub fn with_settings_proxy<F, Fut>(f: F)
+pub async fn with_settings_proxy<F, Fut>(f: F)
 where
-    F: FnOnce(SettingsProxy<'static>) -> Fut + 'static,
-    Fut: std::future::Future<Output = ()> + 'static,
+    F: FnOnce(SettingsProxy<'static>) -> Fut,
+    Fut: std::future::Future<Output = ()>,
 {
-    relm4::spawn_local(async move {
-        if let Ok(conn) = crate::get_connection().await {
-            if let Ok(proxy) = SettingsProxy::new(&conn).await {
-                f(proxy).await;
-            }
+    if let Ok(conn) = crate::get_connection().await {
+        if let Ok(proxy) = SettingsProxy::new(&conn).await {
+            f(proxy).await;
         }
-    });
+    }
 }

@@ -21,6 +21,15 @@ impl Bedrock {
     }
 }
 
+#[zbus::proxy(
+    interface = "os.ermete.AudioWorker",
+    default_service = "os.ermete.AudioWorker",
+    default_path = "/os/ermete/AudioWorker"
+)]
+trait AudioWorker {
+    fn set_volume(&self, volume: f64) -> zbus::Result<()>;
+}
+
 #[interface(name = "os.ermete.Bedrock")]
 impl Bedrock {
     async fn ping(&self) -> String {
@@ -39,11 +48,12 @@ impl Bedrock {
         }
         let mut vol = self.volume.lock().await;
         *vol = val;
-        let vol_str = format!("{:.2}", val);
-        let _ = tokio::process::Command::new("wpctl")
-            .args(["set-volume", "@DEFAULT_AUDIO_SINK@", &vol_str])
-            .output()
-            .await;
+        
+        if let Ok(conn) = zbus::Connection::session().await {
+            if let Ok(worker) = AudioWorkerProxy::new(&conn).await {
+                let _ = worker.set_volume(val).await;
+            }
+        }
         Ok(())
     }
 }

@@ -9,6 +9,7 @@ pub struct ScreenCastPortal;
 pub struct CameraPortal;
 pub struct LocationPortal;
 pub struct MicrophonePortal;
+pub struct FileChooserPortal;
 
 impl ErmetePortal {
     async fn request_permission(resource: &str, app_id: &str) -> bool {
@@ -91,6 +92,36 @@ impl MicrophonePortal {
             Ok(0)
         } else {
             Ok(1)
+        }
+    }
+}
+
+#[interface(name = "org.freedesktop.impl.portal.FileChooser")]
+impl FileChooserPortal {
+    #[zbus(name = "OpenFile")]
+    async fn open_file(&self, _handle: String, app_id: String, _parent_window: String, _title: String, _options: HashMap<String, zbus::zvariant::Value<'_>>) -> std::result::Result<(u32, HashMap<String, zbus::zvariant::Value<'_>>), zbus::fdo::Error> {
+        if ErmetePortal::request_permission("FileChooser", &app_id).await {
+            Ok((0, HashMap::new()))
+        } else {
+            Ok((2, HashMap::new()))
+        }
+    }
+
+    #[zbus(name = "SaveFile")]
+    async fn save_file(&self, _handle: String, app_id: String, _parent_window: String, _title: String, _options: HashMap<String, zbus::zvariant::Value<'_>>) -> std::result::Result<(u32, HashMap<String, zbus::zvariant::Value<'_>>), zbus::fdo::Error> {
+        if ErmetePortal::request_permission("FileChooser", &app_id).await {
+            Ok((0, HashMap::new()))
+        } else {
+            Ok((2, HashMap::new()))
+        }
+    }
+
+    #[zbus(name = "SaveFiles")]
+    async fn save_files(&self, _handle: String, app_id: String, _parent_window: String, _title: String, _options: HashMap<String, zbus::zvariant::Value<'_>>) -> std::result::Result<(u32, HashMap<String, zbus::zvariant::Value<'_>>), zbus::fdo::Error> {
+        if ErmetePortal::request_permission("FileChooser", &app_id).await {
+            Ok((0, HashMap::new()))
+        } else {
+            Ok((2, HashMap::new()))
         }
     }
 }

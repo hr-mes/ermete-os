@@ -4,7 +4,7 @@ members = [
     "forge/specs/ermete-cloud-rs/ermete-cloud-rs-1.0.0",
     "forge/specs/ermete-daemon-rs/ermete-daemon-rs-0.2.1",
     "forge/specs/ermete-dock/ermete-dock-1.0.0",
-    "forge/specs/ermete-doctor/ermete-doctor-0.1.0",
+    "forge/specs/ermete-doctor/ermete-doctor-1.0.0",
     "forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0",
     "forge/specs/ermete-lvfs-rs/ermete-lvfs-rs-1.0.0",
     "forge/specs/ermete-mdm-rs/ermete-mdm-rs-1.0.0",

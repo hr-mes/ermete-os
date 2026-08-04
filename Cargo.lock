@@ -1014,9 +1014,13 @@ dependencies = [
 
 [[package]]
 name = "ermete-doctor"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "glib 0.22.8",
+ "serde",
+ "serde_json",
+ "tokio",
+ "zbus 5.18.0",
 ]
 
 [[package]]
@@ -1157,6 +1161,7 @@ version = "1.0.0"
 dependencies = [
  "anyhow",
  "ermete-style",
+ "futures",
  "gtk4",
  "mimalloc",
  "relm4",
@@ -1165,6 +1170,7 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-subscriber",
+ "zbus 5.18.0",
 ]
 
 [[package]]

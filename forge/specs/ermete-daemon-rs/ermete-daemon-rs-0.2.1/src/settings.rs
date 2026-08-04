@@ -5,6 +5,19 @@ use tokio::sync::Mutex;
 use zbus::fdo;
 use zbus::interface;
 
+#[zbus::proxy(
+    interface = "os.ermete.SettingsWorker",
+    default_service = "os.ermete.SettingsWorker",
+    default_path = "/os/ermete/SettingsWorker"
+)]
+trait SettingsWorker {
+    fn apply_color_scheme(&self, scheme: &str) -> zbus::Result<()>;
+    fn apply_accent_color(&self, color: &str) -> zbus::Result<()>;
+    fn apply_wallpaper(&self, wallpaper: &str) -> zbus::Result<()>;
+    fn apply_true_tone(&self, enabled: bool, temp: u32) -> zbus::Result<()>;
+    fn apply_voiceover(&self, enabled: bool) -> zbus::Result<()>;
+}
+
 async fn check_polkit_auth() -> bool {
     // Fictional check
     true
@@ -124,6 +137,8 @@ impl SettingsService {
         
         tokio::spawn(async move {
             let mut state = SettingsStateStore::load();
+            let conn = zbus::Connection::session().await.unwrap();
+            let worker = SettingsWorkerProxy::new(&conn).await.unwrap();
             
             while let Some(cmd) = rx.recv().await {
                 match cmd {
@@ -138,10 +153,7 @@ impl SettingsService {
                         state.color_scheme = val.clone();
                         let res = SettingsStateStore::save_async(&state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
                         if res.is_ok() {
-                            let _ = tokio::process::Command::new("dconf")
-                                .args(["write", "/org/gnome/desktop/interface/color-scheme", &format!("'{}'", val)])
-                                .output()
-                                .await;
+                            let _ = worker.apply_color_scheme(&val).await;
                         }
                         let _ = reply.send(res);
                     }
@@ -156,14 +168,7 @@ impl SettingsService {
                         state.accent_color = val.clone();
                         let res = SettingsStateStore::save_async(&state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
                         if res.is_ok() {
-                            let _ = tokio::process::Command::new("matugen")
-                                .args(["color", "hex", &val])
-                                .output()
-                                .await;
-                            let _ = tokio::process::Command::new("niri")
-                                .args(["msg", "action", "do-screen-transition"])
-                                .output()
-                                .await;
+                            let _ = worker.apply_accent_color(&val).await;
                         }
                         let _ = reply.send(res);
                     }
@@ -178,10 +183,7 @@ impl SettingsService {
                         state.wallpaper = val.clone();
                         let res = SettingsStateStore::save_async(&state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
                         if res.is_ok() {
-                            let _ = tokio::process::Command::new("swww")
-                                .args(["img", &val, "--transition-type", "grow", "--transition-pos", "0.5,0.5"])
-                                .output()
-                                .await;
+                            let _ = worker.apply_wallpaper(&val).await;
                         }
                         let _ = reply.send(res);
                     }
@@ -225,10 +227,8 @@ impl SettingsService {
                         }
                         state.voiceover_enabled = val;
                         let res = SettingsStateStore::save_async(&state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
-                        if res.is_ok() && val {
-                            let _ = tokio::process::Command::new("spd-say")
-                                .arg("Voice Over attivato. Accessibilità sistema pronta.")
-                                .spawn();
+                        if res.is_ok() {
+                            let _ = worker.apply_voiceover(val).await;
                         }
                         let _ = reply.send(res);
                     }
@@ -327,20 +327,4 @@ impl SettingsService {
     }
 }
 
-async fn apply_true_tone(enabled: bool, temp: u32) {
-    // Kill existing wlsunset instances
-    let _ = tokio::process::Command::new("killall")
-        .arg("wlsunset")
-        .output()
-        .await;
 
-    if enabled {
-        // Spawn wlsunset with target temperature
-        let _ = tokio::process::Command::new("wlsunset")
-            .arg("-T")
-            .arg(temp.to_string())
-            .arg("-t")
-            .arg(temp.to_string()) // Force fixed temp
-            .spawn();
-    }
-}

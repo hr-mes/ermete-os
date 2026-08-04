@@ -9,10 +9,8 @@ mod settings;
 mod portal;
 mod portal_screencast;
 
-mod gatekeeper_listener;
 mod voiceover;
 mod qos;
-mod power;
 
 use std::error::Error;
 use zbus::connection::Builder;
@@ -25,21 +23,12 @@ use portal_screencast::{PortalScreenCastService, PortalRemoteDesktopService};
 
 use voiceover::VoiceOverService;
 
-use power::PowerManager;
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     println!("Connecting to system D-Bus for NetworkManager & BlueZ integration...");
     let sys_conn = zbus::Connection::system().await?;
 
-    println!("Starting PowerManager...");
-    let power_manager = PowerManager::new();
-    power_manager.start_monitoring(sys_conn.clone()).await;
-
-    println!("Starting Gatekeeper Listener...");
-    let _ = gatekeeper_listener::start_gatekeeper_listener(sys_conn.clone()).await;
-
-
+    println!("Skipping PowerManager and Gatekeeper Listener (now independent microservices)...");
 
     println!("Starting Spatial Audio Raytracing engine...");
 

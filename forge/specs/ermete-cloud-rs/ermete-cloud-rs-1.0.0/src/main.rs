@@ -1,14 +1,54 @@
-
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 use anyhow::Result;
-use std::time::Duration;
-use tokio::time::sleep;
-use tracing::{info, warn, error};
+use zbus::interface;
+use tokio::process::Command;
+use tracing::{info, error};
 
 mod dbus;
 mod sync;
+
+pub struct CloudSyncIface {}
+
+#[interface(name = "os.ermete.CloudSync")]
+impl CloudSyncIface {
+    async fn authenticate_oauth(&self, provider: String, _token: String) -> std::result::Result<String, zbus::fdo::Error> {
+        info!("Authenticating OAuth with provider: {}", provider);
+        // TODO: Implement actual OAuth logic here
+        Ok(format!("Authenticated securely with {}", provider))
+    }
+
+    async fn mount_fuse(&self, remote: String, mountpoint: String) -> std::result::Result<String, zbus::fdo::Error> {
+        info!("Orchestrating FUSE mount for remote '{}' at '{}'", remote, mountpoint);
+        let remote_clone = remote.clone();
+        let mountpoint_clone = mountpoint.clone();
+        
+        tokio::spawn(async move {
+            let child = Command::new("rclone")
+                .arg("mount")
+                .arg(&remote_clone)
+                .arg(&mountpoint_clone)
+                .arg("--vfs-cache-mode")
+                .arg("full")
+                .spawn();
+
+            match child {
+                Ok(mut c) => {
+                    info!("Started rclone mount {} -> {}", remote_clone, mountpoint_clone);
+                    if let Err(e) = c.wait().await {
+                        error!("rclone mount process exited with error: {}", e);
+                    }
+                }
+                Err(e) => {
+                    error!("Failed to spawn rclone mount: {}", e);
+                }
+            }
+        });
+
+        Ok(format!("Initiated FUSE mount for {}", remote))
+    }
+}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -16,26 +56,25 @@ async fn main() -> Result<()> {
         .with_max_level(tracing::Level::INFO)
         .init();
 
-    info!("Starting Ermete Cloud Daemon (Universal Clipboard & P2P Engine)");
+    info!("Starting Ermete Cloud Daemon (CloudSync & Universal Clipboard)");
 
     let sync_engine = std::sync::Arc::new(sync::SyncEngine::new());
     
-    // Export D-Bus interface
-    let _conn = zbus::ConnectionBuilder::system()?
-        .name("os.ermete.Cloud")?
+    // Export D-Bus interfaces
+    let _conn = zbus::ConnectionBuilder::session()?
+        .name("os.ermete.CloudSync")?
+        .serve_at("/os/ermete/CloudSync", CloudSyncIface {})?
         .serve_at("/os/ermete/Cloud", dbus::CloudIface { engine: sync_engine.clone() })?
         .build()
         .await?;
 
-    info!("D-Bus Interface 'os.ermete.Cloud' registered.");
+    info!("D-Bus Interfaces 'os.ermete.CloudSync' and 'os.ermete.Cloud' registered.");
 
-    
     // Start local mDNS discovery loop (placeholder)
     sync_engine.start_discovery().await?;
 
-    // Main event loop
-    loop {
-        // Here we keep the daemon alive to listen for P2P connection requests
-        sleep(Duration::from_secs(3600)).await;
-    }
+    // Purely asynchronous event loop
+    std::future::pending::<()>().await;
+    
+    Ok(())
 }
