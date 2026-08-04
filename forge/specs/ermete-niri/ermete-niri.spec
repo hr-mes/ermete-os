@@ -21,6 +21,7 @@ BuildRequires:  pango-devel
 BuildRequires:  libseat-devel
 BuildRequires:  libinput-devel
 BuildRequires:  pipewire-devel
+BuildRequires:  libdisplay-info-devel
 
 # Evita conflitti con il niri vanilla di Fedora
 Conflicts:      niri
