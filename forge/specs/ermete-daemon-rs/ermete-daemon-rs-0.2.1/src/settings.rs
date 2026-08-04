@@ -198,7 +198,7 @@ impl SettingsService {
                         state.true_tone_enabled = val;
                         let res = SettingsStateStore::save_async(&state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
                         if res.is_ok() {
-                            apply_true_tone(state.true_tone_enabled, state.true_tone_temperature).await;
+                            let _ = worker.apply_true_tone(state.true_tone_enabled, state.true_tone_temperature).await;
                         }
                         let _ = reply.send(res);
                     }
@@ -213,7 +213,7 @@ impl SettingsService {
                         state.true_tone_temperature = val;
                         let res = SettingsStateStore::save_async(&state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
                         if res.is_ok() {
-                            apply_true_tone(state.true_tone_enabled, state.true_tone_temperature).await;
+                            let _ = worker.apply_true_tone(state.true_tone_enabled, state.true_tone_temperature).await;
                         }
                         let _ = reply.send(res);
                     }

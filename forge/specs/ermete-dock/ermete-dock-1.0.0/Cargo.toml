@@ -14,4 +14,5 @@ serde_json = "1.0.120"
 notify = "6.1.1"
 ermete-style = { path = "../../ermete-style" }
 ermete-niri-ipc = { path = "../../ermete-niri-ipc" }
+tokio = { version = "1.0", features = ["full"] }
 
