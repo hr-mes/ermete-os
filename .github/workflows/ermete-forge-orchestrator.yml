@@ -161,6 +161,20 @@ jobs:
               echo "⚠️ WARNING: No sources.hash found or file is empty for ${{ matrix.package }}. Proceeding without verification (Legacy Mode)."
             fi
           
+            # Pre-populate BUILD dir with all local crates to satisfy Cargo path dependencies
+            mkdir -p ~/rpmbuild/BUILD/
+            for spec_dir in /workspace/forge/specs/ermete-*/ ; do
+              if [ -d "$spec_dir" ]; then
+                crate_name=$(basename "$spec_dir")
+                mkdir -p ~/rpmbuild/BUILD/"$crate_name"
+                for ver_dir in "$spec_dir"/*-*/ ; do
+                  if [ -d "$ver_dir" ]; then
+                    cp -a "$ver_dir" ~/rpmbuild/BUILD/"$crate_name"/
+                  fi
+                done
+              fi
+            done
+
             # First attempt (generates buildreqs.nosrc.rpm for Rust packages)
             rpmbuild -bb --nocheck specs/ermete-${{ matrix.package }}/*.spec || true
           
