@@ -1,6 +1,6 @@
 use zbus::interface;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
-use tokio::sync::Mutex;
 use zbus::fdo;
 
 async fn check_polkit_auth() -> bool {
@@ -8,15 +8,21 @@ async fn check_polkit_auth() -> bool {
     true
 }
 
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct Bedrock {
-    volume: Arc<Mutex<f64>>,
+    volume: Arc<AtomicU64>,
+}
+
+impl Default for Bedrock {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Bedrock {
     pub fn new() -> Self {
         Self {
-            volume: Arc::new(Mutex::new(0.5)),
+            volume: Arc::new(AtomicU64::new(0.5f64.to_bits())),
         }
     }
 }
@@ -38,7 +44,7 @@ impl Bedrock {
 
     #[zbus(property, name = "Volume")]
     async fn audio_volume(&self) -> f64 {
-        *self.volume.lock().await
+        f64::from_bits(self.volume.load(Ordering::Relaxed))
     }
 
     #[zbus(property, name = "Volume")]
@@ -46,8 +52,7 @@ impl Bedrock {
         if !check_polkit_auth().await {
             return Err(fdo::Error::Failed("Polkit authorization failed".into()));
         }
-        let mut vol = self.volume.lock().await;
-        *vol = val;
+        self.volume.store(val.to_bits(), Ordering::Relaxed);
         
         if let Ok(conn) = zbus::Connection::session().await {
             if let Ok(worker) = AudioWorkerProxy::new(&conn).await {

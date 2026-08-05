@@ -46,9 +46,13 @@ bwrap \
     /bin/bash -c "
         echo 'Inside hermetic sandbox.'
         ip link || echo 'Network is successfully isolated.'
-        # Replace with actual build command (e.g. rpmbuild, make, cargo build)
         echo 'Executing build...'
-        # ./build.sh
+        if [ -f "./build.sh" ]; then
+            ./build.sh
+        else
+            echo "Executing hermetic build script..."
+            ./build.sh
+        fi
     "
 
 echo "=> Hermetic build completed successfully."

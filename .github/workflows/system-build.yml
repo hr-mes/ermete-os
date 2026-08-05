@@ -106,11 +106,10 @@ jobs:
     steps:
       - name: 🔎 Run Trivy Scanner
         uses: aquasecurity/trivy-action@master
-        continue-on-error: true
         with:
           image-ref: '${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.build_container.outputs.digest }}'
           format: 'table'
-          exit-code: '0'
+          exit-code: '1'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'

@@ -1,18 +1,17 @@
 use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::watch;
 use zbus::interface;
 use zbus::zvariant::{OwnedValue, Value};
 use crate::settings::SettingsState;
 
 #[derive(Clone)]
 pub struct PortalSettingsService {
-    pub state: Arc<Mutex<SettingsState>>,
+    pub rx: watch::Receiver<SettingsState>,
 }
 
 impl PortalSettingsService {
-    pub fn new(state: Arc<Mutex<SettingsState>>) -> Self {
-        Self { state }
+    pub fn new(rx: watch::Receiver<SettingsState>) -> Self {
+        Self { rx }
     }
 
     pub fn parse_hex_rgb(hex: &str) -> (f64, f64, f64) {
@@ -31,7 +30,7 @@ impl PortalSettingsService {
 #[interface(name = "org.freedesktop.impl.portal.Settings")]
 impl PortalSettingsService {
     async fn read(&self, namespace: String, key: String) -> zbus::fdo::Result<OwnedValue> {
-        let st = self.state.lock().await;
+        let st = self.rx.borrow();
         if namespace == "org.freedesktop.appearance" {
             match key.as_str() {
                 "color-scheme" => {
@@ -56,7 +55,7 @@ impl PortalSettingsService {
     }
 
     async fn read_all(&self, namespaces: Vec<String>) -> zbus::fdo::Result<HashMap<String, HashMap<String, OwnedValue>>> {
-        let st = self.state.lock().await;
+        let st = self.rx.borrow();
         let mut result = HashMap::new();
 
         if namespaces.is_empty() || namespaces.iter().any(|n| n == "org.freedesktop.appearance") {

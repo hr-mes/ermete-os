@@ -1,13 +1,14 @@
 
+#![allow(unsafe_code)]
+
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 use std::collections::HashMap;
 use std::error::Error;
-use std::os::unix::io::{AsRawFd, FromRawFd, RawFd};
+use std::os::unix::io::RawFd;
 use std::sync::Arc;
 use tokio::io::unix::AsyncFd;
-use tokio::sync::Mutex;
 use zbus::{connection::Builder, interface};
 use libc::{c_void, fanotify_event_metadata, fanotify_response};
 
@@ -22,7 +23,7 @@ const FAN_EVENT_METADATA_LEN: usize = std::mem::size_of::<fanotify_event_metadat
 
 struct GatekeeperManager {
     fanotify_fd: RawFd,
-    pending_events: Arc<Mutex<HashMap<u64, i32>>>, // fd_id -> event_fd
+    pending_events: Arc<std::sync::Mutex<HashMap<u64, i32>>>, // fd_id -> event_fd
 }
 
 #[interface(name = "os.ermete.Gatekeeper")]
@@ -47,14 +48,21 @@ impl GatekeeperManager {
             return Err(zbus::fdo::Error::Failed("Polkit authorization failed".into()));
         }
 
-        let mut pending = self.pending_events.lock().await;
-        if let Some(event_fd) = pending.remove(&fd_id) {
+        let event_fd = {
+            let mut pending = self.pending_events.lock().unwrap();
+            pending.remove(&fd_id)
+        };
+
+        if let Some(event_fd) = event_fd {
             let fd_path = format!("/proc/self/fd/{}", event_fd);
-            let target_path = std::fs::read_link(&fd_path)
+            let target_path = tokio::fs::read_link(&fd_path).await
                 .map_err(|e| zbus::fdo::Error::Failed(format!("Failed to resolve fd: {}", e)))?;
 
-            // Remove quarantine xattr via stable /proc/self/fd path (TOCTOU-safe)
-            let _ = xattr::remove(&fd_path, "user.ermete.quarantine");
+            // Remove quarantine xattr via stable /proc/self/fd path (TOCTOU-safe) offloaded to blocking pool
+            let fd_path_clone = fd_path.clone();
+            let _ = tokio::task::spawn_blocking(move || {
+                xattr::remove(&fd_path_clone, "user.ermete.quarantine")
+            }).await;
 
             // Spawn inside Bubblewrap sandbox, then DENY original unsandboxed execution
             let target_str = target_path.to_string_lossy().to_string();
@@ -97,8 +105,11 @@ impl GatekeeperManager {
     }
 
     async fn deny_execution(&self, fd_id: u64) -> zbus::fdo::Result<()> {
-        let mut pending = self.pending_events.lock().await;
-        if let Some(event_fd) = pending.remove(&fd_id) {
+        let event_fd = {
+            let mut pending = self.pending_events.lock().unwrap();
+            pending.remove(&fd_id)
+        };
+        if let Some(event_fd) = event_fd {
             // Deny execution
             let mut response = fanotify_response {
                 fd: event_fd,
@@ -236,7 +247,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    let pending_events = Arc::new(Mutex::new(HashMap::new()));
+    let pending_events = Arc::new(std::sync::Mutex::new(HashMap::new()));
     let manager = GatekeeperManager {
         fanotify_fd,
         pending_events: pending_events.clone(),
@@ -293,15 +304,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 }
 
                 if metadata.fd >= 0 {
-                    let mut is_quarantined = false;
-                    let path = std::path::PathBuf::from(format!("/proc/self/fd/{}", metadata.fd));
-                    let target_path = std::fs::read_link(&path).unwrap_or_default();
+                    let path_str = format!("/proc/self/fd/{}", metadata.fd);
+                    let target_path = tokio::fs::read_link(&path_str).await.unwrap_or_default();
                     let target_path_str = target_path.to_string_lossy().to_string();
 
-                    // Check for quarantine attribute via stable /proc/self/fd path (TOCTOU-safe)
-                    if let Ok(Some(_)) = xattr::get(&path, "user.ermete.quarantine") {
-                        is_quarantined = true;
-                    }
+                    // Check for quarantine attribute via stable /proc/self/fd path (TOCTOU-safe) offloaded to spawn_blocking
+                    let path_str_clone = path_str.clone();
+                    let is_quarantined = tokio::task::spawn_blocking(move || {
+                        xattr::get(&path_str_clone, "user.ermete.quarantine")
+                            .ok()
+                            .flatten()
+                            .is_some()
+                    }).await.unwrap_or(false);
 
                     if is_quarantined {
                         let fd_id = next_id;
@@ -310,7 +324,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         println!("Intercepted execution of quarantined file: {}", target_path_str);
                         
                         // Store the fd
-                        pending_events.lock().await.insert(fd_id, metadata.fd);
+                        pending_events.lock().unwrap().insert(fd_id, metadata.fd);
                         
                         // Ask the UI to prompt the user
                         if let Err(e) = GatekeeperManager::prompt_required(&signal_ctxt, fd_id, &target_path_str).await {

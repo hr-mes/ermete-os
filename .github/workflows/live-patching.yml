@@ -24,13 +24,18 @@ jobs:
         run: |
           echo "Building kpatch..."
           mkdir -p build/livepatch
-          # kpatch-build -t vmlinux -v kernel/patches/my-patch.patch
-          touch build/livepatch/kpatch-stub.ko
+          for patch in kernel/patches/*.patch; do
+            if [ -f "$patch" ]; then
+              kpatch-build -t vmlinux -v "$patch" -o build/livepatch/
+            fi
+          done
 
       - name: Package Live Patch
         run: |
           echo "Packaging live patch into RPM..."
-          # rpmbuild -ba forge/specs/ermete-livepatch/ermete-livepatch.spec
+          if [ -f "forge/specs/ermete-livepatch/ermete-livepatch.spec" ]; then
+            rpmbuild -ba forge/specs/ermete-livepatch/ermete-livepatch.spec
+          fi
           
       - name: Upload Artifact
         uses: actions/upload-artifact@v4

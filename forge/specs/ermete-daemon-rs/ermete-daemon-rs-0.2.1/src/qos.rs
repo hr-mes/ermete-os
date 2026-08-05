@@ -6,6 +6,7 @@ use tokio::time::sleep;
 /// Starts the App Nap QoS observer.
 /// This observer will throttle background window PIDs by applying
 /// a high nice value (19) or by moving them to a restricted systemd cgroup (e.g., CPUWeight=10).
+#[allow(unsafe_code)]
 pub async fn start_qos_observer() {
     println!("Starting App Nap QoS observer...");
     tokio::spawn(async move {

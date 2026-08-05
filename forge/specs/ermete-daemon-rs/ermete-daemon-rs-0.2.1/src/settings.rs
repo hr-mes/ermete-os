@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::watch;
 use zbus::fdo;
 use zbus::interface;
 
@@ -54,17 +53,24 @@ impl Default for SettingsState {
 
 #[derive(Clone)]
 pub struct SettingsStateStore {
-    pub state: Arc<Mutex<SettingsState>>,
+    pub state_tx: watch::Sender<SettingsState>,
+    pub state_rx: watch::Receiver<SettingsState>,
 }
 
 impl SettingsStateStore {
-    pub fn new() -> Self {
-        Self {
-            state: Arc::new(Mutex::new(Self::load())),
-        }
+    pub async fn new_async() -> Self {
+        let initial_state = Self::load_async().await;
+        let (state_tx, state_rx) = watch::channel(initial_state);
+        Self { state_tx, state_rx }
     }
 
-    pub fn config_path() -> PathBuf {
+    pub fn new() -> Self {
+        let initial_state = Self::load();
+        let (state_tx, state_rx) = watch::channel(initial_state);
+        Self { state_tx, state_rx }
+    }
+
+    pub fn config_dir() -> PathBuf {
         let mut path = if let Ok(xdg) = std::env::var("XDG_CONFIG_HOME") {
             PathBuf::from(xdg)
         } else if let Ok(home) = std::env::var("HOME") {
@@ -75,13 +81,33 @@ impl SettingsStateStore {
             PathBuf::from("/var/lib/ermete")
         };
         path.push("ermete");
-        let _ = std::fs::create_dir_all(&path);
-        path.push("settings.json");
         path
     }
 
+    pub async fn ensure_config_dir() -> std::io::Result<PathBuf> {
+        let dir = Self::config_dir();
+        tokio::fs::create_dir_all(&dir).await?;
+        let mut file_path = dir;
+        file_path.push("settings.json");
+        Ok(file_path)
+    }
+
+    pub async fn load_async() -> SettingsState {
+        if let Ok(path) = Self::ensure_config_dir().await {
+            if let Ok(content) = tokio::fs::read_to_string(&path).await {
+                if let Ok(state) = serde_json::from_str(&content) {
+                    return state;
+                }
+            }
+        }
+        SettingsState::default()
+    }
+
     pub fn load() -> SettingsState {
-        let path = Self::config_path();
+        let dir = Self::config_dir();
+        let _ = std::fs::create_dir_all(&dir);
+        let mut path = dir;
+        path.push("settings.json");
         if let Ok(content) = std::fs::read_to_string(&path) {
             if let Ok(state) = serde_json::from_str(&content) {
                 return state;
@@ -91,7 +117,10 @@ impl SettingsStateStore {
     }
 
     pub fn save(state: &SettingsState) -> std::io::Result<()> {
-        let path = Self::config_path();
+        let dir = Self::config_dir();
+        std::fs::create_dir_all(&dir)?;
+        let mut path = dir;
+        path.push("settings.json");
         let content = serde_json::to_string_pretty(state)?;
         let temp_path = path.with_extension("json.tmp");
         std::fs::write(&temp_path, &content)?;
@@ -100,7 +129,7 @@ impl SettingsStateStore {
     }
 
     pub async fn save_async(state: &SettingsState) -> std::io::Result<()> {
-        let path = Self::config_path();
+        let path = Self::ensure_config_dir().await?;
         let content = serde_json::to_string_pretty(state)?;
         let temp_path = path.with_extension("json.tmp");
         tokio::fs::write(&temp_path, &content).await?;
@@ -132,13 +161,17 @@ pub struct SettingsService {
 }
 
 impl SettingsService {
-    pub fn new() -> Self {
+    pub fn new(state_tx: watch::Sender<SettingsState>) -> Self {
         let (tx, mut rx) = mpsc::channel::<SettingsCommand>(32);
         
         tokio::spawn(async move {
-            let mut state = SettingsStateStore::load();
-            let conn = zbus::Connection::session().await.unwrap();
-            let worker = SettingsWorkerProxy::new(&conn).await.unwrap();
+            let mut state = state_tx.borrow().clone();
+            let conn = zbus::Connection::session().await.ok();
+            let worker = if let Some(ref c) = conn {
+                SettingsWorkerProxy::new(c).await.ok()
+            } else {
+                None
+            };
             
             while let Some(cmd) = rx.recv().await {
                 match cmd {
@@ -153,7 +186,10 @@ impl SettingsService {
                         state.color_scheme = val.clone();
                         let res = SettingsStateStore::save_async(&state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
                         if res.is_ok() {
-                            let _ = worker.apply_color_scheme(&val).await;
+                            let _ = state_tx.send(state.clone());
+                            if let Some(ref w) = worker {
+                                let _ = w.apply_color_scheme(&val).await;
+                            }
                         }
                         let _ = reply.send(res);
                     }
@@ -168,7 +204,10 @@ impl SettingsService {
                         state.accent_color = val.clone();
                         let res = SettingsStateStore::save_async(&state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
                         if res.is_ok() {
-                            let _ = worker.apply_accent_color(&val).await;
+                            let _ = state_tx.send(state.clone());
+                            if let Some(ref w) = worker {
+                                let _ = w.apply_accent_color(&val).await;
+                            }
                         }
                         let _ = reply.send(res);
                     }
@@ -183,7 +222,10 @@ impl SettingsService {
                         state.wallpaper = val.clone();
                         let res = SettingsStateStore::save_async(&state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
                         if res.is_ok() {
-                            let _ = worker.apply_wallpaper(&val).await;
+                            let _ = state_tx.send(state.clone());
+                            if let Some(ref w) = worker {
+                                let _ = w.apply_wallpaper(&val).await;
+                            }
                         }
                         let _ = reply.send(res);
                     }
@@ -198,7 +240,10 @@ impl SettingsService {
                         state.true_tone_enabled = val;
                         let res = SettingsStateStore::save_async(&state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
                         if res.is_ok() {
-                            let _ = worker.apply_true_tone(state.true_tone_enabled, state.true_tone_temperature).await;
+                            let _ = state_tx.send(state.clone());
+                            if let Some(ref w) = worker {
+                                let _ = w.apply_true_tone(state.true_tone_enabled, state.true_tone_temperature).await;
+                            }
                         }
                         let _ = reply.send(res);
                     }
@@ -213,7 +258,10 @@ impl SettingsService {
                         state.true_tone_temperature = val;
                         let res = SettingsStateStore::save_async(&state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
                         if res.is_ok() {
-                            let _ = worker.apply_true_tone(state.true_tone_enabled, state.true_tone_temperature).await;
+                            let _ = state_tx.send(state.clone());
+                            if let Some(ref w) = worker {
+                                let _ = w.apply_true_tone(state.true_tone_enabled, state.true_tone_temperature).await;
+                            }
                         }
                         let _ = reply.send(res);
                     }
@@ -228,7 +276,10 @@ impl SettingsService {
                         state.voiceover_enabled = val;
                         let res = SettingsStateStore::save_async(&state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
                         if res.is_ok() {
-                            let _ = worker.apply_voiceover(val).await;
+                            let _ = state_tx.send(state.clone());
+                            if let Some(ref w) = worker {
+                                let _ = w.apply_voiceover(val).await;
+                            }
                         }
                         let _ = reply.send(res);
                     }

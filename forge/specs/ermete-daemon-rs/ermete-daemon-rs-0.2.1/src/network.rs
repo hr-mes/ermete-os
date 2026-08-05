@@ -66,6 +66,8 @@ impl Network {
     }
 }
 
+use futures_util::future::join_all;
+
 #[interface(name = "os.ermete.Bedrock.Network")]
 impl Network {
     async fn scan_networks(&self) -> fdo::Result<Vec<String>> {
@@ -75,44 +77,52 @@ impl Network {
         let devices = nm_proxy.get_devices().await
             .map_err(|e| fdo::Error::Failed(format!("Failed to get devices: {}", e)))?;
 
-        let mut ap_paths = Vec::new();
-        for dev_path in devices {
-            if let Ok(builder) = NmDeviceProxy::builder(&self.sys_conn).path(dev_path.clone()) {
-                if let Ok(dev_proxy) = builder.build().await {
-                    if let Ok(dev_type) = dev_proxy.device_type().await {
-                        // NM_DEVICE_TYPE_WIFI == 2
-                        if dev_type == 2 {
-                            if let Ok(builder) = NmWirelessProxy::builder(&self.sys_conn).path(dev_path) {
-                                if let Ok(wifi_proxy) = builder.build().await {
-                                    let _ = wifi_proxy.request_scan(HashMap::new()).await;
-                                    if let Ok(aps) = wifi_proxy.get_access_points().await {
-                                        ap_paths.extend(aps);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+        // Concurrently query device types and fetch access points for WiFi devices
+        let dev_futures = devices.into_iter().map(|dev_path| async move {
+            let builder = NmDeviceProxy::builder(&self.sys_conn).path(dev_path.clone()).ok()?;
+            let dev_proxy = builder.build().await.ok()?;
+            let dev_type = dev_proxy.device_type().await.ok()?;
+            if dev_type == 2 {
+                let wifi_builder = NmWirelessProxy::builder(&self.sys_conn).path(dev_path).ok()?;
+                let wifi_proxy = wifi_builder.build().await.ok()?;
+                let _ = wifi_proxy.request_scan(HashMap::new()).await;
+                wifi_proxy.get_access_points().await.ok()
+            } else {
+                None
             }
-        }
+        });
 
-        let mut results: Vec<(String, u8, bool)> = Vec::new();
-        for ap_path in ap_paths {
-            if let Ok(builder) = NmAccessPointProxy::builder(&self.sys_conn).path(ap_path) {
-                if let Ok(ap_proxy) = builder.build().await {
-                    if let Ok(ssid_bytes) = ap_proxy.ssid().await {
-                        let ssid = String::from_utf8_lossy(&ssid_bytes).trim().to_string();
-                        if !ssid.is_empty() {
-                            let strength = ap_proxy.strength().await.unwrap_or(0);
-                            let wpa = ap_proxy.wpa_flags().await.unwrap_or(0);
-                            let rsn = ap_proxy.rsn_flags().await.unwrap_or(0);
-                            let is_protected = wpa > 0 || rsn > 0;
-                            results.push((ssid, strength, is_protected));
-                        }
-                    }
-                }
+        let dev_results = join_all(dev_futures).await;
+        let ap_paths: Vec<OwnedObjectPath> = dev_results.into_iter().flatten().flatten().collect();
+
+        // Concurrently query all access point properties
+        let ap_futures = ap_paths.into_iter().map(|ap_path| async move {
+            let builder = NmAccessPointProxy::builder(&self.sys_conn).path(ap_path).ok()?;
+            let ap_proxy = builder.build().await.ok()?;
+
+            let (ssid_res, strength_res, wpa_res, rsn_res) = tokio::join!(
+                ap_proxy.ssid(),
+                ap_proxy.strength(),
+                ap_proxy.wpa_flags(),
+                ap_proxy.rsn_flags()
+            );
+
+            let ssid_bytes = ssid_res.ok()?;
+            let ssid = String::from_utf8_lossy(&ssid_bytes).trim().to_string();
+            if ssid.is_empty() {
+                return None;
             }
-        }
+
+            let strength = strength_res.unwrap_or(0);
+            let wpa = wpa_res.unwrap_or(0);
+            let rsn = rsn_res.unwrap_or(0);
+            let is_protected = wpa > 0 || rsn > 0;
+
+            Some((ssid, strength, is_protected))
+        });
+
+        let ap_results = join_all(ap_futures).await;
+        let mut results: Vec<(String, u8, bool)> = ap_results.into_iter().flatten().collect();
 
         results.sort_by(|a, b| b.1.cmp(&a.1));
         let mut seen = HashSet::new();

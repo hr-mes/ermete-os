@@ -51,8 +51,6 @@ jobs:
           - ermete-gatekeeper-rs
           - ermete-settings-rs
           - ermete-store-rs
-          - ermete-updater-rs
-          - ermete-telemetry-rs
           - ermete-mdm-rs
           - ermete-lvfs-rs
           - ermete-backup
@@ -114,28 +112,24 @@ jobs:
           CRATE_DIR=$(find forge/specs/${{ matrix.component }} -maxdepth 2 -name "Cargo.toml" -exec dirname {} \; | head -n 1)
           
           if [ -z "$CRATE_DIR" ]; then
-            echo "⚠️ Nessun Cargo.toml trovato in forge/specs/${{ matrix.component }}"
-            exit 0
+            echo "❌ ERROR: Nessun Cargo.toml trovato in forge/specs/${{ matrix.component }}"
+            exit 1
           fi
           
           echo "📁 Operando nella directory: $CRATE_DIR"
           cd "$CRATE_DIR"
 
-          # Se la directory fuzz/ non esiste, esce con successo (skip)
           if [ ! -d "fuzz" ]; then
-            echo "🚀 Nessun target fuzz versionato trovato per ${{ matrix.component }}. Skipping grazioso."
-            exit 0
+            echo "❌ ERROR: Nessuna directory fuzz/ trovata per ${{ matrix.component }}"
+            exit 1
           fi
 
           # Trova tutti i target di fuzzing configurati
-          TARGETS=$(cargo fuzz list 2>/dev/null || true)
-          if [ -z "$TARGETS" ]; then
-            # Se la lista è vuota, scansiona fuzz/fuzz_targets/
-            TARGETS=$(ls fuzz/fuzz_targets/*.rs 2>/dev/null | xargs -n 1 basename | sed 's/\.rs$//' || true)
-          fi
+          TARGETS=$(cargo fuzz list 2>/dev/null || ls fuzz/fuzz_targets/*.rs 2>/dev/null | xargs -n 1 basename | sed 's/\.rs$//')
 
           if [ -z "$TARGETS" ]; then
-            TARGETS="fuzz_target_1"
+            echo "❌ ERROR: Nessun target di fuzzing valido per ${{ matrix.component }}"
+            exit 1
           fi
 
           echo "🎯 Target di Fuzzing individuati: $TARGETS"

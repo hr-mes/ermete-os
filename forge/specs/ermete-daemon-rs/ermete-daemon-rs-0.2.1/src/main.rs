@@ -38,12 +38,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
 
     println!("Initializing ACID Settings Engine and XDG Desktop Portal backend...");
-    let settings_srv = SettingsService::new();
-    let global_store = settings::SettingsStateStore::new();
-    let portal_srv = PortalSettingsService::new(global_store.state.clone());
+    let global_store = settings::SettingsStateStore::new_async().await;
+    let settings_srv = SettingsService::new(global_store.state_tx.clone());
+    let portal_srv = PortalSettingsService::new(global_store.state_rx.clone());
     let screencast_srv = PortalScreenCastService::new();
     let remotedesktop_srv = PortalRemoteDesktopService::new(screencast_srv.clone());
-    let voiceover_srv = VoiceOverService::new(global_store.state.clone());
+    let voiceover_srv = VoiceOverService::new(global_store.state_rx.clone());
 
     println!("Starting Ermete Bedrock Session Daemon on /os/ermete/Bedrock & /org/ermete/Settings...");
     let _conn = Builder::session()?

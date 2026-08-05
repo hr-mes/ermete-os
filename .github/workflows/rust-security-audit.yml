@@ -38,8 +38,8 @@ jobs:
 
       - name: Verify Cryptographic Supply-Chain Audits (cargo-vet)
         run: |
-          cargo vet check || true
+          cargo vet check
 
       - name: Check Dependencies & Vulnerabilities (cargo-deny)
         run: |
-          cargo deny check || true
+          cargo deny check

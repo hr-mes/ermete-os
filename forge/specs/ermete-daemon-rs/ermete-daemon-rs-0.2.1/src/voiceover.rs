@@ -1,15 +1,14 @@
 use zbus::interface;
-use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::watch;
 use crate::settings::SettingsState;
 
 pub struct VoiceOverService {
-    state: Arc<Mutex<SettingsState>>,
+    rx: watch::Receiver<SettingsState>,
 }
 
 impl VoiceOverService {
-    pub fn new(state: Arc<Mutex<SettingsState>>) -> Self {
-        Self { state }
+    pub fn new(rx: watch::Receiver<SettingsState>) -> Self {
+        Self { rx }
     }
 }
 
@@ -27,7 +26,7 @@ trait VoiceOverWorker {
 impl VoiceOverService {
     /// Parla il testo specificato (solo se VoiceOver è attivo nel sistema)
     async fn speak(&self, text: String) -> zbus::fdo::Result<()> {
-        let is_enabled = self.state.lock().await.voiceover_enabled;
+        let is_enabled = self.rx.borrow().voiceover_enabled;
         if !is_enabled {
             return Ok(());
         }
