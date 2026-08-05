@@ -1,1 +1,0 @@
-// UI Animations module

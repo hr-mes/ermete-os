@@ -331,7 +331,12 @@ pub fn build_desktop_widgets(app: &Application) {
                 reload_widgets(&canvas);
             }
         }));
-        std::boxed::Box::leak(std::boxed::Box::new(monitor));
+        thread_local! {
+            static WIDGET_MONITOR: std::cell::RefCell<Option<gtk4::gio::FileMonitor>> = const { std::cell::RefCell::new(None) };
+        }
+        WIDGET_MONITOR.with(|m| {
+            *m.borrow_mut() = Some(monitor);
+        });
     }
 
     window.set_child(Some(&canvas));

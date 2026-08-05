@@ -3,11 +3,18 @@ use gtk4::prelude::*;
 use relm4::{ComponentParts, ComponentSender, SimpleComponent};
 use crate::backend::repository::{get_featured_catalog, AppItem};
 
+#[derive(Default, Debug)]
+pub struct FilterState {
+    pub search_query: String,
+    pub active_category: String,
+}
+
 /// Modello del componente Showcase (Homepage dello Store)
 pub struct ShowcaseModel {
     pub apps: Vec<AppItem>,
     pub search_query: String,
     pub active_category: String,
+    pub filter_state: std::rc::Rc<std::cell::RefCell<FilterState>>,
 }
 
 /// Messaggi di input per il componente Showcase
@@ -158,6 +165,7 @@ impl SimpleComponent for ShowcaseModel {
                     set_column_spacing: 16,
                     set_row_spacing: 16,
                     add_css_class: "app-grid",
+                    invalidate_filter: (),
                 }
             }
         }
@@ -168,15 +176,21 @@ impl SimpleComponent for ShowcaseModel {
         root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
+        let filter_state = std::rc::Rc::new(std::cell::RefCell::new(FilterState {
+            search_query: String::new(),
+            active_category: "All".to_string(),
+        }));
+
         let model = ShowcaseModel {
             apps: get_featured_catalog(),
             search_query: String::new(),
             active_category: "All".to_string(),
+            filter_state,
         };
 
         let widgets = view_output!();
 
-        // Popola il FlowBox con le card in modo reattivo e sicuro
+        // Popola il FlowBox con le card in modo reattivo e sicuro ed imposta il filtro nativo GTK
         model.populate_flow_box(&widgets.flow_box, &sender);
 
         ComponentParts { model, widgets }
@@ -185,10 +199,12 @@ impl SimpleComponent for ShowcaseModel {
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
         match msg {
             ShowcaseMsg::Search(query) => {
-                self.search_query = query;
+                self.search_query = query.clone();
+                self.filter_state.borrow_mut().search_query = query;
             }
             ShowcaseMsg::SelectCategory(cat) => {
-                self.active_category = cat;
+                self.active_category = cat.clone();
+                self.filter_state.borrow_mut().active_category = cat;
             }
             ShowcaseMsg::Install(app_id) => {
                 println!("[OverlayFS/Nix] 🚀 Lancio immediato overlay fittizio per '{}'...", app_id);
@@ -213,7 +229,7 @@ impl SimpleComponent for ShowcaseModel {
 }
 
 impl ShowcaseModel {
-    /// Popola il `gtk4::FlowBox` in base ai filtri attivi (ricerca e categoria)
+    /// Popola il `gtk4::FlowBox` una sola volta ed imposta il filtro nativo GTK (`set_filter_func`)
     pub fn populate_flow_box(
         &self,
         flow_box: &gtk4::FlowBox,
@@ -224,27 +240,48 @@ impl ShowcaseModel {
             flow_box.remove(&child);
         }
 
+        let apps_data: Vec<(String, String)> = self
+            .apps
+            .iter()
+            .map(|a| {
+                (
+                    a.category.clone(),
+                    format!("{} {}", a.name, a.summary).to_lowercase(),
+                )
+            })
+            .collect();
+
         for app in &self.apps {
+            let card = build_app_card(app, sender);
+            flow_box.insert(&card, -1);
+        }
+
+        let filter_state = self.filter_state.clone();
+        flow_box.set_filter_func(move |child| {
+            let idx = child.index();
+            if idx < 0 || (idx as usize) >= apps_data.len() {
+                return true;
+            }
+            let (category, search_text) = &apps_data[idx as usize];
+            let state = filter_state.borrow();
+
             // Filtro Categoria
-            if !self.active_category.is_empty() && self.active_category != "All" {
-                if app.category != self.active_category {
-                    continue;
+            if !state.active_category.is_empty() && state.active_category != "All" {
+                if category != &state.active_category {
+                    return false;
                 }
             }
 
             // Filtro Ricerca
-            if !self.search_query.is_empty() {
-                let q = self.search_query.to_lowercase();
-                let name_match = app.name.to_lowercase().contains(&q);
-                let summary_match = app.summary.to_lowercase().contains(&q);
-                if !name_match && !summary_match {
-                    continue;
+            if !state.search_query.is_empty() {
+                let q = state.search_query.to_lowercase();
+                if !search_text.contains(&q) {
+                    return false;
                 }
             }
 
-            let card = build_app_card(app, sender);
-            flow_box.insert(&card, -1);
-        }
+            true
+        });
     }
 }
 

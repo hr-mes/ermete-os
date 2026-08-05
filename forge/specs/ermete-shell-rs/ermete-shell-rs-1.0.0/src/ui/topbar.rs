@@ -242,7 +242,6 @@ impl SimpleComponent for TopbarModel {
         root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        ermete_style::load_glass_theme();
         crate::ui::notifications::spawn_notification_daemon(&app);
 
         root.set_application(Some(&app));

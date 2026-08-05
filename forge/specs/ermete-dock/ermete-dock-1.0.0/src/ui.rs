@@ -5,108 +5,190 @@ use crate::controller::DockController;
 use gtk4::glib;
 use gtk4::prelude::*;
 use gtk4::{
-    Align, Application, ApplicationWindow, Box as GtkBox, Button, CssProvider, DropControllerMotion, EventControllerMotion,
+    Align, Application, ApplicationWindow, Box as GtkBox, Button, DropControllerMotion, EventControllerMotion,
     EventControllerScroll, EventControllerScrollFlags, GestureClick, Image, Orientation, Popover,
 };
 use gtk4_layer_shell::{Edge, Layer, LayerShell};
 use std::cell::RefCell;
-use std::process::Command;
 use std::rc::Rc;
-
-const DOCK_CSS: &str = r#"
-window.dock-window {
-    background-color: transparent;
-}
-
-.dock-container {
-    background: alpha(#1e1e20, 0.85);
-    border: 1px solid alpha(white, 0.15);
-    border-radius: 24px;
-    padding: 6px 12px;
-    box-shadow: 0px 16px 48px alpha(black, 0.60);
-    transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.dock-hidden {
-    transform: translateY(120px);
-    opacity: 0;
-}
-
-.dock-item-btn {
-    background: transparent;
-    border: none;
-    border-radius: 16px;
-    padding: 6px 8px;
-    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.dock-item-btn:hover {
-    background: alpha(white, 0.12);
-    transform: scale(1.12) translateY(-4px);
-}
-
-.dock-item-btn:active {
-    transform: scale(0.96);
-}
-
-.dock-indicator {
-    min-height: 4px;
-    min-width: 4px;
-    border-radius: 99px;
-    background-color: alpha(white, 0.5);
-    margin-top: 2px;
-}
-
-.dock-indicator-focused {
-    min-height: 4px;
-    min-width: 16px;
-    border-radius: 99px;
-    background-color: @shell_primary;
-    margin-top: 2px;
-}
-
-.dock-popover {
-    background: alpha(#1a1b26, 0.95);
-    border: 1px solid alpha(white, 0.12);
-    border-radius: 12px;
-    padding: 6px;
-}
-
-.dock-popover-btn {
-    background: transparent;
-    border: none;
-    border-radius: 6px;
-    padding: 6px 12px;
-    color: #ffffff;
-}
-
-.dock-popover-btn:hover {
-    background: alpha(white, 0.1);
-}
-
-.dock-trigger-area {
-    background-color: alpha(black, 0.01);
-    min-height: 6px;
-}
-
-.dock-instance-badge {
-    background-color: @shell_primary;
-    color: #ffffff;
-    font-size: 11px;
-    font-weight: bold;
-    border-radius: 99px;
-    padding: 0 5px;
-    min-width: 16px;
-    min-height: 16px;
-    box-shadow: 0px 2px 4px alpha(black, 0.4);
-}
-"#;
 
 struct DockState {
     pinned: Vec<String>,
     windows: Vec<NiriWindowInfo>,
     workspaces: Vec<NiriWorkspaceInfo>,
     is_hovered: bool,
+}
+
+struct DockItemWidget {
+    item_rc: Rc<RefCell<DockItem>>,
+    button: Button,
+    overlay: gtk4::Overlay,
+    badge: Option<gtk4::Label>,
+    indicator: GtkBox,
+}
+
+impl DockItemWidget {
+    fn new(item: DockItem) -> Self {
+        let btn = Button::builder().css_classes(["dock-item-btn"]).build();
+        let box_inner = GtkBox::new(Orientation::Vertical, 2);
+        box_inner.set_halign(Align::Center);
+
+        let icon = Image::from_icon_name(&item.icon_name);
+        icon.set_pixel_size(44);
+
+        let overlay = gtk4::Overlay::new();
+        overlay.set_child(Some(&icon));
+
+        let badge = if item.window_ids.len() > 1 {
+            let b = gtk4::Label::builder()
+                .label(item.window_ids.len().to_string())
+                .css_classes(["dock-instance-badge"])
+                .halign(Align::End)
+                .valign(Align::Start)
+                .margin_top(0)
+                .margin_end(0)
+                .build();
+            overlay.add_overlay(&b);
+            Some(b)
+        } else {
+            None
+        };
+        box_inner.append(&overlay);
+
+        let indicator = GtkBox::new(Orientation::Horizontal, 0);
+        indicator.set_halign(Align::Center);
+        update_indicator_style(&indicator, &item);
+        box_inner.append(&indicator);
+        btn.set_child(Some(&box_inner));
+
+        let voice_text = format_voice_text(&item);
+        btn.set_tooltip_text(Some(&voice_text));
+
+        let item_rc = Rc::new(RefCell::new(item));
+
+        let item_c1 = item_rc.clone();
+        let btn_c1 = btn.clone();
+        btn.connect_clicked(move |_| {
+            let it = item_c1.borrow();
+            if it.window_ids.len() == 1 {
+                let win_id = it.window_ids[0];
+                DockController::focus_window(win_id);
+            } else if it.window_ids.len() > 1 {
+                show_window_picker_popover(&btn_c1, &it);
+            } else {
+                DockController::launch_app(&it.key_id);
+            }
+        });
+
+        let gesture_right = GestureClick::new();
+        gesture_right.set_button(3);
+        let item_c2 = item_rc.clone();
+        let btn_c2 = btn.clone();
+        gesture_right.connect_released(move |_, _, _, _| {
+            let it = item_c2.borrow();
+            show_dock_context_menu(&btn_c2, &it);
+        });
+        btn.add_controller(gesture_right);
+
+        let gesture_middle = GestureClick::new();
+        gesture_middle.set_button(2);
+        let item_c3 = item_rc.clone();
+        gesture_middle.connect_released(move |_, _, _, _| {
+            let it = item_c3.borrow();
+            DockController::launch_app(&it.key_id);
+        });
+        btn.add_controller(gesture_middle);
+
+        let scroll_ctrl = EventControllerScroll::new(EventControllerScrollFlags::VERTICAL);
+        let item_c4 = item_rc.clone();
+        scroll_ctrl.connect_scroll(move |_, _, dy| {
+            let win_ids = item_c4.borrow().window_ids.clone();
+            if !win_ids.is_empty() {
+                let idx = if dy > 0.0 { 0 } else { win_ids.len() - 1 };
+                let win_id = win_ids[idx];
+                DockController::focus_window(win_id);
+            }
+            glib::Propagation::Stop
+        });
+        btn.add_controller(scroll_ctrl);
+
+        let drop_ctrl = DropControllerMotion::new();
+        let btn_c5 = btn.clone();
+        drop_ctrl.connect_enter(move |_, _, _| {
+            btn_c5.add_css_class("aura-active");
+        });
+        let btn_c6 = btn.clone();
+        drop_ctrl.connect_leave(move |_| {
+            btn_c6.remove_css_class("aura-active");
+        });
+        btn.add_controller(drop_ctrl);
+
+        DockItemWidget {
+            item_rc,
+            button: btn,
+            overlay,
+            badge,
+            indicator,
+        }
+    }
+
+    fn update(&mut self, new_item: DockItem) {
+        if *self.item_rc.borrow() == new_item {
+            return;
+        }
+
+        let voice_text = format_voice_text(&new_item);
+        self.button.set_tooltip_text(Some(&voice_text));
+
+        if new_item.window_ids.len() > 1 {
+            let label_str = new_item.window_ids.len().to_string();
+            if let Some(ref badge_label) = self.badge {
+                badge_label.set_label(&label_str);
+            } else {
+                let b = gtk4::Label::builder()
+                    .label(&label_str)
+                    .css_classes(["dock-instance-badge"])
+                    .halign(Align::End)
+                    .valign(Align::Start)
+                    .margin_top(0)
+                    .margin_end(0)
+                    .build();
+                self.overlay.add_overlay(&b);
+                self.badge = Some(b);
+            }
+        } else if let Some(badge_label) = self.badge.take() {
+            self.overlay.remove_overlay(&badge_label);
+        }
+
+        update_indicator_style(&self.indicator, &new_item);
+        *self.item_rc.borrow_mut() = new_item;
+    }
+}
+
+fn update_indicator_style(indicator: &GtkBox, item: &DockItem) {
+    indicator.remove_css_class("dock-indicator-focused");
+    indicator.remove_css_class("dock-indicator");
+    if item.is_focused {
+        indicator.add_css_class("dock-indicator-focused");
+        indicator.set_opacity(1.0);
+        indicator.set_size_request(-1, -1);
+    } else if !item.window_ids.is_empty() {
+        indicator.add_css_class("dock-indicator");
+        indicator.set_opacity(1.0);
+        indicator.set_size_request(-1, -1);
+    } else {
+        indicator.set_opacity(0.0);
+        indicator.set_size_request(4, 4);
+    }
+}
+
+fn format_voice_text(item: &DockItem) -> String {
+    let clean_id = item.key_id.replace(".desktop", "").replace("org.", "").replace("com.", "").replace("gnome.", "");
+    if item.window_ids.is_empty() {
+        format!("App, {}", clean_id)
+    } else {
+        format!("{}, {} finestre aperte", clean_id, item.window_ids.len())
+    }
 }
 
 struct DockMonitorInstance {
@@ -116,6 +198,8 @@ struct DockMonitorInstance {
     container: GtkBox,
     trigger_win: glib::WeakRef<ApplicationWindow>,
     state: Rc<RefCell<DockState>>,
+    widgets: Vec<DockItemWidget>,
+    separator: Option<gtk4::Separator>,
 }
 
 thread_local! {
@@ -166,21 +250,6 @@ fn should_autohide_for_monitor(state: &DockState, monitor_connector: &str, scree
         }
         w.is_focused
     })
-}
-
-fn speak_text(text: String) {
-    glib::MainContext::default().spawn_local(async move {
-        // VoiceOver integration
-    });
-}
-
-fn attach_voiceover_hover<W: gtk4::prelude::IsA<gtk4::Widget>>(widget: &W, text: &str) {
-    let ctrl = EventControllerMotion::new();
-    let text_clone = text.to_string();
-    ctrl.connect_enter(move |_, _, _| {
-        speak_text(text_clone.clone());
-    });
-    widget.add_controller(ctrl);
 }
 
 #[allow(dead_code)]
@@ -426,6 +495,8 @@ fn create_dock_for_monitor(
         container: container.clone(),
         trigger_win: trigger_win.downgrade(),
         state,
+        widgets: Vec::new(),
+        separator: None,
     };
     refresh_monitor_instance(&mut inst);
     window.present();
@@ -452,122 +523,63 @@ pub fn toggle_dock_visibility() {
 }
 
 fn refresh_monitor_instance(inst: &mut DockMonitorInstance) {
-    while let Some(child) = inst.container.first_child() {
-        inst.container.remove(&child);
-    }
-
     let state = inst.state.borrow();
-    let items = reconcile_dock_items(&state.pinned, &state.windows);
-    let mut added_unpinned_separator = false;
+    let new_items = reconcile_dock_items(&state.pinned, &state.windows);
+    let is_hovered = state.is_hovered;
 
-    for item in items {
-        if !item.is_pinned && !added_unpinned_separator {
-            let sep = gtk4::Separator::new(Orientation::Vertical);
-            sep.set_margin_top(8);
-            sep.set_margin_bottom(8);
-            inst.container.append(&sep);
-            added_unpinned_separator = true;
+    let keys_match = inst.widgets.len() == new_items.len()
+        && inst.widgets.iter().zip(&new_items).all(|(w, item)| w.item_rc.borrow().key_id == item.key_id);
+
+    if keys_match {
+        for (w, item) in inst.widgets.iter_mut().zip(new_items) {
+            w.update(item);
         }
+    } else {
+        use std::collections::HashMap;
+        let mut old_widgets: HashMap<String, DockItemWidget> = inst
+            .widgets
+            .drain(..)
+            .map(|w| {
+                let key_id = w.item_rc.borrow().key_id.clone();
+                (key_id, w)
+            })
+            .collect();
 
-        let btn = Button::builder().css_classes(["dock-item-btn"]).build();
-        let box_inner = GtkBox::new(Orientation::Vertical, 2);
-        box_inner.set_halign(Align::Center);
-
-        let icon = Image::from_icon_name(&item.icon_name);
-        icon.set_pixel_size(44);
-        
-        let overlay = gtk4::Overlay::new();
-        overlay.set_child(Some(&icon));
-        if item.window_ids.len() > 1 {
-            let badge = gtk4::Label::builder()
-                .label(item.window_ids.len().to_string())
-                .css_classes(["dock-instance-badge"])
-                .halign(Align::End)
-                .valign(Align::Start)
-                .margin_top(0)
-                .margin_end(0)
-                .build();
-            overlay.add_overlay(&badge);
-        }
-        box_inner.append(&overlay);
-
-        let indicator = GtkBox::new(Orientation::Horizontal, 0);
-        indicator.set_halign(Align::Center);
-        if item.is_focused {
-            indicator.add_css_class("dock-indicator-focused");
-        } else if !item.window_ids.is_empty() {
-            indicator.add_css_class("dock-indicator");
-        } else {
-            indicator.set_opacity(0.0);
-            indicator.set_size_request(4, 4);
-        }
-        box_inner.append(&indicator);
-        btn.set_child(Some(&box_inner));
-
-        let voice_text = if item.window_ids.is_empty() {
-            format!("App, {}", item.key_id.replace(".desktop", "").replace("org.", "").replace("com.", "").replace("gnome.", ""))
-        } else {
-            format!("{}, {} finestre aperte", item.key_id.replace(".desktop", "").replace("org.", "").replace("com.", "").replace("gnome.", ""), item.window_ids.len())
-        };
-        attach_voiceover_hover(&btn, &voice_text);
-
-        let item_clone = item.clone();
-        let btn_clone = btn.clone();
-        btn.connect_clicked(move |_| {
-            if item_clone.window_ids.len() == 1 {
-                let win_id = item_clone.window_ids[0];
-                DockController::focus_window(win_id);
-            } else if item_clone.window_ids.len() > 1 {
-                show_window_picker_popover(&btn_clone, &item_clone);
+        let mut updated_widgets = Vec::with_capacity(new_items.len());
+        for item in new_items {
+            if let Some(mut existing) = old_widgets.remove(&item.key_id) {
+                existing.update(item);
+                updated_widgets.push(existing);
             } else {
-                DockController::launch_app(&item_clone.key_id);
+                updated_widgets.push(DockItemWidget::new(item));
             }
-        });
+        }
 
-        let gesture_right = GestureClick::new();
-        gesture_right.set_button(3);
-        let item_clone2 = item.clone();
-        let btn_clone2 = btn.clone();
-        gesture_right.connect_released(move |_, _, _, _| {
-            show_dock_context_menu(&btn_clone2, &item_clone2);
-        });
-        btn.add_controller(gesture_right);
+        while let Some(child) = inst.container.first_child() {
+            inst.container.remove(&child);
+        }
 
-        let gesture_middle = GestureClick::new();
-        gesture_middle.set_button(2);
-        let key_id_mid = item.key_id.clone();
-        gesture_middle.connect_released(move |_, _, _, _| {
-            DockController::launch_app(&key_id_mid);
-        });
-        btn.add_controller(gesture_middle);
-
-        let scroll_ctrl = EventControllerScroll::new(EventControllerScrollFlags::VERTICAL);
-        let win_ids = item.window_ids.clone();
-        scroll_ctrl.connect_scroll(move |_, _, dy| {
-            if !win_ids.is_empty() {
-                let idx = if dy > 0.0 { 0 } else { win_ids.len() - 1 };
-                let win_id = win_ids[idx];
-                DockController::focus_window(win_id);
+        let mut added_unpinned_separator = false;
+        for w in &updated_widgets {
+            if !w.item_rc.borrow().is_pinned && !added_unpinned_separator {
+                if inst.separator.is_none() {
+                    let sep = gtk4::Separator::new(Orientation::Vertical);
+                    sep.set_margin_top(8);
+                    sep.set_margin_bottom(8);
+                    inst.separator = Some(sep);
+                }
+                if let Some(ref sep) = inst.separator {
+                    inst.container.append(sep);
+                }
+                added_unpinned_separator = true;
             }
-            glib::Propagation::Stop
-        });
-        btn.add_controller(scroll_ctrl);
+            inst.container.append(&w.button);
+        }
 
-        let drop_ctrl = DropControllerMotion::new();
-        let btn_clone_drop_enter = btn.clone();
-        drop_ctrl.connect_enter(move |_, _, _| {
-            btn_clone_drop_enter.add_css_class("aura-active");
-        });
-        let btn_clone_drop_leave = btn.clone();
-        drop_ctrl.connect_leave(move |_| {
-            btn_clone_drop_leave.remove_css_class("aura-active");
-        });
-        btn.add_controller(drop_ctrl);
-
-        inst.container.append(&btn);
+        inst.widgets = updated_widgets;
     }
 
-    let should_hide = !state.is_hovered && should_autohide_for_monitor(&state, &inst.monitor_connector, inst.screen_height);
+    let should_hide = !is_hovered && should_autohide_for_monitor(&state, &inst.monitor_connector, inst.screen_height);
     animate_dock_visibility(&inst.container, should_hide);
 }
 

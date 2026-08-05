@@ -1,4 +1,3 @@
-pub mod anim;
 pub mod topbar;
 pub use ermete_dock::ui as dock;
 pub mod control_center;

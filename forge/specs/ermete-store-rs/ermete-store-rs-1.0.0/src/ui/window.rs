@@ -132,6 +132,7 @@ impl SimpleComponent for AppModel {
                     set_margin_bottom: 16,
                     set_margin_end: 16,
                     add_css_class: "central-stack",
+                    set_visible_child_name: &model.active_page,
                 }
             }
         }

@@ -326,9 +326,6 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
 pub fn show_spotlight_modal(app: &Application) {
     ensure_index_loaded();
 
-    // Inietta lo stile Premium Seelen UI (Glassmorphism e Typography)
-    ermete_style::load_glass_theme();
-
     let pop = ApplicationWindow::builder()
         .application(app)
         .title("Spotlight")

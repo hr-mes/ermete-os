@@ -5,7 +5,6 @@ static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 pub mod components;
 pub mod pages;
 pub mod settings_proxy;
-pub mod style;
 
 use gtk4::prelude::*;
 use relm4::{ComponentParts, RelmApp, SimpleComponent};
@@ -23,6 +22,7 @@ pub async fn get_system_connection() -> Result<zbus::Connection, zbus::Error> {
 /// Shell di base per Ermete Settings
 pub struct AppModel {
     initial_page: Option<String>,
+    active_page: String,
 }
 
 #[derive(Debug)]
@@ -68,6 +68,8 @@ impl SimpleComponent for AppModel {
                     set_hexpand: true,
                     set_vexpand: true,
                     add_css_class: "flat-canvas-container",
+                    #[watch]
+                    set_visible_child_name: model.active_page.as_str(),
                 }
             }
         }
@@ -78,8 +80,12 @@ impl SimpleComponent for AppModel {
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> ComponentParts<Self> {
+        let initial = init.clone();
+        let target_page = initial.as_deref().unwrap_or("wifi").to_string();
+
         let model = AppModel {
-            initial_page: init.clone(),
+            initial_page: init,
+            active_page: target_page,
         };
         let widgets = view_output!();
 
@@ -148,17 +154,26 @@ impl SimpleComponent for AppModel {
 
     fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
         match msg {
-            AppMsg::SelectPage(_page_id) => {
-                // Gestione messaggi dinamici di cambio pagina se necessari
+            AppMsg::SelectPage(page_id) => {
+                self.active_page = page_id;
             }
             AppMsg::RouteAi(query) => {
                 // Chiamata all'AI Daemon per il natural language routing
                 println!("AI Daemon Routing: analizzo l'intento '{}'", query);
-                
-                // TODO: in base alla risposta, navigare direttamente al widget/fix corretto
-                // es: show_audio_panel_with_autofix
-                if query.to_lowercase().contains("audio") {
+
+                let q = query.to_lowercase();
+                if q.contains("audio") || q.contains("suono") || q.contains("volume") {
                     sender.input(AppMsg::SelectPage("audio".to_string()));
+                } else if q.contains("wifi") || q.contains("wi-fi") || q.contains("internet") {
+                    sender.input(AppMsg::SelectPage("wifi".to_string()));
+                } else if q.contains("bluetooth") {
+                    sender.input(AppMsg::SelectPage("bluetooth".to_string()));
+                } else if q.contains("schermo") || q.contains("display") || q.contains("monit") {
+                    sender.input(AppMsg::SelectPage("displays".to_string()));
+                } else if q.contains("batteria") || q.contains("power") || q.contains("energia") {
+                    sender.input(AppMsg::SelectPage("battery".to_string()));
+                } else if q.contains("aspetto") || q.contains("tema") || q.contains("dark") {
+                    sender.input(AppMsg::SelectPage("appearance".to_string()));
                 }
             }
         }

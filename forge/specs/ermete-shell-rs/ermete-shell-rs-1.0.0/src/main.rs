@@ -150,6 +150,10 @@ fn main() -> glib::ExitCode {
         .flags(gio::ApplicationFlags::HANDLES_COMMAND_LINE)
         .build();
 
+thread_local! {
+    static TOPBAR_CTRL: std::cell::RefCell<Option<relm4::component::Connector<ui::topbar::TopbarModel>>> = const { std::cell::RefCell::new(None) };
+}
+
     app.connect_activate(move |app| {
         crate::theme::init_css();
         static ACTIVATED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
@@ -158,7 +162,9 @@ fn main() -> glib::ExitCode {
             let ctrl = ui::topbar::TopbarModel::builder()
                 .launch(app.clone());
             
-            Box::leak(Box::new(ctrl));
+            TOPBAR_CTRL.with(|c| {
+                *c.borrow_mut() = Some(ctrl);
+            });
                 
             crate::ui::osd::spawn_osd(app);
             crate::ui::desktop_widgets::build_desktop_widgets(app);

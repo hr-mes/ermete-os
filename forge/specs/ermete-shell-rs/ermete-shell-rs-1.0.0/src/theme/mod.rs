@@ -20,6 +20,7 @@ pub fn init_css() {
                 );
                 *p = Some(provider);
             }
+            ermete_style::load_glass_theme();
         }
     });
 }
