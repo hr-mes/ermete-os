@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, oneshot};
-use crate::ipc::system_proxies::{ControllerBackend, SystemEventBus, SystemEvent, MockState, BedrockAudioProxy};
+use crate::ipc::types::{ControllerBackend, SystemEventBus, SystemEvent, MockState, BedrockAudioProxy};
 
 pub enum AudioCommand {
     ToggleMute(oneshot::Sender<zbus::Result<bool>>),

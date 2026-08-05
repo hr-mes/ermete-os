@@ -72,9 +72,15 @@ pull_and_extract() {
   local IMAGE_LOWER=$(echo "ghcr.io/$OWNER/$img:latest" | tr '[:upper:]' '[:lower:]')
   
   local old_digest="${OLD_DIGESTS[$img]:-}"
-  local new_digest=$(skopeo inspect --config "docker://$IMAGE_LOWER" 2>/dev/null | jq -r '.config.Labels["org.opencontainers.image.revision"] // .config.Labels["tier.content.sha256"] // ""' || true)
+  local new_digest=""
+  local inspect_out
+  if inspect_out=$(skopeo inspect --config "docker://$IMAGE_LOWER" 2>/dev/null); then
+    new_digest=$(echo "$inspect_out" | jq -r '.config.Labels["org.opencontainers.image.revision"] // .config.Labels["tier.content.sha256"] // ""')
+  fi
   if [ -z "$new_digest" ]; then
-    new_digest=$(skopeo inspect "docker://$IMAGE_LOWER" 2>/dev/null | jq -r '.Digest' || true)
+    if inspect_out=$(skopeo inspect "docker://$IMAGE_LOWER" 2>/dev/null); then
+      new_digest=$(echo "$inspect_out" | jq -r '.Digest // ""')
+    fi
   fi
 
   if [ -n "$old_digest" ] && [ -n "$new_digest" ] && [ "$old_digest" = "$new_digest" ]; then
@@ -86,18 +92,22 @@ pull_and_extract() {
   echo "    [CACHE MISS] Pulling $img (old: $old_digest, new: $new_digest)"
   echo "$new_digest" > "$TMP_DIR/digest_$img"
 
-  local ctr
-  ctr=$(buildah from "$IMAGE_LOWER")
-  if [ -n "$ctr" ]; then
+  local ctr=""
+  if ctr=$(buildah from "$IMAGE_LOWER" 2>/dev/null); then
     local mnt
     mnt=$(buildah mount "$ctr")
     (
       flock 200
       # Prune old versions by wiping the image's dedicated subdirectory
-      rm -rf "$target_dir/$img" 2>/dev/null || true
+      if [ -d "$target_dir/$img" ]; then
+        rm -rf "$target_dir/$img"
+      fi
       mkdir -p "$target_dir/$img"
       
-      cp -a "$mnt"/*.rpm "$target_dir/$img/" 2>/dev/null || true
+      readarray -t mnt_rpms < <(find "$mnt" -maxdepth 1 -name "*.rpm" -type f)
+      if [ ${#mnt_rpms[@]} -gt 0 ]; then
+        cp -a "${mnt_rpms[@]}" "$target_dir/$img/"
+      fi
     ) 200>"$target_dir/.lock"
     buildah umount "$ctr"
     buildah rm "$ctr"
@@ -111,13 +121,16 @@ for tier in tier0 tier1 tier2 tier3; do
   img="ermete-os-forge-${tier}-repo:latest"
   IMAGE_LOWER=$(echo "ghcr.io/$OWNER/$img" | tr '[:upper:]' '[:lower:]')
   echo "    Pulling previous $IMAGE_LOWER..."
-  ctr=$(buildah from "$IMAGE_LOWER" 2>/dev/null || true)
-  if [ -n "$ctr" ]; then
+  ctr=""
+  if ctr=$(buildah from "$IMAGE_LOWER" 2>/dev/null); then
     mnt=$(buildah mount "$ctr")
-    find "$mnt" -name '*.rpm' -exec cp -a {} "repo-cache/repo-${tier}/" \; 2>/dev/null || true
-    find "$mnt" -name '*.rpm' -exec cp -a {} "repo-cache/repo/" \; 2>/dev/null || true
+    readarray -t cached_rpms < <(find "$mnt" -name '*.rpm' -type f)
+    if [ ${#cached_rpms[@]} -gt 0 ]; then
+      cp -a "${cached_rpms[@]}" "repo-cache/repo-${tier}/"
+      cp -a "${cached_rpms[@]}" "repo-cache/repo/"
+    fi
     if [ -f "$mnt/manifest.json" ]; then
-      cp -a "$mnt/manifest.json" "repo-cache/repo-${tier}/" 2>/dev/null || true
+      cp -a "$mnt/manifest.json" "repo-cache/repo-${tier}/"
     fi
     buildah umount "$ctr"
     buildah rm "$ctr"
@@ -217,10 +230,12 @@ for tier in tier0 tier1 tier2 tier3; do
 done
 
 echo "=== Syncing tiered RPMs to aggregate repo ==="
-find repo-cache/repo-tier0/ -name "*.rpm" -exec cp -a {} repo-cache/repo/ \; 2>/dev/null || true
-find repo-cache/repo-tier1/ -name "*.rpm" -exec cp -a {} repo-cache/repo/ \; 2>/dev/null || true
-find repo-cache/repo-tier2/ -name "*.rpm" -exec cp -a {} repo-cache/repo/ \; 2>/dev/null || true
-find repo-cache/repo-tier3/ -name "*.rpm" -exec cp -a {} repo-cache/repo/ \; 2>/dev/null || true
+for tier in tier0 tier1 tier2 tier3; do
+  readarray -t tier_rpms < <(find "repo-cache/repo-${tier}/" -name "*.rpm" -type f)
+  if [ ${#tier_rpms[@]} -gt 0 ]; then
+    cp -a "${tier_rpms[@]}" repo-cache/repo/
+  fi
+done
 
 for img in "${TIER0_IMAGES[@]}" "${TIER1_IMAGES[@]}" "${TIER2_IMAGES[@]}" "${TIER3_IMAGES[@]}"; do
   if [ -f "$TMP_DIR/digest_$img" ]; then
@@ -239,12 +254,23 @@ for tier in tier0 tier1 tier2 tier3; do
       jq --arg k "$img" --arg v "$digest" '.[$k] = $v' "repo-cache/repo-${tier}/manifest.json" > tmp.json && mv tmp.json "repo-cache/repo-${tier}/manifest.json"
     fi
   done
-  cp "repo-cache/repo-${tier}/manifest.json" "repo-cache/repo/manifest_${tier}.json" 2>/dev/null || true
+  if [ -f "repo-cache/repo-${tier}/manifest.json" ]; then
+    cp "repo-cache/repo-${tier}/manifest.json" "repo-cache/repo/manifest_${tier}.json"
+  fi
 done
 
+count_rpms() {
+  local dir="$1"
+  if [ -d "$dir" ]; then
+    find "$dir" -name '*.rpm' -type f | wc -l
+  else
+    echo 0
+  fi
+}
+
 echo "--- Extracted RPMs Summary ---"
-echo "Tier 0 count: $(find repo-cache/repo-tier0 -name '*.rpm' 2>/dev/null | wc -l || echo 0)"
-echo "Tier 1 count: $(find repo-cache/repo-tier1 -name '*.rpm' 2>/dev/null | wc -l || echo 0)"
-echo "Tier 2 count: $(find repo-cache/repo-tier2 -name '*.rpm' 2>/dev/null | wc -l || echo 0)"
-echo "Tier 3 count: $(find repo-cache/repo-tier3 -name '*.rpm' 2>/dev/null | wc -l || echo 0)"
-echo "Total repo count: $(find repo-cache/repo -name '*.rpm' 2>/dev/null | wc -l || echo 0)"
+echo "Tier 0 count: $(count_rpms repo-cache/repo-tier0)"
+echo "Tier 1 count: $(count_rpms repo-cache/repo-tier1)"
+echo "Tier 2 count: $(count_rpms repo-cache/repo-tier2)"
+echo "Tier 3 count: $(count_rpms repo-cache/repo-tier3)"
+echo "Total repo count: $(count_rpms repo-cache/repo)"

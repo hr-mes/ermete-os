@@ -1,17 +1,10 @@
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, oneshot};
-use crate::ipc::system_proxies::{
+use crate::ipc::types::{
     ControllerBackend, SystemEventBus, SystemEvent, MockState, WifiNetworkInfo,
     NetworkManagerProxy, NmDeviceProxy, NmWirelessProxy, NmAccessPointProxy, 
     NmSettingsProxy, NmSettingsConnectionProxy, NmActiveConnectionProxy
 };
-
-#[allow(dead_code)]
-pub async fn get_network_status_dbus() -> (String, String, String) {
-    let ctrl = crate::ipc::system_proxies::get_network_controller();
-    let _ = ctrl.refresh_network_status().await;
-    ctrl.get_cached_network_status()
-}
 
 pub enum NetworkCommand {
     ToggleWifi(oneshot::Sender<zbus::Result<bool>>),

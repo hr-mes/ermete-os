@@ -1,7 +1,7 @@
 use zbus::proxy;
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, oneshot};
-use crate::ipc::system_proxies::{ControllerBackend, SystemEventBus, SystemEvent, MockState};
+use crate::ipc::types::{ControllerBackend, SystemEventBus, SystemEvent, MockState};
 
 #[proxy(
     interface = "org.freedesktop.login1.Session",

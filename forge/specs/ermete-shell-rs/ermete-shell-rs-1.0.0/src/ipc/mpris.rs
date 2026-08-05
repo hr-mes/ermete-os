@@ -1,14 +1,8 @@
 use zbus::proxy;
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, oneshot};
-use crate::ipc::system_proxies::{ControllerBackend, SystemEventBus, SystemEvent, MockState};
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct MprisState {
-    pub title: String,
-    pub artist: String,
-    pub status: String,
-}
+use crate::ipc::types::{ControllerBackend, SystemEventBus, SystemEvent, MockState};
+pub use crate::ipc::types::MprisState;
 
 #[proxy(
     interface = "org.mpris.MediaPlayer2.Player",

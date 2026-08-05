@@ -149,17 +149,17 @@ jobs:
               fi
             done
           
-            dnf builddep -y specs/ermete-${{ matrix.package }}/*.spec || true
-            spectool -g -R specs/ermete-${{ matrix.package }}/*.spec || true
+            dnf builddep -y specs/ermete-${{ matrix.package }}/*.spec
+            spectool -g -R specs/ermete-${{ matrix.package }}/*.spec
 
-            if [ -s "specs/ermete-${{ matrix.package }}/sources.hash" ]; then
-              echo "🔒 Validating SHA256 checksums from sources.hash..."
-              cd ~/rpmbuild/SOURCES/
-              sha256sum -c /workspace/forge/specs/ermete-${{ matrix.package }}/sources.hash || exit 1
-              cd -
-            else
-              echo "⚠️ WARNING: No sources.hash found or file is empty for ${{ matrix.package }}. Proceeding without verification (Legacy Mode)."
+            if [ ! -s "specs/ermete-${{ matrix.package }}/sources.hash" ]; then
+              echo "::error:: No sources.hash found or file is empty for ${{ matrix.package }}."
+              exit 1
             fi
+            echo "🔒 Validating SHA256 checksums from sources.hash..."
+            cd ~/rpmbuild/SOURCES/
+            sha256sum -c /workspace/forge/specs/ermete-${{ matrix.package }}/sources.hash || exit 1
+            cd -
           
             # Pre-populate BUILD dir with all local crates to satisfy Cargo path dependencies
             mkdir -p ~/rpmbuild/BUILD/
@@ -172,16 +172,16 @@ jobs:
             done
 
             # First attempt (generates buildreqs.nosrc.rpm for Rust packages)
-            rpmbuild -bb --nocheck specs/ermete-${{ matrix.package }}/*.spec || true
+            rpmbuild -bb specs/ermete-${{ matrix.package }}/*.spec || true
           
             # Install dynamic dependencies if generated
             if ls ~/rpmbuild/SRPMS/*.nosrc.rpm 1> /dev/null 2>&1; then
-                dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SRPMS/*.nosrc.rpm || true
+                dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SRPMS/*.nosrc.rpm
             fi
           
 
             # Second attempt (actual build)
-            rpmbuild -bb --nocheck specs/ermete-${{ matrix.package }}/*.spec
+            rpmbuild -bb specs/ermete-${{ matrix.package }}/*.spec
           
             mkdir -p /workspace/forge/RPMS
             cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
@@ -505,7 +505,7 @@ jobs:
             done
           
             echo "--- Ricompilazione estrema con macro Ermete e Ponytail ---"
-            if ! rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec; then
+            if ! rpmbuild -bb ~/rpmbuild/SPECS/*.spec; then
               if ls ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm >/dev/null 2>&1; then
                 echo "--- Installazione Dipendenze Dinamiche (%generate_buildrequires) ---"
                 dnf builddep -y --nogpgcheck --allowerasing ~/rpmbuild/SRPMS/*.buildreqs.nosrc.rpm
@@ -519,7 +519,7 @@ jobs:
                     fi
                   done
                 fi
-                rpmbuild -bb --nocheck ~/rpmbuild/SPECS/*.spec
+                rpmbuild -bb ~/rpmbuild/SPECS/*.spec
               else
                 exit 1
               fi
@@ -588,7 +588,7 @@ jobs:
             
             # Setup GPG for RPM signing
             echo "::add-mask::${{ secrets.RPM_GPG_PASSPHRASE }}"
-            echo "${{ secrets.RPM_GPG_KEY }}" | gpg --import || true
+            echo "${{ secrets.RPM_GPG_KEY }}" | gpg --import
             echo '%_signature gpg' > ~/.rpmmacros
             echo '%_gpg_name ermete' >> ~/.rpmmacros
             echo '%__gpg_sign_cmd %{__gpg} --batch --verbose --no-armor --passphrase "${RPM_GPG_PASSPHRASE}" --pinentry-mode loopback --no-secmem-warning -u "%{_gpg_name}" -sbo %{__signature_filename} --digest-algo sha256 %{__plaintext_filename}' >> ~/.rpmmacros
@@ -664,7 +664,7 @@ jobs:
 
             rm -rf tier0 tier1 tier2 tier3
             if [ -n "${{ secrets.RPM_GPG_KEY }}" ]; then
-              gpg --export --armor "%{_gpg_name}" > RPM-GPG-KEY-ermete || true
+              gpg --export --armor "%{_gpg_name}" > RPM-GPG-KEY-ermete
             fi
             cp -a /workspace/forge/repo-cache/repo-tier0 tier0
             cp -a /workspace/forge/repo-cache/repo-tier1 tier1

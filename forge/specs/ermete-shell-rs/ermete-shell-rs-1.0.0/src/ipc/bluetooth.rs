@@ -1,7 +1,7 @@
 use zbus::proxy;
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, oneshot};
-use crate::ipc::system_proxies::{ControllerBackend, MockState, SystemEvent, SystemEventBus, BluetoothDeviceInfo};
+use crate::ipc::types::{ControllerBackend, MockState, SystemEvent, SystemEventBus, BluetoothDeviceInfo};
 
 #[proxy(
     interface = "org.bluez.Adapter1",
