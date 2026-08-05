@@ -3,8 +3,9 @@ use gtk4::ApplicationWindow;
 use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
 
 thread_local! {
-    static ACTIVE_POPUP: std::cell::RefCell<Option<(String, glib::WeakRef<ApplicationWindow>)>> = std::cell::RefCell::new(None);
+    pub static ACTIVE_POPUP: std::cell::RefCell<Option<(String, glib::WeakRef<ApplicationWindow>)>> = std::cell::RefCell::new(None);
 }
+
 
 pub fn setup_popup_autoclose(pop: &ApplicationWindow, tag: &str) {
     let mut to_close = None;

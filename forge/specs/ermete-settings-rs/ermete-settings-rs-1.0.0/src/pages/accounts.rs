@@ -121,7 +121,7 @@ pub fn build_page() -> GtkBox {
                         let mut success = false;
                         match crate::get_system_connection().await {
                             Ok(conn) => {
-                                let uid = unsafe { libc::getuid() };
+                                let uid = rustix::process::getuid().as_raw();
                                 let path = format!("/org/freedesktop/Accounts/User{}", uid);
                                 let Ok(builder) = AccountsUserProxy::builder(&conn).path(path.as_str()) else {
                                     eprintln!("Invalid DBus object path for user: {}", path);

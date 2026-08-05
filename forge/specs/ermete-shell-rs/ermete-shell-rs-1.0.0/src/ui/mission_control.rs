@@ -1,6 +1,6 @@
 // Mission Control spatial overlay
 use gtk4::prelude::*;
-use gtk4::{Align, Application, ApplicationWindow, Box as GtkBox, Button, FlowBox, Image, Label, Orientation, ScrolledWindow, Widget};
+use gtk4::{Align, Application, ApplicationWindow, Box as GtkBox, Button, FlowBox, Image, Label, Orientation, ScrolledWindow};
 use gtk4_layer_shell::{Edge, Layer, LayerShell};
 use crate::core::dock_watcher::{fetch_current_niri_windows, fetch_current_workspaces};
 use crate::ui::popup_manager::setup_popup_autoclose;

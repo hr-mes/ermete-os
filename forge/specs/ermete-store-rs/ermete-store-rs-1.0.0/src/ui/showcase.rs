@@ -1,3 +1,4 @@
+use gtk4::glib;
 use gtk4::prelude::*;
 use relm4::{ComponentParts, ComponentSender, SimpleComponent};
 use crate::backend::repository::{get_featured_catalog, AppItem};
@@ -199,8 +200,8 @@ impl SimpleComponent for ShowcaseModel {
                 
                 // Simulazione asincrona del download in background
                 let id_clone = app_id.clone();
-                std::thread::spawn(move || {
-                    std::thread::sleep(std::time::Duration::from_secs(3));
+                glib::spawn_future_local(async move {
+                    glib::timeout_future(std::time::Duration::from_secs(3)).await;
                     println!("[Demone] ✅ Download completato per '{}'. Overlay sincronizzato e reso persistente.", id_clone);
                 });
             }

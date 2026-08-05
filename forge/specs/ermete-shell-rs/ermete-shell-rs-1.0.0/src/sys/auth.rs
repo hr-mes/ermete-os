@@ -91,7 +91,7 @@ pub fn discover_target_user() -> UserInfo {
 pub fn unlock_keyring_automatic(password: &str, username: &str) {
     println!("[Ermete Greeter] Keyring unlock requested for user: {}", username);
     if let Ok(conn) = zbus::blocking::Connection::session() {
-        if let Ok(proxy) = crate::core::system_proxies::SecretEnrollerProxyBlocking::new(&conn) {
+        if let Ok(proxy) = crate::ipc::system_proxies::SecretEnrollerProxyBlocking::new(&conn) {
             if password.is_empty() {
                 if let Ok(decrypted_secret) = proxy.decrypt_secret(username) {
                     let _ = proxy.unlock_keyring(username, &decrypted_secret);
@@ -104,13 +104,13 @@ pub fn unlock_keyring_automatic(password: &str, username: &str) {
     }
 }
 
-pub fn authenticate_interactive<F>(password: &str, is_lockscreen: bool, status_cb: &F) -> Result<(), String>
+pub async fn authenticate_interactive<F>(password: &str, is_lockscreen: bool, status_cb: &F) -> Result<(), String>
 where
     F: Fn(&str),
 {
     let path = std::env::var("GREETD_SOCK").unwrap_or_else(|_| "/run/greetd.sock".to_string());
     if !std::path::Path::new(&path).exists() {
-        std::thread::sleep(std::time::Duration::from_millis(500));
+        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
         if password.is_empty() {
             return Err("Inserisci la password o usa l'impronta digitale".to_string());
         }
@@ -176,6 +176,6 @@ where
     Err("Timeout conversazione PAM (troppi passaggi di autenticazione)".to_string())
 }
 
-pub fn authenticate_or_simulate(password: &str, is_lockscreen: bool) -> Result<(), String> {
-    authenticate_interactive(password, is_lockscreen, &|_| {})
+pub async fn authenticate_or_simulate(password: &str, is_lockscreen: bool) -> Result<(), String> {
+    authenticate_interactive(password, is_lockscreen, &|_| {}).await
 }

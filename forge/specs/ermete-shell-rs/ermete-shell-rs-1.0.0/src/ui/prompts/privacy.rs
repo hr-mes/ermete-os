@@ -100,8 +100,5 @@ pub fn build_ui(app: &Application, request_info: &str) {
 
     window.set_child(Some(&vbox));
 
-    // Basic CSS
-    
-
     window.present();
 }

@@ -1,12 +1,8 @@
-use notify::{Watcher, RecursiveMode};
-use relm4::{gtk, ComponentParts, ComponentSender, SimpleComponent, RelmWidgetExt};
+use relm4::{gtk, ComponentParts, ComponentSender, SimpleComponent};
 use relm4::factory::{FactoryComponent, FactoryVecDeque, FactorySender};
 use gtk::prelude::*;
-use gtk4::{Application, ApplicationWindow, CssProvider};
-use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
-use crate::core::*;
-use crate::ui::spotlight::*;
-use crate::ui::notifications::*;
+use gtk4::Application;
+use gtk4_layer_shell::{Edge, Layer, LayerShell};
 use crate::ui::control_center::*;
 
 pub struct WorkspaceItem {
@@ -50,7 +46,10 @@ impl FactoryComponent for WorkspaceItem {
     fn update(&mut self, msg: Self::Input, _sender: FactorySender<Self>) {
         match msg {
             WorkspaceMsg::Focus => {
-                ermete_niri_ipc::sync_client::focus_workspace_by_id(self.ws.id);
+                let id = self.ws.id;
+                glib::MainContext::default().spawn_local(async move {
+                    ermete_niri_ipc::async_client::focus_workspace_by_id(id).await;
+                });
             }
         }
     }
@@ -281,8 +280,8 @@ impl SimpleComponent for TopbarModel {
 
         let sender_ws = sender.clone();
         let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
-        let state_store = crate::core::system_proxies::get_state_store();
-        state_store.event_bus().subscribe(move |ev| {
+        let event_bus = crate::core::system_proxies::get_event_bus();
+        event_bus.subscribe(move |ev| {
             let _ = tx.send(ev.clone());
         });
 
@@ -321,7 +320,7 @@ impl SimpleComponent for TopbarModel {
             TopbarInput::TickSecond => {
                 self.clock_text = crate::core::macos_clock_string();
                 
-                let (net_icon, _, _) = crate::core::get_network_status();
+                let (net_icon, _, _) = crate::core::system_proxies::get_network_controller().get_cached_network_status();
                 self.network_icon = net_icon;
                 
                 let live = crate::core::live_state::get_live_state();
@@ -398,7 +397,7 @@ pub fn handle_command(app: &Application, arg: &str) {
 pub fn toggle_or_open_popup(tag: &str, open_fn: impl FnOnce()) {
     let mut to_close = None;
     let mut already_open = false;
-    ACTIVE_POPUP.with(|p| {
+    crate::wayland::popup::ACTIVE_POPUP.with(|p| {
         if let Some((old_tag, old_weak)) = p.borrow().as_ref() {
             if let Some(old_win) = old_weak.upgrade() {
                 if old_win.is_visible() {

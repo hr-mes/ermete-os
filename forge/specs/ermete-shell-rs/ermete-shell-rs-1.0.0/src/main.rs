@@ -1,4 +1,3 @@
-
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
@@ -6,9 +5,11 @@ use clap::Parser;
 use gtk4::prelude::*;
 use gtk4::{gio, Application};
 
-// Dummy modules for now
+mod theme;
+mod wayland;
+mod ipc;
+mod sys;
 mod ui;
-mod greeter;
 mod core;
 
 #[derive(Parser, Debug)]
@@ -55,22 +56,13 @@ fn main() -> glib::ExitCode {
     // Disabilita lo scaling X11 frazionario per evitare blur
     std::env::set_var("GDK_SCALE", "1");
 
-    // SAFETY: Called at the very start of main(), before user Rust threads are created.
-    // Uses C-level setenv to avoid UB concerns with Rust's set_var in multithreaded contexts.
-    // Workaround for Vulkan swapchain resizing panic (VK_ERROR_OUT_OF_DATE_KHR) on Wayland.
-    unsafe {
-        libc::setenv(
-            b"GSK_RENDERER\0".as_ptr() as *const libc::c_char,
-            b"ngl\0".as_ptr() as *const libc::c_char,
-            1,
-        );
-    }
 
-    crate::core::sandbox::apply_landlock_sandbox()
+
+    crate::sys::sandbox::apply_landlock_sandbox()
         .expect("[Sandboxing] Errore fatale: Impossibile applicare la policy Landlock");
 
     let args = Args::parse();
-    crate::core::system_proxies::init_system_controller();
+    crate::ipc::system_proxies::init_system_controller();
 
     if let Some(req_info) = args.privacy_prompt {
         let app = Application::builder()
@@ -78,7 +70,7 @@ fn main() -> glib::ExitCode {
             .build();
         let req_clone = req_info.clone();
         app.connect_activate(move |app| {
-        crate::core::init_css();
+            crate::theme::init_css();
             crate::ui::privacy_prompt::build_ui(app, &req_clone);
         });
         return app.run_with_args(&Vec::<String>::new());
@@ -90,7 +82,7 @@ fn main() -> glib::ExitCode {
             .build();
         let path_clone = app_path.clone();
         app.connect_activate(move |app| {
-        crate::core::init_css();
+            crate::theme::init_css();
             crate::ui::gatekeeper_prompt::build_ui(app, &path_clone);
         });
         return app.run_with_args(&Vec::<String>::new());
@@ -101,7 +93,7 @@ fn main() -> glib::ExitCode {
             .application_id("os.ermete.MissionControl")
             .build();
         app.connect_activate(|app| {
-        crate::core::init_css();
+            crate::theme::init_css();
             crate::ui::mission_control::build_ui(app);
         });
         return app.run_with_args(&Vec::<String>::new());
@@ -112,7 +104,7 @@ fn main() -> glib::ExitCode {
             .application_id("os.ermete.StoreUI")
             .build();
         app.connect_activate(|app| {
-        crate::core::init_css();
+            crate::theme::init_css();
             crate::ui::store::show_store_modal(app);
         });
         return app.run_with_args(&Vec::<String>::new());
@@ -126,8 +118,8 @@ fn main() -> glib::ExitCode {
             .application_id(app_id)
             .build();
         app.connect_activate(move |app| {
-        crate::core::init_css();
-            greeter::build_ui(app, is_lock);
+            crate::theme::init_css();
+            crate::ui::greeter::build_ui(app, is_lock);
         });
         return app.run_with_args(&Vec::<String>::new());
     }
@@ -138,7 +130,7 @@ fn main() -> glib::ExitCode {
             .flags(gio::ApplicationFlags::HANDLES_COMMAND_LINE)
             .build();
         app.connect_activate(|app| {
-        crate::core::init_css();
+            crate::theme::init_css();
             static ACTIVATED_DOCK: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
             if !ACTIVATED_DOCK.swap(true, std::sync::atomic::Ordering::SeqCst) {
                 ui::dock::build_ui(app);
@@ -159,7 +151,7 @@ fn main() -> glib::ExitCode {
         .build();
 
     app.connect_activate(move |app| {
-        crate::core::init_css();
+        crate::theme::init_css();
         static ACTIVATED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
         if !ACTIVATED.swap(true, std::sync::atomic::Ordering::SeqCst) {
             use relm4::Component;

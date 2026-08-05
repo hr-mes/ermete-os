@@ -1,50 +1,13 @@
 use gtk4::glib;
 use gtk4::prelude::*;
 use gtk4::{
-    Align, Application, ApplicationWindow, Box as GtkBox, Button, CssProvider,
+    Align, Application, ApplicationWindow, Box as GtkBox, Button,
     EventControllerKey, Label, Orientation,
 };
 use gtk4_layer_shell::{KeyboardMode, Layer, LayerShell};
 use std::process::Command;
 
-const POWERMENU_CSS: &str = r#"
-window.powermenu-window {
-    background-color: rgba(10, 10, 14, 0.75);
-}
 
-.powermenu-card {
-    background: radial-gradient(circle, alpha(@surface_darker, 0.9), alpha(@surface_dim, 0.9));
-    border-radius: 12px;
-    box-shadow: inset 1px 2px 2px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(0,0,0,0.5);
-    margin: 10px;
-    padding: 32px;
-}
-
-.powermenu-btn {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    padding: 20px 24px;
-    color: #e0def4;
-    transition: all 0.2s ease;
-}
-
-.powermenu-btn:hover {
-    background: rgba(235, 111, 146, 0.25);
-    border-color: #eb6f92;
-    color: #ffffff;
-}
-
-.powermenu-icon {
-    font-size: 28px;
-    margin-bottom: 8px;
-}
-
-.powermenu-label {
-    font-size: 13px;
-    font-weight: 600;
-}
-"#;
 
 pub fn show_powermenu_modal(app: &Application) {
     let window = ApplicationWindow::builder()
@@ -116,7 +79,9 @@ pub fn show_powermenu_modal(app: &Application) {
                 w.close();
             }
             if cmd_str == "niri msg action quit" {
-                ermete_niri_ipc::sync_client::quit_niri();
+                glib::MainContext::default().spawn_local(async move {
+                    ermete_niri_ipc::async_client::quit_niri().await;
+                });
             } else {
                 let mut parts = cmd_str.split_whitespace();
                 if let Some(prog) = parts.next() {

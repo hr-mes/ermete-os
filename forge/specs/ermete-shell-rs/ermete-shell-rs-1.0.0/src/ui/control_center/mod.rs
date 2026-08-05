@@ -7,7 +7,6 @@ pub mod main_cc;
 pub mod start_menu;
 pub mod calendar;
 
-pub use widgets::*;
 pub use sysmon::*;
 pub use wifi::*;
 pub use bluetooth::*;

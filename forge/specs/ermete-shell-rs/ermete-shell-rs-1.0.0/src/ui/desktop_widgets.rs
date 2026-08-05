@@ -1,5 +1,5 @@
 use gtk4::prelude::*;
-use gtk4::{Application, ApplicationWindow, CssProvider, Fixed, Box, Label, Orientation, Align, GestureDrag};
+use gtk4::{Application, ApplicationWindow, Fixed, Box, Label, Orientation, Align, GestureDrag};
 use gtk4_layer_shell::{Edge, Layer, LayerShell};
 use chrono::Local;
 use serde::{Deserialize, Serialize};

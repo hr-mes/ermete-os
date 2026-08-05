@@ -1,4 +1,4 @@
-export image_name := env("IMAGE_NAME", "ermete")
+export image_name := env("IMAGE_NAME", "ermete-os-system")
 export default_tag := env("DEFAULT_TAG", "latest")
 export bib_image := env("BIB_IMAGE", "quay.io/centos-bootc/bootc-image-builder:latest")
 
@@ -19,9 +19,10 @@ fix:
 # Clean Repo Build Artifacts
 [group('Utility')]
 clean:
-    rm -rf *_build* previous.manifest.json changelog.md output.env output/
+    rm -rf *_build* previous.manifest.json changelog.md output.env output/ system-sbom.spdx.json
 
 # Build OS Container Image
+[group('Build')]
 build target_image=image_name tag=default_tag:
     #!/usr/bin/env bash
     BUILD_ARGS=()
@@ -54,18 +55,35 @@ _build-bib target_image tag type:
     sudo rmdir "$BUILDTMP"
     sudo chown -R $USER:$USER output/
 
-# Build Virtual Machine Image (qcow2 / iso)
+# Build Virtual Machine Disk Image (qcow2)
 [group('Build VM Image')]
 build-vm type="qcow2" target_image=("localhost/" + image_name) tag=default_tag:
     just _build-bib "{{ target_image }}" "{{ tag }}" "{{ type }}"
 
+# Build Anaconda Installer ISO Image
+[group('Build VM Image')]
+build-iso target_image=("localhost/" + image_name) tag=default_tag:
+    just _build-bib "{{ target_image }}" "{{ tag }}" "iso"
+
+# Security Scan of System Image using Trivy
+[group('QA & Security')]
+security-scan target_image=("localhost/" + image_name) tag=default_tag:
+    trivy image "{{ target_image }}:{{ tag }}" --severity CRITICAL,HIGH
+
+# Generate SPDX SBOM using Syft
+[group('QA & Security')]
+generate-sbom target_image=("localhost/" + image_name) tag=default_tag output_file="system-sbom.spdx.json":
+    syft packages "{{ target_image }}:{{ tag }}" -o spdx-json="{{ output_file }}"
+
 # Runs shellcheck on all Bash scripts
+[group('Utility')]
 lint:
     #!/usr/bin/env bash
     set -euo pipefail
     find . -iname "*.sh" -type f -exec shellcheck "{}" +
 
 # Runs shfmt on all Bash scripts
+[group('Utility')]
 format:
     #!/usr/bin/env bash
     set -euo pipefail

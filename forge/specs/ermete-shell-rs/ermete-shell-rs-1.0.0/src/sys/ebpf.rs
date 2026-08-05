@@ -1,4 +1,4 @@
-use crate::core::system_proxies::{SystemEvent, SystemEventBus};
+use crate::ipc::system_proxies::{SystemEvent, SystemEventBus};
 use tokio::time::{sleep, Duration};
 
 /// Mock-up of an eBPF-driven push notification system for DBus.

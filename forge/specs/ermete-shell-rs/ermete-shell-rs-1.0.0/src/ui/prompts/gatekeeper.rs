@@ -76,7 +76,6 @@ pub fn build_ui(app: &Application, app_path: &str) {
         .build();
         
     btn_cancel.connect_clicked(move |_btn| {
-        // Exit with code 1 to deny
         std::process::exit(1);
     });
 
@@ -86,8 +85,6 @@ pub fn build_ui(app: &Application, app_path: &str) {
         .build();
 
     btn_approve.connect_clicked(move |_btn| {
-        // Future: PAM Authentication here!
-        // For now, exit 0 to approve
         std::process::exit(0);
     });
 
@@ -96,9 +93,6 @@ pub fn build_ui(app: &Application, app_path: &str) {
     vbox.append(&hbox);
 
     window.set_child(Some(&vbox));
-
-    // Basic CSS
-    
 
     window.present();
 }

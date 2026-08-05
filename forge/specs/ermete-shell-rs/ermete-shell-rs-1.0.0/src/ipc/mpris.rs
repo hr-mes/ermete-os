@@ -1,6 +1,14 @@
 use zbus::proxy;
 use std::sync::{Arc, Mutex};
-use crate::core::system_proxies::{ControllerBackend, SystemEventBus, SystemEvent, MockState};
+use tokio::sync::{mpsc, oneshot};
+use crate::ipc::system_proxies::{ControllerBackend, SystemEventBus, SystemEvent, MockState};
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MprisState {
+    pub title: String,
+    pub artist: String,
+    pub status: String,
+}
 
 #[proxy(
     interface = "org.mpris.MediaPlayer2.Player",
@@ -16,31 +24,46 @@ pub trait MprisPlayer {
     fn stop(&self) -> zbus::Result<()>;
 }
 
-#[derive(Clone, Debug)]
-pub struct MprisController {
-    backend: ControllerBackend,
-    cached_mpris: Arc<Mutex<Option<crate::core::mpris::MprisState>>>,
-    event_bus: SystemEventBus,
+pub enum MprisCommand {
+    PlayerCommand(String, oneshot::Sender<zbus::Result<()>>),
+    GetCachedMprisState(oneshot::Sender<Option<MprisState>>),
 }
 
-impl MprisController {
-    pub fn new(backend: ControllerBackend, event_bus: SystemEventBus) -> Self {
-        Self {
+pub struct MprisActor {
+    backend: ControllerBackend,
+    cached_mpris: Option<MprisState>,
+    event_bus: SystemEventBus,
+    receiver: mpsc::Receiver<MprisCommand>,
+}
+
+impl MprisActor {
+    pub fn spawn(backend: ControllerBackend, event_bus: SystemEventBus) -> mpsc::Sender<MprisCommand> {
+        let (tx, rx) = mpsc::channel(32);
+        let actor = Self {
             backend,
-            cached_mpris: Arc::new(Mutex::new(None)),
+            cached_mpris: None,
             event_bus,
+            receiver: rx,
+        };
+        tokio::spawn(actor.run());
+        tx
+    }
+
+    async fn run(mut self) {
+        while let Some(cmd) = self.receiver.recv().await {
+            match cmd {
+                MprisCommand::PlayerCommand(c, resp) => {
+                    let res = self.handle_player_command(&c).await;
+                    let _ = resp.send(res);
+                }
+                MprisCommand::GetCachedMprisState(resp) => {
+                    let _ = resp.send(self.cached_mpris.clone());
+                }
+            }
         }
     }
 
-    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: SystemEventBus) -> Self {
-        Self {
-            backend: ControllerBackend::Mock(state),
-            cached_mpris: Arc::new(Mutex::new(None)),
-            event_bus,
-        }
-    }
-
-    pub async fn player_command(&self, cmd: &str) -> zbus::Result<()> {
+    async fn handle_player_command(&mut self, cmd: &str) -> zbus::Result<()> {
         match &self.backend {
             ControllerBackend::Dbus { session, .. } => {
                 if let Ok(dbus) = zbus::fdo::DBusProxy::new(session).await {
@@ -66,29 +89,18 @@ impl MprisController {
                         }
                     }
                 }
-                let _ = self.refresh_mpris().await;
+                let _ = self.handle_refresh_mpris().await;
             }
             ControllerBackend::Mock(state) => {
                 state.lock().unwrap_or_else(|e| e.into_inner()).last_player_command = Some(cmd.to_string());
-                let _ = self.refresh_mpris().await;
+                let _ = self.handle_refresh_mpris().await;
             }
         }
-        self.event_bus.emit(SystemEvent::MprisUpdated(self.get_cached_mpris_state()));
+        self.event_bus.emit(SystemEvent::MprisUpdated(self.cached_mpris.clone()));
         Ok(())
     }
 
-    pub fn get_cached_mpris_state(&self) -> Option<crate::core::mpris::MprisState> {
-        self.cached_mpris.lock().unwrap_or_else(|e| e.into_inner()).clone()
-    }
-
-    pub fn get_last_player_command(&self) -> Option<String> {
-        match &self.backend {
-            ControllerBackend::Dbus { .. } => None,
-            ControllerBackend::Mock(state) => state.lock().unwrap_or_else(|e| e.into_inner()).last_player_command.clone(),
-        }
-    }
-
-    pub async fn refresh_mpris(&self) -> zbus::Result<()> {
+    async fn handle_refresh_mpris(&mut self) -> zbus::Result<()> {
         match &self.backend {
             ControllerBackend::Dbus { session, .. } => {
                 if let Ok(dbus_proxy) = zbus::fdo::DBusProxy::new(session).await {
@@ -138,37 +150,90 @@ impl MprisController {
                                             }
                                             None
                                         }).unwrap_or_else(|| "-".to_string());
-                                    let new_state = crate::core::mpris::MprisState {
+                                    let new_state = MprisState {
                                         title,
                                         artist,
                                         status,
                                     };
-                                    if let Ok(mut lock) = self.cached_mpris.lock() {
-                                        *lock = Some(new_state);
-                                    }
+                                    self.cached_mpris = Some(new_state);
                                     return Ok(());
                                 }
                             }
                         }
                     }
                 }
-                if let Ok(mut lock) = self.cached_mpris.lock() {
-                    *lock = None;
-                }
+                self.cached_mpris = None;
                 Ok(())
             }
             ControllerBackend::Mock(_) => {
-                if let Ok(mut lock) = self.cached_mpris.lock() {
-                    if lock.is_none() {
-                        *lock = Some(crate::core::mpris::MprisState {
-                            title: "Track Title".to_string(),
-                            artist: "Artist".to_string(),
-                            status: "Playing".to_string(),
-                        });
-                    }
+                if self.cached_mpris.is_none() {
+                    self.cached_mpris = Some(MprisState {
+                        title: "Track Title".to_string(),
+                        artist: "Artist".to_string(),
+                        status: "Playing".to_string(),
+                    });
                 }
                 Ok(())
             }
         }
     }
 }
+
+#[derive(Clone, Debug)]
+pub struct MprisController {
+    sender: mpsc::Sender<MprisCommand>,
+    cached_mpris: Arc<Mutex<Option<MprisState>>>,
+    last_player_command: Arc<Mutex<Option<String>>>,
+}
+
+impl MprisController {
+    pub fn new(backend: ControllerBackend, event_bus: SystemEventBus) -> Self {
+        let sender = MprisActor::spawn(backend, event_bus);
+        Self {
+            sender,
+            cached_mpris: Arc::new(Mutex::new(None)),
+            last_player_command: Arc::new(Mutex::new(None)),
+        }
+    }
+
+    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: SystemEventBus) -> Self {
+        let backend = ControllerBackend::Mock(state);
+        let sender = MprisActor::spawn(backend, event_bus);
+        Self {
+            sender,
+            cached_mpris: Arc::new(Mutex::new(None)),
+            last_player_command: Arc::new(Mutex::new(None)),
+        }
+    }
+
+    pub async fn player_command(&self, cmd: &str) -> zbus::Result<()> {
+        if let Ok(mut lock) = self.last_player_command.lock() {
+            *lock = Some(cmd.to_string());
+        }
+        let (tx, rx) = oneshot::channel();
+        if self.sender.send(MprisCommand::PlayerCommand(cmd.to_string(), tx)).await.is_ok() {
+            let res = rx.await.unwrap_or(Ok(()));
+            let _ = self.refresh_mpris().await;
+            res
+        } else {
+            Ok(())
+        }
+    }
+
+    pub fn get_cached_mpris_state(&self) -> Option<MprisState> {
+        self.cached_mpris.lock().unwrap_or_else(|e| e.into_inner()).clone()
+    }
+
+    pub async fn refresh_mpris(&self) -> zbus::Result<()> {
+        let (tx, rx) = oneshot::channel();
+        if self.sender.send(MprisCommand::GetCachedMprisState(tx)).await.is_ok() {
+            if let Ok(state) = rx.await {
+                if let Ok(mut lock) = self.cached_mpris.lock() {
+                    *lock = state;
+                }
+            }
+        }
+        Ok(())
+    }
+}
+

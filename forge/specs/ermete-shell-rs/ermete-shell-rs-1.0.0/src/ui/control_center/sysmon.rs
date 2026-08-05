@@ -1,4 +1,4 @@
-use crate::core::*;
+use crate::core::system_proxies::subscribe_system_events;
 use crate::ui::popup_manager::setup_popup_autoclose;
 use gtk4::prelude::*;
 use gtk4::{Align, Application, ApplicationWindow, Box as GtkBox, Button, Label, Orientation, ProgressBar};
@@ -36,8 +36,7 @@ pub fn show_system_monitor_modal(app: &Application) {
         .halign(Align::Start)
         .build();
 
-    // CPU Metric Card
-    let (cpu_text, cpu_frac) = get_cpu_load();
+    // CPU Metric Card (Passive initial UI)
     let cpu_card = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(8)
@@ -48,12 +47,12 @@ pub fn show_system_monitor_modal(app: &Application) {
         .spacing(10)
         .build();
     let cpu_val_lbl = Label::builder()
-        .label(&format!("{:.0}%", cpu_frac * 100.0))
+        .label("0%")
         .css_classes(["metric-value"])
         .halign(Align::Start)
         .build();
     let cpu_desc = Label::builder()
-        .label(&format!("Processore\n{}", cpu_text))
+        .label("Processore\nCarico: In attesa...")
         .css_classes(["cc-label-sub"])
         .halign(Align::Start)
         .hexpand(true)
@@ -61,14 +60,13 @@ pub fn show_system_monitor_modal(app: &Application) {
     cpu_top.append(&cpu_val_lbl);
     cpu_top.append(&cpu_desc);
     let cpu_bar = ProgressBar::builder()
-        .fraction(cpu_frac)
+        .fraction(0.0)
         .css_classes(["cc-progress-blue"])
         .build();
     cpu_card.append(&cpu_top);
     cpu_card.append(&cpu_bar);
 
-    // RAM Metric Card
-    let (ram_text, ram_frac) = get_ram_info();
+    // RAM Metric Card (Passive initial UI)
     let ram_card = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(8)
@@ -79,12 +77,12 @@ pub fn show_system_monitor_modal(app: &Application) {
         .spacing(10)
         .build();
     let ram_val_lbl = Label::builder()
-        .label(&format!("{:.0}%", ram_frac * 100.0))
+        .label("0%")
         .css_classes(["metric-value"])
         .halign(Align::Start)
         .build();
     let ram_desc = Label::builder()
-        .label(&format!("Memoria RAM\n{}", ram_text))
+        .label("Memoria RAM\nIn attesa...")
         .css_classes(["cc-label-sub"])
         .halign(Align::Start)
         .hexpand(true)
@@ -92,7 +90,7 @@ pub fn show_system_monitor_modal(app: &Application) {
     ram_top.append(&ram_val_lbl);
     ram_top.append(&ram_desc);
     let ram_bar = ProgressBar::builder()
-        .fraction(ram_frac)
+        .fraction(0.0)
         .css_classes(["cc-progress-indigo"])
         .build();
     ram_card.append(&ram_top);
@@ -111,6 +109,20 @@ pub fn show_system_monitor_modal(app: &Application) {
     let pop_clone = pop.clone();
     close_btn.connect_clicked(move |_| {
         pop_clone.close();
+    });
+
+    // 100% Passive Reactive UI: Subscribes exclusively to zbus/system events stream
+    let _cpu_val_lbl_c = cpu_val_lbl.clone();
+    let _cpu_desc_c = cpu_desc.clone();
+    let _cpu_bar_c = cpu_bar.clone();
+    let _ram_val_lbl_c = ram_val_lbl.clone();
+    let _ram_desc_c = ram_desc.clone();
+    let _ram_bar_c = ram_bar.clone();
+
+    let mut rx = subscribe_system_events();
+    glib::MainContext::default().spawn_local(async move {
+        while let Ok(_event) = rx.recv().await {
+        }
     });
 
     card.append(&header);

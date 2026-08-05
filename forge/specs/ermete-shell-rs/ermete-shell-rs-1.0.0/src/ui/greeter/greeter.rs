@@ -1,7 +1,7 @@
 use gtk4::prelude::*;
 use gtk4::{Application, ApplicationWindow, Box, Button, Entry, Label, Orientation, Align};
 use gtk4_layer_shell::{Edge, Layer, LayerShell};
-use crate::core::auth::*;
+use crate::sys::auth::*;
 
 const GREETER_CSS: &str = r#"
 window.background {
@@ -471,18 +471,14 @@ pub fn build_ui(app: &Application, is_lockscreen: bool) {
             status_label.set_text("Accesso in corso...");
             status_label.set_visible(true);
 
-            let (sender, receiver) = glib::MainContext::channel::<Result<(), String>>(glib::Priority::DEFAULT);
-            std::thread::spawn(move || {
-                let res = authenticate_or_simulate(&password, is_lockscreen);
-                let _ = sender.send(res);
-            });
-
             let entry_clone = entry.clone();
             let err_clone = err_label.clone();
             let status_clone = status_label.clone();
             let submit_clone = submit_btn.clone();
             let app_quit = app_ref.clone();
-            receiver.attach(None, move |res| {
+
+            glib::MainContext::default().spawn_local(async move {
+                let res = authenticate_or_simulate(&password, is_lockscreen).await;
                 match res {
                     Ok(_) => {
                         app_quit.quit();
@@ -497,7 +493,6 @@ pub fn build_ui(app: &Application, is_lockscreen: bool) {
                         entry_clone.grab_focus();
                     }
                 }
-                glib::ControlFlow::Break
             });
         }
     });
@@ -567,14 +562,3 @@ pub fn build_ui(app: &Application, is_lockscreen: bool) {
     window.set_child(Some(&root_vbox));
     window.present();
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_greeter_ui_initialization_dry_run() {
-        // dummy test
-    }
-}
-

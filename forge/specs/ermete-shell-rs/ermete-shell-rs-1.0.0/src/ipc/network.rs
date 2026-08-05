@@ -1,35 +1,97 @@
 use std::sync::{Arc, Mutex};
-use crate::core::system_proxies::{
+use tokio::sync::{mpsc, oneshot};
+use crate::ipc::system_proxies::{
     ControllerBackend, SystemEventBus, SystemEvent, MockState, WifiNetworkInfo,
     NetworkManagerProxy, NmDeviceProxy, NmWirelessProxy, NmAccessPointProxy, 
     NmSettingsProxy, NmSettingsConnectionProxy, NmActiveConnectionProxy
 };
 
-#[derive(Clone, Debug)]
-pub struct NetworkController {
-    backend: ControllerBackend,
-    active_wifi_ssid: Arc<Mutex<Option<String>>>,
-    event_bus: SystemEventBus,
+#[allow(dead_code)]
+pub async fn get_network_status_dbus() -> (String, String, String) {
+    let ctrl = crate::ipc::system_proxies::get_network_controller();
+    let _ = ctrl.refresh_network_status().await;
+    ctrl.get_cached_network_status()
 }
 
-impl NetworkController {
-    pub fn new(backend: ControllerBackend, event_bus: SystemEventBus) -> Self {
-        Self {
+pub enum NetworkCommand {
+    ToggleWifi(oneshot::Sender<zbus::Result<bool>>),
+    IsWifiEnabled(oneshot::Sender<zbus::Result<bool>>),
+    SetWifiPowered(bool, oneshot::Sender<zbus::Result<()>>),
+    ListWifiNetworks(oneshot::Sender<zbus::Result<Vec<WifiNetworkInfo>>>),
+    ConnectWifi(String, String, oneshot::Sender<zbus::Result<()>>),
+    DisconnectWifi(String, oneshot::Sender<zbus::Result<()>>),
+    DeleteWifi(String, oneshot::Sender<zbus::Result<()>>),
+    ModifyWifi(oneshot::Sender<zbus::Result<()>>),
+    GetWifiDetails(String, oneshot::Sender<zbus::Result<(String, String, String, String, bool)>>),
+    RefreshStatus(oneshot::Sender<zbus::Result<()>>),
+}
+
+pub struct NetworkActor {
+    backend: ControllerBackend,
+    active_wifi_ssid: Option<String>,
+    event_bus: SystemEventBus,
+    receiver: mpsc::Receiver<NetworkCommand>,
+}
+
+impl NetworkActor {
+    pub fn spawn(backend: ControllerBackend, event_bus: SystemEventBus, initial_ssid: Option<String>) -> mpsc::Sender<NetworkCommand> {
+        let (tx, rx) = mpsc::channel(32);
+        let actor = Self {
             backend,
-            active_wifi_ssid: Arc::new(Mutex::new(None)),
+            active_wifi_ssid: initial_ssid,
             event_bus,
+            receiver: rx,
+        };
+        tokio::spawn(actor.run());
+        tx
+    }
+
+    async fn run(mut self) {
+        while let Some(cmd) = self.receiver.recv().await {
+            match cmd {
+                NetworkCommand::ToggleWifi(resp) => {
+                    let res = self.handle_toggle_wifi().await;
+                    let _ = resp.send(res);
+                }
+                NetworkCommand::IsWifiEnabled(resp) => {
+                    let res = self.handle_is_wifi_enabled().await;
+                    let _ = resp.send(res);
+                }
+                NetworkCommand::SetWifiPowered(powered, resp) => {
+                    let res = self.handle_set_wifi_powered(powered).await;
+                    let _ = resp.send(res);
+                }
+                NetworkCommand::ListWifiNetworks(resp) => {
+                    let res = self.handle_list_wifi_networks().await;
+                    let _ = resp.send(res);
+                }
+                NetworkCommand::ConnectWifi(ssid, pass, resp) => {
+                    let res = self.handle_connect_wifi(&ssid, &pass).await;
+                    let _ = resp.send(res);
+                }
+                NetworkCommand::DisconnectWifi(ssid, resp) => {
+                    let res = self.handle_disconnect_wifi(&ssid).await;
+                    let _ = resp.send(res);
+                }
+                NetworkCommand::DeleteWifi(ssid, resp) => {
+                    let res = self.handle_delete_wifi(&ssid).await;
+                    let _ = resp.send(res);
+                }
+                NetworkCommand::ModifyWifi(responder) => {
+                    let _ = responder.send(Ok(()));
+                }
+                NetworkCommand::GetWifiDetails(_ssid, resp) => {
+                    let _ = resp.send(Ok(("auto".to_string(), "192.168.1.100".to_string(), "192.168.1.1".to_string(), "8.8.8.8".to_string(), true)));
+                }
+                NetworkCommand::RefreshStatus(resp) => {
+                    let res = self.handle_refresh_network_status().await;
+                    let _ = resp.send(res);
+                }
+            }
         }
     }
 
-    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: SystemEventBus) -> Self {
-        Self {
-            backend: ControllerBackend::Mock(state),
-            active_wifi_ssid: Arc::new(Mutex::new(Some("Ermete-5G".to_string()))),
-            event_bus,
-        }
-    }
-
-    pub async fn toggle_wifi(&self) -> zbus::Result<bool> {
+    async fn handle_toggle_wifi(&self) -> zbus::Result<bool> {
         let new_state = match &self.backend {
             ControllerBackend::Dbus { system, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
@@ -51,7 +113,7 @@ impl NetworkController {
         Ok(new_state)
     }
 
-    pub async fn is_wifi_enabled(&self) -> zbus::Result<bool> {
+    async fn handle_is_wifi_enabled(&self) -> zbus::Result<bool> {
         match &self.backend {
             ControllerBackend::Dbus { system, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
@@ -63,7 +125,7 @@ impl NetworkController {
         }
     }
 
-    pub async fn set_wifi_powered(&self, powered: bool) -> zbus::Result<()> {
+    async fn handle_set_wifi_powered(&self, powered: bool) -> zbus::Result<()> {
         match &self.backend {
             ControllerBackend::Dbus { system, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
@@ -78,7 +140,7 @@ impl NetworkController {
         Ok(())
     }
 
-    pub async fn list_wifi_networks(&self) -> zbus::Result<Vec<WifiNetworkInfo>> {
+    async fn handle_list_wifi_networks(&self) -> zbus::Result<Vec<WifiNetworkInfo>> {
         match &self.backend {
             ControllerBackend::Dbus { system, .. } => {
                 let mut results = Vec::new();
@@ -134,7 +196,7 @@ impl NetworkController {
         }
     }
 
-    pub async fn connect_wifi(&self, ssid: &str, _password: &str) -> zbus::Result<()> {
+    async fn handle_connect_wifi(&mut self, ssid: &str, _password: &str) -> zbus::Result<()> {
         match &self.backend {
             ControllerBackend::Dbus { system, .. } => {
                 if let Ok(Ok(settings_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NmSettingsProxy::new(system)).await {
@@ -148,9 +210,7 @@ impl NetworkController {
                                                 if s == ssid {
                                                     if let Ok(Ok(nm_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
                                                         let _ = nm_proxy.activate_connection(&conn_path, &zbus::zvariant::ObjectPath::from_str_unchecked("/"), &zbus::zvariant::ObjectPath::from_str_unchecked("/")).await?;
-                                                        if let Ok(mut l) = self.active_wifi_ssid.lock() {
-                                                            *l = Some(ssid.to_string());
-                                                        }
+                                                        self.active_wifi_ssid = Some(ssid.to_string());
                                                         self.event_bus.emit(SystemEvent::NetworkUpdated(ssid.to_string()));
                                                         return Ok(());
                                                     }
@@ -176,7 +236,7 @@ impl NetworkController {
         }
     }
 
-    pub async fn disconnect_wifi(&self, ssid: &str) -> zbus::Result<()> {
+    async fn handle_disconnect_wifi(&mut self, ssid: &str) -> zbus::Result<()> {
         match &self.backend {
             ControllerBackend::Dbus { system, .. } => {
                 if let Ok(Ok(nm_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
@@ -186,9 +246,7 @@ impl NetworkController {
                                 if let Ok(id) = ac_proxy.id().await {
                                     if id == ssid {
                                         nm_proxy.deactivate_connection(&path).await?;
-                                        if let Ok(mut l) = self.active_wifi_ssid.lock() {
-                                            *l = None;
-                                        }
+                                        self.active_wifi_ssid = None;
                                         self.event_bus.emit(SystemEvent::NetworkUpdated("Disconnected".to_string()));
                                         return Ok(());
                                     }
@@ -212,7 +270,7 @@ impl NetworkController {
         }
     }
 
-    pub async fn delete_wifi(&self, ssid: &str) -> zbus::Result<()> {
+    async fn handle_delete_wifi(&self, ssid: &str) -> zbus::Result<()> {
         match &self.backend {
             ControllerBackend::Dbus { system, .. } => {
                 if let Ok(Ok(settings_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NmSettingsProxy::new(system)).await {
@@ -245,15 +303,7 @@ impl NetworkController {
         }
     }
 
-    pub async fn modify_wifi(&self, _ssid: &str, _dhcp: bool, _ip: &str, _gw: &str, _dns: &str, _auto: bool) -> zbus::Result<()> {
-        Ok(())
-    }
-
-    pub async fn get_wifi_details(&self, _ssid: &str) -> zbus::Result<(String, String, String, String, bool)> {
-        Ok(("auto".to_string(), "192.168.1.100".to_string(), "192.168.1.1".to_string(), "8.8.8.8".to_string(), true))
-    }
-
-    pub async fn refresh_network_status(&self) -> zbus::Result<()> {
+    async fn handle_refresh_network_status(&mut self) -> zbus::Result<()> {
         match &self.backend {
             ControllerBackend::Dbus { system, .. } => {
                 if let Ok(Ok(nm_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
@@ -261,35 +311,147 @@ impl NetworkController {
                         for path in active_conns {
                             if let Ok(ac_proxy) = NmActiveConnectionProxy::builder(system).path(path)?.build().await {
                                 if let Ok(id) = ac_proxy.id().await {
-                                    if let Ok(mut l) = self.active_wifi_ssid.lock() {
-                                        *l = Some(id);
-                                    }
+                                    self.active_wifi_ssid = Some(id);
                                     return Ok(());
                                 }
                             }
                         }
                     }
                 }
-                if let Ok(mut l) = self.active_wifi_ssid.lock() {
-                    *l = None;
-                }
+                self.active_wifi_ssid = None;
                 Ok(())
             }
             ControllerBackend::Mock(_) => Ok(()),
         }
     }
+}
+
+#[derive(Clone, Debug)]
+pub struct NetworkController {
+    sender: mpsc::Sender<NetworkCommand>,
+    active_wifi_ssid: Arc<Mutex<Option<String>>>,
+}
+
+impl NetworkController {
+    pub fn new(backend: ControllerBackend, event_bus: SystemEventBus) -> Self {
+        let sender = NetworkActor::spawn(backend, event_bus, None);
+        Self {
+            sender,
+            active_wifi_ssid: Arc::new(Mutex::new(None)),
+        }
+    }
+
+    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: SystemEventBus) -> Self {
+        let backend = ControllerBackend::Mock(state);
+        let sender = NetworkActor::spawn(backend, event_bus, Some("Ermete-5G".to_string()));
+        Self {
+            sender,
+            active_wifi_ssid: Arc::new(Mutex::new(Some("Ermete-5G".to_string()))),
+        }
+    }
+
+    pub async fn toggle_wifi(&self) -> zbus::Result<bool> {
+        let (tx, rx) = oneshot::channel();
+        if self.sender.send(NetworkCommand::ToggleWifi(tx)).await.is_ok() {
+            rx.await.unwrap_or(Ok(true))
+        } else {
+            Ok(true)
+        }
+    }
+
+    pub async fn is_wifi_enabled(&self) -> zbus::Result<bool> {
+        let (tx, rx) = oneshot::channel();
+        if self.sender.send(NetworkCommand::IsWifiEnabled(tx)).await.is_ok() {
+            rx.await.unwrap_or(Ok(true))
+        } else {
+            Ok(true)
+        }
+    }
+
+    pub async fn set_wifi_powered(&self, powered: bool) -> zbus::Result<()> {
+        let (tx, rx) = oneshot::channel();
+        if self.sender.send(NetworkCommand::SetWifiPowered(powered, tx)).await.is_ok() {
+            rx.await.unwrap_or(Ok(()))
+        } else {
+            Ok(())
+        }
+    }
+
+    pub async fn list_wifi_networks(&self) -> zbus::Result<Vec<WifiNetworkInfo>> {
+        let (tx, rx) = oneshot::channel();
+        if self.sender.send(NetworkCommand::ListWifiNetworks(tx)).await.is_ok() {
+            rx.await.unwrap_or(Ok(Vec::new()))
+        } else {
+            Ok(Vec::new())
+        }
+    }
+
+    pub async fn connect_wifi(&self, ssid: &str, password: &str) -> zbus::Result<()> {
+        if let Ok(mut l) = self.active_wifi_ssid.lock() {
+            *l = Some(ssid.to_string());
+        }
+        let (tx, rx) = oneshot::channel();
+        if self.sender.send(NetworkCommand::ConnectWifi(ssid.to_string(), password.to_string(), tx)).await.is_ok() {
+            rx.await.unwrap_or(Ok(()))
+        } else {
+            Ok(())
+        }
+    }
+
+    pub async fn disconnect_wifi(&self, ssid: &str) -> zbus::Result<()> {
+        if let Ok(mut l) = self.active_wifi_ssid.lock() {
+            *l = None;
+        }
+        let (tx, rx) = oneshot::channel();
+        if self.sender.send(NetworkCommand::DisconnectWifi(ssid.to_string(), tx)).await.is_ok() {
+            rx.await.unwrap_or(Ok(()))
+        } else {
+            Ok(())
+        }
+    }
+
+    pub async fn delete_wifi(&self, ssid: &str) -> zbus::Result<()> {
+        let (tx, rx) = oneshot::channel();
+        if self.sender.send(NetworkCommand::DeleteWifi(ssid.to_string(), tx)).await.is_ok() {
+            rx.await.unwrap_or(Ok(()))
+        } else {
+            Ok(())
+        }
+    }
+
+    pub async fn modify_wifi(&self, _ssid: &str, _autoconnect: bool, _ip: &str, _gw: &str, _dns: &str, _ipv6: bool) -> zbus::Result<()> {
+        let (tx, rx) = oneshot::channel();
+        if self.sender.send(NetworkCommand::ModifyWifi(tx)).await.is_ok() {
+            rx.await.unwrap_or(Ok(()))
+        } else {
+            Ok(())
+        }
+    }
+
+    pub async fn get_wifi_details(&self, ssid: &str) -> zbus::Result<(String, String, String, String, bool)> {
+        let (tx, rx) = oneshot::channel();
+        if self.sender.send(NetworkCommand::GetWifiDetails(ssid.to_string(), tx)).await.is_ok() {
+            rx.await.unwrap_or(Ok(("auto".to_string(), "192.168.1.100".to_string(), "192.168.1.1".to_string(), "8.8.8.8".to_string(), true)))
+        } else {
+            Ok(("auto".to_string(), "192.168.1.100".to_string(), "192.168.1.1".to_string(), "8.8.8.8".to_string(), true))
+        }
+    }
+
+    pub async fn refresh_network_status(&self) -> zbus::Result<()> {
+        let (tx, rx) = oneshot::channel();
+        if self.sender.send(NetworkCommand::RefreshStatus(tx)).await.is_ok() {
+            rx.await.unwrap_or(Ok(()))
+        } else {
+            Ok(())
+        }
+    }
 
     pub fn get_cached_network_status(&self) -> (String, String, String) {
-        if let ControllerBackend::Mock(state) = &self.backend {
-            let s = state.lock().unwrap_or_else(|e| e.into_inner());
-            if !s.wifi_enabled {
-                return ("󰖪".to_string(), "Rete Wi-Fi".to_string(), "Disattivato".to_string());
+        if let Ok(l) = self.active_wifi_ssid.lock() {
+            if let Some(ssid) = l.as_ref() {
+                return ("".to_string(), "Rete Wi-Fi".to_string(), ssid.clone());
             }
-            let active_ssid = s.wifi_networks.iter().find(|w| w.active).map(|w| w.ssid.clone()).unwrap_or_else(|| "Non connesso".to_string());
-            let icon = if active_ssid == "Non connesso" { "󰖪" } else { "" };
-            return (icon.to_string(), "Rete Wi-Fi".to_string(), active_ssid);
         }
-
         if let Ok(entries) = std::fs::read_dir("/sys/class/net") {
             for entry in entries.flatten() {
                 let name = entry.file_name().to_string_lossy().to_string();
@@ -301,8 +463,7 @@ impl NetworkController {
                         if name.starts_with("eth") || name.starts_with("en") {
                             return ("󰈀".to_string(), "Ethernet".to_string(), "Connesso via cavo".to_string());
                         } else if name.starts_with("wl") {
-                            let ssid = self.active_wifi_ssid.lock().unwrap_or_else(|e| e.into_inner()).clone().unwrap_or_else(|| "Connesso".to_string());
-                            return ("".to_string(), "Rete Wi-Fi".to_string(), ssid);
+                            return ("".to_string(), "Rete Wi-Fi".to_string(), "Connesso".to_string());
                         }
                     }
                 }
@@ -311,3 +472,4 @@ impl NetworkController {
         ("󰖪".to_string(), "Rete Wi-Fi".to_string(), "Non connesso".to_string())
     }
 }
+

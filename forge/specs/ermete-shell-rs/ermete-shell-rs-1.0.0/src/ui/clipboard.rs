@@ -1,35 +1,13 @@
 use gtk4::glib;
 use gtk4::prelude::*;
 use gtk4::{
-    Align, Application, ApplicationWindow, Box as GtkBox, Button, CssProvider,
+    Align, Application, ApplicationWindow, Box as GtkBox, Button,
     EventControllerKey, Label, Orientation, ScrolledWindow,
 };
 use gtk4_layer_shell::{KeyboardMode, Layer, LayerShell};
-use std::io::Write;
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
-const CLIPBOARD_CSS: &str = r#"
-.clipboard-card {
-    background: radial-gradient(circle, alpha(@surface_darker, 0.9), alpha(@surface_dim, 0.9));
-    border-radius: 12px;
-    box-shadow: inset 1px 2px 2px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(0,0,0,0.5);
-    margin: 10px;
-    padding: 16px;
-}
 
-.clipboard-item-btn {
-    background: rgba(255, 255, 255, 0.04);
-    border: none;
-    border-radius: 8px;
-    padding: 10px 14px;
-    color: #e0def4;
-}
-
-.clipboard-item-btn:hover {
-    background: rgba(156, 207, 216, 0.2);
-    color: #9ccfd8;
-}
-"#;
 
 pub fn show_clipboard_modal(app: &Application) {
     let window = ApplicationWindow::builder()
@@ -74,9 +52,9 @@ pub fn show_clipboard_modal(app: &Application) {
         .build();
     let list_box = GtkBox::new(Orientation::Vertical, 6);
 
+    let list_box_clone = list_box.clone();
+    let window_clone = window.clone();
     glib::MainContext::default().spawn_local(async move {
-        let list_box_clone = list_box.clone();
-        let window_clone = window.clone();
         if let Ok(output) = tokio::process::Command::new("cliphist").arg("list").output().await {
             let stdout = String::from_utf8_lossy(&output.stdout);
             for line in stdout.lines().take(30) {
@@ -95,6 +73,8 @@ pub fn show_clipboard_modal(app: &Application) {
 
                     let line_capture = line_str.clone();
                     btn.connect_clicked(glib::clone!(@weak window_clone => move |_| {
+                        let line_cap = line_capture.clone();
+                        let win = window_clone.clone();
                         glib::MainContext::default().spawn_local(async move {
                             if let Ok(mut decode_proc) = tokio::process::Command::new("cliphist")
                                 .arg("decode")
@@ -104,7 +84,7 @@ pub fn show_clipboard_modal(app: &Application) {
                             {
                                 if let Some(mut stdin) = decode_proc.stdin.take() {
                                     use tokio::io::AsyncWriteExt;
-                                    let _ = stdin.write_all(line_capture.as_bytes()).await;
+                                    let _ = stdin.write_all(line_cap.as_bytes()).await;
                                 }
                                 if let Ok(dec_out) = decode_proc.wait_with_output().await {
                                     if let Ok(mut wl_proc) = tokio::process::Command::new("wl-copy")
@@ -118,7 +98,7 @@ pub fn show_clipboard_modal(app: &Application) {
                                     }
                                 }
                             }
-                            window_clone.close();
+                            win.close();
                         });
                     }));
 
@@ -136,3 +116,4 @@ pub fn show_clipboard_modal(app: &Application) {
 
     window.present();
 }
+
