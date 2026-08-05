@@ -8,3 +8,4 @@ description = "Ermete OS Confidential Computing Attestation Daemon"
 tokio = { version = "1.37", features = ["full"] }
 zbus = "4.1.2"
 sev = "1.2.1"
+tracing = "0.1"

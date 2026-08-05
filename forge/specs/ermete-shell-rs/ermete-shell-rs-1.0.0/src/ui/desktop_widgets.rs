@@ -295,7 +295,7 @@ fn reload_widgets(canvas: &Fixed) {
                 canvas.put(&widget, widget_cfg.x, widget_cfg.y);
             }
             other => {
-                eprintln!("Unknown widget type requested: {}", other);
+                tracing::warn!("Unknown widget type requested: {}", other);
             }
         }
     }

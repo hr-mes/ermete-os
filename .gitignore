@@ -23,6 +23,8 @@ graphify-out/
 # Build Artifacts & Worktrees
 target/
 **/target/
+*.bak
+**/*.bak
 RPMS_OUT/
 .ccache_local/
 .worktrees/

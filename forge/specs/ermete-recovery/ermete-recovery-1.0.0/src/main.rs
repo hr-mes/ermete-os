@@ -12,7 +12,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Aggiungiamo una regola di match per il segnale CriticalFailure
     let proxy = zbus::fdo::DBusProxy::new(&connection).await?;
     proxy
-        .add_match("type='signal',interface='os.ermete.Recovery',member='CriticalFailure'")
+        .add_match_rule(
+            "type='signal',interface='os.ermete.Recovery',member='CriticalFailure'"
+                .try_into()?,
+        )
         .await?;
 
     // Creiamo uno stream per ricevere i messaggi
@@ -22,8 +25,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     while let Some(msg_result) = stream.next().await {
         match msg_result {
             Ok(msg) => {
-                if msg.message_type() == zbus::MessageType::Signal {
-                    if let (Some(interface), Some(member)) = (msg.interface(), msg.member()) {
+                let header = msg.header();
+                if header.message_type() == zbus::message::Type::Signal {
+                    if let (Some(interface), Some(member)) = (header.interface(), header.member()) {
                         if interface.as_str() == "os.ermete.Recovery"
                             && member.as_str() == "CriticalFailure"
                         {

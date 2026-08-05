@@ -36,7 +36,7 @@ async fn check_attestation() -> Result<(), Box<dyn std::error::Error>> {
             // A direct read might return an error, but we handle it gracefully here as a syscall check.
             let mut buf = [0u8; 1];
             if let Err(e) = file.read(&mut buf) {
-                println!("Note: direct read from /dev/sev-guest returned: {} (ioctl usually required)", e);
+                tracing::info!("Note: direct read from /dev/sev-guest returned: {} (ioctl usually required)", e);
             }
 
             Ok(())
@@ -64,7 +64,7 @@ async fn check_attestation() -> Result<(), Box<dyn std::error::Error>> {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("Starting ermete-attestation daemon...");
+    tracing::info!("Starting ermete-attestation daemon...");
 
     let connection = connection::Builder::system()?
         .name("org.ermete.AttestationAlarm")?
@@ -79,15 +79,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     match check_attestation().await {
         Ok(_) => {
-            println!("Attestation successful.");
+            tracing::info!("Attestation successful.");
             AttestationAlarm::attestation_success(iface_ref.signal_context()).await?;
-            println!("Attestation success signal emitted on DBus.");
+            tracing::info!("Attestation success signal emitted on DBus.");
         },
         Err(e) => {
-            eprintln!("Attestation Error: {}", e);
+            tracing::error!("Attestation Error: {}", e);
             let error_msg = e.to_string();
             AttestationAlarm::attestation_failed(iface_ref.signal_context(), &error_msg).await?;
-            eprintln!("Attestation alarm signal emitted on DBus.");
+            tracing::error!("Attestation alarm signal emitted on DBus.");
         }
     }
 

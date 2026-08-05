@@ -1,6 +1,6 @@
 use aya::programs::TracePoint;
 use aya::Bpf;
-use aya::maps::perf::AsyncPerfEventArray;
+use aya::maps::perf::PerfEventArray;
 use aya::util::online_cpus;
 use bytes::BytesMut;
 use tokio::signal;
@@ -23,15 +23,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     program.attach("sched", "sched_process_exec")?;
     info!("eBPF hooks attached to sched:sched_process_exec.");
     
-    // Read events from the kernel via AsyncPerfEventArray
-    if let Ok(events_map) = bpf.take_map("EVENTS") {
-        let mut perf_array = AsyncPerfEventArray::try_from(events_map)?;
+    // Read events from the kernel via PerfEventArray
+    if let Ok(events_map) = bpf.map_mut("EVENTS") {
+        let mut perf_array = PerfEventArray::try_from(events_map)?;
         for cpu_id in online_cpus()? {
             let mut buf = perf_array.open(cpu_id, None)?;
             task::spawn(async move {
                 let mut buffers = (0..10).map(|_| BytesMut::with_capacity(1024)).collect::<Vec<_>>();
                 loop {
-                    let events = buf.read_events(&mut buffers).await.unwrap();
+                    let events = buf.read_events(&mut buffers).unwrap();
                     for b in buffers.iter_mut().take(events.read) {
                         info!("Received event from kernel on CPU {} ({} bytes)", cpu_id, b.len());
                     }

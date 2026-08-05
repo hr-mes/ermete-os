@@ -207,8 +207,8 @@ impl SimpleComponent for ShowcaseModel {
                 self.filter_state.borrow_mut().active_category = cat;
             }
             ShowcaseMsg::Install(app_id) => {
-                println!("[OverlayFS/Nix] 🚀 Lancio immediato overlay fittizio per '{}'...", app_id);
-                println!("[Demone] ⬇️ Avvio download in background per '{}' (Lazy Loading)...", app_id);
+                tracing::info!("[OverlayFS/Nix] 🚀 Lancio immediato overlay fittizio per '{}'...", app_id);
+                tracing::info!("[Demone] ⬇️ Avvio download in background per '{}' (Lazy Loading)...", app_id);
                 
                 if let Some(app) = self.apps.iter_mut().find(|a| a.id == app_id) {
                     app.installed = true; // Disponibile istantaneamente
@@ -218,11 +218,11 @@ impl SimpleComponent for ShowcaseModel {
                 let id_clone = app_id.clone();
                 glib::spawn_future_local(async move {
                     glib::timeout_future(std::time::Duration::from_secs(3)).await;
-                    println!("[Demone] ✅ Download completato per '{}'. Overlay sincronizzato e reso persistente.", id_clone);
+                    tracing::info!("[Demone] ✅ Download completato per '{}'. Overlay sincronizzato e reso persistente.", id_clone);
                 });
             }
             ShowcaseMsg::OpenApp(app_id) => {
-                println!("[Store] Apertura applicazione '{}'", app_id);
+                tracing::info!("[Store] Apertura applicazione '{}'", app_id);
             }
         }
     }

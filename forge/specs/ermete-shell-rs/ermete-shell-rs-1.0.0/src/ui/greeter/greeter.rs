@@ -527,7 +527,7 @@ pub fn build_ui(app: &Application, is_lockscreen: bool) {
         .build();
     suspend_btn.connect_clicked(|_| {
         if let Err(e) = std::process::Command::new("systemctl").arg("suspend").spawn() {
-            eprintln!("Failed to spawn systemctl suspend: {}", e);
+            tracing::error!("Failed to spawn systemctl suspend: {}", e);
         }
     });
 
@@ -537,7 +537,7 @@ pub fn build_ui(app: &Application, is_lockscreen: bool) {
         .build();
     reboot_btn.connect_clicked(|_| {
         if let Err(e) = std::process::Command::new("systemctl").arg("reboot").spawn() {
-            eprintln!("Failed to spawn systemctl reboot: {}", e);
+            tracing::error!("Failed to spawn systemctl reboot: {}", e);
         }
     });
 
@@ -547,7 +547,7 @@ pub fn build_ui(app: &Application, is_lockscreen: bool) {
         .build();
     poweroff_btn.connect_clicked(|_| {
         if let Err(e) = std::process::Command::new("systemctl").arg("poweroff").spawn() {
-            eprintln!("Failed to spawn systemctl poweroff: {}", e);
+            tracing::error!("Failed to spawn systemctl poweroff: {}", e);
         }
     });
 

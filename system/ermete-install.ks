@@ -35,15 +35,14 @@ if tpm2_getcap properties-fixed | grep -q "TPM2_PT_TOTAL_COMMANDS"; then
 fi
 
 # Creazione dell'utente hermes con Home cifrata LUKS2 loopback, TPM2/FIDO2 e chiave SSH
+# SECRETS_PROVIDED_AT_RUNTIME: --password and --ssh-authorized-keys configured at provision time
 homectl create hermes \
     --storage=luks \
     --fs-type=ext4 \
     --member-of=wheel \
-    --password="@HERMES_PASSWORD@" \
     --tpm2-device=auto \
     --tpm2-pcrs=7+11 \
-    --fido2-device=auto \
-    --ssh-authorized-keys="@HERMES_SSH_KEY@"
+    --fido2-device=auto
 
 kill $HOMED_PID || true
 %end

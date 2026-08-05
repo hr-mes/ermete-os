@@ -6,7 +6,7 @@ use tokio::time::{sleep, Duration};
 /// to tracepoints like `sys_enter_sendmsg` to instantly capture DBus properties
 /// changes without requiring the UI thread to poll with timeouts.
 pub async fn start_ebpf_dbus_listener(event_bus: SystemEventBus) {
-    println!("[eBPF] Attaching push notification hooks to AF_UNIX DBus sockets...");
+    tracing::info!("[eBPF] Attaching push notification hooks to AF_UNIX DBus sockets...");
     
     // Simulate push events bypassing the standard 5-second DBus polling
     tokio::spawn(async move {

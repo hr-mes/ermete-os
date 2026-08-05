@@ -89,7 +89,7 @@ pub fn discover_target_user() -> UserInfo {
 }
 
 pub fn unlock_keyring_automatic(password: &str, username: &str) {
-    println!("[Ermete Greeter] Keyring unlock requested for user: {}", username);
+    tracing::info!("[Ermete Greeter] Keyring unlock requested for user: {}", username);
     if let Ok(conn) = zbus::blocking::Connection::session() {
         if let Ok(proxy) = crate::ipc::system_proxies::SecretEnrollerProxyBlocking::new(&conn) {
             if password.is_empty() {

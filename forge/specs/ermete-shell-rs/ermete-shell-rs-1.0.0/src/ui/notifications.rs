@@ -127,7 +127,7 @@ pub fn spawn_notification_daemon(app: &Application) {
         let builder = match zbus::connection::Builder::session() {
             Ok(b) => b,
             Err(e) => {
-                eprintln!("Failed to get session bus: {}", e);
+                tracing::error!("Failed to get session bus: {}", e);
                 return;
             }
         };
@@ -135,7 +135,7 @@ pub fn spawn_notification_daemon(app: &Application) {
         let builder = match builder.name("org.freedesktop.Notifications") {
             Ok(b) => b,
             Err(e) => {
-                eprintln!("Failed to request DBus name: {}", e);
+                tracing::error!("Failed to request DBus name: {}", e);
                 return;
             }
         };
@@ -143,7 +143,7 @@ pub fn spawn_notification_daemon(app: &Application) {
         let builder = match builder.serve_at("/org/freedesktop/Notifications", server) {
             Ok(b) => b,
             Err(e) => {
-                eprintln!("Failed to serve DBus object: {}", e);
+                tracing::error!("Failed to serve DBus object: {}", e);
                 return;
             }
         };
@@ -151,7 +151,7 @@ pub fn spawn_notification_daemon(app: &Application) {
         let conn = match builder.build().await {
             Ok(c) => c,
             Err(e) => {
-                eprintln!("Failed to build DBus connection: {}", e);
+                tracing::error!("Failed to build DBus connection: {}", e);
                 return;
             }
         };
@@ -164,7 +164,7 @@ pub fn spawn_notification_daemon(app: &Application) {
                 "ActionInvoked",
                 &(id, action_key),
             ).await {
-                eprintln!("Failed to emit ActionInvoked: {}", e);
+                tracing::error!("Failed to emit ActionInvoked: {}", e);
             }
         }
     });
