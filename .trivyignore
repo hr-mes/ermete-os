@@ -1,0 +1,6 @@
+# Ignore upstream Golang CVEs in third-party binaries (e.g. nvidia-container-toolkit) until Fedora upstream updates them
+CVE-2026-39820
+CVE-2026-39822
+CVE-2026-39836
+CVE-2026-42499
+CVE-2026-42504
