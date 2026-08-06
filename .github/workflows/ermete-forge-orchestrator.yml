@@ -144,8 +144,8 @@ jobs:
             for dir in specs/ermete-${{ matrix.package }}/*-*/ ; do
               if [ -d "$dir" ]; then
                 pkg_dir=$(basename "$dir")
-                echo "Packing $pkg_dir into ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz..."
-                tar -czf ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz -C "specs/ermete-${{ matrix.package }}" "$pkg_dir"
+                echo "Packing $pkg_dir into ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz (deterministic)..."
+                tar --mtime="2024-01-01 00:00:00Z" --sort=name --owner=root:0 --group=root:0 --numeric-owner -c -C "specs/ermete-${{ matrix.package }}" "$pkg_dir" | gzip -n > ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz
               fi
             done
           
