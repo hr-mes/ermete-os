@@ -89,7 +89,7 @@ jobs:
     - name: 🧹 Cleanup Isolator
       if: always()
       run: |
-        podman exec chimera-builder bash -c "chown -R 1000:1000 /forge/.ccache_local || true"
+        podman exec chimera-builder bash -c "chown -R 1000:1000 /forge/.ccache_local" || true
         podman unshare chown -R $USER:$USER .ccache_local || true
         podman rm -f chimera-builder || true
           
