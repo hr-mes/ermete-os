@@ -56,8 +56,8 @@ jobs:
           - ermete-backup
 
     steps:
-      - name: System Dependencies are pre-installed
-        run: echo "Builder image has everything ready!"
+      - name: Install System Dependencies
+        run: dnf install -y cairo-devel pango-devel gdk-pixbuf2-devel gtk4-devel glib2-devel
 
       - name: Checkout Code
         uses: actions/checkout@v4

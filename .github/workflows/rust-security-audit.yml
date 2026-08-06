@@ -13,8 +13,8 @@ jobs:
     container:
       image: ghcr.io/hr-mes/ermete-os-builder:latest
     steps:
-      - name: System Dependencies are pre-installed in Builder
-        run: echo "Builder image has everything ready!"
+      - name: Install System Dependencies
+        run: dnf install -y cairo-devel pango-devel gdk-pixbuf2-devel gtk4-devel glib2-devel
 
       - name: Checkout Code
         uses: actions/checkout@v4
