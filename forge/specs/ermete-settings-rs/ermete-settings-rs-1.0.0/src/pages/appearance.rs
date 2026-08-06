@@ -48,24 +48,30 @@ pub fn build_page() -> Box {
 
     btn_light.connect_toggled(|btn| {
         if btn.is_active() {
-            with_settings_proxy(|proxy| async move {
-                let _ = proxy.set_color_scheme("prefer-light").await;
+            relm4::spawn_local(async move {
+                with_settings_proxy(|proxy| async move {
+                    let _ = proxy.set_color_scheme("prefer-light").await;
+                }).await;
             });
         }
     });
 
     btn_dark.connect_toggled(|btn| {
         if btn.is_active() {
-            with_settings_proxy(|proxy| async move {
-                let _ = proxy.set_color_scheme("prefer-dark").await;
+            relm4::spawn_local(async move {
+                with_settings_proxy(|proxy| async move {
+                    let _ = proxy.set_color_scheme("prefer-dark").await;
+                }).await;
             });
         }
     });
 
     btn_auto.connect_toggled(|btn| {
         if btn.is_active() {
-            with_settings_proxy(|proxy| async move {
-                let _ = proxy.set_color_scheme("default").await;
+            relm4::spawn_local(async move {
+                with_settings_proxy(|proxy| async move {
+                    let _ = proxy.set_color_scheme("default").await;
+                }).await;
             });
         }
     });
@@ -108,8 +114,10 @@ pub fn build_page() -> Box {
         let hex_clone = hex_val.to_string();
         btn.connect_clicked(move |_| {
             let hex_c = hex_clone.clone();
-            with_settings_proxy(move |proxy| async move {
-                let _ = proxy.set_accent_color(&hex_c).await;
+            relm4::spawn_local(async move {
+                with_settings_proxy(move |proxy| async move {
+                    let _ = proxy.set_accent_color(&hex_c).await;
+                }).await;
             });
         });
         accent_box.append(&btn);
@@ -128,14 +136,16 @@ pub fn build_page() -> Box {
     let bl = btn_light.clone();
     let bd = btn_dark.clone();
     let ba = btn_auto.clone();
-    with_settings_proxy(move |proxy| async move {
-        if let Ok(scheme) = proxy.color_scheme().await {
-            match scheme.as_str() {
-                "prefer-dark" => bd.set_active(true),
-                "prefer-light" => bl.set_active(true),
-                _ => ba.set_active(true),
+    relm4::spawn_local(async move {
+        with_settings_proxy(move |proxy| async move {
+            if let Ok(scheme) = proxy.color_scheme().await {
+                match scheme.as_str() {
+                    "prefer-dark" => bd.set_active(true),
+                    "prefer-light" => bl.set_active(true),
+                    _ => ba.set_active(true),
+                }
             }
-        }
+        }).await;
     });
 
     container

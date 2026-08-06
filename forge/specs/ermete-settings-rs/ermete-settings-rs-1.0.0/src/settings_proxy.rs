@@ -1,3 +1,4 @@
+#![allow(deprecated)]
 #[zbus::dbus_proxy(
     interface = "org.ermete.Settings",
     default_service = "org.ermete.Settings",

@@ -191,6 +191,7 @@ fn format_voice_text(item: &DockItem) -> String {
     }
 }
 
+#[allow(dead_code)]
 struct DockMonitorInstance {
     monitor_connector: String,
     screen_height: i32,
@@ -203,7 +204,7 @@ struct DockMonitorInstance {
 }
 
 thread_local! {
-    static DOCK_INSTANCES: RefCell<Vec<DockMonitorInstance>> = RefCell::new(Vec::new());
+    static DOCK_INSTANCES: RefCell<Vec<DockMonitorInstance>> = const { RefCell::new(Vec::new()) };
 }
 
 fn animate_dock_visibility(container: &GtkBox, hide: bool) {
@@ -243,7 +244,7 @@ fn should_autohide_for_monitor(state: &DockState, monitor_connector: &str, scree
         }
         if let Some(layout) = &w.layout {
             let y = layout.tile_pos_in_workspace_view.map(|p| p.1).unwrap_or(0.0);
-            let h = layout.window_size.map(|s| s.1 as f64).unwrap_or(0.0);
+            let h = layout.window_size.map(|s| s.1).unwrap_or(0.0);
             if (y + h) >= overlap_threshold {
                 return true;
             }
@@ -252,6 +253,7 @@ fn should_autohide_for_monitor(state: &DockState, monitor_connector: &str, scree
     })
 }
 
+#[allow(deprecated)]
 #[allow(dead_code)]
 pub fn build_ui(app: &Application) -> ApplicationWindow {
     let display = gtk4::gdk::Display::default().expect("Display default");

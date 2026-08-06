@@ -21,6 +21,25 @@ const FAN_ALLOW: u32 = 0x01;
 const FAN_DENY: u32 = 0x02;
 const FAN_EVENT_METADATA_LEN: usize = std::mem::size_of::<fanotify_event_metadata>();
 
+fn respond_and_close(fanotify_fd: RawFd, event_fd: RawFd, response_code: u32) {
+    let mut response = fanotify_response {
+        fd: event_fd,
+        response: response_code,
+    };
+    // SAFETY: Write fanotify response to fanotify_fd file descriptor.
+    unsafe {
+        libc::write(
+            fanotify_fd,
+            &mut response as *mut _ as *const c_void,
+            std::mem::size_of::<fanotify_response>(),
+        );
+    }
+    // SAFETY: Close fanotify event file descriptor.
+    unsafe {
+        libc::close(event_fd);
+    }
+}
+
 struct GatekeeperManager {
     fanotify_fd: RawFd,
     pending_events: Arc<std::sync::Mutex<HashMap<u64, i32>>>, // fd_id -> event_fd
@@ -83,19 +102,11 @@ impl GatekeeperManager {
             match sandbox_result {
                 Ok(_child) => {
                     // Sandbox spawned — DENY original unsandboxed execution
-                    let mut response = fanotify_response { fd: event_fd, response: FAN_DENY };
-                    unsafe {
-                        libc::write(self.fanotify_fd, &mut response as *mut _ as *const c_void, std::mem::size_of::<fanotify_response>());
-                        libc::close(event_fd);
-                    }
+                    respond_and_close(self.fanotify_fd, event_fd, FAN_DENY);
                 }
                 Err(e) => {
                     eprintln!("bwrap failed for {}: {}. Denying.", target_str, e);
-                    let mut response = fanotify_response { fd: event_fd, response: FAN_DENY };
-                    unsafe {
-                        libc::write(self.fanotify_fd, &mut response as *mut _ as *const c_void, std::mem::size_of::<fanotify_response>());
-                        libc::close(event_fd);
-                    }
+                    respond_and_close(self.fanotify_fd, event_fd, FAN_DENY);
                 }
             }
             Ok(())
@@ -110,19 +121,7 @@ impl GatekeeperManager {
             pending.remove(&fd_id)
         };
         if let Some(event_fd) = event_fd {
-            // Deny execution
-            let mut response = fanotify_response {
-                fd: event_fd,
-                response: FAN_DENY,
-            };
-            unsafe {
-                libc::write(
-                    self.fanotify_fd,
-                    &mut response as *mut _ as *const c_void,
-                    std::mem::size_of::<fanotify_response>(),
-                );
-                libc::close(event_fd);
-            }
+            respond_and_close(self.fanotify_fd, event_fd, FAN_DENY);
             Ok(())
         } else {
             Err(zbus::fdo::Error::InvalidArgs(format!("No pending event for id {}", fd_id)))
@@ -210,6 +209,7 @@ impl GatekeeperManager {
 async fn main() -> Result<(), Box<dyn Error>> {
     println!("Starting Ermete Gatekeeper Daemon...");
 
+    // SAFETY: Call libc fanotify_init syscall to create fanotify file descriptor.
     let fanotify_fd = unsafe {
         libc::fanotify_init(FAN_CLASS_CONTENT | FAN_NONBLOCK, (libc::O_RDONLY | libc::O_LARGEFILE) as u32)
     };
@@ -231,6 +231,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 continue;
             }
         };
+        // SAFETY: Call libc fanotify_mark syscall with valid CString pointer.
         let ret = unsafe {
             libc::fanotify_mark(
                 fanotify_fd,
@@ -272,6 +273,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         
         let mut buf = [0u8; 4096];
         loop {
+            // SAFETY: Read from fanotify_fd into local byte buffer.
             let n = unsafe {
                 libc::read(fanotify_fd, buf.as_mut_ptr() as *mut c_void, buf.len())
             };
@@ -293,9 +295,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     break;
                 }
                 
-                let metadata: &fanotify_event_metadata = unsafe {
-                    &*(buf.as_ptr().add(offset) as *const fanotify_event_metadata)
-                };
+                // SAFETY: Calculate pointer offset within read buffer bounds.
+                let ptr = unsafe { buf.as_ptr().add(offset) as *const fanotify_event_metadata };
+                // SAFETY: Dereference pointer to fanotify_event_metadata struct after bounds check.
+                let metadata: &fanotify_event_metadata = unsafe { &*ptr };
                 
                 if metadata.vers != libc::FANOTIFY_METADATA_VERSION {
                     eprintln!("Mismatch fanotify version");
@@ -330,25 +333,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         if let Err(e) = GatekeeperManager::prompt_required(&signal_ctxt, fd_id, &target_path_str).await {
                             eprintln!("Failed to send prompt_required signal: {}", e);
                             // Fallback deny if UI is dead
-                            let mut response = fanotify_response {
-                                fd: metadata.fd,
-                                response: FAN_DENY,
-                            };
-                            unsafe {
-                                libc::write(fanotify_fd, &mut response as *mut _ as *const c_void, std::mem::size_of::<fanotify_response>());
-                                libc::close(metadata.fd);
-                            }
+                            respond_and_close(fanotify_fd, metadata.fd, FAN_DENY);
                         }
                     } else {
                         // Allow immediately
-                        let mut response = fanotify_response {
-                            fd: metadata.fd,
-                            response: FAN_ALLOW,
-                        };
-                        unsafe {
-                            libc::write(fanotify_fd, &mut response as *mut _ as *const c_void, std::mem::size_of::<fanotify_response>());
-                            libc::close(metadata.fd);
-                        }
+                        respond_and_close(fanotify_fd, metadata.fd, FAN_ALLOW);
                     }
                 }
                 

@@ -40,7 +40,7 @@ pub fn build_page() -> Box {
 
     drawing_area.set_draw_func(move |_area, cr, width, height| {
         cr.set_source_rgb(0.12, 0.14, 0.18);
-        let _ = cr.rectangle(0.0, 0.0, width as f64, height as f64);
+        cr.rectangle(0.0, 0.0, width as f64, height as f64);
         let _ = cr.fill();
 
         let store = outputs_store_draw.borrow();
@@ -53,12 +53,12 @@ pub fn build_page() -> Box {
             let x = start_x;
             let y = (height as f64 - box_h) / 2.0;
             cr.set_source_rgb(0.22, 0.55, 0.88);
-            let _ = cr.rectangle(x, y, box_w, box_h);
+            cr.rectangle(x, y, box_w, box_h);
             let _ = cr.fill();
 
             cr.set_source_rgb(1.0, 1.0, 1.0);
             cr.set_font_size(13.0);
-            let _ = cr.move_to(x + 12.0, y + box_h / 2.0);
+            cr.move_to(x + 12.0, y + box_h / 2.0);
             let _ = cr.show_text("eDP-1");
         } else {
             for (i, name) in store.iter().enumerate() {
@@ -66,12 +66,12 @@ pub fn build_page() -> Box {
                 let y = (height as f64 - box_h) / 2.0;
 
                 cr.set_source_rgb(0.22, 0.55, 0.88);
-                let _ = cr.rectangle(x, y, box_w, box_h);
+                cr.rectangle(x, y, box_w, box_h);
                 let _ = cr.fill();
 
                 cr.set_source_rgb(1.0, 1.0, 1.0);
                 cr.set_font_size(13.0);
-                let _ = cr.move_to(x + 12.0, y + box_h / 2.0);
+                cr.move_to(x + 12.0, y + box_h / 2.0);
                 let _ = cr.show_text(name);
             }
         }

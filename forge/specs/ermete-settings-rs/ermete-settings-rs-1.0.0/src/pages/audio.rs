@@ -1,7 +1,9 @@
+#![allow(deprecated)]
 use gtk4::prelude::*;
 use gtk4::{Align, Box, Label, Orientation, Scale};
 use crate::components::action_row::ActionRow;
 
+#[allow(deprecated)]
 #[zbus::dbus_proxy(
     interface = "os.ermete.Bedrock",
     default_service = "os.ermete.Bedrock",

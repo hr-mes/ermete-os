@@ -1,6 +1,6 @@
 
 thread_local! {
-    pub static CSS_PROVIDER: std::cell::RefCell<Option<gtk4::CssProvider>> = std::cell::RefCell::new(None);
+    pub static CSS_PROVIDER: std::cell::RefCell<Option<gtk4::CssProvider>> = const { std::cell::RefCell::new(None) };
 }
 
 pub fn init_css() {

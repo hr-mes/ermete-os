@@ -33,10 +33,10 @@ pub fn build_ui(app: &Application, request_info: &str) {
         .build();
 
     let parts: Vec<&str> = request_info.splitn(2, ':').collect();
-    let resource = parts.get(0).unwrap_or(&"Risorsa");
-    let app_id = parts.get(1).unwrap_or(&"Applicazione Sconosciuta");
+    let resource = parts.first().copied().unwrap_or("Risorsa");
+    let app_id = parts.get(1).copied().unwrap_or("Applicazione Sconosciuta");
 
-    let icon_name = match *resource {
+    let icon_name = match resource {
         "Camera" => "camera-web-symbolic",
         "Microphone" => "audio-input-microphone-symbolic",
         "ScreenCast" => "video-display-symbolic",
@@ -53,7 +53,7 @@ pub fn build_ui(app: &Application, request_info: &str) {
     vbox.append(&icon);
 
     let title = Label::builder()
-        .label(&format!("\"{}\" desidera accedere a {}", app_id, resource))
+        .label(format!("\"{}\" desidera accedere a {}", app_id, resource))
         .css_classes(["privacy-title"])
         .halign(Align::Center)
         .wrap(true)

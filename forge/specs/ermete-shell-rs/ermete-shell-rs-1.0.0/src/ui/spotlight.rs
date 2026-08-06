@@ -22,8 +22,8 @@ pub struct SpotlightItem {
 }
 
 thread_local! {
-    static SPOTLIGHT_INDEX: RefCell<Vec<SpotlightItem>> = RefCell::new(Vec::new());
-    static LAST_INDEX_TIME: RefCell<Option<Instant>> = RefCell::new(None);
+    static SPOTLIGHT_INDEX: RefCell<Vec<SpotlightItem>> = const { RefCell::new(Vec::new()) };
+    static LAST_INDEX_TIME: RefCell<Option<Instant>> = const { RefCell::new(None) };
 }
 
 pub fn ensure_index_loaded() {
@@ -65,7 +65,7 @@ pub fn ensure_index_loaded() {
 
     // 2. Index installed AppInfo catalog
     let mut apps: Vec<AppInfo> = AppInfo::all().into_iter().filter(|a| a.should_show()).collect();
-    apps.sort_by(|a, b| a.display_name().to_lowercase().cmp(&b.display_name().to_lowercase()));
+    apps.sort_by_key(|a| a.display_name().to_lowercase());
 
     for app_info in apps {
         let name = app_info.display_name().to_string();
@@ -114,7 +114,7 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
             let img = Image::builder().icon_name("accessories-calculator").pixel_size(40).build();
             hbox.append(&img);
             let vbox = GtkBox::builder().orientation(Orientation::Vertical).valign(Align::Center).build();
-            let name_lbl = Label::builder().label(&format!("= {}", res_str)).halign(Align::Start).css_classes(["spotlight-item-title"]).build();
+            let name_lbl = Label::builder().label(format!("= {}", res_str)).halign(Align::Start).css_classes(["spotlight-item-title"]).build();
             vbox.append(&name_lbl);
             let desc_lbl = Label::builder().label("Risultato calcolatrice (clicca per copiare e chiudere)").halign(Align::Start).css_classes(["spotlight-item-desc"]).build();
             vbox.append(&desc_lbl);
@@ -137,7 +137,7 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
         let img = Image::builder().icon_name("utilities-terminal").pixel_size(40).build();
         hbox.append(&img);
         let vbox = GtkBox::builder().orientation(Orientation::Vertical).valign(Align::Center).build();
-        let name_lbl = Label::builder().label(&format!("Esegui: {}", cmd)).halign(Align::Start).css_classes(["spotlight-item-title"]).build();
+        let name_lbl = Label::builder().label(format!("Esegui: {}", cmd)).halign(Align::Start).css_classes(["spotlight-item-title"]).build();
         vbox.append(&name_lbl);
         let desc_lbl = Label::builder().label("Lancia comando nel terminale").halign(Align::Start).css_classes(["spotlight-item-desc"]).build();
         vbox.append(&desc_lbl);
@@ -145,7 +145,7 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
         row.set_child(Some(&hbox));
         let cmd_clone = cmd.to_string();
         row.connect_clicked(glib::clone!(@weak pop => move |_| {
-            let _ = std::process::Command::new("foot").arg("-e").arg("sh").arg("-c").arg(&format!("{}; read -p '\nPremi Invio per chiudere...'", cmd_clone)).spawn();
+            let _ = std::process::Command::new("foot").arg("-e").arg("sh").arg("-c").arg(format!("{}; read -p '\nPremi Invio per chiudere...'", cmd_clone)).spawn();
             pop.close();
         }));
         list_box.append(&row);
@@ -164,7 +164,7 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
             let img = Image::builder().icon_name("web-browser").pixel_size(40).build();
             hbox.append(&img);
             let vbox = GtkBox::builder().orientation(Orientation::Vertical).valign(Align::Center).build();
-            let name_lbl = Label::builder().label(&format!("Cerca sul Web: {}", query)).halign(Align::Start).css_classes(["spotlight-item-title"]).build();
+            let name_lbl = Label::builder().label(format!("Cerca sul Web: {}", query)).halign(Align::Start).css_classes(["spotlight-item-title"]).build();
             vbox.append(&name_lbl);
             let desc_lbl = Label::builder().label("Cerca con il browser predefinito").halign(Align::Start).css_classes(["spotlight-item-desc"]).build();
             vbox.append(&desc_lbl);
@@ -206,7 +206,7 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
                         let vbox = GtkBox::builder().orientation(Orientation::Vertical).valign(Align::Center).build();
                         let path = std::path::Path::new(line);
                         let name = path.file_name().unwrap_or_default().to_string_lossy();
-                        let name_lbl = Label::builder().label(&name.to_string()).halign(Align::Start).css_classes(["spotlight-item-title"]).build();
+                        let name_lbl = Label::builder().label(name.to_string()).halign(Align::Start).css_classes(["spotlight-item-title"]).build();
                         vbox.append(&name_lbl);
                         let desc_lbl = Label::builder().label(line).halign(Align::Start).css_classes(["spotlight-item-desc"]).ellipsize(gtk4::pango::EllipsizeMode::Middle).build();
                         vbox.append(&desc_lbl);
@@ -238,7 +238,7 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
         let img = Image::builder().icon_name("system-run").pixel_size(40).build();
         hbox.append(&img);
         let vbox = GtkBox::builder().orientation(Orientation::Vertical).valign(Align::Center).build();
-        let name_lbl = Label::builder().label(&format!("Chiedi ad AI: {}", query)).halign(Align::Start).css_classes(["spotlight-item-title"]).build();
+        let name_lbl = Label::builder().label(format!("Chiedi ad AI: {}", query)).halign(Align::Start).css_classes(["spotlight-item-title"]).build();
         vbox.append(&name_lbl);
         let desc_lbl = Label::builder().label("Ermete AI capirà l'intento e aprirà il pannello corretto").halign(Align::Start).css_classes(["spotlight-item-desc"]).build();
         vbox.append(&desc_lbl);

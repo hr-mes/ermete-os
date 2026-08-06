@@ -44,7 +44,7 @@ async fn get_snapshots_async() -> Vec<SnapshotInfo> {
     if let Ok(entries) = fs::read_dir(&path) {
         for entry in entries.flatten() {
             let p = entry.path();
-            if p.extension().map_or(false, |ext| ext == "json") {
+            if p.extension().is_some_and(|ext| ext == "json") {
                 if let Ok(content) = fs::read_to_string(&p) {
                     if let Ok(info) = serde_json::from_str::<SnapshotInfo>(&content) {
                         list.push(info);
@@ -169,13 +169,13 @@ fn populate_snapshot_list(list_box: &GtkBox) {
                 .build();
 
             let title_lbl = Label::builder()
-                .label(&format!("📸 {} ({})", snap.note, snap.id))
+                .label(format!("📸 {} ({})", snap.note, snap.id))
                 .css_classes(["snap-title"])
                 .halign(Align::Start)
                 .build();
 
             let meta_lbl = Label::builder()
-                .label(&format!("Creato il: {} | Spazio stimato: {}", snap.timestamp, snap.size_estimate))
+                .label(format!("Creato il: {} | Spazio stimato: {}", snap.timestamp, snap.size_estimate))
                 .css_classes(["snap-meta"])
                 .halign(Align::Start)
                 .build();

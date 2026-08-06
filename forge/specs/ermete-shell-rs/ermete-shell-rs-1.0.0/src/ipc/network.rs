@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, oneshot};
 use crate::ipc::types::{

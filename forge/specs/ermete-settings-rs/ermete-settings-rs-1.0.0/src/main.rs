@@ -92,6 +92,7 @@ impl SimpleComponent for AppModel {
         ermete_style::load_glass_theme();
 
         // Registro delle pagine delle impostazioni
+        #[allow(clippy::type_complexity)]
         let pages: &[(&str, &str, fn() -> gtk4::Box)] = &[
             ("wifi", "Wi-Fi", crate::pages::network::build_page),
             ("bluetooth", "Bluetooth", crate::pages::bluetooth::build_page),

@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use zbus::proxy;
 use zbus::Connection;
 use std::sync::{Arc, Mutex};

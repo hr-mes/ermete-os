@@ -5,7 +5,7 @@ static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 use anyhow::Result;
 use std::time::Duration;
 use tokio::time::sleep;
-use tracing::{info, warn, error};
+use tracing::info;
 
 mod dbus;
 mod firmware;
@@ -27,7 +27,7 @@ async fn main() -> Result<()> {
 
     info!("D-Bus Interface 'os.ermete.Lvfs' registered.");
 
-    let engine = firmware::FirmwareEngine::new();
+    let _engine = firmware::FirmwareEngine::new();
 
     // Main event loop
     loop {

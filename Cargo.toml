@@ -21,6 +21,18 @@ members = [
     "forge/specs/ermete-niri-ipc",
     "forge/specs/ermete-live-patcher/ermete-live-patcher-1.0.0"
 ]
+exclude = [
+    "forge/specs/ermete-backup/ermete-backup-1.0.0/fuzz",
+    "forge/specs/ermete-cloud-rs/ermete-cloud-rs-1.0.0/fuzz",
+    "forge/specs/ermete-daemon-rs/ermete-daemon-rs-0.2.1/fuzz",
+    "forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0/fuzz",
+    "forge/specs/ermete-lvfs-rs/ermete-lvfs-rs-1.0.0/fuzz",
+    "forge/specs/ermete-mdm-rs/ermete-mdm-rs-1.0.0/fuzz",
+    "forge/specs/ermete-settings-rs/ermete-settings-rs-1.0.0/fuzz",
+    "forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0/fuzz",
+    "forge/specs/ermete-store-rs/ermete-store-rs-1.0.0/fuzz"
+]
+
 resolver = "2"
 
 [profile.release]

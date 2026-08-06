@@ -124,7 +124,7 @@ impl Network {
         let ap_results = join_all(ap_futures).await;
         let mut results: Vec<(String, u8, bool)> = ap_results.into_iter().flatten().collect();
 
-        results.sort_by(|a, b| b.1.cmp(&a.1));
+        results.sort_by_key(|b| std::cmp::Reverse(b.1));
         let mut seen = HashSet::new();
         let mut formatted = Vec::new();
         for (ssid, strength, is_protected) in results {

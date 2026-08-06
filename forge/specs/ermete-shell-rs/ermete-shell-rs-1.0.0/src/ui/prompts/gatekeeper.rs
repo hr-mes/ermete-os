@@ -46,7 +46,7 @@ pub fn build_ui(app: &Application, app_path: &str) {
     let filename = path_obj.file_name().unwrap_or_default().to_string_lossy();
 
     let title = Label::builder()
-        .label(&format!("Esecuzione di \"{}\" Bloccata", filename))
+        .label(format!("Esecuzione di \"{}\" Bloccata", filename))
         .css_classes(["gatekeeper-title"])
         .halign(Align::Center)
         .wrap(true)

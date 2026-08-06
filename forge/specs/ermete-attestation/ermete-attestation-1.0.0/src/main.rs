@@ -1,7 +1,6 @@
 use std::fs::File;
 use std::io::Read;
 use std::os::unix::fs::FileTypeExt;
-use tokio;
 use zbus::{connection, interface};
 
 struct AttestationAlarm;
@@ -44,7 +43,7 @@ async fn check_attestation() -> Result<(), Box<dyn std::error::Error>> {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
             // Check for TDX as a fallback
             match File::open("/dev/tdx_guest") {
-                Ok(mut tdx_file) => {
+                Ok(tdx_file) => {
                     let metadata = tdx_file.metadata()?;
                     if !metadata.file_type().is_char_device() {
                         return Err("Device /dev/tdx_guest is not a character device.".into());

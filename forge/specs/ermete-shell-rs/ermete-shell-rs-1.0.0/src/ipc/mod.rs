@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 pub mod types;
 pub mod system_proxies;
 pub mod audio;
@@ -63,27 +64,27 @@ mod tests {
         let display = DisplayController::new_mock(state.clone(), bus.clone());
         let mpris = MprisController::new_mock(state.clone(), bus.clone());
 
-        assert_eq!(network.is_wifi_enabled().await.unwrap(), true);
+        assert!(network.is_wifi_enabled().await.unwrap());
 
         let new_wifi = network.toggle_wifi().await.unwrap();
-        assert_eq!(new_wifi, false);
-        assert_eq!(network.is_wifi_enabled().await.unwrap(), false);
+        assert!(!new_wifi);
+        assert!(!network.is_wifi_enabled().await.unwrap());
 
         network.set_wifi_powered(true).await.unwrap();
-        assert_eq!(network.is_wifi_enabled().await.unwrap(), true);
+        assert!(network.is_wifi_enabled().await.unwrap());
 
         let new_bt = bluetooth.toggle_bluetooth().await.unwrap();
-        assert_eq!(new_bt, false);
-        assert_eq!(bluetooth.is_bluetooth_enabled().await.unwrap(), false);
+        assert!(!new_bt);
+        assert!(!bluetooth.is_bluetooth_enabled().await.unwrap());
 
         bluetooth.set_bluetooth_powered(true).await.unwrap();
-        assert_eq!(bluetooth.is_bluetooth_enabled().await.unwrap(), true);
+        assert!(bluetooth.is_bluetooth_enabled().await.unwrap());
 
         let new_mute = audio.toggle_mute().await.unwrap();
-        assert_eq!(new_mute, true);
+        assert!(new_mute);
 
         let new_src_mute = audio.toggle_source_mute().await.unwrap();
-        assert_eq!(new_src_mute, true);
+        assert!(new_src_mute);
 
         audio.set_volume(0.75).await.unwrap();
         assert_eq!(audio.get_cached_volume(), 0.75);
@@ -112,7 +113,7 @@ mod tests {
 
         let details = network.get_wifi_details("Ermete-5G").await.unwrap();
         assert_eq!(details.0, "auto");
-        assert_eq!(details.4, true);
+        assert!(details.4);
 
         let bt_list = bluetooth.list_bluetooth_devices().await.unwrap();
         assert_eq!(bt_list.len(), 1);
@@ -146,7 +147,7 @@ mod tests {
         
         network.connect_wifi("Ermete-5G", "secret").await.unwrap();
         let list = network.list_wifi_networks().await.unwrap();
-        assert_eq!(list[0].active, true);
+        assert!(list[0].active);
         
         let (icon, title, sub) = network.get_cached_network_status();
         assert_eq!(icon, "");
@@ -155,7 +156,7 @@ mod tests {
 
         network.disconnect_wifi("Ermete-5G").await.unwrap();
         let list = network.list_wifi_networks().await.unwrap();
-        assert_eq!(list[0].active, false);
+        assert!(!list[0].active);
 
         assert!(mpris.get_cached_mpris_state().is_none());
         mpris.player_command("play-pause").await.unwrap();

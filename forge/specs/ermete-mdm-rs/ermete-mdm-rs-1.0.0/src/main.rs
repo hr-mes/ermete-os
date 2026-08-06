@@ -87,7 +87,7 @@ impl SystemActor {
     async fn force_vpn(&self) -> bool {
         info!("Forcing VPN...");
         let output = Command::new("systemctl")
-            .args(&["enable", "--now", "openvpn-client@ermete.service"])
+            .args(["enable", "--now", "openvpn-client@ermete.service"])
             .output()
             .await;
             

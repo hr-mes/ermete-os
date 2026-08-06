@@ -1,5 +1,4 @@
 use zbus::{interface, ConnectionBuilder, SignalContext};
-use zbus::fdo::Result as FdoResult;
 use std::process::Stdio;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;

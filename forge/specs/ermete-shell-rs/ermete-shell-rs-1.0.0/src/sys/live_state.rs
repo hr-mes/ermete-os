@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use std::fs;
 
 #[derive(Debug, Clone)]
@@ -21,6 +22,7 @@ impl Default for LiveState {
     }
 }
 
+#[allow(clippy::field_reassign_with_default)]
 pub fn get_live_state() -> LiveState {
     let mut state = LiveState::default();
 

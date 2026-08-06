@@ -7,6 +7,7 @@ pub struct ActionRow;
 
 impl ActionRow {
     /// Costruisce una row GTK4 con titolo, sottotitolo opzionale e widget suffisso opzionale.
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(
         title: &str,
         subtitle: Option<&str>,

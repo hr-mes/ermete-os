@@ -18,6 +18,12 @@ pub struct BackupServer {
     pub snapshot_dir: PathBuf,
 }
 
+impl Default for BackupServer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl BackupServer {
     pub fn new() -> Self {
         let home = std::env::var("HOME").unwrap_or_else(|_| dirs::home_dir().unwrap_or(std::path::PathBuf::from("/home")).to_string_lossy().into_owned().to_string());
@@ -75,7 +81,7 @@ impl BackupServer {
         if let Ok(entries) = fs::read_dir(&self.snapshot_dir) {
             for entry in entries.flatten() {
                 let path = entry.path();
-                if path.extension().map_or(false, |ext| ext == "json") {
+                if path.extension().is_some_and(|ext| ext == "json") {
                     if let Ok(content) = fs::read_to_string(&path) {
                         if let Ok(info) = serde_json::from_str::<SnapshotInfo>(&content) {
                             list.push(info);

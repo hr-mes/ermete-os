@@ -93,7 +93,7 @@ pub fn build_ui(app: &Application) {
                 .arg("action")
                 .arg("focus-workspace")
                 .arg("--id")
-                .arg(&ws_id.to_string())
+                .arg(ws_id.to_string())
                 .spawn();
             win_clone.close();
         });
@@ -166,7 +166,7 @@ pub fn build_ui(app: &Application) {
                 .arg("action")
                 .arg("focus-window")
                 .arg("--id")
-                .arg(&win_id.to_string())
+                .arg(win_id.to_string())
                 .spawn();
             win_clone.close();
         });

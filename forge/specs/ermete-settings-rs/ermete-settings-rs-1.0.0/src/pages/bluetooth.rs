@@ -1,7 +1,9 @@
+#![allow(deprecated)]
 use gtk4::prelude::*;
 use gtk4::{Align, Box, Button, Label, ListBox, Orientation, Switch};
 use crate::components::action_row::ActionRow;
 
+#[allow(deprecated)]
 #[zbus::dbus_proxy(
     interface = "os.ermete.Bedrock.Bluetooth",
     default_service = "os.ermete.Bedrock",
@@ -16,6 +18,7 @@ trait Bluetooth {
     fn get_devices(&self) -> zbus::Result<Vec<(String, String)>>;
 }
 
+#[allow(deprecated)]
 #[zbus::dbus_proxy(
     interface = "org.bluez.Device1",
     default_service = "org.bluez"

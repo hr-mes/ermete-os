@@ -1,5 +1,5 @@
 use zbus::{interface, Connection};
-use tracing::{info, warn, error};
+use tracing::{info, error};
 use std::collections::HashMap;
 use tokio::process::Command;
 

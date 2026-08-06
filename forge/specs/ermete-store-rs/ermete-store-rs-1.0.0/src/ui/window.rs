@@ -13,6 +13,7 @@ pub struct AppModel {
 #[derive(Debug)]
 pub enum AppMsg {
     SelectPage(String),
+    #[allow(dead_code)]
     Quit,
 }
 

@@ -1,4 +1,4 @@
-use gtk::{gdk, prelude::*};
+use gtk::gdk;
 
 pub fn load_glass_theme() {
     let css_provider = gtk::CssProvider::new();

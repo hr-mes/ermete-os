@@ -1,6 +1,6 @@
 use anyhow::Result;
 use std::future::pending;
-use tracing::{info, warn, error};
+use tracing::info;
 
 mod portal;
 

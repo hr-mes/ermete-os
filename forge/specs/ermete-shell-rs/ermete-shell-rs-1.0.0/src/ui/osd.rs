@@ -75,13 +75,12 @@ pub fn spawn_osd(app: &Application) {
                         current_val = v;
                     }
                 }
-                crate::core::system_proxies::SystemEvent::BrightnessChanged(b) => {
-                    if (b - last.brightness).abs() > 1.0 {
+                crate::core::system_proxies::SystemEvent::BrightnessChanged(b)
+                    if (b - last.brightness).abs() > 1.0 => {
                         last.brightness = b;
                         update = true;
                         is_vol = false;
                         current_val = b;
-                    }
                 }
                 _ => {}
             }

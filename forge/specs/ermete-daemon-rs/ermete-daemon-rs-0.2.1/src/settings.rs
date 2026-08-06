@@ -57,6 +57,7 @@ pub struct SettingsStateStore {
     pub state_rx: watch::Receiver<SettingsState>,
 }
 
+#[allow(dead_code)]
 impl SettingsStateStore {
     pub async fn new_async() -> Self {
         let initial_state = Self::load_async().await;

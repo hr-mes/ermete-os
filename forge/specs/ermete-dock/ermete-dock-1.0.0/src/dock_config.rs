@@ -124,17 +124,17 @@ mod tests {
         assert!(get_dock_config_path().exists(), "load_dock_config should save default if file didn't exist");
 
         // Test add_pin
-        let added = add_pin("custom.app.desktop").unwrap_or(DockConfig::default());
+        let added = add_pin("custom.app.desktop").unwrap_or_default();
         assert!(added.is_pinned("custom.app.desktop"));
         assert!(is_pinned("custom.app.desktop"));
 
         // Test adding duplicate
-        let added_again = add_pin("custom.app.desktop").unwrap_or(DockConfig::default());
+        let added_again = add_pin("custom.app.desktop").unwrap_or_default();
         let count = added_again.pinned.iter().filter(|id| *id == "custom.app.desktop").count();
         assert_eq!(count, 1, "duplicate pin should not be added");
 
         // Test remove_pin
-        let removed = remove_pin("custom.app.desktop").unwrap_or(DockConfig::default());
+        let removed = remove_pin("custom.app.desktop").unwrap_or_default();
         assert!(!removed.is_pinned("custom.app.desktop"));
         assert!(!is_pinned("custom.app.desktop"));
 

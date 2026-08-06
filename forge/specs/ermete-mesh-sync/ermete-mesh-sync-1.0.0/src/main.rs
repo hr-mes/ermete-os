@@ -24,7 +24,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 1. Generate X25519 Keys for WireGuard
     let secret_key = EphemeralSecret::random_from_rng(OsRng);
-    let public_key = PublicKey::from(&secret_key);
+    let _public_key = PublicKey::from(&secret_key);
     tracing::info!("Generated WireGuard public key.");
 
     // 2. Setup Asynchronous DBus

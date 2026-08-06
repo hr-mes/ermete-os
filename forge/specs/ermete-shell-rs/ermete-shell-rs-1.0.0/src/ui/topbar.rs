@@ -298,6 +298,7 @@ impl SimpleComponent for TopbarModel {
             }
         });
 
+        #[allow(deprecated)]
         let (niri_tx, niri_rx) = glib::MainContext::channel(glib::Priority::DEFAULT);
         crate::core::spawn_niri_workspace_watcher(niri_tx);
         

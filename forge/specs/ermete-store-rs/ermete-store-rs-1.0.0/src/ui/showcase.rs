@@ -266,10 +266,8 @@ impl ShowcaseModel {
             let state = filter_state.borrow();
 
             // Filtro Categoria
-            if !state.active_category.is_empty() && state.active_category != "All" {
-                if category != &state.active_category {
-                    return false;
-                }
+            if !state.active_category.is_empty() && state.active_category != "All" && category != &state.active_category {
+                return false;
             }
 
             // Filtro Ricerca

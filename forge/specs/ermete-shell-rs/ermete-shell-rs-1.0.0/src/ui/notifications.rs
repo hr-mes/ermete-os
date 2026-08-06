@@ -7,7 +7,7 @@ use std::cell::RefCell;
 use tokio::sync::mpsc::UnboundedSender;
 
 thread_local! {
-    pub static ACTION_SENDER: RefCell<Option<UnboundedSender<(u32, String)>>> = RefCell::new(None);
+    pub static ACTION_SENDER: RefCell<Option<UnboundedSender<(u32, String)>>> = const { RefCell::new(None) };
 }
 
 pub fn format_action_invoked_payload(id: u32, text: &str) -> (u32, String) {
@@ -109,6 +109,7 @@ pub fn show_toast_popup(app: &Application, notif: &NotificationData) {
     }));
 }
 
+#[allow(deprecated)]
 pub fn spawn_notification_daemon(app: &Application) {
     
 
@@ -280,7 +281,7 @@ pub fn show_notification_center(app: &Application) {
                     .build();
 
                 let grp_title = Label::builder()
-                    .label(&format!("󰣆 {}", app_name))
+                    .label(format!("󰣆 {}", app_name))
                     .css_classes(["cc-label-main"])
                     .halign(Align::Start)
                     .hexpand(true)

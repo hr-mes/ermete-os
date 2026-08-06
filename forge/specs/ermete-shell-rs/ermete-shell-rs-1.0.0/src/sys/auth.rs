@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use greetd_ipc::{Request, Response};
 use std::io::{Read, Write};
 use std::os::unix::net::UnixStream;
@@ -42,7 +43,7 @@ pub fn discover_target_user() -> UserInfo {
                     let parts: Vec<&str> = line.split(':').collect();
                     if parts.len() >= 7 {
                         if let Ok(uid) = parts[2].parse::<u32>() {
-                            if uid >= 1000 && uid < 65534 && (parts[6].ends_with("bash") || parts[6].ends_with("zsh") || parts[6].ends_with("fish")) {
+                            if (1000..65534).contains(&uid) && (parts[6].ends_with("bash") || parts[6].ends_with("zsh") || parts[6].ends_with("fish")) {
                                 return parts[0].to_string();
                             }
                         }

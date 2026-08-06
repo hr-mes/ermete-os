@@ -12,6 +12,7 @@ use tokio::sync::mpsc::Sender;
 /// # Errors
 /// Returns `Err(String)` if spawning the process fails, capturing stdout fails, waiting for completion fails,
 /// or if flatpak returns a non-zero exit code.
+#[allow(dead_code)]
 pub async fn install_app(app_id: &str, progress_tx: Sender<f64>) -> Result<(), String> {
     let mut child = Command::new("flatpak")
         .arg("install")
@@ -52,6 +53,7 @@ pub async fn install_app(app_id: &str, progress_tx: Sender<f64>) -> Result<(), S
 }
 
 /// Helper function to parse percentage values (e.g., "45%", " 50.5%") from a stdout line.
+#[allow(dead_code)]
 fn parse_percentage(line: &str) -> Option<f64> {
     if let Some(percent_idx) = line.find('%') {
         let prefix = &line[..percent_idx];

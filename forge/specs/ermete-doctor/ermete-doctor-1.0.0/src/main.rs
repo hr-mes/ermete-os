@@ -23,7 +23,7 @@ impl SystemHealth {
 
 async fn get_nvme_health() -> Option<String> {
     let output = Command::new("smartctl")
-        .args(&["-i", "-A", "-j", "/dev/nvme0n1"])
+        .args(["-i", "-A", "-j", "/dev/nvme0n1"])
         .output()
         .await
         .ok()?;
@@ -37,7 +37,7 @@ async fn get_nvme_health() -> Option<String> {
 
 async fn get_btrfs_health() -> Option<String> {
     let output = Command::new("btrfs")
-        .args(&["device", "stats", "/"])
+        .args(["device", "stats", "/"])
         .output()
         .await
         .ok()?;

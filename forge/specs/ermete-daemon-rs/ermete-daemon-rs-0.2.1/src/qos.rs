@@ -6,6 +6,7 @@ use tokio::time::sleep;
 /// Starts the App Nap QoS observer.
 /// This observer will throttle background window PIDs by applying
 /// a high nice value (19) or by moving them to a restricted systemd cgroup (e.g., CPUWeight=10).
+#[allow(dead_code)]
 #[allow(unsafe_code)]
 pub async fn start_qos_observer() {
     println!("Starting App Nap QoS observer...");
@@ -19,6 +20,7 @@ pub async fn start_qos_observer() {
             
             if dummy_bg_pid > 0 {
                 // Apply nice value of 19 (lowest priority) to the background PID
+                // SAFETY: dummy_bg_pid is validated to be greater than 0 before calling setpriority.
                 unsafe {
                     let ret = setpriority(PRIO_PROCESS, dummy_bg_pid, 19);
                     if ret == -1 {

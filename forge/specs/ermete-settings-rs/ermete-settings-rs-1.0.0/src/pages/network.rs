@@ -1,3 +1,4 @@
+#![allow(deprecated)]
 use gtk4::prelude::*;
 use gtk4::{Align, Box, Button, DropDown, Entry, Label, ListBox, Orientation};
 use crate::components::action_row::ActionRow;
@@ -52,8 +53,8 @@ pub fn build_page() -> Box {
 
     let conn_row_clone = conn_row.clone();
     check_btn.connect_clicked(move |_| {
-        let row = conn_row_clone.clone();
-        let ctx = gtk4::glib::MainContext::default();
+        let _row = conn_row_clone.clone();
+        let _ctx = gtk4::glib::MainContext::default();
         relm4::spawn_local(async move {
             if let Ok(conn) = crate::get_connection().await {
                 if let Ok(proxy) = NetworkProxy::new(&conn).await {
