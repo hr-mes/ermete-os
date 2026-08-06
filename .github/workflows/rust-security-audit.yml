@@ -14,7 +14,7 @@ jobs:
       image: ghcr.io/hr-mes/ermete-os-builder:latest
     steps:
       - name: Install System Dependencies
-        run: dnf install -y cairo-devel pango-devel gdk-pixbuf2-devel gtk4-devel glib2-devel
+        run: dnf install -y cairo-devel pango-devel gdk-pixbuf2-devel gtk4-devel glib2-devel gtk4-layer-shell-devel
 
       - name: Checkout Code
         uses: actions/checkout@v4

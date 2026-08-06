@@ -57,7 +57,7 @@ jobs:
 
     steps:
       - name: Install System Dependencies
-        run: dnf install -y cairo-devel pango-devel gdk-pixbuf2-devel gtk4-devel glib2-devel
+        run: dnf install -y cairo-devel pango-devel gdk-pixbuf2-devel gtk4-devel glib2-devel gtk4-layer-shell-devel
 
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -95,7 +95,9 @@ jobs:
 
       - name: 📦 Install cargo-fuzz
         if: steps.filter.outputs.skip != 'true'
-        uses: taiki-e/install-action@cargo-fuzz
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-fuzz
 
       - name: 🔍 Locate Crate Path & Run Cargo Fuzz (ASan)
         if: steps.filter.outputs.skip != 'true'
