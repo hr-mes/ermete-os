@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, oneshot};
-use crate::ipc::types::{ControllerBackend, SystemEventBus, SystemEvent, MockState, BedrockAudioProxy};
+use crate::ipc::types::{IpcBackend, SystemEventBus, SystemEvent, MockState, BedrockAudioProxy};
 
 pub enum AudioCommand {
     ToggleMute(oneshot::Sender<zbus::Result<bool>>),
@@ -10,14 +10,14 @@ pub enum AudioCommand {
 }
 
 pub struct AudioActor {
-    backend: ControllerBackend,
+    backend: IpcBackend,
     cached_volume: f64,
     event_bus: SystemEventBus,
     receiver: mpsc::Receiver<AudioCommand>,
 }
 
 impl AudioActor {
-    pub fn spawn(backend: ControllerBackend, event_bus: SystemEventBus) -> mpsc::Sender<AudioCommand> {
+    pub fn spawn(backend: IpcBackend, event_bus: SystemEventBus) -> mpsc::Sender<AudioCommand> {
         let (tx, rx) = mpsc::channel(32);
         let actor = Self {
             backend,
@@ -54,7 +54,7 @@ impl AudioActor {
 
     async fn handle_toggle_mute(&mut self) -> zbus::Result<bool> {
         let new_state = match &self.backend {
-            ControllerBackend::Dbus { session, .. } => {
+            IpcBackend::Dbus { session, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BedrockAudioProxy::new(session)).await {
                     let current = proxy.muted().await.unwrap_or(false);
                     let new_st = !current;
@@ -64,7 +64,7 @@ impl AudioActor {
                     true
                 }
             }
-            ControllerBackend::Mock(state) => {
+            IpcBackend::Mock(state) => {
                 let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
                 s.mute = !s.mute;
                 s.mute
@@ -76,7 +76,7 @@ impl AudioActor {
 
     async fn handle_toggle_source_mute(&mut self) -> zbus::Result<bool> {
         match &self.backend {
-            ControllerBackend::Dbus { session, .. } => {
+            IpcBackend::Dbus { session, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BedrockAudioProxy::new(session)).await {
                     let current = proxy.source_muted().await.unwrap_or(false);
                     let new_state = !current;
@@ -85,7 +85,7 @@ impl AudioActor {
                 }
                 Ok(true)
             }
-            ControllerBackend::Mock(state) => {
+            IpcBackend::Mock(state) => {
                 let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
                 s.source_mute = !s.source_mute;
                 Ok(s.source_mute)
@@ -95,13 +95,13 @@ impl AudioActor {
 
     async fn handle_set_volume(&mut self, volume: f64) -> zbus::Result<()> {
         match &self.backend {
-            ControllerBackend::Dbus { session, .. } => {
+            IpcBackend::Dbus { session, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BedrockAudioProxy::new(session)).await {
                     proxy.set_volume(volume).await?;
                     self.cached_volume = volume;
                 }
             }
-            ControllerBackend::Mock(state) => {
+            IpcBackend::Mock(state) => {
                 self.cached_volume = volume;
                 let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
                 s.volume = volume;
@@ -113,13 +113,13 @@ impl AudioActor {
 
     async fn handle_set_source_volume(&mut self, volume: f64) -> zbus::Result<()> {
         match &self.backend {
-            ControllerBackend::Dbus { session, .. } => {
+            IpcBackend::Dbus { session, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BedrockAudioProxy::new(session)).await {
                     proxy.set_source_volume(volume).await?;
                 }
                 Ok(())
             }
-            ControllerBackend::Mock(state) => {
+            IpcBackend::Mock(state) => {
                 let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
                 s.source_volume = volume;
                 Ok(())
@@ -136,7 +136,7 @@ pub struct AudioController {
 }
 
 impl AudioController {
-    pub fn new(backend: ControllerBackend, event_bus: SystemEventBus) -> Self {
+    pub fn new(backend: IpcBackend, event_bus: SystemEventBus) -> Self {
         let sender = AudioActor::spawn(backend, event_bus);
         Self {
             sender,
@@ -145,7 +145,7 @@ impl AudioController {
     }
 
     pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: SystemEventBus) -> Self {
-        let backend = ControllerBackend::Mock(state);
+        let backend = IpcBackend::Mock(state);
         let sender = AudioActor::spawn(backend, event_bus);
         Self {
             sender,
@@ -194,5 +194,24 @@ impl AudioController {
 
     pub fn get_cached_volume(&self) -> f64 {
         *self.cached_volume.lock().unwrap_or_else(|e| e.into_inner())
+    }
+}
+
+impl crate::ipc::system_proxies::ControllerBackend for AudioController {
+    fn name(&self) -> &'static str {
+        "audio"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
+pub fn get_audio_controller() -> AudioController {
+    if let Some(ctrl) = crate::ipc::system_proxies::get_registry().get_typed::<AudioController>("audio") {
+        ctrl
+    } else {
+        let bus = crate::ipc::system_proxies::get_event_bus();
+        let state = Arc::new(Mutex::new(MockState::default_mock()));
+        AudioController::new_mock(state, bus)
     }
 }

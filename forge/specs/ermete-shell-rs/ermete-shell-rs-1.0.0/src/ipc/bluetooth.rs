@@ -1,7 +1,7 @@
 use zbus::proxy;
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, oneshot};
-use crate::ipc::types::{ControllerBackend, MockState, SystemEvent, SystemEventBus, BluetoothDeviceInfo};
+use crate::ipc::types::{IpcBackend, MockState, SystemEvent, SystemEventBus, BluetoothDeviceInfo};
 
 #[proxy(
     interface = "org.bluez.Adapter1",
@@ -23,13 +23,13 @@ pub enum BluetoothCommand {
 }
 
 pub struct BluetoothActor {
-    backend: ControllerBackend,
+    backend: IpcBackend,
     event_bus: SystemEventBus,
     receiver: mpsc::Receiver<BluetoothCommand>,
 }
 
 impl BluetoothActor {
-    pub fn spawn(backend: ControllerBackend, event_bus: SystemEventBus) -> mpsc::Sender<BluetoothCommand> {
+    pub fn spawn(backend: IpcBackend, event_bus: SystemEventBus) -> mpsc::Sender<BluetoothCommand> {
         let (tx, rx) = mpsc::channel(32);
         let actor = Self {
             backend,
@@ -65,7 +65,7 @@ impl BluetoothActor {
 
     async fn handle_toggle_bluetooth(&self) -> zbus::Result<bool> {
         let new_state = match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
+            IpcBackend::Dbus { system, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BlueZProxy::new(system)).await {
                     let current = proxy.powered().await.unwrap_or(false);
                     let new_st = !current;
@@ -75,7 +75,7 @@ impl BluetoothActor {
                     true
                 }
             }
-            ControllerBackend::Mock(state) => {
+            IpcBackend::Mock(state) => {
                 let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
                 s.bt_enabled = !s.bt_enabled;
                 s.bt_enabled
@@ -87,24 +87,24 @@ impl BluetoothActor {
 
     async fn handle_is_bluetooth_enabled(&self) -> zbus::Result<bool> {
         match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
+            IpcBackend::Dbus { system, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BlueZProxy::new(system)).await {
                     return Ok(proxy.powered().await.unwrap_or(true));
                 }
                 Ok(true)
             }
-            ControllerBackend::Mock(state) => Ok(state.lock().unwrap_or_else(|e| e.into_inner()).bt_enabled),
+            IpcBackend::Mock(state) => Ok(state.lock().unwrap_or_else(|e| e.into_inner()).bt_enabled),
         }
     }
 
     async fn handle_set_bluetooth_powered(&self, powered: bool) -> zbus::Result<()> {
         match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
+            IpcBackend::Dbus { system, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BlueZProxy::new(system)).await {
                     proxy.set_powered(powered).await?;
                 }
             }
-            ControllerBackend::Mock(state) => {
+            IpcBackend::Mock(state) => {
                 state.lock().unwrap_or_else(|e| e.into_inner()).bt_enabled = powered;
             }
         }
@@ -114,7 +114,7 @@ impl BluetoothActor {
 
     async fn handle_list_bluetooth_devices(&self) -> zbus::Result<Vec<BluetoothDeviceInfo>> {
         match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
+            IpcBackend::Dbus { system, .. } => {
                 let mut results = Vec::new();
                 if let Ok(obj_mgr) = zbus::fdo::ObjectManagerProxy::builder(system)
                     .destination("org.bluez")?
@@ -138,7 +138,7 @@ impl BluetoothActor {
                 }
                 Ok(results)
             }
-            ControllerBackend::Mock(state) => Ok(state.lock().unwrap_or_else(|e| e.into_inner()).bt_devices.clone()),
+            IpcBackend::Mock(state) => Ok(state.lock().unwrap_or_else(|e| e.into_inner()).bt_devices.clone()),
         }
     }
 }
@@ -149,13 +149,13 @@ pub struct BluetoothController {
 }
 
 impl BluetoothController {
-    pub fn new(backend: ControllerBackend, event_bus: SystemEventBus) -> Self {
+    pub fn new(backend: IpcBackend, event_bus: SystemEventBus) -> Self {
         let sender = BluetoothActor::spawn(backend, event_bus);
         Self { sender }
     }
 
     pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: SystemEventBus) -> Self {
-        let backend = ControllerBackend::Mock(state);
+        let backend = IpcBackend::Mock(state);
         let sender = BluetoothActor::spawn(backend, event_bus);
         Self { sender }
     }
@@ -194,5 +194,24 @@ impl BluetoothController {
         } else {
             Ok(Vec::new())
         }
+    }
+}
+
+impl crate::ipc::system_proxies::ControllerBackend for BluetoothController {
+    fn name(&self) -> &'static str {
+        "bluetooth"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
+pub fn get_bluetooth_controller() -> BluetoothController {
+    if let Some(ctrl) = crate::ipc::system_proxies::get_registry().get_typed::<BluetoothController>("bluetooth") {
+        ctrl
+    } else {
+        let bus = crate::ipc::system_proxies::get_event_bus();
+        let state = Arc::new(Mutex::new(MockState::default_mock()));
+        BluetoothController::new_mock(state, bus)
     }
 }

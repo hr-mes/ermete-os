@@ -40,14 +40,14 @@ pub fn show_bluetooth_popover(app: &Application) {
     let bt_sw = Switch::builder().active(true).valign(Align::Center).build();
     let bt_sw_clone = bt_sw.clone();
     glib::MainContext::default().spawn_local(async move {
-        let ctrl = crate::core::system_proxies::get_bluetooth_controller();
+        let ctrl = crate::core::get_bluetooth_controller();
         if let Ok(enabled) = ctrl.is_bluetooth_enabled().await {
             bt_sw_clone.set_active(enabled);
         }
     });
     bt_sw.connect_state_set(move |_, state| {
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_bluetooth_controller();
+            let ctrl = crate::core::get_bluetooth_controller();
             let _ = ctrl.toggle_bluetooth().await;
             let _ = ctrl.set_bluetooth_powered(state).await;
         });
@@ -64,7 +64,7 @@ pub fn show_bluetooth_popover(app: &Application) {
 
     let list_box_clone = list_box.clone();
     glib::MainContext::default().spawn_local(async move {
-        let ctrl = crate::core::system_proxies::get_bluetooth_controller();
+        let ctrl = crate::core::get_bluetooth_controller();
         if let Ok(devices) = ctrl.list_bluetooth_devices().await {
             for dev in devices.iter().take(8) {
                 let item_row = GtkBox::builder()

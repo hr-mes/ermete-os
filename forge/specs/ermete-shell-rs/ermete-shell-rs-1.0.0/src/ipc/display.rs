@@ -1,7 +1,7 @@
 use zbus::proxy;
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, oneshot};
-use crate::ipc::types::{ControllerBackend, SystemEventBus, SystemEvent, MockState};
+use crate::ipc::types::{IpcBackend, SystemEventBus, SystemEvent, MockState};
 
 #[proxy(
     interface = "org.freedesktop.login1.Session",
@@ -17,13 +17,13 @@ pub enum DisplayCommand {
 }
 
 pub struct DisplayActor {
-    backend: ControllerBackend,
+    backend: IpcBackend,
     event_bus: SystemEventBus,
     receiver: mpsc::Receiver<DisplayCommand>,
 }
 
 impl DisplayActor {
-    pub fn spawn(backend: ControllerBackend, event_bus: SystemEventBus) -> mpsc::Sender<DisplayCommand> {
+    pub fn spawn(backend: IpcBackend, event_bus: SystemEventBus) -> mpsc::Sender<DisplayCommand> {
         let (tx, rx) = mpsc::channel(32);
         let actor = Self {
             backend,
@@ -47,7 +47,7 @@ impl DisplayActor {
 
     async fn handle_set_brightness(&self, brightness: f64) -> zbus::Result<()> {
         match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
+            IpcBackend::Dbus { system, .. } => {
                 let val = (brightness * 100.0) as u32;
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), LogindSessionProxy::new(system)).await {
                     proxy.set_brightness("backlight", "intel_backlight", val).await?;
@@ -63,7 +63,7 @@ impl DisplayActor {
                     }
                 }
             }
-            ControllerBackend::Mock(state) => {
+            IpcBackend::Mock(state) => {
                 let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
                 s.brightness = brightness;
             }
@@ -79,13 +79,13 @@ pub struct DisplayController {
 }
 
 impl DisplayController {
-    pub fn new(backend: ControllerBackend, event_bus: SystemEventBus) -> Self {
+    pub fn new(backend: IpcBackend, event_bus: SystemEventBus) -> Self {
         let sender = DisplayActor::spawn(backend, event_bus);
         Self { sender }
     }
 
     pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: SystemEventBus) -> Self {
-        let backend = ControllerBackend::Mock(state);
+        let backend = IpcBackend::Mock(state);
         let sender = DisplayActor::spawn(backend, event_bus);
         Self { sender }
     }
@@ -97,5 +97,24 @@ impl DisplayController {
         } else {
             Ok(())
         }
+    }
+}
+
+impl crate::ipc::system_proxies::ControllerBackend for DisplayController {
+    fn name(&self) -> &'static str {
+        "display"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
+pub fn get_display_controller() -> DisplayController {
+    if let Some(ctrl) = crate::ipc::system_proxies::get_registry().get_typed::<DisplayController>("display") {
+        ctrl
+    } else {
+        let bus = crate::ipc::system_proxies::get_event_bus();
+        let state = Arc::new(Mutex::new(MockState::default_mock()));
+        DisplayController::new_mock(state, bus)
     }
 }

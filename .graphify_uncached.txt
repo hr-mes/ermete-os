@@ -6,15 +6,18 @@
 /var/home/ermete/GEMINI/ermete-os/forge/scripts/nix_hermetic_build.sh
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/main.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-attestation/ermete-attestation-1.0.0/src/main.rs
+/var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-backup/ermete-backup-1.0.0/fuzz/fuzz_targets/fuzz_target_1.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-backup/ermete-backup-1.0.0/src/daemon.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-backup/ermete-backup-1.0.0/src/main.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-backup/ermete-backup-1.0.0/src/ui.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-base-config/SOURCES/etc/grub.d/01_ermete_grub_auth
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-base-config/SOURCES/usr/bin/nvidia-sleep.sh
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-base-config/SOURCES/usr/lib/systemd/system-sleep/nvidia
+/var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-cloud-rs/ermete-cloud-rs-1.0.0/fuzz/fuzz_targets/fuzz_target_1.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-cloud-rs/ermete-cloud-rs-1.0.0/src/dbus.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-cloud-rs/ermete-cloud-rs-1.0.0/src/main.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-cloud-rs/ermete-cloud-rs-1.0.0/src/sync.rs
+/var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-daemon-rs/ermete-daemon-rs-0.2.1/fuzz/fuzz_targets/fuzz_target_1.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-daemon-rs/ermete-daemon-rs-0.2.1/src/bedrock.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-daemon-rs/ermete-daemon-rs-0.2.1/src/bluetooth.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-daemon-rs/ermete-daemon-rs-0.2.1/src/main.rs
@@ -31,15 +34,18 @@
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-dock/ermete-dock-1.0.0/src/lib.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-dock/ermete-dock-1.0.0/src/ui.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-doctor/ermete-doctor-1.0.0/src/main.rs
+/var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0/fuzz/fuzz_targets/fuzz_target_1.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0/src/bin/gatekeeper-ui.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0/src/main.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-kernel/build-local.sh
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-kernel/prepare-chimera.sh
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-live-patcher/ermete-live-patcher-1.0.0/src/main.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-livepatch/ermete-livepatch-injector.sh
+/var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-lvfs-rs/ermete-lvfs-rs-1.0.0/fuzz/fuzz_targets/fuzz_target_1.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-lvfs-rs/ermete-lvfs-rs-1.0.0/src/dbus.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-lvfs-rs/ermete-lvfs-rs-1.0.0/src/firmware.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-lvfs-rs/ermete-lvfs-rs-1.0.0/src/main.rs
+/var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-mdm-rs/ermete-mdm-rs-1.0.0/fuzz/fuzz_targets/fuzz_target_1.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-mdm-rs/ermete-mdm-rs-1.0.0/src/dbus.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-mdm-rs/ermete-mdm-rs-1.0.0/src/main.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-mdm-rs/ermete-mdm-rs-1.0.0/src/wipe.rs
@@ -53,6 +59,7 @@
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-secure-boot/SOURCES/usr/libexec/ermete/ermete-tpm-rollback-check.sh
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-secure-boot/SOURCES/usr/libexec/ermete/ermete-tpm-rollback-update.sh
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-secure-boot/ermete-secure-boot-1.0.0/src/main.rs
+/var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-settings-rs/ermete-settings-rs-1.0.0/fuzz/fuzz_targets/fuzz_target_1.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-settings-rs/ermete-settings-rs-1.0.0/src/components/action_row.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-settings-rs/ermete-settings-rs-1.0.0/src/components/mod.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-settings-rs/ermete-settings-rs-1.0.0/src/main.rs
@@ -75,7 +82,7 @@
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-settings-rs/ermete-settings-rs-1.0.0/src/pages/updates.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-settings-rs/ermete-settings-rs-1.0.0/src/pages/wired.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-settings-rs/ermete-settings-rs-1.0.0/src/settings_proxy.rs
-/var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-settings-rs/ermete-settings-rs-1.0.0/src/style.rs
+/var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0/fuzz/fuzz_targets/fuzz_target_1.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0/src/core/mod.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0/src/ipc/audio.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0/src/ipc/bluetooth.rs
@@ -86,6 +93,7 @@
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0/src/ipc/notifications.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0/src/ipc/power.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0/src/ipc/system_proxies.rs
+/var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0/src/ipc/types.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0/src/ipc/voiceover.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0/src/main.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0/src/sys/auth.rs
@@ -96,7 +104,6 @@
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0/src/sys/sandbox.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0/src/sys/stats.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0/src/theme/mod.rs
-/var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0/src/ui/anim.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0/src/ui/clipboard.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0/src/ui/control_center/audio.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0/src/ui/control_center/bluetooth.rs
@@ -124,6 +131,7 @@
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0/src/wayland/mod.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0/src/wayland/niri.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0/src/wayland/popup.rs
+/var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-store-rs/ermete-store-rs-1.0.0/fuzz/fuzz_targets/fuzz_target_1.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-store-rs/ermete-store-rs-1.0.0/src/backend/dbus.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-store-rs/ermete-store-rs-1.0.0/src/backend/flatpak.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-store-rs/ermete-store-rs-1.0.0/src/backend/mod.rs
@@ -131,7 +139,6 @@
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-store-rs/ermete-store-rs-1.0.0/src/main.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-store-rs/ermete-store-rs-1.0.0/src/ui/mod.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-store-rs/ermete-store-rs-1.0.0/src/ui/showcase.rs
-/var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-store-rs/ermete-store-rs-1.0.0/src/ui/style.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-store-rs/ermete-store-rs-1.0.0/src/ui/window.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-style/src/lib.rs
 /var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-sysmon-ebpf/ermete-sysmon-ebpf-1.0.0/src/main.rs
@@ -183,6 +190,7 @@
 /var/home/ermete/GEMINI/ermete-os/.github/workflows/rust-security-audit.yml
 /var/home/ermete/GEMINI/ermete-os/.github/workflows/system-build-disk.yml
 /var/home/ermete/GEMINI/ermete-os/.github/workflows/system-build.yml
+/var/home/ermete/GEMINI/ermete-os/.graphify_uncached.txt
 /var/home/ermete/GEMINI/ermete-os/README.md
 /var/home/ermete/GEMINI/ermete-os/docs/AUTONOMOUS_FORGE.md
 /var/home/ermete/GEMINI/ermete-os/forge/README-build-local.md

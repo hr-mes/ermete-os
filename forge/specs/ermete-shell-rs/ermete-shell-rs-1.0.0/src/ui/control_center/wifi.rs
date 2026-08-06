@@ -102,7 +102,7 @@ pub fn show_wifi_password_modal(app: &Application, ssid: &str) {
         let ssid_c = ssid_str.clone();
         let pwd_c = pwd.clone();
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_network_controller();
+            let ctrl = crate::core::get_network_controller();
             let _ = ctrl.connect_wifi(&ssid_c, &pwd_c).await;
         });
         pop_conn.close();
@@ -233,7 +233,7 @@ pub fn show_wifi_details_modal(app: &Application, ssid: &str, active: bool) {
     let auto_sw_clone2 = auto_sw.clone();
     let ssid_clone = ssid.to_string();
     glib::MainContext::default().spawn_local(async move {
-        let ctrl = crate::core::system_proxies::get_network_controller();
+        let ctrl = crate::core::get_network_controller();
         if let Ok((method, ip, gw, dns, auto)) = ctrl.get_wifi_details(&ssid_clone).await {
             dhcp_sw_clone2.set_active(method == "auto");
             ip_e_clone2.set_text(&ip);
@@ -251,7 +251,7 @@ pub fn show_wifi_details_modal(app: &Application, ssid: &str, active: bool) {
     forget_btn.connect_clicked(move |_| {
         let ssid_f = ssid_f.clone();
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_network_controller();
+            let ctrl = crate::core::get_network_controller();
             let _ = ctrl.delete_wifi(&ssid_f).await;
         });
         pop_f.close();
@@ -263,7 +263,7 @@ pub fn show_wifi_details_modal(app: &Application, ssid: &str, active: bool) {
     disc_btn.connect_clicked(move |_| {
         let ssid_d = ssid_d.clone();
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_network_controller();
+            let ctrl = crate::core::get_network_controller();
             let _ = ctrl.disconnect_wifi(&ssid_d).await;
         });
         pop_d.close();
@@ -285,7 +285,7 @@ pub fn show_wifi_details_modal(app: &Application, ssid: &str, active: bool) {
         let dns_val = dns_e_s.text().to_string();
         let auto_val = auto_sw_s.is_active();
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_network_controller();
+            let ctrl = crate::core::get_network_controller();
             let _ = ctrl.modify_wifi(&ssid_s, dhcp_val, &ip_val, &gw_val, &dns_val, auto_val).await;
         });
         pop_s.close();
@@ -330,7 +330,7 @@ pub(crate) fn populate_wifi_list(list_box: &GtkBox, app: &Application, pop: &App
     let app_clone = app.clone();
     let pop_clone = pop.clone();
     glib::MainContext::default().spawn_local(async move {
-        let ctrl = crate::core::system_proxies::get_network_controller();
+        let ctrl = crate::core::get_network_controller();
         if let Ok(networks) = ctrl.list_wifi_networks().await {
             while let Some(child) = list_box_clone.first_child() {
                 list_box_clone.remove(&child);
@@ -460,7 +460,7 @@ pub fn show_wifi_popover(app: &Application) {
     let wifi_sw = Switch::builder().active(true).valign(Align::Center).build();
     let wifi_sw_clone = wifi_sw.clone();
     glib::MainContext::default().spawn_local(async move {
-        let ctrl = crate::core::system_proxies::get_network_controller();
+        let ctrl = crate::core::get_network_controller();
         if let Ok(enabled) = ctrl.is_wifi_enabled().await {
             wifi_sw_clone.set_active(enabled);
         }
@@ -481,7 +481,7 @@ pub fn show_wifi_popover(app: &Application) {
     let pop_clone = pop.clone();
     wifi_sw.connect_state_set(move |_, state| {
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_network_controller();
+            let ctrl = crate::core::get_network_controller();
             let _ = ctrl.toggle_wifi().await;
             let _ = ctrl.set_wifi_powered(state).await;
         });

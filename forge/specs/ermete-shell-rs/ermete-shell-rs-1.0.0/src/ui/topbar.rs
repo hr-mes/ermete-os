@@ -319,7 +319,7 @@ impl SimpleComponent for TopbarModel {
             TopbarInput::TickSecond => {
                 self.clock_text = crate::core::macos_clock_string();
                 
-                let (net_icon, _, _) = crate::core::system_proxies::get_network_controller().get_cached_network_status();
+                let (net_icon, _, _) = crate::core::get_network_controller().get_cached_network_status();
                 self.network_icon = net_icon;
                 
                 let live = crate::core::live_state::get_live_state();

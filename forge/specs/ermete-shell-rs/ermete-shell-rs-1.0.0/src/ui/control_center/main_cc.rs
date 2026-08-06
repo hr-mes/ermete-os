@@ -81,7 +81,7 @@ pub fn show_control_center_popover(app: &Application) {
         .hexpand(true)
         .build();
 
-    let (net_icon, net_title, net_sub) = crate::core::system_proxies::get_network_controller().get_cached_network_status();
+    let (net_icon, net_title, net_sub) = crate::core::get_network_controller().get_cached_network_status();
     let wifi_btn = build_cc_row("cc-circle-blue", &net_icon, &net_title, &net_sub);
     wifi_btn.set_hexpand(true);
     let net_connected = net_sub != "Disattivato" && net_sub != "Non connesso" && net_sub != "Off" && net_sub != "Disconnected";
@@ -164,7 +164,7 @@ pub fn show_control_center_popover(app: &Application) {
     lock_tile.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
         pop.close();
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_power_controller();
+            let ctrl = crate::core::get_power_controller();
             let _ = ctrl.lock_screen().await;
         });
     }));
@@ -192,7 +192,7 @@ pub fn show_control_center_popover(app: &Application) {
     bright_slider.connect_value_changed(move |s| {
         let val = s.value() / 100.0;
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_display_controller();
+            let ctrl = crate::core::get_display_controller();
             let _ = ctrl.set_brightness(val).await;
         });
     });
@@ -241,7 +241,7 @@ pub fn show_control_center_popover(app: &Application) {
     bright_card.append(&disp_settings_btn);
 
     // Slider Volume Audio - Passive initialization from cached state
-    let init_volume = crate::core::system_proxies::get_audio_controller().get_cached_volume() * 100.0;
+    let init_volume = crate::core::get_audio_controller().get_cached_volume() * 100.0;
     let audio_card = GtkBox::builder()
         .orientation(Orientation::Horizontal)
         .spacing(12)
@@ -256,7 +256,7 @@ pub fn show_control_center_popover(app: &Application) {
     audio_slider.connect_value_changed(move |s| {
         let val = s.value() / 100.0;
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_audio_controller();
+            let ctrl = crate::core::get_audio_controller();
             let _ = ctrl.set_volume(val).await;
         });
     });
@@ -281,7 +281,7 @@ pub fn show_control_center_popover(app: &Application) {
         .spacing(6)
         .css_classes(["cc-tile"])
         .build();
-    let initial_mpris = crate::core::system_proxies::get_mpris_controller().get_cached_mpris_state();
+    let initial_mpris = crate::core::get_mpris_controller().get_cached_mpris_state();
     let (init_mpris_title, init_mpris_artist, init_mpris_btn) = match &initial_mpris {
         Some(m) => (m.title.clone(), m.artist.clone(), if m.status.contains("Playing") { "⏸" } else { "▶" }),
         None => ("Nessun media in riproduzione".to_string(), "-".to_string(), "▶"),
@@ -295,19 +295,19 @@ pub fn show_control_center_popover(app: &Application) {
     
     prev_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_mpris_controller();
+            let ctrl = crate::core::get_mpris_controller();
             let _ = ctrl.player_command("previous").await;
         });
     }));
     play_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_mpris_controller();
+            let ctrl = crate::core::get_mpris_controller();
             let _ = ctrl.player_command("play-pause").await;
         });
     }));
     next_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
         glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::system_proxies::get_mpris_controller();
+            let ctrl = crate::core::get_mpris_controller();
             let _ = ctrl.player_command("next").await;
         });
     }));
@@ -348,7 +348,7 @@ pub fn show_control_center_popover(app: &Application) {
         pop.close();
         glib::MainContext::default().spawn_local(async move {
             ermete_niri_ipc::async_client::power_off_monitors().await;
-            let ctrl = crate::core::system_proxies::get_power_controller();
+            let ctrl = crate::core::get_power_controller();
             let _ = ctrl.suspend().await;
         });
     }));
@@ -402,7 +402,7 @@ pub fn show_control_center_popover(app: &Application) {
         while let Ok(event) = rx.recv().await {
             match event {
                 SystemEvent::NetworkUpdated(_) | SystemEvent::WifiToggled(_) => {
-                    let (net_icon, net_title, net_sub) = crate::core::system_proxies::get_network_controller().get_cached_network_status();
+                    let (net_icon, net_title, net_sub) = crate::core::get_network_controller().get_cached_network_status();
                     let net_connected = net_sub != "Disattivato" && net_sub != "Non connesso" && net_sub != "Off" && net_sub != "Disconnected";
                     if net_connected {
                         wifi_btn_clone.add_css_class("cc-btn-active");

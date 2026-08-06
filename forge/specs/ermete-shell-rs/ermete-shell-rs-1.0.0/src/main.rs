@@ -62,7 +62,7 @@ fn main() -> glib::ExitCode {
         .expect("[Sandboxing] Errore fatale: Impossibile applicare la policy Landlock");
 
     let args = Args::parse();
-    crate::ipc::system_proxies::init_system_controller();
+    crate::ipc::init_system_controller();
 
     if let Some(req_info) = args.privacy_prompt {
         let app = Application::builder()

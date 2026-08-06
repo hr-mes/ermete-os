@@ -1,7 +1,7 @@
 use zbus::proxy;
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, oneshot};
-use crate::ipc::types::{ControllerBackend, MockState, SystemEventBus};
+use crate::ipc::types::{IpcBackend, MockState, SystemEventBus};
 
 #[proxy(
     interface = "org.freedesktop.login1.Manager",
@@ -23,13 +23,13 @@ pub enum PowerCommand {
 }
 
 pub struct PowerActor {
-    backend: ControllerBackend,
+    backend: IpcBackend,
     _event_bus: SystemEventBus,
     receiver: mpsc::Receiver<PowerCommand>,
 }
 
 impl PowerActor {
-    pub fn spawn(backend: ControllerBackend, event_bus: SystemEventBus) -> mpsc::Sender<PowerCommand> {
+    pub fn spawn(backend: IpcBackend, event_bus: SystemEventBus) -> mpsc::Sender<PowerCommand> {
         let (tx, rx) = mpsc::channel(32);
         let actor = Self {
             backend,
@@ -65,49 +65,49 @@ impl PowerActor {
 
     async fn handle_lock_screen(&self) -> zbus::Result<()> {
         match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
+            IpcBackend::Dbus { system, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), LogindProxy::new(system)).await {
                     let _ = proxy.lock_sessions().await;
                 }
                 Ok(())
             }
-            ControllerBackend::Mock(_) => Ok(()),
+            IpcBackend::Mock(_) => Ok(()),
         }
     }
 
     async fn handle_power_off(&self) -> zbus::Result<()> {
         match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
+            IpcBackend::Dbus { system, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), LogindProxy::new(system)).await {
                     let _ = proxy.power_off(true).await;
                 }
                 Ok(())
             }
-            ControllerBackend::Mock(_) => Ok(()),
+            IpcBackend::Mock(_) => Ok(()),
         }
     }
 
     async fn handle_reboot(&self) -> zbus::Result<()> {
         match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
+            IpcBackend::Dbus { system, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), LogindProxy::new(system)).await {
                     let _ = proxy.reboot(true).await;
                 }
                 Ok(())
             }
-            ControllerBackend::Mock(_) => Ok(()),
+            IpcBackend::Mock(_) => Ok(()),
         }
     }
 
     async fn handle_suspend(&self) -> zbus::Result<()> {
         match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
+            IpcBackend::Dbus { system, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), LogindProxy::new(system)).await {
                     let _ = proxy.suspend(true).await;
                 }
                 Ok(())
             }
-            ControllerBackend::Mock(_) => Ok(()),
+            IpcBackend::Mock(_) => Ok(()),
         }
     }
 }
@@ -118,13 +118,13 @@ pub struct PowerController {
 }
 
 impl PowerController {
-    pub fn new(backend: ControllerBackend, event_bus: SystemEventBus) -> Self {
+    pub fn new(backend: IpcBackend, event_bus: SystemEventBus) -> Self {
         let sender = PowerActor::spawn(backend, event_bus);
         Self { sender }
     }
 
     pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: SystemEventBus) -> Self {
-        let backend = ControllerBackend::Mock(state);
+        let backend = IpcBackend::Mock(state);
         let sender = PowerActor::spawn(backend, event_bus);
         Self { sender }
     }
@@ -163,5 +163,24 @@ impl PowerController {
         } else {
             Ok(())
         }
+    }
+}
+
+impl crate::ipc::system_proxies::ControllerBackend for PowerController {
+    fn name(&self) -> &'static str {
+        "power"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
+pub fn get_power_controller() -> PowerController {
+    if let Some(ctrl) = crate::ipc::system_proxies::get_registry().get_typed::<PowerController>("power") {
+        ctrl
+    } else {
+        let bus = crate::ipc::system_proxies::get_event_bus();
+        let state = Arc::new(Mutex::new(MockState::default_mock()));
+        PowerController::new_mock(state, bus)
     }
 }

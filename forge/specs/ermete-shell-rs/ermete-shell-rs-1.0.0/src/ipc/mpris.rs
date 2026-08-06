@@ -1,7 +1,7 @@
 use zbus::proxy;
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, oneshot};
-use crate::ipc::types::{ControllerBackend, SystemEventBus, SystemEvent, MockState};
+use crate::ipc::types::{IpcBackend, SystemEventBus, SystemEvent, MockState};
 pub use crate::ipc::types::MprisState;
 
 #[proxy(
@@ -24,14 +24,14 @@ pub enum MprisCommand {
 }
 
 pub struct MprisActor {
-    backend: ControllerBackend,
+    backend: IpcBackend,
     cached_mpris: Option<MprisState>,
     event_bus: SystemEventBus,
     receiver: mpsc::Receiver<MprisCommand>,
 }
 
 impl MprisActor {
-    pub fn spawn(backend: ControllerBackend, event_bus: SystemEventBus) -> mpsc::Sender<MprisCommand> {
+    pub fn spawn(backend: IpcBackend, event_bus: SystemEventBus) -> mpsc::Sender<MprisCommand> {
         let (tx, rx) = mpsc::channel(32);
         let actor = Self {
             backend,
@@ -59,7 +59,7 @@ impl MprisActor {
 
     async fn handle_player_command(&mut self, cmd: &str) -> zbus::Result<()> {
         match &self.backend {
-            ControllerBackend::Dbus { session, .. } => {
+            IpcBackend::Dbus { session, .. } => {
                 if let Ok(dbus) = zbus::fdo::DBusProxy::new(session).await {
                     if let Ok(names) = dbus.list_names().await {
                         for name in names {
@@ -85,7 +85,7 @@ impl MprisActor {
                 }
                 let _ = self.handle_refresh_mpris().await;
             }
-            ControllerBackend::Mock(state) => {
+            IpcBackend::Mock(state) => {
                 state.lock().unwrap_or_else(|e| e.into_inner()).last_player_command = Some(cmd.to_string());
                 let _ = self.handle_refresh_mpris().await;
             }
@@ -96,7 +96,7 @@ impl MprisActor {
 
     async fn handle_refresh_mpris(&mut self) -> zbus::Result<()> {
         match &self.backend {
-            ControllerBackend::Dbus { session, .. } => {
+            IpcBackend::Dbus { session, .. } => {
                 if let Ok(dbus_proxy) = zbus::fdo::DBusProxy::new(session).await {
                     if let Ok(names) = dbus_proxy.list_names().await {
                         for name in names {
@@ -135,7 +135,7 @@ impl MprisActor {
                                                         if let Ok(Some(first)) = arr.get(0) {
                                                             if let zbus::zvariant::Value::Str(s) = first {
                                                                 return Some(s.as_str().to_string());
-                                                            }
+                                                             }
                                                         }
                                                     } else if let zbus::zvariant::Value::Str(s) = val {
                                                         return Some(s.as_str().to_string());
@@ -159,7 +159,7 @@ impl MprisActor {
                 self.cached_mpris = None;
                 Ok(())
             }
-            ControllerBackend::Mock(_) => {
+            IpcBackend::Mock(_) => {
                 if self.cached_mpris.is_none() {
                     self.cached_mpris = Some(MprisState {
                         title: "Track Title".to_string(),
@@ -181,7 +181,7 @@ pub struct MprisController {
 }
 
 impl MprisController {
-    pub fn new(backend: ControllerBackend, event_bus: SystemEventBus) -> Self {
+    pub fn new(backend: IpcBackend, event_bus: SystemEventBus) -> Self {
         let sender = MprisActor::spawn(backend, event_bus);
         Self {
             sender,
@@ -191,7 +191,7 @@ impl MprisController {
     }
 
     pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: SystemEventBus) -> Self {
-        let backend = ControllerBackend::Mock(state);
+        let backend = IpcBackend::Mock(state);
         let sender = MprisActor::spawn(backend, event_bus);
         Self {
             sender,
@@ -231,3 +231,21 @@ impl MprisController {
     }
 }
 
+impl crate::ipc::system_proxies::ControllerBackend for MprisController {
+    fn name(&self) -> &'static str {
+        "mpris"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
+pub fn get_mpris_controller() -> MprisController {
+    if let Some(ctrl) = crate::ipc::system_proxies::get_registry().get_typed::<MprisController>("mpris") {
+        ctrl
+    } else {
+        let bus = crate::ipc::system_proxies::get_event_bus();
+        let state = Arc::new(Mutex::new(MockState::default_mock()));
+        MprisController::new_mock(state, bus)
+    }
+}

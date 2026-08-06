@@ -184,7 +184,7 @@ impl MockState {
 }
 
 #[derive(Clone, Debug)]
-pub enum ControllerBackend {
+pub enum IpcBackend {
     Dbus {
         session: Connection,
         system: Connection,

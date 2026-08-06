@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, oneshot};
 use crate::ipc::types::{
-    ControllerBackend, SystemEventBus, SystemEvent, MockState, WifiNetworkInfo,
+    IpcBackend, SystemEventBus, SystemEvent, MockState, WifiNetworkInfo,
     NetworkManagerProxy, NmDeviceProxy, NmWirelessProxy, NmAccessPointProxy, 
     NmSettingsProxy, NmSettingsConnectionProxy, NmActiveConnectionProxy
 };
@@ -20,14 +20,14 @@ pub enum NetworkCommand {
 }
 
 pub struct NetworkActor {
-    backend: ControllerBackend,
+    backend: IpcBackend,
     active_wifi_ssid: Option<String>,
     event_bus: SystemEventBus,
     receiver: mpsc::Receiver<NetworkCommand>,
 }
 
 impl NetworkActor {
-    pub fn spawn(backend: ControllerBackend, event_bus: SystemEventBus, initial_ssid: Option<String>) -> mpsc::Sender<NetworkCommand> {
+    pub fn spawn(backend: IpcBackend, event_bus: SystemEventBus, initial_ssid: Option<String>) -> mpsc::Sender<NetworkCommand> {
         let (tx, rx) = mpsc::channel(32);
         let actor = Self {
             backend,
@@ -86,7 +86,7 @@ impl NetworkActor {
 
     async fn handle_toggle_wifi(&self) -> zbus::Result<bool> {
         let new_state = match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
+            IpcBackend::Dbus { system, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
                     let current = proxy.wireless_enabled().await.unwrap_or(true);
                     let new_state = !current;
@@ -96,7 +96,7 @@ impl NetworkActor {
                     true
                 }
             }
-            ControllerBackend::Mock(state) => {
+            IpcBackend::Mock(state) => {
                 let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
                 s.wifi_enabled = !s.wifi_enabled;
                 s.wifi_enabled
@@ -108,24 +108,24 @@ impl NetworkActor {
 
     async fn handle_is_wifi_enabled(&self) -> zbus::Result<bool> {
         match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
+            IpcBackend::Dbus { system, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
                     return Ok(proxy.wireless_enabled().await.unwrap_or(true));
                 }
                 Ok(true)
             }
-            ControllerBackend::Mock(state) => Ok(state.lock().unwrap_or_else(|e| e.into_inner()).wifi_enabled),
+            IpcBackend::Mock(state) => Ok(state.lock().unwrap_or_else(|e| e.into_inner()).wifi_enabled),
         }
     }
 
     async fn handle_set_wifi_powered(&self, powered: bool) -> zbus::Result<()> {
         match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
+            IpcBackend::Dbus { system, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
                     proxy.set_wireless_enabled(powered).await?;
                 }
             }
-            ControllerBackend::Mock(state) => {
+            IpcBackend::Mock(state) => {
                 state.lock().unwrap_or_else(|e| e.into_inner()).wifi_enabled = powered;
             }
         }
@@ -135,7 +135,7 @@ impl NetworkActor {
 
     async fn handle_list_wifi_networks(&self) -> zbus::Result<Vec<WifiNetworkInfo>> {
         match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
+            IpcBackend::Dbus { system, .. } => {
                 let mut results = Vec::new();
                 if let Ok(Ok(nm_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
                     if let Ok(devices) = nm_proxy.get_devices().await {
@@ -171,7 +171,7 @@ impl NetworkActor {
                 }
                 Ok(results)
             }
-            ControllerBackend::Mock(state) => Ok(state.lock().unwrap_or_else(|e| e.into_inner()).wifi_networks.clone()),
+            IpcBackend::Mock(state) => Ok(state.lock().unwrap_or_else(|e| e.into_inner()).wifi_networks.clone()),
         }
     }
 
@@ -191,7 +191,7 @@ impl NetworkActor {
 
     async fn handle_connect_wifi(&mut self, ssid: &str, _password: &str) -> zbus::Result<()> {
         match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
+            IpcBackend::Dbus { system, .. } => {
                 if let Ok(Ok(settings_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NmSettingsProxy::new(system)).await {
                     if let Ok(conns) = settings_proxy.list_connections().await {
                         for conn_path in conns {
@@ -218,7 +218,7 @@ impl NetworkActor {
                 }
                 Ok(())
             }
-            ControllerBackend::Mock(state) => {
+            IpcBackend::Mock(state) => {
                 let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
                 for net in &mut s.wifi_networks {
                     net.active = net.ssid == ssid;
@@ -231,7 +231,7 @@ impl NetworkActor {
 
     async fn handle_disconnect_wifi(&mut self, ssid: &str) -> zbus::Result<()> {
         match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
+            IpcBackend::Dbus { system, .. } => {
                 if let Ok(Ok(nm_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
                     if let Ok(active_conns) = nm_proxy.active_connections().await {
                         for path in active_conns {
@@ -250,7 +250,7 @@ impl NetworkActor {
                 }
                 Ok(())
             }
-            ControllerBackend::Mock(state) => {
+            IpcBackend::Mock(state) => {
                 let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
                 for net in &mut s.wifi_networks {
                     if net.ssid == ssid {
@@ -265,7 +265,7 @@ impl NetworkActor {
 
     async fn handle_delete_wifi(&self, ssid: &str) -> zbus::Result<()> {
         match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
+            IpcBackend::Dbus { system, .. } => {
                 if let Ok(Ok(settings_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NmSettingsProxy::new(system)).await {
                     if let Ok(conns) = settings_proxy.list_connections().await {
                         for conn_path in conns {
@@ -288,7 +288,7 @@ impl NetworkActor {
                 }
                 Ok(())
             }
-            ControllerBackend::Mock(state) => {
+            IpcBackend::Mock(state) => {
                 let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
                 s.wifi_networks.retain(|net| net.ssid != ssid);
                 Ok(())
@@ -298,7 +298,7 @@ impl NetworkActor {
 
     async fn handle_refresh_network_status(&mut self) -> zbus::Result<()> {
         match &self.backend {
-            ControllerBackend::Dbus { system, .. } => {
+            IpcBackend::Dbus { system, .. } => {
                 if let Ok(Ok(nm_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
                     if let Ok(active_conns) = nm_proxy.active_connections().await {
                         for path in active_conns {
@@ -314,7 +314,7 @@ impl NetworkActor {
                 self.active_wifi_ssid = None;
                 Ok(())
             }
-            ControllerBackend::Mock(_) => Ok(()),
+            IpcBackend::Mock(_) => Ok(()),
         }
     }
 }
@@ -326,7 +326,7 @@ pub struct NetworkController {
 }
 
 impl NetworkController {
-    pub fn new(backend: ControllerBackend, event_bus: SystemEventBus) -> Self {
+    pub fn new(backend: IpcBackend, event_bus: SystemEventBus) -> Self {
         let sender = NetworkActor::spawn(backend, event_bus, None);
         Self {
             sender,
@@ -335,7 +335,7 @@ impl NetworkController {
     }
 
     pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: SystemEventBus) -> Self {
-        let backend = ControllerBackend::Mock(state);
+        let backend = IpcBackend::Mock(state);
         let sender = NetworkActor::spawn(backend, event_bus, Some("Ermete-5G".to_string()));
         Self {
             sender,
@@ -463,6 +463,25 @@ impl NetworkController {
             }
         }
         ("󰖪".to_string(), "Rete Wi-Fi".to_string(), "Non connesso".to_string())
+    }
+}
+
+impl crate::ipc::system_proxies::ControllerBackend for NetworkController {
+    fn name(&self) -> &'static str {
+        "network"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
+pub fn get_network_controller() -> NetworkController {
+    if let Some(ctrl) = crate::ipc::system_proxies::get_registry().get_typed::<NetworkController>("network") {
+        ctrl
+    } else {
+        let bus = crate::ipc::system_proxies::get_event_bus();
+        let state = Arc::new(Mutex::new(MockState::default_mock()));
+        NetworkController::new_mock(state, bus)
     }
 }
 
