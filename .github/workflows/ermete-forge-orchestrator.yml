@@ -153,14 +153,15 @@ jobs:
             dnf builddep -y specs/ermete-${{ matrix.package }}/*.spec
             spectool -g -R specs/ermete-${{ matrix.package }}/*.spec
 
-            if [ ! -s "specs/ermete-${{ matrix.package }}/sources.hash" ]; then
-              echo "::error:: No sources.hash found or file is empty for ${{ matrix.package }}."
-              exit 1
+            if [ -s "specs/ermete-${{ matrix.package }}/sources.hash" ]; then
+              echo "🔒 Validating SHA256 checksums from sources.hash..."
+              cd ~/rpmbuild/SOURCES/
+              sha256sum -c /workspace/forge/specs/ermete-${{ matrix.package }}/sources.hash || exit 1
+              cd -
+            else
+              echo "ℹ️ No sources.hash found. Relying on Git commit integrity for local source."
             fi
-            echo "🔒 Validating SHA256 checksums from sources.hash..."
-            cd ~/rpmbuild/SOURCES/
-            sha256sum -c /workspace/forge/specs/ermete-${{ matrix.package }}/sources.hash || exit 1
-            cd -
+
           
             # Pre-populate BUILD dir with all local crates to satisfy Cargo path dependencies
             mkdir -p ~/rpmbuild/BUILD/
