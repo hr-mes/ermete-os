@@ -1,6 +1,7 @@
 <div align="center">
   <h1>🦅 Ermete OS — OCI Production Image & 4-Tier Pyramid Caching</h1>
   <p><b>The Golden Standard of Linux. An extreme, cloud-native, Zero-Maintenance Rolling Release desktop OS.</b></p>
+  <p>📚 <b><a href="../docs/architecture/doc_kernel_layer.md">Deep-Dive: Kernel Layer & Boot Sequence</a></b> | <b><a href="../docs/architecture/doc_core_daemons.md">Core Daemons & Security</a></b></p>
 </div>
 
 ---

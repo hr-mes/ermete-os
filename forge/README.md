@@ -1,5 +1,7 @@
 # 🌋 Ermete Forge — Private OCI Micro-Container & RPM Forge
 
+> 📚 **Deep-Dive Technical Documentation:** Per l'architettura dettagliata della pipeline CI/CD, l'idempotenza e il meccanismo deterministico Nix-Hermetic, consulta **[Build System & CI/CD Pipeline](../docs/architecture/doc_build_system.md)** e **[Desktop UI Stack](../docs/architecture/doc_shell_ui.md)**.
+
 **The absolute zero-trust, high-performance CachyOS-level compiler and package builder for Ermete OS.**
 
 Ermete Forge is the automated CI/CD engine responsible for generating all the custom software, UI components, and configurations that make up Ermete OS. It enforces aggressive compiler optimizations (`-O3`, `-march=x86-64-v3`, `-flto=auto`, `mold` linker) across all custom packages.
