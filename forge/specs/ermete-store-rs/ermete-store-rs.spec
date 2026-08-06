@@ -52,8 +52,18 @@ ExecStart=%{_bindir}/%{name}
 Restart=always
 RestartSec=5s
 ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
 MemoryDenyWriteExecute=true
 NoNewPrivileges=true
+SystemCallFilter=@system-service
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
 
 [Install]
 WantedBy=multi-user.target

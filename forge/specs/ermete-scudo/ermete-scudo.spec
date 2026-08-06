@@ -24,8 +24,7 @@ mkdir -p %{buildroot}%{_prefix}/lib/environment.d
 mkdir -p %{buildroot}%{_unitdir}/greetd.service.d
 mkdir -p %{buildroot}%{_unitdir}/ermete-llm.service.d
 
-# LD_PRELOAD
-echo "/usr/lib64/libscudo.so" > %{buildroot}%{_sysconfdir}/ld.so.preload
+# Global LD_PRELOAD injection removed to preserve system stability and immutability
 
 # Scudo Options
 cat <<EOF > %{buildroot}%{_prefix}/lib/environment.d/10-scudo.conf
@@ -54,7 +53,6 @@ if [ -d /usr/lib64/clang ]; then
 fi
 
 %files
-%config(noreplace) %{_sysconfdir}/ld.so.preload
 %{_prefix}/lib/environment.d/10-scudo.conf
 %{_unitdir}/greetd.service.d/override.conf
 %{_unitdir}/ermete-llm.service.d/override.conf

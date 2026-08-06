@@ -18,7 +18,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut bpf = Bpf::load_file(bpf_path).or_else(|_| Bpf::load(&[]))?;
     
     // Attach to the tracepoint
-    let program: &mut TracePoint = bpf.program_mut("sched_process_exec").unwrap().try_into()?;
+    let program: &mut TracePoint = bpf.program_mut("sched_process_exec").ok_or("program 'sched_process_exec' not found")?.try_into()?;
     program.load()?;
     program.attach("sched", "sched_process_exec")?;
     info!("eBPF hooks attached to sched:sched_process_exec.");
@@ -31,9 +31,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             task::spawn(async move {
                 let mut buffers = (0..10).map(|_| BytesMut::with_capacity(1024)).collect::<Vec<_>>();
                 loop {
-                    let events = buf.read_events(&mut buffers).unwrap();
-                    for b in buffers.iter_mut().take(events.read) {
-                        info!("Received event from kernel on CPU {} ({} bytes)", cpu_id, b.len());
+                    match buf.read_events(&mut buffers) {
+                        Ok(events) => {
+                            for b in buffers.iter_mut().take(events.read) {
+                                info!("Received event from kernel on CPU {} ({} bytes)", cpu_id, b.len());
+                            }
+                        }
+                        Err(e) => {
+                            warn!("Error reading perf events on CPU {}: {}", cpu_id, e);
+                            break;
+                        }
                     }
                 }
             });

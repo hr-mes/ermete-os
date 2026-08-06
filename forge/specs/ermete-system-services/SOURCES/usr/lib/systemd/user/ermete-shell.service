@@ -7,6 +7,7 @@ PartOf=graphical-session.target
 
 [Service]
 CPUWeight=200
+MemoryHigh=768M
 MemoryMax=1024M
 OOMScoreAdjust=-500
 Type=simple
@@ -14,6 +15,20 @@ Slice=session.slice
 ExecStart=/usr/bin/ermete-shell-rs
 Restart=on-failure
 RestartSec=2s
+
+# Extreme Sandboxing
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+NoNewPrivileges=true
+SystemCallFilter=@system-service
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
 
 [Install]
 WantedBy=graphical-session.target

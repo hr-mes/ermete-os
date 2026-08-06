@@ -20,9 +20,12 @@ pub use power::{get_power_controller, PowerController};
 use zbus::Connection;
 use system_proxies::ControllerBackend;
 
+#[tracing::instrument]
 pub fn init_system_controller() {
+    tracing::info!("Initializing IPC system controllers and event bus listeners");
     glib::MainContext::default().spawn_local(async {
         if let (Ok(session), Ok(system)) = (Connection::session().await, Connection::system().await) {
+            tracing::info!("Connected to Session and System D-Bus buses cleanly");
             let event_bus = system_proxies::get_event_bus();
             let backend = types::IpcBackend::Dbus { session, system };
             
@@ -44,6 +47,9 @@ pub fn init_system_controller() {
 
             let controllers = vec![audio, network, bluetooth, display, power, mpris];
             system_proxies::init_system_controller(controllers);
+            tracing::info!("All IPC controllers successfully initialized and registered");
+        } else {
+            tracing::warn!("Failed to establish Session or System D-Bus connections for IPC controllers");
         }
     });
 }

@@ -5,6 +5,21 @@ ConditionPathExists=/usr/libexec/ermete-snapshot-trigger.sh
 
 [Service]
 CPUWeight=50
+MemoryHigh=96M
 MemoryMax=128M
 Type=oneshot
 ExecStart=/usr/libexec/ermete-snapshot-trigger.sh
+
+# Extreme Sandboxing
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+NoNewPrivileges=true
+SystemCallFilter=@system-service
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true

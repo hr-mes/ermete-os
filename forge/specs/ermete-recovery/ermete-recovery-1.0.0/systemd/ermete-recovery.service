@@ -6,6 +6,7 @@ Conflicts=getty@tty9.service
 
 [Service]
 CPUWeight=100
+MemoryHigh=768M
 MemoryMax=1024M
 OOMScoreAdjust=-100
 Type=simple
@@ -29,6 +30,7 @@ PrivateTmp=yes
 PrivateDevices=no
 ProtectKernelTunables=yes
 ProtectKernelModules=yes
+ProtectKernelLogs=yes
 ProtectControlGroups=yes
 RestrictNamespaces=yes
 MemoryDenyWriteExecute=no

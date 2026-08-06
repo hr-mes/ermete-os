@@ -4,6 +4,21 @@ Documentation=https://github.com/hr-mes/ermete-forge
 
 [Service]
 CPUWeight=50
+MemoryHigh=48M
 MemoryMax=64M
 Type=oneshot
 ExecStart=/usr/bin/dbus-send --system --dest=org.ermete.Backup1 --type=method_call /org/ermete/Backup1 org.ermete.Backup1.CreateSnapshot string:"Istantanea oraria automatica"
+
+# Extreme Sandboxing
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+NoNewPrivileges=true
+SystemCallFilter=@system-service
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true

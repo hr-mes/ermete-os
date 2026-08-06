@@ -22,6 +22,9 @@ meval = "0.2"
 relm4 = "0.7"
 landlock = "0.4"
 tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+arc-swap = "1.6"
 
 # Decoupled domain crates
 ermete-dock = { path = "../../ermete-dock/ermete-dock-1.0.0" }

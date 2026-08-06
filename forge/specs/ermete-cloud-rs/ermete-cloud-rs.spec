@@ -41,6 +41,7 @@ Requires=dbus.service
 
 [Service]
 CPUWeight=50
+MemoryHigh=384M
 MemoryMax=512M
 OOMScoreAdjust=100
 Type=dbus
@@ -51,7 +52,16 @@ RestartSec=5s
 DynamicUser=yes
 ProtectSystem=strict
 ProtectHome=read-only
+PrivateTmp=true
 NoNewPrivileges=true
+SystemCallFilter=@system-service
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
 
 [Install]
 WantedBy=graphical.target

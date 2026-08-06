@@ -14,20 +14,21 @@ impl Bluetooth {
 #[interface(name = "os.ermete.Bedrock.Bluetooth")]
 impl Bluetooth {
     #[zbus(property)]
+    #[tracing::instrument(skip(self))]
     async fn power(&self) -> bool {
         let proxy_builder = fdo::PropertiesProxy::builder(&self.sys_conn)
             .destination("org.bluez");
         let proxy_builder = match proxy_builder {
             Ok(b) => b,
             Err(e) => {
-                eprintln!("Error setting destination: {}", e);
+                tracing::error!(error = %e, "Error setting D-Bus destination for BlueZ");
                 return false;
             }
         };
         let proxy_builder = match proxy_builder.path("/org/bluez/hci0") {
             Ok(b) => b,
             Err(e) => {
-                eprintln!("Error setting path: {}", e);
+                tracing::error!(error = %e, "Error setting D-Bus path for BlueZ");
                 return false;
             }
         };
@@ -45,7 +46,17 @@ impl Bluetooth {
     }
 
     #[zbus(property)]
-    async fn set_power(&self, val: bool) -> fdo::Result<()> {
+    #[tracing::instrument(skip(self, hdr))]
+    async fn set_power(
+        &self,
+        val: bool,
+        #[zbus(header)] hdr: Option<zbus::message::Header<'_>>,
+    ) -> fdo::Result<()> {
+        let sender = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
+        if !crate::bedrock::check_polkit_auth(sender, "os.ermete.bluetooth.setpower").await {
+            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
+        }
+
         let proxy = fdo::PropertiesProxy::builder(&self.sys_conn)
             .destination("org.bluez")
             .map_err(|e| fdo::Error::Failed(format!("Invalid destination: {}", e)))?
@@ -63,6 +74,7 @@ impl Bluetooth {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self))]
     async fn get_devices(&self) -> fdo::Result<Vec<(String, String)>> {
         let obj_mgr = fdo::ObjectManagerProxy::builder(&self.sys_conn)
             .destination("org.bluez")

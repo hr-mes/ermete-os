@@ -6,11 +6,17 @@ description = "Ermete OS Confidential Computing Attestation Tool"
 authors = ["ermete-kernel-developer"]
 
 [dependencies]
-# Dependencies for hardware attestation and TPM interactions
 anyhow = "1.0"
 log = "0.4"
 env_logger = "0.11"
-# sev = "1.2" # For AMD SEV-SNP
-# tss-esapi = "7.3.0" # For vTPM interactions
+nix = { version = "0.29", features = ["fs", "ioctl"] }
+ring = "0.17"
+sha2 = "0.10"
+p384 = { version = "0.13", features = ["ecdsa"] }
+p256 = { version = "0.13", features = ["ecdsa"] }
+zeroize = { version = "1.8", features = ["zeroize_derive"] }
+hex = "0.4"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 
 [workspace]

@@ -482,7 +482,6 @@ pub fn show_wifi_popover(app: &Application) {
     wifi_sw.connect_state_set(move |_, state| {
         glib::MainContext::default().spawn_local(async move {
             let ctrl = crate::core::get_network_controller();
-            let _ = ctrl.toggle_wifi().await;
             let _ = ctrl.set_wifi_powered(state).await;
         });
         populate_wifi_list(&list_clone, &app_clone, &pop_clone, state);

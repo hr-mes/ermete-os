@@ -107,6 +107,7 @@ impl PipeWireStreamManager {
 
 #[interface(name = "org.freedesktop.impl.portal.ScreenCast")]
 impl PortalScreenCastService {
+    #[tracing::instrument(skip(self, _options))]
     async fn create_session(
         &self,
         request_handle: zbus::zvariant::ObjectPath<'_>,
@@ -114,7 +115,7 @@ impl PortalScreenCastService {
         app_id: String,
         _options: HashMap<String, OwnedValue>,
     ) -> zbus::fdo::Result<(u32, HashMap<String, OwnedValue>)> {
-        println!("[ScreenCast Portal] CreateSession requested: req={}, session={}, app_id={}", request_handle, session_handle, app_id);
+        tracing::info!(%request_handle, %session_handle, %app_id, "ScreenCast CreateSession requested");
         
         let outputs = OutputDiscovery::query_niri_outputs().await;
         let (selected_monitor, selected_title) = outputs.first().cloned()
@@ -146,6 +147,7 @@ impl PortalScreenCastService {
         Ok((0, results)) // 0 = Success
     }
 
+    #[tracing::instrument(skip(self, options))]
     async fn select_sources(
         &self,
         request_handle: zbus::zvariant::ObjectPath<'_>,
@@ -153,7 +155,7 @@ impl PortalScreenCastService {
         app_id: String,
         options: HashMap<String, OwnedValue>,
     ) -> zbus::fdo::Result<(u32, HashMap<String, OwnedValue>)> {
-        println!("[ScreenCast Portal] SelectSources: req={}, session={}, app_id={}", request_handle, session_handle, app_id);
+        tracing::info!(%request_handle, %session_handle, %app_id, "ScreenCast SelectSources requested");
 
         let session_str = session_handle.to_string();
         let mut lock = self.sessions.lock().await;
@@ -180,6 +182,7 @@ impl PortalScreenCastService {
         Ok((0, HashMap::new()))
     }
 
+    #[tracing::instrument(skip(self, _parent_window, _options))]
     async fn start(
         &self,
         request_handle: zbus::zvariant::ObjectPath<'_>,
@@ -188,7 +191,7 @@ impl PortalScreenCastService {
         _parent_window: String,
         _options: HashMap<String, OwnedValue>,
     ) -> zbus::fdo::Result<(u32, HashMap<String, OwnedValue>)> {
-        println!("[ScreenCast Portal] Start requested: req={}, session={}, app_id={}", request_handle, session_handle, app_id);
+        tracing::info!(%request_handle, %session_handle, %app_id, "ScreenCast Start requested");
 
         let session_str = session_handle.to_string();
         let mut lock = self.sessions.lock().await;
@@ -219,13 +222,14 @@ impl PortalScreenCastService {
             results.insert("streams".to_string(), ov);
         }
 
-        println!("[ScreenCast Portal] Negotiated stream for node_id={}, monitor={}", session.pipewire_node_id, session.selected_monitor);
+        tracing::info!(node_id = session.pipewire_node_id, monitor = %session.selected_monitor, "ScreenCast Negotiated stream");
         Ok((0, results)) // 0 = Success
     }
 
+    #[tracing::instrument(skip(self))]
     async fn stop(&self, session_handle: zbus::zvariant::ObjectPath<'_>) -> zbus::fdo::Result<()> {
         let session_str = session_handle.to_string();
-        println!("[ScreenCast Portal] Stop requested for session: {}", session_str);
+        tracing::info!(session = %session_str, "ScreenCast Stop requested");
         let mut lock = self.sessions.lock().await;
         lock.remove(&session_str);
         Ok(())
@@ -245,6 +249,7 @@ impl PortalRemoteDesktopService {
 
 #[interface(name = "org.freedesktop.impl.portal.RemoteDesktop")]
 impl PortalRemoteDesktopService {
+    #[tracing::instrument(skip(self, options))]
     async fn create_session(
         &self,
         request_handle: zbus::zvariant::ObjectPath<'_>,
@@ -252,10 +257,11 @@ impl PortalRemoteDesktopService {
         app_id: String,
         options: HashMap<String, OwnedValue>,
     ) -> zbus::fdo::Result<(u32, HashMap<String, OwnedValue>)> {
-        println!("[RemoteDesktop Portal] Delegating CreateSession to ScreenCast service...");
+        tracing::info!("Delegating CreateSession to ScreenCast service");
         self.screencast.create_session(request_handle, session_handle, app_id, options).await
     }
 
+    #[tracing::instrument(skip(self, _options))]
     async fn select_devices(
         &self,
         request_handle: zbus::zvariant::ObjectPath<'_>,
@@ -263,10 +269,11 @@ impl PortalRemoteDesktopService {
         app_id: String,
         _options: HashMap<String, OwnedValue>,
     ) -> zbus::fdo::Result<(u32, HashMap<String, OwnedValue>)> {
-        println!("[RemoteDesktop Portal] SelectDevices: req={}, session={}, app_id={}", request_handle, session_handle, app_id);
+        tracing::info!(%request_handle, %session_handle, %app_id, "RemoteDesktop SelectDevices requested");
         Ok((0, HashMap::new()))
     }
 
+    #[tracing::instrument(skip(self, options))]
     async fn start(
         &self,
         request_handle: zbus::zvariant::ObjectPath<'_>,
@@ -275,10 +282,11 @@ impl PortalRemoteDesktopService {
         parent_window: String,
         options: HashMap<String, OwnedValue>,
     ) -> zbus::fdo::Result<(u32, HashMap<String, OwnedValue>)> {
-        println!("[RemoteDesktop Portal] Delegating Start to ScreenCast service...");
+        tracing::info!("Delegating Start to ScreenCast service");
         self.screencast.start(request_handle, session_handle, app_id, parent_window, options).await
     }
 
+    #[tracing::instrument(skip(self))]
     async fn stop(&self, session_handle: zbus::zvariant::ObjectPath<'_>) -> zbus::fdo::Result<()> {
         self.screencast.stop(session_handle).await
     }

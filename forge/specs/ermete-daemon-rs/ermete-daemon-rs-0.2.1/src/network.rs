@@ -70,6 +70,7 @@ use futures_util::future::join_all;
 
 #[interface(name = "os.ermete.Bedrock.Network")]
 impl Network {
+    #[tracing::instrument(skip(self))]
     async fn scan_networks(&self) -> fdo::Result<Vec<String>> {
         let nm_proxy = NetworkManagerProxy::new(&self.sys_conn).await
             .map_err(|e| fdo::Error::Failed(format!("Failed to connect to NetworkManager DBus: {}", e)))?;
@@ -138,6 +139,7 @@ impl Network {
     }
 
     /// Check system connectivity status (`PORTAL`, `FULL`, `LIMITED`, `NONE`, `UNKNOWN`)
+    #[tracing::instrument(skip(self))]
     async fn check_connectivity(&self) -> fdo::Result<String> {
         let nm_proxy = NetworkManagerProxy::new(&self.sys_conn).await
             .map_err(|e| fdo::Error::Failed(format!("Failed to connect to NetworkManager DBus: {}", e)))?;
@@ -156,19 +158,26 @@ impl Network {
             _ => "UNKNOWN",
         };
 
-        println!("[Bedrock Network] CheckConnectivity status returned: {} ({})", status, status_str);
+        tracing::info!(status, status_str, "CheckConnectivity status returned");
         Ok(status_str.to_string())
     }
 
     /// Configure and activate 802.1x EAP enterprise Wi-Fi connection
+    #[tracing::instrument(skip(self, hdr, identity))]
     async fn connect_enterprise_wifi(
         &self,
         ssid: String,
         identity: String,
         eap_method: String,
         ca_cert_path: String,
+        #[zbus(header)] hdr: zbus::message::Header<'_>,
     ) -> fdo::Result<String> {
-        println!("[Bedrock Network] Enterprise Wi-Fi requested for SSID={}, identity=[REDACTED], method={}", ssid, eap_method);
+        let sender = hdr.sender().map(|s| s.as_str());
+        if !crate::bedrock::check_polkit_auth(sender, "os.ermete.network.configure").await {
+            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
+        }
+
+        tracing::info!(%ssid, %eap_method, identity = "[REDACTED]", "Enterprise Wi-Fi connection requested");
         let nm_settings = NmSettingsProxy::new(&self.sys_conn).await
             .map_err(|e| fdo::Error::Failed(format!("Failed to connect to NetworkManager Settings DBus: {}", e)))?;
         let dict = Self::build_enterprise_wifi_dict(&ssid, &identity, &eap_method, &ca_cert_path);
@@ -178,7 +187,19 @@ impl Network {
     }
 
     /// Add WireGuard or OpenVPN tunnel from config file
-    async fn add_vpn_tunnel(&self, name: String, vpn_type: String, config_path: String) -> fdo::Result<String> {
+    #[tracing::instrument(skip(self, hdr))]
+    async fn add_vpn_tunnel(
+        &self,
+        name: String,
+        vpn_type: String,
+        config_path: String,
+        #[zbus(header)] hdr: zbus::message::Header<'_>,
+    ) -> fdo::Result<String> {
+        let sender = hdr.sender().map(|s| s.as_str());
+        if !crate::bedrock::check_polkit_auth(sender, "os.ermete.network.configure").await {
+            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
+        }
+
         if config_path.contains("..") || (!config_path.starts_with("/etc/") && !config_path.starts_with("/var/home/")) {
             return Err(fdo::Error::InvalidArgs("Invalid config path for VPN".to_string()));
         }
@@ -188,7 +209,8 @@ impl Network {
             return Err(fdo::Error::InvalidArgs("Invalid VPN type".to_string()));
         }
 
-        println!("[Bedrock Network] Staging VPN Tunnel: name={}, type={}, path={}", name, vpn_type, config_path);
+        tracing::info!(%name, %vpn_type, %config_path, "Staging VPN Tunnel");
+
         let content = tokio::fs::read_to_string(&config_path).await.unwrap_or_default();
         let nm_settings = NmSettingsProxy::new(&self.sys_conn).await
             .map_err(|e| fdo::Error::Failed(format!("Failed to connect to NetworkManager Settings DBus: {}", e)))?;

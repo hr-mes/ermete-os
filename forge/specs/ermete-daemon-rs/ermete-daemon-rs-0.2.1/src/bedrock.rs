@@ -3,9 +3,28 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use zbus::fdo;
 
-async fn check_polkit_auth() -> bool {
-    // Fictional check
-    true
+use zbus::message::Header;
+
+pub async fn check_polkit_auth(sender: Option<&str>, action_id: &str) -> bool {
+    let sender_str = match sender {
+        Some(s) if !s.is_empty() => s,
+        _ => return false,
+    };
+
+    match tokio::process::Command::new("pkcheck")
+        .arg("--system-bus-name")
+        .arg(sender_str)
+        .arg("--action-id")
+        .arg(action_id)
+        .status()
+        .await
+    {
+        Ok(status) => status.success(),
+        Err(e) => {
+            eprintln!("[Polkit Zero-Trust] pkcheck failed for action {}: {}", action_id, e);
+            false
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -36,10 +55,45 @@ trait AudioWorker {
     fn set_volume(&self, volume: f64) -> zbus::Result<()>;
 }
 
+static SESSION_CONN: tokio::sync::OnceCell<Option<zbus::Connection>> = tokio::sync::OnceCell::const_new();
+
+async fn get_session_conn() -> Option<zbus::Connection> {
+    let conn_opt = SESSION_CONN.get_or_init(|| async {
+        zbus::Connection::session().await.ok()
+    }).await;
+    conn_opt.clone()
+}
+
 #[interface(name = "os.ermete.Bedrock")]
 impl Bedrock {
     async fn ping(&self) -> String {
+        if let Some(patched) = crate::live_patch::LivePatchManager::global().dispatch("ping", "") {
+            return patched;
+        }
         "pong".to_string()
+    }
+
+    /// ZBus API to load a dynamic shared library (.so) for zero-downtime hot-patching of method logic.
+    async fn apply_live_patch(
+        &self,
+        so_path: String,
+        #[zbus(header)] hdr: Header<'_>,
+    ) -> fdo::Result<String> {
+        let sender = hdr.sender().map(|s| s.as_str());
+
+        if !check_polkit_auth(sender, "os.ermete.livepatcher.apply").await {
+            return Err(fdo::Error::Failed("Polkit authorization failed for live patching".into()));
+        }
+
+        crate::live_patch::LivePatchManager::global()
+            .load_patch_so(&so_path)
+            .map_err(|e| fdo::Error::Failed(e))
+    }
+
+    /// Retrieve live patching status metadata as JSON
+    async fn get_live_patch_status(&self) -> String {
+        let status = crate::live_patch::LivePatchManager::global().get_status();
+        serde_json::to_string(&status).unwrap_or_else(|_| "{}".to_string())
     }
 
     #[zbus(property, name = "Volume")]
@@ -48,13 +102,18 @@ impl Bedrock {
     }
 
     #[zbus(property, name = "Volume")]
-    async fn set_audio_volume(&self, val: f64) -> fdo::Result<()> {
-        if !check_polkit_auth().await {
+    async fn set_audio_volume(
+        &self,
+        val: f64,
+        #[zbus(header)] hdr: Option<Header<'_>>,
+    ) -> fdo::Result<()> {
+        let sender = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
+        if !check_polkit_auth(sender, "os.ermete.bedrock.setvolume").await {
             return Err(fdo::Error::Failed("Polkit authorization failed".into()));
         }
         self.volume.store(val.to_bits(), Ordering::Relaxed);
         
-        if let Ok(conn) = zbus::Connection::session().await {
+        if let Some(conn) = get_session_conn().await {
             if let Ok(worker) = AudioWorkerProxy::new(&conn).await {
                 let _ = worker.set_volume(val).await;
             }
@@ -62,3 +121,4 @@ impl Bedrock {
         Ok(())
     }
 }
+

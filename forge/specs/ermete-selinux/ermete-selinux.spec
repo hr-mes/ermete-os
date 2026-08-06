@@ -33,6 +33,9 @@ mkdir -p %{buildroot}/usr/share/selinux/packages
 install -m 644 bootupd_lsblk.pp %{buildroot}/usr/share/selinux/packages/
 install -m 644 ermete_scx.pp %{buildroot}/usr/share/selinux/packages/
 
+%post
+semodule -i /usr/share/selinux/packages/*.pp
+
 %files
 /usr/share/selinux/packages/bootupd_lsblk.pp
 /usr/share/selinux/packages/ermete_scx.pp

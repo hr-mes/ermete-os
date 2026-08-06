@@ -100,12 +100,13 @@ impl SyncEngine {
                     let current_token = auth_token_ref.lock().await.clone();
 
                     // Security check: require TLS/Noise secure session or valid Auth Token
-                    if current_token.is_none() {
-                        warn!("Rejecting unencrypted incoming clipboard on TCP 9091 from {}: TLS/Noise tunnel not established", peer_ip);
-                        continue;
-                    }
-
-                    let required_token = current_token.unwrap();
+                    let required_token = match current_token {
+                        Some(tok) => tok,
+                        None => {
+                            warn!("Rejecting unencrypted incoming clipboard on TCP 9091 from {}: TLS/Noise tunnel not established", peer_ip);
+                            continue;
+                        }
+                    };
 
                     tokio::spawn(async move {
                         let mut content = String::new();

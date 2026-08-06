@@ -107,51 +107,52 @@ impl MprisActor {
                                     .path("/org/mpris/MediaPlayer2")?
                                     .build().await
                                 {
-                                    let iface: zbus::names::InterfaceName = "org.mpris.MediaPlayer2.Player".try_into().unwrap_or_else(|_| "org.mpris.MediaPlayer2.Player".try_into().unwrap());
-                                    let status = props_proxy.get(iface.clone(), "PlaybackStatus").await
-                                        .ok()
-                                        .and_then(|v| match &*v {
-                                            zbus::zvariant::Value::Str(s) => Some(s.as_str().to_string()),
-                                            _ => None,
-                                        })
-                                        .unwrap_or_else(|| "Stopped".to_string());
-                                    let title = props_proxy.get(iface.clone(), "Metadata").await
-                                        .ok()
-                                        .and_then(|v| {
-                                            if let zbus::zvariant::Value::Dict(dict) = &*v {
-                                                if let Ok(Some(val)) = dict.get(&zbus::zvariant::Value::from("xesam:title")) {
-                                                    if let zbus::zvariant::Value::Str(s) = val {
-                                                        return Some(s.as_str().to_string());
-                                                    }
-                                                }
-                                            }
-                                            None
-                                        }).unwrap_or_else(|| "Sconosciuto".to_string());
-                                    let artist = props_proxy.get(iface.clone(), "Metadata").await
-                                        .ok()
-                                        .and_then(|v| {
-                                            if let zbus::zvariant::Value::Dict(dict) = &*v {
-                                                if let Ok(Some(val)) = dict.get(&zbus::zvariant::Value::from("xesam:artist")) {
-                                                    if let zbus::zvariant::Value::Array(arr) = val {
-                                                        if let Ok(Some(first)) = arr.get(0) {
-                                                            if let zbus::zvariant::Value::Str(s) = first {
-                                                                return Some(s.as_str().to_string());
-                                                             }
+                                    if let Ok(iface) = zbus::names::InterfaceName::try_from("org.mpris.MediaPlayer2.Player") {
+                                        let status = props_proxy.get(iface.clone(), "PlaybackStatus").await
+                                            .ok()
+                                            .and_then(|v| match &*v {
+                                                zbus::zvariant::Value::Str(s) => Some(s.as_str().to_string()),
+                                                _ => None,
+                                            })
+                                            .unwrap_or_else(|| "Stopped".to_string());
+                                        let title = props_proxy.get(iface.clone(), "Metadata").await
+                                            .ok()
+                                            .and_then(|v| {
+                                                if let zbus::zvariant::Value::Dict(dict) = &*v {
+                                                    if let Ok(Some(val)) = dict.get(&zbus::zvariant::Value::from("xesam:title")) {
+                                                        if let zbus::zvariant::Value::Str(s) = val {
+                                                            return Some(s.as_str().to_string());
                                                         }
-                                                    } else if let zbus::zvariant::Value::Str(s) = val {
-                                                        return Some(s.as_str().to_string());
                                                     }
                                                 }
-                                            }
-                                            None
-                                        }).unwrap_or_else(|| "-".to_string());
-                                    let new_state = MprisState {
-                                        title,
-                                        artist,
-                                        status,
-                                    };
-                                    self.cached_mpris = Some(new_state);
-                                    return Ok(());
+                                                None
+                                            }).unwrap_or_else(|| "Sconosciuto".to_string());
+                                        let artist = props_proxy.get(iface.clone(), "Metadata").await
+                                            .ok()
+                                            .and_then(|v| {
+                                                if let zbus::zvariant::Value::Dict(dict) = &*v {
+                                                    if let Ok(Some(val)) = dict.get(&zbus::zvariant::Value::from("xesam:artist")) {
+                                                        if let zbus::zvariant::Value::Array(arr) = val {
+                                                            if let Ok(Some(first)) = arr.get(0) {
+                                                                if let zbus::zvariant::Value::Str(s) = first {
+                                                                    return Some(s.as_str().to_string());
+                                                                }
+                                                            }
+                                                        } else if let zbus::zvariant::Value::Str(s) = val {
+                                                            return Some(s.as_str().to_string());
+                                                        }
+                                                    }
+                                                }
+                                                None
+                                            }).unwrap_or_else(|| "-".to_string());
+                                        let new_state = MprisState {
+                                            title,
+                                            artist,
+                                            status,
+                                        };
+                                        self.cached_mpris = Some(new_state);
+                                        return Ok(());
+                                    }
                                 }
                             }
                         }

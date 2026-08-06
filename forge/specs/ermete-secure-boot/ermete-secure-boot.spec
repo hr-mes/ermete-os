@@ -41,6 +41,7 @@ ConditionPathExists=/etc/keys/ermete-secure-boot.key
 
 [Service]
 CPUWeight=50
+MemoryHigh=384M
 MemoryMax=512M
 Type=oneshot
 ExecStart=%{_libexecdir}/ermete-secure-boot-measure.sh
@@ -50,6 +51,14 @@ PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
 RestrictAddressFamilies=AF_UNIX
+SystemCallFilter=@system-service
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
 ReadWritePaths=/etc/keys /boot/efi /etc/systemd
 
 [Install]

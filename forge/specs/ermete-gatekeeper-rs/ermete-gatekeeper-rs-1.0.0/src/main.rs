@@ -1,12 +1,16 @@
 
 #![allow(unsafe_code)]
 
+use ermete_gatekeeper_rs::allocator::BareMetalScudoAllocator;
+
 #[global_allocator]
-static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+static GLOBAL: BareMetalScudoAllocator = BareMetalScudoAllocator::new();
+
 
 use std::collections::HashMap;
 use std::error::Error;
 use std::os::unix::io::RawFd;
+use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::io::unix::AsyncFd;
 use zbus::{connection::Builder, interface};
@@ -40,9 +44,118 @@ fn respond_and_close(fanotify_fd: RawFd, event_fd: RawFd, response_code: u32) {
     }
 }
 
+/// Takes an atomic BTRFS subvolume snapshot of `/var/home/ermete` prior to prompt or kill.
+async fn take_btrfs_snapshot(fd_id: u64) -> Option<PathBuf> {
+    let snapshot_dir = PathBuf::from("/var/home/.snapshots");
+    let _ = tokio::fs::create_dir_all(&snapshot_dir).await;
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+    let snapshot_path = snapshot_dir.join(format!("gatekeeper-pre-exec-{}-{}", fd_id, timestamp));
+
+    println!(
+        "[BTRFS Rollback Architect] Creating atomic CoW snapshot of /var/home/ermete at {:?}",
+        snapshot_path
+    );
+
+    let status = tokio::process::Command::new("btrfs")
+        .args([
+            "subvolume",
+            "snapshot",
+            "/var/home/ermete",
+            snapshot_path.to_str().unwrap_or(""),
+        ])
+        .status()
+        .await;
+
+    if matches!(status, Ok(ref s) if s.success()) {
+        println!(
+            "[BTRFS Rollback Architect] Atomic snapshot successfully created: {:?}",
+            snapshot_path
+        );
+        Some(snapshot_path)
+    } else {
+        eprintln!(
+            "[BTRFS Rollback Architect] Failed to create BTRFS snapshot for fd_id {}",
+            fd_id
+        );
+        None
+    }
+}
+
+/// Restores `/var/home/ermete` instantly from the recorded snapshot upon confirmed infection / denial.
+async fn restore_btrfs_snapshot_impl(
+    fd_id: u64,
+    pending_snapshots: &Arc<std::sync::Mutex<HashMap<u64, PathBuf>>>,
+) -> zbus::fdo::Result<bool> {
+    let snapshot_path = {
+        let mut snapshots = pending_snapshots.lock().unwrap_or_else(|e| e.into_inner());
+        snapshots.remove(&fd_id)
+    };
+
+    if let Some(snapshot_path) = snapshot_path {
+        println!(
+            "[BTRFS Rollback Architect] Confirmed infection / execution denial for fd_id {}. Triggering instant BTRFS restore from {:?}",
+            fd_id, snapshot_path
+        );
+
+        let target_subvol = "/var/home/ermete";
+        let del_status = tokio::process::Command::new("btrfs")
+            .args(["subvolume", "delete", target_subvol])
+            .status()
+            .await;
+
+        if !matches!(del_status, Ok(ref s) if s.success()) {
+            eprintln!("[BTRFS Rollback Architect] Subvolume delete returned non-zero; attempting snapshot restore & fallback...");
+        }
+
+        let restore_status = tokio::process::Command::new("btrfs")
+            .args([
+                "subvolume",
+                "snapshot",
+                snapshot_path.to_str().unwrap_or(""),
+                target_subvol,
+            ])
+            .status()
+            .await;
+
+        if matches!(restore_status, Ok(ref s) if s.success()) {
+            println!(
+                "[BTRFS Rollback Architect] Instant restore completed successfully from {:?}",
+                snapshot_path
+            );
+            Ok(true)
+        } else {
+            println!("[BTRFS Rollback Architect] Executing file-level restore fallback via rsync...");
+            let fallback_status = tokio::process::Command::new("rsync")
+                .args([
+                    "-a",
+                    "--delete",
+                    &format!("{}/", snapshot_path.to_string_lossy()),
+                    &format!("{}/", target_subvol),
+                ])
+                .status()
+                .await;
+
+            if matches!(fallback_status, Ok(ref s) if s.success()) {
+                println!("[BTRFS Rollback Architect] Fallback file-level restore succeeded.");
+                Ok(true)
+            } else {
+                eprintln!("[BTRFS Rollback Architect] BTRFS restore failed!");
+                Err(zbus::fdo::Error::Failed("BTRFS instant restore failed".into()))
+            }
+        }
+    } else {
+        println!("[BTRFS Rollback Architect] No snapshot registered for fd_id {}", fd_id);
+        Ok(false)
+    }
+}
+
 struct GatekeeperManager {
     fanotify_fd: RawFd,
     pending_events: Arc<std::sync::Mutex<HashMap<u64, i32>>>, // fd_id -> event_fd
+    pending_snapshots: Arc<std::sync::Mutex<HashMap<u64, PathBuf>>>, // fd_id -> snapshot_path
 }
 
 #[interface(name = "os.ermete.Gatekeeper")]
@@ -67,8 +180,11 @@ impl GatekeeperManager {
             return Err(zbus::fdo::Error::Failed("Polkit authorization failed".into()));
         }
 
+        // Clean up pending snapshot registration on approval
+        let _ = self.pending_snapshots.lock().unwrap_or_else(|e| e.into_inner()).remove(&fd_id);
+
         let event_fd = {
-            let mut pending = self.pending_events.lock().unwrap();
+            let mut pending = self.pending_events.lock().unwrap_or_else(|e| e.into_inner());
             pending.remove(&fd_id)
         };
 
@@ -116,8 +232,9 @@ impl GatekeeperManager {
     }
 
     async fn deny_execution(&self, fd_id: u64) -> zbus::fdo::Result<()> {
+        let _ = restore_btrfs_snapshot_impl(fd_id, &self.pending_snapshots).await;
         let event_fd = {
-            let mut pending = self.pending_events.lock().unwrap();
+            let mut pending = self.pending_events.lock().unwrap_or_else(|e| e.into_inner());
             pending.remove(&fd_id)
         };
         if let Some(event_fd) = event_fd {
@@ -126,6 +243,10 @@ impl GatekeeperManager {
         } else {
             Err(zbus::fdo::Error::InvalidArgs(format!("No pending event for id {}", fd_id)))
         }
+    }
+
+    async fn rollback_snapshot(&self, fd_id: u64) -> zbus::fdo::Result<bool> {
+        restore_btrfs_snapshot_impl(fd_id, &self.pending_snapshots).await
     }
 
     #[zbus(signal)]
@@ -169,15 +290,15 @@ impl GatekeeperManager {
             }
 
             if !authorized {
-                if let Ok(p) = zbus::ProxyBuilder::<'_, zbus::Proxy>::new(&conn)
-                    .destination("os.ermete.Fido2Mock").unwrap()
-                    .path("/os/ermete/Fido2Mock").unwrap()
-                    .interface("os.ermete.Fido2Mock").unwrap()
-                    .build()
-                    .await 
-                {
-                    if let Ok(true) = p.call::<_, _, bool>("Authenticate", &(reason,)).await {
-                        authorized = true;
+                let proxy_res = zbus::ProxyBuilder::<'_, zbus::Proxy>::new(&conn)
+                    .destination("os.ermete.Fido2Mock")
+                    .and_then(|b| b.path("/os/ermete/Fido2Mock"))
+                    .and_then(|b| b.interface("os.ermete.Fido2Mock"));
+                if let Ok(builder) = proxy_res {
+                    if let Ok(p) = builder.build().await {
+                        if let Ok(true) = p.call::<_, _, bool>("Authenticate", &(reason,)).await {
+                            authorized = true;
+                        }
                     }
                 }
             }
@@ -207,7 +328,7 @@ impl GatekeeperManager {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    println!("Starting Ermete Gatekeeper Daemon...");
+    println!("Starting Ermete Gatekeeper Daemon with BTRFS Rollback Architect Engine...");
 
     // SAFETY: Call libc fanotify_init syscall to create fanotify file descriptor.
     let fanotify_fd = unsafe {
@@ -249,9 +370,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     }
 
     let pending_events = Arc::new(std::sync::Mutex::new(HashMap::new()));
+    let pending_snapshots = Arc::new(std::sync::Mutex::new(HashMap::new()));
     let manager = GatekeeperManager {
         fanotify_fd,
         pending_events: pending_events.clone(),
+        pending_snapshots: pending_snapshots.clone(),
     };
 
     let conn = Builder::system()?
@@ -325,14 +448,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         next_id += 1;
                         
                         println!("Intercepted execution of quarantined file: {}", target_path_str);
+
+                        // Take atomic BTRFS subvolume snapshot BEFORE prompt or kill
+                        if let Some(snap_path) = take_btrfs_snapshot(fd_id).await {
+                            pending_snapshots.lock().unwrap_or_else(|e| e.into_inner()).insert(fd_id, snap_path);
+                        }
                         
                         // Store the fd
-                        pending_events.lock().unwrap().insert(fd_id, metadata.fd);
+                        pending_events.lock().unwrap_or_else(|e| e.into_inner()).insert(fd_id, metadata.fd);
                         
                         // Ask the UI to prompt the user
                         if let Err(e) = GatekeeperManager::prompt_required(&signal_ctxt, fd_id, &target_path_str).await {
                             eprintln!("Failed to send prompt_required signal: {}", e);
-                            // Fallback deny if UI is dead
+                            // Fallback deny if UI is dead: trigger instant restore and deny execution
+                            let _ = restore_btrfs_snapshot_impl(fd_id, &pending_snapshots).await;
                             respond_and_close(fanotify_fd, metadata.fd, FAN_DENY);
                         }
                     } else {
@@ -347,3 +476,4 @@ async fn main() -> Result<(), Box<dyn Error>> {
         guard.clear_ready();
     }
 }
+

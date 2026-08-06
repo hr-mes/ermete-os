@@ -4,11 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-aya = "0.3"
-aya-log = "0.2"
+aya = "0.13.0"
+aya-log = "0.2.1"
 clap = { version = "4.1", features = ["derive"] }
-tokio = { version = "1.25", features = ["macros", "rt", "rt-multi-thread", "net", "signal"] }
+tokio = { version = "1.25", features = ["macros", "rt", "rt-multi-thread", "net", "signal", "time"] }
 env_logger = "0.10"
 log = "0.4"
 anyhow = "1"
 libc = "0.2"
+
+

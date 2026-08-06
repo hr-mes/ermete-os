@@ -5,21 +5,19 @@ Summary:        Cilium Tetragon eBPF Runtime Security
 
 License:        Apache-2.0
 URL:            https://github.com/cilium/tetragon
-Source0:        %{name}-%{version}.tar.gz
+Source0:        https://github.com/cilium/tetragon/releases/download/v%{version}/tetragon-v%{version}-amd64.tar.gz
 
-BuildRequires:  curl tar
+BuildRequires:  tar
 Requires:       systemd
 
 %description
 Cilium Tetragon eBPF Runtime Security engine, packaged for Ermete OS.
 
 %prep
-# No prep
+%setup -q -c
 
 %build
-# Download the binary release dynamically in build phase
-curl -sSL "https://github.com/cilium/tetragon/releases/download/v%{version}/tetragon-v%{version}-amd64.tar.gz" -o tetragon.tar.gz
-tar -xzf tetragon.tar.gz
+# Offline hermetic build using pre-fetched Source0 tarball
 
 %install
 mkdir -p %{buildroot}%{_bindir}

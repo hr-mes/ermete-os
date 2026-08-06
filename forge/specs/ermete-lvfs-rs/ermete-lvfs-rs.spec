@@ -41,6 +41,7 @@ Requires=dbus.service fwupd.service
 
 [Service]
 CPUWeight=30
+MemoryHigh=192M
 MemoryMax=256M
 OOMScoreAdjust=300
 Type=dbus
@@ -51,7 +52,16 @@ RestartSec=5s
 DynamicUser=yes
 ProtectSystem=strict
 ProtectHome=read-only
+PrivateTmp=true
 NoNewPrivileges=true
+SystemCallFilter=@system-service
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
 
 [Install]
 WantedBy=multi-user.target

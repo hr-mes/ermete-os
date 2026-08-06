@@ -1,5 +1,7 @@
 #![allow(dead_code)]
+use arc_swap::ArcSwap;
 use std::fs;
+use std::sync::{Arc, OnceLock};
 
 #[derive(Debug, Clone)]
 pub struct LiveState {
@@ -22,8 +24,14 @@ impl Default for LiveState {
     }
 }
 
-#[allow(clippy::field_reassign_with_default)]
-pub fn get_live_state() -> LiveState {
+static LIVE_STATE_CACHE: OnceLock<ArcSwap<LiveState>> = OnceLock::new();
+
+fn get_cache() -> &'static ArcSwap<LiveState> {
+    LIVE_STATE_CACHE.get_or_init(|| ArcSwap::from_pointee(LiveState::default()))
+}
+
+/// Direct synchronous reader performing blocking sysfs / procfs reads off the main thread.
+pub fn read_live_state_io() -> LiveState {
     let mut state = LiveState::default();
 
     // Volume from AudioController D-Bus proxy cache
@@ -80,4 +88,29 @@ pub fn get_live_state() -> LiveState {
     }
 
     state
+}
+
+/// Asynchronous fetcher running `read_live_state_io` on Tokio's blocking thread pool via `tokio::task::spawn_blocking`.
+pub async fn get_live_state_async() -> LiveState {
+    let state = tokio::task::spawn_blocking(read_live_state_io)
+        .await
+        .unwrap_or_default();
+    get_cache().store(Arc::new(state.clone()));
+    state
+}
+
+/// Non-blocking state getter for GTK main loop. Returns cached state instantly without blocking
+/// and dispatches a background `tokio::task::spawn_blocking` task to update the cache asynchronously.
+#[allow(clippy::field_reassign_with_default)]
+pub fn get_live_state() -> LiveState {
+    let current_cached = (**get_cache().load()).clone();
+
+    if let Ok(handle) = tokio::runtime::Handle::try_current() {
+        handle.spawn(async {
+            let updated = tokio::task::spawn_blocking(read_live_state_io).await.unwrap_or_default();
+            get_cache().store(Arc::new(updated));
+        });
+    }
+
+    current_cached
 }

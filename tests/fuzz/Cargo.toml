@@ -1,0 +1,28 @@
+[package]
+name = "ermete-os-fuzz"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+ermete-backup = { path = "../../forge/specs/ermete-backup/ermete-backup-1.0.0" }
+ermete-cloud-rs = { path = "../../forge/specs/ermete-cloud-rs/ermete-cloud-rs-1.0.0" }
+ermete-daemon-rs = { path = "../../forge/specs/ermete-daemon-rs/ermete-daemon-rs-0.2.1" }
+ermete-gatekeeper-rs = { path = "../../forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0" }
+ermete-lvfs-rs = { path = "../../forge/specs/ermete-lvfs-rs/ermete-lvfs-rs-1.0.0" }
+ermete-mdm-rs = { path = "../../forge/specs/ermete-mdm-rs/ermete-mdm-rs-1.0.0" }
+ermete-settings-rs = { path = "../../forge/specs/ermete-settings-rs/ermete-settings-rs-1.0.0" }
+ermete-shell-rs = { path = "../../forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0" }
+ermete-store-rs = { path = "../../forge/specs/ermete-store-rs/ermete-store-rs-1.0.0" }
+
+[[bin]]
+name = "fuzz_target_1"
+path = "fuzz_targets/fuzz_target_1.rs"
+test = false
+doc = false
+
+[workspace]

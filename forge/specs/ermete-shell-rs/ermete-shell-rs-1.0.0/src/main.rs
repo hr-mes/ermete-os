@@ -49,17 +49,30 @@ struct Args {
 
 const APP_ID: &str = "os.ermete.Shell";
 
+fn init_telemetry() {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info,ermete_shell_rs=debug"))
+        )
+        .with_target(true)
+        .init();
+}
+
+#[tracing::instrument]
 fn main() -> glib::ExitCode {
+    init_telemetry();
+    tracing::info!("Starting Ermete Shell...");
+
     // Forza il renderer GTK4 NGL (New GL) ad altissime prestazioni / Vulkan e backend puramente Wayland
     std::env::set_var("GSK_RENDERER", "ngl");
     std::env::set_var("GDK_BACKEND", "wayland");
     // Disabilita lo scaling X11 frazionario per evitare blur
     std::env::set_var("GDK_SCALE", "1");
 
-
-
-    crate::sys::sandbox::apply_landlock_sandbox()
-        .expect("[Sandboxing] Errore fatale: Impossibile applicare la policy Landlock");
+    if let Err(err) = crate::sys::sandbox::apply_landlock_sandbox() {
+        tracing::warn!(error = %err, "Impossibile applicare la policy Landlock");
+    }
 
     let args = Args::parse();
     crate::ipc::init_system_controller();

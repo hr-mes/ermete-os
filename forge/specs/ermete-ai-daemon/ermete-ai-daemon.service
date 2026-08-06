@@ -1,0 +1,33 @@
+[Unit]
+Description=Ermete OS Local AI & Machine Learning Inference Daemon
+Documentation=https://github.com/hr-mes/ermete-forge
+After=network-online.target dbus.service
+Requires=dbus.service
+
+[Service]
+CPUWeight=100
+MemoryHigh=2048M
+MemoryMax=4096M
+OOMScoreAdjust=100
+Type=dbus
+BusName=os.ermete.AiDaemon
+ExecStart=/usr/bin/ermete-ai-daemon
+Restart=always
+RestartSec=5s
+
+# Extreme Sandboxing
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+NoNewPrivileges=true
+SystemCallFilter=@system-service
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target

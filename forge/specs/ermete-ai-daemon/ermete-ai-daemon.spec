@@ -28,8 +28,12 @@ cargo build --release --locked
 mkdir -p %{buildroot}%{_bindir}
 install -m 0755 target/release/%{name} %{buildroot}%{_bindir}/%{name}
 
+mkdir -p %{buildroot}%{_unitdir}
+install -m 0644 %{_sourcedir}/../ermete-ai-daemon.service %{buildroot}%{_unitdir}/%{name}.service || install -m 0644 ermete-ai-daemon.service %{buildroot}%{_unitdir}/%{name}.service
+
 %files
 %{_bindir}/%{name}
+%{_unitdir}/%{name}.service
 
 %changelog
 * Wed Aug 05 2026 Ermete Forge <forge@ermete.os> - 1.0.0-1

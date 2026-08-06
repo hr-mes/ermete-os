@@ -43,3 +43,49 @@ jobs:
       - name: Check Dependencies & Vulnerabilities (cargo-deny)
         run: |
           cargo deny check
+
+  kani-verification:
+    name: 🔬 Kani Formal Verification
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install AWS Kani Verifier
+        run: |
+          cargo install --locked kani-verifier
+          cargo kani setup
+
+      - name: Run Mathematical Proofs (Gatekeeper)
+        run: |
+          cd forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0
+          cargo kani
+
+  bare-metal-audit:
+    name: ⚡ eBPF & Bare-Metal Build Audit
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust (Nightly for no_std & eBPF)
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rust-src
+
+      - name: Install bpf-linker
+        run: cargo install bpf-linker
+
+      - name: Compile XDP Zero-Trust Firewall (eBPF)
+        run: |
+          cd system/ebpf/ebpf-core
+          cargo build --target bpfel-unknown-none -Z build-std=core --release
+
+      - name: Compile Gatekeeper (no_std Bare-Metal)
+        run: |
+          cd forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0
+          cargo build --release
+

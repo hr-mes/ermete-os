@@ -16,7 +16,7 @@ impl PortalSettingsService {
 
     pub fn parse_hex_rgb(hex: &str) -> (f64, f64, f64) {
         let clean = hex.trim_start_matches('#');
-        if clean.len() == 6 {
+        if clean.len() == 6 && clean.is_ascii() {
             let r = u8::from_str_radix(&clean[0..2], 16).unwrap_or(137) as f64 / 255.0;
             let g = u8::from_str_radix(&clean[2..4], 16).unwrap_or(180) as f64 / 255.0;
             let b = u8::from_str_radix(&clean[4..6], 16).unwrap_or(250) as f64 / 255.0;

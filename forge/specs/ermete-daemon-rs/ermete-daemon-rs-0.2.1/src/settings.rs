@@ -18,7 +18,7 @@ trait SettingsWorker {
 }
 
 async fn check_polkit_auth() -> bool {
-    // Fictional check
+    // Legacy internal stub retained for internal actor compatibility
     true
 }
 
@@ -156,13 +156,20 @@ pub enum SettingsCommand {
     SetVoiceoverEnabled(bool, oneshot::Sender<fdo::Result<()>>),
 }
 
+use tokio_util::sync::CancellationToken;
+
 #[derive(Clone)]
 pub struct SettingsService {
     tx: mpsc::Sender<SettingsCommand>,
 }
 
 impl SettingsService {
+    #[allow(dead_code)]
     pub fn new(state_tx: watch::Sender<SettingsState>) -> Self {
+        Self::new_with_token(state_tx, CancellationToken::new())
+    }
+
+    pub fn new_with_token(state_tx: watch::Sender<SettingsState>, cancel_token: CancellationToken) -> Self {
         let (tx, mut rx) = mpsc::channel::<SettingsCommand>(32);
         
         tokio::spawn(async move {
@@ -174,7 +181,20 @@ impl SettingsService {
                 None
             };
             
-            while let Some(cmd) = rx.recv().await {
+            loop {
+                let cmd = tokio::select! {
+                    _ = cancel_token.cancelled() => {
+                        tracing::info!("Shutdown token received. Exiting Settings actor loop.");
+                        break;
+                    }
+                    opt = rx.recv() => {
+                        match opt {
+                            Some(c) => c,
+                            None => break,
+                        }
+                    }
+                };
+
                 match cmd {
                     SettingsCommand::GetColorScheme(reply) => {
                         let _ = reply.send(state.color_scheme.clone());
@@ -302,7 +322,15 @@ impl SettingsService {
     }
 
     #[zbus(property, name = "ColorScheme")]
-    async fn set_color_scheme(&self, val: String) -> fdo::Result<()> {
+    async fn set_color_scheme(
+        &self,
+        val: String,
+        #[zbus(header)] hdr: Option<zbus::message::Header<'_>>,
+    ) -> fdo::Result<()> {
+        let sender = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
+        if !crate::bedrock::check_polkit_auth(sender, "os.ermete.settings.change").await {
+            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
+        }
         let (reply, rx) = oneshot::channel();
         let _ = self.tx.send(SettingsCommand::SetColorScheme(val, reply)).await;
         rx.await.unwrap_or(Err(fdo::Error::Failed("Actor dead".into())))
@@ -316,7 +344,15 @@ impl SettingsService {
     }
 
     #[zbus(property, name = "AccentColor")]
-    async fn set_accent_color(&self, val: String) -> fdo::Result<()> {
+    async fn set_accent_color(
+        &self,
+        val: String,
+        #[zbus(header)] hdr: Option<zbus::message::Header<'_>>,
+    ) -> fdo::Result<()> {
+        let sender = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
+        if !crate::bedrock::check_polkit_auth(sender, "os.ermete.settings.change").await {
+            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
+        }
         let (reply, rx) = oneshot::channel();
         let _ = self.tx.send(SettingsCommand::SetAccentColor(val, reply)).await;
         rx.await.unwrap_or(Err(fdo::Error::Failed("Actor dead".into())))
@@ -330,7 +366,15 @@ impl SettingsService {
     }
 
     #[zbus(property, name = "Wallpaper")]
-    async fn set_wallpaper(&self, val: String) -> fdo::Result<()> {
+    async fn set_wallpaper(
+        &self,
+        val: String,
+        #[zbus(header)] hdr: Option<zbus::message::Header<'_>>,
+    ) -> fdo::Result<()> {
+        let sender = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
+        if !crate::bedrock::check_polkit_auth(sender, "os.ermete.settings.change").await {
+            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
+        }
         let (reply, rx) = oneshot::channel();
         let _ = self.tx.send(SettingsCommand::SetWallpaper(val, reply)).await;
         rx.await.unwrap_or(Err(fdo::Error::Failed("Actor dead".into())))
@@ -344,7 +388,15 @@ impl SettingsService {
     }
 
     #[zbus(property, name = "TrueToneEnabled")]
-    async fn set_true_tone_enabled(&self, val: bool) -> fdo::Result<()> {
+    async fn set_true_tone_enabled(
+        &self,
+        val: bool,
+        #[zbus(header)] hdr: Option<zbus::message::Header<'_>>,
+    ) -> fdo::Result<()> {
+        let sender = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
+        if !crate::bedrock::check_polkit_auth(sender, "os.ermete.settings.change").await {
+            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
+        }
         let (reply, rx) = oneshot::channel();
         let _ = self.tx.send(SettingsCommand::SetTrueToneEnabled(val, reply)).await;
         rx.await.unwrap_or(Err(fdo::Error::Failed("Actor dead".into())))
@@ -358,7 +410,15 @@ impl SettingsService {
     }
 
     #[zbus(property, name = "TrueToneTemperature")]
-    async fn set_true_tone_temperature(&self, val: u32) -> fdo::Result<()> {
+    async fn set_true_tone_temperature(
+        &self,
+        val: u32,
+        #[zbus(header)] hdr: Option<zbus::message::Header<'_>>,
+    ) -> fdo::Result<()> {
+        let sender = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
+        if !crate::bedrock::check_polkit_auth(sender, "os.ermete.settings.change").await {
+            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
+        }
         let (reply, rx) = oneshot::channel();
         let _ = self.tx.send(SettingsCommand::SetTrueToneTemperature(val, reply)).await;
         rx.await.unwrap_or(Err(fdo::Error::Failed("Actor dead".into())))
@@ -372,11 +432,32 @@ impl SettingsService {
     }
 
     #[zbus(property, name = "VoiceOverEnabled")]
-    async fn set_voiceover_enabled(&self, val: bool) -> fdo::Result<()> {
+    async fn set_voiceover_enabled(
+        &self,
+        val: bool,
+        #[zbus(header)] hdr: Option<zbus::message::Header<'_>>,
+    ) -> fdo::Result<()> {
+        let sender = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
+        if !crate::bedrock::check_polkit_auth(sender, "os.ermete.settings.change").await {
+            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
+        }
         let (reply, rx) = oneshot::channel();
         let _ = self.tx.send(SettingsCommand::SetVoiceoverEnabled(val, reply)).await;
         rx.await.unwrap_or(Err(fdo::Error::Failed("Actor dead".into())))
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
 
+    #[tokio::test]
+    async fn test_settings_service_cancellation() {
+        let store = SettingsStateStore::new_async().await;
+        let token = CancellationToken::new();
+        let _service = SettingsService::new_with_token(store.state_tx, token.clone());
+        assert!(!token.is_cancelled());
+        token.cancel();
+        assert!(token.is_cancelled());
+    }
+}

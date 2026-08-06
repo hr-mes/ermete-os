@@ -256,7 +256,18 @@ fn should_autohide_for_monitor(state: &DockState, monitor_connector: &str, scree
 #[allow(deprecated)]
 #[allow(dead_code)]
 pub fn build_ui(app: &Application) -> ApplicationWindow {
-    let display = gtk4::gdk::Display::default().expect("Display default");
+    let display = match gtk4::gdk::Display::default() {
+        Some(d) => d,
+        None => {
+            return create_dock_for_monitor(
+                app,
+                None,
+                &load_dock_config(),
+                &fetch_current_niri_windows(),
+                &fetch_current_workspaces(),
+            );
+        }
+    };
     ermete_style::load_glass_theme();
 
     let (tx_win, rx_win) = glib::MainContext::channel::<Vec<NiriWindowInfo>>(glib::Priority::DEFAULT);
@@ -338,7 +349,15 @@ pub fn build_ui(app: &Application) -> ApplicationWindow {
         glib::ControlFlow::Continue
     });
 
-    first_window.expect("At least one dock window created")
+    first_window.unwrap_or_else(|| {
+        create_dock_for_monitor(
+            app,
+            None,
+            &initial_config,
+            &initial_windows,
+            &initial_workspaces,
+        )
+    })
 }
 
 fn create_dock_for_monitor(

@@ -76,6 +76,10 @@ fn default_config() -> DesktopConfig {
     }
 }
 
+thread_local! {
+    static LAST_INTERNAL_UPDATE: std::cell::Cell<Option<std::time::Instant>> = const { std::cell::Cell::new(None) };
+}
+
 fn update_widget_position(target_id: &str, new_x: f64, new_y: f64) {
     let mut config = load_config();
     let mut updated = false;
@@ -90,6 +94,7 @@ fn update_widget_position(target_id: &str, new_x: f64, new_y: f64) {
     if updated {
         let path = get_config_path();
         if let Ok(content) = serde_json::to_string_pretty(&config) {
+            LAST_INTERNAL_UPDATE.with(|cell| cell.set(Some(std::time::Instant::now())));
             let _ = fs::write(&path, content);
         }
     }
@@ -328,6 +333,11 @@ pub fn build_desktop_widgets(app: &Application) {
     if let Ok(monitor) = file.monitor_file(gtk4::gio::FileMonitorFlags::NONE, gtk4::gio::Cancellable::NONE) {
         monitor.connect_changed(glib::clone!(@weak canvas => move |_, _, _, event_type| {
             if event_type == gtk4::gio::FileMonitorEvent::Changed || event_type == gtk4::gio::FileMonitorEvent::Created {
+                if let Some(last_update) = LAST_INTERNAL_UPDATE.with(|cell| cell.get()) {
+                    if last_update.elapsed() < std::time::Duration::from_millis(500) {
+                        return;
+                    }
+                }
                 reload_widgets(&canvas);
             }
         }));

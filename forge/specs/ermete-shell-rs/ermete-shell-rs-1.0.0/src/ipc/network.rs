@@ -1,5 +1,6 @@
 #![allow(dead_code)]
-use std::sync::{Arc, Mutex};
+use arc_swap::ArcSwap;
+use std::sync::{Arc, Mutex, OnceLock};
 use tokio::sync::{mpsc, oneshot};
 use crate::ipc::types::{
     IpcBackend, SystemEventBus, SystemEvent, MockState, WifiNetworkInfo,
@@ -203,7 +204,20 @@ impl NetworkActor {
                                             if let Some(s) = Self::extract_ssid(ssid_val) {
                                                 if s == ssid {
                                                     if let Ok(Ok(nm_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
-                                                        let _ = nm_proxy.activate_connection(&conn_path, &zbus::zvariant::ObjectPath::from_str_unchecked("/"), &zbus::zvariant::ObjectPath::from_str_unchecked("/")).await?;
+                                                        let mut device_path = zbus::zvariant::ObjectPath::from_str_unchecked("/");
+                                                        if let Ok(devices) = nm_proxy.get_devices().await {
+                                                            for dev_path in devices {
+                                                                if let Ok(dev_proxy) = NmDeviceProxy::builder(system).path(dev_path.clone())?.build().await {
+                                                                    if let Ok(dev_type) = dev_proxy.device_type().await {
+                                                                        if dev_type == 2 {
+                                                                            device_path = dev_path.into_inner();
+                                                                            break;
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                        let _ = nm_proxy.activate_connection(&conn_path, &device_path, &zbus::zvariant::ObjectPath::from_str_unchecked("/")).await?;
                                                         self.active_wifi_ssid = Some(ssid.to_string());
                                                         self.event_bus.emit(SystemEvent::NetworkUpdated(ssid.to_string()));
                                                         return Ok(());
@@ -440,31 +454,71 @@ impl NetworkController {
         }
     }
 
+    pub async fn get_network_status_async(&self) -> (String, String, String) {
+        if let Ok(l) = self.active_wifi_ssid.lock() {
+            if let Some(ssid) = l.as_ref() {
+                let status = ("".to_string(), "Rete Wi-Fi".to_string(), ssid.clone());
+                get_net_cache().store(Arc::new(status.clone()));
+                return status;
+            }
+        }
+        let status = tokio::task::spawn_blocking(check_sysfs_net_status)
+            .await
+            .unwrap_or_else(|_| ("󰖪".to_string(), "Rete Wi-Fi".to_string(), "Non connesso".to_string()));
+        get_net_cache().store(Arc::new(status.clone()));
+        status
+    }
+
     pub fn get_cached_network_status(&self) -> (String, String, String) {
         if let Ok(l) = self.active_wifi_ssid.lock() {
             if let Some(ssid) = l.as_ref() {
                 return ("".to_string(), "Rete Wi-Fi".to_string(), ssid.clone());
             }
         }
-        if let Ok(entries) = std::fs::read_dir("/sys/class/net") {
-            for entry in entries.flatten() {
-                let name = entry.file_name().to_string_lossy().to_string();
-                if name == "lo" {
-                    continue;
-                }
-                if let Ok(state) = std::fs::read_to_string(entry.path().join("operstate")) {
-                    if state.trim() == "up" {
-                        if name.starts_with("eth") || name.starts_with("en") {
-                            return ("󰈀".to_string(), "Ethernet".to_string(), "Connesso via cavo".to_string());
-                        } else if name.starts_with("wl") {
-                            return ("".to_string(), "Rete Wi-Fi".to_string(), "Connesso".to_string());
-                        }
+
+        let cached = (**get_net_cache().load()).clone();
+
+        if let Ok(handle) = tokio::runtime::Handle::try_current() {
+            handle.spawn(async {
+                let updated = tokio::task::spawn_blocking(check_sysfs_net_status)
+                    .await
+                    .unwrap_or_else(|_| ("󰖪".to_string(), "Rete Wi-Fi".to_string(), "Non connesso".to_string()));
+                get_net_cache().store(Arc::new(updated));
+            });
+        }
+
+        cached
+    }
+}
+
+static NET_STATUS_CACHE: OnceLock<ArcSwap<(String, String, String)>> = OnceLock::new();
+
+fn get_net_cache() -> &'static ArcSwap<(String, String, String)> {
+    NET_STATUS_CACHE.get_or_init(|| {
+        ArcSwap::from_pointee(("󰖪".to_string(), "Rete Wi-Fi".to_string(), "Non connesso".to_string()))
+    })
+}
+
+/// Reads `/sys/class/net` for network interface operstates off the main thread.
+pub fn check_sysfs_net_status() -> (String, String, String) {
+    if let Ok(entries) = std::fs::read_dir("/sys/class/net") {
+        for entry in entries.flatten() {
+            let name = entry.file_name().to_string_lossy().to_string();
+            if name == "lo" {
+                continue;
+            }
+            if let Ok(state) = std::fs::read_to_string(entry.path().join("operstate")) {
+                if state.trim() == "up" {
+                    if name.starts_with("eth") || name.starts_with("en") {
+                        return ("󰈀".to_string(), "Ethernet".to_string(), "Connesso via cavo".to_string());
+                    } else if name.starts_with("wl") {
+                        return ("".to_string(), "Rete Wi-Fi".to_string(), "Connesso".to_string());
                     }
                 }
             }
         }
-        ("󰖪".to_string(), "Rete Wi-Fi".to_string(), "Non connesso".to_string())
     }
+    ("󰖪".to_string(), "Rete Wi-Fi".to_string(), "Non connesso".to_string())
 }
 
 impl crate::ipc::system_proxies::ControllerBackend for NetworkController {

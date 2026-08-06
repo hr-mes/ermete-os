@@ -31,6 +31,7 @@ cp -a %{_sourcedir}/etc %{buildroot}/ 2>/dev/null || true
 
 mkdir -p %{buildroot}/usr/share/ermete-system-config
 mv %{buildroot}/etc/usbguard/usbguard-daemon.conf %{buildroot}/usr/share/ermete-system-config/usbguard-daemon.conf
+rm -f %{buildroot}/etc/yum.repos.d/ermete-forge.repo
 
 %post
 # Configurations are now managed declaratively via tmpfiles.d (10-ermete-greetd.conf)
@@ -46,7 +47,6 @@ mv %{buildroot}/etc/usbguard/usbguard-daemon.conf %{buildroot}/usr/share/ermete-
 /usr/lib/tmpfiles.d/10-ermete-greetd.conf
 /usr/share/ermete-system-config/greetd.toml
 /usr/share/ermete-system-config/usbguard-daemon.conf
-%config(noreplace) /etc/yum.repos.d/ermete-forge.repo
 %attr(0755,root,root) /etc/greenboot/check/required.d/10-greetd-running.sh
 %config(noreplace) /etc/security/limits.d/99-ermete-realtime.conf
 

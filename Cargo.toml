@@ -19,19 +19,14 @@ members = [
     "forge/specs/ermete-attestation/ermete-attestation-1.0.0",
     "forge/specs/ermete-style",
     "forge/specs/ermete-niri-ipc",
-    "forge/specs/ermete-live-patcher/ermete-live-patcher-1.0.0"
+    "forge/specs/ermete-live-patcher/ermete-live-patcher-1.0.0",
+    "forge/specs/ermete-daemon-patch-plugin"
 ]
+
 exclude = [
-    "forge/specs/ermete-backup/ermete-backup-1.0.0/fuzz",
-    "forge/specs/ermete-cloud-rs/ermete-cloud-rs-1.0.0/fuzz",
-    "forge/specs/ermete-daemon-rs/ermete-daemon-rs-0.2.1/fuzz",
-    "forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0/fuzz",
-    "forge/specs/ermete-lvfs-rs/ermete-lvfs-rs-1.0.0/fuzz",
-    "forge/specs/ermete-mdm-rs/ermete-mdm-rs-1.0.0/fuzz",
-    "forge/specs/ermete-settings-rs/ermete-settings-rs-1.0.0/fuzz",
-    "forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0/fuzz",
-    "forge/specs/ermete-store-rs/ermete-store-rs-1.0.0/fuzz"
+    "tests/fuzz"
 ]
+
 
 resolver = "2"
 
@@ -41,3 +36,6 @@ lto = true
 codegen-units = 1
 panic = "abort"
 strip = true
+
+[profile.release.package.ermete-ai-daemon]
+opt-level = 3

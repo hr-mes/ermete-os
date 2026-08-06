@@ -7,11 +7,28 @@ Before=sysinit.target
 ConditionPathExistsGlob=!/var/log/journal/*/fss.key
 
 [Service]
+CPUWeight=50
+MemoryHigh=64M
+MemoryMax=128M
 Type=oneshot
 RemainAfterExit=no
 ExecStart=/usr/bin/journalctl --setup-keys
 ExecStartPost=/usr/bin/systemctl restart systemd-journald.service
 ExecStartPost=/usr/bin/systemctl disable ermete-journal-seal.service
+
+# Extreme Sandboxing
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+NoNewPrivileges=true
+SystemCallFilter=@system-service
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+ReadWritePaths=/var/log/journal /etc/systemd
 
 [Install]
 WantedBy=sysinit.target multi-user.target

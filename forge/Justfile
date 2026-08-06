@@ -148,6 +148,13 @@ fuzz component="all" time="60":
         fi
     done
 
+# Runs AWS Kani formal verification proof harnesses on Rust spec targets
+[group('QA & Validation')]
+verify component="ermete-gatekeeper-rs":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    LD_LIBRARY_PATH=/usr/lib64:/lib64:${LD_LIBRARY_PATH:-} PATH=/home/ermete/.cargo/bin:$PATH cargo kani --package "{{ component }}"
+
 # Validates NVIDIA kernel module loading (nvidia, uvm, drm, modeset) and GPU device nodes
 [group('QA & Validation')]
 test-nvidia-modules:

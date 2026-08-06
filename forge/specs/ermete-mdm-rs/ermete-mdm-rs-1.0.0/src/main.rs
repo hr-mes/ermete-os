@@ -154,8 +154,7 @@ async fn main() -> anyhow::Result<()> {
     tokio::spawn(async move {
         while let Some(msg) = notify_rx.recv().await {
             info!("Notification on MPSC channel: {}", msg);
-            if msg.starts_with("SUCCESS: ") {
-                let action = msg.strip_prefix("SUCCESS: ").unwrap();
+            if let Some(action) = msg.strip_prefix("SUCCESS: ") {
                 if let Err(e) = MdmDBusInterface::policy_applied(&signal_context, action).await {
                     error!("Failed to emit DBus signal: {}", e);
                 }

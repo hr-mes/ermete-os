@@ -56,7 +56,7 @@ impl BackupServer {
             .args(["subvolume", "snapshot", "-r", &home, target_dir.to_str().unwrap_or("")])
             .status().await;
 
-        if status.is_err() || !status.unwrap().success() {
+        if !matches!(status, Ok(ref s) if s.success()) {
             println!("[BackupDaemon] Btrfs subvolume snapshot command failed or unsupported on current fs. Creating manifest snapshot dir.");
             let _ = fs::create_dir_all(&target_dir);
         }
@@ -106,7 +106,7 @@ impl BackupServer {
             .args(["subvolume", "delete", target_dir.to_str().unwrap_or("")])
             .status().await;
 
-        if status.is_err() || !status.unwrap().success() {
+        if !matches!(status, Ok(ref s) if s.success()) {
             let _ = fs::remove_dir_all(&target_dir);
         }
 
@@ -137,7 +137,7 @@ impl BackupServer {
             .args(["subvolume", "snapshot", target_dir.to_str().unwrap_or(""), &home])
             .status().await;
 
-        if status.is_err() || !status.unwrap().success() {
+        if !matches!(status, Ok(ref s) if s.success()) {
             println!("[BackupDaemon] Btrfs subvolume restore failed.");
             return false;
         }

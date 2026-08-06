@@ -46,6 +46,11 @@ kernel mode="full":
 system-build target_image=env('IMAGE_NAME', 'ermete-os-system') tag=env('DEFAULT_TAG', 'latest'):
     just system/build "{{ target_image }}" "{{ tag }}"
 
+# Builds system bootc container image locally in offline fallback mode (GH Actions outage fallback)
+[group('Pipeline')]
+build-offline target_image="localhost/ermete-os-system" tag="offline":
+    ./build-offline.sh "{{ target_image }}" "{{ tag }}"
+
 # Builds QCOW2 VM disk image from system bootc container
 [group('Pipeline')]
 disk-qcow2 target_image=("localhost/" + env('IMAGE_NAME', 'ermete-os-system')) tag=env('DEFAULT_TAG', 'latest'):
@@ -79,6 +84,11 @@ audit:
 [group('QA & Security')]
 fuzz component="all" time="60":
     just forge/fuzz "{{ component }}" "{{ time }}"
+
+# Runs AWS Kani formal verification proofs on Rust spec targets
+[group('QA & Security')]
+verify component="ermete-gatekeeper-rs":
+    just forge/verify "{{ component }}"
 
 # Validates NVIDIA kernel module loading and GPU device nodes
 [group('QA & Security')]

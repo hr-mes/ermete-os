@@ -59,7 +59,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
 
     // Wait for the object to be registered and name to be acquired
-    let context = SignalContext::new(&_conn, "/os/ermete/SystemHealth").expect("Failed to create context");
+    let context = SignalContext::new(&_conn, "/os/ermete/SystemHealth")?;
 
     let mut interval = time::interval(Duration::from_secs(60));
 

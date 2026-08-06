@@ -6,10 +6,25 @@ DefaultDependencies=no
 
 [Service]
 CPUWeight=50
+MemoryHigh=96M
 MemoryMax=128M
 Type=oneshot
 ExecStart=/usr/bin/bash -c 'if [ ! -f "$HOME/.config/.skel_installed" ]; then cp -n -R /etc/skel/. "$HOME/" 2>/dev/null && mkdir -p "$HOME/.config" && touch "$HOME/.config/.skel_installed"; fi'
 RemainAfterExit=yes
+
+# Extreme Sandboxing
+ProtectSystem=strict
+ProtectHome=false
+PrivateTmp=true
+NoNewPrivileges=true
+SystemCallFilter=@system-service
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
 
 [Install]
 WantedBy=niri-session.target graphical-session.target

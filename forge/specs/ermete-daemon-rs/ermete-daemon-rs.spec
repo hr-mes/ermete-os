@@ -7,7 +7,7 @@ Summary:        Ermete OS Native D-Bus Bedrock, ACID Settings & Multimedia Porta
 License:        MIT
 Source0:        ermete-daemon-rs-%{version}.tar.gz
 
-BuildRequires:  rust cargo gcc gcc-c++ pkgconf-pkg-config
+BuildRequires:  rust cargo gcc gcc-c++ pkgconf-pkg-config systemd-rpm-macros
 Requires: pipewire wireplumber
 Requires:       dconf ermete-matugen niri speech-dispatcher psmisc wlsunset
 
@@ -29,9 +29,13 @@ install -m 0755 target/release/ermete-daemon-rs %{buildroot}%{_bindir}/ermete-da
 mkdir -p %{buildroot}%{_datadir}/dbus-1/services
 install -m 0644 org.ermete.Settings.service %{buildroot}%{_datadir}/dbus-1/services/org.ermete.Settings.service
 
+mkdir -p %{buildroot}%{_unitdir}
+install -m 0644 %{_sourcedir}/../ermete-daemon.service %{buildroot}%{_unitdir}/ermete-daemon.service || install -m 0644 ermete-daemon.service %{buildroot}%{_unitdir}/ermete-daemon.service
+
 %files
 %{_bindir}/ermete-daemon-rs
 %{_datadir}/dbus-1/services/org.ermete.Settings.service
+%{_unitdir}/ermete-daemon.service
 
 %changelog
 * Fri Jul 17 2026 Ermete Forge <forge@ermete.os> - 0.2.1-1
