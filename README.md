@@ -16,6 +16,16 @@
 <hr />
 
 ## 📖 Indice Enciclopedico dell'Architettura
+
+### 📚 Deep-Dive Technical Documentation
+Esplora le specifiche architetturali dettagliate (generate dallo sciame di intelligenza artificiale):
+- [**Kernel Layer & Boot Sequence**](docs/architecture/doc_kernel_layer.md)
+- [**Core Daemons, Security & IPC**](docs/architecture/doc_core_daemons.md)
+- [**Desktop UI Stack & Compositor**](docs/architecture/doc_shell_ui.md)
+- [**Ermete Cloud Mesh & Sync**](docs/architecture/doc_cloud_mesh.md)
+- [**Build System & CI/CD Pipeline**](docs/architecture/doc_build_system.md)
+
+### Capitoli Rapidi
 1. [Il Paradigma Ermete: Oltre le Big-Tech](#1-il-paradigma-ermete-oltre-le-big-tech)
 2. [Topologia del Sistema (Mermaid Graph)](#2-topologia-del-sistema)
 3. [Core 1: Immutabilità e BootC Containerization](#3-core-1-immutabilità-e-bootc-containerization)
