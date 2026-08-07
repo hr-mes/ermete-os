@@ -1200,6 +1200,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "ermete-ebpf-sched"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "aya",
+ "libc",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "zbus 4.4.0",
+]
+
+[[package]]
 name = "ermete-gatekeeper-rs"
 version = "1.0.0"
 dependencies = [
