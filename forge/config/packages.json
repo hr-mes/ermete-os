@@ -33,7 +33,10 @@
     "scudo",
     "qa",
     "rust-toolchain",
-    "antigravity"
+    "antigravity",
+    "syft",
+    "bpf-linker",
+    "astro-toolchain"
   ],
   "custom_tier0": [
     "base-config",
@@ -42,7 +45,10 @@
     "secure-boot",
     "tetragon",
     "rust-toolchain",
-    "antigravity"
+    "antigravity",
+    "syft",
+    "bpf-linker",
+    "astro-toolchain"
   ],
   "custom_tier1": [
     "starship",
