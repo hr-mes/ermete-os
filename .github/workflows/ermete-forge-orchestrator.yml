@@ -51,6 +51,10 @@ jobs:
       has_changes: ${{ steps.brain.outputs.has_changes }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            forge
+            .github
       - name: Align Repositories
         run: cp builder/rpmfusion-custom.repo /etc/yum.repos.d/ 2>/dev/null || true
       - name: Verify Redis Distributed Cache Connection
@@ -78,13 +82,17 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            forge
+            .github
       - name: Check Idempotency (Content Hash)
         id: check_idempotency
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
-          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package builder --registry ghcr.io --owner ${{ github.repository_owner }} --image-name ermete-os-builder > idemp.out
+          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v /dev/shm:/dev/shm -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package builder --registry ghcr.io --owner ${{ github.repository_owner }} --image-name ermete-os-builder > idemp.out
           source ./idemp.out
           if [ "$CACHE_HIT" = "true" ]; then
             echo "cache_hit=true" >> $GITHUB_OUTPUT
@@ -127,6 +135,13 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            forge/config
+            forge/scripts
+            forge/specs/ermete-${{ matrix.package }}
+            forge/specs
+            .github
       - name: Install Redis Tools
         run: sudo apt-get update && sudo apt-get install -y redis-tools
       - name: Check Idempotency & Distributed Redis Cache
@@ -139,7 +154,7 @@ jobs:
           if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then
             img_name="ermete-os-forge-rolling-${{ matrix.package }}"
           fi
-          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name $img_name > idemp.out
+          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v /dev/shm:/dev/shm -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name $img_name > idemp.out
           source ./idemp.out
           echo "hash=$CONTENT_HASH" >> $GITHUB_OUTPUT
           if [ "$CACHE_HIT" = "true" ]; then echo "skip=true" >> $GITHUB_OUTPUT; else echo "skip=false" >> $GITHUB_OUTPUT; fi
@@ -163,6 +178,7 @@ jobs:
           if [ -d "specs/ermete-${{ matrix.package }}" ]; then
             echo "📦 Compiling Custom Spec: ermete-${{ matrix.package }}"
             podman run -i --rm \
+              -v /dev/shm:/dev/shm \
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
               -w /workspace/forge \
@@ -207,6 +223,7 @@ jobs:
           else
             echo "🌐 Compiling Upstream Package: ${{ matrix.package }}"
             podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+              -v /dev/shm:/dev/shm \
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
               -w /workspace/forge \
@@ -297,6 +314,13 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            forge/config
+            forge/scripts
+            forge/specs/ermete-${{ matrix.package }}
+            forge/specs
+            .github
       - name: Install Redis Tools
         run: sudo apt-get update && sudo apt-get install -y redis-tools
       - name: Check Idempotency & Distributed Redis Cache
@@ -309,7 +333,7 @@ jobs:
           if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then
             img_name="ermete-os-forge-rolling-${{ matrix.package }}"
           fi
-          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name $img_name > idemp.out
+          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v /dev/shm:/dev/shm -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name $img_name > idemp.out
           source ./idemp.out
           echo "hash=$CONTENT_HASH" >> $GITHUB_OUTPUT
           if [ "$CACHE_HIT" = "true" ]; then echo "skip=true" >> $GITHUB_OUTPUT; else echo "skip=false" >> $GITHUB_OUTPUT; fi
@@ -333,6 +357,7 @@ jobs:
           if [ -d "specs/ermete-${{ matrix.package }}" ]; then
             echo "📦 Compiling Custom Spec: ermete-${{ matrix.package }}"
             podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+              -v /dev/shm:/dev/shm \
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
               -w /workspace/forge \
@@ -377,6 +402,7 @@ jobs:
           else
             echo "🌐 Compiling Upstream Package: ${{ matrix.package }}"
             podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+              -v /dev/shm:/dev/shm \
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
               -w /workspace/forge \
@@ -467,6 +493,13 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            forge/config
+            forge/scripts
+            forge/specs/ermete-${{ matrix.package }}
+            forge/specs
+            .github
       - name: Install Redis Tools
         run: sudo apt-get update && sudo apt-get install -y redis-tools
       - name: Check Idempotency & Distributed Redis Cache
@@ -477,7 +510,7 @@ jobs:
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           img_name="ermete-os-forge-${{ matrix.package }}"
           if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then img_name="ermete-os-forge-rolling-${{ matrix.package }}"; fi
-          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name $img_name > idemp.out
+          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v /dev/shm:/dev/shm -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name $img_name > idemp.out
           source ./idemp.out
           echo "hash=$CONTENT_HASH" >> $GITHUB_OUTPUT
           if [ "$CACHE_HIT" = "true" ]; then echo "skip=true" >> $GITHUB_OUTPUT; else echo "skip=false" >> $GITHUB_OUTPUT; fi
@@ -501,6 +534,7 @@ jobs:
           if [ -d "specs/ermete-${{ matrix.package }}" ]; then
             echo "📦 Compiling Custom Spec: ermete-${{ matrix.package }}"
             podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+              -v /dev/shm:/dev/shm \
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
               -w /workspace/forge \
@@ -545,6 +579,7 @@ jobs:
           else
             echo "🌐 Compiling Upstream Package: ${{ matrix.package }}"
             podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+              -v /dev/shm:/dev/shm \
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
               -w /workspace/forge \
@@ -626,6 +661,10 @@ jobs:
         flatpak: ${{ fromJson(needs.orchestrator-brain.outputs.dag_flatpaks) }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            forge
+            .github
       - name: Build Flatpak App
         run: echo "Building Flatpak package ${{ matrix.flatpak }}..."
 
@@ -642,12 +681,17 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            forge
+            .github
       - name: Authenticate Podman to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: Resolve Kernel Version and Install Chimera Headers
         id: kernel
         run: |
           podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+            -v /dev/shm:/dev/shm \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
             ghcr.io/hr-mes/ermete-os-builder:latest \
@@ -681,6 +725,7 @@ jobs:
         run: |
           mkdir -p ${{ github.workspace }}/nvidia_cache
           podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+            -v /dev/shm:/dev/shm \
             -v ${{ github.workspace }}:/workspace \
             -v ${{ github.workspace }}/nvidia_cache:/var/cache/akmods/nvidia \
             -w /workspace \
@@ -766,10 +811,15 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            forge
+            .github
       - name: Create Repo and Push OCI
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+            -v /dev/shm:/dev/shm \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace/forge \
             ghcr.io/hr-mes/ermete-os-builder:latest \
@@ -898,7 +948,7 @@ jobs:
       - name: 🧹 Cleanup Workspace Permissions
         if: always()
         run: |
-          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -v "${{ github.workspace }}:/workspace:rw" -w /workspace docker.io/library/alpine:latest rm -rf /workspace/var-tmp || true
+          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -v /dev/shm:/dev/shm -v "${{ github.workspace }}:/workspace:rw" -w /workspace docker.io/library/alpine:latest rm -rf /workspace/var-tmp || true
           sudo chown -R 1000:1000 ${{ github.workspace }} || true
 
   dag-system-image:
@@ -917,6 +967,10 @@ jobs:
           echo "DEFAULT_TAG=latest" >> ${GITHUB_ENV}
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            system
+            .github
       - name: 🧹 Maximize build space
         uses: ublue-os/remove-unwanted-software@v9
       - name: 🔑 Login to GHCR
@@ -924,7 +978,7 @@ jobs:
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: 🐳 Build OS Image
         run: |
-          podman run -i --rm --privileged             -v ${{ github.workspace }}:/workspace             -w /workspace             ghcr.io/hr-mes/ermete-os-builder:latest             bash -c "bwrap --unshare-net --dev-bind / / podman build --network=none --layers -t ghcr.io/hr-mes/ermete-os-system:latest -f ./system/Containerfile ./system && podman push ghcr.io/hr-mes/ermete-os-system:latest" ||           bwrap --unshare-net --dev-bind / / podman build             --network=none             --layers             -t ghcr.io/hr-mes/ermete-os-system:latest             -f ./system/Containerfile ./system
+          podman run -i --rm --privileged -v /dev/shm:/dev/shm -v ${{ github.workspace }}:/workspace -w /workspace ghcr.io/hr-mes/ermete-os-builder:latest bash -c "bwrap --unshare-net --dev-bind / / podman build --network=none --layers -t ghcr.io/hr-mes/ermete-os-system:latest -f ./system/Containerfile ./system && podman push ghcr.io/hr-mes/ermete-os-system:latest" || bwrap --unshare-net --dev-bind / / podman build --network=none --layers -t ghcr.io/hr-mes/ermete-os-system:latest -f ./system/Containerfile ./system
           podman push ghcr.io/hr-mes/ermete-os-system:latest || true
       - name: 💿 Build ISO (osbuild)
         uses: osbuild/bootc-image-builder-action@v0.0.2
@@ -945,6 +999,11 @@ jobs:
     steps:
       - name: 📥 Check out repository
         uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            openwiki
+            docs
+            .github
       - name: 🟢 Set up Node.js (v22)
         uses: actions/setup-node@v4
         with:
@@ -967,6 +1026,9 @@ jobs:
     steps:
       - name: 📥 Check out repository
         uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github
       - name: 📸 Visual Rendering Check & Performance Audit
         run: |
           echo "Simulating Visual Regression, Lighthouse & Playwright checks..."

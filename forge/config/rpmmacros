@@ -45,13 +45,20 @@
 %__global_ldflags %{_ldflags} %{?_lto_cflags}
 
 # =========================================================================
+# RAM DISK COMPILATION MACROS
+# =========================================================================
+%_builddir /dev/shm/rpmbuild/BUILD
+%_tmppath /dev/shm
+
+# =========================================================================
 # RUST & CARGO EXTREME MACROS
 # =========================================================================
 # opt-level=3: Ottimizzazione aggressiva massima
 # lto=thin: ThinLTO per bilanciare tempi di link e performance
 # codegen-units=1: Piattaforma singola per max LTO puro (lento ma potente)
 # link-arg=-fuse-ld=mold: Linker mold anche su Rust
-%rustflags -C target-cpu=x86-64-v3 -C opt-level=3 -C codegen-units=16 -C strip=symbols -C link-arg=-fuse-ld=mold
+# -Z threads=8: Rustc Parallel Front-end
+%rustflags -Z threads=8 -C target-cpu=x86-64-v3 -C opt-level=3 -C codegen-units=16 -C strip=symbols -C link-arg=-fuse-ld=mold
 
 # =========================================================================
 # MULTITHREADING
@@ -64,6 +71,7 @@
 # Inietta LTO nativo di Cargo su ogni singolo pacchetto Rust upstream,
 # evitando il crash globale sulle macro procedurali che avremmo con RUSTFLAGS.
 %__spec_build_pre %{___build_pre}\
+  export CARGO_TARGET_DIR="/dev/shm/cargo_target"\
   export RUSTFLAGS="%{rustflags}"\
   export CARGO_PROFILE_RELEASE_LTO="thin"\
   export CARGO_PROFILE_RELEASE_PANIC="abort"\
@@ -71,3 +79,4 @@
   export RUSTC_WRAPPER=sccache\
   export SCCACHE_DIRECT=true\
   export SCCACHE_CACHE_SIZE="10G"
+
