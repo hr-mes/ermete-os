@@ -425,7 +425,7 @@ EOF
 
 echo ">>> Esecuzione rpmbuild -bp per scompattare, applicare patch e validare l'albero..."
 spectool -g -R SPECS/kernel.spec
-dnf builddep -y SPECS/kernel.spec
+sudo dnf builddep -y SPECS/kernel.spec
 export LLVM=1
 export MAKEFLAGS="LLVM=1 LLVM_IAS=1"
 rpmbuild -bp --with toolchain_clang --with clang_lto SPECS/kernel.spec --target x86_64
