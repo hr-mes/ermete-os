@@ -22,7 +22,8 @@ members = [
     "forge/specs/ermete-live-patcher/ermete-live-patcher-1.0.0",
     "forge/specs/ermete-daemon-patch-plugin"
 , "system/ermete-store"
-, "system/unikernel"]
+, "system/unikernel"
+, "system/ermete-agentic-kernel"]
 
 exclude = [
     "tests/fuzz"
