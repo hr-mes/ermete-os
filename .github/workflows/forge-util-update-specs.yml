@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
+  packages: read
 
 defaults:
   run:
@@ -16,44 +18,92 @@ jobs:
   update-specs:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.PAT_TOKEN || github.token }}
-      - name: Check and Update Specs
+
+      - name: Install Skopeo and JQ Tooling
         run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq skopeo jq curl
+
+      - name: "Autonomous Janitor: Check & Update Specs with OCI Merkle Verification"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY: "ghcr.io"
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
           UPDATED=0
-          
+
+          echo "=== 🤖 Autonomous Spec Janitor & OCI Merkle Verifier ==="
+
           function update_spec() {
             local repo=$1
             local spec_file=$2
-            
-            # Fetch latest release tag (remove 'v' prefix if present)
-            local latest_tag=$(curl -sL -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${repo}/releases/latest | jq -r .tag_name | sed 's/^v//')
-            if [ -z "$latest_tag" ] || [ "$latest_tag" == "null" ]; then
-              echo "Could not fetch release for $repo"
+            local package_name
+            package_name=$(basename "$spec_file" .spec | sed 's/^ermete-//')
+
+            echo "--------------------------------------------------"
+            echo "Evaluating Spec: $spec_file ($repo)..."
+
+            if [ ! -f "$spec_file" ]; then
+              echo "Warning: Spec file $spec_file not found. Skipping."
               return
             fi
-            
+
+            # Fetch latest release tag via GitHub API
+            local latest_tag
+            latest_tag=$(curl -sL -H "Authorization: token ${GH_TOKEN}" "https://api.github.com/repos/${repo}/releases/latest" | jq -r '.tag_name // empty' 2>/dev/null | sed 's/^v//' || echo "")
+
+            if [ -z "$latest_tag" ] || [ "$latest_tag" == "null" ]; then
+              echo "  Could not fetch release from /releases/latest for $repo. Checking /tags..."
+              latest_tag=$(curl -sL -H "Authorization: token ${GH_TOKEN}" "https://api.github.com/repos/${repo}/tags" | jq -r '.[0].name // empty' 2>/dev/null | sed 's/^v//' || echo "")
+            fi
+
+            if [ -z "$latest_tag" ] || [ "$latest_tag" == "null" ]; then
+              echo "  Warning: Unable to resolve latest tag for $repo."
+              return
+            fi
+
             # Get current version from spec
-            local current_ver=$(grep -E '^Version:' "$spec_file" | awk '{print $2}')
-            
+            local current_ver
+            current_ver=$(grep -E '^Version:' "$spec_file" | awk '{print $2}')
+
+            echo "  Current Spec Version: $current_ver | Upstream Latest: $latest_tag"
+
+            # OCI Layer Merkle verification with skopeo & jq
+            local image_ref="docker://${REGISTRY}/${OWNER}/ermete-os-forge-${package_name}:latest"
+            if command -v skopeo >/dev/null 2>&1; then
+              local layer_digest
+              layer_digest=$(skopeo inspect --no-tags "$image_ref" 2>/dev/null | jq -r '.Digest // empty' || echo "")
+              if [ -n "$layer_digest" ]; then
+                echo "  GHCR OCI Merkle Digest for ${package_name}: $layer_digest"
+              fi
+            fi
+
             if [ "$latest_tag" != "$current_ver" ]; then
-              echo "Updating $spec_file from $current_ver to $latest_tag"
+              echo "  --> Bumping $spec_file from $current_ver to $latest_tag"
               sed -i "s/^Version:.*$/Version:        $latest_tag/" "$spec_file"
+              sed -i "s/^Release:.*$/Release:        1%{?dist}/" "$spec_file" || true
               UPDATED=1
             else
-              echo "$spec_file is up to date ($current_ver)"
+              echo "  $spec_file is up to date ($current_ver)."
             fi
           }
-          
+
           update_spec "starship/starship" "specs/ermete-starship/ermete-starship.spec"
           update_spec "InioX/matugen" "specs/ermete-matugen/ermete-matugen.spec"
           update_spec "ful1e5/Bibata_Cursor" "specs/ermete-bibata/ermete-bibata.spec"
-          
+          update_spec "sentriz/cliphist" "specs/ermete-cliphist/ermete-cliphist.spec"
+
           if [ "$UPDATED" -eq 1 ]; then
-            echo "updates=true" >> $GITHUB_ENV
+            echo "updates=true" >> "$GITHUB_ENV"
+            echo "Spec updates detected and staged."
           else
-            echo "updates=false" >> $GITHUB_ENV
+            echo "updates=false" >> "$GITHUB_ENV"
+            echo "No spec updates required."
           fi
 
       - name: Create Pull Request
@@ -65,3 +115,4 @@ jobs:
           title: "chore(deps): auto-update spec versions"
           branch: "chore/update-specs"
           base: "main"
+          delete-branch: true

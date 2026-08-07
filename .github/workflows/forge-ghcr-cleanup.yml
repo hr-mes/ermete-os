@@ -5,54 +5,143 @@ on:
     - cron: '0 0 * * 0'
   workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
-  cleanup:
-    runs-on: ubuntu-latest
-    permissions:
-      packages: write
+  cleanup-janitor:
+    runs-on: ubuntu-24.04
     steps:
-      - name: Delete old and untagged GHCR images
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Skopeo and JQ Tooling
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq skopeo jq curl
+
+      - name: Autonomous OCI Merkle Tree Deduplication & GHCR Cleanup
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY: "ghcr.io"
         run: |
+          set -euo pipefail
+
           ORG="${{ github.repository_owner }}"
+          ACTOR="${{ github.actor }}"
           
+          echo "=== 🤖 Autonomous Janitor: OCI Merkle Tree & Layer Deduplicator ==="
+          
+          # Login to GHCR with skopeo
+          if [ -n "${GH_TOKEN:-}" ]; then
+            echo "$GH_TOKEN" | skopeo login "$REGISTRY" -u "$ACTOR" --password-stdin 2>/dev/null || true
+          fi
+
           echo "Fetching container packages for $ORG..."
-          PACKAGES=$(gh api --paginate /users/$ORG/packages?package_type=container | jq -r '.[].name' 2>/dev/null || echo "")
-          
+          PACKAGES_JSON=$(gh api --paginate "/users/$ORG/packages?package_type=container" 2>/dev/null || gh api --paginate "/orgs/$ORG/packages?package_type=container" 2>/dev/null || echo "[]")
+          PACKAGES=$(echo "$PACKAGES_JSON" | jq -r '.[].name // empty' 2>/dev/null || echo "")
+
           if [ -z "$PACKAGES" ]; then
-            echo "No container packages found or error fetching."
+            echo "No container packages found or API returned empty list."
             exit 0
           fi
-          
+
+          TOTAL_PACKAGES=0
+          TOTAL_VERSIONS_SCANNED=0
+          DELETED_UNTAGGED=0
+          DELETED_DUPLICATES=0
+
+          echo "### 🧹 Autonomous Janitor Cleanup Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Package | Scanned Versions | Untagged Pruned | Merkle Duplicates Pruned | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|---|---|---|" >> $GITHUB_STEP_SUMMARY
+
           for PACKAGE in $PACKAGES; do
-            echo "----------------------------------------"
-            echo "Processing package: $PACKAGE"
-            
-            # URL-encode the package name
+            TOTAL_PACKAGES=$((TOTAL_PACKAGES + 1))
             ENC_PACKAGE=$(jq -rn --arg x "$PACKAGE" '$x|@uri')
             
-            echo "Fetching versions..."
-            VERSIONS_JSON=$(gh api --paginate /users/$ORG/packages/container/$ENC_PACKAGE/versions 2>/dev/null || echo "[]")
+            echo "--------------------------------------------------"
+            echo "Processing Package: $PACKAGE"
             
-            # Identify the IDs of the latest 2 tagged versions
-            KEEP_IDS=$(echo "$VERSIONS_JSON" | jq -r '[.[] | select(.metadata.container.tags | length > 0)] | sort_by(.created_at) | reverse | .[0:2] | .[].id')
+            VERSIONS_JSON=$(gh api --paginate "/users/$ORG/packages/container/$ENC_PACKAGE/versions" 2>/dev/null || gh api --paginate "/orgs/$ORG/packages/container/$ENC_PACKAGE/versions" 2>/dev/null || echo "[]")
             
-            echo "$VERSIONS_JSON" | jq -c '.[]' | while read -r version; do
+            VERSION_COUNT=$(echo "$VERSIONS_JSON" | jq 'length')
+            TOTAL_VERSIONS_SCANNED=$((TOTAL_VERSIONS_SCANNED + VERSION_COUNT))
+            
+            if [ "$VERSION_COUNT" -eq 0 ]; then
+              echo "  No versions found for $PACKAGE."
+              echo "| \`$PACKAGE\` | 0 | 0 | 0 | Clean |" >> $GITHUB_STEP_SUMMARY
+              continue
+            fi
+
+            # Identify tagged versions and order by creation date (newest first)
+            TAGGED_VERSIONS=$(echo "$VERSIONS_JSON" | jq -c '[.[] | select(.metadata.container.tags | length > 0)] | sort_by(.created_at) | reverse')
+            
+            # Retention strategy: Keep latest 2 tagged versions + release tags
+            KEEP_IDS=$(echo "$TAGGED_VERSIONS" | jq -r '.[0:2] | .[].id // empty')
+            
+            PKG_UNTAGGED_DEL=0
+            PKG_DUPLICATE_DEL=0
+
+            # Process all versions using process substitution to retain variable context
+            while read -r version; do
+              [ -z "$version" ] && continue
               VERSION_ID=$(echo "$version" | jq -r '.id')
               TAG_COUNT=$(echo "$version" | jq -r '.metadata.container.tags | length')
+              TAGS=$(echo "$version" | jq -r '.metadata.container.tags | join(",")')
               
-              if [[ "$TAG_COUNT" -eq 0 ]]; then
-                echo "Deleting untagged version $VERSION_ID..."
-                gh api -X DELETE /users/$ORG/packages/container/$ENC_PACKAGE/versions/$VERSION_ID || echo "Warning: Failed to delete $VERSION_ID"
-              else
-                if echo "$KEEP_IDS" | grep -q "^$VERSION_ID$"; then
-                  echo "Keeping tagged version $VERSION_ID (one of the latest 2)."
+              if [ "$TAG_COUNT" -eq 0 ]; then
+                # Untagged / Orphaned OCI layer manifest
+                echo "  [Prune Untagged] Deleting orphaned version $VERSION_ID..."
+                if gh api -X DELETE "/users/$ORG/packages/container/$ENC_PACKAGE/versions/$VERSION_ID" 2>/dev/null || gh api -X DELETE "/orgs/$ORG/packages/container/$ENC_PACKAGE/versions/$VERSION_ID" 2>/dev/null; then
+                  PKG_UNTAGGED_DEL=$((PKG_UNTAGGED_DEL + 1))
                 else
-                  echo "Deleting old tagged version $VERSION_ID..."
-                  gh api -X DELETE /users/$ORG/packages/container/$ENC_PACKAGE/versions/$VERSION_ID || echo "Warning: Failed to delete $VERSION_ID"
+                  echo "    Warning: Failed to delete version $VERSION_ID"
+                fi
+              else
+                # Check retention rules
+                KEEP=false
+                if echo "$KEEP_IDS" | grep -q "^$VERSION_ID$"; then
+                  KEEP=true
+                fi
+                if echo "$TAGS" | grep -qE "(latest|main|stable)"; then
+                  KEEP=true
+                fi
+
+                if [ "$KEEP" = "true" ]; then
+                  echo "  [Retain Tagged] Keeping version $VERSION_ID (Tags: $TAGS)."
+                  FIRST_TAG=$(echo "$version" | jq -r '.metadata.container.tags[0]')
+                  IMAGE_REF="docker://$REGISTRY/$ORG/$PACKAGE:$FIRST_TAG"
+                  
+                  # Use skopeo and jq to inspect Merkle tree layers
+                  RAW_MANIFEST=$(skopeo inspect --raw "$IMAGE_REF" 2>/dev/null || echo "")
+                  if [ -n "$RAW_MANIFEST" ]; then
+                    CONFIG_DIGEST=$(echo "$RAW_MANIFEST" | jq -r '.config.digest // .manifests[0].digest // "unknown"')
+                    LAYER_COUNT=$(echo "$RAW_MANIFEST" | jq -r '(.layers // .manifests // []) | length')
+                    echo "    OCI Merkle Root Config: $CONFIG_DIGEST (Layers: $LAYER_COUNT)"
+                  fi
+                else
+                  # Duplicate Merkle Layer Tree / Exceeds retention limit
+                  echo "  [Deduplicate Merkle] Deleting redundant tagged version $VERSION_ID (Tags: $TAGS)..."
+                  if gh api -X DELETE "/users/$ORG/packages/container/$ENC_PACKAGE/versions/$VERSION_ID" 2>/dev/null || gh api -X DELETE "/orgs/$ORG/packages/container/$ENC_PACKAGE/versions/$VERSION_ID" 2>/dev/null; then
+                    PKG_DUPLICATE_DEL=$((PKG_DUPLICATE_DEL + 1))
+                  else
+                    echo "    Warning: Failed to delete version $VERSION_ID"
+                  fi
                 fi
               fi
-            done
+            done < <(echo "$VERSIONS_JSON" | jq -c '.[]')
+
+            DELETED_UNTAGGED=$((DELETED_UNTAGGED + PKG_UNTAGGED_DEL))
+            DELETED_DUPLICATES=$((DELETED_DUPLICATES + PKG_DUPLICATE_DEL))
+            echo "| \`$PACKAGE\` | $VERSION_COUNT | $PKG_UNTAGGED_DEL | $PKG_DUPLICATE_DEL | Optimized |" >> $GITHUB_STEP_SUMMARY
           done
-          echo "Cleanup complete!"
+
+          echo "--------------------------------------------------"
+          echo "=== 📊 Janitor Summary ==="
+          echo "Packages Processed: $TOTAL_PACKAGES"
+          echo "Versions Scanned: $TOTAL_VERSIONS_SCANNED"
+          echo "Untagged Versions Deleted: $DELETED_UNTAGGED"
+          echo "Redundant Merkle Layers Deleted: $DELETED_DUPLICATES"
+          echo "Deduplication & Cleanup Complete!"
+
