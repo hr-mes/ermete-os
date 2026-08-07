@@ -3,7 +3,7 @@ use arc_swap::ArcSwap;
 use std::sync::{Arc, Mutex, OnceLock};
 use tokio::sync::{mpsc, oneshot};
 use crate::ipc::types::{
-    IpcBackend, SystemEventBus, SystemEvent, MockState, WifiNetworkInfo,
+    IpcBackend, NetBus, NetEvent, MockState, WifiNetworkInfo,
     NetworkManagerProxy, NmDeviceProxy, NmWirelessProxy, NmAccessPointProxy, 
     NmSettingsProxy, NmSettingsConnectionProxy, NmActiveConnectionProxy
 };
@@ -25,12 +25,12 @@ pub enum NetworkCommand {
 pub struct NetworkActor {
     backend: IpcBackend,
     active_wifi_ssid: Option<String>,
-    event_bus: SystemEventBus,
+    event_bus: NetBus,
     receiver: mpsc::Receiver<NetworkCommand>,
 }
 
 impl NetworkActor {
-    pub fn spawn(backend: IpcBackend, event_bus: SystemEventBus, initial_ssid: Option<String>) -> mpsc::Sender<NetworkCommand> {
+    pub fn spawn(backend: IpcBackend, event_bus: NetBus, initial_ssid: Option<String>) -> mpsc::Sender<NetworkCommand> {
         let (tx, rx) = mpsc::channel(32);
         let actor = Self {
             backend,
@@ -105,7 +105,7 @@ impl NetworkActor {
                 s.wifi_enabled
             }
         };
-        self.event_bus.emit(SystemEvent::WifiToggled(new_state));
+        self.event_bus.emit(NetEvent::WifiToggled(new_state));
         Ok(new_state)
     }
 
@@ -132,7 +132,7 @@ impl NetworkActor {
                 state.lock().unwrap_or_else(|e| e.into_inner()).wifi_enabled = powered;
             }
         }
-        self.event_bus.emit(SystemEvent::WifiToggled(powered));
+        self.event_bus.emit(NetEvent::WifiToggled(powered));
         Ok(())
     }
 
@@ -220,7 +220,7 @@ impl NetworkActor {
                                                         }
                                                         let _ = nm_proxy.activate_connection(&conn_path, &device_path, &zbus::zvariant::ObjectPath::from_str_unchecked("/")).await?;
                                                         self.active_wifi_ssid = Some(ssid.to_string());
-                                                        self.event_bus.emit(SystemEvent::NetworkUpdated(ssid.to_string()));
+                                                        self.event_bus.emit(NetEvent::NetworkUpdated(ssid.to_string()));
                                                         return Ok(());
                                                     }
                                                 }
@@ -239,7 +239,7 @@ impl NetworkActor {
                 for net in &mut s.wifi_networks {
                     net.active = net.ssid == ssid;
                 }
-                self.event_bus.emit(SystemEvent::NetworkUpdated(ssid.to_string()));
+                self.event_bus.emit(NetEvent::NetworkUpdated(ssid.to_string()));
                 Ok(())
             }
         }
@@ -256,7 +256,7 @@ impl NetworkActor {
                                     if id == ssid {
                                         nm_proxy.deactivate_connection(&path).await?;
                                         self.active_wifi_ssid = None;
-                                        self.event_bus.emit(SystemEvent::NetworkUpdated("Disconnected".to_string()));
+                                        self.event_bus.emit(NetEvent::NetworkUpdated("Disconnected".to_string()));
                                         return Ok(());
                                     }
                                 }
@@ -273,7 +273,7 @@ impl NetworkActor {
                         net.active = false;
                     }
                 }
-                self.event_bus.emit(SystemEvent::NetworkUpdated("Disconnected".to_string()));
+                self.event_bus.emit(NetEvent::NetworkUpdated("Disconnected".to_string()));
                 Ok(())
             }
         }
@@ -342,7 +342,7 @@ pub struct NetworkController {
 }
 
 impl NetworkController {
-    pub fn new(backend: IpcBackend, event_bus: SystemEventBus) -> Self {
+    pub fn new(backend: IpcBackend, event_bus: NetBus) -> Self {
         let sender = NetworkActor::spawn(backend, event_bus, None);
         Self {
             sender,
@@ -350,7 +350,7 @@ impl NetworkController {
         }
     }
 
-    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: SystemEventBus) -> Self {
+    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: NetBus) -> Self {
         let backend = IpcBackend::Mock(state);
         let sender = NetworkActor::spawn(backend, event_bus, Some("Ermete-5G".to_string()));
         Self {
@@ -535,7 +535,7 @@ pub fn get_network_controller() -> NetworkController {
     if let Some(ctrl) = crate::ipc::system_proxies::get_registry().get_typed::<NetworkController>("network") {
         ctrl
     } else {
-        let bus = crate::ipc::system_proxies::get_event_bus();
+        let bus = crate::ipc::system_proxies::get_net_bus();
         let state = Arc::new(Mutex::new(MockState::default_mock()));
         NetworkController::new_mock(state, bus)
     }

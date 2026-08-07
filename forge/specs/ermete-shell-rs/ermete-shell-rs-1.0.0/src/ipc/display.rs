@@ -1,7 +1,7 @@
 use zbus::proxy;
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, oneshot};
-use crate::ipc::types::{IpcBackend, SystemEventBus, SystemEvent, MockState};
+use crate::ipc::types::{IpcBackend, HardwareBus, HardwareEvent, MockState};
 
 #[proxy(
     interface = "org.freedesktop.login1.Session",
@@ -18,12 +18,12 @@ pub enum DisplayCommand {
 
 pub struct DisplayActor {
     backend: IpcBackend,
-    event_bus: SystemEventBus,
+    event_bus: HardwareBus,
     receiver: mpsc::Receiver<DisplayCommand>,
 }
 
 impl DisplayActor {
-    pub fn spawn(backend: IpcBackend, event_bus: SystemEventBus) -> mpsc::Sender<DisplayCommand> {
+    pub fn spawn(backend: IpcBackend, event_bus: HardwareBus) -> mpsc::Sender<DisplayCommand> {
         let (tx, rx) = mpsc::channel(32);
         let actor = Self {
             backend,
@@ -68,7 +68,7 @@ impl DisplayActor {
                 s.brightness = brightness;
             }
         }
-        self.event_bus.emit(SystemEvent::BrightnessChanged(brightness));
+        self.event_bus.emit(HardwareEvent::BrightnessChanged(brightness));
         Ok(())
     }
 }
@@ -79,12 +79,12 @@ pub struct DisplayController {
 }
 
 impl DisplayController {
-    pub fn new(backend: IpcBackend, event_bus: SystemEventBus) -> Self {
+    pub fn new(backend: IpcBackend, event_bus: HardwareBus) -> Self {
         let sender = DisplayActor::spawn(backend, event_bus);
         Self { sender }
     }
 
-    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: SystemEventBus) -> Self {
+    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: HardwareBus) -> Self {
         let backend = IpcBackend::Mock(state);
         let sender = DisplayActor::spawn(backend, event_bus);
         Self { sender }
@@ -113,7 +113,7 @@ pub fn get_display_controller() -> DisplayController {
     if let Some(ctrl) = crate::ipc::system_proxies::get_registry().get_typed::<DisplayController>("display") {
         ctrl
     } else {
-        let bus = crate::ipc::system_proxies::get_event_bus();
+        let bus = crate::ipc::system_proxies::get_hardware_bus();
         let state = Arc::new(Mutex::new(MockState::default_mock()));
         DisplayController::new_mock(state, bus)
     }

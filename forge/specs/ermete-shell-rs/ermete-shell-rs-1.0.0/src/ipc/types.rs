@@ -193,65 +193,64 @@ pub enum IpcBackend {
     Mock(Arc<Mutex<MockState>>),
 }
 
+
 #[derive(Debug, Clone)]
-pub enum SystemEvent {
+pub enum AudioEvent {
     VolumeChanged(f64),
     MuteToggled(bool),
+}
+
+#[derive(Clone)]
+pub struct AudioBus { sender: tokio::sync::broadcast::Sender<AudioEvent> }
+impl Default for AudioBus { fn default() -> Self { Self::new() } }
+impl AudioBus {
+    pub fn new() -> Self { let (sender, _) = tokio::sync::broadcast::channel(128); Self { sender } }
+    pub fn subscribe(&self) -> tokio::sync::broadcast::Receiver<AudioEvent> { self.sender.subscribe() }
+    pub fn emit(&self, event: AudioEvent) { let _ = self.sender.send(event); }
+}
+
+#[derive(Debug, Clone)]
+pub enum NetEvent {
     WifiToggled(bool),
     BluetoothToggled(bool),
-    BrightnessChanged(f64),
-    MprisUpdated(Option<MprisState>),
     NetworkUpdated(String),
 }
 
-type EventListener = Box<dyn Fn(&SystemEvent) + Send + Sync>;
+#[derive(Clone)]
+pub struct NetBus { sender: tokio::sync::broadcast::Sender<NetEvent> }
+impl Default for NetBus { fn default() -> Self { Self::new() } }
+impl NetBus {
+    pub fn new() -> Self { let (sender, _) = tokio::sync::broadcast::channel(128); Self { sender } }
+    pub fn subscribe(&self) -> tokio::sync::broadcast::Receiver<NetEvent> { self.sender.subscribe() }
+    pub fn emit(&self, event: NetEvent) { let _ = self.sender.send(event); }
+}
+
+#[derive(Debug, Clone)]
+pub enum HardwareEvent {
+    BrightnessChanged(f64),
+}
 
 #[derive(Clone)]
-pub struct SystemEventBus {
-    listeners: Arc<Mutex<Vec<EventListener>>>,
-    sender: tokio::sync::broadcast::Sender<SystemEvent>,
+pub struct HardwareBus { sender: tokio::sync::broadcast::Sender<HardwareEvent> }
+impl Default for HardwareBus { fn default() -> Self { Self::new() } }
+impl HardwareBus {
+    pub fn new() -> Self { let (sender, _) = tokio::sync::broadcast::channel(128); Self { sender } }
+    pub fn subscribe(&self) -> tokio::sync::broadcast::Receiver<HardwareEvent> { self.sender.subscribe() }
+    pub fn emit(&self, event: HardwareEvent) { let _ = self.sender.send(event); }
 }
 
-impl Default for SystemEventBus {
-    fn default() -> Self {
-        Self::new()
-    }
+#[derive(Debug, Clone)]
+pub enum MprisEvent {
+    MprisUpdated(Option<MprisState>),
 }
 
-impl SystemEventBus {
-    pub fn new() -> Self {
-        let (sender, _) = tokio::sync::broadcast::channel(128);
-        Self {
-            listeners: Arc::new(Mutex::new(Vec::new())),
-            sender,
-        }
-    }
-
-    pub fn subscribe<F>(&self, listener: F)
-    where
-        F: Fn(&SystemEvent) + Send + Sync + 'static,
-    {
-        if let Ok(mut listeners) = self.listeners.lock() {
-            listeners.push(Box::new(listener));
-        }
-    }
-
-    pub fn subscribe_broadcast(&self) -> tokio::sync::broadcast::Receiver<SystemEvent> {
-        self.sender.subscribe()
-    }
-
-    pub fn emit(&self, event: SystemEvent) {
-        let _ = self.sender.send(event.clone());
-        if let Ok(listeners) = self.listeners.lock() {
-            for listener in listeners.iter() {
-                listener(&event);
-            }
-        }
-    }
+#[derive(Clone)]
+pub struct MprisBus { sender: tokio::sync::broadcast::Sender<MprisEvent> }
+impl Default for MprisBus { fn default() -> Self { Self::new() } }
+impl MprisBus {
+    pub fn new() -> Self { let (sender, _) = tokio::sync::broadcast::channel(128); Self { sender } }
+    pub fn subscribe(&self) -> tokio::sync::broadcast::Receiver<MprisEvent> { self.sender.subscribe() }
+    pub fn emit(&self, event: MprisEvent) { let _ = self.sender.send(event); }
 }
 
-impl std::fmt::Debug for SystemEventBus {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("SystemEventBus").finish()
-    }
 }

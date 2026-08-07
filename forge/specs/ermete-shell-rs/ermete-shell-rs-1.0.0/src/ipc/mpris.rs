@@ -2,7 +2,7 @@
 use zbus::proxy;
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, oneshot};
-use crate::ipc::types::{IpcBackend, SystemEventBus, SystemEvent, MockState};
+use crate::ipc::types::{IpcBackend, MprisBus, MprisEvent, MockState};
 pub use crate::ipc::types::MprisState;
 
 #[proxy(
@@ -27,12 +27,12 @@ pub enum MprisCommand {
 pub struct MprisActor {
     backend: IpcBackend,
     cached_mpris: Option<MprisState>,
-    event_bus: SystemEventBus,
+    event_bus: MprisBus,
     receiver: mpsc::Receiver<MprisCommand>,
 }
 
 impl MprisActor {
-    pub fn spawn(backend: IpcBackend, event_bus: SystemEventBus) -> mpsc::Sender<MprisCommand> {
+    pub fn spawn(backend: IpcBackend, event_bus: MprisBus) -> mpsc::Sender<MprisCommand> {
         let (tx, rx) = mpsc::channel(32);
         let actor = Self {
             backend,
@@ -91,7 +91,7 @@ impl MprisActor {
                 let _ = self.handle_refresh_mpris().await;
             }
         }
-        self.event_bus.emit(SystemEvent::MprisUpdated(self.cached_mpris.clone()));
+        self.event_bus.emit(MprisEvent::MprisUpdated(self.cached_mpris.clone()));
         Ok(())
     }
 
@@ -179,7 +179,7 @@ pub struct MprisController {
 }
 
 impl MprisController {
-    pub fn new(backend: IpcBackend, event_bus: SystemEventBus) -> Self {
+    pub fn new(backend: IpcBackend, event_bus: MprisBus) -> Self {
         let sender = MprisActor::spawn(backend, event_bus);
         Self {
             sender,
@@ -188,7 +188,7 @@ impl MprisController {
         }
     }
 
-    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: SystemEventBus) -> Self {
+    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: MprisBus) -> Self {
         let backend = IpcBackend::Mock(state);
         let sender = MprisActor::spawn(backend, event_bus);
         Self {
@@ -242,7 +242,7 @@ pub fn get_mpris_controller() -> MprisController {
     if let Some(ctrl) = crate::ipc::system_proxies::get_registry().get_typed::<MprisController>("mpris") {
         ctrl
     } else {
-        let bus = crate::ipc::system_proxies::get_event_bus();
+        let bus = crate::ipc::system_proxies::get_mpris_bus();
         let state = Arc::new(Mutex::new(MockState::default_mock()));
         MprisController::new_mock(state, bus)
     }

@@ -1,7 +1,7 @@
 use zbus::proxy;
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, oneshot};
-use crate::ipc::types::{IpcBackend, MockState, SystemEvent, SystemEventBus, BluetoothDeviceInfo};
+use crate::ipc::types::{IpcBackend, MockState, NetEvent, NetBus, BluetoothDeviceInfo};
 
 #[proxy(
     interface = "org.bluez.Adapter1",
@@ -24,12 +24,12 @@ pub enum BluetoothCommand {
 
 pub struct BluetoothActor {
     backend: IpcBackend,
-    event_bus: SystemEventBus,
+    event_bus: NetBus,
     receiver: mpsc::Receiver<BluetoothCommand>,
 }
 
 impl BluetoothActor {
-    pub fn spawn(backend: IpcBackend, event_bus: SystemEventBus) -> mpsc::Sender<BluetoothCommand> {
+    pub fn spawn(backend: IpcBackend, event_bus: NetBus) -> mpsc::Sender<BluetoothCommand> {
         let (tx, rx) = mpsc::channel(32);
         let actor = Self {
             backend,
@@ -81,7 +81,7 @@ impl BluetoothActor {
                 s.bt_enabled
             }
         };
-        self.event_bus.emit(SystemEvent::BluetoothToggled(new_state));
+        self.event_bus.emit(NetEvent::BluetoothToggled(new_state));
         Ok(new_state)
     }
 
@@ -108,7 +108,7 @@ impl BluetoothActor {
                 state.lock().unwrap_or_else(|e| e.into_inner()).bt_enabled = powered;
             }
         }
-        self.event_bus.emit(SystemEvent::BluetoothToggled(powered));
+        self.event_bus.emit(NetEvent::BluetoothToggled(powered));
         Ok(())
     }
 
@@ -149,12 +149,12 @@ pub struct BluetoothController {
 }
 
 impl BluetoothController {
-    pub fn new(backend: IpcBackend, event_bus: SystemEventBus) -> Self {
+    pub fn new(backend: IpcBackend, event_bus: NetBus) -> Self {
         let sender = BluetoothActor::spawn(backend, event_bus);
         Self { sender }
     }
 
-    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: SystemEventBus) -> Self {
+    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: NetBus) -> Self {
         let backend = IpcBackend::Mock(state);
         let sender = BluetoothActor::spawn(backend, event_bus);
         Self { sender }
@@ -210,7 +210,7 @@ pub fn get_bluetooth_controller() -> BluetoothController {
     if let Some(ctrl) = crate::ipc::system_proxies::get_registry().get_typed::<BluetoothController>("bluetooth") {
         ctrl
     } else {
-        let bus = crate::ipc::system_proxies::get_event_bus();
+        let bus = crate::ipc::system_proxies::get_net_bus();
         let state = Arc::new(Mutex::new(MockState::default_mock()));
         BluetoothController::new_mock(state, bus)
     }

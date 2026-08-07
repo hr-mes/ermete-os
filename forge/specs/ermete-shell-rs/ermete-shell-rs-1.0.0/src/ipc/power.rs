@@ -1,7 +1,7 @@
 use zbus::proxy;
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, oneshot};
-use crate::ipc::types::{IpcBackend, MockState, SystemEventBus};
+use crate::ipc::types::{IpcBackend, MockState, HardwareBus};
 
 #[proxy(
     interface = "org.freedesktop.login1.Manager",
@@ -24,12 +24,12 @@ pub enum PowerCommand {
 
 pub struct PowerActor {
     backend: IpcBackend,
-    _event_bus: SystemEventBus,
+    _event_bus: HardwareBus,
     receiver: mpsc::Receiver<PowerCommand>,
 }
 
 impl PowerActor {
-    pub fn spawn(backend: IpcBackend, event_bus: SystemEventBus) -> mpsc::Sender<PowerCommand> {
+    pub fn spawn(backend: IpcBackend, event_bus: HardwareBus) -> mpsc::Sender<PowerCommand> {
         let (tx, rx) = mpsc::channel(32);
         let actor = Self {
             backend,
@@ -118,12 +118,12 @@ pub struct PowerController {
 }
 
 impl PowerController {
-    pub fn new(backend: IpcBackend, event_bus: SystemEventBus) -> Self {
+    pub fn new(backend: IpcBackend, event_bus: HardwareBus) -> Self {
         let sender = PowerActor::spawn(backend, event_bus);
         Self { sender }
     }
 
-    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: SystemEventBus) -> Self {
+    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: HardwareBus) -> Self {
         let backend = IpcBackend::Mock(state);
         let sender = PowerActor::spawn(backend, event_bus);
         Self { sender }
@@ -179,7 +179,7 @@ pub fn get_power_controller() -> PowerController {
     if let Some(ctrl) = crate::ipc::system_proxies::get_registry().get_typed::<PowerController>("power") {
         ctrl
     } else {
-        let bus = crate::ipc::system_proxies::get_event_bus();
+        let bus = crate::ipc::system_proxies::get_hardware_bus();
         let state = Arc::new(Mutex::new(MockState::default_mock()));
         PowerController::new_mock(state, bus)
     }

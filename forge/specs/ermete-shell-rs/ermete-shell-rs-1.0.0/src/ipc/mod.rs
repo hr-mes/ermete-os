@@ -26,15 +26,15 @@ pub fn init_system_controller() {
     glib::MainContext::default().spawn_local(async {
         if let (Ok(session), Ok(system)) = (Connection::session().await, Connection::system().await) {
             tracing::info!("Connected to Session and System D-Bus buses cleanly");
-            let event_bus = system_proxies::get_event_bus();
+            
             let backend = types::IpcBackend::Dbus { session, system };
             
-            let audio: Box<dyn ControllerBackend> = Box::new(AudioController::new(backend.clone(), event_bus.clone()));
-            let network_ctrl = NetworkController::new(backend.clone(), event_bus.clone());
-            let bluetooth: Box<dyn ControllerBackend> = Box::new(BluetoothController::new(backend.clone(), event_bus.clone()));
-            let display: Box<dyn ControllerBackend> = Box::new(DisplayController::new(backend.clone(), event_bus.clone()));
-            let power: Box<dyn ControllerBackend> = Box::new(PowerController::new(backend.clone(), event_bus.clone()));
-            let mpris_ctrl = MprisController::new(backend, event_bus.clone());
+            let audio: Box<dyn ControllerBackend> = Box::new(AudioController::new(backend.clone(), system_proxies::get_audio_bus()));
+            let network_ctrl = NetworkController::new(backend.clone(), system_proxies::get_net_bus());
+            let bluetooth: Box<dyn ControllerBackend> = Box::new(BluetoothController::new(backend.clone(), system_proxies::get_net_bus()));
+            let display: Box<dyn ControllerBackend> = Box::new(DisplayController::new(backend.clone(), system_proxies::get_hardware_bus()));
+            let power: Box<dyn ControllerBackend> = Box::new(PowerController::new(backend.clone(), system_proxies::get_hardware_bus()));
+            let mpris_ctrl = MprisController::new(backend, system_proxies::get_mpris_bus());
 
             let _ = mpris_ctrl.refresh_mpris().await;
             let _ = network_ctrl.refresh_network_status().await;
@@ -58,17 +58,17 @@ pub fn init_system_controller() {
 mod tests {
     use super::*;
     use std::sync::{Arc, Mutex};
-    use crate::ipc::types::{MockState, SystemEventBus};
+    use crate::ipc::types::{MockState, AudioBus, NetBus, HardwareBus, MprisBus};
 
     #[tokio::test]
     async fn test_system_controller_state_updates() {
-        let bus = SystemEventBus::new();
+        let audio_bus = AudioBus::new(); let net_bus = NetBus::new(); let hw_bus = HardwareBus::new(); let mpris_bus = MprisBus::new();
         let state = Arc::new(Mutex::new(MockState::default_mock()));
-        let network = NetworkController::new_mock(state.clone(), bus.clone());
-        let bluetooth = BluetoothController::new_mock(state.clone(), bus.clone());
-        let audio = AudioController::new_mock(state.clone(), bus.clone());
-        let display = DisplayController::new_mock(state.clone(), bus.clone());
-        let mpris = MprisController::new_mock(state.clone(), bus.clone());
+        let network = NetworkController::new_mock(state.clone(), net_bus.clone());
+        let bluetooth = BluetoothController::new_mock(state.clone(), net_bus.clone());
+        let audio = AudioController::new_mock(state.clone(), audio_bus.clone());
+        let display = DisplayController::new_mock(state.clone(), hw_bus.clone());
+        let mpris = MprisController::new_mock(state.clone(), mpris_bus.clone());
 
         assert!(network.is_wifi_enabled().await.unwrap());
 
@@ -103,10 +103,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_system_controller_ui_network_and_bt_methods() {
-        let bus = SystemEventBus::new();
+        let audio_bus = AudioBus::new(); let net_bus = NetBus::new(); let hw_bus = HardwareBus::new(); let mpris_bus = MprisBus::new();
         let state = Arc::new(Mutex::new(MockState::default_mock()));
-        let network = NetworkController::new_mock(state.clone(), bus.clone());
-        let bluetooth = BluetoothController::new_mock(state.clone(), bus.clone());
+        let network = NetworkController::new_mock(state.clone(), net_bus.clone());
+        let bluetooth = BluetoothController::new_mock(state.clone(), net_bus.clone());
 
         let wifi_list = network.list_wifi_networks().await.unwrap();
         assert_eq!(wifi_list.len(), 1);
@@ -128,11 +128,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_system_controller_power_and_global_methods() {
-        let bus = SystemEventBus::new();
+        let audio_bus = AudioBus::new(); let net_bus = NetBus::new(); let hw_bus = HardwareBus::new(); let mpris_bus = MprisBus::new();
         let state = Arc::new(Mutex::new(MockState::default_mock()));
-        let power = PowerController::new_mock(state.clone(), bus.clone());
-        let mpris = MprisController::new_mock(state.clone(), bus.clone());
-        let network = NetworkController::new_mock(state.clone(), bus.clone());
+        let power = PowerController::new_mock(state.clone(), hw_bus.clone());
+        let mpris = MprisController::new_mock(state.clone(), mpris_bus.clone());
+        let network = NetworkController::new_mock(state.clone(), net_bus.clone());
 
         assert!(power.lock_screen().await.is_ok());
         assert!(power.power_off().await.is_ok());
@@ -146,10 +146,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_review_findings_compliance() {
-        let bus = SystemEventBus::new();
+        let audio_bus = AudioBus::new(); let net_bus = NetBus::new(); let hw_bus = HardwareBus::new(); let mpris_bus = MprisBus::new();
         let state = Arc::new(Mutex::new(MockState::default_mock()));
-        let network = NetworkController::new_mock(state.clone(), bus.clone());
-        let mpris = MprisController::new_mock(state.clone(), bus.clone());
+        let network = NetworkController::new_mock(state.clone(), net_bus.clone());
+        let mpris = MprisController::new_mock(state.clone(), mpris_bus.clone());
         
         network.connect_wifi("Ermete-5G", "secret").await.unwrap();
         let list = network.list_wifi_networks().await.unwrap();

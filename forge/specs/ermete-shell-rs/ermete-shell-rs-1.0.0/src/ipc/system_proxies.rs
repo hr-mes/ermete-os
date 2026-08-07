@@ -10,37 +10,32 @@ pub trait ControllerBackend: Any + Send + Sync {
 }
 
 static GLOBAL_REGISTRY: OnceLock<ProxyRegistry> = OnceLock::new();
-static GLOBAL_EVENT_BUS: OnceLock<SystemEventBus> = OnceLock::new();
+static GLOBAL_AUDIO_BUS: OnceLock<AudioBus> = OnceLock::new();
+static GLOBAL_NET_BUS: OnceLock<NetBus> = OnceLock::new();
+static GLOBAL_HARDWARE_BUS: OnceLock<HardwareBus> = OnceLock::new();
+static GLOBAL_MPRIS_BUS: OnceLock<MprisBus> = OnceLock::new();
 
-pub fn get_event_bus() -> SystemEventBus {
-    GLOBAL_EVENT_BUS
-        .get_or_init(SystemEventBus::new)
-        .clone()
-}
+pub fn get_audio_bus() -> AudioBus { GLOBAL_AUDIO_BUS.get_or_init(AudioBus::new).clone() }
+pub fn get_net_bus() -> NetBus { GLOBAL_NET_BUS.get_or_init(NetBus::new).clone() }
+pub fn get_hardware_bus() -> HardwareBus { GLOBAL_HARDWARE_BUS.get_or_init(HardwareBus::new).clone() }
+pub fn get_mpris_bus() -> MprisBus { GLOBAL_MPRIS_BUS.get_or_init(MprisBus::new).clone() }
 
-pub fn subscribe_system_events() -> tokio::sync::broadcast::Receiver<SystemEvent> {
-    get_event_bus().subscribe_broadcast()
-}
 
-#[allow(dead_code)]
-pub fn emit_system_event(event: SystemEvent) {
-    get_event_bus().emit(event);
-}
 
-pub fn get_registry() -> &'static ProxyRegistry {
-    GLOBAL_REGISTRY.get_or_init(|| ProxyRegistry::new(get_event_bus()))
-}
+
+
+pub fn get_registry() -> &'static ProxyRegistry { GLOBAL_REGISTRY.get_or_init(|| ProxyRegistry::new()) }
 
 pub struct ProxyRegistry {
     controllers: Mutex<HashMap<&'static str, Arc<dyn ControllerBackend>>>,
-    event_bus: SystemEventBus,
+    
 }
 
 impl ProxyRegistry {
-    pub fn new(event_bus: SystemEventBus) -> Self {
+    pub fn new() -> Self {
         Self {
             controllers: Mutex::new(HashMap::new()),
-            event_bus,
+            
         }
     }
 
@@ -80,16 +75,8 @@ impl ProxyRegistry {
         None
     }
 
-    #[allow(dead_code)]
-    pub fn emit_event(&self, event: SystemEvent) {
-        self.event_bus.emit(event);
+    
     }
-
-    #[allow(dead_code)]
-    pub fn event_bus(&self) -> &SystemEventBus {
-        &self.event_bus
-    }
-}
 
 pub fn init_system_controller(controllers: Vec<Box<dyn ControllerBackend>>) {
     let registry = get_registry();

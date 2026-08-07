@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, oneshot};
-use crate::ipc::types::{IpcBackend, SystemEventBus, SystemEvent, MockState, BedrockAudioProxy};
+use crate::ipc::types::{IpcBackend, AudioBus, AudioEvent, MockState, BedrockAudioProxy};
 
 pub enum AudioCommand {
     ToggleMute(oneshot::Sender<zbus::Result<bool>>),
@@ -12,12 +12,12 @@ pub enum AudioCommand {
 pub struct AudioActor {
     backend: IpcBackend,
     cached_volume: f64,
-    event_bus: SystemEventBus,
+    event_bus: AudioBus,
     receiver: mpsc::Receiver<AudioCommand>,
 }
 
 impl AudioActor {
-    pub fn spawn(backend: IpcBackend, event_bus: SystemEventBus) -> mpsc::Sender<AudioCommand> {
+    pub fn spawn(backend: IpcBackend, event_bus: AudioBus) -> mpsc::Sender<AudioCommand> {
         let (tx, rx) = mpsc::channel(32);
         let actor = Self {
             backend,
@@ -70,7 +70,7 @@ impl AudioActor {
                 s.mute
             }
         };
-        self.event_bus.emit(SystemEvent::MuteToggled(new_state));
+        self.event_bus.emit(AudioEvent::MuteToggled(new_state));
         Ok(new_state)
     }
 
@@ -107,7 +107,7 @@ impl AudioActor {
                 s.volume = volume;
             }
         }
-        self.event_bus.emit(SystemEvent::VolumeChanged(volume));
+        self.event_bus.emit(AudioEvent::VolumeChanged(volume));
         Ok(())
     }
 
@@ -136,7 +136,7 @@ pub struct AudioController {
 }
 
 impl AudioController {
-    pub fn new(backend: IpcBackend, event_bus: SystemEventBus) -> Self {
+    pub fn new(backend: IpcBackend, event_bus: AudioBus) -> Self {
         let sender = AudioActor::spawn(backend, event_bus);
         Self {
             sender,
@@ -144,7 +144,7 @@ impl AudioController {
         }
     }
 
-    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: SystemEventBus) -> Self {
+    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: AudioBus) -> Self {
         let backend = IpcBackend::Mock(state);
         let sender = AudioActor::spawn(backend, event_bus);
         Self {
@@ -210,7 +210,7 @@ pub fn get_audio_controller() -> AudioController {
     if let Some(ctrl) = crate::ipc::system_proxies::get_registry().get_typed::<AudioController>("audio") {
         ctrl
     } else {
-        let bus = crate::ipc::system_proxies::get_event_bus();
+        let bus = crate::ipc::system_proxies::get_audio_bus();
         let state = Arc::new(Mutex::new(MockState::default_mock()));
         AudioController::new_mock(state, bus)
     }
