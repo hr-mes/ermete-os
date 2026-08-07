@@ -2,15 +2,15 @@ use std::collections::HashMap;
 use tokio::sync::watch;
 use zbus::interface;
 use zbus::zvariant::{OwnedValue, Value};
-use crate::settings::SettingsState;
+use crate::settings::AppearanceDomainState;
 
 #[derive(Clone)]
 pub struct PortalSettingsService {
-    pub rx: watch::Receiver<SettingsState>,
+    pub rx: watch::Receiver<AppearanceDomainState>,
 }
 
 impl PortalSettingsService {
-    pub fn new(rx: watch::Receiver<SettingsState>) -> Self {
+    pub fn new(rx: watch::Receiver<AppearanceDomainState>) -> Self {
         Self { rx }
     }
 

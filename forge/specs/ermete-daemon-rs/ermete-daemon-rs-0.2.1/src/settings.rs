@@ -22,18 +22,18 @@ async fn check_polkit_auth() -> bool {
     true
 }
 
+/// Domain micro-state for desktop appearance settings.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SettingsState {
+pub struct AppearanceDomainState {
     pub color_scheme: String,  // "prefer-dark" or "default" (light)
     pub accent_color: String,  // hex e.g. "#89b4fa"
     pub wallpaper: String,     // e.g. "/usr/share/backgrounds/ermete-default.png"
     pub dock_pinned: Vec<String>,
     pub true_tone_enabled: bool,
     pub true_tone_temperature: u32,
-    pub voiceover_enabled: bool,
 }
 
-impl Default for SettingsState {
+impl Default for AppearanceDomainState {
     fn default() -> Self {
         Self {
             color_scheme: "prefer-dark".to_string(),
@@ -46,19 +46,46 @@ impl Default for SettingsState {
             ],
             true_tone_enabled: false,
             true_tone_temperature: 4500,
-            voiceover_enabled: false,
         }
     }
 }
 
+/// Domain micro-state for accessibility / voiceover settings.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VoiceOverDomainState {
+    pub enabled: bool,
+}
+
+impl Default for VoiceOverDomainState {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+        }
+    }
+}
+
+pub fn config_dir() -> PathBuf {
+    let mut path = if let Ok(xdg) = std::env::var("XDG_CONFIG_HOME") {
+        PathBuf::from(xdg)
+    } else if let Ok(home) = std::env::var("HOME") {
+        let mut p = PathBuf::from(home);
+        p.push(".config");
+        p
+    } else {
+        PathBuf::from("/var/lib/ermete")
+    };
+    path.push("ermete");
+    path
+}
+
 #[derive(Clone)]
-pub struct SettingsStateStore {
-    pub state_tx: watch::Sender<SettingsState>,
-    pub state_rx: watch::Receiver<SettingsState>,
+pub struct AppearanceStateStore {
+    pub state_tx: watch::Sender<AppearanceDomainState>,
+    pub state_rx: watch::Receiver<AppearanceDomainState>,
 }
 
 #[allow(dead_code)]
-impl SettingsStateStore {
+impl AppearanceStateStore {
     pub async fn new_async() -> Self {
         let initial_state = Self::load_async().await;
         let (state_tx, state_rx) = watch::channel(initial_state);
@@ -71,57 +98,43 @@ impl SettingsStateStore {
         Self { state_tx, state_rx }
     }
 
-    pub fn config_dir() -> PathBuf {
-        let mut path = if let Ok(xdg) = std::env::var("XDG_CONFIG_HOME") {
-            PathBuf::from(xdg)
-        } else if let Ok(home) = std::env::var("HOME") {
-            let mut p = PathBuf::from(home);
-            p.push(".config");
-            p
-        } else {
-            PathBuf::from("/var/lib/ermete")
-        };
-        path.push("ermete");
-        path
-    }
-
-    pub async fn ensure_config_dir() -> std::io::Result<PathBuf> {
-        let dir = Self::config_dir();
+    pub async fn ensure_config_file() -> std::io::Result<PathBuf> {
+        let dir = config_dir();
         tokio::fs::create_dir_all(&dir).await?;
         let mut file_path = dir;
-        file_path.push("settings.json");
+        file_path.push("appearance.json");
         Ok(file_path)
     }
 
-    pub async fn load_async() -> SettingsState {
-        if let Ok(path) = Self::ensure_config_dir().await {
+    pub async fn load_async() -> AppearanceDomainState {
+        if let Ok(path) = Self::ensure_config_file().await {
             if let Ok(content) = tokio::fs::read_to_string(&path).await {
                 if let Ok(state) = serde_json::from_str(&content) {
                     return state;
                 }
             }
         }
-        SettingsState::default()
+        AppearanceDomainState::default()
     }
 
-    pub fn load() -> SettingsState {
-        let dir = Self::config_dir();
+    pub fn load() -> AppearanceDomainState {
+        let dir = config_dir();
         let _ = std::fs::create_dir_all(&dir);
         let mut path = dir;
-        path.push("settings.json");
+        path.push("appearance.json");
         if let Ok(content) = std::fs::read_to_string(&path) {
             if let Ok(state) = serde_json::from_str(&content) {
                 return state;
             }
         }
-        SettingsState::default()
+        AppearanceDomainState::default()
     }
 
-    pub fn save(state: &SettingsState) -> std::io::Result<()> {
-        let dir = Self::config_dir();
+    pub fn save(state: &AppearanceDomainState) -> std::io::Result<()> {
+        let dir = config_dir();
         std::fs::create_dir_all(&dir)?;
         let mut path = dir;
-        path.push("settings.json");
+        path.push("appearance.json");
         let content = serde_json::to_string_pretty(state)?;
         let temp_path = path.with_extension("json.tmp");
         std::fs::write(&temp_path, &content)?;
@@ -129,8 +142,82 @@ impl SettingsStateStore {
         Ok(())
     }
 
-    pub async fn save_async(state: &SettingsState) -> std::io::Result<()> {
-        let path = Self::ensure_config_dir().await?;
+    pub async fn save_async(state: &AppearanceDomainState) -> std::io::Result<()> {
+        let path = Self::ensure_config_file().await?;
+        let content = serde_json::to_string_pretty(state)?;
+        let temp_path = path.with_extension("json.tmp");
+        tokio::fs::write(&temp_path, &content).await?;
+        tokio::fs::rename(&temp_path, &path).await?;
+        Ok(())
+    }
+}
+
+#[derive(Clone)]
+pub struct VoiceOverStateStore {
+    pub state_tx: watch::Sender<VoiceOverDomainState>,
+    pub state_rx: watch::Receiver<VoiceOverDomainState>,
+}
+
+#[allow(dead_code)]
+impl VoiceOverStateStore {
+    pub async fn new_async() -> Self {
+        let initial_state = Self::load_async().await;
+        let (state_tx, state_rx) = watch::channel(initial_state);
+        Self { state_tx, state_rx }
+    }
+
+    pub fn new() -> Self {
+        let initial_state = Self::load();
+        let (state_tx, state_rx) = watch::channel(initial_state);
+        Self { state_tx, state_rx }
+    }
+
+    pub async fn ensure_config_file() -> std::io::Result<PathBuf> {
+        let dir = config_dir();
+        tokio::fs::create_dir_all(&dir).await?;
+        let mut file_path = dir;
+        file_path.push("voiceover.json");
+        Ok(file_path)
+    }
+
+    pub async fn load_async() -> VoiceOverDomainState {
+        if let Ok(path) = Self::ensure_config_file().await {
+            if let Ok(content) = tokio::fs::read_to_string(&path).await {
+                if let Ok(state) = serde_json::from_str(&content) {
+                    return state;
+                }
+            }
+        }
+        VoiceOverDomainState::default()
+    }
+
+    pub fn load() -> VoiceOverDomainState {
+        let dir = config_dir();
+        let _ = std::fs::create_dir_all(&dir);
+        let mut path = dir;
+        path.push("voiceover.json");
+        if let Ok(content) = std::fs::read_to_string(&path) {
+            if let Ok(state) = serde_json::from_str(&content) {
+                return state;
+            }
+        }
+        VoiceOverDomainState::default()
+    }
+
+    pub fn save(state: &VoiceOverDomainState) -> std::io::Result<()> {
+        let dir = config_dir();
+        std::fs::create_dir_all(&dir)?;
+        let mut path = dir;
+        path.push("voiceover.json");
+        let content = serde_json::to_string_pretty(state)?;
+        let temp_path = path.with_extension("json.tmp");
+        std::fs::write(&temp_path, &content)?;
+        std::fs::rename(&temp_path, &path)?;
+        Ok(())
+    }
+
+    pub async fn save_async(state: &VoiceOverDomainState) -> std::io::Result<()> {
+        let path = Self::ensure_config_file().await?;
         let content = serde_json::to_string_pretty(state)?;
         let temp_path = path.with_extension("json.tmp");
         tokio::fs::write(&temp_path, &content).await?;
@@ -165,15 +252,23 @@ pub struct SettingsService {
 
 impl SettingsService {
     #[allow(dead_code)]
-    pub fn new(state_tx: watch::Sender<SettingsState>) -> Self {
-        Self::new_with_token(state_tx, CancellationToken::new())
+    pub fn new(
+        appearance_tx: watch::Sender<AppearanceDomainState>,
+        voiceover_tx: watch::Sender<VoiceOverDomainState>,
+    ) -> Self {
+        Self::new_with_token(appearance_tx, voiceover_tx, CancellationToken::new())
     }
 
-    pub fn new_with_token(state_tx: watch::Sender<SettingsState>, cancel_token: CancellationToken) -> Self {
+    pub fn new_with_token(
+        appearance_tx: watch::Sender<AppearanceDomainState>,
+        voiceover_tx: watch::Sender<VoiceOverDomainState>,
+        cancel_token: CancellationToken,
+    ) -> Self {
         let (tx, mut rx) = mpsc::channel::<SettingsCommand>(32);
         
         tokio::spawn(async move {
-            let mut state = state_tx.borrow().clone();
+            let mut appearance_state = appearance_tx.borrow().clone();
+            let mut voiceover_state = voiceover_tx.borrow().clone();
             let conn = zbus::Connection::session().await.ok();
             let worker = if let Some(ref c) = conn {
                 SettingsWorkerProxy::new(c).await.ok()
@@ -197,17 +292,17 @@ impl SettingsService {
 
                 match cmd {
                     SettingsCommand::GetColorScheme(reply) => {
-                        let _ = reply.send(state.color_scheme.clone());
+                        let _ = reply.send(appearance_state.color_scheme.clone());
                     }
                     SettingsCommand::SetColorScheme(val, reply) => {
                         if !check_polkit_auth().await {
                             let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
                             continue;
                         }
-                        state.color_scheme = val.clone();
-                        let res = SettingsStateStore::save_async(&state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
+                        appearance_state.color_scheme = val.clone();
+                        let res = AppearanceStateStore::save_async(&appearance_state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
                         if res.is_ok() {
-                            let _ = state_tx.send(state.clone());
+                            let _ = appearance_tx.send(appearance_state.clone());
                             if let Some(ref w) = worker {
                                 let _ = w.apply_color_scheme(&val).await;
                             }
@@ -215,17 +310,17 @@ impl SettingsService {
                         let _ = reply.send(res);
                     }
                     SettingsCommand::GetAccentColor(reply) => {
-                        let _ = reply.send(state.accent_color.clone());
+                        let _ = reply.send(appearance_state.accent_color.clone());
                     }
                     SettingsCommand::SetAccentColor(val, reply) => {
                         if !check_polkit_auth().await {
                             let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
                             continue;
                         }
-                        state.accent_color = val.clone();
-                        let res = SettingsStateStore::save_async(&state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
+                        appearance_state.accent_color = val.clone();
+                        let res = AppearanceStateStore::save_async(&appearance_state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
                         if res.is_ok() {
-                            let _ = state_tx.send(state.clone());
+                            let _ = appearance_tx.send(appearance_state.clone());
                             if let Some(ref w) = worker {
                                 let _ = w.apply_accent_color(&val).await;
                             }
@@ -233,17 +328,17 @@ impl SettingsService {
                         let _ = reply.send(res);
                     }
                     SettingsCommand::GetWallpaper(reply) => {
-                        let _ = reply.send(state.wallpaper.clone());
+                        let _ = reply.send(appearance_state.wallpaper.clone());
                     }
                     SettingsCommand::SetWallpaper(val, reply) => {
                         if !check_polkit_auth().await {
                             let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
                             continue;
                         }
-                        state.wallpaper = val.clone();
-                        let res = SettingsStateStore::save_async(&state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
+                        appearance_state.wallpaper = val.clone();
+                        let res = AppearanceStateStore::save_async(&appearance_state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
                         if res.is_ok() {
-                            let _ = state_tx.send(state.clone());
+                            let _ = appearance_tx.send(appearance_state.clone());
                             if let Some(ref w) = worker {
                                 let _ = w.apply_wallpaper(&val).await;
                             }
@@ -251,53 +346,53 @@ impl SettingsService {
                         let _ = reply.send(res);
                     }
                     SettingsCommand::GetTrueToneEnabled(reply) => {
-                        let _ = reply.send(state.true_tone_enabled);
+                        let _ = reply.send(appearance_state.true_tone_enabled);
                     }
                     SettingsCommand::SetTrueToneEnabled(val, reply) => {
                         if !check_polkit_auth().await {
                             let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
                             continue;
                         }
-                        state.true_tone_enabled = val;
-                        let res = SettingsStateStore::save_async(&state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
+                        appearance_state.true_tone_enabled = val;
+                        let res = AppearanceStateStore::save_async(&appearance_state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
                         if res.is_ok() {
-                            let _ = state_tx.send(state.clone());
+                            let _ = appearance_tx.send(appearance_state.clone());
                             if let Some(ref w) = worker {
-                                let _ = w.apply_true_tone(state.true_tone_enabled, state.true_tone_temperature).await;
+                                let _ = w.apply_true_tone(appearance_state.true_tone_enabled, appearance_state.true_tone_temperature).await;
                             }
                         }
                         let _ = reply.send(res);
                     }
                     SettingsCommand::GetTrueToneTemperature(reply) => {
-                        let _ = reply.send(state.true_tone_temperature);
+                        let _ = reply.send(appearance_state.true_tone_temperature);
                     }
                     SettingsCommand::SetTrueToneTemperature(val, reply) => {
                         if !check_polkit_auth().await {
                             let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
                             continue;
                         }
-                        state.true_tone_temperature = val;
-                        let res = SettingsStateStore::save_async(&state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
+                        appearance_state.true_tone_temperature = val;
+                        let res = AppearanceStateStore::save_async(&appearance_state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
                         if res.is_ok() {
-                            let _ = state_tx.send(state.clone());
+                            let _ = appearance_tx.send(appearance_state.clone());
                             if let Some(ref w) = worker {
-                                let _ = w.apply_true_tone(state.true_tone_enabled, state.true_tone_temperature).await;
+                                let _ = w.apply_true_tone(appearance_state.true_tone_enabled, appearance_state.true_tone_temperature).await;
                             }
                         }
                         let _ = reply.send(res);
                     }
                     SettingsCommand::GetVoiceoverEnabled(reply) => {
-                        let _ = reply.send(state.voiceover_enabled);
+                        let _ = reply.send(voiceover_state.enabled);
                     }
                     SettingsCommand::SetVoiceoverEnabled(val, reply) => {
                         if !check_polkit_auth().await {
                             let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
                             continue;
                         }
-                        state.voiceover_enabled = val;
-                        let res = SettingsStateStore::save_async(&state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
+                        voiceover_state.enabled = val;
+                        let res = VoiceOverStateStore::save_async(&voiceover_state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
                         if res.is_ok() {
-                            let _ = state_tx.send(state.clone());
+                            let _ = voiceover_tx.send(voiceover_state.clone());
                             if let Some(ref w) = worker {
                                 let _ = w.apply_voiceover(val).await;
                             }
@@ -453,9 +548,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_settings_service_cancellation() {
-        let store = SettingsStateStore::new_async().await;
+        let app_store = AppearanceStateStore::new_async().await;
+        let vo_store = VoiceOverStateStore::new_async().await;
         let token = CancellationToken::new();
-        let _service = SettingsService::new_with_token(store.state_tx, token.clone());
+        let _service = SettingsService::new_with_token(app_store.state_tx, vo_store.state_tx, token.clone());
         assert!(!token.is_cancelled());
         token.cancel();
         assert!(token.is_cancelled());

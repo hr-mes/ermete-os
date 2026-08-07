@@ -47,9 +47,9 @@ Entrambi i demoni sono sviluppati in **Pure Rust** utilizzando l'allocatore ad a
    - **Flusso IPC**: Comunica con il servizio `os.ermete.AudioWorker` tramite `AudioWorkerProxy` inviando le modifiche di volume.
 
 2. **`settings.rs` (`org.ermete.Settings` / `os.ermete.Bedrock.Settings`)**:
-   - **ACID Settings Engine**: Mantiene lo stato serializzato `SettingsState` (tema chiaro/scuro, colori di accento, wallpaper, configurazione dock, True Tone, VoiceOver).
-   - **Persistenza Atomica**: Scrive le impostazioni su `settings.json.tmp` e le rinomina in atomico su `~/.config/ermete/settings.json`.
-   - **Actor Loop Asincrono**: Utilizza un canale `mpsc::channel(32)` e messaggi `SettingsCommand` con risposte `oneshot::Sender`. Quando una proprietà viene modificata, aggiorna un canale `tokio::sync::watch::Sender<SettingsState>`, notificando tutti i sub-servizi dipendenti e chiamando `SettingsWorkerProxy`.
+   - **Decentralized Domain States**: Mantiene i micro-stati di dominio decentralizzati `AppearanceDomainState` (tema chiaro/scuro, colori di accento, wallpaper, configurazione dock, True Tone) e `VoiceOverDomainState` (VoiceOver enabled).
+   - **Persistenza Atomica**: Scrive le impostazioni su file di dominio dedicati (`appearance.json`, `voiceover.json`) con rinominazione atomica su `~/.config/ermete/`.
+   - **Actor Loop Asincrono**: Utilizza un canale `mpsc::channel(32)` e messaggi `SettingsCommand` con risposte `oneshot::Sender`. Quando una proprietà viene modificata, aggiorna i canali di dominio dedicati (`watch::Sender<AppearanceDomainState>`, `watch::Sender<VoiceOverDomainState>`), notificando solo i sub-servizi dipendenti dal rispettivo dominio.
 
 3. **`network.rs` (`os.ermete.Bedrock.Network`)**:
    - **Integrazione NetworkManager**: Si connette alla **System D-Bus** e interagisce con `org.freedesktop.NetworkManager`.
@@ -60,11 +60,11 @@ Entrambi i demoni sono sviluppati in **Pure Rust** utilizzando l'allocatore ad a
    - **Integrazione BlueZ**: Si interfaccia con il servizio di sistema BlueZ (`org.bluez`) su `/org/bluez/hci0` tramite `PropertiesProxy` (lettura/scrittura della proprietà `Powered`) e `ObjectManagerProxy` su `/` per enumerare i dispositivi Bluetooth accoppiati e connessi.
 
 5. **`portal.rs` e `portal_screencast.rs` (XDG Desktop Portal Backend)**:
-   - **`org.freedesktop.impl.portal.Settings`**: Esporta i parametri di aspetto del desktop (schema colori, accento RGB) leggendoli in modalità reattiva dal `watch::Receiver<SettingsState>`.
+   - **`org.freedesktop.impl.portal.Settings`**: Esporta i parametri di aspetto del desktop (schema colori, accento RGB) leggendoli in modalità reattiva dal `watch::Receiver<AppearanceDomainState>`.
    - **`org.freedesktop.impl.portal.ScreenCast` & `RemoteDesktop`**: Gestisce le sessioni di cattura dello schermo per il compositore Wayland **Niri**. Comunica direttamente con il socket UNIX del compositore (`$NIRI_SOCKET`) tramite `OutputDiscovery::query_niri_outputs()` per rilevare i monitor fisici e risolve dinamicamente i `node_id` di PipeWire (`PipeWireStreamManager::resolve_pipewire_node`).
 
 6. **`voiceover.rs` (`os.ermete.VoiceOver`)**:
-   - Legge lo stato dal canale `watch::Receiver`. Se l'accessibilità è abilitata, inoltra i testi da sintetizzare al servizio `os.ermete.VoiceOverWorker`.
+   - Legge lo stato dal canale `watch::Receiver<VoiceOverDomainState>`. Se l'accessibilità è abilitata, inoltra i testi da sintetizzare al servizio `os.ermete.VoiceOverWorker`.
 
 7. **`qos.rs` (App Nap QoS Observer)**:
    - Controlla in background i PID delle applicazioni in secondo piano applicando un valore di nice elevato (`nice 19`) tramite `libc::setpriority(PRIO_PROCESS, pid, 19)` per preservare le risorse CPU del sistema.

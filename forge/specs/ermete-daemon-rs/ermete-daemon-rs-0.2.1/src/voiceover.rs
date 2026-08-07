@@ -1,13 +1,13 @@
 use zbus::interface;
 use tokio::sync::watch;
-use crate::settings::SettingsState;
+use crate::settings::VoiceOverDomainState;
 
 pub struct VoiceOverService {
-    rx: watch::Receiver<SettingsState>,
+    rx: watch::Receiver<VoiceOverDomainState>,
 }
 
 impl VoiceOverService {
-    pub fn new(rx: watch::Receiver<SettingsState>) -> Self {
+    pub fn new(rx: watch::Receiver<VoiceOverDomainState>) -> Self {
         Self { rx }
     }
 }
@@ -35,7 +35,7 @@ async fn get_session_conn() -> Option<zbus::Connection> {
 impl VoiceOverService {
     /// Parla il testo specificato (solo se VoiceOver è attivo nel sistema)
     async fn speak(&self, text: String) -> zbus::fdo::Result<()> {
-        let is_enabled = self.rx.borrow().voiceover_enabled;
+        let is_enabled = self.rx.borrow().enabled;
         if !is_enabled {
             return Ok(());
         }
