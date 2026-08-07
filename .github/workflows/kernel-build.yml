@@ -1,4 +1,4 @@
-name: 🧬 Kernel Chimera Build
+name: Kernel Chimera Build
 on:
   workflow_run:
     workflows: ["Ermete Forge Orchestrator"]

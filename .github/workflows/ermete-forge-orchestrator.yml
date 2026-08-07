@@ -1,5 +1,5 @@
 # Force trigger to wake up GitHub Actions
-name: 🌋 Ermete Forge Orchestrator
+name: Ermete Forge Orchestrator
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
       - 'forge/**'
       - '.github/workflows/ermete-forge-orchestrator.yml'
   workflow_run:
-    workflows: ["🧬 Kernel Chimera Build"]
+    workflows: ["Kernel Chimera Build"]
     types: [completed]
   workflow_dispatch:
   schedule:
