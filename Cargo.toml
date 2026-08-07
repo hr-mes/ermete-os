@@ -24,7 +24,7 @@ members = [
 , "system/unikernel"
 , "system/ermete-agentic-kernel"
 , "system/confidential_computing/ermete-attestation"
-, "system/ermete-self-evolution", "system/ermete-ebpf-sched"]
+, "system/ermete-self-evolution", "system/ermete-ebpf-sched", "system/ermete-hypervisor-daemon"]
 
 exclude = [
     "tests/fuzz"

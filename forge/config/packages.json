@@ -53,7 +53,8 @@
     "style",
     "sysmon-ebpf",
     "osbuild",
-    "cargo-tools"
+    "cargo-tools",
+    "hypervisor-daemon"
   ],
   "custom_tier0": [
     "base-config",
@@ -115,7 +116,8 @@
     "xdg-desktop-portal-ermete",
     "lvfs-rs",
     "ui-agent",
-    "qa"
+    "qa",
+    "hypervisor-daemon"
   ],
   "cachyos_addons": [],
   "upstream_core": [

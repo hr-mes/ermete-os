@@ -1227,6 +1227,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "ermete-hypervisor-daemon"
+version = "1.0.0"
+dependencies = [
+ "anyhow",
+ "env_logger",
+ "hex",
+ "libc",
+ "log",
+ "nix 0.29.0",
+ "pqc_dilithium",
+ "pqc_kyber",
+ "ring 0.17.14",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "vmm-sys-util",
+ "zbus 4.4.0",
+]
+
+[[package]]
 name = "ermete-live-patcher"
 version = "1.0.0"
 dependencies = [
@@ -4619,6 +4642,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "81086c28be67a8759cd80cbb3c8f7b520e0874605fc5eb74d5a1c9c2d1878e79"
 dependencies = [
  "xml-rs",
+]
+
+[[package]]
+name = "vmm-sys-util"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d1435039746e20da4f8d507a72ee1b916f7b4b05af7a91c093d2c6561934ede"
+dependencies = [
+ "bitflags 1.3.2",
+ "libc",
 ]
 
 [[package]]
