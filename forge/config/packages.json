@@ -31,14 +31,18 @@
     "ui-agent",
     "tetragon",
     "scudo",
-    "qa"
+    "qa",
+    "rust-toolchain",
+    "antigravity"
   ],
   "custom_tier0": [
     "base-config",
     "selinux",
     "nix-support",
     "secure-boot",
-    "tetragon"
+    "tetragon",
+    "rust-toolchain",
+    "antigravity"
   ],
   "custom_tier1": [
     "starship",
