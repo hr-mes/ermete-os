@@ -55,7 +55,10 @@
     "osbuild",
     "cargo-tools",
     "hypervisor-daemon",
-    "mesh-bus"
+    "mesh-bus",
+    "init-oracle",
+    "ermete-greeter",
+    "ermete-compositor"
   ],
   "custom_tier0": [
     "base-config",
@@ -119,7 +122,10 @@
     "lvfs-rs",
     "ui-agent",
     "qa",
-    "hypervisor-daemon"
+    "hypervisor-daemon",
+    "init-oracle",
+    "ermete-greeter",
+    "ermete-compositor"
   ],
   "cachyos_addons": [],
   "upstream_core": [

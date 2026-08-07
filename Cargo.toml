@@ -29,10 +29,11 @@ members = [
     "system/ermete-hypervisor-daemon",
     "system/ermete-mesh-bus",
     "system/ermete-init-oracle"
-, "system/ermete-audio-bus"]
+]
 
 exclude = [
     "tests/fuzz",
+    "system/ermete-audio-bus",
     "system/ermete-compositor",
     "system/ermete-greeter"
 ]
