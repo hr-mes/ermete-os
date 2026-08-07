@@ -1,6 +1,6 @@
 // 🦅 Ermete OS - Niri Window Manager Masterclass Community Rice
 // Inspired by top community dotfiles (Neurarian/matshell, sodiboo, YaLTeR, saatvik333, nfoert)
-// Architecture: OCI Bedrock • Wayland Layer Shell • Catppuccin Mocha Aesthetics
+// Architecture: OCI Bedrock • Wayland Layer Shell • Catppuccin Mocha Aesthetics • Vulkan Direct Scanout
 
 hotkey-overlay {
     skip-at-startup
@@ -33,11 +33,23 @@ output "DP-1" {
     scale 1.0
     transform "normal"
     position x=0 y=0
+    variable-refresh-rate
 }
 
 output "HDMI-A-1" {
     scale 1.0
     transform "normal"
+    variable-refresh-rate
+}
+
+// --- VULKAN DIRECT SCANOUT & GRAPHICS OPTIMIZATION ---
+// Disable forced VSync to allow unthrottled frame presentation (tearing control) for zero input lag (eSports & Vulkan)
+prefer-no-vsync
+
+debug {
+    // Explicitly enable DRM/KMS direct scanout buffer bypass for fullscreen surfaces
+    // Bypasses Wayland compositor composition pass, mapping Vulkan/DRM buffers directly to display hardware planes
+    enable-direct-scanout
 }
 
 layout {
@@ -90,6 +102,12 @@ environment {
     XDG_SESSION_TYPE "wayland"
     MOZ_ENABLE_WAYLAND "1"
     ELECTRON_OZONE_PLATFORM_HINT "wayland"
+    // Vulkan & Wayland DRM Direct Scanout & Zero-Latency Engine
+    ENABLE_VULKAN_DIRECT_SCANOUT "1"
+    MESA_VK_WLR_DIRECT_SCANOUT "1"
+    KWIN_DRM_USE_MODIFIER "1"
+    AQ_MGPU_NO_EXPLICIT_SYNC "0"
+    WLR_DRM_NO_ATOMIC "0"
 }
 
 blur {
@@ -162,6 +180,11 @@ window-rule {
     open-fullscreen true
 }
 
+// Fullscreen Direct Scanout Window Rule
+window-rule {
+    match is-fullscreen=true
+    variable-refresh-rate true
+}
 
 // --- LAYER RULES (ERMETE SHELL & MODALS INTEGRATION) ---
 layer-rule {

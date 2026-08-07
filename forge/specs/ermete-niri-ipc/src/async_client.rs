@@ -213,6 +213,19 @@ pub async fn update_niri_kdl_setting(setting_key: &str, val: &str) {
     }
 }
 
+/// Enable or disable DRM/KMS Direct Scanout compositor bypass asynchronously.
+pub async fn set_direct_scanout(enabled: bool) {
+    let val = if enabled { "enable-direct-scanout" } else { "// enable-direct-scanout" };
+    update_niri_kdl_setting("enable-direct-scanout", val).await;
+}
+
+/// Enable or disable prefer-no-vsync for tearing control and zero-latency graphics asynchronously.
+pub async fn set_prefer_no_vsync(enabled: bool) {
+    let val = if enabled { "prefer-no-vsync" } else { "// prefer-no-vsync" };
+    update_niri_kdl_setting("prefer-no-vsync", val).await;
+}
+
+
 /// Focus window by window ID asynchronously.
 pub async fn focus_window(win_id: u64) {
     let _ = niri_action(serde_json::json!({

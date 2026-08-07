@@ -222,6 +222,44 @@ pub fn build_page() -> Box {
         .build();
     container.append(&hdr_row);
 
+    // Vulkan Direct Scanout & Low Latency Section
+    let ds_title = Label::builder()
+        .label("<b>Vulkan Direct Scanout &amp; Grafica Zero-Latency</b>")
+        .use_markup(true)
+        .halign(Align::Start)
+        .margin_top(16)
+        .build();
+    container.append(&ds_title);
+
+    let ds_switch = Switch::builder().valign(Align::Center).active(true).build();
+    ds_switch.connect_state_set(move |_, state| {
+        relm4::spawn_local(async move {
+            ermete_niri_ipc::async_client::set_direct_scanout(state).await;
+        });
+        glib::Propagation::Proceed
+    });
+
+    let ds_row = ActionRow::builder("Direct Scanout (DRM Buffer Bypass)")
+        .subtitle("Bypass completo del compositore per app fullscreen (latenza zero Vulkan/KMS)")
+        .suffix(&ds_switch)
+        .build();
+    container.append(&ds_row);
+
+    let vsync_switch = Switch::builder().valign(Align::Center).active(true).build();
+    vsync_switch.connect_state_set(move |_, state| {
+        relm4::spawn_local(async move {
+            ermete_niri_ipc::async_client::set_prefer_no_vsync(state).await;
+        });
+        glib::Propagation::Proceed
+    });
+
+    let vsync_row = ActionRow::builder("Disabilita VSync Forzato (Tearing Control eSports)")
+        .subtitle("Rimozione del blocco sincronia verticale per massimizzare gli FPS e ridurre l'input lag")
+        .suffix(&vsync_switch)
+        .build();
+    container.append(&vsync_row);
+
+
     // ColorSync & True Tone
     let tt_title = Label::builder()
         .label("<b>ColorSync &amp; True Tone</b>")
