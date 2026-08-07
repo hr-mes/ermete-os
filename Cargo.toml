@@ -21,7 +21,7 @@ members = [
     "forge/specs/ermete-niri-ipc",
     "forge/specs/ermete-live-patcher/ermete-live-patcher-1.0.0",
     "forge/specs/ermete-daemon-patch-plugin"
-]
+, "system/ermete-store"]
 
 exclude = [
     "tests/fuzz"

@@ -1230,6 +1230,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "ermete-store"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+]
+
+[[package]]
 name = "ermete-store-rs"
 version = "1.0.0"
 dependencies = [
