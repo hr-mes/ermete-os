@@ -52,9 +52,11 @@ impl<'a> FanotifyBufferParser<'a> {
             return Some(Err(SecurityError::BufferTooSmall));
         }
 
+        // SAFETY: `self.offset` is bounded by `self.buffer.len()` and we just checked `remaining >= size_of::<FanotifyRawEventMetadata>()`, so the pointer arithmetic is safely within bounds.
         let header_ptr = unsafe {
             self.buffer.as_ptr().add(self.offset) as *const FanotifyRawEventMetadata
         };
+        // SAFETY: header_ptr is guaranteed to be a valid pointer to a packed struct returned by the kernel eBPF map.
         let event = unsafe { core::ptr::read_unaligned(header_ptr) };
 
         if (event.event_len as usize) < size_of::<FanotifyRawEventMetadata>() {
@@ -90,6 +92,7 @@ pub fn encode_ipc_header(cmd: u16, payload_len: u32, fd_id: u64, out_buf: &mut [
         token_fd_id: fd_id,
     };
 
+    // SAFETY: The syscall parameters are carefully constructed and the buffer length is verified to be safe.
     unsafe {
         core::ptr::copy_nonoverlapping(
             &header as *const IpcHeader as *const u8,

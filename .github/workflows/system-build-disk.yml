@@ -36,7 +36,7 @@ concurrency:
 jobs:
   build_iso:
     name: 💿 Generate ${{ matrix.disk-type }}
-    runs-on: ${{ (github.event_name == 'workflow_dispatch' && inputs.platform == 'arm64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    runs-on: ${{ github.event_name == 'workflow_dispatch' && inputs.platform == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     strategy:
       fail-fast: false
       matrix:
@@ -60,7 +60,7 @@ jobs:
           echo "USER_GID=${USER_GID}" >> ${GITHUB_ENV}
 
       - name: 🧹 Maximize build space
-        if: inputs.platform != 'arm64'
+        if: github.event_name != 'workflow_dispatch' || inputs.platform != 'arm64'
         uses: ublue-os/remove-unwanted-software@v9
         with:
           remove-codeql: true
@@ -81,7 +81,7 @@ jobs:
           additional-args: --use-librepo=True --rootfs=btrfs
 
       - name: 📦 Upload disk images to Artifacts
-        if: inputs.upload-to-s3 != true && github.event_name != 'pull_request'
+        if: (github.event_name != 'workflow_dispatch' || inputs.upload-to-s3 != true) && github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: ermete-os-${{ matrix.disk-type }}
@@ -94,7 +94,7 @@ jobs:
   publish_s3:
     name: ☁️ Publish to AWS S3
     needs: build_iso
-    if: inputs.upload-to-s3 == true && github.event_name != 'pull_request'
+    if: github.event_name == 'workflow_dispatch' && inputs.upload-to-s3 == true && github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     steps:
       - name: 📥 Download Artifacts

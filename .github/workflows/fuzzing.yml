@@ -78,7 +78,7 @@ jobs:
           
           cd tests/fuzz
 
-          TARGETS=$(cargo fuzz list 2>/dev/null || ls fuzz_targets/*.rs 2>/dev/null | xargs -n 1 basename | sed 's/\.rs$//')
+          TARGETS=$(cargo fuzz list --fuzz-dir . 2>/dev/null || ls fuzz_targets/*.rs 2>/dev/null | xargs -n 1 basename | sed 's/\.rs$//')
 
           if [ -z "$TARGETS" ]; then
             echo "❌ ERROR: Nessun target di fuzzing valido in tests/fuzz"
@@ -89,7 +89,7 @@ jobs:
           
           for target in $TARGETS; do
             echo "🔥 Running cargo fuzz su target '$target' per ${FUZZ_TIME}s con AddressSanitizer..."
-            cargo fuzz run "$target" -- -max_total_time="$FUZZ_TIME" -sanitizer=address
+            cargo fuzz run --fuzz-dir . "$target" -- -max_total_time="$FUZZ_TIME" -sanitizer=address
           done
 
       - name: 🚨 Upload Fuzzing Crash Artifacts
