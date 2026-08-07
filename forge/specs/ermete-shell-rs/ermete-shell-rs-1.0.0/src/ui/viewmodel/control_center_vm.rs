@@ -105,8 +105,9 @@ impl ControlCenterViewModel {
         let mut hw_rx = crate::ipc::system_proxies::get_hardware_bus().subscribe();
         gtk4::glib::MainContext::default().spawn_local(async move {
             while let Ok(event) = hw_rx.recv().await {
-                let crate::ipc::types::HardwareEvent::BrightnessChanged(val) = event;
-                on_brightness_change(val);
+                if let crate::ipc::types::HardwareEvent::BrightnessChanged(val) = event {
+                    on_brightness_change(val);
+                }
             }
         });
     }

@@ -228,6 +228,7 @@ impl NetBus {
 #[derive(Debug, Clone)]
 pub enum HardwareEvent {
     BrightnessChanged(f64),
+    CapsLockToggled(bool),
 }
 
 #[derive(Clone)]
