@@ -8,7 +8,7 @@ fn build_quick_toggle_pill(badge_class: &str, icon_glyph: &str, title: &str, sub
     let btn = Button::builder().css_classes(["cc-toggle-pill"]).hexpand(true).build();
     let box_ = GtkBox::builder()
         .orientation(Orientation::Horizontal)
-        .spacing(10)
+        .spacing(12)
         .valign(Align::Center)
         .build();
 
@@ -212,10 +212,13 @@ pub fn show_control_center_popover(app: &Application) {
         .valign(Align::Center)
         .build();
     let bright_icon = Label::builder().label("☀").css_classes(["cc-slider-icon"]).build();
-    let bright_slider = Scale::with_range(Orientation::Horizontal, 0.0, 100.0, 1.0);
-    bright_slider.set_value(initial.brightness);
-    bright_slider.set_hexpand(true);
-    bright_slider.set_valign(Align::Center);
+    let bright_slider = Scale::builder()
+        .orientation(Orientation::Horizontal)
+        .adjustment(&gtk4::Adjustment::new(initial.brightness, 0.0, 100.0, 1.0, 10.0, 0.0))
+        .css_classes(["cc-scale"])
+        .hexpand(true)
+        .valign(Align::Center)
+        .build();
     bright_slider.connect_value_changed(move |s| {
         let val = s.value() / 100.0;
         ControlCenterViewModel::execute_intent(ControlCenterIntent::SetBrightness(val));
@@ -243,10 +246,13 @@ pub fn show_control_center_popover(app: &Application) {
         .valign(Align::Center)
         .build();
     let audio_icon = Label::builder().label("🔊").css_classes(["cc-slider-icon"]).build();
-    let audio_slider = Scale::with_range(Orientation::Horizontal, 0.0, 100.0, 1.0);
-    audio_slider.set_value(initial.volume);
-    audio_slider.set_hexpand(true);
-    audio_slider.set_valign(Align::Center);
+    let audio_slider = Scale::builder()
+        .orientation(Orientation::Horizontal)
+        .adjustment(&gtk4::Adjustment::new(initial.volume, 0.0, 100.0, 1.0, 10.0, 0.0))
+        .css_classes(["cc-scale"])
+        .hexpand(true)
+        .valign(Align::Center)
+        .build();
     audio_slider.connect_value_changed(move |s| {
         let val = s.value() / 100.0;
         ControlCenterViewModel::execute_intent(ControlCenterIntent::SetVolume(val));
