@@ -1244,6 +1244,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "ermete-cluster-mesh"
+version = "1.0.0"
+dependencies = [
+ "anyhow",
+ "base64 0.21.7",
+ "rand 0.8.7",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "tracing-subscriber",
+ "zbus 4.4.0",
+]
+
+[[package]]
 name = "ermete-compositor"
 version = "0.1.0"
 dependencies = [
@@ -1408,6 +1425,19 @@ version = "1.0.0"
 dependencies = [
  "anyhow",
  "regex",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "zbus 4.4.0",
+]
+
+[[package]]
+name = "ermete-kernel-forge"
+version = "1.0.0"
+dependencies = [
+ "anyhow",
  "serde",
  "serde_json",
  "tokio",

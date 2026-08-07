@@ -1,0 +1,19 @@
+[package]
+name = "ermete-cluster-mesh"
+version = "1.0.0"
+edition = "2021"
+description = "Ermete OS Multi-Node Zero-Conf P2P Swarm Computing Daemon for Distributed NPU Inference"
+authors = ["ermete-swarm-cluster-architect"]
+
+[dependencies]
+tokio = { version = "1.37", features = ["full"] }
+zbus = "4.1"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+base64 = "0.21"
+sha2 = "0.10"
+tokio-util = { version = "0.7", features = ["codec"] }
+rand = "0.8"

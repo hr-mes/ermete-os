@@ -62,9 +62,11 @@
     "ermete-audio-bus",
     "ermete-telemetry",
     "ermete-net-unikernel",
+    "cluster-mesh",
     "kani-verifier",
     "just",
-    "uki-tools"
+    "uki-tools",
+    "kernel-forge"
   ],
   "custom_tier0": [
     "base-config",
@@ -112,7 +114,9 @@
     "niri-ipc",
     "recovery",
     "style",
-    "sysmon-ebpf"
+    "sysmon-ebpf",
+    "cluster-mesh",
+    "kernel-forge"
   ],
   "custom_tier3": [
     "shell-rs",
@@ -227,5 +231,14 @@
     "org.mozilla.firefox",
     "com.spotify.Client",
     "com.visualstudio.code"
-  ]
+  ],
+  "target_architectures": [
+    "x86_64",
+    "aarch64",
+    "riscv64"
+  ],
+  "cross_compile_targets": {
+    "aarch64": "aarch64-unknown-linux-gnu",
+    "riscv64": "riscv64gc-unknown-linux-gnu"
+  }
 }

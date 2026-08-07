@@ -33,7 +33,9 @@ members = [
     "system/ermete-audio-bus",
     "system/ermete-compositor",
     "system/ermete-telemetry",
-    "system/ermete-net-unikernel"
+    "system/ermete-net-unikernel",
+    "system/ermete-cluster-mesh",
+    "system/ermete-kernel-forge"
 ]
 
 exclude = [
