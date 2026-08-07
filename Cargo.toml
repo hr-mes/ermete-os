@@ -23,7 +23,8 @@ members = [
     "forge/specs/ermete-daemon-patch-plugin"
 , "system/ermete-store"
 , "system/unikernel"
-, "system/ermete-agentic-kernel"]
+, "system/ermete-agentic-kernel"
+, "system/confidential_computing/ermete-attestation"]
 
 exclude = [
     "tests/fuzz"

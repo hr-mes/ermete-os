@@ -11,4 +11,5 @@ sev = "1.2.1"
 tracing = "0.1"
 pqc_dilithium = "0.2.0"
 pqc_kyber = { version = "0.7.1", features = ["kyber1024"] }
+ermete-cvm-attestation = { path = "../../../../system/confidential_computing/ermete-attestation" }
 

@@ -1,5 +1,5 @@
 [package]
-name = "ermete-attestation"
+name = "ermete-cvm-attestation"
 version = "0.1.0"
 edition = "2021"
 description = "Ermete OS Confidential Computing Attestation Tool"
@@ -20,6 +20,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 pqc_dilithium = "0.2.0"
 pqc_kyber = { version = "0.7.1", features = ["kyber1024"] }
+tokio = { version = "1.37", features = ["full"] }
+zbus = "4.1.2"
+tracing = "0.1"
 
-
-[workspace]
