@@ -1287,6 +1287,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "ermete-mesh-bus"
+version = "1.0.0"
+dependencies = [
+ "anyhow",
+ "base64 0.21.7",
+ "hex",
+ "pqc_dilithium",
+ "pqc_kyber",
+ "rand_core 0.6.4",
+ "ring 0.17.14",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "x25519-dalek",
+ "zbus 4.4.0",
+]
+
+[[package]]
 name = "ermete-mesh-sync"
 version = "1.0.0"
 dependencies = [

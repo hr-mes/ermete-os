@@ -1,0 +1,25 @@
+[package]
+name = "ermete-mesh-bus"
+version = "1.0.0"
+edition = "2021"
+description = "Ermete OS Zero-Trust Post-Quantum Cryptography WireGuard P2P Mesh Bus Daemon"
+authors = ["ermete-mesh-pqc-architect"]
+
+[dependencies]
+tokio = { version = "1.37", features = ["full"] }
+zbus = "4.1"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+base64 = "0.21"
+rand_core = "0.6"
+pqc_kyber = { version = "0.7.1", features = ["kyber1024"] }
+pqc_dilithium = "0.2.0"
+x25519-dalek = "=2.0.0-rc.3"
+sha2 = "0.10"
+ring = "0.17"
+hex = "0.4"
+
+
