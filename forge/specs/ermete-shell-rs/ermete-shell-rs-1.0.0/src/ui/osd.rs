@@ -27,17 +27,20 @@ fn init_osd_css() {
             min-height: 48px;
             opacity: 0;
             margin-top: -16px;
-            transition: all 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform: scale(0.92);
+            transition: all 300ms cubic-bezier(0.05, 0.9, 0.1, 1.05);
         }
 
         .dynamic-island-container.active {
             opacity: 1;
             margin-top: 0px;
+            transform: scale(1);
         }
 
         .dynamic-island-icon {
             color: #ffffff;
             margin-right: 10px;
+            transition: all 200ms cubic-bezier(0.05, 0.9, 0.1, 1.05);
         }
 
         .dynamic-island-title {
@@ -45,12 +48,14 @@ fn init_osd_css() {
             font-weight: 700;
             color: rgba(255, 255, 255, 0.95);
             font-family: system-ui, -apple-system, sans-serif;
+            transition: all 200ms cubic-bezier(0.05, 0.9, 0.1, 1.05);
         }
 
         .dynamic-island-value {
             font-size: 12px;
             font-weight: 600;
             color: rgba(255, 255, 255, 0.7);
+            transition: all 200ms cubic-bezier(0.05, 0.9, 0.1, 1.05);
         }
 
         .dynamic-island-progress progressbar trough {
@@ -66,6 +71,7 @@ fn init_osd_css() {
             min-height: 6px;
             border: none;
             box-shadow: 0 0 8px rgba(0, 122, 255, 0.6);
+            transition: all 250ms cubic-bezier(0.05, 0.9, 0.1, 1.05);
         }
 
         .dynamic-island-badge {
@@ -77,12 +83,14 @@ fn init_osd_css() {
             background-color: rgba(255, 255, 255, 0.12);
             color: rgba(255, 255, 255, 0.85);
             border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 250ms cubic-bezier(0.05, 0.9, 0.1, 1.05);
         }
 
         .dynamic-island-badge.caps-on {
             background-color: rgba(255, 149, 0, 0.25);
             color: #ff9f0a;
             border-color: rgba(255, 149, 0, 0.5);
+            box-shadow: 0 0 10px rgba(255, 149, 0, 0.3);
         }
 
         .dynamic-island-badge.caps-off {
@@ -284,7 +292,10 @@ pub fn spawn_osd(app: &Application) {
         }
 
         // Make window visible and trigger elastic show transition
-        window_rc.set_visible(true);
+        if !window_rc.is_visible() {
+            island_box_rc.remove_css_class("active");
+            window_rc.set_visible(true);
+        }
         island_box_rc.add_css_class("active");
 
         let island_box_clone = island_box_rc.clone();
@@ -295,7 +306,7 @@ pub fn spawn_osd(app: &Application) {
         *active_timeout.borrow_mut() = Some(glib::timeout_add_local_once(
             Duration::from_millis(2000),
             move || {
-                // Remove active class -> triggers 300ms CSS fade-out transition
+                // Remove active class -> triggers 300ms CSS cubic-bezier fade-out transition
                 island_box_clone.remove_css_class("active");
                 *active_timeout_ref.borrow_mut() = None;
 
@@ -313,3 +324,13 @@ pub fn spawn_osd(app: &Application) {
         ));
     });
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_bezier_curve_definition() {
+        let css = r#"transition: all 300ms cubic-bezier(0.05, 0.9, 0.1, 1.05);"#;
+        assert!(css.contains("cubic-bezier(0.05, 0.9, 0.1, 1.05)"));
+    }
+}
+

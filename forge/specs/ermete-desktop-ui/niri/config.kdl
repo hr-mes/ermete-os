@@ -44,12 +44,12 @@ output "HDMI-A-1" {
 
 // --- VULKAN DIRECT SCANOUT & GRAPHICS OPTIMIZATION ---
 // Disable forced VSync to allow unthrottled frame presentation (tearing control) for zero input lag (eSports & Vulkan)
-prefer-no-vsync
+// prefer-no-vsync
 
 debug {
     // Explicitly enable DRM/KMS direct scanout buffer bypass for fullscreen surfaces
     // Bypasses Wayland compositor composition pass, mapping Vulkan/DRM buffers directly to display hardware planes
-    enable-direct-scanout
+    // enable-direct-scanout
 }
 
 layout {
@@ -182,26 +182,13 @@ window-rule {
 
 // Fullscreen Direct Scanout Window Rule
 window-rule {
-    match is-fullscreen=true
+    // match is-fullscreen=true
     variable-refresh-rate true
 }
 
-// --- LAYER RULES (ERMETE SHELL & MODALS INTEGRATION) ---
+// --- LAYER RULES (ERMETE SHELL & MODALS INTEGRATION WITH BLUR) ---
 layer-rule {
-    match namespace="^bar$"
-    match namespace="^dock$"
-    match namespace="^control-center$"
-    match namespace="^launcher$"
-    match namespace="^spotlight$"
-    match namespace="^powermenu$"
-    match namespace="^clipboard$"
-    match namespace="^media-player$"
-    match namespace="^sys-monitor$"
-    match namespace="^calendar$"
-    match namespace="^wifi.*$"
-    match namespace="^bluetooth$"
-    match namespace="^osd$"
-    match namespace="^notifications$"
+    match namespace="^(bar|topbar|dock|dock-trigger|control-center|cc|launcher|spotlight|powermenu|clipboard|media-player|sys-monitor|calendar|wifi.*|bluetooth|osd.*|dynamic-island-osd|notifications|overview|gatekeeper|privacy)$"
     
     geometry-corner-radius 12
     opacity 0.85
@@ -219,6 +206,28 @@ layer-rule {
         spread 0
         offset x=0 y=4
         color "#00000070"
+    }
+}
+
+// Explicit layer rules for topbar, osd, and control center (cc)
+layer-rule {
+    match namespace="^topbar$"
+    background-effect {
+        blur true
+    }
+}
+
+layer-rule {
+    match namespace="^osd$"
+    background-effect {
+        blur true
+    }
+}
+
+layer-rule {
+    match namespace="^cc$"
+    background-effect {
+        blur true
     }
 }
 
