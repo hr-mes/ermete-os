@@ -258,12 +258,9 @@ jobs:
           buildah push $IMAGE_LOWER:${{ steps.check.outputs.hash }}
           
 
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v3
 
       - name: Generate SBOM (Syft)
         run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
           img_prefix="ermete-os-forge"
           if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then
             img_prefix="ermete-os-forge-rolling"
@@ -433,12 +430,9 @@ jobs:
           buildah push $IMAGE_LOWER:${{ steps.check.outputs.hash }}
           
 
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v3
 
       - name: Generate SBOM (Syft)
         run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
           img_prefix="ermete-os-forge"
           if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then
             img_prefix="ermete-os-forge-rolling"
@@ -606,12 +600,9 @@ jobs:
           buildah push $IMAGE_LOWER:${{ steps.check.outputs.hash }}
           
 
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v3
 
       - name: Generate SBOM (Syft)
         run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
           img_prefix="ermete-os-forge"
           if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then
             img_prefix="ermete-os-forge-rolling"

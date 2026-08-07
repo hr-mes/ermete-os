@@ -40,9 +40,19 @@
     "sccache",
     "buildah",
     "mold",
-    "sccache",
-    "buildah",
-    "mold"
+    "ai-daemon",
+    "attestation",
+    "daemon-patch-plugin",
+    "dock",
+    "kernel",
+    "keylime",
+    "live-patcher",
+    "livepatch",
+    "mesh-sync",
+    "niri-ipc",
+    "recovery",
+    "style",
+    "sysmon-ebpf"
   ],
   "custom_tier0": [
     "base-config",
@@ -72,7 +82,20 @@
   "custom_tier2": [
     "bibata",
     "matugen",
-    "dart-sass"
+    "dart-sass",
+    "ai-daemon",
+    "attestation",
+    "daemon-patch-plugin",
+    "dock",
+    "kernel",
+    "keylime",
+    "live-patcher",
+    "livepatch",
+    "mesh-sync",
+    "niri-ipc",
+    "recovery",
+    "style",
+    "sysmon-ebpf"
   ],
   "custom_tier3": [
     "shell-rs",
@@ -175,5 +198,6 @@
     "wl-clipboard",
     "wl-mirror",
     "wlr-randr"
-  ]
+  ],
+  "flatpaks": []
 }
