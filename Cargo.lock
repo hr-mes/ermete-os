@@ -1316,6 +1316,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "ermete-self-evolution"
+version = "1.0.0"
+dependencies = [
+ "anyhow",
+ "libc",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "zbus 4.4.0",
+]
+
+[[package]]
 name = "ermete-settings-rs"
 version = "1.0.0"
 dependencies = [
