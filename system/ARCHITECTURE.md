@@ -147,6 +147,45 @@ Ermete OS ha assimilato e riscritto in Rust nativo i 5 componenti storici e vuln
 2. **Bedrock Diet:** Strips -1.1 GB of non-consumer firmware, build tools, and cache files.
 3. **Immutability:** Bootable OCI container deployed and updated atomically via `bootc switch`.
 
+### 🔄 Modello di Aggiornamento Ibrido (Rolling-Forge)
+
+Ermete OS rivoluziona la gestione delle transizioni di sistema introducendo il **Modello di Aggiornamento Ibrido (Rolling-Forge)**, un paradigma che coniuga la velocità atomica dei container OCI cloud-native con la personalizzazione estrema dell'hardware tipica dei sistemi sorgente (Gentoo-style):
+
+```mermaid
+flowchart TD
+    subgraph Update_Trigger ["🔄 Trigger Aggiornamento Systemd / BootC"]
+        PULL["bootc update / switch\n(OCI Image Fetch da GHCR)"]
+    end
+
+    subgraph Binary_Userspace ["⚡ Tier 1: Userspace Binario Atomico (BootC)"]
+        FAST["Applica Layer OCI immodificati\n(Librerie, Ermete Shell, Assimilated Pillars)"]
+        VERIFY["Verifica Firma Cosign & Supply Chain SLSA L4"]
+        PULL --> VERIFY --> FAST
+    end
+
+    subgraph Transaction_Hook ["⚙️ Tier 2: Transaction Hook (Gentoo-Style Local Forge)"]
+        HOOK["Post-Pull Transaction Hook\n(systemd-ukify + uki-tools + dracut)"]
+        KBUILD["Ricompilazione & Ottimizzazione Locale UKI\n(Kernel Module Microcode, eBPF sched_ext, Secure Boot Keys)"]
+        FAST --> HOOK --> KBUILD
+    end
+
+    subgraph Validation_Rollback ["🛡️ Verification & Atomic Commit"]
+        CHECK{"Compilazione UKI OK?"}
+        KBUILD --> CHECK
+        COMMIT["Staging Nuovo Deployment UKI\nAtomic Bootloader Switch (GRUB/systemd-boot)"]
+        ROLLBACK["💥 ABORT TRANSACTION\nRollback Atomico Istantaneo al Layer OCI Precedente"]
+        CHECK -- Si --> COMMIT
+        CHECK -- No / Fail --> ROLLBACK
+    end
+```
+
+- **Speed & Predictability (Binary Userspace OCI):** L'intero *userspace* (Ermete Shell, i 5 Pilastri Assimilati in Rust, librerie di sistema e runtime GTK4/Vulkan) viene distribuito come immagine OCI immutabile pre-compilata. Gli aggiornamenti tramite `bootc` avvengono in pochi secondi tramite delta-layering e firma Cosign (SLSA Level 4).
+- **Gentoo-Style Local Kernel UKI Forge:** Durante i transaction hook post-pull di `bootc`, il sistema non impiega una **Unified Kernel Image (UKI)** generica. Esegue invece la ricompilazione e l'assemblaggio locale automatizzato della sola UKI tramite `uki-tools` (`ukify` + `sbsigntools`). Questo passaggio integra:
+  - Microcode CPU specifico e parametri di tuning hardware locali (`march=native`).
+  - Moduli kernel custom e sonde **eBPF** per `ermete-ebpf-sched`.
+  - Firma crittografica EFI Secure Boot mediante le chiavi locali autarchiche generate dal chip TPM 2.0 dell'host (`ermete-greeter`).
+- **Garanzia di Rollback Atomico (Atomic Rollback Safety):** Se la compilazione locale della UKI o la verifica dei checksum EFI fallisce in fase di transaction hook, la transazione viene interrotta immediatamente (`ABORT TRANSACTION`). Il bootloader non viene toccato e l'OS ripristina atomicamente l'immagine OCI e la UKI precedenti, garantendo un'immunità totale da stati di boot corrotti o system bricking.
+
 ---
 
 ## 🛡️ Ecosistema di CI/CD Autarchico & Multi-Stage Build Pipeline

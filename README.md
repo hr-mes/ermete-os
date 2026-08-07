@@ -41,6 +41,7 @@ Esplora le specifiche architetturali dettagliate (generate dallo sciame di intel
 10. [Core 6: Caching, Idempotenza e SLSA L4 CI/CD](#10-core-6-caching-idempotenza-e-slsa-l4-cicd)
 11. [Ottimizzazione Estrema: Il Motore "Ultra Leggero"](#11-ottimizzazione-estrema-il-motore-ultra-leggero)
 12. [Ecosistema di CI/CD Autarchico e Multi-Stage Build](#12-ecosistema-di-cicd-autarchico-e-multi-stage-build)
+13. [Modello di Aggiornamento Ibrido (Rolling-Forge)](#13-modello-di-aggiornamento-ibrido-rolling-forge)
 
 
 ---
@@ -245,6 +246,44 @@ flowchart LR
    L'immagine finale di sistema immutabile (`bootc`). Nel `system/Containerfile`, gli RPM prodotti dallo Stage 1 vengono montati in modalità bind-mount ed installati nel filesystem finale. Al termine dell'installazione e della generazione dell'initramfs via Dracut, l'ambiente di build viene completamente **epurato**: compilatori, sorgenti, intestazioni di sviluppo e file temporanei vengono rimossi (-1.1 GB).
 
 **Risultato**: Il sistema finale `ermete-os-system` è incredibilmente snello, leggero e sicuro, privo di compilatori in ambiente di runtime, pur essendo nato da un ambiente di build pesante ed autarchico.
+
+---
+
+## 13. Modello di Aggiornamento Ibrido (Rolling-Forge)
+
+Ermete OS supera la dicotomia classica tra distribuzioni binarie (es. Fedora, Arch) e distribuzioni sorgente (es. Gentoo) implementando l'infrastruttura di aggiornamento **Rolling-Forge**:
+
+```mermaid
+flowchart LR
+    subgraph Userspace ["⚡ Fast Binary OCI Layer"]
+        OCI["bootc update"] -->|Pre-compiled OCI Layers| US["Userspace & Rust Pillars"]
+    end
+
+    subgraph Kernel_Forge ["🔧 Gentoo-Style Local UKI Forge"]
+        HOOK["Transaction Hook"] -->|ukify + uki-tools| UKI["Host-Optimized UKI Kernel"]
+    end
+
+    subgraph Safety ["🛡️ Atomic Rollback"]
+        VAL{"Build UKI OK?"}
+        VAL -- OK --> BOOT["Commit & Boot Switch"]
+        VAL -- FAIL --> RB["Atomic Rollback (Zero Downtime)"]
+    end
+
+    US --> HOOK
+    UKI --> VAL
+```
+
+### 🏎️ 1. Userspace a Velocità Binaria (BootC OCI)
+L'intero userspace (Ermete Shell GTK4, demone `ermete-init-oracle`, `ermete-compositor`, `ermete-audio-bus` e le stack D-Bus) viene scaricato in modalità binaria immutabile tramite container OCI (`bootc switch`). Questo garantisce aggiornamenti fulminei, riproducibilità totale e la certificazione della supply chain **SLSA Level 4** con firme Sigstore Cosign.
+
+### 🔬 2. UKI Kernel Forge Locale (Gentoo-Style Hook)
+Invece di utilizzare un kernel generico preconfezionato, i transaction hook post-fetch di `bootc` innescano la compilazione e l'assemblaggio locale automatizzato della sola **Unified Kernel Image (UKI)** tramite `uki-tools` (`ukify` + `sbsigntools`). La UKI viene cucita su misura per la macchina ospitante:
+- Inietta i microcode hardware specifici della CPU ed i parametri di ottimizzazione del Ring-0.
+- Rigenera l'initramfs ultra-snello dracut per `ermete-ebpf-sched` e le configurazioni cgroup v2.
+- Firma il binario EFI risultante direttamente con le chiavi Secure Boot autarchiche dell'host.
+
+### 🛡️ 3. Garanzia di Rollback Atomico (Anti-Bricking)
+Il modello di aggiornamento opera sotto stretta invariante di isolamento: se durante il transaction hook la build della UKI fallisce (es. errori di link dei moduli o mancata firma EFI), l'intera transazione viene annullata atomicamente prima della modifica dei puntatori del bootloader. Il sistema rimane intatto e completamente operativo sull'ultimo stato funzionante noto, garantendo **zero downtime e l'impossibilità teorica di renderlo inavviabile**.
 
 <br />
 <div align="center">
