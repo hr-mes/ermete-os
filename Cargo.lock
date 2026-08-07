@@ -1095,6 +1095,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "ermete-audio-bus"
+version = "0.1.0"
+
+[[package]]
 name = "ermete-backup"
 version = "1.0.0"
 dependencies = [
@@ -1246,6 +1250,20 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "vmm-sys-util",
+ "zbus 4.4.0",
+]
+
+[[package]]
+name = "ermete-init-oracle"
+version = "1.0.0"
+dependencies = [
+ "anyhow",
+ "regex",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
  "zbus 4.4.0",
 ]
 
@@ -5163,6 +5181,8 @@ name = "xdg-desktop-portal-ermete"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "serde",
+ "serde_json",
  "tokio",
  "tracing",
  "tracing-subscriber",

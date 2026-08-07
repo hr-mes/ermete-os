@@ -110,6 +110,32 @@ impl HypervisorDbus {
         }
     }
 
+    /// Checks if specified app runs inside a Micro-VM Enclave
+    async fn is_microvm_app(&self, app_id: String) -> bool {
+        self.enclave_manager.is_microvm_app(&app_id)
+    }
+
+    /// Opens a secure virtio-fs tunnel for Micro-VM file access
+    async fn open_virtiofs_tunnel(
+        &self,
+        enclave_id: String,
+        host_path: String,
+        read_only: bool,
+    ) -> String {
+        match self.enclave_manager.open_virtiofs_tunnel(&enclave_id, &host_path, read_only) {
+            Ok(json_resp) => json_resp,
+            Err(e) => format!(r#"{{"error": "Failed to open virtio-fs tunnel: {}"}}"#, e),
+        }
+    }
+
+    /// Bridges a PipeWire Screen Sharing stream to a Micro-VM Enclave
+    async fn bridge_screencast_tunnel(&self, enclave_id: String, pipewire_node: u32) -> String {
+        match self.enclave_manager.bridge_screencast_tunnel(&enclave_id, pipewire_node) {
+            Ok(json_resp) => json_resp,
+            Err(e) => format!(r#"{{"error": "Failed to bridge ScreenCast stream: {}"}}"#, e),
+        }
+    }
+
     /// Signal emitted when a new enclave is created
     #[zbus(signal)]
     pub async fn enclave_created(

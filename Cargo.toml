@@ -19,15 +19,22 @@ members = [
     "forge/specs/ermete-style",
     "forge/specs/ermete-niri-ipc",
     "forge/specs/ermete-live-patcher/ermete-live-patcher-1.0.0",
-    "forge/specs/ermete-daemon-patch-plugin"
-, "system/ermete-store"
-, "system/unikernel"
-, "system/ermete-agentic-kernel"
-, "system/confidential_computing/ermete-attestation"
-, "system/ermete-self-evolution", "system/ermete-ebpf-sched", "system/ermete-hypervisor-daemon", "system/ermete-mesh-bus"]
+    "forge/specs/ermete-daemon-patch-plugin",
+    "system/ermete-store",
+    "system/unikernel",
+    "system/ermete-agentic-kernel",
+    "system/confidential_computing/ermete-attestation",
+    "system/ermete-self-evolution",
+    "system/ermete-ebpf-sched",
+    "system/ermete-hypervisor-daemon",
+    "system/ermete-mesh-bus",
+    "system/ermete-init-oracle"
+, "system/ermete-audio-bus"]
 
 exclude = [
-    "tests/fuzz"
+    "tests/fuzz",
+    "system/ermete-compositor",
+    "system/ermete-greeter"
 ]
 
 
