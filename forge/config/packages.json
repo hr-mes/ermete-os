@@ -170,7 +170,6 @@
     "squashfuse",
     "upower",
     "virt-manager",
-    "systemd",
     "wayland"
   ],
   "upstream_desktop": [
@@ -178,7 +177,6 @@
     "adw-gtk3-theme",
     "fontawesome-fonts-all",
     "foot",
-    "greetd",
     "gtk4-layer-shell",
     "gtk-layer-shell",
     "jetbrains-mono-fonts",
@@ -198,10 +196,8 @@
     "xdg-user-dirs-gtk"
   ],
   "upstream_media": [
-    "pipewire",
     "ffmpeg",
     "mpv",
-    "wireplumber",
     "x264",
     "libva-nvidia-driver",
     "libva-utils",
