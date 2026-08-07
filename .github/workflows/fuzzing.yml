@@ -30,13 +30,26 @@ concurrency:
 
 jobs:
   fuzz:
-    name: 🎯 Fuzz Unified Suite
+    name: 🎯 Fuzz Unified Suite (${{ matrix.sanitizer_name }})
     runs-on: ubuntu-24.04
     container: ghcr.io/hr-mes/ermete-os-builder:latest
     permissions:
       contents: read
       security-events: write
       actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: [address, thread, memory, leak]
+        include:
+          - sanitizer: address
+            sanitizer_name: AddressSanitizer
+          - sanitizer: thread
+            sanitizer_name: ThreadSanitizer
+          - sanitizer: memory
+            sanitizer_name: MemorySanitizer
+          - sanitizer: leak
+            sanitizer_name: LeakSanitizer
 
     steps:
       - name: Install System Dependencies
@@ -58,16 +71,16 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             tests/fuzz/target/
-          key: ${{ runner.os }}-cargo-fuzz-unified-${{ hashFiles('tests/fuzz/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-fuzz-${{ matrix.sanitizer }}-${{ hashFiles('tests/fuzz/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-fuzz-unified-
+            ${{ runner.os }}-cargo-fuzz-${{ matrix.sanitizer }}-
 
       - name: 📦 Install cargo-fuzz
         uses: taiki-e/install-action@v2
         with:
           tool: cargo-fuzz
 
-      - name: 🔍 Run Cargo Fuzz (ASan)
+      - name: 🔍 Run Cargo Fuzz (${{ matrix.sanitizer_name }})
         run: |
           set -e
           
@@ -88,15 +101,15 @@ jobs:
           echo "🎯 Target di Fuzzing individuati: $TARGETS"
           
           for target in $TARGETS; do
-            echo "🔥 Running cargo fuzz su target '$target' per ${FUZZ_TIME}s con AddressSanitizer..."
-            cargo fuzz run --fuzz-dir . "$target" -- -max_total_time="$FUZZ_TIME" -sanitizer=address
+            echo "🔥 Running cargo fuzz su target '$target' per ${FUZZ_TIME}s con ${{ matrix.sanitizer_name }}..."
+            cargo fuzz run --fuzz-dir . "$target" -- -max_total_time="$FUZZ_TIME" -sanitizer=${{ matrix.sanitizer }}
           done
 
       - name: 🚨 Upload Fuzzing Crash Artifacts
         if: failure() || always()
         uses: actions/upload-artifact@v4
         with:
-          name: fuzz-artifacts-unified
+          name: fuzz-artifacts-${{ matrix.sanitizer }}
           path: |
             tests/fuzz/artifacts/
             tests/fuzz/corpus/

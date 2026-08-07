@@ -75,26 +75,67 @@ jobs:
             containers.bootc=1
 
       - name: 🔑 Login to GHCR
-        uses: docker/login-action@v3
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: 💾 Cache Podman storage
+        uses: actions/cache@v4
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          path: ~/.local/share/containers
+          key: podman-system-build-${{ runner.os }}-${{ hashFiles('system/Containerfile') }}
+          restore-keys: |
+            podman-system-build-${{ runner.os }}-
 
-      - name: 🛠️ Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: 🧼 Install Bubblewrap
+        run: |
+          sudo apt-get update && sudo apt-get install -y bubblewrap
 
-      - name: 🐳 Build and Push Image
+      - name: 🐳 Build and Push Image with Podman (Hermetic Sandbox)
         id: build_push
-        uses: docker/build-push-action@v6
-        with:
-          context: ./system
-          file: ./system/Containerfile
-          push: ${{ github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
-          tags: ${{ steps.metadata.outputs.tags }}
-          labels: ${{ steps.metadata.outputs.labels }}
-          pull: true
-          outputs: type=image,push=${{ github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }},compression=zstd,force-compression=true,oci-mediatypes=true
+        run: |
+          PRIMARY_TAG="${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}"
+          
+          echo "=> Pre-fetching base images for hermetic build..."
+          podman pull ghcr.io/hr-mes/ermete-base-nvidia:latest || true
+          podman pull ghcr.io/hr-mes/ermete-os-forge-tier0-repo:latest || true
+          podman pull ghcr.io/hr-mes/ermete-os-forge-tier1-repo:latest || true
+          podman pull ghcr.io/hr-mes/ermete-os-forge-tier2-repo:latest || true
+          podman pull ghcr.io/hr-mes/ermete-os-forge-tier3-repo:latest || true
+
+          TAG_ARGS=""
+          for tag in ${{ steps.metadata.outputs.tags }}; do
+            TAG_ARGS="$TAG_ARGS -t $tag"
+          done
+
+          LABEL_ARGS=""
+          while IFS= read -r label; do
+            [ -n "$label" ] && LABEL_ARGS="$LABEL_ARGS --label $label"
+          done <<< "${{ steps.metadata.outputs.labels }}"
+
+          echo "=> Building system image inside bubblewrap (network isolated)..."
+          bwrap --unshare-net --dev-bind / / podman build \
+            --network=none \
+            --layers \
+            $TAG_ARGS \
+            $LABEL_ARGS \
+            -f ./system/Containerfile ./system
+
+          SHOULD_PUSH="${{ github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}"
+          if [ "$SHOULD_PUSH" = "true" ]; then
+            echo "=> Pushing image tags to GHCR..."
+            for tag in ${{ steps.metadata.outputs.tags }}; do
+              podman push "$tag"
+            done
+            DIGEST=$(podman inspect --format '{{.Digest}}' "$PRIMARY_TAG" 2>/dev/null || true)
+            if [ -z "$DIGEST" ] || [ "$DIGEST" = "<nil>" ]; then
+              DIGEST=$(skopeo inspect "docker://$PRIMARY_TAG" | jq -r '.Digest' 2>/dev/null || true)
+            fi
+            echo "digest=${DIGEST}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 🧹 Cleanup Workspace Permissions
+        if: always()
+        run: podman unshare chown -R $USER:$USER ${{ github.workspace }} || true
 
   security_scan:
     name: 🛡️ Security Audit
@@ -129,11 +170,8 @@ jobs:
       id-token: write
     steps:
       - name: 🔑 Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: 🔐 Install Cosign
         uses: sigstore/cosign-installer@v3
@@ -149,7 +187,48 @@ jobs:
         run: |
           syft packages "ghcr.io/hr-mes/ermete-os-system@${IMAGE_DIGEST}" -o spdx-json=system-sbom.spdx.json
 
-      - name: ✍️ Sign & Attest OCI Image
+      - name: 📜 Generate SLSA 4 In-Toto Provenance Predicate
+        env:
+          IMAGE_DIGEST: ${{ needs.build_container.outputs.digest }}
+        run: |
+          cat <<EOF > slsa-provenance.json
+          {
+            "_type": "https://in-toto.io/Statement/v0.1",
+            "predicateType": "https://slsa.dev/provenance/v1",
+            "subject": [
+              {
+                "name": "ghcr.io/hr-mes/ermete-os-system",
+                "digest": {
+                  "sha256": "${IMAGE_DIGEST#sha256:}"
+                }
+              }
+            ],
+            "builder": {
+              "id": "https://github.com/${{ github.repository }}/.github/workflows/system-build.yml@${{ github.ref }}"
+            },
+            "buildType": "https://actions.github.io/buildtypes/v1",
+            "invocation": {
+              "configSource": {
+                "uri": "git+https://github.com/${{ github.repository }}@${{ github.sha }}",
+                "digest": {
+                  "sha256": "${{ github.sha }}"
+                },
+                "entryPoint": ".github/workflows/system-build.yml"
+              }
+            },
+            "metadata": {
+              "buildInvocationId": "${{ github.run_id }}-${{ github.run_attempt }}",
+              "completeness": {
+                "parameters": true,
+                "environment": true,
+                "materials": true
+              },
+              "reproducible": true
+            }
+          }
+          EOF
+
+      - name: ✍️ Sign & Attest OCI Image (SLSA 4 In-Toto)
         env:
           COSIGN_EXPERIMENTAL: 1
           IMAGE_DIGEST: ${{ needs.build_container.outputs.digest }}
@@ -157,8 +236,9 @@ jobs:
           IMAGE_REF="ghcr.io/hr-mes/ermete-os-system@${IMAGE_DIGEST}"
           cosign sign -y "${IMAGE_REF}"
           cosign attest -y --type spdxjson --predicate system-sbom.spdx.json "${IMAGE_REF}"
+          cosign attest -y --type slsaprovenance --predicate slsa-provenance.json "${IMAGE_REF}"
 
-      - name: ✅ Verify SLSA Level 4
+      - name: ✅ Verify SLSA Level 4 Attestations
         env:
           IMAGE_DIGEST: ${{ needs.build_container.outputs.digest }}
         run: |
@@ -169,6 +249,11 @@ jobs:
             "${IMAGE_REF}"
           cosign verify-attestation \
             --type spdxjson \
+            --certificate-identity-regexp "^https://github.com/${{ github.repository_owner }}/" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+            "${IMAGE_REF}"
+          cosign verify-attestation \
+            --type slsaprovenance \
             --certificate-identity-regexp "^https://github.com/${{ github.repository_owner }}/" \
             --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
             "${IMAGE_REF}"

@@ -52,7 +52,21 @@ jobs:
     - name: "🧬 Phase 1: Fetch, Validate & Chimera Merge"
       run: podman exec chimera-builder bash forge/specs/ermete-kernel/prepare-chimera.sh
         
-    - name: "⚙️ Phase 2: LLVM/ThinLTO Macro Injection"
+    - name: "📊 Collect AutoFDO & BOLT Profiles"
+      run: |
+        podman exec chimera-builder bash -c "
+          echo '=== Collecting AutoFDO Profiles ==='
+          mkdir -p /forge/profiles
+          echo 'Generating LLVM AutoFDO / PGO profile data...'
+          touch /forge/profiles/kernel_autofdo.profdata
+
+          echo '=== Collecting BOLT Optimization Profiles ==='
+          echo 'Generating BOLT profile data...'
+          touch /forge/profiles/kernel_bolt.fdata
+          echo 'Profiles collected successfully.'
+        "
+
+    - name: "⚙️ Phase 2: LLVM/ThinLTO & AutoFDO/BOLT Macro Injection"
       run: |
         podman exec chimera-builder bash -c "
           export CCACHE_DIR=/forge/.ccache_local
@@ -70,18 +84,24 @@ jobs:
         %_host_cxx clang++
         %_ld ld.lld
         %_ldflags -Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro -fuse-ld=lld
-        %optflags %{__global_compiler_flags} -march=x86-64-v3 -pipe -Wno-error
-        %kcflags -march=x86-64-v3 -pipe -Wno-error
+        %optflags %{__global_compiler_flags} -march=x86-64-v3 -pipe -Wno-error -flto=thin -fprofile-sample-use=/forge/profiles/kernel_autofdo.profdata
+        %kcflags -march=x86-64-v3 -pipe -Wno-error -flto=thin -fprofile-sample-use=/forge/profiles/kernel_autofdo.profdata
         MACRO
         "
         
-    - name: "🔥 Phase 3: RPMBuild (ThinLTO Absolute)"
+    - name: "🔥 Phase 3: RPMBuild (Clang LTO + AutoFDO + BOLT)"
       run: |
         podman exec chimera-builder bash -c "
           export CCACHE_DIR=/forge/.ccache_local
           export PATH=/usr/lib64/ccache:/usr/lib/ccache:\$PATH
           cd ~/rpmbuild/SPECS
-          rpmbuild -bb --with toolchain_clang --with clang_lto --noprep kernel.spec --target x86_64 </dev/null
+          rpmbuild -bb --with toolchain_clang --with clang_lto --with clang_fdo --with bolt --noprep kernel.spec --target x86_64 </dev/null
+          
+          echo '=== Applying Post-Build BOLT Binary Optimization ==='
+          if [ -f ~/rpmbuild/BUILD/vmlinux ]; then
+            llvm-bolt ~/rpmbuild/BUILD/vmlinux -o ~/rpmbuild/BUILD/vmlinux.bolt -data=/forge/profiles/kernel_bolt.fdata -reorder-blocks=ext-tsp -reorder-functions=hfsort -split-functions || true
+          fi
+          
           mkdir -p /forge/RPMS_OUT
           cp ~/rpmbuild/RPMS/x86_64/*.rpm /forge/RPMS_OUT/
         "

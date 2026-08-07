@@ -45,8 +45,24 @@ jobs:
           cargo deny check
 
   kani-verification:
-    name: 🔬 Kani Formal Verification
+    name: 🔬 Kani Formal Verification (${{ matrix.module }})
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - module: allocator
+            dir: forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0
+            harness: allocator
+          - module: ipc
+            dir: forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0
+            harness: ipc
+          - module: security
+            dir: forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0
+            harness: security
+          - module: attestation
+            dir: system/confidential_computing/ermete-attestation
+            harness: attestation
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -62,10 +78,14 @@ jobs:
           cargo install --locked kani-verifier
           cargo kani setup
 
-      - name: Run Mathematical Proofs (Gatekeeper)
+      - name: Run Mathematical Proofs (${{ matrix.module }})
         run: |
-          cd forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0
-          cargo kani
+          cd ${{ matrix.dir }}
+          if [ -n "${{ matrix.harness }}" ]; then
+            cargo kani --harness "*${{ matrix.harness }}*" 2>/dev/null || cargo kani
+          else
+            cargo kani
+          fi
 
   bare-metal-audit:
     name: ⚡ eBPF & Bare-Metal Build Audit

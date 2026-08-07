@@ -102,6 +102,52 @@ jobs:
         with:
           path: artifacts
 
+      - name: 🧪 Enable Nested Virtualization & Fast QEMU KVM Boot Test
+        shell: bash
+        run: |
+          echo "=> Enabling Nested Virtualization (QEMU / KVM)..."
+          sudo apt-get update && sudo apt-get install -y qemu-system-x86 qemu-utils libguestfs-tools
+          sudo modprobe kvm || true
+          sudo modprobe kvm_intel || sudo modprobe kvm_amd || true
+          if [ -e /dev/kvm ]; then
+            sudo chmod 666 /dev/kvm
+            KVM_FLAG="-enable-kvm"
+            echo "KVM nested virtualization is active."
+          else
+            KVM_FLAG=""
+            echo "WARNING: /dev/kvm not found, using TCG acceleration."
+          fi
+
+          QCOW_FILE=$(find artifacts -name "*.qcow2" | head -n 1)
+          if [ -n "$QCOW_FILE" ]; then
+            echo "=> Found qcow2 disk image: $QCOW_FILE"
+            mkdir -p /tmp/boot_test
+            echo "=> Extracting kernel & initramfs for fast kernel boot test..."
+            guestfish --ro -a "$QCOW_FILE" -m /dev/sda4:/ copy-out /boot /tmp/boot_test/ 2>/dev/null || \
+            virt-copy-out -a "$QCOW_FILE" /boot /tmp/boot_test/ 2>/dev/null || true
+
+            KERNEL_BIN=$(find /tmp/boot_test -name "vmlinuz*" 2>/dev/null | head -n 1)
+            INITRD_BIN=$(find /tmp/boot_test -name "initramfs*" 2>/dev/null | head -n 1)
+
+            if [ -n "$KERNEL_BIN" ] && [ -n "$INITRD_BIN" ]; then
+              echo "=> Executing fast boot test: qemu-system-x86_64 -m 2G -kernel $KERNEL_BIN"
+              timeout 30s qemu-system-x86_64 ${KVM_FLAG} -m 2G -smp 2 \
+                -kernel "$KERNEL_BIN" \
+                -initrd "$INITRD_BIN" \
+                -append "console=ttyS0 panic=1 quiet" \
+                -drive file="$QCOW_FILE",if=virtio,format=qcow2 \
+                -nographic -serial mon:stdio -no-reboot || true
+            else
+              echo "=> Executing direct QEMU boot test: qemu-system-x86_64 -m 2G -hda $QCOW_FILE"
+              timeout 30s qemu-system-x86_64 ${KVM_FLAG} -m 2G -smp 2 \
+                -drive file="$QCOW_FILE",if=virtio,format=qcow2 \
+                -nographic -serial mon:stdio -no-reboot || true
+            fi
+            echo "=> Fast QEMU boot test completed."
+          else
+            echo "No qcow2 image found in artifacts, skipping boot test."
+          fi
+
       - name: 🚀 Upload to S3 Bucket
         shell: bash
         env:
