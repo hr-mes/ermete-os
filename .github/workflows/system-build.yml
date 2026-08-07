@@ -104,6 +104,9 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
       - name: 🔎 Run Trivy Scanner
         uses: aquasecurity/trivy-action@master
         with:

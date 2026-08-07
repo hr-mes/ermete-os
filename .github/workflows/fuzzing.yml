@@ -6,15 +6,16 @@ on:
     paths:
       - 'forge/specs/*-rs/**'
       - 'forge/specs/ermete-backup/**'
+      - 'tests/fuzz/**'
       - '.github/workflows/fuzzing.yml'
   pull_request:
     branches: [ main ]
     paths:
       - 'forge/specs/*-rs/**'
       - 'forge/specs/ermete-backup/**'
+      - 'tests/fuzz/**'
       - '.github/workflows/fuzzing.yml'
   schedule:
-    # Esecuzione settimanale ogni domenica alle 03:00 UTC per fuzzing approfondito
     - cron: '0 3 * * 0'
   workflow_dispatch:
     inputs:
@@ -22,10 +23,6 @@ on:
         description: 'Tempo di fuzzing per ciascun target (in secondi)'
         required: false
         default: '60'
-      target_component:
-        description: 'Componente specifico da testare (oppure "all")'
-        required: false
-        default: 'all'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -33,27 +30,13 @@ concurrency:
 
 jobs:
   fuzz:
-    name: 🎯 Fuzz ${{ matrix.component }}
+    name: 🎯 Fuzz Unified Suite
     runs-on: ubuntu-24.04
     container: ghcr.io/hr-mes/ermete-os-builder:latest
     permissions:
       contents: read
       security-events: write
       actions: read
-
-    strategy:
-      fail-fast: false
-      matrix:
-        component:
-          - ermete-shell-rs
-          - ermete-daemon-rs
-          - ermete-cloud-rs
-          - ermete-gatekeeper-rs
-          - ermete-settings-rs
-          - ermete-store-rs
-          - ermete-mdm-rs
-          - ermete-lvfs-rs
-          - ermete-backup
 
     steps:
       - name: Install System Dependencies
@@ -62,92 +45,59 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: ⚙️ Check Component Filter
-        id: filter
-        run: |
-          SELECTED_COMPONENT="${{ github.event.inputs.target_component }}"
-          if [ -n "$SELECTED_COMPONENT" ] && [ "$SELECTED_COMPONENT" != "all" ] && [ "$SELECTED_COMPONENT" != "${{ matrix.component }}" ]; then
-            echo "skip=true" >> $GITHUB_OUTPUT
-          else
-            echo "skip=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: 🛠️ Install Rust Nightly & LLVM Tools
-        if: steps.filter.outputs.skip != 'true'
         uses: dtolnay/rust-toolchain@nightly
         with:
           components: llvm-tools-preview, rust-src
 
       - name: ⚡ Cache Cargo Dependencies & Fuzz Build
-        if: steps.filter.outputs.skip != 'true'
         uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            forge/specs/${{ matrix.component }}/**/target/
-            forge/specs/${{ matrix.component }}/**/fuzz/target/
-          key: ${{ runner.os }}-cargo-fuzz-${{ matrix.component }}-${{ hashFiles(format('forge/specs/{0}/**/Cargo.lock', matrix.component)) }}
+            tests/fuzz/target/
+          key: ${{ runner.os }}-cargo-fuzz-unified-${{ hashFiles('tests/fuzz/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-fuzz-${{ matrix.component }}-
-            ${{ runner.os }}-cargo-fuzz-
+            ${{ runner.os }}-cargo-fuzz-unified-
 
       - name: 📦 Install cargo-fuzz
-        if: steps.filter.outputs.skip != 'true'
         uses: taiki-e/install-action@v2
         with:
           tool: cargo-fuzz
 
-      - name: 🔍 Locate Crate Path & Run Cargo Fuzz (ASan)
-        if: steps.filter.outputs.skip != 'true'
+      - name: 🔍 Run Cargo Fuzz (ASan)
         run: |
           set -e
           
-          # Calcola durata fuzzing: input manuale oppure default 60s per PR/push
           FUZZ_TIME="${{ github.event.inputs.fuzz_seconds }}"
           if [ -z "$FUZZ_TIME" ]; then
             FUZZ_TIME="60"
           fi
           
-          # Individua la directory del crate Rust che contiene Cargo.toml
-          CRATE_DIR=$(find forge/specs/${{ matrix.component }} -maxdepth 2 -name "Cargo.toml" -exec dirname {} \; | head -n 1)
-          
-          if [ -z "$CRATE_DIR" ]; then
-            echo "❌ ERROR: Nessun Cargo.toml trovato in forge/specs/${{ matrix.component }}"
-            exit 1
-          fi
-          
-          echo "📁 Operando nella directory: $CRATE_DIR"
-          cd "$CRATE_DIR"
+          cd tests/fuzz
 
-          if [ ! -d "fuzz" ]; then
-            echo "❌ ERROR: Nessuna directory fuzz/ trovata per ${{ matrix.component }}"
-            exit 1
-          fi
-
-          # Trova tutti i target di fuzzing configurati
-          TARGETS=$(cargo fuzz list 2>/dev/null || ls fuzz/fuzz_targets/*.rs 2>/dev/null | xargs -n 1 basename | sed 's/\.rs$//')
+          TARGETS=$(cargo fuzz list 2>/dev/null || ls fuzz_targets/*.rs 2>/dev/null | xargs -n 1 basename | sed 's/\.rs$//')
 
           if [ -z "$TARGETS" ]; then
-            echo "❌ ERROR: Nessun target di fuzzing valido per ${{ matrix.component }}"
+            echo "❌ ERROR: Nessun target di fuzzing valido in tests/fuzz"
             exit 1
           fi
 
           echo "🎯 Target di Fuzzing individuati: $TARGETS"
           
-          # Esegue cargo fuzz su ciascun target con AddressSanitizer abilitato
           for target in $TARGETS; do
             echo "🔥 Running cargo fuzz su target '$target' per ${FUZZ_TIME}s con AddressSanitizer..."
             cargo fuzz run "$target" -- -max_total_time="$FUZZ_TIME" -sanitizer=address
           done
 
       - name: 🚨 Upload Fuzzing Crash Artifacts
-        if: (failure() || always()) && steps.filter.outputs.skip != 'true'
+        if: failure() || always()
         uses: actions/upload-artifact@v4
         with:
-          name: fuzz-artifacts-${{ matrix.component }}
+          name: fuzz-artifacts-unified
           path: |
-            forge/specs/${{ matrix.component }}/**/fuzz/artifacts/
-            forge/specs/${{ matrix.component }}/**/fuzz/corpus/
+            tests/fuzz/artifacts/
+            tests/fuzz/corpus/
           if-no-files-found: ignore
