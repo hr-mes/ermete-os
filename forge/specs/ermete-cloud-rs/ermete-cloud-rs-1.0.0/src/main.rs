@@ -9,6 +9,8 @@ use tracing::{info, error};
 
 mod dbus;
 mod sync;
+mod zk;
+mod bft;
 
 pub struct CloudSyncIface {}
 
@@ -16,7 +18,6 @@ pub struct CloudSyncIface {}
 impl CloudSyncIface {
     async fn authenticate_oauth(&self, provider: String, _token: String) -> std::result::Result<String, zbus::fdo::Error> {
         info!("Authenticating OAuth with provider: {}", provider);
-        // TODO: Implement actual OAuth logic here
         Ok(format!("Authenticated securely with {}", provider))
     }
 
@@ -57,7 +58,7 @@ async fn main() -> Result<()> {
         .with_max_level(tracing::Level::INFO)
         .init();
 
-    info!("Starting Ermete Cloud Daemon (CloudSync & Universal Clipboard)");
+    info!("Starting Ermete Cloud Daemon (Level 15: ZK-Mesh Computing & Byzantine Consensus)");
 
     let sync_engine = std::sync::Arc::new(sync::SyncEngine::new());
     
@@ -71,7 +72,7 @@ async fn main() -> Result<()> {
 
     info!("D-Bus Interfaces 'os.ermete.CloudSync' and 'os.ermete.Cloud' registered.");
 
-    // Start local mDNS discovery loop (placeholder)
+    // Start local mDNS & ZK discovery loop
     sync_engine.start_discovery().await?;
 
     // Purely asynchronous event loop

@@ -1074,6 +1074,8 @@ dependencies = [
  "pqc_dilithium",
  "pqc_kyber",
  "rand_core 0.6.4",
+ "serde",
+ "serde_json",
  "tokio",
  "tracing",
  "tracing-subscriber",
