@@ -1,7 +1,6 @@
 use std::process::Command;
 use gtk4::gio::prelude::SettingsExt;
 
-
 #[derive(Debug, Clone)]
 pub struct ControlCenterState {
     pub network_icon: String,
@@ -9,8 +8,11 @@ pub struct ControlCenterState {
     pub network_sub: String,
     pub is_network_connected: bool,
     pub is_bluetooth_active: bool,
+    pub bluetooth_sub: String,
     pub brightness: f64,
     pub volume: f64,
+    pub true_tone: bool,
+    pub focus_time: bool,
     pub mpris_title: String,
     pub mpris_artist: String,
     pub is_playing: bool,
@@ -24,8 +26,11 @@ impl Default for ControlCenterState {
             network_sub: "Disattivato".to_string(),
             is_network_connected: false,
             is_bluetooth_active: false,
+            bluetooth_sub: "Disattivato".to_string(),
             brightness: 75.0,
             volume: 80.0,
+            true_tone: false,
+            focus_time: false,
             mpris_title: "Nessun media in riproduzione".to_string(),
             mpris_artist: "-".to_string(),
             is_playing: false,
@@ -34,9 +39,12 @@ impl Default for ControlCenterState {
 }
 
 pub enum ControlCenterIntent {
+    ToggleWifi(bool),
+    ToggleBluetooth(bool),
     SetBrightness(f64),
     SetVolume(f64),
     ToggleTrueTone(bool),
+    ToggleFocusTime(bool),
     MediaPrevious,
     MediaPlayPause,
     MediaNext,
@@ -60,6 +68,8 @@ impl ControlCenterViewModel {
         
         let init_volume = crate::core::get_audio_controller().get_cached_volume() * 100.0;
         let volume = if init_volume > 0.0 { init_volume } else { 80.0 };
+
+        let focus_time = crate::ipc::notifications::DND_ACTIVE.load(std::sync::atomic::Ordering::SeqCst);
         
         let initial_mpris = crate::core::get_mpris_controller().get_cached_mpris_state();
         let (mpris_title, mpris_artist, is_playing) = match initial_mpris {
@@ -73,8 +83,11 @@ impl ControlCenterViewModel {
             network_sub: net_sub,
             is_network_connected,
             is_bluetooth_active: false,
+            bluetooth_sub: "Dispositivi".to_string(),
             brightness,
             volume,
+            true_tone: false,
+            focus_time,
             mpris_title,
             mpris_artist,
             is_playing,
@@ -139,6 +152,18 @@ impl ControlCenterViewModel {
 
     pub fn execute_intent(intent: ControlCenterIntent) {
         match intent {
+            ControlCenterIntent::ToggleWifi(state) => {
+                gtk4::glib::MainContext::default().spawn_local(async move {
+                    let ctrl = crate::core::get_network_controller();
+                    let _ = ctrl.set_wifi_powered(state).await;
+                });
+            }
+            ControlCenterIntent::ToggleBluetooth(state) => {
+                gtk4::glib::MainContext::default().spawn_local(async move {
+                    let ctrl = crate::core::get_bluetooth_controller();
+                    let _ = ctrl.set_bluetooth_powered(state).await;
+                });
+            }
             ControlCenterIntent::SetBrightness(val) => {
                 gtk4::glib::MainContext::default().spawn_local(async move {
                     let ctrl = crate::core::get_display_controller();
@@ -163,6 +188,9 @@ impl ControlCenterViewModel {
                         ).await;
                     }
                 });
+            }
+            ControlCenterIntent::ToggleFocusTime(enabled) => {
+                crate::ipc::notifications::DND_ACTIVE.store(enabled, std::sync::atomic::Ordering::SeqCst);
             }
             ControlCenterIntent::MediaPrevious => {
                 gtk4::glib::MainContext::default().spawn_local(async move {
@@ -218,3 +246,4 @@ impl ControlCenterViewModel {
         }
     }
 }
+

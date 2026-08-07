@@ -1,37 +1,324 @@
-@define-color glass_bg rgba(30, 30, 32, 0.65);
-@define-color glass_border rgba(255, 255, 255, 0.1);
+@define-color glass_bg rgba(24, 25, 32, 0.78);
+@define-color glass_border rgba(255, 255, 255, 0.12);
 @define-color accent_color #007aff;
 @define-color hover_bg rgba(255, 255, 255, 0.15);
 
 /* Core Glassmorphism Base */
-window, popover {
+window.popup-window, popover {
     background-color: @glass_bg;
-    backdrop-filter: blur(20px);
+    backdrop-filter: blur(24px);
     border: 1px solid @glass_border;
     border-radius: 24px;
     padding: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
 }
 
-/* Big-Tech Killer Buttons */
+/* Control Center Main Container */
+.cc-card {
+    background-color: rgba(30, 32, 44, 0.65);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Typography & Labels */
+.cc-label-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.3px;
+}
+
+.cc-label-main {
+    font-size: 13px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.cc-label-sub {
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.cc-slider-icon {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Tiles & Containers */
+.cc-tile {
+    background-color: rgba(255, 255, 255, 0.06);
+    border-radius: 18px;
+    padding: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cc-tile:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+.cc-tile-row {
+    background-color: transparent;
+    border: none;
+    border-radius: 14px;
+    padding: 6px 10px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cc-tile-row:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+    transform: translateY(-1px);
+}
+
+.cc-tile-row:active {
+    transform: scale(0.97);
+}
+
+.cc-tile-slider {
+    background-color: rgba(255, 255, 255, 0.07);
+    border-radius: 18px;
+    padding: 8px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cc-tile-slider:hover {
+    background-color: rgba(255, 255, 255, 0.11);
+}
+
+/* Quick Action & Toggle Buttons */
 button {
     background-color: transparent;
     color: white;
     border: 1px solid @glass_border;
     border-radius: 16px;
-    padding: 12px 24px;
+    padding: 10px 18px;
     font-weight: bold;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 button:hover {
     background-color: @hover_bg;
-    transform: scale(1.02);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transform: scale(1.02) translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
 }
 
 button:active {
-    transform: scale(0.98);
+    transform: scale(0.96);
+}
+
+.cc-quick-btn {
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #ffffff;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cc-quick-btn:hover {
+    background-color: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+.cc-quick-btn:active {
+    transform: scale(0.95);
+}
+
+/* Quick Toggle Pills (iOS/AGS style) */
+.cc-toggle-pill {
+    background-color: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 10px 14px;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cc-toggle-pill:hover {
+    background-color: rgba(255, 255, 255, 0.14);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.cc-toggle-pill:active {
+    transform: scale(0.96);
+}
+
+/* Active Quick Toggle States */
+.cc-btn-active, .cc-toggle-active {
+    background-color: #007aff !important;
+    color: #ffffff !important;
+    border-color: #007aff !important;
+    box-shadow: 0 4px 20px rgba(0, 122, 255, 0.45) !important;
+}
+
+.cc-btn-active:hover, .cc-toggle-active:hover {
+    background-color: #1a8cff !important;
+    box-shadow: 0 6px 24px rgba(0, 122, 255, 0.6) !important;
+}
+
+.cc-truetone-active {
+    background-color: #ff9500 !important;
+    color: #ffffff !important;
+    border-color: #ff9500 !important;
+    box-shadow: 0 4px 20px rgba(255, 149, 0, 0.45) !important;
+}
+
+.cc-focus-active {
+    background-color: #5856d6 !important;
+    color: #ffffff !important;
+    border-color: #5856d6 !important;
+    box-shadow: 0 4px 20px rgba(88, 86, 214, 0.45) !important;
+}
+
+/* Round Badge Icons */
+.cc-circle-blue {
+    background-color: #007aff;
+    color: white;
+    border-radius: 50%;
+    min-width: 34px;
+    min-height: 34px;
+    font-size: 15px;
+}
+
+.cc-circle-indigo {
+    background-color: #5856d6;
+    color: white;
+    border-radius: 50%;
+    min-width: 34px;
+    min-height: 34px;
+    font-size: 15px;
+}
+
+.cc-circle-amber {
+    background-color: #ff9500;
+    color: white;
+    border-radius: 50%;
+    min-width: 34px;
+    min-height: 34px;
+    font-size: 15px;
+}
+
+.cc-circle-emerald {
+    background-color: #34c759;
+    color: white;
+    border-radius: 50%;
+    min-width: 34px;
+    min-height: 34px;
+    font-size: 15px;
+}
+
+/* MPRIS Media Card */
+.cc-mpris-card {
+    background: linear-gradient(135deg, rgba(35, 38, 55, 0.75), rgba(20, 22, 35, 0.75));
+    border-radius: 20px;
+    padding: 14px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 8px 24px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.cc-mpris-card:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.mpris-art-badge {
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    color: #ffffff;
+    border-radius: 14px;
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 20px;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+}
+
+.mpris-ctrl-btn {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 50%;
+    min-width: 36px;
+    min-height: 36px;
+    font-size: 14px;
+    color: #ffffff;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mpris-ctrl-btn:hover {
+    background-color: rgba(255, 255, 255, 0.22);
+    transform: scale(1.08);
+}
+
+.mpris-ctrl-btn:active {
+    transform: scale(0.92);
+}
+
+.mpris-play-btn {
+    background-color: #007aff !important;
+    border-color: #007aff !important;
+    min-width: 42px;
+    min-height: 42px;
+    font-size: 16px;
+    box-shadow: 0 4px 16px rgba(0, 122, 255, 0.45);
+}
+
+.mpris-play-btn:hover {
+    background-color: #1a8cff !important;
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 122, 255, 0.6);
+}
+
+/* Audio Mixer Card */
+.pro-applet-card {
+    background-color: rgba(255, 255, 255, 0.06);
+    border-radius: 18px;
+    padding: 12px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    transition: all 0.25s ease;
+}
+
+.pro-applet-card:hover {
+    background-color: rgba(255, 255, 255, 0.09);
+}
+
+.applet-header-card {
+    background: linear-gradient(135deg, rgba(0, 122, 255, 0.2), rgba(88, 86, 214, 0.2));
+    border-radius: 18px;
+    padding: 12px 16px;
+    border: 1px solid rgba(0, 122, 255, 0.3);
+}
+
+/* Sliders (GTK Scale) */
+scale trough {
+    background-color: rgba(255, 255, 255, 0.16);
+    border-radius: 10px;
+    min-height: 8px;
+}
+
+scale highlight {
+    background-color: #ffffff;
+    border-radius: 10px;
+}
+
+scale slider {
+    background-color: #ffffff;
+    border-radius: 50%;
+    min-width: 18px;
+    min-height: 18px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    transition: transform 0.15s ease;
+}
+
+scale slider:hover {
+    transform: scale(1.2);
 }
 
 /* Primary Action Button */
@@ -46,3 +333,4 @@ button.suggested-action:hover {
     transform: scale(1.02);
     box-shadow: 0 6px 25px rgba(0, 122, 255, 0.5);
 }
+
