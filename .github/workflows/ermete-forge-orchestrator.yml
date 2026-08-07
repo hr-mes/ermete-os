@@ -92,7 +92,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
-          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v /dev/shm:/dev/shm -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package builder --registry ghcr.io --owner ${{ github.repository_owner }} --image-name ermete-os-builder > idemp.out
+          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package builder --registry ghcr.io --owner ${{ github.repository_owner }} --image-name ermete-os-builder > idemp.out
           source ./idemp.out
           if [ "$CACHE_HIT" = "true" ]; then
             echo "cache_hit=true" >> $GITHUB_OUTPUT
@@ -154,7 +154,7 @@ jobs:
           if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then
             img_name="ermete-os-forge-rolling-${{ matrix.package }}"
           fi
-          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v /dev/shm:/dev/shm -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name $img_name > idemp.out
+          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name $img_name > idemp.out
           source ./idemp.out
           echo "hash=$CONTENT_HASH" >> $GITHUB_OUTPUT
           if [ "$CACHE_HIT" = "true" ]; then echo "skip=true" >> $GITHUB_OUTPUT; else echo "skip=false" >> $GITHUB_OUTPUT; fi
@@ -178,7 +178,6 @@ jobs:
           if [ -d "specs/ermete-${{ matrix.package }}" ]; then
             echo "📦 Compiling Custom Spec: ermete-${{ matrix.package }}"
             podman run -i --rm \
-              -v /dev/shm:/dev/shm \
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
               -w /workspace/forge \
@@ -223,7 +222,6 @@ jobs:
           else
             echo "🌐 Compiling Upstream Package: ${{ matrix.package }}"
             podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
-              -v /dev/shm:/dev/shm \
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
               -w /workspace/forge \
@@ -333,7 +331,7 @@ jobs:
           if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then
             img_name="ermete-os-forge-rolling-${{ matrix.package }}"
           fi
-          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v /dev/shm:/dev/shm -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name $img_name > idemp.out
+          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name $img_name > idemp.out
           source ./idemp.out
           echo "hash=$CONTENT_HASH" >> $GITHUB_OUTPUT
           if [ "$CACHE_HIT" = "true" ]; then echo "skip=true" >> $GITHUB_OUTPUT; else echo "skip=false" >> $GITHUB_OUTPUT; fi
@@ -357,7 +355,6 @@ jobs:
           if [ -d "specs/ermete-${{ matrix.package }}" ]; then
             echo "📦 Compiling Custom Spec: ermete-${{ matrix.package }}"
             podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
-              -v /dev/shm:/dev/shm \
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
               -w /workspace/forge \
@@ -402,7 +399,6 @@ jobs:
           else
             echo "🌐 Compiling Upstream Package: ${{ matrix.package }}"
             podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
-              -v /dev/shm:/dev/shm \
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
               -w /workspace/forge \
@@ -510,7 +506,7 @@ jobs:
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           img_name="ermete-os-forge-${{ matrix.package }}"
           if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then img_name="ermete-os-forge-rolling-${{ matrix.package }}"; fi
-          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v /dev/shm:/dev/shm -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name $img_name > idemp.out
+          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name $img_name > idemp.out
           source ./idemp.out
           echo "hash=$CONTENT_HASH" >> $GITHUB_OUTPUT
           if [ "$CACHE_HIT" = "true" ]; then echo "skip=true" >> $GITHUB_OUTPUT; else echo "skip=false" >> $GITHUB_OUTPUT; fi
@@ -534,7 +530,6 @@ jobs:
           if [ -d "specs/ermete-${{ matrix.package }}" ]; then
             echo "📦 Compiling Custom Spec: ermete-${{ matrix.package }}"
             podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
-              -v /dev/shm:/dev/shm \
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
               -w /workspace/forge \
@@ -579,7 +574,6 @@ jobs:
           else
             echo "🌐 Compiling Upstream Package: ${{ matrix.package }}"
             podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
-              -v /dev/shm:/dev/shm \
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
               -w /workspace/forge \
@@ -691,7 +685,6 @@ jobs:
         id: kernel
         run: |
           podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
-            -v /dev/shm:/dev/shm \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
             ghcr.io/hr-mes/ermete-os-builder:latest \
@@ -725,7 +718,6 @@ jobs:
         run: |
           mkdir -p ${{ github.workspace }}/nvidia_cache
           podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
-            -v /dev/shm:/dev/shm \
             -v ${{ github.workspace }}:/workspace \
             -v ${{ github.workspace }}/nvidia_cache:/var/cache/akmods/nvidia \
             -w /workspace \
@@ -819,7 +811,6 @@ jobs:
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
-            -v /dev/shm:/dev/shm \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace/forge \
             ghcr.io/hr-mes/ermete-os-builder:latest \
@@ -948,7 +939,7 @@ jobs:
       - name: 🧹 Cleanup Workspace Permissions
         if: always()
         run: |
-          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -v /dev/shm:/dev/shm -v "${{ github.workspace }}:/workspace:rw" -w /workspace docker.io/library/alpine:latest rm -rf /workspace/var-tmp || true
+          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -v "${{ github.workspace }}:/workspace:rw" -w /workspace docker.io/library/alpine:latest rm -rf /workspace/var-tmp || true
           sudo chown -R 1000:1000 ${{ github.workspace }} || true
 
   dag-system-image:
@@ -978,7 +969,7 @@ jobs:
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: 🐳 Build OS Image
         run: |
-          podman run -i --rm --privileged -v /dev/shm:/dev/shm -v ${{ github.workspace }}:/workspace -w /workspace ghcr.io/hr-mes/ermete-os-builder:latest bash -c "bwrap --unshare-net --dev-bind / / podman build --network=none --layers -t ghcr.io/hr-mes/ermete-os-system:latest -f ./system/Containerfile ./system && podman push ghcr.io/hr-mes/ermete-os-system:latest" || bwrap --unshare-net --dev-bind / / podman build --network=none --layers -t ghcr.io/hr-mes/ermete-os-system:latest -f ./system/Containerfile ./system
+          podman run -i --rm --privileged -v ${{ github.workspace }}:/workspace -w /workspace ghcr.io/hr-mes/ermete-os-builder:latest bash -c "bwrap --unshare-net --dev-bind / / podman build --network=none --layers -t ghcr.io/hr-mes/ermete-os-system:latest -f ./system/Containerfile ./system && podman push ghcr.io/hr-mes/ermete-os-system:latest" || bwrap --unshare-net --dev-bind / / podman build --network=none --layers -t ghcr.io/hr-mes/ermete-os-system:latest -f ./system/Containerfile ./system
           podman push ghcr.io/hr-mes/ermete-os-system:latest || true
       - name: 💿 Build ISO (osbuild)
         uses: osbuild/bootc-image-builder-action@v0.0.2
