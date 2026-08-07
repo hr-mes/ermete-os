@@ -1,12 +1,56 @@
 <div align="center">
-  <h1>🦅 Ermete OS — OCI Production Image & 4-Tier Pyramid Caching</h1>
+  <h1>🦅 Ermete OS — System Services, 4 God Nodes & OCI Layering Strategy</h1>
   <p><b>The Golden Standard of Linux. An extreme, cloud-native, Zero-Maintenance Rolling Release desktop OS.</b></p>
-  <p>📚 <b><a href="../docs/architecture/doc_kernel_layer.md">Deep-Dive: Kernel Layer & Boot Sequence</a></b> | <b><a href="../docs/architecture/doc_core_daemons.md">Core Daemons & Security</a></b></p>
+  <p>📚 <b><a href="../docs/architecture/doc_kernel_layer.md">Kernel Layer & Boot</a></b> | <b><a href="../docs/architecture/doc_core_daemons.md">Core Daemons & Security</a></b> | <b><a href="ARCHITECTURE.md">System Architecture & 4 God Nodes</a></b></p>
 </div>
 
 ---
 
-The `system` sub-project is the final assembly line of Ermete OS. It takes the output artifacts from the `forge` (Custom RPMs) and the `kernel` (Chimera Kernel) sub-projects, and layers them sequentially on top of the **Fedora Atomic 43** base image to produce the final `ermete-os-system` bootable OCI container.
+The `system` sub-project is the final assembly line and core runtime engine of Ermete OS. It takes the output artifacts from the `forge` (Custom RPMs) and the `kernel` (Chimera Kernel) sub-projects, and integrates the **4 God Nodes** on top of the **Fedora Atomic 43** base image to produce the final `ermete-os-system` bootable OCI container.
+
+---
+
+## 🏛️ The 4 System God Nodes
+
+The `system/` directory hosts the 4 fundamental God Nodes driving system execution, hardware security, post-quantum networking, and app orchestration:
+
+```
++-----------------------------------------------------------------------------------+
+|               GOD NODE 4: FLATPAK DECLARATIVE ORCHESTRATOR                        |
+|                        system/ermete-store                                        |
+|         - SLSA Level 4 OCI App Management & Cosign Signature Verification        |
++-----------------------------------------------------------------------------------+
+|               GOD NODE 3: MESH PQC (POST-QUANTUM CRYPTOGRAPHY BUS)                 |
+|                        system/ermete-mesh-bus                                     |
+|         - Dilithium5 / ML-DSA Signatures & ML-KEM / Kyber1024 WireGuard P2P       |
++-----------------------------------------------------------------------------------+
+|               GOD NODE 2: MICRO-HYPERVISOR ENCLAVE ORCHESTRATOR                   |
+|                        system/ermete-hypervisor-daemon                            |
+|         - Hardware Confidential Computing: AMD SEV-SNP & Intel TDX Enclaves       |
++-----------------------------------------------------------------------------------+
+|               GOD NODE 1: KERNEL AI SCHEDULER                                     |
+|                        system/ermete-ebpf-sched                                   |
+|         - Ring-0 sys_execve eBPF Tracepoints, NPU AI Prediction, sched_ext        |
++-----------------------------------------------------------------------------------+
+```
+
+### 1. 🧠 Kernel AI Scheduler ([`system/ermete-ebpf-sched`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-ebpf-sched))
+- **Role:** AI-Driven eBPF Kernel Scheduler Bridge.
+- **Implementation:** Intercepts `sys_execve` process creation events via eBPF, passes process metadata to `ermete-ai-daemon` on the NPU, and dynamically configures Ring-0 `sched_ext` task latency slice targets (100μs to 20ms) and cgroup v2 `cpu.weight`.
+
+### 2. 🛡️ Micro-Hypervisor Enclave ([`system/ermete-hypervisor-daemon`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-hypervisor-daemon))
+- **Role:** Zero-Trust Hardware Confidential Enclave Daemon.
+- **Implementation:** Uses KVM, `vmm-sys-util`, AMD SEV-SNP, and Intel TDX extensions to launch and verify cryptographically sealed hardware enclaves for isolated execution of Ring-0 security workloads.
+
+### 3. ⚡ Mesh PQC ([`system/ermete-mesh-bus`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-mesh-bus))
+- **Role:** Post-Quantum Cryptography P2P WireGuard Mesh Bus.
+- **Implementation:** Implements quantum-resistant key exchange (**ML-KEM-1024 / Kyber1024**) and digital signatures (**Dilithium5 / ML-DSA-87**) over peer-to-peer WireGuard tunnels and ZBus IPC, ensuring immunity against quantum decryption attacks.
+
+### 4. 🏛️ Flatpak Declarative Orchestrator ([`system/ermete-store`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-store))
+- **Role:** Declarative App Sandbox & OCI Container Engine.
+- **Implementation:** Completely disconnects Flathub, using strict SLSA Level 4 OCI container images verified with **Cosign** signatures before installation.
+
+---
 
 ## 🏗️ Architecture: The 4-Tier Pyramid OCI Layering Strategy
 
@@ -22,10 +66,10 @@ Ermete OS structures the OS into **4 sequential layers** inside `Containerfile` 
 |            Bibata Cursors, Matugen Dynamic Colors, Starship             |
 +-------------------------------------------------------------------------+
 |          TIER 1: DISPLAY SERVER & CORE USERSPACE SERVICES (~34 MB)      |
-|         Cage Wayland Kiosk, Greetd, Niri Compositor, System Config      |
+|     Cage Wayland Kiosk, Greetd, Niri Compositor, ermete-mesh-bus        |
 +-------------------------------------------------------------------------+
 |          TIER 0: BEDROCK HARDWARE & KERNEL FOUNDATION (~3.3 GB)         |
-|     Fedora Atomic 43 + Chimera Kernel + NVIDIA DKMS + SELinux Policies  |
+|  Fedora Atomic 43 + Chimera Kernel + ermete-ebpf-sched + SEV-SNP / TDX  |
 |       [Bedrock Diet Applied: -1.1 GB Server Firmware & Build Pruned]    |
 |                 [Layer 0 - Reboot Required for updates]                 |
 +-------------------------------------------------------------------------+

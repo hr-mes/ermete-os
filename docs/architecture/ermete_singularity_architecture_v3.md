@@ -115,6 +115,26 @@ La documentazione ed il portale sviluppatori sono realizzati mediante un'archite
 - **Zero-JS Search Indexing (`Pagefind`)**: Indicizzazione statica lato build per ricerche ultra-rapide e trasparenti senza pesanti frammenti JavaScript lato client.
 - **Dynamic Local AI Localization**: Traduzione automatica integrata nelle varie lingue (`en`, `es`, `fr`, `zh`) orchestrata dal motore NPU locale.
 
+### 2.5 I 4 God Nodes Architetturali dell'Ecosistema Ermete OS
+
+Ermete OS v3.0 struttura i propri pilastri architetturali attorno a **4 God Nodes** altamente specializzati:
+
+1. **🧠 Kernel AI Scheduler (`ermete-ebpf-sched`)**  
+   *Location:* [`system/ermete-ebpf-sched`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-ebpf-sched)  
+   Cattura gli eventi `sys_execve` a livello Ring-0 tramite sonde eBPF, consulta l'AI Daemon locale su NPU e applica politiche di schedulazione ultra-rapide mediante `sched_ext` (con target da 100μs per NPU Realtime a 20ms per task background) e cgroup v2 `cpu.weight`.
+
+2. **🛡️ Micro-Hypervisor Enclave (`ermete-hypervisor-daemon`)**  
+   *Location:* [`system/ermete-hypervisor-daemon`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-hypervisor-daemon)  
+   Gestisce l'orchestrazione Zero-Trust di enclave confidenziali in memoria hardware cifrata (AMD SEV-SNP / Intel TDX) avvalendosi di KVM e `vmm-sys-util`.
+
+3. **⚡ Mesh PQC (`ermete-mesh-bus`)**  
+   *Location:* [`system/ermete-mesh-bus`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-mesh-bus)  
+   Daemon di rete mesh P2P protetto da crittografia post-quantistica. Utilizza **ML-KEM-1024 (Kyber1024)** per lo scambio chiavi e **Dilithium5 (ML-DSA-87)** per le firme digitali su tunnel WireGuard P2P e bus ZBus.
+
+4. **🏛️ Flatpak Declarative Orchestrator (`ermete-store`)**  
+   *Location:* [`system/ermete-store`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-store)  
+   Gestore applicativo dichiarativo isolato. Disconnette integralmente Flathub ed installa container applicativi OCI verificati crittograficamente con firmatario **Cosign** sotto la direttiva **SLSA Level 4**.
+
 ---
 
 ## 🔬 3. Formal Verification & Topology Orchestration
