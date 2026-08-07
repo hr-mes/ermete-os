@@ -1,5 +1,7 @@
 pub mod drm_lease;
 pub mod npu;
+pub mod types;
+use types::AiIntent;
 
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -10,10 +12,6 @@ use zbus::{interface, Connection};
 use npu::HardwareOffloader;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct AiIntent {
-    pub text: String,
-    pub intent: String,
-}
 
 pub struct AiDaemonProxy {
     offloader: Arc<HardwareOffloader>,

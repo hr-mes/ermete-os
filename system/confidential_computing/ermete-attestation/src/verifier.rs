@@ -168,11 +168,6 @@ impl AttestationVerifier {
             return Ok(());
         }
 
-        // 4. Fallback check for trusted remote PEM format presence
-        if pem_str.contains("PUBLIC KEY") {
-            info!("PEM Remote Public Key verified for hardware attestation payload.");
-            return Ok(());
-        }
 
         Err(anyhow!("Cryptographic verification failed: Signature does not match remote public key"))
     }

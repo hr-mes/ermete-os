@@ -1,7 +1,7 @@
 use tracing::{error, info, warn};
 use crate::npu::openvino::OpenVinoNpuEngine;
 use crate::npu::vulkan::VulkanTensorEngine;
-use crate::AiIntent;
+use crate::types::AiIntent;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AccelerationBackend {
