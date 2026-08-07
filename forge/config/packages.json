@@ -1,5 +1,6 @@
 {
   "custom_packages": [
+    "stage0-bootstrap",
     "niri",
     "starship",
     "bat",
@@ -66,9 +67,13 @@
     "kani-verifier",
     "just",
     "uki-tools",
-    "kernel-forge"
+    "kernel-forge",
+    "git-native",
+    "openssl-native",
+    "ripgrep-native"
   ],
   "custom_tier0": [
+    "stage0-bootstrap",
     "base-config",
     "selinux",
     "nix-support",
@@ -97,7 +102,10 @@
     "system-tweaks",
     "niri",
     "scudo",
-    "mesh-bus"
+    "mesh-bus",
+    "git-native",
+    "openssl-native",
+    "ripgrep-native"
   ],
   "custom_tier2": [
     "bibata",
@@ -165,7 +173,6 @@
     "lm_sensors",
     "mokutil",
     "nftables",
-    "openssl",
     "qemu-kvm",
     "squashfuse",
     "upower",
@@ -209,12 +216,10 @@
     "btop",
     "eza",
     "fd-find",
-    "git",
     "inotify-tools",
     "nushell",
     "parallel",
     "playerctl",
-    "ripgrep",
     "rsync",
     "sqlite",
     "unzip",
