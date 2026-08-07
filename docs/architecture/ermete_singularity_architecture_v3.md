@@ -135,6 +135,26 @@ Ermete OS v3.0 struttura i propri pilastri architetturali attorno a **4 God Node
    *Location:* [`system/ermete-store`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-store)  
    Gestore applicativo dichiarativo isolato. Disconnette integralmente Flathub ed installa container applicativi OCI verificati crittograficamente con firmatario **Cosign** sotto la direttiva **SLSA Level 4**.
 
+### 2.6 I 5 Pilastri dell'Assimilazione Proprietaria (Rust Native Stack)
+
+Ermete OS v3.0 Singularity completa l'assimilazione totale dei sottosistemi di sistema tradizionali scardinando la dipendenza dal codice C legacy mediante 5 componenti proprietari sviluppati in **Pure Rust**:
+
+1. **🪟 `ermete-compositor` (Wayland Assimilato)**  
+   *Location:* [`system/ermete-compositor`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-compositor)  
+   Compositore Wayland nativo in Rust su stack Smithay (DRM/KMS, Udev, EGL). Gestisce la visualizzazione ad alte prestazioni a 144Hz con un motore di posizionamento AI-driven per le finestre.
+2. **🤖 `ermete-init-oracle` (Systemd Assimilato)**  
+   *Location:* [`system/ermete-init-oracle`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-init-oracle)  
+   Supervisore e oracolo di sistema in Rust asincrono (Tokio + Zbus IPC). Monitora l'integrità dei servizi, analizza le eccezioni e applica logiche di Self-Healing dinamiche.
+3. **🎵 `ermete-audio-bus` (PipeWire Assimilato)**  
+   *Location:* [`system/ermete-audio-bus`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-audio-bus)  
+   Router audio e gestore di sessione nativo Rust a latenza zero. Sostituisce i demoni PipeWire/PulseAudio garantendo il multiplexing flussi senza copie di memoria.
+4. **🔑 `ermete-greeter` (Greetd Assimilato)**  
+   *Location:* [`system/ermete-greeter`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-greeter)  
+   Display Manager e Key Release Manager con Zero-Trust hardware attestation (TPM 2.0 PCR checks). Utilizza la protezione `ZeroizeOnDrop` per l'azzeramento istantaneo delle credenziali in RAM.
+5. **🛡️ `xdg-desktop-portal-ermete` (XDG Desktop Portal Assimilato)**  
+   *Location:* [`forge/specs/ermete-xdg-desktop-portal-ermete/xdg-desktop-portal-ermete-1.0.0`](file:///var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-xdg-desktop-portal-ermete/xdg-desktop-portal-ermete-1.0.0)  
+   Portale desktop nativo Rust asincrono (Zbus 4.4 + GTK4 Shell). Gestisce l'isolamento sandboxed di ScreenShare, Privacy e File Picker per container OCI con standard SLSA Level 4.
+
 ---
 
 ## 🔬 3. Formal Verification & Topology Orchestration

@@ -52,6 +52,18 @@ The `system/` directory hosts the 4 fundamental God Nodes driving system executi
 
 ---
 
+## 🔥 The 5 Assimilated Proprietary Pillars (Pure Rust Re-writes)
+
+In addition to the 4 God Nodes, `system/` hosts the **5 Native Assimilated Pillars** that devoured legacy C/C++ Linux subsystems:
+
+1. **🪟 `ermete-compositor` ([`system/ermete-compositor`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-compositor))**: Pure Rust Wayland Compositor powered by Smithay (DRM/KMS, Udev, EGL) with an AI-driven dynamic window tiling engine. Replaces Mutter/Weston.
+2. **🤖 `ermete-init-oracle` ([`system/ermete-init-oracle`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-init-oracle))**: Autonomous Tokio & Zbus AI systemd init oracle that monitors unit lifecycle and auto-heals failing services. Replaces C Systemd init.
+3. **🎵 `ermete-audio-bus` ([`system/ermete-audio-bus`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-audio-bus))**: Pure Rust real-time PipeWire session manager and zero-copy audio swarm router. Replaces Pipewire/PulseAudio C daemons.
+4. **🔑 `ermete-greeter` ([`system/ermete-greeter`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-greeter))**: Zero-Trust TPM 2.0 key release & hardware attestation display manager with `ZeroizeOnDrop` memory protection. Replaces greetd/gdm.
+5. **🛡️ `xdg-desktop-portal-ermete` ([`forge/specs/ermete-xdg-desktop-portal-ermete`](file:///var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-xdg-desktop-portal-ermete/xdg-desktop-portal-ermete-1.0.0))**: Native Rust Zbus 4.4 async desktop portal implementation for SLSA Level 4 Flatpak sandboxes. Replaces C XDG desktop portals.
+
+---
+
 ## 🏗️ Architecture: The 4-Tier Pyramid OCI Layering Strategy
 
 Ermete OS structures the OS into **4 sequential layers** inside `Containerfile` to achieve maximum OCI layer caching efficiency. Lower tiers require reboots to update, while higher tiers can be updated live.
