@@ -11,6 +11,7 @@ logs_*/
 __pycache__/
 *.py[cod]
 *$py.class
+.cache/
 
 # Tooling & Analysis Artifacts
 .graphify*.json

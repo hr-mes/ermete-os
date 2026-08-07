@@ -63,7 +63,8 @@
     "ermete-telemetry",
     "ermete-net-unikernel",
     "kani-verifier",
-    "just"
+    "just",
+    "uki-tools"
   ],
   "custom_tier0": [
     "base-config",
@@ -82,7 +83,8 @@
     "osbuild",
     "cargo-tools",
     "kani-verifier",
-    "just"
+    "just",
+    "uki-tools"
   ],
   "custom_tier1": [
     "starship",
@@ -161,7 +163,6 @@
     "nftables",
     "openssl",
     "qemu-kvm",
-    "sbsigntools",
     "squashfuse",
     "upower",
     "virt-manager",
