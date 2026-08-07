@@ -303,6 +303,11 @@ impl SettingsService {
                         let res = AppearanceStateStore::save_async(&appearance_state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
                         if res.is_ok() {
                             let _ = appearance_tx.send(appearance_state.clone());
+                            let wall = appearance_state.wallpaper.clone();
+                            let scheme = val.clone();
+                            tokio::spawn(async move {
+                                crate::theme::apply_dynamic_theme(&wall, &scheme).await;
+                            });
                             if let Some(ref w) = worker {
                                 let _ = w.apply_color_scheme(&val).await;
                             }
@@ -339,6 +344,11 @@ impl SettingsService {
                         let res = AppearanceStateStore::save_async(&appearance_state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
                         if res.is_ok() {
                             let _ = appearance_tx.send(appearance_state.clone());
+                            let wall = val.clone();
+                            let scheme = appearance_state.color_scheme.clone();
+                            tokio::spawn(async move {
+                                crate::theme::apply_dynamic_theme(&wall, &scheme).await;
+                            });
                             if let Some(ref w) = worker {
                                 let _ = w.apply_wallpaper(&val).await;
                             }

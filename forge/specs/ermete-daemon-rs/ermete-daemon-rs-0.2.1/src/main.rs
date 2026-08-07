@@ -8,10 +8,10 @@ mod bluetooth;
 mod settings;
 mod portal;
 mod portal_screencast;
-
 mod voiceover;
 mod qos;
 mod live_patch;
+mod theme;
 
 
 use std::error::Error;
@@ -60,6 +60,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let cancel_token = CancellationToken::new();
     let appearance_store = settings::AppearanceStateStore::new_async().await;
     let voiceover_store = settings::VoiceOverStateStore::new_async().await;
+
+    let init_app = appearance_store.state_rx.borrow().clone();
+    tokio::spawn(async move {
+        theme::apply_dynamic_theme(&init_app.wallpaper, &init_app.color_scheme).await;
+    });
+
     let settings_srv = SettingsService::new_with_token(
         appearance_store.state_tx.clone(),
         voiceover_store.state_tx.clone(),
