@@ -220,6 +220,12 @@ Se l'ambiente grafico principale (`greetd`) fallisce l'avvio per 3 volte consecu
 2. Viene avviato il compositor Wayland `cage` che esegue l'applicazione Rust GTK4 `ermete-recovery-ui`.
 3. L'utente o l'amministratore può eseguire il rollback automatico ad una deployment OSTree/bootc stabile precedente con 1 solo click.
 
+### 6.4 Level 12 Unikernel Runtime Engine (`x86_64-unknown-hermit`)
+Il **Level 12 Unikernel Runtime Engine** consente di compilare i microservizi Rust di Ermete OS come Unikernel bare-metal Ring-0 basati sull'astrazione **RustyHermit** (`x86_64-unknown-hermit`):
+1. **Zero POSIX Overhead**: Bypassa completamente lo stack di chiamate di sistema Linux e lo userland POSIX tradizionale, portando i demoni di rete a girare direttamente sul livello bare-metal / ipervisore (`uhyve`).
+2. **Hermetic Build Pipeline**: Script di build dedicato (`system/scripts/build_unikernel.sh`) e target `just unikernel` / `just system/build-unikernel` che gestisce la toolchain `-Z build-std=std,panic_abort`.
+3. **Immutabilità & Isolation Zero-Trust**: Binari Unikernel autonomi con footprint ultraridotto (< 2 MB) ideali per micro-servizi cloud, networking e p2p zero-latency.
+
 ---
 
 ## 7. Tabella Riassuntiva dei Componenti dello Strato Kernel
@@ -233,3 +239,4 @@ Se l'ambiente grafico principale (`greetd`) fallisce l'avvio per 3 volte consecu
 | **Base Config & Kargs** | `forge/specs/ermete-base-config/` | TOML / Systemd Presets | Argomenti Kernel Bootc (NVIDIA, IMA/EVM, Confidential Compute, Hardening), Dracut Slim conf. |
 | **Secure Boot & TPM** | `forge/specs/ermete-secure-boot/` | Bash / TPM2 Tools / `ukify` | Generazione UKI, firma Secure Boot, misurazione PCR 11, check anti-rollback hardware via NV Counter. |
 | **Recovery Kiosk** | `forge/specs/ermete-recovery/` | Rust (GTK4 + `cage`) | Ambiente GUI di ripristino ed emergenza con rollback 1-click per OSTree / bootc. |
+| **Unikernel Runtime Engine** | `system/unikernel/`, `system/scripts/build_unikernel.sh` | Rust (RustyHermit target) | Runtime & build toolchain per la compilazione di demoni Ring-0 bare-metal Zero-Latency. |
