@@ -1,3 +1,7 @@
+pub mod palette;
+
+pub use palette::*;
+
 use gtk4::gio;
 use gtk4::prelude::*;
 
@@ -38,6 +42,11 @@ pub fn init_dynamic_theme_css() {
                 let theme_provider = gtk4::CssProvider::new();
 
                 let theme_path = get_theme_css_path();
+                if !theme_path.exists() {
+                    let default_palette = Material3Palette::default_dark();
+                    let _ = default_palette.write_to_file(&theme_path);
+                }
+
                 if theme_path.exists() {
                     theme_provider.load_from_path(&theme_path);
                 }
@@ -56,7 +65,17 @@ pub fn init_dynamic_theme_css() {
     });
 }
 
-fn get_theme_css_path() -> std::path::PathBuf {
+pub fn apply_dynamic_material3_theme(wallpaper_path: Option<&std::path::Path>, is_dark: bool) {
+    let theme_path = get_theme_css_path();
+    let palette = Material3Palette::extract_from_wallpaper(wallpaper_path, is_dark);
+    if let Err(e) = palette.write_to_file(&theme_path) {
+        tracing::error!(error = %e, "Failed writing extracted Material 3 GTK4 CSS theme.");
+    } else {
+        tracing::info!(path = %theme_path.display(), "Extracted and wrote Material 3 dynamic theme CSS.");
+    }
+}
+
+pub fn get_theme_css_path() -> std::path::PathBuf {
     if let Ok(xdg) = std::env::var("XDG_CONFIG_HOME") {
         std::path::PathBuf::from(xdg).join("ermete").join("theme.css")
     } else if let Ok(home) = std::env::var("HOME") {
@@ -90,5 +109,18 @@ mod tests {
     fn test_theme_css_path() {
         let path = get_theme_css_path();
         assert!(path.to_str().unwrap().contains("theme.css"));
+    }
+
+    #[test]
+    fn test_apply_dynamic_material3_theme() {
+        let tmp = std::env::temp_dir().join("ermete_mod_theme_test");
+        std::env::set_var("XDG_CONFIG_HOME", &tmp);
+
+        apply_dynamic_material3_theme(None, true);
+        let theme_file = get_theme_css_path();
+        assert!(theme_file.exists());
+        let content = std::fs::read_to_string(&theme_file).unwrap();
+        assert!(content.contains("@define-color primary"));
+        assert!(content.contains("@define-color surface"));
     }
 }
