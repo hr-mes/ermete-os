@@ -57,11 +57,7 @@ jobs:
         run: dnf install -y cairo-devel pango-devel gdk-pixbuf2-devel gtk4-devel glib2-devel gtk4-layer-shell-devel
 
       - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: 🛠️ Install Rust Nightly & LLVM Tools
-        uses: dtolnay/rust-toolchain@nightly
-        with:
+        uses: actions/checkout@v4        with:
           components: llvm-tools-preview, rust-src
 
       - name: ⚡ Extreme Rust Cache (LLVM & Dependencies)
@@ -70,12 +66,6 @@ jobs:
           shared-key: "cargo-fuzz-${{ matrix.sanitizer }}"
           cache-on-failure: "true"
           workspaces: "tests/fuzz -> target"
-
-      - name: 📦 Install cargo-fuzz
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-fuzz
-
       - name: 🔍 Run Cargo Fuzz (${{ matrix.sanitizer_name }})
         run: |
           set -e

@@ -20,11 +20,7 @@ jobs:
         run: dnf install -y cairo-devel pango-devel gdk-pixbuf2-devel gtk4-devel glib2-devel gtk4-layer-shell-devel
 
       - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Install Rust Toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
+        uses: actions/checkout@v4        with:
           components: clippy, rustfmt
 
       - name: Extreme Rust Cache (LLVM & Dependencies)
@@ -32,12 +28,6 @@ jobs:
         with:
           shared-key: "rust-security-audit"
           cache-on-failure: "true"
-
-      - name: Install cargo-vet and cargo-deny fast
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-vet,cargo-deny
-
       - name: Check Unsafe Code & Clippy Policies
         run: |
           cargo clippy --all-targets --all-features -- \
@@ -128,10 +118,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Install Rust Toolchain
-        uses: dtolnay/rust-toolchain@stable
-
       - name: Extreme Rust Cache (Kani Proof Artifacts)
         uses: Swatinem/rust-cache@v2
         with:
@@ -189,11 +175,7 @@ jobs:
             cmd: cargo build --release
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Rust (Nightly for no_std & eBPF)
-        uses: dtolnay/rust-toolchain@nightly
-        with:
+        uses: actions/checkout@v4        with:
           components: rust-src
 
       - name: Extreme Rust Cache (Bare Metal & eBPF)
