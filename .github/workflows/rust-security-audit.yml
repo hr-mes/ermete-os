@@ -6,11 +6,6 @@ on:
   pull_request:
     branches: [ main, develop ]
 
-env:
-  RUSTC_WRAPPER: sccache
-  SCCACHE_DIRECT: "true"
-  SCCACHE_CACHE_SIZE: "10G"
-
 jobs:
   security-audit:
     name: Enforce Safety & Cargo Vet Audit
@@ -29,9 +24,6 @@ jobs:
         with:
           components: clippy, rustfmt
 
-      - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.11
-
       - name: Extreme Rust Cache (LLVM & Dependencies)
         uses: Swatinem/rust-cache@v2
         with:
@@ -44,9 +36,6 @@ jobs:
           tool: cargo-vet,cargo-deny
 
       - name: Check Unsafe Code & Clippy Policies
-        env:
-          RUSTC_WRAPPER: sccache
-          SCCACHE_DIRECT: "true"
         run: |
           cargo clippy --all-targets --all-features -- \
             -D clippy::undocumented_unsafe_blocks \
@@ -140,9 +129,6 @@ jobs:
       - name: Install Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.11
-
       - name: Extreme Rust Cache (Kani Proof Artifacts)
         uses: Swatinem/rust-cache@v2
         with:
@@ -153,17 +139,11 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libglib2.0-dev libgtk-4-dev
 
       - name: Install AWS Kani Verifier
-        env:
-          RUSTC_WRAPPER: sccache
-          SCCACHE_DIRECT: "true"
         run: |
           cargo install --locked kani-verifier || true
           cargo kani setup
 
       - name: Run Mathematical Proofs (${{ matrix.module }})
-        env:
-          RUSTC_WRAPPER: sccache
-          SCCACHE_DIRECT: "true"
         run: |
           cd ${{ matrix.dir }}
           if [ -n "${{ matrix.harness }}" ]; then
@@ -214,9 +194,6 @@ jobs:
         with:
           components: rust-src
 
-      - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.11
-
       - name: Extreme Rust Cache (Bare Metal & eBPF)
         uses: Swatinem/rust-cache@v2
         with:
@@ -231,9 +208,6 @@ jobs:
         run: cargo install bpf-linker || true
 
       - name: Compile Component (${{ matrix.target_name }})
-        env:
-          RUSTC_WRAPPER: sccache
-          SCCACHE_DIRECT: "true"
         run: |
           cd ${{ matrix.dir }}
           ${{ matrix.cmd }}
