@@ -1,10 +1,9 @@
 name: 🧬 Kernel Chimera Build
 on:
-  push:
-    branches: [ "main" ]
-    paths:
-      - 'forge/specs/ermete-kernel/**'
-      - '.github/workflows/kernel-build.yml'
+  workflow_run:
+    workflows: ["Ermete Forge Orchestrator"]
+    types:
+      - completed
   workflow_dispatch:
 
 defaults:

@@ -52,7 +52,9 @@
     "niri-ipc",
     "recovery",
     "style",
-    "sysmon-ebpf"
+    "sysmon-ebpf",
+    "osbuild",
+    "cargo-tools"
   ],
   "custom_tier0": [
     "base-config",
@@ -67,7 +69,9 @@
     "astro-toolchain",
     "sccache",
     "buildah",
-    "mold"
+    "mold",
+    "osbuild",
+    "cargo-tools"
   ],
   "custom_tier1": [
     "starship",

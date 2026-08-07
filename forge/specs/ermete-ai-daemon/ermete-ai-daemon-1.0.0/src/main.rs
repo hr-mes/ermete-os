@@ -11,7 +11,6 @@ use zbus::{interface, Connection};
 
 use npu::HardwareOffloader;
 
-#[derive(Serialize, Deserialize, Debug)]
 
 pub struct AiDaemonProxy {
     offloader: Arc<HardwareOffloader>,
