@@ -37,8 +37,8 @@ RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier0-repo:latest,sour
 # TIER 1: CORE USERSERVICE, DBUS & POLICYKIT
 RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier1-repo:latest,source=/,target=/mnt/tier1-repo \
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/cache/libdnf5 \
-    echo "Tier 1: Installing Scudo Hardened Allocator (compiler-rt) & Keylime..." && \
-    dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs compiler-rt keylime-tenant keylime-agent && \
+    echo "Tier 1: Installing Scudo Hardened Allocator (compiler-rt), Keylime & UKI tools..." && \
+    dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs compiler-rt keylime-tenant keylime-agent systemd-ukify systemd-boot-unsigned sbsigntools openssl tpm2-tools cryptsetup && \
     if find /mnt/tier1-repo -name "*.rpm" 1> /dev/null 2>&1; then \
         echo "Tier 1: Installing Core User Services, DBus & Policies..." && \
         RPM_LIST=$(find /mnt/tier1-repo -name "*.rpm" 2>/dev/null | grep -vE -- '-devel-|-doc-|debuginfo|debugsource' || true) && \
@@ -128,6 +128,11 @@ ExecStart=/usr/libexec/ermete-flatpak-provisioner
 WantedBy=multi-user.target
 EOF
 
+# TPM 2.0 PCR Sealing Provisioning Service & Script for LUKS /var/home
+COPY forge/specs/ermete-secure-boot/SOURCES/usr/libexec/ermete-tpm-luks-seal.sh /usr/libexec/ermete-tpm-luks-seal.sh
+COPY forge/specs/ermete-secure-boot/SOURCES/usr/lib/systemd/system/ermete-tpm-luks-seal.service /usr/lib/systemd/system/ermete-tpm-luks-seal.service
+RUN chmod +x /usr/libexec/ermete-tpm-luks-seal.sh
+
 RUN flatpak remote-add --if-not-exists --system flathub https://dl.flathub.org/repo/flathub.flatpakrepo || true && \
     if command -v jq >/dev/null 2>&1; then \
         FLATPAKS=$(jq -r '.flatpaks[]?' /usr/share/ermete/packages.json 2>/dev/null || true); \
@@ -139,9 +144,9 @@ RUN flatpak remote-add --if-not-exists --system flathub https://dl.flathub.org/r
 
 # Declarative Systemd presets & sysusers
 RUN authselect enable-feature with-systemd-homed && \
-    systemctl enable tetragon.service systemd-sysext.service systemd-homed.service keylime_agent.service ermete-tpm-rollback-check.service ermete-tpm-rollback-update.service ermete-flatpak-provision.service && systemd-sysusers && systemctl preset-all && systemctl --global preset-all
+    systemctl enable tetragon.service systemd-sysext.service systemd-homed.service keylime_agent.service ermete-tpm-rollback-check.service ermete-tpm-rollback-update.service ermete-flatpak-provision.service ermete-tpm-luks-seal.service && systemd-sysusers && systemctl preset-all && systemctl --global preset-all
 
-# Initramfs generation
+# Initramfs & Unified Kernel Image (UKI) generation
 RUN QUALIFIED_KERNEL="" && \
     for k in /lib/modules/*; do \
         if [ -e "$k/vmlinuz" ] || [ -L "$k/vmlinuz" ]; then \
@@ -156,12 +161,53 @@ RUN QUALIFIED_KERNEL="" && \
         cp "$REAL_VMLINUZ" "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz"; \
     fi && \
     depmod "${QUALIFIED_KERNEL}" && \
+    echo "Generating Initramfs..." && \
     dracut --no-hostonly --kver "${QUALIFIED_KERNEL}" --reproducible --compress "zstd -T0 -15" -v \
         --strip --omit-drivers "nouveau" \
         --add ostree --add fido2 --add tpm2-tss --add systemd-pcrphase \
         --install "/etc/group" --install "/etc/passwd" \
         -f /usr/lib/modules/${QUALIFIED_KERNEL}/initramfs.img && \
     chmod 0644 /usr/lib/modules/${QUALIFIED_KERNEL}/initramfs.img && \
+    echo "Assembling Unified Kernel Image (UKI) using systemd-stub and ukify..." && \
+    mkdir -p /etc/pki/uki /boot/efi/EFI/Linux && \
+    if [ ! -f /etc/pki/uki/uki-signing.key ]; then \
+        openssl req -new -x509 -newkey rsa:2048 -nodes \
+            -keyout /etc/pki/uki/uki-signing.key \
+            -out /etc/pki/uki/uki-signing.crt \
+            -days 3650 \
+            -subj "/CN=Ermete OS Root of Trust UKI Key/"; \
+        chmod 0600 /etc/pki/uki/uki-signing.key; \
+    fi && \
+    STUB_PATH=$(find /usr/lib/systemd/boot/efi/ /usr/lib/systemd/ /usr/share/systemd/ -name "linuxx64.efi.stub" -o -name "systemd-stub.efi" 2>/dev/null | head -n 1) && \
+    if [ -z "$STUB_PATH" ]; then \
+        STUB_PATH="/usr/lib/systemd/boot/efi/linuxx64.efi.stub"; \
+    fi && \
+    UKIFY_BIN=$(command -v ukify || find /usr/lib/systemd /usr/bin -name "ukify" 2>/dev/null | head -n 1 || echo "ukify") && \
+    CMDLINE_STR="quiet splash fastboot iommu=pt intel_iommu=on amd_iommu=on efi=disable_early_pci_dma zswap.enabled=1 zswap.compressor=zstd rootflags=noatime slab_nomerge pti=on randomize_kstack_offset=on vsyscall=none debugfs=off oops=panic module.sig_enforce=1 lockdown=integrity init_on_free=1" && \
+    if command -v "$UKIFY_BIN" >/dev/null 2>&1 || [ -f "$UKIFY_BIN" ]; then \
+        "$UKIFY_BIN" build \
+            --linux="/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz" \
+            --initrd="/usr/lib/modules/${QUALIFIED_KERNEL}/initramfs.img" \
+            --stub="$STUB_PATH" \
+            --cmdline="$CMDLINE_STR" \
+            --os-release="@/etc/os-release" \
+            --secureboot-private-key=/etc/pki/uki/uki-signing.key \
+            --secureboot-certificate=/etc/pki/uki/uki-signing.crt \
+            --output="/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi" || true; \
+    fi && \
+    if [ -f "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi" ] && command -v sbsign >/dev/null 2>&1; then \
+        echo "Signing UKI EFI binary with sbsign..." && \
+        sbsign --key /etc/pki/uki/uki-signing.key \
+               --cert /etc/pki/uki/uki-signing.crt \
+               --output "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi.signed" \
+               "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi" && \
+        mv -f "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi.signed" "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi"; \
+    fi && \
+    if [ -f "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi" ]; then \
+        chmod 0755 "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi" && \
+        cp "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi" /boot/efi/EFI/Linux/ermete-chimera-uki.efi && \
+        cp "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi" "/usr/lib/modules/${QUALIFIED_KERNEL}/uki.efi"; \
+    fi && \
     ldconfig
 
 # Hardening & OSTree cleanup

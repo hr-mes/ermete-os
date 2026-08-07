@@ -44,5 +44,12 @@ homectl create hermes \
     --tpm2-pcrs=7+11 \
     --fido2-device=auto
 
+# TPM 2.0 PCR Sealing (PCRs 0, 2, 7, 11) for LUKS partition /var/home
+if command -v systemd-cryptenroll &>/dev/null; then
+    echo "Esecuzione systemd-cryptenroll per sigillare la partizione LUKS /var/home a PCRs 0,2,7,11..."
+    TARGET_LUKS=$(blkid -t TYPE=crypto_LUKS -o device 2>/dev/null | grep -E '/dev/vda|/dev/nvme|/dev/sda' | head -n 1 || echo "/dev/vda3")
+    systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=0,2,7,11 "$TARGET_LUKS" || true
+fi
+
 kill $HOMED_PID || true
 %end

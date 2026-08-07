@@ -1,0 +1,14 @@
+[Unit]
+Description=Ermete OS TPM 2.0 PCR Sealing for LUKS /var/home
+Documentation=man:systemd-cryptenroll(1)
+After=local-fs.target tpm2-abrmd.service systemd-tpm2-setup.service
+ConditionPathExists=!/etc/ermete/tpm2-luks-sealed.stamp
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/ermete-tpm-luks-seal.sh
+ExecStartPost=/usr/bin/touch /etc/ermete/tpm2-luks-sealed.stamp
+
+[Install]
+WantedBy=multi-user.target

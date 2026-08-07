@@ -8,11 +8,11 @@ URL:            https://github.com/hr-mes/ermete-forge
 Source0:        %{name}-%{version}.tar.gz
 
 BuildRequires:  systemd-rpm-macros
-Requires:       systemd-ukify sbsigntools tpm2-tools
+Requires:       systemd-ukify systemd-boot-unsigned sbsigntools tpm2-tools cryptsetup
 
 %description
-Ermete OS cryptographic scripts for Unified Kernel Image (UKI) generation,
-UEFI Secure Boot signing, and TPM 2.0 PCR 11 measurement/sealing.
+Ermete OS cryptographic scripts for Unified Kernel Image (UKI) generation using systemd-stub and ukify,
+UEFI Secure Boot signing, and TPM 2.0 PCR 0, 2, 7, 11 measurement/sealing.
 
 %prep
 # Nothing to prep, just source files
@@ -23,13 +23,15 @@ UEFI Secure Boot signing, and TPM 2.0 PCR 11 measurement/sealing.
 %install
 mkdir -p %{buildroot}%{_libexecdir}/ermete
 install -m 0755 %{_sourcedir}/usr/libexec/ermete-secure-boot-measure.sh %{buildroot}%{_libexecdir}/ermete-secure-boot-measure.sh
+install -m 0755 %{_sourcedir}/usr/libexec/ermete-tpm-luks-seal.sh %{buildroot}%{_libexecdir}/ermete-tpm-luks-seal.sh
 install -m 0755 %{_sourcedir}/usr/libexec/ermete/ermete-tpm-rollback-check.sh %{buildroot}%{_libexecdir}/ermete/ermete-tpm-rollback-check.sh
 install -m 0755 %{_sourcedir}/usr/libexec/ermete/ermete-tpm-rollback-update.sh %{buildroot}%{_libexecdir}/ermete/ermete-tpm-rollback-update.sh
 
-# Install a systemd service that triggers on kernel install
+# Install systemd services
 mkdir -p %{buildroot}%{_unitdir}
 install -m 0644 %{_sourcedir}/usr/lib/systemd/system/ermete-tpm-rollback-check.service %{buildroot}%{_unitdir}/ermete-tpm-rollback-check.service
 install -m 0644 %{_sourcedir}/usr/lib/systemd/system/ermete-tpm-rollback-update.service %{buildroot}%{_unitdir}/ermete-tpm-rollback-update.service
+install -m 0644 %{_sourcedir}/usr/lib/systemd/system/ermete-tpm-luks-seal.service %{buildroot}%{_unitdir}/ermete-tpm-luks-seal.service
 
 mkdir -p %{buildroot}%{_unitdir}/systemd-pcrphase-sysinit.service.d
 install -m 0644 %{_sourcedir}/usr/lib/systemd/system/systemd-pcrphase-sysinit.service.d/10-rollback-check.conf %{buildroot}%{_unitdir}/systemd-pcrphase-sysinit.service.d/10-rollback-check.conf
@@ -67,13 +69,15 @@ EOF
 
 %files
 %{_libexecdir}/ermete-secure-boot-measure.sh
+%{_libexecdir}/ermete-tpm-luks-seal.sh
 %{_libexecdir}/ermete/ermete-tpm-rollback-check.sh
 %{_libexecdir}/ermete/ermete-tpm-rollback-update.sh
 %{_unitdir}/ermete-secure-boot.service
+%{_unitdir}/ermete-tpm-luks-seal.service
 %{_unitdir}/ermete-tpm-rollback-check.service
 %{_unitdir}/ermete-tpm-rollback-update.service
 %{_unitdir}/systemd-pcrphase-sysinit.service.d/10-rollback-check.conf
 
 %changelog
-* Thu Jul 16 2026 Ermete <ermete@ermete.os> - 1.0.0-1
-- Initial release
+* Fri Aug 07 2026 Ermete <ermete@ermete.os> - 1.0.0-2
+- Add UKI assembly via systemd-stub and ukify, and TPM 2.0 PCR 0,2,7,11 LUKS sealing service
