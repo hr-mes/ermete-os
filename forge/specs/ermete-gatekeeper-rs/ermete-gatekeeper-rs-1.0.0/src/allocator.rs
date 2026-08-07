@@ -30,6 +30,12 @@ impl BumpArenaAllocator {
             offset: AtomicUsize::new(0),
         }
     }
+}
+
+impl Default for BumpArenaAllocator {
+    fn default() -> Self {
+        Self::new()
+    }
 
     pub fn reset(&self) {
         self.offset.store(0, Ordering::Relaxed);
@@ -49,6 +55,13 @@ impl BareMetalScudoAllocator {
     }
 }
 
+impl Default for BareMetalScudoAllocator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+// SAFETY: BareMetalScudoAllocator manages allocation via BumpArena in a thread-safe manner using atomic operations.
 unsafe impl GlobalAlloc for BareMetalScudoAllocator {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         let align = layout.align();
@@ -57,15 +70,15 @@ unsafe impl GlobalAlloc for BareMetalScudoAllocator {
         // Fast path: align and allocate from static IPC arena (zero glibc overhead)
         let current = self.arena.offset.load(Ordering::Relaxed);
         let aligned = (current + align - 1) & !(align - 1);
-        if aligned.saturating_add(size) <= ARENA_SIZE {
-            if self.arena.offset.compare_exchange_weak(
+        if aligned.saturating_add(size) <= ARENA_SIZE
+            && self.arena.offset.compare_exchange_weak(
                 current,
                 aligned + size,
                 Ordering::SeqCst,
                 Ordering::Relaxed,
-            ).is_ok() {
-                return self.arena.arena.as_ptr().add(aligned) as *mut u8;
-            }
+            ).is_ok()
+        {
+            return self.arena.arena.as_ptr().add(aligned) as *mut u8;
         }
 
         // Direct libscudo / libc FFI fallback

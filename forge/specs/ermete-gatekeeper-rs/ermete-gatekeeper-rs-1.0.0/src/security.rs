@@ -1,3 +1,4 @@
+#![allow(unexpected_cfgs)]
 //! Security & Cryptographic Verification Engine for Ermete Gatekeeper.
 //!
 //! Provides mathematically verified state machine logic, token authentication,
@@ -45,7 +46,7 @@ pub fn verify_auth_token(
     }
 
     // Check magic bytes
-    if &token[0..4] != &MAGIC {
+    if token[0..4] != MAGIC {
         return Err(SecurityError::InvalidMagic);
     }
 
@@ -55,11 +56,7 @@ pub fn verify_auth_token(
     let token_ts = u64::from_le_bytes(ts_bytes);
 
     // Verify timestamp skew without arithmetic overflow
-    let diff = if current_time >= token_ts {
-        current_time - token_ts
-    } else {
-        token_ts - current_time
-    };
+    let diff = current_time.abs_diff(token_ts);
 
     if diff > max_skew {
         return Err(SecurityError::TimestampExpired);
