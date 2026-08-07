@@ -9,6 +9,17 @@ Ermete OS è un sistema operativo **immutabile, cloud-native ed eBPF-hardened** 
 
 L'intero albero dei target di build è gestito in maniera dichiarativa tramite un runner unificato basato su **Justfile** (`Justfile` radice, `forge/Justfile` e `system/Justfile`).
 
+### 1.1 Ecosistema di CI/CD Autarchico & Multi-Stage Build Strategy
+
+Ermete OS non dipende da alcun binario pre-compilato di terze parti per la sua catena di montaggio. Nel **Tier 0** della Forgia, il sistema compila la propria toolchain di CI/CD:
+- **`kani-verifier`**: Motore di *bounded model checking* per Rust compilato nativamente (`kani-driver`, `cargo-kani`), per la verifica formale formale delle invarianti di sicurezza.
+- **`just`**: Task runner e orchestratore di build compilato con ottimizzazioni CachyOS (`-O3 -march=x86-64-v3`, `mold`).
+- **`uki-tools`**: Toolchain autarchica Secure Boot che assimila `sbsigntools` (`sbsign`, `sbverify`, `sbattach`) e `systemd-ukify` (`ukify`).
+
+#### Architettura Multi-Stage (Il Builder Pesante produce l'OS Leggero)
+- **Stage 1 (`ermete-os-builder`)**: Contenitore pesante dotato di GCC, LLVM, Rustc, Mold e toolchain autarchica (`kani-verifier`, `just`, `uki-tools`). Compila gli RPM in micro-container OCI isolati.
+- **Stage 2 (`ermete-os-system`)**: Contenitore finale immutabile BootC. Installa gli RPM compilati via bind-mount, genera l'initramfs con Dracut ed epura completamente la toolchain del builder (-1.1 GB su disco).
+
 ```mermaid
 flowchart TD
     subgraph Spec ["📦 Forge Specs & Configs"]

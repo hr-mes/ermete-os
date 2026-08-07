@@ -40,6 +40,8 @@ Esplora le specifiche architetturali dettagliate (generate dallo sciame di intel
 9. [Core 5: Sicurezza Ring-0, Hardware Enclave e Polkit](#9-core-5-sicurezza-ring-0-hardware-enclave-e-polkit)
 10. [Core 6: Caching, Idempotenza e SLSA L4 CI/CD](#10-core-6-caching-idempotenza-e-slsa-l4-cicd)
 11. [Ottimizzazione Estrema: Il Motore "Ultra Leggero"](#11-ottimizzazione-estrema-il-motore-ultra-leggero)
+12. [Ecosistema di CI/CD Autarchico e Multi-Stage Build](#12-ecosistema-di-cicd-autarchico-e-multi-stage-build)
+
 
 ---
 
@@ -197,7 +199,55 @@ Ermete OS è compresso per dominare sull'hardware.
   strip = true           # Epura i simboli nativi
   ```
 
+---
+
+## 12. Ecosistema di CI/CD Autarchico e Multi-Stage Build
+
+Per garantire la massima sovranità tecnologica e immunità totale alle vulnerabilità della *supply chain* esterna, Ermete OS non si affida a binary pre-compilati di terze parti per i suoi tool di sviluppo e build. La Forgia di Ermete OS (`forge/`) compila autonomamente la propria toolchain di CI/CD.
+
+### 🛡️ Ecosistema di Build Autarchico (Self-Hosted CI Toolchain)
+Nel **Tier 0** della Forgia, Ermete OS compila dai sorgenti ufficiali i seguenti strumenti chiave, integrandoli nell'infrastruttura di build:
+1. **`kani-verifier`**: Motore di verifica formale e *bounded model checking* per il codice Rust. Compilato nativamente (`kani-driver`, `cargo-kani`), valida con precisione bit-level la sicurezza della memoria e le asserzioni logiche dei componenti critici dell'OS prima del merge.
+2. **`just`**: Task runner e orchestratore di comandi ad altissime prestazioni, compilato in Rust con flag `-O3 -march=x86-64-v3` per garantire la deterministica esecuzione dei target di build sia in locale che in CI.
+3. **`uki-tools`**: Toolchain autarchica per la generazione ed autenticazione di immagini kernel unificate (Unified Kernel Images - UKI). Assimila `sbsigntools` (`sbsign`, `sbverify`, `sbattach`) e `systemd-ukify` (`ukify`) eliminando ogni dipendenza esterna da binari o repository di terze parti per le operazioni di firma Secure Boot.
+
+### 🏗️ Architettura Multi-Stage Build (Il Builder Pesante produce l'OS Leggero)
+L'intero processo di generazione dell'OS segue un rigoroso paradigma **Multi-Stage Build**:
+
+```mermaid
+flowchart LR
+    subgraph Stage1 ["🏗️ Stage 1: Heavy Builder Environment (ermete-os-builder)"]
+        direction TB
+        B1["Compilatori (GCC, Clang/LLVM, Rustc)"]
+        B2["Toolchain Autarchica (Kani, Just, Sbsign, Ukify)"]
+        B3["Linker Iper-Veloce Mold + sccache"]
+        B4["Nix-Hermetic Bwrap Sandbox & Micro-Containers"]
+        B1 --> B4
+        B2 --> B4
+        B3 --> B4
+    end
+
+    subgraph Stage2 ["💿 Stage 2: Minimal Bootable OS (ermete-os-system)"]
+        direction TB
+        S1["OSTree / BootC Image"]
+        S2["RPM Assimilati & Binary Ottimizzati"]
+        S3["Initramfs Dracut ZSTD"]
+        S4["Epurazione Totale Toolchain Builder (-1.1 GB)"]
+        S1 --- S2 --- S3 --- S4
+    end
+
+    Stage1 -->|Mount & Install RPMs| Stage2
+```
+
+1. **Stage 1 (Heavy Builder Image - `ermete-os-builder`)**:
+   Un contenitore di compilazione pesante equipaggiato con l'intero ambiente di sviluppo, compilatori (GCC, LLVM/Clang, Rustc), i tool autarchici di CI (`kani-verifier`, `just`, `uki-tools`), il linker `mold` e i tool di pacchettizzazione (`rpmbuild`, `buildah`). Esegue le build ermetiche isolate in sandbox Nix (`bwrap`) senza accesso a internet.
+2. **Stage 2 (Lightweight Bootable System OS - `ermete-os-system`)**:
+   L'immagine finale di sistema immutabile (`bootc`). Nel `system/Containerfile`, gli RPM prodotti dallo Stage 1 vengono montati in modalità bind-mount ed installati nel filesystem finale. Al termine dell'installazione e della generazione dell'initramfs via Dracut, l'ambiente di build viene completamente **epurato**: compilatori, sorgenti, intestazioni di sviluppo e file temporanei vengono rimossi (-1.1 GB).
+
+**Risultato**: Il sistema finale `ermete-os-system` è incredibilmente snello, leggero e sicuro, privo di compilatori in ambiente di runtime, pur essendo nato da un ambiente di build pesante ed autarchico.
+
 <br />
 <div align="center">
   <i>Ingegnerizzato senza compromessi. Progettato senza limiti.</i>
 </div>
+

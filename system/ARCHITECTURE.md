@@ -147,3 +147,53 @@ Ermete OS ha assimilato e riscritto in Rust nativo i 5 componenti storici e vuln
 2. **Bedrock Diet:** Strips -1.1 GB of non-consumer firmware, build tools, and cache files.
 3. **Immutability:** Bootable OCI container deployed and updated atomically via `bootc switch`.
 
+---
+
+## 🛡️ Ecosistema di CI/CD Autarchico & Multi-Stage Build Pipeline
+
+Ermete OS applica il principio della **sovranità informatica assoluta** al proprio ciclo di compilazione e deployment. L'intero sistema è costruito mediante una filiera autarchica e disaccoppiata da qualsiasi dipendenza binaria esterna.
+
+```mermaid
+flowchart TD
+    subgraph Tier0_Autarchic ["🛡️ Tier 0: Toolchain CI Autarchica (Self-Hosted)"]
+        T0_Kani["kani-verifier\n(Bit-Precise Model Checker: kani-driver, cargo-kani)"]
+        T0_Just["just\n(Native Rust Command Runner -O3 march=x86-64-v3)"]
+        T0_Uki["uki-tools\n(Assimilated Secure Boot: sbsigntools + systemd-ukify)"]
+    end
+
+    subgraph Heavy_Builder ["🏗️ Stage 1: Heavy Builder Container (ermete-os-builder)"]
+        Toolchain["Compilatori GCC / Clang LLVM + Rustc"]
+        Linker["Mold Linker + sccache + bwrap Sandbox"]
+        Specs["Micro-Containers RPM Scratch (specs/*)"]
+        Tier0_Autarchic --> Heavy_Builder
+        Toolchain --> Specs
+        Linker --> Specs
+    end
+
+    subgraph Lightweight_OS ["💿 Stage 2: Minimal Bootable OS (ermete-os-system)"]
+        OCI["BootC Immutable OCI Layering"]
+        Install["DNF Local Bind-Mount Install (Tier 0 -> Tier 3)"]
+        Purge["Epurazione Totale Tool Builder & Dev Headers (-1.1 GB)"]
+        Specs -->|RUN --mount=type=bind| Install
+        Install --> OCI
+        OCI --> Purge
+    end
+```
+
+### 1. ⚡ Toolchain CI Assimilata nel Tier 0 (Autarchic Tooling)
+I tool di build e verifica non vengono mai scaricati come binari preconfezionati:
+- **`kani-verifier`** ([`forge/specs/kani-verifier`](file:///var/home/ermete/GEMINI/ermete-os/forge/specs/kani-verifier/kani-verifier.spec)): Compilato dai sorgenti Rust ufficiali nel Tier 0 della Forgia. Fornisce i binari `kani-driver` e `cargo-kani` per eseguire la verifica formale bit-precise delle invarianti di sicurezza e della memoria nei moduli Rust e nei driver eBPF.
+- **`just`** ([`forge/specs/just`](file:///var/home/ermete/GEMINI/ermete-os/forge/specs/just/just.spec)): Task runner nativo Rust compilato con ottimizzazioni aggressive (`-O3`, `-march=x86-64-v3`, `mold`). Gestisce in modo deterministico le ricette di build trasversali in tutto l'OS.
+- **`uki-tools`** ([`forge/specs/uki-tools`](file:///var/home/ermete/GEMINI/ermete-os/forge/specs/uki-tools/uki-tools.spec)): Pacchetto nativo che assimila `sbsigntools` (`sbsign`, `sbverify`, `sbattach`, `sbkeysync`, `sbvarsign`) e `systemd-ukify` (`ukify`). Elimina qualsiasi dipendenza esterna da pacchetti o repository per la generazione di immagini kernel unificate (UKI) e la firma dei binari EFI con chiavi Secure Boot autarchiche.
+
+### 2. 🏭 Struttura Multi-Stage Build (Heavy Builder -> Lightweight OS)
+La costruzione del sistema operativo si articola in due stage nettamente distinti:
+1. **Stage 1 — Il Builder Pesante (`ermete-os-builder`)**:
+   - Immagine container ricca di toolchain di compilazione, SDK, librerie di sviluppo, linter e motori di verifica formale (`kani-verifier`, `just`, `uki-tools`, `gcc`, `clang`, `rustc`, `mold`).
+   - Genera i singoli **micro-container OCI** per ogni pacchetto RPM della Forgia dentro sandbox eretiche Nix (`bwrap`).
+2. **Stage 2 — L'OS Bootable Leggero (`ermete-os-system`)**:
+   - Parte da una base minimale Fedora BootC (`system/Containerfile`).
+   - Gli RPM prodotti dallo Stage 1 vengono montati tramite `RUN --mount=type=bind` e installati senza scaricare nulla dalla rete.
+   - **Purge Post-Build**: Al termine della generazione dell'initramfs via Dracut, l'immagine esegue un'epurazione drastica eliminando i tool di build residui (`gcc`, `make`, `llvm-static`), le intestazioni C/Rust e le cache di compilazione, riducendo l'impronta su disco di **-1.1 GB** e portando la superficie d'attacco a runtime al minimo assoluto.
+
+
