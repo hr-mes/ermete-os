@@ -3,7 +3,7 @@ use relm4::factory::{FactoryComponent, FactoryVecDeque, FactorySender};
 use gtk::prelude::*;
 use gtk4::Application;
 use gtk4_layer_shell::{Edge, Layer, LayerShell};
-use crate::ui::control_center::*;
+
 
 pub struct WorkspaceItem {
     pub ws: crate::core::NiriWorkspace,
@@ -277,20 +277,9 @@ impl SimpleComponent for TopbarModel {
             glib::ControlFlow::Continue
         });
 
-        let sender_net = sender.clone();
-        let mut net_rx = crate::ipc::system_proxies::get_net_bus().subscribe();
-        glib::MainContext::default().spawn_local(async move {
-            while let Ok(_) = net_rx.recv().await {
-                sender_net.input(TopbarInput::TickSecond);
-            }
-        });
-
-        let sender_audio = sender.clone();
-        let mut audio_rx = crate::ipc::system_proxies::get_audio_bus().subscribe();
-        glib::MainContext::default().spawn_local(async move {
-            while let Ok(_) = audio_rx.recv().await {
-                sender_audio.input(TopbarInput::TickSecond);
-            }
+        let sender_vm = sender.clone();
+        crate::ui::viewmodel::TopbarViewModel::subscribe_events(move || {
+            sender_vm.input(TopbarInput::TickSecond);
         });
 
         #[allow(deprecated)]
@@ -311,20 +300,20 @@ impl SimpleComponent for TopbarModel {
     }
 
     fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
+        use crate::ui::viewmodel::{TopbarViewModel, NavigationViewModel, UiPopoverTarget};
         match message {
             TopbarInput::TickSecond => {
-                self.clock_text = crate::core::macos_clock_string();
+                self.clock_text = TopbarViewModel::get_clock_string();
                 
-                let (net_icon, _, _) = crate::core::get_network_controller().get_cached_network_status();
+                let (net_icon, _, _) = TopbarViewModel::get_network_status();
                 self.network_icon = net_icon;
                 
-                let live = crate::core::live_state::get_live_state();
-                self.has_battery = live.has_battery;
-                self.battery_percent = live.battery_percent;
+                let (has_battery, battery_percent) = TopbarViewModel::get_live_state();
+                self.has_battery = has_battery;
+                self.battery_percent = battery_percent;
             }
             TopbarInput::TickFast => {
-                let niri = crate::core::niri_state::get_niri_state();
-                self.focused_app_title = niri.focused_window_title.unwrap_or_else(|| "Ermete OS".to_string());
+                self.focused_app_title = TopbarViewModel::get_focused_title();
             }
             TopbarInput::UpdateWorkspaces(workspaces_data) => {
                 let active_output = workspaces_data.iter()
@@ -343,22 +332,22 @@ impl SimpleComponent for TopbarModel {
                 }
             }
             TopbarInput::ToggleStartMenu => {
-                toggle_or_open_popup("launcher", || crate::ui::control_center::show_start_menu_popover(&self.app));
+                NavigationViewModel::navigate_to(&self.app, UiPopoverTarget::StartMenu);
             }
             TopbarInput::ToggleControlCenter => {
-                toggle_or_open_popup("control-center", || crate::ui::control_center::show_control_center_popover(&self.app));
+                NavigationViewModel::navigate_to(&self.app, UiPopoverTarget::ControlCenter);
             }
             TopbarInput::ToggleSpotlight => {
-                toggle_or_open_popup("spotlight", || crate::ui::spotlight::show_spotlight_modal(&self.app));
+                NavigationViewModel::navigate_to(&self.app, UiPopoverTarget::Spotlight);
             }
             TopbarInput::ToggleCalendar => {
-                toggle_or_open_popup("calendar", || crate::ui::control_center::show_calendar_popover(&self.app));
+                NavigationViewModel::navigate_to(&self.app, UiPopoverTarget::Calendar);
             }
             TopbarInput::ToggleWifi => {
-                toggle_or_open_popup("wifi", || crate::ui::control_center::show_wifi_popover(&self.app));
+                NavigationViewModel::navigate_to(&self.app, UiPopoverTarget::Wifi);
             }
             TopbarInput::ToggleNotifications => {
-                toggle_or_open_popup("notifications", || crate::ui::notifications::show_notification_center(&self.app));
+                NavigationViewModel::navigate_to(&self.app, UiPopoverTarget::Notifications);
             }
             TopbarInput::ToggleDesktopWidgets => {
                 let _ = gtk4::glib::spawn_command_line_async("ermete-settings-rs --page desktop");
@@ -371,19 +360,20 @@ impl SimpleComponent for TopbarModel {
 }
 
 pub fn handle_command(app: &Application, arg: &str) {
+    use crate::ui::viewmodel::{NavigationViewModel, UiPopoverTarget};
     match arg {
-        "spotlight" | "launcher" => toggle_or_open_popup("spotlight", || crate::ui::spotlight::show_spotlight_modal(app)),
-        "control-center" => toggle_or_open_popup("control-center", || show_control_center_popover(app)),
-        "notifications" | "notification-center" => toggle_or_open_popup("notifications", || crate::ui::notifications::show_notification_center(app)),
-        "sys-monitor" | "monitor" => toggle_or_open_popup("sys-monitor", || show_system_monitor_modal(app)),
-        "calendar" => toggle_or_open_popup("calendar", || show_calendar_popover(app)),
-        "media-player" | "mixer" | "audio" => toggle_or_open_popup("media-player", || show_audio_mixer_popover(app)),
-        "wifi" => toggle_or_open_popup("wifi", || show_wifi_popover(app)),
-        "bluetooth" => toggle_or_open_popup("bluetooth", || show_bluetooth_popover(app)),
-        "start-menu" | "menu" => toggle_or_open_popup("launcher", || show_start_menu_popover(app)),
-        "powermenu" => toggle_or_open_popup("powermenu", || crate::ui::powermenu::show_powermenu_modal(app)),
-        "clipboard" => toggle_or_open_popup("clipboard", || crate::ui::clipboard::show_clipboard_modal(app)),
-        "store" => toggle_or_open_popup("store", || crate::ui::store::show_store_modal(app)),
+        "spotlight" | "launcher" => NavigationViewModel::navigate_to(app, UiPopoverTarget::Spotlight),
+        "control-center" => NavigationViewModel::navigate_to(app, UiPopoverTarget::ControlCenter),
+        "notifications" | "notification-center" => NavigationViewModel::navigate_to(app, UiPopoverTarget::Notifications),
+        "sys-monitor" | "monitor" => NavigationViewModel::navigate_to(app, UiPopoverTarget::SystemMonitor),
+        "calendar" => NavigationViewModel::navigate_to(app, UiPopoverTarget::Calendar),
+        "media-player" | "mixer" | "audio" => NavigationViewModel::navigate_to(app, UiPopoverTarget::AudioMixer),
+        "wifi" => NavigationViewModel::navigate_to(app, UiPopoverTarget::Wifi),
+        "bluetooth" => NavigationViewModel::navigate_to(app, UiPopoverTarget::Bluetooth),
+        "start-menu" | "menu" => NavigationViewModel::navigate_to(app, UiPopoverTarget::StartMenu),
+        "powermenu" => NavigationViewModel::navigate_to(app, UiPopoverTarget::PowerMenu),
+        "clipboard" => NavigationViewModel::navigate_to(app, UiPopoverTarget::Clipboard),
+        "store" => NavigationViewModel::navigate_to(app, UiPopoverTarget::Store),
         "dock" => crate::ui::dock::toggle_dock_visibility(),
         _ => {}
     }

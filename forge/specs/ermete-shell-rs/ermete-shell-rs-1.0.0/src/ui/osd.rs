@@ -5,6 +5,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use std::time::Duration;
 use crate::core::live_state::get_live_state;
+use crate::ui::viewmodel::{OsdViewModel, OsdEvent};
 
 pub fn spawn_osd(app: &Application) {
     let window = ApplicationWindow::new(app);
@@ -16,11 +17,7 @@ pub fn spawn_osd(app: &Application) {
     window.set_layer(Layer::Overlay);
 
     // Apply Glassmorphism
-    
     window.set_margin(Edge::Bottom, 100);
-    // Center at the bottom horizontally
-    // By not setting Left/Right anchors, it naturally centers if we don't expand.
-    
     window.set_default_size(200, 50);
     window.set_visible(false); // Starts hidden
 
@@ -51,85 +48,57 @@ pub fn spawn_osd(app: &Application) {
     let last_state = Rc::new(RefCell::new(get_live_state()));
     let hide_timeout_id = Rc::new(RefCell::new(None::<glib::SourceId>));
     let window_rc = window.clone();
-    
-    enum OsdEvent {
-        Volume(f64),
-        Brightness(f64),
-    }
 
-    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
-    
-    let tx1 = tx.clone();
-    let mut audio_rx = crate::ipc::system_proxies::get_audio_bus().subscribe();
-    glib::MainContext::default().spawn_local(async move {
-        while let Ok(ev) = audio_rx.recv().await {
-            if let crate::ipc::types::AudioEvent::VolumeChanged(v) = ev {
-                let _ = tx1.send(OsdEvent::Volume(v));
+    OsdViewModel::subscribe(move |event| {
+        let mut last = last_state.borrow_mut();
+        let mut update = false;
+        let mut is_vol = false;
+        let mut current_val = 0.0;
+        
+        match event {
+            OsdEvent::Volume(v) => {
+                let diff = (v * 100.0 - last.volume * 100.0).abs();
+                if diff > 1.0 || (v - last.volume).abs() > 1.0 {
+                    last.volume = v;
+                    update = true;
+                    is_vol = true;
+                    current_val = v;
+                }
+            }
+            OsdEvent::Brightness(b) => {
+                if (b - last.brightness).abs() > 1.0 {
+                    last.brightness = b;
+                    update = true;
+                    is_vol = false;
+                    current_val = b;
+                }
             }
         }
-    });
-
-    let tx2 = tx;
-    let mut hw_rx = crate::ipc::system_proxies::get_hardware_bus().subscribe();
-    glib::MainContext::default().spawn_local(async move {
-        while let Ok(ev) = hw_rx.recv().await {
-            let crate::ipc::types::HardwareEvent::BrightnessChanged(b) = ev;
-            let _ = tx2.send(OsdEvent::Brightness(b));
-        }
-    });
-
-    glib::MainContext::default().spawn_local(async move {
-        while let Some(event) = rx.recv().await {
-            let mut last = last_state.borrow_mut();
-            let mut update = false;
-            let mut is_vol = false;
-            let mut current_val = 0.0;
-            
-            match event {
-                OsdEvent::Volume(v) => {
-                    let diff = (v * 100.0 - last.volume * 100.0).abs();
-                    if diff > 1.0 || (v - last.volume).abs() > 1.0 {
-                        last.volume = v;
-                        update = true;
-                        is_vol = true;
-                        current_val = v;
-                    }
-                }
-                OsdEvent::Brightness(b)
-                    if (b - last.brightness).abs() > 1.0 => {
-                        last.brightness = b;
-                        update = true;
-                        is_vol = false;
-                        current_val = b;
-                }
-                _ => {}
+        
+        if update {
+            if is_vol {
+                icon.set_icon_name(Some("audio-volume-high-symbolic"));
+                progress.set_fraction(current_val.clamp(0.0, 1.0));
+            } else {
+                icon.set_icon_name(Some("display-brightness-symbolic"));
+                progress.set_fraction((current_val / 100.0).clamp(0.0, 1.0));
             }
             
-            if update {
-                if is_vol {
-                    icon.set_icon_name(Some("audio-volume-high-symbolic"));
-                    progress.set_fraction(current_val.clamp(0.0, 1.0));
-                } else {
-                    icon.set_icon_name(Some("display-brightness-symbolic"));
-                    progress.set_fraction((current_val / 100.0).clamp(0.0, 1.0));
-                }
-                
-                window_rc.set_visible(true);
-                
-                let win_clone = window_rc.clone();
-                let hide_timeout_clone = hide_timeout_id.clone();
-                let mut timeout_guard = hide_timeout_id.borrow_mut();
-                if let Some(id) = timeout_guard.take() {
-                    let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                        id.remove();
-                    }));
-                }
-                
-                *timeout_guard = Some(glib::timeout_add_local_once(Duration::from_secs(2), move || {
-                    win_clone.set_visible(false);
-                    *hide_timeout_clone.borrow_mut() = None;
+            window_rc.set_visible(true);
+            
+            let win_clone = window_rc.clone();
+            let hide_timeout_clone = hide_timeout_id.clone();
+            let mut timeout_guard = hide_timeout_id.borrow_mut();
+            if let Some(id) = timeout_guard.take() {
+                let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    id.remove();
                 }));
             }
+            
+            *timeout_guard = Some(glib::timeout_add_local_once(Duration::from_secs(2), move || {
+                win_clone.set_visible(false);
+                *hide_timeout_clone.borrow_mut() = None;
+            }));
         }
     });
 }

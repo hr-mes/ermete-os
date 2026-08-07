@@ -1,13 +1,9 @@
-use crate::ui::control_center::audio::show_audio_mixer_popover;
-use crate::ui::control_center::bluetooth::show_bluetooth_popover;
-use crate::ui::control_center::sysmon::show_system_monitor_modal;
 use crate::ui::control_center::widgets::{build_cc_compact_tile, build_cc_row, build_cc_row_content};
-use crate::ui::control_center::wifi::show_wifi_popover;
 use crate::ui::popup_manager::setup_popup_autoclose;
+use crate::ui::viewmodel::{ControlCenterViewModel, ControlCenterIntent, NavigationViewModel, UiPopoverTarget};
 use gtk4::prelude::*;
 use gtk4::{Align, Application, ApplicationWindow, Box as GtkBox, Button, Label, Orientation, Scale};
 use gtk4_layer_shell::{Edge, Layer, LayerShell};
-use std::process::Command;
 
 fn build_quick_toggle_content(icon: &str, text: &str) -> GtkBox {
     let box_ = GtkBox::builder().orientation(Orientation::Horizontal).spacing(6).halign(Align::Center).build();
@@ -31,6 +27,8 @@ pub fn show_control_center_popover(app: &Application) {
     pop.set_anchor(Edge::Right, true);
     pop.set_margin(Edge::Top, 34);
     pop.set_margin(Edge::Right, 50);
+
+    let initial = ControlCenterViewModel::get_initial_state();
 
     let card = GtkBox::builder()
         .orientation(Orientation::Vertical)
@@ -59,9 +57,9 @@ pub fn show_control_center_popover(app: &Application) {
         .css_classes(["cc-quick-btn"])
         .tooltip_text("Impostazioni di Sistema")
         .build();
-    settings_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
+    settings_btn.connect_clicked(glib::clone!(@weak pop => move |_| {
         pop.close();
-        let _ = gtk4::glib::spawn_command_line_async("ermete-settings-rs");
+        ControlCenterViewModel::execute_intent(ControlCenterIntent::LaunchSettings(String::new()));
     }));
     header_box.append(&cc_title_lbl);
     header_box.append(&settings_btn);
@@ -72,7 +70,7 @@ pub fn show_control_center_popover(app: &Application) {
         .spacing(10)
         .build();
 
-    // Colonna Sinistra (Connettività) - Initialized passively from cached state
+    // Colonna Sinistra (Connettività) - Initialized passively from ViewModel state
     let conn_box = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(4)
@@ -80,17 +78,15 @@ pub fn show_control_center_popover(app: &Application) {
         .hexpand(true)
         .build();
 
-    let (net_icon, net_title, net_sub) = crate::core::get_network_controller().get_cached_network_status();
-    let wifi_btn = build_cc_row("cc-circle-blue", &net_icon, &net_title, &net_sub);
+    let wifi_btn = build_cc_row("cc-circle-blue", &initial.network_icon, &initial.network_title, &initial.network_sub);
     wifi_btn.set_hexpand(true);
-    let net_connected = net_sub != "Disattivato" && net_sub != "Non connesso" && net_sub != "Off" && net_sub != "Disconnected";
-    if net_connected {
+    if initial.is_network_connected {
         wifi_btn.add_css_class("cc-btn-active");
     }
 
     wifi_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
         pop.close();
-        show_wifi_popover(&app);
+        NavigationViewModel::navigate_to(&app, UiPopoverTarget::Wifi);
     }));
     let wifi_row_box = GtkBox::builder()
         .orientation(Orientation::Horizontal)
@@ -102,9 +98,9 @@ pub fn show_control_center_popover(app: &Application) {
         .valign(Align::Center)
         .tooltip_text("Impostazioni Wi-Fi")
         .build();
-    wifi_settings_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
+    wifi_settings_btn.connect_clicked(glib::clone!(@weak pop => move |_| {
         pop.close();
-        let _ = gtk4::glib::spawn_command_line_async(format!("ermete-settings-rs --page {}", "wifi"));
+        ControlCenterViewModel::execute_intent(ControlCenterIntent::LaunchSettings("wifi".to_string()));
     }));
     wifi_row_box.append(&wifi_btn);
     wifi_row_box.append(&wifi_settings_btn);
@@ -113,7 +109,7 @@ pub fn show_control_center_popover(app: &Application) {
     bt_btn.set_hexpand(true);
     bt_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
         pop.close();
-        show_bluetooth_popover(&app);
+        NavigationViewModel::navigate_to(&app, UiPopoverTarget::Bluetooth);
     }));
     let bt_row_box = GtkBox::builder()
         .orientation(Orientation::Horizontal)
@@ -125,9 +121,9 @@ pub fn show_control_center_popover(app: &Application) {
         .valign(Align::Center)
         .tooltip_text("Impostazioni Bluetooth")
         .build();
-    bt_settings_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
+    bt_settings_btn.connect_clicked(glib::clone!(@weak pop => move |_| {
         pop.close();
-        let _ = gtk4::glib::spawn_command_line_async(format!("ermete-settings-rs --page {}", "bluetooth"));
+        ControlCenterViewModel::execute_intent(ControlCenterIntent::LaunchSettings("bluetooth".to_string()));
     }));
     bt_row_box.append(&bt_btn);
     bt_row_box.append(&bt_settings_btn);
@@ -135,7 +131,7 @@ pub fn show_control_center_popover(app: &Application) {
     let sys_btn = build_cc_row("cc-circle-blue", "⚙", "Risorse", "Monitor Live");
     sys_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
         pop.close();
-        show_system_monitor_modal(&app);
+        NavigationViewModel::navigate_to(&app, UiPopoverTarget::SystemMonitor);
     }));
 
     conn_box.append(&wifi_row_box);
@@ -151,21 +147,15 @@ pub fn show_control_center_popover(app: &Application) {
         .build();
 
     let screenshot_tile = build_cc_compact_tile("cc-circle-indigo", "📷", "Screenshot");
-    screenshot_tile.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
+    screenshot_tile.connect_clicked(glib::clone!(@weak pop => move |_| {
         pop.close();
-        glib::MainContext::default().spawn_local(async move {
-            ermete_niri_ipc::async_client::screenshot().await;
-        });
-
+        ControlCenterViewModel::execute_intent(ControlCenterIntent::TriggerScreenshot);
     }));
 
     let lock_tile = build_cc_compact_tile("cc-circle-blue", "🔒", "Blocca");
-    lock_tile.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
+    lock_tile.connect_clicked(glib::clone!(@weak pop => move |_| {
         pop.close();
-        glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::get_power_controller();
-            let _ = ctrl.lock_screen().await;
-        });
+        ControlCenterViewModel::execute_intent(ControlCenterIntent::TriggerLock);
     }));
 
     right_col.append(&screenshot_tile);
@@ -175,8 +165,7 @@ pub fn show_control_center_popover(app: &Application) {
     top_grid.append(&right_col);
 
     // 2. MIDDLE SECTION (Slider Apple-Style)
-    // Slider Luminosità - Passive initialization from cached state
-    let init_brightness = crate::core::live_state::get_live_state().brightness;
+    // Slider Luminosità - Passive initialization from ViewModel
     let bright_card = GtkBox::builder()
         .orientation(Orientation::Horizontal)
         .spacing(12)
@@ -185,15 +174,12 @@ pub fn show_control_center_popover(app: &Application) {
         .build();
     let bright_icon = Label::builder().label("☀").css_classes(["cc-slider-icon"]).build();
     let bright_slider = Scale::with_range(Orientation::Horizontal, 0.0, 100.0, 1.0);
-    bright_slider.set_value(if init_brightness > 0.0 { init_brightness } else { 75.0 });
+    bright_slider.set_value(initial.brightness);
     bright_slider.set_hexpand(true);
     bright_slider.set_valign(Align::Center);
     bright_slider.connect_value_changed(move |s| {
         let val = s.value() / 100.0;
-        glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::get_display_controller();
-            let _ = ctrl.set_brightness(val).await;
-        });
+        ControlCenterViewModel::execute_intent(ControlCenterIntent::SetBrightness(val));
     });
     bright_card.append(&bright_icon);
     bright_card.append(&bright_slider);
@@ -203,9 +189,9 @@ pub fn show_control_center_popover(app: &Application) {
         .valign(Align::Center)
         .tooltip_text("Impostazioni Schermi")
         .build();
-    disp_settings_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
+    disp_settings_btn.connect_clicked(glib::clone!(@weak pop => move |_| {
         pop.close();
-        let _ = gtk4::glib::spawn_command_line_async(format!("ermete-settings-rs --page {}", "displays"));
+        ControlCenterViewModel::execute_intent(ControlCenterIntent::LaunchSettings("displays".to_string()));
     }));
 
     let tt_btn = Button::builder()
@@ -215,7 +201,7 @@ pub fn show_control_center_popover(app: &Application) {
         .tooltip_text("True Tone")
         .build();
     let tt_btn_clone_click = tt_btn.clone();
-    tt_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
+    tt_btn.connect_clicked(move |_| {
         let is_active = tt_btn_clone_click.has_css_class("cc-btn-active");
         let new_state = !is_active;
         if new_state {
@@ -223,24 +209,13 @@ pub fn show_control_center_popover(app: &Application) {
         } else {
             tt_btn_clone_click.remove_css_class("cc-btn-active");
         }
-        glib::MainContext::default().spawn_local(async move {
-            if let Ok(connection) = zbus::Connection::session().await {
-                let _ = connection.call_method(
-                    Some("org.ermete.Settings"),
-                    "/org/ermete/Settings",
-                    Some("org.freedesktop.DBus.Properties"),
-                    "Set",
-                    &("org.ermete.Settings", "TrueToneEnabled", zbus::zvariant::Value::from(new_state))
-                ).await;
-            }
-        });
-    }));
+        ControlCenterViewModel::execute_intent(ControlCenterIntent::ToggleTrueTone(new_state));
+    });
 
     bright_card.append(&tt_btn);
     bright_card.append(&disp_settings_btn);
 
-    // Slider Volume Audio - Passive initialization from cached state
-    let init_volume = crate::core::get_audio_controller().get_cached_volume() * 100.0;
+    // Slider Volume Audio - Passive initialization from ViewModel
     let audio_card = GtkBox::builder()
         .orientation(Orientation::Horizontal)
         .spacing(12)
@@ -249,15 +224,12 @@ pub fn show_control_center_popover(app: &Application) {
         .build();
     let audio_icon = Label::builder().label("🔊").css_classes(["cc-slider-icon"]).build();
     let audio_slider = Scale::with_range(Orientation::Horizontal, 0.0, 100.0, 1.0);
-    audio_slider.set_value(if init_volume > 0.0 { init_volume } else { 80.0 });
+    audio_slider.set_value(initial.volume);
     audio_slider.set_hexpand(true);
     audio_slider.set_valign(Align::Center);
     audio_slider.connect_value_changed(move |s| {
         let val = s.value() / 100.0;
-        glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::get_audio_controller();
-            let _ = ctrl.set_volume(val).await;
-        });
+        ControlCenterViewModel::execute_intent(ControlCenterIntent::SetVolume(val));
     });
     audio_card.append(&audio_icon);
     audio_card.append(&audio_slider);
@@ -268,9 +240,9 @@ pub fn show_control_center_popover(app: &Application) {
         .valign(Align::Center)
         .tooltip_text("Impostazioni Audio")
         .build();
-    audio_settings_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
+    audio_settings_btn.connect_clicked(glib::clone!(@weak pop => move |_| {
         pop.close();
-        let _ = gtk4::glib::spawn_command_line_async(format!("ermete-settings-rs --page {}", "audio"));
+        ControlCenterViewModel::execute_intent(ControlCenterIntent::LaunchSettings("audio".to_string()));
     }));
     audio_card.append(&audio_settings_btn);
 
@@ -280,36 +252,24 @@ pub fn show_control_center_popover(app: &Application) {
         .spacing(6)
         .css_classes(["cc-tile"])
         .build();
-    let initial_mpris = crate::core::get_mpris_controller().get_cached_mpris_state();
-    let (init_mpris_title, init_mpris_artist, init_mpris_btn) = match &initial_mpris {
-        Some(m) => (m.title.clone(), m.artist.clone(), if m.status.contains("Playing") { "⏸" } else { "▶" }),
-        None => ("Nessun media in riproduzione".to_string(), "-".to_string(), "▶"),
-    };
-    let mpris_title = Label::builder().label(&init_mpris_title).css_classes(["cc-label-main"]).halign(Align::Start).hexpand(true).ellipsize(gtk4::pango::EllipsizeMode::End).build();
-    let mpris_artist = Label::builder().label(&init_mpris_artist).css_classes(["cc-label-sub"]).halign(Align::Start).hexpand(true).ellipsize(gtk4::pango::EllipsizeMode::End).build();
+    
+    let play_btn_label = if initial.is_playing { "⏸" } else { "▶" };
+    let mpris_title = Label::builder().label(&initial.mpris_title).css_classes(["cc-label-main"]).halign(Align::Start).hexpand(true).ellipsize(gtk4::pango::EllipsizeMode::End).build();
+    let mpris_artist = Label::builder().label(&initial.mpris_artist).css_classes(["cc-label-sub"]).halign(Align::Start).hexpand(true).ellipsize(gtk4::pango::EllipsizeMode::End).build();
     let mpris_ctrl_box = GtkBox::builder().orientation(Orientation::Horizontal).spacing(12).halign(Align::Center).build();
     let prev_btn = Button::builder().label("⏮").css_classes(["cc-quick-btn"]).build();
-    let play_btn = Button::builder().label(init_mpris_btn).css_classes(["cc-quick-btn"]).build();
+    let play_btn = Button::builder().label(play_btn_label).css_classes(["cc-quick-btn"]).build();
     let next_btn = Button::builder().label("⏭").css_classes(["cc-quick-btn"]).build();
     
-    prev_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
-        glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::get_mpris_controller();
-            let _ = ctrl.player_command("previous").await;
-        });
-    }));
-    play_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
-        glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::get_mpris_controller();
-            let _ = ctrl.player_command("play-pause").await;
-        });
-    }));
-    next_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
-        glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::get_mpris_controller();
-            let _ = ctrl.player_command("next").await;
-        });
-    }));
+    prev_btn.connect_clicked(move |_| {
+        ControlCenterViewModel::execute_intent(ControlCenterIntent::MediaPrevious);
+    });
+    play_btn.connect_clicked(move |_| {
+        ControlCenterViewModel::execute_intent(ControlCenterIntent::MediaPlayPause);
+    });
+    next_btn.connect_clicked(move |_| {
+        ControlCenterViewModel::execute_intent(ControlCenterIntent::MediaNext);
+    });
 
     mpris_ctrl_box.append(&prev_btn);
     mpris_ctrl_box.append(&play_btn);
@@ -332,10 +292,9 @@ pub fn show_control_center_popover(app: &Application) {
     dark_btn.set_child(Some(&build_quick_toggle_content("☾", "Scuro")));
     crate::core::attach_voiceover_hover(&dark_btn, "Attiva o disattiva la modalità scura");
 
-    dark_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
-        let settings = gtk4::gio::Settings::new("org.gnome.desktop.interface");
-        let _ = settings.set_string("color-scheme", "prefer-dark");
-    }));
+    dark_btn.connect_clicked(move |_| {
+        ControlCenterViewModel::execute_intent(ControlCenterIntent::SetDarkMode);
+    });
 
     let standby_btn = Button::builder()
         .css_classes(["cc-quick-btn"])
@@ -343,15 +302,10 @@ pub fn show_control_center_popover(app: &Application) {
     standby_btn.set_child(Some(&build_quick_toggle_content("🖥", "Standby")));
     crate::core::attach_voiceover_hover(&standby_btn, "Sospendi il computer");
 
-    standby_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
+    standby_btn.connect_clicked(glib::clone!(@weak pop => move |_| {
         pop.close();
-        glib::MainContext::default().spawn_local(async move {
-            ermete_niri_ipc::async_client::power_off_monitors().await;
-            let ctrl = crate::core::get_power_controller();
-            let _ = ctrl.suspend().await;
-        });
+        ControlCenterViewModel::execute_intent(ControlCenterIntent::TriggerStandby);
     }));
-
 
     let mixer_btn = Button::builder()
         .css_classes(["cc-quick-btn"])
@@ -361,7 +315,7 @@ pub fn show_control_center_popover(app: &Application) {
 
     mixer_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
         pop.close();
-        show_audio_mixer_popover(&app);
+        NavigationViewModel::navigate_to(&app, UiPopoverTarget::AudioMixer);
     }));
 
     let term_btn = Button::builder()
@@ -370,9 +324,9 @@ pub fn show_control_center_popover(app: &Application) {
     term_btn.set_child(Some(&build_quick_toggle_content("", "Shell")));
     crate::core::attach_voiceover_hover(&term_btn, "Apri un terminale");
 
-    term_btn.connect_clicked(glib::clone!(@weak pop, @weak app => move |_| {
+    term_btn.connect_clicked(glib::clone!(@weak pop => move |_| {
         pop.close();
-        let _ = Command::new("foot").spawn();
+        ControlCenterViewModel::execute_intent(ControlCenterIntent::LaunchTerminal);
     }));
 
     bottom_grid.append(&dark_btn);
@@ -387,7 +341,7 @@ pub fn show_control_center_popover(app: &Application) {
     card.append(&mpris_card);
     card.append(&bottom_grid);
 
-    // 100% PASSIVE REACTIVE SUBSCRIPTION (Zero active polling, Zero blocking calls)
+    // REACTIVE BINDINGS TO VIEWMODEL STATE (View passively observes ViewModel)
     let bright_slider_clone = bright_slider.clone();
     let audio_slider_clone = audio_slider.clone();
     let mpris_t = mpris_title.clone();
@@ -396,72 +350,38 @@ pub fn show_control_center_popover(app: &Application) {
     let wifi_btn_clone = wifi_btn.clone();
     let bt_btn_clone = bt_btn.clone();
 
-    let wifi_btn_c = wifi_btn_clone.clone();
-    let bt_btn_c = bt_btn_clone.clone();
-    let mut net_rx = crate::ipc::system_proxies::get_net_bus().subscribe();
-    glib::MainContext::default().spawn_local(async move {
-        while let Ok(event) = net_rx.recv().await {
-            match event {
-                crate::ipc::types::NetEvent::NetworkUpdated(_) | crate::ipc::types::NetEvent::WifiToggled(_) => {
-                    let (net_icon, net_title, net_sub) = crate::core::get_network_controller().get_cached_network_status();
-                    let net_connected = net_sub != "Disattivato" && net_sub != "Non connesso" && net_sub != "Off" && net_sub != "Disconnected";
-                    if net_connected {
-                        wifi_btn_c.add_css_class("cc-btn-active");
-                    } else {
-                        wifi_btn_c.remove_css_class("cc-btn-active");
-                    }
-                    wifi_btn_c.set_child(Some(&build_cc_row_content("cc-circle-blue", &net_icon, &net_title, &net_sub)));
-                }
-                crate::ipc::types::NetEvent::BluetoothToggled(enabled) => {
-                    if enabled {
-                        bt_btn_c.add_css_class("cc-btn-active");
-                    } else {
-                        bt_btn_c.remove_css_class("cc-btn-active");
-                    }
-                }
-            }
+    ControlCenterViewModel::subscribe_network(move |icon, title, sub, connected, bt_enabled| {
+        if connected {
+            wifi_btn_clone.add_css_class("cc-btn-active");
+        } else {
+            wifi_btn_clone.remove_css_class("cc-btn-active");
         }
-    });
-
-    let mut hw_rx = crate::ipc::system_proxies::get_hardware_bus().subscribe();
-    glib::MainContext::default().spawn_local(async move {
-        while let Ok(event) = hw_rx.recv().await {
-            let crate::ipc::types::HardwareEvent::BrightnessChanged(val) = event;
-            if (bright_slider_clone.value() - val * 100.0).abs() > 1.5 {
-                bright_slider_clone.set_value(val * 100.0);
-            }
-        }
-    });
-
-    let mut audio_rx = crate::ipc::system_proxies::get_audio_bus().subscribe();
-    glib::MainContext::default().spawn_local(async move {
-        while let Ok(event) = audio_rx.recv().await {
-            if let crate::ipc::types::AudioEvent::VolumeChanged(val) = event {
-                if (audio_slider_clone.value() - val * 100.0).abs() > 1.5 {
-                    audio_slider_clone.set_value(val * 100.0);
-                }
-            }
-        }
-    });
-
-    let mut mpris_rx = crate::ipc::system_proxies::get_mpris_bus().subscribe();
-    glib::MainContext::default().spawn_local(async move {
-        while let Ok(event) = mpris_rx.recv().await {
-            let crate::ipc::types::MprisEvent::MprisUpdated(mpris_opt) = event;
-            if let Some(mpris) = mpris_opt {
-                mpris_t.set_label(&mpris.title);
-                mpris_a.set_label(&mpris.artist);
-                if mpris.status.contains("Playing") {
-                    mpris_p.set_label("⏸");
-                } else {
-                    mpris_p.set_label("▶");
-                }
+        wifi_btn_clone.set_child(Some(&build_cc_row_content("cc-circle-blue", &icon, &title, &sub)));
+        if let Some(enabled) = bt_enabled {
+            if enabled {
+                bt_btn_clone.add_css_class("cc-btn-active");
             } else {
-                mpris_t.set_label("Nessun media in riproduzione");
-                mpris_a.set_label("-");
-                mpris_p.set_label("▶");
+                bt_btn_clone.remove_css_class("cc-btn-active");
             }
         }
+    });
+
+    ControlCenterViewModel::subscribe_hardware(move |val| {
+        if (bright_slider_clone.value() - val * 100.0).abs() > 1.5 {
+            bright_slider_clone.set_value(val * 100.0);
+        }
+    });
+
+    ControlCenterViewModel::subscribe_audio(move |val| {
+        if (audio_slider_clone.value() - val * 100.0).abs() > 1.5 {
+            audio_slider_clone.set_value(val * 100.0);
+        }
+    });
+
+    ControlCenterViewModel::subscribe_mpris(move |title, artist, is_playing| {
+        mpris_t.set_label(&title);
+        mpris_a.set_label(&artist);
+        mpris_p.set_label(if is_playing { "⏸" } else { "▶" });
     });
 
     let key_ctrl = gtk4::EventControllerKey::new();
@@ -475,7 +395,6 @@ pub fn show_control_center_popover(app: &Application) {
         }
     });
     pop.add_controller(key_ctrl);
-
 
     pop.set_child(Some(&card));
     pop.present();

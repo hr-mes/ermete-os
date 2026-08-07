@@ -1,4 +1,5 @@
 use crate::ui::popup_manager::setup_popup_autoclose;
+use crate::ui::viewmodel::{AudioViewModel, AudioIntent};
 use gtk4::prelude::*;
 use gtk4::{Align, Application, ApplicationWindow, Box as GtkBox, Button, Label, Orientation, Scale};
 use gtk4_layer_shell::{Edge, Layer, LayerShell};
@@ -54,10 +55,7 @@ pub fn show_audio_mixer_popover(app: &Application) {
     let out_lbl = Label::builder().label("🔊  Uscita Audio (Speaker/Cuffie)").css_classes(["cc-label-main"]).hexpand(true).halign(Align::Start).build();
     let mute_out_btn = Button::builder().label("Muto").css_classes(["cc-quick-btn"]).build();
     mute_out_btn.connect_clicked(move |_| {
-        glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::get_audio_controller();
-            let _ = ctrl.toggle_mute().await;
-        });
+        AudioViewModel::execute_intent(AudioIntent::ToggleOutputMute);
     });
     out_header.append(&out_lbl);
     out_header.append(&mute_out_btn);
@@ -68,10 +66,7 @@ pub fn show_audio_mixer_popover(app: &Application) {
     out_slider.set_valign(Align::Center);
     out_slider.connect_value_changed(move |s| {
         let val = s.value() / 100.0;
-        glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::get_audio_controller();
-            let _ = ctrl.set_volume(val).await;
-        });
+        AudioViewModel::execute_intent(AudioIntent::SetOutputVolume(val));
     });
     out_card.append(&out_header);
     out_card.append(&out_slider);
@@ -86,10 +81,7 @@ pub fn show_audio_mixer_popover(app: &Application) {
     let in_lbl = Label::builder().label("🎙  Ingresso Audio (Microfono)").css_classes(["cc-label-main"]).hexpand(true).halign(Align::Start).build();
     let mute_in_btn = Button::builder().label("Muto").css_classes(["cc-quick-btn"]).build();
     mute_in_btn.connect_clicked(move |_| {
-        glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::get_audio_controller();
-            let _ = ctrl.toggle_source_mute().await;
-        });
+        AudioViewModel::execute_intent(AudioIntent::ToggleInputMute);
     });
     in_header.append(&in_lbl);
     in_header.append(&mute_in_btn);
@@ -100,10 +92,7 @@ pub fn show_audio_mixer_popover(app: &Application) {
     in_slider.set_valign(Align::Center);
     in_slider.connect_value_changed(move |s| {
         let val = s.value() / 100.0;
-        glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::get_audio_controller();
-            let _ = ctrl.set_source_volume(val).await;
-        });
+        AudioViewModel::execute_intent(AudioIntent::SetInputVolume(val));
     });
     in_card.append(&in_header);
     in_card.append(&in_slider);
@@ -129,7 +118,7 @@ pub fn show_audio_mixer_popover(app: &Application) {
     let pop_audio_s = pop.clone();
     settings_audio_btn.connect_clicked(move |_| {
         pop_audio_s.close();
-        let _ = gtk4::glib::spawn_command_line_async(format!("ermete-settings-rs --page {}", "audio"));
+        AudioViewModel::execute_intent(AudioIntent::LaunchAudioSettings);
     });
     footer_box.append(&settings_audio_btn);
     footer_box.append(&close_btn);

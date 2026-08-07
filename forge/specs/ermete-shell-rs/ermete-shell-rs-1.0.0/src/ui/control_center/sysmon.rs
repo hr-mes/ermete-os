@@ -1,4 +1,5 @@
 use crate::ui::popup_manager::setup_popup_autoclose;
+use crate::ui::viewmodel::SysMonViewModel;
 use gtk4::prelude::*;
 use gtk4::{Align, Application, ApplicationWindow, Box as GtkBox, Button, Label, Orientation, ProgressBar};
 use gtk4_layer_shell::{Edge, Layer, LayerShell};
@@ -19,6 +20,8 @@ pub fn show_system_monitor_modal(app: &Application) {
     pop.set_margin(Edge::Top, 34);
     pop.set_margin(Edge::Right, 50);
 
+    let initial = SysMonViewModel::get_initial_state();
+
     let card = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(16)
@@ -35,7 +38,7 @@ pub fn show_system_monitor_modal(app: &Application) {
         .halign(Align::Start)
         .build();
 
-    // CPU Metric Card (Passive initial UI)
+    // CPU Metric Card (Passive UI bound to ViewModel)
     let cpu_card = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(8)
@@ -51,7 +54,7 @@ pub fn show_system_monitor_modal(app: &Application) {
         .halign(Align::Start)
         .build();
     let cpu_desc = Label::builder()
-        .label("Processore\nCarico: In attesa...")
+        .label(&initial.cpu_text)
         .css_classes(["cc-label-sub"])
         .halign(Align::Start)
         .hexpand(true)
@@ -59,13 +62,13 @@ pub fn show_system_monitor_modal(app: &Application) {
     cpu_top.append(&cpu_val_lbl);
     cpu_top.append(&cpu_desc);
     let cpu_bar = ProgressBar::builder()
-        .fraction(0.0)
+        .fraction(initial.cpu_fraction)
         .css_classes(["cc-progress-blue"])
         .build();
     cpu_card.append(&cpu_top);
     cpu_card.append(&cpu_bar);
 
-    // RAM Metric Card (Passive initial UI)
+    // RAM Metric Card (Passive UI bound to ViewModel)
     let ram_card = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(8)
@@ -81,7 +84,7 @@ pub fn show_system_monitor_modal(app: &Application) {
         .halign(Align::Start)
         .build();
     let ram_desc = Label::builder()
-        .label("Memoria RAM\nIn attesa...")
+        .label(&initial.ram_text)
         .css_classes(["cc-label-sub"])
         .halign(Align::Start)
         .hexpand(true)
@@ -89,14 +92,14 @@ pub fn show_system_monitor_modal(app: &Application) {
     ram_top.append(&ram_val_lbl);
     ram_top.append(&ram_desc);
     let ram_bar = ProgressBar::builder()
-        .fraction(0.0)
+        .fraction(initial.ram_fraction)
         .css_classes(["cc-progress-indigo"])
         .build();
     ram_card.append(&ram_top);
     ram_card.append(&ram_bar);
 
     let sys_info = Label::builder()
-        .label("Wayland / Niri Compositor — Forgia Atomica RPM")
+        .label(&initial.info_text)
         .css_classes(["cc-label-sub"])
         .halign(Align::Start)
         .build();

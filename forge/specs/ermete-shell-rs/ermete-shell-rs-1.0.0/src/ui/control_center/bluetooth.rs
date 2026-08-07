@@ -1,4 +1,5 @@
 use crate::ui::popup_manager::setup_popup_autoclose;
+use crate::ui::viewmodel::{BluetoothViewModel, BluetoothIntent};
 use gtk4::prelude::*;
 use gtk4::{Align, Application, ApplicationWindow, Box as GtkBox, Button, Label, Orientation, Switch};
 use gtk4_layer_shell::{Edge, Layer, LayerShell};
@@ -39,18 +40,13 @@ pub fn show_bluetooth_popover(app: &Application) {
     let header_lbl = Label::builder().label("Bluetooth").css_classes(["cc-label-main"]).hexpand(true).halign(Align::Start).build();
     let bt_sw = Switch::builder().active(true).valign(Align::Center).build();
     let bt_sw_clone = bt_sw.clone();
-    glib::MainContext::default().spawn_local(async move {
-        let ctrl = crate::core::get_bluetooth_controller();
-        if let Ok(enabled) = ctrl.is_bluetooth_enabled().await {
-            bt_sw_clone.set_active(enabled);
-        }
+    
+    BluetoothViewModel::fetch_initial_state(move |enabled| {
+        bt_sw_clone.set_active(enabled);
     });
+
     bt_sw.connect_state_set(move |_, state| {
-        glib::MainContext::default().spawn_local(async move {
-            let ctrl = crate::core::get_bluetooth_controller();
-            let _ = ctrl.toggle_bluetooth().await;
-            let _ = ctrl.set_bluetooth_powered(state).await;
-        });
+        BluetoothViewModel::execute_intent(BluetoothIntent::TogglePowered(state));
         glib::Propagation::Proceed
     });
     header_card.append(&header_icon);
@@ -63,42 +59,39 @@ pub fn show_bluetooth_popover(app: &Application) {
         .build();
 
     let list_box_clone = list_box.clone();
-    glib::MainContext::default().spawn_local(async move {
-        let ctrl = crate::core::get_bluetooth_controller();
-        if let Ok(devices) = ctrl.list_bluetooth_devices().await {
-            for dev in devices.iter().take(8) {
-                let item_row = GtkBox::builder()
-                    .orientation(Orientation::Horizontal)
-                    .spacing(10)
-                    .css_classes(["pro-applet-card"])
-                    .build();
+    BluetoothViewModel::fetch_devices(move |devices| {
+        for dev in devices.iter().take(8) {
+            let item_row = GtkBox::builder()
+                .orientation(Orientation::Horizontal)
+                .spacing(10)
+                .css_classes(["pro-applet-card"])
+                .build();
 
-                let icon_lbl = Label::builder().label("").build();
-                let texts = GtkBox::builder().orientation(Orientation::Vertical).hexpand(true).build();
-                let name_lbl = Label::builder()
-                    .label(&dev.name)
-                    .css_classes(["cc-label-main"])
-                    .halign(Align::Start)
-                    .build();
-                let sub_lbl = Label::builder()
-                    .label(if dev.connected { "Connesso" } else { "Dispositivo Rilevato" })
-                    .css_classes(["cc-label-sub"])
-                    .halign(Align::Start)
-                    .build();
-                texts.append(&name_lbl);
-                texts.append(&sub_lbl);
+            let icon_lbl = Label::builder().label("").build();
+            let texts = GtkBox::builder().orientation(Orientation::Vertical).hexpand(true).build();
+            let name_lbl = Label::builder()
+                .label(&dev.name)
+                .css_classes(["cc-label-main"])
+                .halign(Align::Start)
+                .build();
+            let sub_lbl = Label::builder()
+                .label(if dev.connected { "Connesso" } else { "Dispositivo Rilevato" })
+                .css_classes(["cc-label-sub"])
+                .halign(Align::Start)
+                .build();
+            texts.append(&name_lbl);
+            texts.append(&sub_lbl);
 
-                item_row.append(&icon_lbl);
-                item_row.append(&texts);
-                list_box_clone.append(&item_row);
-            }
-            if devices.is_empty() {
-                let no_bt = Label::builder()
-                    .label("Nessun dispositivo accoppiato")
-                    .css_classes(["cc-label-sub"])
-                    .build();
-                list_box_clone.append(&no_bt);
-            }
+            item_row.append(&icon_lbl);
+            item_row.append(&texts);
+            list_box_clone.append(&item_row);
+        }
+        if devices.is_empty() {
+            let no_bt = Label::builder()
+                .label("Nessun dispositivo accoppiato")
+                .css_classes(["cc-label-sub"])
+                .build();
+            list_box_clone.append(&no_bt);
         }
     });
 
@@ -123,7 +116,7 @@ pub fn show_bluetooth_popover(app: &Application) {
     let pop_bt_s = pop.clone();
     settings_bt_btn.connect_clicked(move |_| {
         pop_bt_s.close();
-        let _ = gtk4::glib::spawn_command_line_async(format!("ermete-settings-rs --page {}", "bluetooth"));
+        BluetoothViewModel::execute_intent(BluetoothIntent::LaunchBluetoothSettings);
     });
     footer_box.append(&settings_bt_btn);
     footer_box.append(&close_btn);
