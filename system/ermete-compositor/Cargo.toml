@@ -1,0 +1,27 @@
+[package]
+name = "ermete-compositor"
+version = "0.1.0"
+edition = "2021"
+description = "Ermete OS Native AI-Driven Wayland Compositor (Smithay DRM/KMS & AI-Tiling IPC Engine)"
+authors = ["ermete-compositor-architect"]
+
+[dependencies]
+tokio = { version = "1.37", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+thiserror = "1.0"
+nix = { version = "0.28", features = ["fs", "process", "signal"] }
+smithay = { version = "0.3.0", default-features = false, features = [
+    "backend_drm",
+    "backend_udev",
+    "backend_egl",
+    "backend_gbm",
+    "backend_libinput",
+    "backend_session",
+    "renderer_gl",
+    "wayland_frontend"
+] }
+wayland-server = "0.31"
