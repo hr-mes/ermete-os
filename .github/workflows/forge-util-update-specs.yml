@@ -17,16 +17,13 @@ defaults:
 jobs:
   update-specs:
     runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/hr-mes/ermete-os-builder:latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.PAT_TOKEN || github.token }}
-
-      - name: Install Skopeo and JQ Tooling
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq skopeo jq curl
 
       - name: "Autonomous Janitor: Check & Update Specs with OCI Merkle Verification"
         env:

@@ -678,7 +678,6 @@ jobs:
             bash <<'EOF'
               set -euo pipefail
               curl -Lo /etc/yum.repos.d/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo
-              dnf install -y buildah jq
               export BUILDAH_ISOLATION=chroot
               buildah from ghcr.io/hr-mes/ermete-os-kernel:latest > ctr_id
               ctr=$(cat ctr_id)
@@ -713,7 +712,6 @@ jobs:
             ghcr.io/hr-mes/ermete-os-builder:latest \
             bash <<'EOF'
               curl -Lo /etc/yum.repos.d/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo
-              dnf install -y buildah jq
               export BUILDAH_ISOLATION=chroot
               ctr=$(buildah from ghcr.io/hr-mes/ermete-os-kernel:latest)
               mnt=$(buildah mount $ctr)
@@ -723,7 +721,7 @@ jobs:
               REAL_KERNEL_VER=$(ls /usr/src/kernels/ | grep -v "debug" | head -n 1)
               if [ -z "$REAL_KERNEL_VER" ]; then exit 1; fi
 
-              dnf install -y akmods akmod-nvidia gcc gcc-c++ make elfutils-libelf-devel openssl-devel rpm-build rpmdevtools clang lld llvm dwarves
+              dnf install -y akmods akmod-nvidia
               mkdir -p /lib/modules/$REAL_KERNEL_VER
               ln -sf /usr/src/kernels/$REAL_KERNEL_VER /lib/modules/$REAL_KERNEL_VER/build
               mkdir -p /etc/pki/akmods/certs /etc/pki/akmods/private
@@ -820,8 +818,6 @@ jobs:
             echo 'ignore_chown_errors = "true"' >> /var/tmp/storage.conf
             export CONTAINERS_STORAGE_CONF=/var/tmp/storage.conf
             
-            dnf install -y createrepo_c buildah skopeo jq rpm-sign gnupg2
-            
             if [ -n "${{ secrets.RPM_GPG_KEY }}" ]; then
               echo "::add-mask::${{ secrets.RPM_GPG_PASSPHRASE }}"
               echo "${{ secrets.RPM_GPG_KEY }}" | gpg --import
@@ -877,7 +873,6 @@ jobs:
             wait
   
             echo "🌐 Deploying DNF & Flatpak channels to GitHub Pages..."
-            dnf install -y ipxe-bootimgs git
             git clone --depth 1 -b gh-pages "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" /workspace/pages_repo || {
               mkdir -p /workspace/pages_repo
               cd /workspace/pages_repo

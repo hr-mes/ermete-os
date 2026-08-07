@@ -15,13 +15,20 @@ jobs:
     runs-on: ubuntu-24.04
     container:
       image: ghcr.io/hr-mes/ermete-os-builder:latest
+    env:
+      RUSTC_WRAPPER: sccache
+      SCCACHE_DIR: /tmp/sccache
     steps:
-      - name: Install System Dependencies
-        run: dnf install -y cairo-devel pango-devel gdk-pixbuf2-devel gtk4-devel glib2-devel gtk4-layer-shell-devel
-
       - name: Checkout Code
-        uses: actions/checkout@v4        with:
-          components: clippy, rustfmt
+        uses: actions/checkout@v4
+
+      - name: ⚡ Restore sccache Cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/sccache
+          key: sccache-security-audit-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            sccache-security-audit-${{ runner.os }}-
 
       - name: Extreme Rust Cache (LLVM & Dependencies)
         uses: Swatinem/rust-cache@v2
@@ -46,6 +53,11 @@ jobs:
   kani-verification:
     name: 🔬 Kani Formal Verification (${{ matrix.module }} - Shard ${{ matrix.shard }})
     runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/hr-mes/ermete-os-builder:latest
+    env:
+      RUSTC_WRAPPER: sccache
+      SCCACHE_DIR: /tmp/sccache
     strategy:
       fail-fast: false
       max-parallel: 20
@@ -118,18 +130,20 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: ⚡ Restore sccache Cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/sccache
+          key: sccache-kani-${{ matrix.module }}-${{ matrix.shard }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            sccache-kani-${{ matrix.module }}-${{ matrix.shard }}-
+
       - name: Extreme Rust Cache (Kani Proof Artifacts)
         uses: Swatinem/rust-cache@v2
         with:
           shared-key: "kani-${{ matrix.module }}-${{ matrix.shard }}"
           cache-on-failure: "true"
-
-      - name: Install System Dependencies
-        run: sudo apt-get update && sudo apt-get install -y libglib2.0-dev libgtk-4-dev
-
-      - name: Install AWS Kani Verifier
-        run: |
-          cargo kani setup || (cargo install --locked kani-verifier && cargo kani setup)
 
       - name: Run Mathematical Proofs (${{ matrix.module }})
         run: |
@@ -152,6 +166,11 @@ jobs:
   bare-metal-audit:
     name: ⚡ eBPF & Bare-Metal Build Audit (${{ matrix.target_name }})
     runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/hr-mes/ermete-os-builder:latest
+    env:
+      RUSTC_WRAPPER: sccache
+      SCCACHE_DIR: /tmp/sccache
     strategy:
       fail-fast: false
       max-parallel: 20
@@ -175,21 +194,21 @@ jobs:
             cmd: cargo build --release
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4        with:
-          components: rust-src
+        uses: actions/checkout@v4
+
+      - name: ⚡ Restore sccache Cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/sccache
+          key: sccache-baremetal-${{ matrix.target_name }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            sccache-baremetal-${{ matrix.target_name }}-
 
       - name: Extreme Rust Cache (Bare Metal & eBPF)
         uses: Swatinem/rust-cache@v2
         with:
           shared-key: "bare-metal-${{ matrix.target_name }}"
           cache-on-failure: "true"
-
-      - name: Install System Dependencies
-        run: sudo apt-get update && sudo apt-get install -y libglib2.0-dev libgtk-4-dev
-
-      - name: Install bpf-linker
-        if: matrix.component == 'ebpf'
-        run: cargo install bpf-linker || true
 
       - name: Compile Component (${{ matrix.target_name }})
         run: |

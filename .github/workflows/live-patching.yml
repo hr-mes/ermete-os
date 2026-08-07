@@ -11,14 +11,10 @@ jobs:
   build-livepatch:
     runs-on: ubuntu-latest
     container:
-      image: fedora:40
+      image: ghcr.io/hr-mes/ermete-os-builder:latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          dnf install -y kpatch-build kernel-devel elfutils-libelf-devel gcc make
 
       - name: Build Live Patch
         run: |
