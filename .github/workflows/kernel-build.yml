@@ -106,10 +106,7 @@ jobs:
           cp ~/rpmbuild/RPMS/x86_64/*.rpm /forge/RPMS_OUT/
         "
         
-    - name: 🧹 Cleanup Isolator
-      if: always()
-      run: |
-        podman rm -f chimera-builder || true
+
           
     - name: Upload Binary RPMs
       uses: actions/upload-artifact@v4
@@ -120,40 +117,46 @@ jobs:
         
     - name: Publish Kernel Micro-Container OCI
       run: |
-        export STORAGE_DRIVER=overlay
-        export BUILDAH_ISOLATION=chroot
-        buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
-        ctr=$(buildah from scratch)
-        buildah copy $ctr RPMS_OUT/*.rpm /
-        IMAGE_LOWER=$(echo "ghcr.io/hr-mes/ermete-os-kernel:latest" | tr '[:upper:]' '[:lower:]')
-        buildah commit --omit-timestamp $ctr $IMAGE_LOWER
-        buildah push --digestfile kernel_digest.txt $IMAGE_LOWER
+        podman exec chimera-builder bash -c "
+          export STORAGE_DRIVER=overlay
+          export BUILDAH_ISOLATION=chroot
+          buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
+          ctr=\$(buildah from scratch)
+          buildah copy \$ctr /forge/RPMS_OUT/*.rpm /
+          IMAGE_LOWER=\$(echo 'ghcr.io/hr-mes/ermete-os-kernel:latest' | tr '[:upper:]' '[:lower:]')
+          buildah commit --omit-timestamp \$ctr \$IMAGE_LOWER
+          buildah push --digestfile kernel_digest.txt \$IMAGE_LOWER
+          cat kernel_digest.txt > /forge/kernel_digest.txt
+        "
         echo "KERNEL_DIGEST=$(cat kernel_digest.txt)" >> $GITHUB_ENV
 
-    - name: Install Cosign
-      uses: sigstore/cosign-installer@v3
-
     - name: Generate Kernel SBOM (Syft)
-      uses: anchore/sbom-action@v0
-      with:
-        image: "ghcr.io/hr-mes/ermete-os-kernel@${{ env.KERNEL_DIGEST }}"
-        format: "spdx-json"
-        output-file: "kernel-sbom.spdx.json"
-        registry-username: ${{ github.actor }}
-        registry-password: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        podman exec chimera-builder bash -c "
+          syft ghcr.io/hr-mes/ermete-os-kernel@${{ env.KERNEL_DIGEST }} -o spdx-json > /forge/kernel-sbom.spdx.json
+        "
 
     - name: Sign & Attest Kernel Micro-Container OCI
       env:
         COSIGN_EXPERIMENTAL: 1
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        cosign login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-        IMAGE_REF="ghcr.io/hr-mes/ermete-os-kernel@${{ env.KERNEL_DIGEST }}"
-        cosign sign -y "${IMAGE_REF}"
-        cosign attest -y --type spdxjson --predicate kernel-sbom.spdx.json "${IMAGE_REF}"
+        podman exec -e COSIGN_EXPERIMENTAL=1 -e GITHUB_TOKEN=${GITHUB_TOKEN} chimera-builder bash -c "
+          cosign login ghcr.io -u ${{ github.actor }} -p \${GITHUB_TOKEN}
+          IMAGE_REF='ghcr.io/hr-mes/ermete-os-kernel@${{ env.KERNEL_DIGEST }}'
+          cosign sign -y \${IMAGE_REF}
+          cosign attest -y --type spdxjson --predicate /forge/kernel-sbom.spdx.json \${IMAGE_REF}
+        "
 
     - name: Verify Kernel Image Signature & Attestation
       run: |
-        IMAGE_REF="ghcr.io/hr-mes/ermete-os-kernel@${{ env.KERNEL_DIGEST }}"
-        cosign verify --certificate-identity-regexp "^https://github.com/${{ github.repository_owner }}/" --certificate-oidc-issuer "https://token.actions.githubusercontent.com" "${IMAGE_REF}"
-        cosign verify-attestation --type spdxjson --certificate-identity-regexp "^https://github.com/${{ github.repository_owner }}/" --certificate-oidc-issuer "https://token.actions.githubusercontent.com" "${IMAGE_REF}"
+        podman exec -e COSIGN_EXPERIMENTAL=1 chimera-builder bash -c "
+          IMAGE_REF='ghcr.io/hr-mes/ermete-os-kernel@${{ env.KERNEL_DIGEST }}'
+          cosign verify --certificate-identity-regexp '^https://github.com/${{ github.repository_owner }}/' --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \${IMAGE_REF}
+          cosign verify-attestation --type spdxjson --certificate-identity-regexp '^https://github.com/${{ github.repository_owner }}/' --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \${IMAGE_REF}
+        "
+
+    - name: 🧹 Cleanup Isolator
+      if: always()
+      run: |
+        podman rm -f chimera-builder || true
