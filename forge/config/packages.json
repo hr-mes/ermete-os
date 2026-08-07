@@ -135,8 +135,7 @@
     "ermete-compositor",
     "ermete-audio-bus",
     "ermete-telemetry",
-    "ermete-net-unikernel",
-    "just"
+    "ermete-net-unikernel"
   ],
   "cachyos_addons": [],
   "upstream_core": [

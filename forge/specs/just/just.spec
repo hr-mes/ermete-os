@@ -1,0 +1,42 @@
+Name:           just
+%global debug_package %{nil}
+Version:        1.39.0
+Release:        1%{?dist}
+Summary:        Just a command runner - handy way to save and run project-specific commands
+License:        CC0-1.0
+URL:            https://github.com/casey/just
+Source0:        https://github.com/casey/just/archive/refs/tags/v%{version}.tar.gz
+
+BuildRequires:  cargo
+BuildRequires:  rust
+BuildRequires:  mold
+
+%description
+`just` is a handy way to save and run project-specific commands.
+Compiled natively in Ermete Forge with extreme x86-64-v3 optimizations.
+
+%prep
+%autosetup -n just-%{version}
+
+# Disable GCC LTO as it conflicts with Rust LLVM LTO and mold
+%define _lto_cflags %{nil}
+
+%build
+%set_build_flags
+export CARGO_PROFILE_RELEASE_LTO="thin"
+export CFLAGS="$(echo $CFLAGS | sed 's/-flto=auto//g')"
+export CXXFLAGS="$(echo $CXXFLAGS | sed 's/-flto=auto//g')"
+export LDFLAGS="$(echo $LDFLAGS | sed 's/-flto=auto//g')"
+cargo generate-lockfile
+cargo build --release
+
+%install
+rm -rf %{buildroot}
+install -Dm755 target/release/just %{buildroot}/usr/bin/just
+
+%files
+/usr/bin/just
+
+%changelog
+* Sat Aug 08 2026 Ermete Forge <forge@ermete.os> - 1.39.0-1
+- Native Rust source build integrated into Ermete Forge Tier0

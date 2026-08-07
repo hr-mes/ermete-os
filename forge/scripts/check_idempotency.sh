@@ -30,6 +30,8 @@ if [[ "$PACKAGE" == "builder" ]]; then
   DIR="builder"
 elif [[ -d "specs/ermete-${PACKAGE}" ]]; then
   DIR="specs/ermete-${PACKAGE}"
+elif [[ -d "specs/${PACKAGE}" ]]; then
+  DIR="specs/${PACKAGE}"
 else
   DIR=""
 fi
