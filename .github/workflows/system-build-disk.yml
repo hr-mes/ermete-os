@@ -70,7 +70,6 @@ jobs:
 
       - name: 🏗️ Build disk images
         id: build
-        working-directory: system
         uses: osbuild/bootc-image-builder-action@v0.0.2
         with:
           builder-image: ${{ env.BIB_IMAGE }}

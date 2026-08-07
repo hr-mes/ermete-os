@@ -204,7 +204,7 @@ jobs:
               rpmbuild -bb specs/ermete-${{ matrix.package }}/*.spec
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
-EOF
+          EOF
           else
             echo "🌐 Compiling Upstream Package: ${{ matrix.package }}"
             podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
@@ -222,7 +222,7 @@ EOF
               rpmbuild -bb ~/rpmbuild/SPECS/*.spec
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
-EOF
+          EOF
           fi
 
       - name: Publish Micro-Container OCI & Update Distributed Redis Cache
@@ -337,7 +337,7 @@ EOF
               rpmbuild -bb specs/ermete-${{ matrix.package }}/*.spec
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
-EOF
+          EOF
           else
             podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
               -v ${{ github.workspace }}:/workspace \
@@ -353,7 +353,7 @@ EOF
               rpmbuild -bb ~/rpmbuild/SPECS/*.spec
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
-EOF
+          EOF
           fi
 
       - name: Publish Micro-Container OCI & Update Distributed Redis Cache
@@ -431,7 +431,7 @@ EOF
               rpmbuild -bb specs/ermete-${{ matrix.package }}/*.spec
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
-EOF
+          EOF
           else
             podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
               -v ${{ github.workspace }}:/workspace \
@@ -447,7 +447,7 @@ EOF
               rpmbuild -bb ~/rpmbuild/SPECS/*.spec
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
-EOF
+          EOF
           fi
 
       - name: Publish Micro-Container OCI & Update Distributed Redis Cache
@@ -748,7 +748,7 @@ EOF
               git commit -m "🚀 Deploy DNF & Flatpak channels for Ermete OS Rolling Release"
             fi
             git push -f "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" gh-pages
-EOF
+          EOF
       - name: 🧹 Cleanup Workspace Permissions
         if: always()
         run: |
