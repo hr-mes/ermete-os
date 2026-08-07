@@ -54,7 +54,8 @@
     "sysmon-ebpf",
     "osbuild",
     "cargo-tools",
-    "hypervisor-daemon"
+    "hypervisor-daemon",
+    "mesh-bus"
   ],
   "custom_tier0": [
     "base-config",
@@ -81,7 +82,8 @@
     "ide-bootstrap",
     "system-tweaks",
     "niri",
-    "scudo"
+    "scudo",
+    "mesh-bus"
   ],
   "custom_tier2": [
     "bibata",
@@ -126,6 +128,7 @@
     "dbus-tools",
     "distribution-gpg-keys",
     "drm_info",
+    "flatpak",
     "fuse",
     "fwupd",
     "glibc-langpack-en",
@@ -203,5 +206,10 @@
     "wl-mirror",
     "wlr-randr"
   ],
-  "flatpaks": []
+  "flatpaks": [
+    "com.google.Chrome",
+    "org.mozilla.firefox",
+    "com.spotify.Client",
+    "com.visualstudio.code"
+  ]
 }

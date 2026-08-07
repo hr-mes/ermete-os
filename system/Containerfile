@@ -69,9 +69,77 @@ RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier3-repo:latest,sour
         fi; \
     fi
 
+# DECLARATIVE DYNAMIC FLATPAK LAYER & PROVISIONING ENGINE
+COPY forge/config/packages.json /usr/share/ermete/packages.json
+RUN dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs flatpak jq || true
+
+RUN cat << 'EOF' > /usr/libexec/ermete-flatpak-provisioner
+#!/bin/bash
+set -euo pipefail
+
+MANIFEST="/usr/share/ermete/packages.json"
+if [ ! -f "$MANIFEST" ]; then
+    MANIFEST="/etc/ermete/packages.json"
+fi
+
+if [ ! -f "$MANIFEST" ]; then
+    echo "[Ermete Flatpak] No package manifest found at $MANIFEST, skipping."
+    exit 0
+fi
+
+if ! command -v flatpak &>/dev/null; then
+    echo "[Ermete Flatpak] Flatpak binary not found, skipping."
+    exit 0
+fi
+
+echo "[Ermete Flatpak] Configuring Flathub remote..."
+flatpak remote-add --if-not-exists --system flathub https://dl.flathub.org/repo/flathub.flatpakrepo || true
+
+FLATPAKS=$(jq -r '.flatpaks[]?' "$MANIFEST" 2>/dev/null || true)
+
+if [ -z "$FLATPAKS" ]; then
+    echo "[Ermete Flatpak] No flatpaks configured in manifest."
+    exit 0
+fi
+
+for app in $FLATPAKS; do
+    echo "[Ermete Flatpak] Provisioning $app..."
+    if ! flatpak info "$app" &>/dev/null; then
+        flatpak install --system -y --noninteractive flathub "$app" || echo "[Ermete Flatpak] Failed to install $app"
+    else
+        echo "[Ermete Flatpak] $app is already installed."
+    fi
+done
+EOF
+RUN chmod +x /usr/libexec/ermete-flatpak-provisioner
+
+RUN cat << 'EOF' > /usr/lib/systemd/system/ermete-flatpak-provision.service
+[Unit]
+Description=Ermete OS Declarative Dynamic Flatpak Provisioner
+After=network-online.target flatpak-system-helper.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/ermete-flatpak-provisioner
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+RUN flatpak remote-add --if-not-exists --system flathub https://dl.flathub.org/repo/flathub.flatpakrepo || true && \
+    if command -v jq >/dev/null 2>&1; then \
+        FLATPAKS=$(jq -r '.flatpaks[]?' /usr/share/ermete/packages.json 2>/dev/null || true); \
+        for app in $FLATPAKS; do \
+            echo "Installing declarative Flatpak: $app"; \
+            flatpak install --system -y --noninteractive flathub "$app" || true; \
+        done; \
+    fi
+
 # Declarative Systemd presets & sysusers
 RUN authselect enable-feature with-systemd-homed && \
-    systemctl enable tetragon.service systemd-sysext.service systemd-homed.service keylime_agent.service ermete-tpm-rollback-check.service ermete-tpm-rollback-update.service && systemd-sysusers && systemctl preset-all && systemctl --global preset-all
+    systemctl enable tetragon.service systemd-sysext.service systemd-homed.service keylime_agent.service ermete-tpm-rollback-check.service ermete-tpm-rollback-update.service ermete-flatpak-provision.service && systemd-sysusers && systemctl preset-all && systemctl --global preset-all
 
 # Initramfs generation
 RUN QUALIFIED_KERNEL="" && \

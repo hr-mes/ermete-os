@@ -12,6 +12,16 @@ import glob
 import re
 import json
 import hashlib
+from collections import defaultdict, deque
+
+CONFIG_PATH = os.environ.get("CONFIG_PATH", "config/packages.json")
+if not os.path.exists(CONFIG_PATH) and os.path.exists("forge/config/packages.json"):
+    CONFIG_PATH = "forge/config/packages.json"
+
+SPECS_DIR = os.environ.get("SPECS_DIR", "specs")
+if not os.path.exists(SPECS_DIR) and os.path.exists("forge/specs"):
+    SPECS_DIR = "forge/specs"
+
 
 
 def compute_dir_hash(dir_path):
