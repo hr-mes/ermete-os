@@ -1,3 +1,4 @@
+pub mod drm_lease;
 pub mod npu;
 
 use serde::{Deserialize, Serialize};
@@ -57,6 +58,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Ermete AI Daemon starting (NPU & Vulkan GPU Hardware Accelerated - 0% CPU Target)...");
 
     let offloader = Arc::new(HardwareOffloader::new());
+    
+    // Acquire exclusive DRM Lease for AI Offloading
+    if let Err(e) = drm_lease::acquire_drm_lease().await {
+        error!("Failed to acquire DRM Lease: {}. Falling back to normal mode.", e);
+    }
+    
     let hw_info = offloader.get_active_hardware_info();
     info!(
         "Active Hardware Device: backend={:?}, device='{}', CPU target impact={:.1}%",
