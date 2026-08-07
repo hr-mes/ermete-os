@@ -36,7 +36,13 @@
     "antigravity",
     "syft",
     "bpf-linker",
-    "astro-toolchain"
+    "astro-toolchain",
+    "sccache",
+    "buildah",
+    "mold",
+    "sccache",
+    "buildah",
+    "mold"
   ],
   "custom_tier0": [
     "base-config",
@@ -48,7 +54,10 @@
     "antigravity",
     "syft",
     "bpf-linker",
-    "astro-toolchain"
+    "astro-toolchain",
+    "sccache",
+    "buildah",
+    "mold"
   ],
   "custom_tier1": [
     "starship",
