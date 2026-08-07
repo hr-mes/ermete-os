@@ -1,0 +1,48 @@
+name: 🔬 Kani Formal Verification Architecture
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  kani-verification:
+    name: 📐 Kani Formal Mathematical Verification
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Cache Kani Installation
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/cargo-kani
+            ~/.cargo/bin/kani
+            ~/.kani
+          key: ${{ runner.os }}-kani-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install Kani Verifier
+        run: |
+          if ! command -v cargo-kani &> /dev/null; then
+            cargo install --locked kani-verifier
+            cargo kani setup
+          fi
+
+      - name: 🔐 Formal Verification - PQC Mesh Bus (system/ermete-mesh-bus)
+        run: |
+          RUSTFLAGS='--cfg curve25519_dalek_backend="serial"' cargo kani -p ermete-mesh-bus
+
+      - name: 🛡️ Formal Verification - Hypervisor Daemon (system/ermete-hypervisor-daemon)
+        run: |
+          RUSTFLAGS='--cfg curve25519_dalek_backend="serial"' cargo kani -p ermete-hypervisor-daemon
