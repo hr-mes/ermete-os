@@ -390,6 +390,29 @@ pub fn show_control_center_popover(app: &Application) {
     bottom_grid.append(&screenshot_btn);
     bottom_grid.append(&lock_btn);
 
+    // 5. HARDWARE-TAILORED KERNEL FORGE ACTION BUTTON
+    let kernel_forge_btn = Button::builder()
+        .css_classes(["cc-quick-btn"])
+        .hexpand(true)
+        .build();
+    let kf_box = GtkBox::builder()
+        .orientation(Orientation::Horizontal)
+        .spacing(8)
+        .halign(Align::Center)
+        .valign(Align::Center)
+        .build();
+    let kf_icon = Label::builder().label("🧬").css_classes(["cc-slider-icon"]).build();
+    let kf_label = Label::builder().label("Optimize Kernel for this Hardware").css_classes(["cc-label-main"]).build();
+    kf_box.append(&kf_icon);
+    kf_box.append(&kf_label);
+    kernel_forge_btn.set_child(Some(&kf_box));
+    kernel_forge_btn.set_tooltip_text(Some("Gentoo-style hardware tailored kernel compilation with LTO & AutoFDO"));
+    kernel_forge_btn.connect_clicked(glib::clone!(@weak pop => move |_| {
+        pop.close();
+        ControlCenterViewModel::execute_intent(ControlCenterIntent::OptimizeKernel);
+    }));
+    crate::core::attach_voiceover_hover(&kernel_forge_btn, "Optimize Kernel for this Hardware");
+
     // ASSEMBLY INTO CARD CONTAINER
     card.append(&header_box);
     card.append(&quick_toggles_grid);
@@ -397,6 +420,7 @@ pub fn show_control_center_popover(app: &Application) {
     card.append(&audio_card);
     card.append(&mpris_card);
     card.append(&bottom_grid);
+    card.append(&kernel_forge_btn);
 
     // REACTIVE BINDINGS TO VIEWMODEL STATE
     let bright_slider_clone = bright_slider.clone();

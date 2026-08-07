@@ -21,8 +21,12 @@ concurrency:
 
 jobs:
   build-rpm:
-    name: 🧬 Build Chimera Kernel RPM
+    name: 🧬 Build Chimera Kernel RPM (${{ matrix.target }})
     runs-on: self-hosted
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [x86_64, aarch64, riscv64]
     steps:
     - name: Checkout Source
       uses: actions/checkout@v4

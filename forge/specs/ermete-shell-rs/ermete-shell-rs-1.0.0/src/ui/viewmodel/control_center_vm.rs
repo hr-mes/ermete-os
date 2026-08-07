@@ -54,6 +54,7 @@ pub enum ControlCenterIntent {
     LaunchSettings(String),
     TriggerScreenshot,
     TriggerLock,
+    OptimizeKernel,
 }
 
 pub struct ControlCenterViewModel;
@@ -241,6 +242,33 @@ impl ControlCenterViewModel {
                 gtk4::glib::MainContext::default().spawn_local(async move {
                     let ctrl = crate::core::get_power_controller();
                     let _ = ctrl.lock_screen().await;
+                });
+            }
+            ControlCenterIntent::OptimizeKernel => {
+                gtk4::glib::MainContext::default().spawn_local(async move {
+                    let conn = match zbus::Connection::session().await {
+                        Ok(c) => Ok(c),
+                        Err(_) => zbus::Connection::system().await,
+                    };
+                    if let Ok(connection) = conn {
+                        let res = connection.call_method(
+                            Some("org.ermete.KernelForge"),
+                            "/org/ermete/KernelForge",
+                            Some("org.ermete.KernelForge"),
+                            "ForgeHardwareTailoredKernel",
+                            &(),
+                        ).await;
+                        match res {
+                            Ok(msg) => {
+                                let body_str: Result<String, _> = msg.body().deserialize();
+                                match body_str {
+                                    Ok(text) => tracing::info!("Kernel Forge successfully completed: {}", text),
+                                    Err(_) => tracing::info!("Kernel Forge successfully triggered"),
+                                }
+                            }
+                            Err(e) => tracing::error!("Kernel Forge D-Bus call failed: {}", e),
+                        }
+                    }
                 });
             }
         }
