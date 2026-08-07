@@ -43,7 +43,7 @@ pub fn init_system_controller() {
             let mpris: Box<dyn ControllerBackend> = Box::new(mpris_ctrl);
 
             // Start eBPF push notification hooks to bypass DBus polling
-            crate::sys::ebpf::start_ebpf_dbus_listener(event_bus).await;
+            crate::sys::ebpf::start_ebpf_dbus_listener(system_proxies::get_net_bus()).await;
 
             let controllers = vec![audio, network, bluetooth, display, power, mpris];
             system_proxies::init_system_controller(controllers);

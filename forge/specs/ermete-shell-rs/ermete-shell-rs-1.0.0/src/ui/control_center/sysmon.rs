@@ -1,4 +1,3 @@
-use crate::core::system_proxies::subscribe_system_events;
 use crate::ui::popup_manager::setup_popup_autoclose;
 use gtk4::prelude::*;
 use gtk4::{Align, Application, ApplicationWindow, Box as GtkBox, Button, Label, Orientation, ProgressBar};
@@ -109,20 +108,6 @@ pub fn show_system_monitor_modal(app: &Application) {
     let pop_clone = pop.clone();
     close_btn.connect_clicked(move |_| {
         pop_clone.close();
-    });
-
-    // 100% Passive Reactive UI: Subscribes exclusively to zbus/system events stream
-    let _cpu_val_lbl_c = cpu_val_lbl.clone();
-    let _cpu_desc_c = cpu_desc.clone();
-    let _cpu_bar_c = cpu_bar.clone();
-    let _ram_val_lbl_c = ram_val_lbl.clone();
-    let _ram_desc_c = ram_desc.clone();
-    let _ram_bar_c = ram_bar.clone();
-
-    let mut rx = subscribe_system_events();
-    glib::MainContext::default().spawn_local(async move {
-        while let Ok(_event) = rx.recv().await {
-        }
     });
 
     card.append(&header);

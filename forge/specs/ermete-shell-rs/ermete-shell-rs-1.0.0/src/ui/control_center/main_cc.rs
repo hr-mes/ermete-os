@@ -1,4 +1,3 @@
-use crate::core::system_proxies::{subscribe_system_events, SystemEvent};
 use crate::ui::control_center::audio::show_audio_mixer_popover;
 use crate::ui::control_center::bluetooth::show_bluetooth_popover;
 use crate::ui::control_center::sysmon::show_system_monitor_modal;
@@ -397,53 +396,70 @@ pub fn show_control_center_popover(app: &Application) {
     let wifi_btn_clone = wifi_btn.clone();
     let bt_btn_clone = bt_btn.clone();
 
-    let mut rx = subscribe_system_events();
+    let wifi_btn_c = wifi_btn_clone.clone();
+    let bt_btn_c = bt_btn_clone.clone();
+    let mut net_rx = crate::ipc::system_proxies::get_net_bus().subscribe();
     glib::MainContext::default().spawn_local(async move {
-        while let Ok(event) = rx.recv().await {
+        while let Ok(event) = net_rx.recv().await {
             match event {
-                SystemEvent::NetworkUpdated(_) | SystemEvent::WifiToggled(_) => {
+                crate::ipc::types::NetEvent::NetworkUpdated(_) | crate::ipc::types::NetEvent::WifiToggled(_) => {
                     let (net_icon, net_title, net_sub) = crate::core::get_network_controller().get_cached_network_status();
                     let net_connected = net_sub != "Disattivato" && net_sub != "Non connesso" && net_sub != "Off" && net_sub != "Disconnected";
                     if net_connected {
-                        wifi_btn_clone.add_css_class("cc-btn-active");
+                        wifi_btn_c.add_css_class("cc-btn-active");
                     } else {
-                        wifi_btn_clone.remove_css_class("cc-btn-active");
+                        wifi_btn_c.remove_css_class("cc-btn-active");
                     }
-                    wifi_btn_clone.set_child(Some(&build_cc_row_content("cc-circle-blue", &net_icon, &net_title, &net_sub)));
+                    wifi_btn_c.set_child(Some(&build_cc_row_content("cc-circle-blue", &net_icon, &net_title, &net_sub)));
                 }
-                SystemEvent::BluetoothToggled(enabled) => {
+                crate::ipc::types::NetEvent::BluetoothToggled(enabled) => {
                     if enabled {
-                        bt_btn_clone.add_css_class("cc-btn-active");
+                        bt_btn_c.add_css_class("cc-btn-active");
                     } else {
-                        bt_btn_clone.remove_css_class("cc-btn-active");
+                        bt_btn_c.remove_css_class("cc-btn-active");
                     }
                 }
-                SystemEvent::BrightnessChanged(val) => {
-                    if (bright_slider_clone.value() - val * 100.0).abs() > 1.5 {
-                        bright_slider_clone.set_value(val * 100.0);
-                    }
+            }
+        }
+    });
+
+    let mut hw_rx = crate::ipc::system_proxies::get_hardware_bus().subscribe();
+    glib::MainContext::default().spawn_local(async move {
+        while let Ok(event) = hw_rx.recv().await {
+            let crate::ipc::types::HardwareEvent::BrightnessChanged(val) = event;
+            if (bright_slider_clone.value() - val * 100.0).abs() > 1.5 {
+                bright_slider_clone.set_value(val * 100.0);
+            }
+        }
+    });
+
+    let mut audio_rx = crate::ipc::system_proxies::get_audio_bus().subscribe();
+    glib::MainContext::default().spawn_local(async move {
+        while let Ok(event) = audio_rx.recv().await {
+            if let crate::ipc::types::AudioEvent::VolumeChanged(val) = event {
+                if (audio_slider_clone.value() - val * 100.0).abs() > 1.5 {
+                    audio_slider_clone.set_value(val * 100.0);
                 }
-                SystemEvent::VolumeChanged(val) => {
-                    if (audio_slider_clone.value() - val * 100.0).abs() > 1.5 {
-                        audio_slider_clone.set_value(val * 100.0);
-                    }
+            }
+        }
+    });
+
+    let mut mpris_rx = crate::ipc::system_proxies::get_mpris_bus().subscribe();
+    glib::MainContext::default().spawn_local(async move {
+        while let Ok(event) = mpris_rx.recv().await {
+            let crate::ipc::types::MprisEvent::MprisUpdated(mpris_opt) = event;
+            if let Some(mpris) = mpris_opt {
+                mpris_t.set_label(&mpris.title);
+                mpris_a.set_label(&mpris.artist);
+                if mpris.status.contains("Playing") {
+                    mpris_p.set_label("⏸");
+                } else {
+                    mpris_p.set_label("▶");
                 }
-                SystemEvent::MprisUpdated(mpris_opt) => {
-                    if let Some(mpris) = mpris_opt {
-                        mpris_t.set_label(&mpris.title);
-                        mpris_a.set_label(&mpris.artist);
-                        if mpris.status.contains("Playing") {
-                            mpris_p.set_label("⏸");
-                        } else {
-                            mpris_p.set_label("▶");
-                        }
-                    } else {
-                        mpris_t.set_label("Nessun media in riproduzione");
-                        mpris_a.set_label("-");
-                        mpris_p.set_label("▶");
-                    }
-                }
-                _ => {}
+            } else {
+                mpris_t.set_label("Nessun media in riproduzione");
+                mpris_a.set_label("-");
+                mpris_p.set_label("▶");
             }
         }
     });

@@ -277,24 +277,19 @@ impl SimpleComponent for TopbarModel {
             glib::ControlFlow::Continue
         });
 
-        let sender_ws = sender.clone();
-        let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
-        let event_bus = crate::core::system_proxies::get_event_bus();
-        event_bus.subscribe(move |ev| {
-            let _ = tx.send(ev.clone());
+        let sender_net = sender.clone();
+        let mut net_rx = crate::ipc::system_proxies::get_net_bus().subscribe();
+        glib::MainContext::default().spawn_local(async move {
+            while let Ok(_) = net_rx.recv().await {
+                sender_net.input(TopbarInput::TickSecond);
+            }
         });
 
+        let sender_audio = sender.clone();
+        let mut audio_rx = crate::ipc::system_proxies::get_audio_bus().subscribe();
         glib::MainContext::default().spawn_local(async move {
-            while let Some(event) = rx.recv().await {
-                match event {
-                    crate::core::system_proxies::SystemEvent::NetworkUpdated(_) |
-                    crate::core::system_proxies::SystemEvent::VolumeChanged(_) |
-                    crate::core::system_proxies::SystemEvent::WifiToggled(_) |
-                    crate::core::system_proxies::SystemEvent::BluetoothToggled(_) => {
-                        sender_ws.input(TopbarInput::TickSecond);
-                    },
-                    _ => {}
-                }
+            while let Ok(_) = audio_rx.recv().await {
+                sender_audio.input(TopbarInput::TickSecond);
             }
         });
 

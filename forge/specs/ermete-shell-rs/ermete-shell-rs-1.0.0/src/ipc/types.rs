@@ -252,5 +252,3 @@ impl MprisBus {
     pub fn subscribe(&self) -> tokio::sync::broadcast::Receiver<MprisEvent> { self.sender.subscribe() }
     pub fn emit(&self, event: MprisEvent) { let _ = self.sender.send(event); }
 }
-
-}

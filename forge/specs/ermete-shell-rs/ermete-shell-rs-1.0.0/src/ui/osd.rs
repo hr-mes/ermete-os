@@ -52,10 +52,30 @@ pub fn spawn_osd(app: &Application) {
     let hide_timeout_id = Rc::new(RefCell::new(None::<glib::SourceId>));
     let window_rc = window.clone();
     
+    enum OsdEvent {
+        Volume(f64),
+        Brightness(f64),
+    }
+
     let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
-    let event_bus = crate::core::system_proxies::get_event_bus();
-    event_bus.subscribe(move |ev| {
-        let _ = tx.send(ev.clone());
+    
+    let tx1 = tx.clone();
+    let mut audio_rx = crate::ipc::system_proxies::get_audio_bus().subscribe();
+    glib::MainContext::default().spawn_local(async move {
+        while let Ok(ev) = audio_rx.recv().await {
+            if let crate::ipc::types::AudioEvent::VolumeChanged(v) = ev {
+                let _ = tx1.send(OsdEvent::Volume(v));
+            }
+        }
+    });
+
+    let tx2 = tx;
+    let mut hw_rx = crate::ipc::system_proxies::get_hardware_bus().subscribe();
+    glib::MainContext::default().spawn_local(async move {
+        while let Ok(ev) = hw_rx.recv().await {
+            let crate::ipc::types::HardwareEvent::BrightnessChanged(b) = ev;
+            let _ = tx2.send(OsdEvent::Brightness(b));
+        }
     });
 
     glib::MainContext::default().spawn_local(async move {
@@ -66,7 +86,7 @@ pub fn spawn_osd(app: &Application) {
             let mut current_val = 0.0;
             
             match event {
-                crate::core::system_proxies::SystemEvent::VolumeChanged(v) => {
+                OsdEvent::Volume(v) => {
                     let diff = (v * 100.0 - last.volume * 100.0).abs();
                     if diff > 1.0 || (v - last.volume).abs() > 1.0 {
                         last.volume = v;
@@ -75,7 +95,7 @@ pub fn spawn_osd(app: &Application) {
                         current_val = v;
                     }
                 }
-                crate::core::system_proxies::SystemEvent::BrightnessChanged(b)
+                OsdEvent::Brightness(b)
                     if (b - last.brightness).abs() > 1.0 => {
                         last.brightness = b;
                         update = true;
