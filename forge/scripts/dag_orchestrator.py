@@ -12,71 +12,7 @@ import glob
 import re
 import json
 import hashlib
-import socket
-import subprocess
-from collections import defaultdict, deque
 
-# Configuration
-CONFIG_PATH = "config/packages.json"
-SPECS_DIR = "specs"
-REGISTRY = "ghcr.io"
-OWNER = os.environ.get("GITHUB_REPOSITORY_OWNER", "hr-mes")
-
-def parse_redis_args():
-    redis_host = os.environ.get("REDIS_HOST", "redis")
-    redis_port = int(os.environ.get("REDIS_PORT", "6379"))
-    
-    for i, arg in enumerate(sys.argv):
-        if arg == "--redis-host" and i + 1 < len(sys.argv):
-            redis_host = sys.argv[i + 1]
-        elif arg == "--redis-port" and i + 1 < len(sys.argv):
-            redis_port = int(sys.argv[i + 1])
-            
-    return redis_host, redis_port
-
-class PureSocketRedisClient:
-    """Pure Python socket client for Redis RESP protocol (no external binary or pip dependencies required)."""
-    def __init__(self, host, port):
-        self.host = host
-        self.port = port
-        self.available = self._check_connection()
-        
-    def _check_connection(self):
-        try:
-            with socket.create_connection((self.host, self.port), timeout=1) as s:
-                s.sendall(b"*1\r\n$4\r\nPING\r\n")
-                resp = s.recv(1024)
-                return b"PONG" in resp
-        except Exception:
-            return False
-
-    def get(self, key):
-        if not self.available:
-            return None
-        try:
-            with socket.create_connection((self.host, self.port), timeout=1) as s:
-                cmd = f"*2\r\n$3\r\nGET\r\n${len(key)}\r\n{key}\r\n"
-                s.sendall(cmd.encode("utf-8"))
-                resp = s.recv(4096).decode("utf-8", errors="ignore")
-                lines = resp.split("\r\n")
-                if len(lines) > 1 and lines[0] != "$-1":
-                    return lines[1]
-        except Exception:
-            pass
-        return None
-
-    def set(self, key, value):
-        if not self.available:
-            return False
-        try:
-            val_str = str(value)
-            with socket.create_connection((self.host, self.port), timeout=1) as s:
-                cmd = f"*3\r\n$3\r\nSET\r\n${len(key)}\r\n{key}\r\n${len(val_str)}\r\n{val_str}\r\n"
-                s.sendall(cmd.encode("utf-8"))
-                resp = s.recv(1024)
-                return b"OK" in resp
-        except Exception:
-            return False
 
 def compute_dir_hash(dir_path):
     """Calculates deterministic SHA256 for a directory."""
@@ -212,9 +148,9 @@ def build_dag(manifest):
         
     return all_nodes, graph, prereqs, in_degree, node_hashes, node_types
 
-def evaluate_dirty_nodes(all_nodes, graph, prereqs, node_hashes, redis):
+def evaluate_dirty_nodes(all_nodes, graph, prereqs, node_hashes):
     """
-    Queries Redis distributed cache for cached hash.
+    Reads local file cache for previous hashes.
     Marks node DIRTY if content hash changed OR if any upstream dependency is DIRTY.
     """
     dirty_nodes = set()
@@ -242,22 +178,24 @@ def evaluate_dirty_nodes(all_nodes, graph, prereqs, node_hashes, redis):
         trans_hash = hasher.hexdigest()[:16]
         transitive_hashes[node] = trans_hash
         
-        redis_val = redis.get(f"forge:dag:node:{node}:hash")
-        
-        if not redis_val and os.path.exists(f".cache/{node}.hash"):
+        cached_val = None
+        if os.path.exists(f".cache/{node}.hash"):
             try:
                 with open(f".cache/{node}.hash", "r") as f:
-                    redis_val = f.read().strip()
+                    cached_val = f.read().strip()
             except OSError:
                 pass
                 
         is_parent_dirty = any(parent in dirty_nodes for parent in prereqs[node])
         
-        if redis_val != trans_hash or is_parent_dirty:
+        if cached_val != trans_hash or is_parent_dirty:
             dirty_nodes.add(node)
-            redis.set(f"forge:dag:node:{node}:pending_hash", trans_hash)
-        else:
-            redis.set(f"forge:dag:node:{node}:status", "HIT")
+            # Write new hash to disk for future runs
+            try:
+                with open(f".cache/{node}.hash", "w") as f:
+                    f.write(trans_hash)
+            except OSError:
+                pass
 
     return dirty_nodes, transitive_hashes
 
@@ -305,9 +243,7 @@ def partition_dag_levels(dirty_nodes, graph, prereqs, node_types):
     return level_0, level_1, level_2, flatpaks
 
 def main():
-    redis_host, redis_port = parse_redis_args()
-    redis = PureSocketRedisClient(redis_host, redis_port)
-    print(f"🧠 Forge DAG Architect initializing... (Redis Connected: {redis.available})")
+    print("🧠 Forge DAG Architect initializing... (Local File Cache Enabled)")
     
     manifest = load_package_manifest()
     all_nodes, graph, prereqs, in_degree, node_hashes, node_types = build_dag(manifest)
@@ -315,7 +251,7 @@ def main():
     print(f"📊 DAG Topology built: {len(all_nodes)} nodes analyzed.")
     
     dirty_nodes, transitive_hashes = evaluate_dirty_nodes(
-        all_nodes, graph, prereqs, node_hashes, redis
+        all_nodes, graph, prereqs, node_hashes
     )
     
     level_0, level_1, level_2, flatpaks = partition_dag_levels(dirty_nodes, graph, prereqs, node_types)
@@ -327,7 +263,12 @@ def main():
         "level_2": level_2,
         "flatpaks": flatpaks
     }
-    redis.set("forge:dag:plan", json.dumps(dag_plan))
+    
+    try:
+        with open(".cache/dag_plan.json", "w") as f:
+            json.dump(dag_plan, f)
+    except OSError:
+        pass
     
     has_changes = "true" if len(dirty_nodes) > 0 else "false"
     

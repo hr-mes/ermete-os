@@ -16,8 +16,6 @@ on:
 env:
   REGISTRY: ghcr.io
   FEDORA_VERSION: 43
-  REDIS_HOST: redis
-  REDIS_PORT: 6379
   RUSTC_WRAPPER: sccache
   SCCACHE_DIRECT: "true"
   SCCACHE_CACHE_SIZE: "10G"
@@ -35,16 +33,6 @@ jobs:
     name: 🧠 DAG Orchestrator Brain & Distributed Cache
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
-    services:
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 5s
-          --health-timeout 3s
-          --health-retries 5
     outputs:
       dag_level_0: ${{ steps.brain.outputs.dag_level_0 }}
       dag_level_1: ${{ steps.brain.outputs.dag_level_1 }}
@@ -60,15 +48,17 @@ jobs:
             .github
       - name: Align Repositories
         run: cp builder/rpmfusion-custom.repo /etc/yum.repos.d/ 2>/dev/null || true
-      - name: Verify Redis Distributed Cache Connection
-        run: |
-          sudo apt-get update && sudo apt-get install -y redis-tools
-          redis-cli -h redis ping || echo "Redis ping pending..."
+      - name: Persist DAG State Cache
+        uses: actions/cache@v4
+        with:
+          path: .cache
+          key: dag-cache-${{ github.run_id }}
+          restore-keys: |
+            dag-cache-
+
       - name: Compute Dependency DAG & Topological Matrix
         id: brain
         env:
-          REDIS_HOST: redis
-          REDIS_PORT: 6379
         run: ./scripts/dynamic-matrix.sh
 
       - name: 🧹 Cleanup Workspace Permissions
@@ -123,11 +113,6 @@ jobs:
     if: needs.orchestrator-brain.outputs.dag_level_0 != '[]' && needs.orchestrator-brain.outputs.dag_level_0 != ''
     name: ⚡ DAG Level 0 Parallel Build
     runs-on: ubuntu-24.04
-    services:
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
     strategy:
       fail-fast: false
       max-parallel: 20
@@ -146,9 +131,7 @@ jobs:
             forge/specs/ermete-${{ matrix.package }}
             forge/specs
             .github
-      - name: Install Redis Tools
-        run: sudo apt-get update && sudo apt-get install -y redis-tools
-      - name: Check Idempotency & Distributed Redis Cache
+      - name: Check Idempotency (GHCR Cache)
         id: check
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -250,7 +233,7 @@ jobs:
           EOF
           fi
 
-      - name: Publish Micro-Container OCI & Update Distributed Redis Cache
+      - name: Publish Micro-Container OCI
         if: steps.check.outputs.skip != 'true'
         run: |
           export BUILDAH_ISOLATION=chroot
@@ -269,9 +252,6 @@ jobs:
           buildah push $IMAGE_LOWER:latest
           buildah push $IMAGE_LOWER:${{ steps.check.outputs.hash }}
           
-          # Store build hash state in Redis distributed cache
-          redis-cli -h redis SET "forge:dag:node:${{ matrix.package }}:hash" "${{ steps.check.outputs.hash }}" || true
-          redis-cli -h redis SET "forge:dag:node:${{ matrix.package }}:status" "SUCCESS" || true
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3
@@ -308,11 +288,6 @@ jobs:
     if: always() && needs.orchestrator-brain.outputs.dag_level_1 != '[]' && needs.orchestrator-brain.outputs.dag_level_1 != '' && !contains(needs.dag-build-level-0.result, 'failure')
     name: ⚡ DAG Level 1 Parallel Build
     runs-on: ubuntu-24.04
-    services:
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
     strategy:
       fail-fast: false
       max-parallel: 20
@@ -331,9 +306,7 @@ jobs:
             forge/specs/ermete-${{ matrix.package }}
             forge/specs
             .github
-      - name: Install Redis Tools
-        run: sudo apt-get update && sudo apt-get install -y redis-tools
-      - name: Check Idempotency & Distributed Redis Cache
+      - name: Check Idempotency (GHCR Cache)
         id: check
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -435,7 +408,7 @@ jobs:
           EOF
           fi
 
-      - name: Publish Micro-Container OCI & Update Distributed Redis Cache
+      - name: Publish Micro-Container OCI
         if: steps.check.outputs.skip != 'true'
         run: |
           export BUILDAH_ISOLATION=chroot
@@ -454,9 +427,6 @@ jobs:
           buildah push $IMAGE_LOWER:latest
           buildah push $IMAGE_LOWER:${{ steps.check.outputs.hash }}
           
-          # Store build hash state in Redis distributed cache
-          redis-cli -h redis SET "forge:dag:node:${{ matrix.package }}:hash" "${{ steps.check.outputs.hash }}" || true
-          redis-cli -h redis SET "forge:dag:node:${{ matrix.package }}:status" "SUCCESS" || true
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3
@@ -493,11 +463,6 @@ jobs:
     if: always() && needs.orchestrator-brain.outputs.dag_level_2 != '[]' && needs.orchestrator-brain.outputs.dag_level_2 != '' && !contains(needs.dag-build-level-1.result, 'failure')
     name: ⚡ DAG Level 2 Parallel Build
     runs-on: ubuntu-24.04
-    services:
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
     strategy:
       fail-fast: false
       max-parallel: 20
@@ -516,9 +481,7 @@ jobs:
             forge/specs/ermete-${{ matrix.package }}
             forge/specs
             .github
-      - name: Install Redis Tools
-        run: sudo apt-get update && sudo apt-get install -y redis-tools
-      - name: Check Idempotency & Distributed Redis Cache
+      - name: Check Idempotency (GHCR Cache)
         id: check
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -618,7 +581,7 @@ jobs:
           EOF
           fi
 
-      - name: Publish Micro-Container OCI & Update Distributed Redis Cache
+      - name: Publish Micro-Container OCI
         if: steps.check.outputs.skip != 'true'
         run: |
           export BUILDAH_ISOLATION=chroot
@@ -637,9 +600,6 @@ jobs:
           buildah push $IMAGE_LOWER:latest
           buildah push $IMAGE_LOWER:${{ steps.check.outputs.hash }}
           
-          # Store build hash state in Redis distributed cache
-          redis-cli -h redis SET "forge:dag:node:${{ matrix.package }}:hash" "${{ steps.check.outputs.hash }}" || true
-          redis-cli -h redis SET "forge:dag:node:${{ matrix.package }}:status" "SUCCESS" || true
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3
