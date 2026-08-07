@@ -58,7 +58,8 @@
     "mesh-bus",
     "init-oracle",
     "ermete-greeter",
-    "ermete-compositor"
+    "ermete-compositor",
+    "ermete-audio-bus"
   ],
   "custom_tier0": [
     "base-config",
@@ -125,7 +126,8 @@
     "hypervisor-daemon",
     "init-oracle",
     "ermete-greeter",
-    "ermete-compositor"
+    "ermete-compositor",
+    "ermete-audio-bus"
   ],
   "cachyos_addons": [],
   "upstream_core": [
