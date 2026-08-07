@@ -59,7 +59,9 @@
     "init-oracle",
     "ermete-greeter",
     "ermete-compositor",
-    "ermete-audio-bus"
+    "ermete-audio-bus",
+    "ermete-telemetry",
+    "ermete-net-unikernel"
   ],
   "custom_tier0": [
     "base-config",
@@ -127,7 +129,9 @@
     "init-oracle",
     "ermete-greeter",
     "ermete-compositor",
-    "ermete-audio-bus"
+    "ermete-audio-bus",
+    "ermete-telemetry",
+    "ermete-net-unikernel"
   ],
   "cachyos_addons": [],
   "upstream_core": [

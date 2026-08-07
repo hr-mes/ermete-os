@@ -31,7 +31,9 @@ members = [
     "system/ermete-init-oracle",
     "system/ermete-greeter",
     "system/ermete-audio-bus",
-    "system/ermete-compositor"
+    "system/ermete-compositor",
+    "system/ermete-telemetry",
+    "system/ermete-net-unikernel"
 ]
 
 exclude = [
