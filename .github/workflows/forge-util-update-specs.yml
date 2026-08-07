@@ -85,7 +85,7 @@ jobs:
 
             if [ "$latest_tag" != "$current_ver" ]; then
               echo "  --> Bumping $spec_file from $current_ver to $latest_tag"
-              sed -i "s/^Version:.*$/Version:        $latest_tag/" "$spec_file"
+              sed -i "s|^Version:.*$|Version:        $latest_tag|" "$spec_file"
               sed -i "s/^Release:.*$/Release:        1%{?dist}/" "$spec_file" || true
               UPDATED=1
             else

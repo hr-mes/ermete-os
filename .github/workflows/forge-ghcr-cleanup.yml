@@ -39,7 +39,7 @@ jobs:
           fi
 
           echo "Fetching container packages for $ORG..."
-          PACKAGES_JSON=$(gh api --paginate "/users/$ORG/packages?package_type=container" 2>/dev/null || gh api --paginate "/orgs/$ORG/packages?package_type=container" 2>/dev/null || echo "[]")
+          PACKAGES_JSON=$(gh api --paginate "/users/$ORG/packages?package_type=container" 2>/dev/null | jq -s 'add' || gh api --paginate "/orgs/$ORG/packages?package_type=container" 2>/dev/null | jq -s 'add' || echo "[]")
           PACKAGES=$(echo "$PACKAGES_JSON" | jq -r '.[].name // empty' 2>/dev/null || echo "")
 
           if [ -z "$PACKAGES" ]; then

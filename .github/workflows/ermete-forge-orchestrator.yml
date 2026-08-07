@@ -20,9 +20,8 @@ env:
   SCCACHE_DIRECT: "true"
   SCCACHE_CACHE_SIZE: "10G"
 
-defaults:
-  run:
-    working-directory: forge
+permissions:
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -33,6 +32,9 @@ jobs:
     name: 🧠 DAG Orchestrator Brain & Distributed Cache
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: forge
     outputs:
       dag_level_0: ${{ steps.brain.outputs.dag_level_0 }}
       dag_level_1: ${{ steps.brain.outputs.dag_level_1 }}
@@ -69,6 +71,9 @@ jobs:
     name: 🏗️ Build Base Builder
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: forge
     permissions:
       contents: read
       packages: write
@@ -782,7 +787,7 @@ jobs:
 
   build-repo:
     name: 📦 Aggregate Repositories & Deploy DNF/Flatpak Channel
-    if: ${{ always() && needs.orchestrator-brain.outputs.has_changes == 'true' && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
+    if: ${{ always() && needs.orchestrator-brain.outputs.has_changes == 'true' && !contains(needs.dag-build-level-0.result, 'failure') && !contains(needs.dag-build-level-1.result, 'failure') && !contains(needs.dag-build-level-2.result, 'failure') && !contains(needs.dag-build-flatpaks.result, 'failure') }}
     needs: [orchestrator-brain, dag-build-level-0, dag-build-level-1, dag-build-level-2, dag-build-flatpaks, build-nvidia]
     runs-on: ubuntu-24.04
     permissions:

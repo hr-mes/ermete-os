@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+permissions:
+  contents: read
+
 jobs:
   security-audit:
     name: Enforce Safety & Cargo Vet Audit
@@ -140,8 +143,7 @@ jobs:
 
       - name: Install AWS Kani Verifier
         run: |
-          cargo install --locked kani-verifier || true
-          cargo kani setup
+          cargo kani setup || (cargo install --locked kani-verifier && cargo kani setup)
 
       - name: Run Mathematical Proofs (${{ matrix.module }})
         run: |
@@ -157,7 +159,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: kani-proof-shard-${{ matrix.shard }}-${{ matrix.module }}
-          path: ${{ matrix.dir }}/target/
+          path: ${{ matrix.dir }}/target/**/*.sarif
           if-no-files-found: ignore
           compression-level: 1
 
@@ -217,7 +219,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: baremetal-artifact-${{ matrix.target_name }}
-          path: ${{ matrix.dir }}/target/
+          path: ${{ matrix.dir }}/target/**/*.sarif
           if-no-files-found: ignore
           compression-level: 1
 

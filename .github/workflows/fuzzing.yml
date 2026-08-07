@@ -69,6 +69,7 @@ jobs:
         with:
           shared-key: "cargo-fuzz-${{ matrix.sanitizer }}"
           cache-on-failure: "true"
+          workspaces: "tests/fuzz -> target"
 
       - name: 📦 Install cargo-fuzz
         uses: taiki-e/install-action@v2
@@ -97,7 +98,7 @@ jobs:
           
           for target in $TARGETS; do
             echo "🔥 Running cargo fuzz su target '$target' per ${FUZZ_TIME}s con ${{ matrix.sanitizer_name }}..."
-            cargo fuzz run --fuzz-dir . "$target" -- -max_total_time="$FUZZ_TIME" -sanitizer=${{ matrix.sanitizer }}
+            cargo fuzz run --fuzz-dir . "$target" -- -max_total_time="$FUZZ_TIME" -sanitizer=${{ matrix.sanitizer }} -Zbuild-std
           done
 
       - name: 🚨 Upload Fuzzing Crash Artifacts (ZSTD Compressed)
