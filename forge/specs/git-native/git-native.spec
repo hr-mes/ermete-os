@@ -1,0 +1,42 @@
+Name:           git-native
+Version:        2.48.1
+Release:        1%{?dist}
+Summary:        Assimilated Git Version Control System built natively from source for Ermete OS
+License:        GPL-2.0-only
+URL:            https://git-scm.com/
+Source0:        https://mirrors.edge.kernel.org/pub/software/scm/git/git-%{version}.tar.xz
+
+Provides:       git = %{version}-%{release}
+Provides:       git-core = %{version}-%{release}
+Obsoletes:      git < %{version}
+
+BuildRequires:  gcc
+BuildRequires:  make
+BuildRequires:  gettext
+BuildRequires:  curl-devel
+BuildRequires:  expat-devel
+BuildRequires:  openssl-devel
+BuildRequires:  zlib-devel
+
+%description
+Git version control system compiled natively from source for Ermete OS Forge.
+
+%prep
+%autosetup -n git-%{version}
+
+%build
+%set_build_flags
+make %{?_smp_mflags} prefix=/usr all
+
+%install
+rm -rf %{buildroot}
+make %{?_smp_mflags} prefix=/usr DESTDIR=%{buildroot} install
+
+%files
+/usr/bin/git*
+%{_libexecdir}/git-core
+%{_datadir}/git-core
+
+%changelog
+* Sat Aug 08 2026 Ermete Forge <forge@ermete.os> - 2.48.1-1
+- Assimilated git native source build for Ermete OS.

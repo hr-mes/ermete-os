@@ -1,0 +1,46 @@
+%global debug_package %{nil}
+
+Name:           ripgrep-native
+Version:        14.1.1
+Release:        1%{?dist}
+Summary:        Assimilated Fast Line-Oriented Search Tool built natively from source for Ermete OS
+License:        Unlicense OR MIT
+URL:            https://github.com/BurntSushi/ripgrep
+Source0:        https://github.com/BurntSushi/ripgrep/archive/refs/tags/%{version}.tar.gz
+
+Provides:       ripgrep = %{version}-%{release}
+Provides:       rg = %{version}-%{release}
+Obsoletes:      ripgrep < %{version}
+
+BuildRequires:  cargo
+BuildRequires:  rust
+BuildRequires:  mold
+
+%description
+ripgrep is a line-oriented search tool that recursively searches your current directory for a regex pattern.
+Compiled natively in Ermete Forge from Rust source with extreme x86-64-v3 optimizations.
+
+%prep
+%autosetup -n ripgrep-%{version}
+
+# Disable GCC LTO as it conflicts with Rust LLVM LTO and mold
+%define _lto_cflags %{nil}
+
+%build
+%set_build_flags
+export CARGO_PROFILE_RELEASE_LTO="thin"
+export CFLAGS="$(echo $CFLAGS | sed 's/-flto=auto//g')"
+export CXXFLAGS="$(echo $CXXFLAGS | sed 's/-flto=auto//g')"
+export LDFLAGS="$(echo $LDFLAGS | sed 's/-flto=auto//g')"
+cargo build --release
+
+%install
+rm -rf %{buildroot}
+install -Dm755 target/release/rg %{buildroot}/usr/bin/rg
+
+%files
+/usr/bin/rg
+
+%changelog
+* Sat Aug 08 2026 Ermete Forge <forge@ermete.os> - 14.1.1-1
+- Assimilated ripgrep native source build for Ermete OS.
