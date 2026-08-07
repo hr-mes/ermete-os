@@ -92,26 +92,38 @@ environment {
     ELECTRON_OZONE_PLATFORM_HINT "wayland"
 }
 
+blur {
+    passes 4
+    offset 4.0
+    noise 0.02
+    saturation 1.2
+}
+
 animations {
     slowdown 1.0
     workspace-switch {
-        spring damping-ratio=0.9 stiffness=1200 epsilon=0.0001
+        spring damping-ratio=0.5 stiffness=1000 epsilon=0.0001
     }
     window-open {
-        spring damping-ratio=0.9 stiffness=1200 epsilon=0.0001
+        spring damping-ratio=0.5 stiffness=1000 epsilon=0.0001
     }
     window-close {
-        duration-ms 150
-        curve "ease-out-quad"
+        spring damping-ratio=0.5 stiffness=1000 epsilon=0.0001
     }
     horizontal-view-movement {
-        spring damping-ratio=0.9 stiffness=1200 epsilon=0.0001
+        spring damping-ratio=0.5 stiffness=1000 epsilon=0.0001
     }
     window-movement {
-        spring damping-ratio=0.9 stiffness=1200 epsilon=0.0001
+        spring damping-ratio=0.5 stiffness=1000 epsilon=0.0001
     }
     window-resize {
-        spring damping-ratio=0.9 stiffness=1200 epsilon=0.0001
+        spring damping-ratio=0.5 stiffness=1000 epsilon=0.0001
+    }
+    config-notification-open-close {
+        spring damping-ratio=0.5 stiffness=1000 epsilon=0.0001
+    }
+    screenshot-ui-open {
+        spring damping-ratio=0.5 stiffness=1000 epsilon=0.0001
     }
 }
 
@@ -127,7 +139,10 @@ window-rule {
     match app-id=r#"^kitty$"#
     match app-id=r#"^Alacritty$"#
     default-column-width { proportion 0.5; }
-    opacity 0.96
+    opacity 0.92
+    background-effect {
+        blur true
+    }
 }
 
 window-rule {
@@ -165,7 +180,16 @@ layer-rule {
     match namespace="^osd$"
     match namespace="^notifications$"
     
-    geometry-corner-radius 10
+    geometry-corner-radius 12
+    opacity 0.85
+    background-effect {
+        blur true
+    }
+    popups {
+        background-effect {
+            blur true
+        }
+    }
     shadow {
         on
         softness 32
