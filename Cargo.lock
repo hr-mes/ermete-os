@@ -1026,6 +1026,8 @@ dependencies = [
 name = "ermete-attestation"
 version = "1.0.0"
 dependencies = [
+ "pqc_dilithium",
+ "pqc_kyber",
  "sev",
  "tokio",
  "tracing",
@@ -1051,7 +1053,11 @@ name = "ermete-cloud-rs"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "base64 0.21.7",
  "mimalloc",
+ "pqc_dilithium",
+ "pqc_kyber",
+ "rand_core 0.6.4",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -1114,6 +1120,7 @@ version = "1.0.0"
 dependencies = [
  "gtk4",
  "libc",
+ "pqc_dilithium",
  "tokio",
  "xattr",
  "zbus 4.4.0",
@@ -1162,6 +1169,8 @@ version = "1.0.0"
 dependencies = [
  "base64 0.21.7",
  "boringtun",
+ "pqc_dilithium",
+ "pqc_kyber",
  "rand_core 0.6.4",
  "tokio",
  "tracing",
@@ -1235,6 +1244,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "pqc_dilithium",
 ]
 
 [[package]]
@@ -1244,7 +1254,9 @@ dependencies = [
  "anyhow",
  "ermete-style",
  "gtk4",
+ "hex",
  "mimalloc",
+ "pqc_dilithium",
  "relm4",
  "tokio",
  "tracing",
@@ -3049,6 +3061,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "85eae3c4ed2f50dcfe72643da4befc30deadb458a9b590d720cde2f2b1e97da9"
 dependencies = [
  "zerocopy",
+]
+
+[[package]]
+name = "pqc_dilithium"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "580a6801ec2155f89317b08e5aab68dee8f541db974e0c72b7e43aa65c1f4a4a"
+dependencies = [
+ "rand 0.8.7",
+ "rand_core 0.6.4",
+]
+
+[[package]]
+name = "pqc_kyber"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b23e1823e8a78ad67990c5cb843d5eba75ab3b8a44d041f3814fde89463dc6f"
+dependencies = [
+ "rand_core 0.6.4",
 ]
 
 [[package]]

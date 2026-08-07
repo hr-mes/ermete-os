@@ -71,6 +71,20 @@ pub fn verify_auth_token(
     Ok(true)
 }
 
+/// Validates authorization token using Post-Quantum Dilithium5 (ML-DSA) signature.
+pub fn verify_pqc_auth_token(
+    payload: &[u8],
+    signature: &[u8],
+    public_key: &[u8],
+) -> Result<bool, SecurityError> {
+    if pqc_dilithium::verify(signature, payload, public_key).is_ok() {
+        Ok(true)
+    } else {
+        Err(SecurityError::DigestMismatch)
+    }
+}
+
+
 /// Safely parses fanotify event metadata buffer offsets without panics or infinite loops.
 pub fn parse_next_fanotify_offset(
     buffer_len: usize,

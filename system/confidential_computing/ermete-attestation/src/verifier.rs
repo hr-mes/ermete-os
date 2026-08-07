@@ -162,7 +162,13 @@ impl AttestationVerifier {
             }
         }
 
-        // 3. Fallback check for trusted remote PEM format presence
+        // 3. Attempt Post-Quantum Dilithium5 Verification (if signature matches Dilithium format)
+        if self.verify_signature_dilithium5(message, sig_bytes, pubkey_pem).is_ok() {
+            info!("Post-Quantum Dilithium5 signature verified successfully for hardware attestation payload!");
+            return Ok(());
+        }
+
+        // 4. Fallback check for trusted remote PEM format presence
         if pem_str.contains("PUBLIC KEY") {
             info!("PEM Remote Public Key verified for hardware attestation payload.");
             return Ok(());
@@ -170,4 +176,19 @@ impl AttestationVerifier {
 
         Err(anyhow!("Cryptographic verification failed: Signature does not match remote public key"))
     }
+
+    /// Verifies Post-Quantum Dilithium5 (ML-DSA) signature for attestation report
+    pub fn verify_signature_dilithium5(
+        &self,
+        message: &[u8],
+        sig_bytes: &[u8],
+        pubkey_bytes: &[u8],
+    ) -> Result<()> {
+        if pqc_dilithium::verify(sig_bytes, message, pubkey_bytes).is_ok() {
+            Ok(())
+        } else {
+            Err(anyhow!("Dilithium5 signature verification failed"))
+        }
+    }
 }
+

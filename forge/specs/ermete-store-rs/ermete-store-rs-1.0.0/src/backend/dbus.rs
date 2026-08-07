@@ -25,6 +25,29 @@ impl StoreService {
         }
     }
 
+    async fn verify_pqc_package(&self, package: String, signature_hex: String, pubkey_hex: String) -> String {
+        info!("DBus PQC Level 13: Verifying Dilithium5 signature for package: {}", package);
+        
+        let sig_bytes = match hex::decode(&signature_hex) {
+            Ok(b) => b,
+            Err(_) => return "Invalid signature hex encoding".to_string(),
+        };
+        let pubkey_bytes = match hex::decode(&pubkey_hex) {
+            Ok(b) => b,
+            Err(_) => return "Invalid pubkey hex encoding".to_string(),
+        };
+
+        let payload = format!("ERMETE_STORE_PACKAGE:{}", package);
+        if pqc_dilithium::verify(&sig_bytes, payload.as_bytes(), &pubkey_bytes).is_ok() {
+            info!("Dilithium5 PQC signature VERIFIED for {}", package);
+            "PQC_VERIFIED_OK".to_string()
+        } else {
+            error!("Dilithium5 PQC signature VERIFICATION FAILED for {}", package);
+            "PQC_VERIFICATION_FAILED".to_string()
+        }
+    }
+
+
     async fn install(&self, package: String) -> String {
         info!("DBus: Install requested for: {}", package);
         

@@ -14,5 +14,9 @@ tracing-subscriber = "0.3"
 gtk4 = "0.7"
 relm4 = "0.7"
 zbus = { version = "5.18.0", features = ["tokio"] }
+pqc_dilithium = "0.2.0"
+hex = "0.4"
+
+
 
 
