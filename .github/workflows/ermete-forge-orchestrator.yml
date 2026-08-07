@@ -174,12 +174,11 @@ jobs:
               if [ -d "specs/ermete-${{ matrix.package }}/SOURCES" ]; then 
                 cp -a specs/ermete-${{ matrix.package }}/SOURCES/* ~/rpmbuild/SOURCES/ || true
               fi
-            
-              for dir in specs/ermete-${{ matrix.package }}/*-*/ ; do
-                if [ -d "$dir" ]; then
+
+              for dir in specs/ermete-${{ matrix.package }}/*/ ; do
+                if [ -d "$dir" ] && [ "$(basename "$dir")" != "SOURCES" ]; then
                   pkg_dir=$(basename "$dir")
-                  git config --global --add safe.directory /workspace
-                  git -C /workspace archive --format=tar --prefix="${pkg_dir}/" HEAD:"forge/specs/ermete-${{ matrix.package }}/${pkg_dir}" | gzip -n > ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz
+                  tar -czf ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz -C specs/ermete-${{ matrix.package }} ${pkg_dir}
                 fi
               done
             
@@ -194,7 +193,7 @@ jobs:
                   cp -a "$spec_dir"/. ~/rpmbuild/BUILD/"$crate_name"/ 2>/dev/null || true
                 fi
               done
-  
+   
               rpmbuild -bb specs/ermete-${{ matrix.package }}/*.spec || true
             
               if ls ~/rpmbuild/SRPMS/*.nosrc.rpm 1> /dev/null 2>&1; then
@@ -315,6 +314,15 @@ jobs:
           echo "hash=$CONTENT_HASH" >> $GITHUB_OUTPUT
           if [ "$CACHE_HIT" = "true" ]; then echo "skip=true" >> $GITHUB_OUTPUT; else echo "skip=false" >> $GITHUB_OUTPUT; fi
 
+      - name: Cache sccache
+        if: steps.check.outputs.skip != 'true'
+        uses: actions/cache@v4
+        with:
+          path: .sccache
+          key: sccache-${{ matrix.package }}-${{ runner.os }}-${{ hashFiles(format('forge/specs/ermete-{0}/**', matrix.package)) }}
+          restore-keys: |
+            sccache-${{ matrix.package }}-
+
       - name: Build Package (Custom Spec or Upstream SRPM)
         if: steps.check.outputs.skip != 'true'
         run: |
@@ -323,7 +331,8 @@ jobs:
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           
           if [ -d "specs/ermete-${{ matrix.package }}" ]; then
-            podman run -i --rm \
+            echo "📦 Compiling Custom Spec: ermete-${{ matrix.package }}"
+            podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
               -w /workspace/forge \
@@ -331,16 +340,45 @@ jobs:
               bash <<'EOF'
               cp config/rpmmacros ~/.rpmmacros
               rpmdev-setuptree
-              if [ -d "specs/ermete-${{ matrix.package }}/SOURCES" ]; then cp -a specs/ermete-${{ matrix.package }}/SOURCES/* ~/rpmbuild/SOURCES/ || true; fi
+            
+              if [ -d "specs/ermete-${{ matrix.package }}/SOURCES" ]; then 
+                cp -a specs/ermete-${{ matrix.package }}/SOURCES/* ~/rpmbuild/SOURCES/ || true
+              fi
+            
+              for dir in specs/ermete-${{ matrix.package }}/*/ ; do
+                if [ -d "$dir" ] && [ "$(basename "$dir")" != "SOURCES" ]; then
+                  pkg_dir=$(basename "$dir")
+                  tar -czf ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz -C specs/ermete-${{ matrix.package }} ${pkg_dir}
+                fi
+              done
+            
               dnf builddep -y specs/ermete-${{ matrix.package }}/*.spec
               spectool -g -R specs/ermete-${{ matrix.package }}/*.spec || true
+            
+              mkdir -p ~/rpmbuild/BUILD/
+              for spec_dir in /workspace/forge/specs/ermete-*/ ; do
+                if [ -d "$spec_dir" ]; then
+                  crate_name=$(basename "$spec_dir")
+                  mkdir -p ~/rpmbuild/BUILD/"$crate_name"
+                  cp -a "$spec_dir"/. ~/rpmbuild/BUILD/"$crate_name"/ 2>/dev/null || true
+                fi
+              done
+   
+              rpmbuild -bb specs/ermete-${{ matrix.package }}/*.spec || true
+            
+              if ls ~/rpmbuild/SRPMS/*.nosrc.rpm 1> /dev/null 2>&1; then
+                  dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SRPMS/*.nosrc.rpm
+              fi
+            
               rpmbuild -bb specs/ermete-${{ matrix.package }}/*.spec
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
           EOF
           else
-            podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+            echo "🌐 Compiling Upstream Package: ${{ matrix.package }}"
+            podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
               -v ${{ github.workspace }}:/workspace \
+              -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
               -w /workspace/forge \
               ghcr.io/hr-mes/ermete-os-builder:latest \
               bash <<'EOF'
@@ -363,13 +401,47 @@ jobs:
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
           buildah copy $ctr RPMS/*.rpm /
+          
           img_prefix="ermete-os-forge"
-          if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then img_prefix="ermete-os-forge-rolling"; fi
+          if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then
+            img_prefix="ermete-os-forge-rolling"
+          fi
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/${img_prefix}-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
           buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
           buildah commit --omit-timestamp $ctr $IMAGE_LOWER:latest
+          buildah tag $IMAGE_LOWER:latest $IMAGE_LOWER:${{ steps.check.outputs.hash }}
           buildah push $IMAGE_LOWER:latest
+          buildah push $IMAGE_LOWER:${{ steps.check.outputs.hash }}
+          
+          # Store build hash state in Redis distributed cache
           redis-cli -h redis SET "forge:dag:node:${{ matrix.package }}:hash" "${{ steps.check.outputs.hash }}" || true
+          redis-cli -h redis SET "forge:dag:node:${{ matrix.package }}:status" "SUCCESS" || true
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Generate SBOM (Syft)
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          img_prefix="ermete-os-forge"
+          if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then
+            img_prefix="ermete-os-forge-rolling"
+          fi
+          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/${img_prefix}-${{ matrix.package }}:latest" | tr "[:upper:]" "[:lower:]")
+          syft packages $IMAGE_LOWER -o spdx-json=sbom-${{ matrix.package }}.spdx.json
+
+      - name: Sign & Attest Micro-Container
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cosign login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+          img_prefix="ermete-os-forge"
+          if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then
+            img_prefix="ermete-os-forge-rolling"
+          fi
+          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/${img_prefix}-${{ matrix.package }}:latest" | tr '[:upper:]' '[:lower:]')
+          cosign sign --yes $IMAGE_LOWER
+          cosign attest --yes --type spdxjson --predicate sbom-${{ matrix.package }}.spdx.json $IMAGE_LOWER
 
       - name: 🧹 Cleanup Workspace Permissions
         if: always()
@@ -410,14 +482,25 @@ jobs:
           echo "hash=$CONTENT_HASH" >> $GITHUB_OUTPUT
           if [ "$CACHE_HIT" = "true" ]; then echo "skip=true" >> $GITHUB_OUTPUT; else echo "skip=false" >> $GITHUB_OUTPUT; fi
 
+      - name: Cache sccache
+        if: steps.check.outputs.skip != 'true'
+        uses: actions/cache@v4
+        with:
+          path: .sccache
+          key: sccache-${{ matrix.package }}-${{ runner.os }}-${{ hashFiles(format('forge/specs/ermete-{0}/**', matrix.package)) }}
+          restore-keys: |
+            sccache-${{ matrix.package }}-
+
       - name: Build Package (Custom Spec or Upstream SRPM)
         if: steps.check.outputs.skip != 'true'
         run: |
           mkdir -p RPMS
           mkdir -p ${{ github.workspace }}/.sccache
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+          
           if [ -d "specs/ermete-${{ matrix.package }}" ]; then
-            podman run -i --rm \
+            echo "📦 Compiling Custom Spec: ermete-${{ matrix.package }}"
+            podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
               -w /workspace/forge \
@@ -425,16 +508,45 @@ jobs:
               bash <<'EOF'
               cp config/rpmmacros ~/.rpmmacros
               rpmdev-setuptree
-              if [ -d "specs/ermete-${{ matrix.package }}/SOURCES" ]; then cp -a specs/ermete-${{ matrix.package }}/SOURCES/* ~/rpmbuild/SOURCES/ || true; fi
+            
+              if [ -d "specs/ermete-${{ matrix.package }}/SOURCES" ]; then 
+                cp -a specs/ermete-${{ matrix.package }}/SOURCES/* ~/rpmbuild/SOURCES/ || true
+              fi
+            
+              for dir in specs/ermete-${{ matrix.package }}/*/ ; do
+                if [ -d "$dir" ] && [ "$(basename "$dir")" != "SOURCES" ]; then
+                  pkg_dir=$(basename "$dir")
+                  tar -czf ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz -C specs/ermete-${{ matrix.package }} ${pkg_dir}
+                fi
+              done
+            
               dnf builddep -y specs/ermete-${{ matrix.package }}/*.spec
               spectool -g -R specs/ermete-${{ matrix.package }}/*.spec || true
+            
+              mkdir -p ~/rpmbuild/BUILD/
+              for spec_dir in /workspace/forge/specs/ermete-*/ ; do
+                if [ -d "$spec_dir" ]; then
+                  crate_name=$(basename "$spec_dir")
+                  mkdir -p ~/rpmbuild/BUILD/"$crate_name"
+                  cp -a "$spec_dir"/. ~/rpmbuild/BUILD/"$crate_name"/ 2>/dev/null || true
+                fi
+              done
+   
+              rpmbuild -bb specs/ermete-${{ matrix.package }}/*.spec || true
+            
+              if ls ~/rpmbuild/SRPMS/*.nosrc.rpm 1> /dev/null 2>&1; then
+                  dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SRPMS/*.nosrc.rpm
+              fi
+            
               rpmbuild -bb specs/ermete-${{ matrix.package }}/*.spec
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
           EOF
           else
-            podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+            echo "🌐 Compiling Upstream Package: ${{ matrix.package }}"
+            podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
               -v ${{ github.workspace }}:/workspace \
+              -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
               -w /workspace/forge \
               ghcr.io/hr-mes/ermete-os-builder:latest \
               bash <<'EOF'
@@ -457,13 +569,47 @@ jobs:
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
           buildah copy $ctr RPMS/*.rpm /
+          
           img_prefix="ermete-os-forge"
-          if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then img_prefix="ermete-os-forge-rolling"; fi
+          if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then
+            img_prefix="ermete-os-forge-rolling"
+          fi
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/${img_prefix}-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
           buildah config --label tier.content.sha256="${{ steps.check.outputs.hash }}" $ctr
           buildah commit --omit-timestamp $ctr $IMAGE_LOWER:latest
+          buildah tag $IMAGE_LOWER:latest $IMAGE_LOWER:${{ steps.check.outputs.hash }}
           buildah push $IMAGE_LOWER:latest
+          buildah push $IMAGE_LOWER:${{ steps.check.outputs.hash }}
+          
+          # Store build hash state in Redis distributed cache
           redis-cli -h redis SET "forge:dag:node:${{ matrix.package }}:hash" "${{ steps.check.outputs.hash }}" || true
+          redis-cli -h redis SET "forge:dag:node:${{ matrix.package }}:status" "SUCCESS" || true
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Generate SBOM (Syft)
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          img_prefix="ermete-os-forge"
+          if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then
+            img_prefix="ermete-os-forge-rolling"
+          fi
+          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/${img_prefix}-${{ matrix.package }}:latest" | tr "[:upper:]" "[:lower:]")
+          syft packages $IMAGE_LOWER -o spdx-json=sbom-${{ matrix.package }}.spdx.json
+
+      - name: Sign & Attest Micro-Container
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cosign login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+          img_prefix="ermete-os-forge"
+          if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then
+            img_prefix="ermete-os-forge-rolling"
+          fi
+          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/${img_prefix}-${{ matrix.package }}:latest" | tr '[:upper:]' '[:lower:]')
+          cosign sign --yes $IMAGE_LOWER
+          cosign attest --yes --type spdxjson --predicate sbom-${{ matrix.package }}.spdx.json $IMAGE_LOWER
 
       - name: 🧹 Cleanup Workspace Permissions
         if: always()

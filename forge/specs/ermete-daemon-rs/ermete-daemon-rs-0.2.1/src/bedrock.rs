@@ -87,7 +87,7 @@ impl Bedrock {
 
         crate::live_patch::LivePatchManager::global()
             .load_patch_so(&so_path)
-            .map_err(|e| fdo::Error::Failed(e))
+            .map_err(fdo::Error::Failed)
     }
 
     /// Retrieve live patching status metadata as JSON

@@ -17,6 +17,7 @@ pub enum NetworkCommand {
     DisconnectWifi(String, oneshot::Sender<zbus::Result<()>>),
     DeleteWifi(String, oneshot::Sender<zbus::Result<()>>),
     ModifyWifi(oneshot::Sender<zbus::Result<()>>),
+    #[allow(clippy::type_complexity)]
     GetWifiDetails(String, oneshot::Sender<zbus::Result<(String, String, String, String, bool)>>),
     RefreshStatus(oneshot::Sender<zbus::Result<()>>),
 }

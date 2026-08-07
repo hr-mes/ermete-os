@@ -7,6 +7,12 @@ pub struct OpenVinoNpuEngine {
     npu_available: bool,
 }
 
+impl Default for OpenVinoNpuEngine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl OpenVinoNpuEngine {
     pub fn new() -> Self {
         info!("Initializing OpenVINO NPU Subsystem...");

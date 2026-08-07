@@ -8,6 +8,10 @@ use std::os::raw::c_char;
 /// Dynamic hot-patch handler exported by the .so plugin.
 /// When loaded into `ermete-daemon-rs` RAM via `libloading` / `load_patch_so`,
 /// the ACTIVE_PATCH_FN function pointer is atomically updated to point to this function.
+///
+/// # Safety
+/// `method` must be a valid null-terminated C string or null.
+/// `input` must be a valid null-terminated C string or null.
 #[no_mangle]
 pub unsafe extern "C" fn ermete_zbus_patch_handler(
     method: *const c_char,

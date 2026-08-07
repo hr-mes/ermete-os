@@ -31,6 +31,7 @@ fn get_cache() -> &'static ArcSwap<LiveState> {
 }
 
 /// Direct synchronous reader performing blocking sysfs / procfs reads off the main thread.
+#[allow(clippy::field_reassign_with_default)]
 pub fn read_live_state_io() -> LiveState {
     let mut state = LiveState::default();
 

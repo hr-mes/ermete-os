@@ -10,6 +10,7 @@ import sys
 import glob
 import json
 import math
+import time
 import requests
 
 QDRANT_HOST = os.getenv("QDRANT_HOST", "http://localhost:6333")
@@ -94,26 +95,40 @@ def chunk_markdown(filepath: str) -> list[dict]:
     return chunks
 
 def ensure_collection():
-    """Ensures Qdrant collection exists."""
+    """Ensures Qdrant collection exists with retry mechanism."""
     url = f"{QDRANT_HOST}/collections/{COLLECTION_NAME}"
-    resp = requests.get(url)
-    if resp.status_code != 200:
-        print(f"[*] Creating Qdrant collection '{COLLECTION_NAME}'...")
-        create_resp = requests.put(
-            url,
-            json={
-                "vectors": {
-                    "size": EMBEDDING_DIM,
-                    "distance": "Cosine"
-                }
-            }
-        )
-        if create_resp.status_code not in (200, 201):
-            print(f"[E] Failed to create collection: {create_resp.text}", file=sys.stderr)
-            sys.exit(1)
-        print(f"[+] Collection '{COLLECTION_NAME}' created successfully.")
-    else:
-        print(f"[*] Collection '{COLLECTION_NAME}' already exists.")
+    max_retries = 5
+    for attempt in range(1, max_retries + 1):
+        try:
+            resp = requests.get(url, timeout=5)
+            if resp.status_code == 200:
+                print(f"[*] Collection '{COLLECTION_NAME}' already exists.")
+                return
+            elif resp.status_code == 404:
+                print(f"[*] Creating Qdrant collection '{COLLECTION_NAME}'...")
+                create_resp = requests.put(
+                    url,
+                    json={
+                        "vectors": {
+                            "size": EMBEDDING_DIM,
+                            "distance": "Cosine"
+                        }
+                    },
+                    timeout=10
+                )
+                if create_resp.status_code in (200, 201):
+                    print(f"[+] Collection '{COLLECTION_NAME}' created successfully.")
+                    return
+                else:
+                    print(f"[E] Failed to create collection: {create_resp.text}", file=sys.stderr)
+                    sys.exit(1)
+        except requests.exceptions.RequestException as e:
+            print(f"[W] Connection attempt {attempt}/{max_retries} to Qdrant at {QDRANT_HOST} failed: {e}", file=sys.stderr)
+            if attempt < max_retries:
+                time.sleep(2)
+            else:
+                print(f"[E] Failed to connect to Qdrant at {QDRANT_HOST} after {max_retries} attempts.", file=sys.stderr)
+                sys.exit(1)
 
 def index_docs():
     """Finds all markdown files, generates embeddings, and upserts to Qdrant."""
@@ -164,6 +179,7 @@ def index_docs():
                 total_upserted += len(batch)
             else:
                 print(f"[E] Error upserting batch {i}: {upsert_resp.text}", file=sys.stderr)
+                sys.exit(1)
         
         print(f"[+] Successfully indexed {total_upserted} vector chunks into Qdrant.")
     else:

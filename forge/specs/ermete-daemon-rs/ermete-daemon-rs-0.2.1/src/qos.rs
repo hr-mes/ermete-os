@@ -27,7 +27,7 @@ impl CgroupFreezer {
         let file = fs::File::open(&proc_cgroup_path).ok()?;
         let reader = BufReader::new(file);
 
-        for line in reader.lines().flatten() {
+        for line in reader.lines().map_while(Result::ok) {
             // cgroups v2 format: "0::<cgroup_path>"
             if let Some(rel_path) = line.strip_prefix("0::") {
                 let rel_path = rel_path.trim_start_matches('/');
@@ -103,6 +103,7 @@ impl CgroupFreezer {
         if pid == 0 {
             return Err(io::Error::new(io::ErrorKind::InvalidInput, "PID 0 cannot be modified"));
         }
+        // SAFETY: Calling libc setpriority syscall to change nice level of target PID.
         unsafe {
             let ret = setpriority(PRIO_PROCESS, pid as libc::id_t, nice_val);
             if ret == -1 {
@@ -185,6 +186,7 @@ impl EnergyAwareScheduler {
     }
 
     /// Protects a specific PID from being frozen.
+    #[allow(dead_code)]
     pub async fn add_protected_pid(&self, pid: u32) {
         let mut state = self.state.write().await;
         state.protected_pids.insert(pid);
@@ -242,10 +244,11 @@ impl EnergyAwareScheduler {
 
             // Identify background PIDs eligible for freezing
             for (bg_pid, app_name) in background_pids {
-                if Some(bg_pid) != focused_pid && !state.protected_pids.contains(&bg_pid) {
-                    if !state.frozen_pids.contains(&bg_pid) {
-                        pids_to_freeze.push((bg_pid, app_name));
-                    }
+                if Some(bg_pid) != focused_pid
+                    && !state.protected_pids.contains(&bg_pid)
+                    && !state.frozen_pids.contains(&bg_pid)
+                {
+                    pids_to_freeze.push((bg_pid, app_name));
                 }
             }
         }

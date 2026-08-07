@@ -74,7 +74,7 @@ impl LivePatchManager {
 
         info!("Zero-Downtime Live-Patch: Opening shared library dynamic load: {}", so_path);
 
-        // Load the shared library (.so) into process RAM space using libloading (dlopen)
+        // SAFETY: Dynamically loading a shared library via libloading dlopen.
         let lib = unsafe {
             Library::new(so_path)
                 .map_err(|e| format!("dlopen failed for {}: {}", so_path, e))?
@@ -83,6 +83,7 @@ impl LivePatchManager {
         let lib_arc = Arc::new(lib);
 
         // Resolve the dynamic patch entrypoint symbol inside the .so
+        // SAFETY: Retrieving dynamic function symbol from loaded shared library.
         let patch_symbol: ZBusPatchFn = unsafe {
             let symbol: libloading::Symbol<ZBusPatchFn> = lib_arc
                 .get(b"ermete_zbus_patch_handler\0")
@@ -124,16 +125,19 @@ impl LivePatchManager {
         let c_method = CString::new(method_name).ok()?;
         let c_input = CString::new(input_json).ok()?;
 
-        unsafe {
-            let res_ptr = live_patch_zbus_entrypoint(c_method.as_ptr(), c_input.as_ptr());
-            if res_ptr.is_null() {
-                None
-            } else {
-                let c_str = CStr::from_ptr(res_ptr);
-                let result_str = c_str.to_string_lossy().into_owned();
+        // SAFETY: Invoking extern C function pointer for live patch entrypoint.
+        let res_ptr = unsafe { live_patch_zbus_entrypoint(c_method.as_ptr(), c_input.as_ptr()) };
+        if res_ptr.is_null() {
+            None
+        } else {
+            // SAFETY: Constructing CStr from non-null pointer returned by live patch entrypoint.
+            let c_str = unsafe { CStr::from_ptr(res_ptr) };
+            let result_str = c_str.to_string_lossy().into_owned();
+            // SAFETY: Freeing non-null C string pointer returned by live patch entrypoint.
+            unsafe {
                 ermete_free_c_string(res_ptr);
-                Some(result_str)
             }
+            Some(result_str)
         }
     }
 

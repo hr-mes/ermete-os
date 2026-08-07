@@ -29,6 +29,12 @@ pub struct HardwareOffloader {
     policy: OffloadPolicy,
 }
 
+impl Default for HardwareOffloader {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl HardwareOffloader {
     pub fn new() -> Self {
         info!("Initializing Hardware AI Offloading Engine (Policy: ForceHardwareOnly - 0% CPU target)");

@@ -53,7 +53,7 @@ pub fn load_notification_history() {
 pub static DND_ACTIVE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 thread_local! {
-    pub static NOTIFICATIONS: std::cell::RefCell<Vec<NotificationData>> = std::cell::RefCell::new(Vec::new());
+    pub static NOTIFICATIONS: std::cell::RefCell<Vec<NotificationData>> = const { std::cell::RefCell::new(Vec::new()) };
 }
 
 pub struct NotificationServer {
@@ -63,6 +63,7 @@ pub struct NotificationServer {
 
 #[interface(name = "org.freedesktop.Notifications")]
 impl NotificationServer {
+    #[allow(clippy::too_many_arguments)]
     async fn notify(
         &self,
         app_name: &str,

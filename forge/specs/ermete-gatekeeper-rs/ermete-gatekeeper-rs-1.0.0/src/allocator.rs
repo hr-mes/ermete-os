@@ -18,6 +18,7 @@ extern "C" {
 const ARENA_SIZE: usize = 2 * 1024 * 1024; // 2 MB static arena for zero-glibc IPC buffers
 
 /// Lock-free arena bump allocator for `no_std` bare-metal IPC.
+#[repr(C, align(64))]
 pub struct BumpArenaAllocator {
     arena: [u8; ARENA_SIZE],
     offset: AtomicUsize,
@@ -30,15 +31,15 @@ impl BumpArenaAllocator {
             offset: AtomicUsize::new(0),
         }
     }
+
+    pub fn reset(&self) {
+        self.offset.store(0, Ordering::Relaxed);
+    }
 }
 
 impl Default for BumpArenaAllocator {
     fn default() -> Self {
         Self::new()
-    }
-
-    pub fn reset(&self) {
-        self.offset.store(0, Ordering::Relaxed);
     }
 }
 
@@ -68,17 +69,23 @@ unsafe impl GlobalAlloc for BareMetalScudoAllocator {
         let size = layout.size();
 
         // Fast path: align and allocate from static IPC arena (zero glibc overhead)
-        let current = self.arena.offset.load(Ordering::Relaxed);
-        let aligned = (current + align - 1) & !(align - 1);
-        if aligned.saturating_add(size) <= ARENA_SIZE
-            && self.arena.offset.compare_exchange_weak(
+        let start = self.arena.arena.as_ptr() as usize;
+        let mut current = self.arena.offset.load(Ordering::Relaxed);
+        loop {
+            let ptr_val = (start + current + align - 1) & !(align - 1);
+            let offset_needed = ptr_val - start;
+            if offset_needed.saturating_add(size) > ARENA_SIZE {
+                break;
+            }
+            match self.arena.offset.compare_exchange_weak(
                 current,
-                aligned + size,
+                offset_needed + size,
                 Ordering::SeqCst,
                 Ordering::Relaxed,
-            ).is_ok()
-        {
-            return self.arena.arena.as_ptr().add(aligned) as *mut u8;
+            ) {
+                Ok(_) => return ptr_val as *mut u8,
+                Err(actual) => current = actual,
+            }
         }
 
         // Direct libscudo / libc FFI fallback

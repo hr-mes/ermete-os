@@ -119,10 +119,8 @@ impl MprisActor {
                                             .ok()
                                             .and_then(|v| {
                                                 if let zbus::zvariant::Value::Dict(dict) = &*v {
-                                                    if let Ok(Some(val)) = dict.get(&zbus::zvariant::Value::from("xesam:title")) {
-                                                        if let zbus::zvariant::Value::Str(s) = val {
-                                                            return Some(s.as_str().to_string());
-                                                        }
+                                                    if let Ok(Some(zbus::zvariant::Value::Str(s))) = dict.get(&zbus::zvariant::Value::from("xesam:title")) {
+                                                        return Some(s.as_str().to_string());
                                                     }
                                                 }
                                                 None
@@ -133,10 +131,8 @@ impl MprisActor {
                                                 if let zbus::zvariant::Value::Dict(dict) = &*v {
                                                     if let Ok(Some(val)) = dict.get(&zbus::zvariant::Value::from("xesam:artist")) {
                                                         if let zbus::zvariant::Value::Array(arr) = val {
-                                                            if let Ok(Some(first)) = arr.get(0) {
-                                                                if let zbus::zvariant::Value::Str(s) = first {
-                                                                    return Some(s.as_str().to_string());
-                                                                }
+                                                            if let Ok(Some(zbus::zvariant::Value::Str(s))) = arr.get(0) {
+                                                                return Some(s.as_str().to_string());
                                                             }
                                                         } else if let zbus::zvariant::Value::Str(s) = val {
                                                             return Some(s.as_str().to_string());

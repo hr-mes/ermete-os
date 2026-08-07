@@ -11,6 +11,12 @@ pub struct VulkanTensorEngine {
     has_tensor_cores: bool,
 }
 
+impl Default for VulkanTensorEngine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl VulkanTensorEngine {
     pub fn new() -> Self {
         info!("Initializing Vulkan GPU Tensor Core Subsystem...");
@@ -21,8 +27,8 @@ impl VulkanTensorEngine {
 
         if let Ok(library) = VulkanLibrary::new() {
             if let Ok(instance) = Instance::new(library, InstanceCreateInfo::default()) {
-                if let Ok(physical_devices) = instance.enumerate_physical_devices() {
-                    for pdev in physical_devices {
+                if let Ok(mut physical_devices) = instance.enumerate_physical_devices() {
+                    if let Some(pdev) = physical_devices.next() {
                         let props = pdev.properties();
                         info!("Detected Vulkan Physical Device: {}", props.device_name);
                         dev_name = props.device_name.clone();
@@ -36,7 +42,6 @@ impl VulkanTensorEngine {
                                 break;
                             }
                         }
-                        break;
                     }
                 }
             }
