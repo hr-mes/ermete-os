@@ -47,10 +47,11 @@ fetch_pinned "https://github.com/CachyOS/kernel-patches.git" "/tmp/cachyos-patch
 
 
 echo ">>> [BEDROCK SECURE] Calcolo dinamico dello Scudo NVIDIA (Dynamic Ceiling)..."
-curl -sLo /etc/yum.repos.d/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo || true
+curl -sLo /tmp/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo || true
 EXPECTED_SHA="9126880310a20437de6ba1a83d299ee9a2119f8a1ef1e40de601676054320fc5"
-if [ -f /etc/yum.repos.d/fedora-nvidia.repo ]; then
-    echo "$EXPECTED_SHA  /etc/yum.repos.d/fedora-nvidia.repo" | sha256sum -c || { echo "FATAL: Checksum mismatch per fedora-nvidia.repo"; exit 1; }
+if [ -f /tmp/fedora-nvidia.repo ]; then
+    echo "$EXPECTED_SHA  /tmp/fedora-nvidia.repo" | sha256sum -c || { echo "FATAL: Checksum mismatch per fedora-nvidia.repo"; exit 1; }
+    cp /tmp/fedora-nvidia.repo /etc/yum.repos.d/fedora-nvidia.repo 2>/dev/null || true
 fi
 NVIDIA_VER=$(dnf repoquery --qf '%{VERSION}\n' akmod-nvidia 2>/dev/null | sort -V | tail -n 1 | awk -F. '{print $1}' || true)
 MAX_KERNEL="6.18" # Default
