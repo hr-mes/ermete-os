@@ -148,7 +148,7 @@ route_patch() {
         domain="04"
     elif [[ "$lower_patch" =~ (mglru|mm|lru|zswap|zram|page|memory|vm) ]]; then
         domain="03"
-    elif [[ "$lower_patch" =~ (fs|ext4|btrfs|xfs|zfs|io|block|nvme) ]]; then
+    elif [[ "$lower_patch" =~ (fs|ext4|bcachefs|xfs|zfs|io|block|nvme) ]]; then
         domain="05"
     else
         domain="99"

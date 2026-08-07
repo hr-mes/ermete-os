@@ -17,7 +17,7 @@ scope: Disk image and ISO generation management
 - Validate `disk.toml` and `iso.toml` configurations
 - Generate qcow2 and ISO images via `bootc-image-builder`
 - Test installation flow in VM environment
-- Validate BTRFS+LUKS2 partitioning schemes
+- Validate Bcachefs+LUKS2 partitioning schemes
 - Verify user provisioning (hermes user, SSH keys)
 - Track disk image size and composition metrics
 
@@ -54,7 +54,7 @@ Return structured JSON:
   ],
   "kickstart_valid": <true|false>,
   "partitioning": {
-    "filesystem": "<btrfs>",
+    "filesystem": "<bcachefs>",
     "encryption": "<luks2|none>",
     "min_size_gb": <size>
   },

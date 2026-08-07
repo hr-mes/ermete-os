@@ -7,7 +7,7 @@ use zbus::{ConnectionBuilder, interface, SignalContext};
 #[derive(Serialize, Deserialize, Default, Debug)]
 struct HealthReport {
     nvme: Option<String>,
-    btrfs: Option<String>,
+    bcachefs: Option<String>,
 }
 
 struct SystemHealth;
@@ -35,8 +35,8 @@ async fn get_nvme_health() -> Option<String> {
     }
 }
 
-async fn get_btrfs_health() -> Option<String> {
-    let output = Command::new("btrfs")
+async fn get_bcachefs_health() -> Option<String> {
+    let output = Command::new("bcachefs")
         .args(["device", "stats", "/"])
         .output()
         .await
@@ -67,9 +67,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         interval.tick().await;
 
         let nvme = get_nvme_health().await;
-        let btrfs = get_btrfs_health().await;
+        let bcachefs = get_bcachefs_health().await;
 
-        let report = HealthReport { nvme, btrfs };
+        let report = HealthReport { nvme, bcachefs };
 
         if let Ok(json) = serde_json::to_string(&report) {
             if let Err(e) = SystemHealth::system_health_update(&context, &json).await {

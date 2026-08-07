@@ -44,7 +44,7 @@ _build-bib target_image tag type:
       -v "$(pwd)/${config}:/config.toml:ro" \
       -v "$BUILDTMP:/output" \
       -v /var/lib/containers/storage:/var/lib/containers/storage \
-      "${bib_image}" --type "${type}" --use-librepo=True --rootfs=btrfs --config /config.toml \
+      "${bib_image}" --type "${type}" --use-librepo=True --rootfs=bcachefs --config /config.toml \
       "${target_image}:${tag}"
 
     if [[ "${type}" == "qcow2" ]]; then

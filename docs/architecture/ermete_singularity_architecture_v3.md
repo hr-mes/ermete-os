@@ -10,7 +10,7 @@
 
 ## 🏛️ Executive Summary & Vision Architetturale
 
-**Ermete OS v3.0 "Singularity"** rappresenta il punto di svolta definitivo nell'evoluzione dei sistemi operativi moderni. Superando le eredità monolitiche e le stratificazioni inefficienti del passato, Ermete OS fonde un'architettura **Immutable Core** basata su **Unified Kernel Image (UKI)** e **BTRFS Atomic Snapshots** con il paradigma **Zero-Trust Wire-Speed Processing**.
+**Ermete OS v3.0 "Singularity"** rappresenta il punto di svolta definitivo nell'evoluzione dei sistemi operativi moderni. Superando le eredità monolitiche e le stratificazioni inefficienti del passato, Ermete OS fonde un'architettura **Immutable Core** basata su **Unified Kernel Image (UKI)** e **Bcachefs Atomic Snapshots** con il paradigma **Zero-Trust Wire-Speed Processing**.
 
 Con l'integrazione del nuovo **OCI Flatpak Store (SLSA Level 4)** disconnesso da Flathub, del **Portale Astro.js Starlight Multilingua** potenziato da traduzioni locali su **NPU**, della topologia **DAG deterministica multi-livello**, e della verifica formale matematica **AWS Kani** affiancata a **Clippy Strict**, Ermete OS consolida la sua posizione di assoluta supremazia tecnologica rispetto agli ambienti closed e legacy di Apple, Microsoft e Google.
 
@@ -169,7 +169,7 @@ Di seguito viene presentata l'analisi comparativa a 360° che dimostra la schiac
 | **Supply Chain & App Store** | App Store chiuso con certificati notarili e tolleranza malware | Microsoft Store con MSIX/Win32 vulnerabile a spoofing | Google Play Store / Flathub terzi non garantiti SLSA 4 | **OCI Flatpak Store (SLSA Level 4) + Cosign Cryptographic Signature (Zero-Flathub)** |
 | **Intelligenza Artificiale & Privacy** | Siri / Apple Intelligence con offloading su Private Cloud Compute | Windows Recall / Copilot+ con acquisizione continua e invio dati cloud | Gemini / Cloud AI con dipendenza costante da server Google | **Local NPU Engine (`ermete-ai-daemon`) con Traduzione Locale & Zero Cloud Telemetry** |
 | **Garanzia di Sicurezza** | Audit manuale e bug bounty empirici | Testing empirico e continuous patching post-vulnerabilità | Fuzzing guidato ma assenza di verifiche matematiche formali | **AWS Kani Model Checker (Dimostrazione Matematica Formale) + Clippy Strict** |
-| **Immutabilità & Recovery** | APFS Read-Only System Volume con snapshot vincolati | Nessuna vera immutabilità di sistema (Registry vulnerabile) | ChromiumOS Read-Only RootFS con doppia partizione A/B | **UKI Measured Boot (TPM2) + BTRFS Atomic Snapshots Automatici Pre-Exec** |
+| **Immutabilità & Recovery** | APFS Read-Only System Volume con snapshot vincolati | Nessuna vera immutabilità di sistema (Registry vulnerabile) | ChromiumOS Read-Only RootFS con doppia partizione A/B | **UKI Measured Boot (TPM2) + Bcachefs Atomic Snapshots Automatici Pre-Exec** |
 
 ---
 
@@ -177,7 +177,7 @@ Di seguito viene presentata l'analisi comparativa a 360° che dimostra la schiac
 
 L'analisi integrata a 360 gradi conferma che **Ermete OS v3.0 "Singularity"** ha infranto le barriere tradizionali dei sistemi operativi desktop e server:
 
-1. **Supremazia della Sicurezza**: La combinazione di **Kani Formal Verification**, **Cosign SLSA Level 4**, **eBPF XDP Firewall** e **BTRFS Atomic Snapshots** crea una fortezza inattaccabile sia contro minacce di rete che contro attacchi alla supply chain.
+1. **Supremazia della Sicurezza**: La combinazione di **Kani Formal Verification**, **Cosign SLSA Level 4**, **eBPF XDP Firewall** e **Bcachefs Atomic Snapshots** crea una fortezza inattaccabile sia contro minacce di rete che contro attacchi alla supply chain.
 2. **Supremazia delle Prestazioni**: Il kernel **Chimera** ottimizzato con **AutoFDO** e **ThinLTO**, unito alla comunicazione IPC zero-copy su **Zbus**, garantisce una reattività dell'interfaccia e un throughput di rete che nessun SO commerciale attuale può rivaleggiare.
 3. **Supremazia della Privacy**: L'integrazione nativa su **NPU locale** garantisce funzionalità IA avanzate (come la localizzazione istantanea del portale) preservando la sovranità totale sui dati dell'utente.
 

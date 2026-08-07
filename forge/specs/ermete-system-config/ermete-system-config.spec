@@ -14,7 +14,7 @@ Requires: ermete-shell-rs ermete-settings-rs ermete-daemon-rs
 Requires: ermete-updater-rs ermete-store-rs ermete-telemetry-rs ermete-cloud-rs xdg-desktop-portal-ermete
 Requires: usbguard bolt
 
-Requires:       btrfs-progs
+Requires:       bcachefs-tools
 %description
 Provides ermete-system-config for Ermete OS.
 

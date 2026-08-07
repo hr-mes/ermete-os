@@ -242,7 +242,7 @@ fn build_ui(app: &Application) {
 
     let window = ApplicationWindow::builder()
         .application(app)
-        .title("Ermete Time Machine — Btrfs Snapshot Manager")
+        .title("Ermete Time Machine — Bcachefs Snapshot Manager")
         .default_width(740)
         .default_height(600)
         .build();
@@ -257,7 +257,7 @@ fn build_ui(app: &Application) {
         .build();
 
     let title = Label::builder()
-        .label("⏳ Ermete Time Machine — Gestore Istantanee Btrfs")
+        .label("⏳ Ermete Time Machine — Gestore Istantanee Bcachefs")
         .css_classes(["header-title"])
         .halign(Align::Start)
         .build();
@@ -284,7 +284,7 @@ fn build_ui(app: &Application) {
         .build();
 
     let create_btn = Button::builder()
-        .label("📸 Scatta Istantanea Btrfs")
+        .label("📸 Scatta Istantanea Bcachefs")
         .css_classes(["btn-action"])
         .build();
 

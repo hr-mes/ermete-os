@@ -14,7 +14,7 @@ scope: Performance benchmarking and regression detection
 
 ## In-Scope
 - Benchmark BORE scheduler performance
-- Measure BTRFS compression ratios and throughput
+- Measure Bcachefs compression ratios and throughput
 - Track boot time from GRUB to desktop
 - Monitor memory usage and swap behavior
 - Detect performance regressions vs baseline
@@ -49,7 +49,7 @@ Return structured JSON:
     "cpu_score": <float>,
     "memory_bandwidth_mbps": <float>,
     "disk_io_iops": <float>,
-    "btrfs_compression_ratio": <float>
+    "bcachefs_compression_ratio": <float>
   },
   "regressions": [
     {

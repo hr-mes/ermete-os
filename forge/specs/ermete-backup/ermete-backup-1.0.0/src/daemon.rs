@@ -51,13 +51,13 @@ impl BackupServer {
         let mut target_dir = self.snapshot_dir.clone();
         target_dir.push(&id);
 
-        println!("[BackupDaemon] Creating Btrfs CoW snapshot of {} at {:?}", home, target_dir);
-        let status = Command::new("btrfs")
+        println!("[BackupDaemon] Creating Bcachefs CoW snapshot of {} at {:?}", home, target_dir);
+        let status = Command::new("bcachefs")
             .args(["subvolume", "snapshot", "-r", &home, target_dir.to_str().unwrap_or("")])
             .status().await;
 
         if !matches!(status, Ok(ref s) if s.success()) {
-            println!("[BackupDaemon] Btrfs subvolume snapshot command failed or unsupported on current fs. Creating manifest snapshot dir.");
+            println!("[BackupDaemon] Bcachefs subvolume snapshot command failed or unsupported on current fs. Creating manifest snapshot dir.");
             let _ = fs::create_dir_all(&target_dir);
         }
 
@@ -66,7 +66,7 @@ impl BackupServer {
             timestamp,
             note: note.to_string(),
             path: target_dir.to_string_lossy().to_string(),
-            size_estimate: "0 B (Btrfs CoW)".to_string(),
+            size_estimate: "0 B (Bcachefs CoW)".to_string(),
         };
 
         if let Ok(json) = serde_json::to_string_pretty(&info) {
@@ -101,8 +101,8 @@ impl BackupServer {
         let mut target_dir = self.snapshot_dir.clone();
         target_dir.push(id);
 
-        println!("[BackupDaemon] Deleting Btrfs subvolume snapshot {:?}", target_dir);
-        let status = Command::new("btrfs")
+        println!("[BackupDaemon] Deleting Bcachefs subvolume snapshot {:?}", target_dir);
+        let status = Command::new("bcachefs")
             .args(["subvolume", "delete", target_dir.to_str().unwrap_or("")])
             .status().await;
 
@@ -130,15 +130,15 @@ impl BackupServer {
 
         let home = std::env::var("HOME").unwrap_or_else(|_| dirs::home_dir().unwrap_or(std::path::PathBuf::from("/home")).to_string_lossy().into_owned().to_string());
 
-        let _del_status = Command::new("btrfs")
+        let _del_status = Command::new("bcachefs")
             .args(["subvolume", "delete", &home])
             .status().await;
-        let status = Command::new("btrfs")
+        let status = Command::new("bcachefs")
             .args(["subvolume", "snapshot", target_dir.to_str().unwrap_or(""), &home])
             .status().await;
 
         if !matches!(status, Ok(ref s) if s.success()) {
-            println!("[BackupDaemon] Btrfs subvolume restore failed.");
+            println!("[BackupDaemon] Bcachefs subvolume restore failed.");
             return false;
         }
 

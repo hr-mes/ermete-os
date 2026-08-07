@@ -44,8 +44,8 @@ fn respond_and_close(fanotify_fd: RawFd, event_fd: RawFd, response_code: u32) {
     }
 }
 
-/// Takes an atomic BTRFS subvolume snapshot of `/var/home/ermete` prior to prompt or kill.
-async fn take_btrfs_snapshot(fd_id: u64) -> Option<PathBuf> {
+/// Takes an atomic Bcachefs subvolume snapshot of `/var/home/ermete` prior to prompt or kill.
+async fn take_bcachefs_snapshot(fd_id: u64) -> Option<PathBuf> {
     let snapshot_dir = PathBuf::from("/var/home/.snapshots");
     let _ = tokio::fs::create_dir_all(&snapshot_dir).await;
     let timestamp = std::time::SystemTime::now()
@@ -55,11 +55,11 @@ async fn take_btrfs_snapshot(fd_id: u64) -> Option<PathBuf> {
     let snapshot_path = snapshot_dir.join(format!("gatekeeper-pre-exec-{}-{}", fd_id, timestamp));
 
     println!(
-        "[BTRFS Rollback Architect] Creating atomic CoW snapshot of /var/home/ermete at {:?}",
+        "[Bcachefs Rollback Architect] Creating atomic CoW snapshot of /var/home/ermete at {:?}",
         snapshot_path
     );
 
-    let status = tokio::process::Command::new("btrfs")
+    let status = tokio::process::Command::new("bcachefs")
         .args([
             "subvolume",
             "snapshot",
@@ -71,13 +71,13 @@ async fn take_btrfs_snapshot(fd_id: u64) -> Option<PathBuf> {
 
     if matches!(status, Ok(ref s) if s.success()) {
         println!(
-            "[BTRFS Rollback Architect] Atomic snapshot successfully created: {:?}",
+            "[Bcachefs Rollback Architect] Atomic snapshot successfully created: {:?}",
             snapshot_path
         );
         Some(snapshot_path)
     } else {
         eprintln!(
-            "[BTRFS Rollback Architect] Failed to create BTRFS snapshot for fd_id {}",
+            "[Bcachefs Rollback Architect] Failed to create Bcachefs snapshot for fd_id {}",
             fd_id
         );
         None
@@ -85,7 +85,7 @@ async fn take_btrfs_snapshot(fd_id: u64) -> Option<PathBuf> {
 }
 
 /// Restores `/var/home/ermete` instantly from the recorded snapshot upon confirmed infection / denial.
-async fn restore_btrfs_snapshot_impl(
+async fn restore_bcachefs_snapshot_impl(
     fd_id: u64,
     pending_snapshots: &Arc<std::sync::Mutex<HashMap<u64, PathBuf>>>,
 ) -> zbus::fdo::Result<bool> {
@@ -96,21 +96,21 @@ async fn restore_btrfs_snapshot_impl(
 
     if let Some(snapshot_path) = snapshot_path {
         println!(
-            "[BTRFS Rollback Architect] Confirmed infection / execution denial for fd_id {}. Triggering instant BTRFS restore from {:?}",
+            "[Bcachefs Rollback Architect] Confirmed infection / execution denial for fd_id {}. Triggering instant Bcachefs restore from {:?}",
             fd_id, snapshot_path
         );
 
         let target_subvol = "/var/home/ermete";
-        let del_status = tokio::process::Command::new("btrfs")
+        let del_status = tokio::process::Command::new("bcachefs")
             .args(["subvolume", "delete", target_subvol])
             .status()
             .await;
 
         if !matches!(del_status, Ok(ref s) if s.success()) {
-            eprintln!("[BTRFS Rollback Architect] Subvolume delete returned non-zero; attempting snapshot restore & fallback...");
+            eprintln!("[Bcachefs Rollback Architect] Subvolume delete returned non-zero; attempting snapshot restore & fallback...");
         }
 
-        let restore_status = tokio::process::Command::new("btrfs")
+        let restore_status = tokio::process::Command::new("bcachefs")
             .args([
                 "subvolume",
                 "snapshot",
@@ -122,12 +122,12 @@ async fn restore_btrfs_snapshot_impl(
 
         if matches!(restore_status, Ok(ref s) if s.success()) {
             println!(
-                "[BTRFS Rollback Architect] Instant restore completed successfully from {:?}",
+                "[Bcachefs Rollback Architect] Instant restore completed successfully from {:?}",
                 snapshot_path
             );
             Ok(true)
         } else {
-            println!("[BTRFS Rollback Architect] Executing file-level restore fallback via rsync...");
+            println!("[Bcachefs Rollback Architect] Executing file-level restore fallback via rsync...");
             let fallback_status = tokio::process::Command::new("rsync")
                 .args([
                     "-a",
@@ -139,15 +139,15 @@ async fn restore_btrfs_snapshot_impl(
                 .await;
 
             if matches!(fallback_status, Ok(ref s) if s.success()) {
-                println!("[BTRFS Rollback Architect] Fallback file-level restore succeeded.");
+                println!("[Bcachefs Rollback Architect] Fallback file-level restore succeeded.");
                 Ok(true)
             } else {
-                eprintln!("[BTRFS Rollback Architect] BTRFS restore failed!");
-                Err(zbus::fdo::Error::Failed("BTRFS instant restore failed".into()))
+                eprintln!("[Bcachefs Rollback Architect] Bcachefs restore failed!");
+                Err(zbus::fdo::Error::Failed("Bcachefs instant restore failed".into()))
             }
         }
     } else {
-        println!("[BTRFS Rollback Architect] No snapshot registered for fd_id {}", fd_id);
+        println!("[Bcachefs Rollback Architect] No snapshot registered for fd_id {}", fd_id);
         Ok(false)
     }
 }
@@ -232,7 +232,7 @@ impl GatekeeperManager {
     }
 
     async fn deny_execution(&self, fd_id: u64) -> zbus::fdo::Result<()> {
-        let _ = restore_btrfs_snapshot_impl(fd_id, &self.pending_snapshots).await;
+        let _ = restore_bcachefs_snapshot_impl(fd_id, &self.pending_snapshots).await;
         let event_fd = {
             let mut pending = self.pending_events.lock().unwrap_or_else(|e| e.into_inner());
             pending.remove(&fd_id)
@@ -246,7 +246,7 @@ impl GatekeeperManager {
     }
 
     async fn rollback_snapshot(&self, fd_id: u64) -> zbus::fdo::Result<bool> {
-        restore_btrfs_snapshot_impl(fd_id, &self.pending_snapshots).await
+        restore_bcachefs_snapshot_impl(fd_id, &self.pending_snapshots).await
     }
 
     #[zbus(signal)]
@@ -328,7 +328,7 @@ impl GatekeeperManager {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    println!("Starting Ermete Gatekeeper Daemon with BTRFS Rollback Architect Engine...");
+    println!("Starting Ermete Gatekeeper Daemon with Bcachefs Rollback Architect Engine...");
 
     // SAFETY: Call libc fanotify_init syscall to create fanotify file descriptor.
     let fanotify_fd = unsafe {
@@ -449,8 +449,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         
                         println!("Intercepted execution of quarantined file: {}", target_path_str);
 
-                        // Take atomic BTRFS subvolume snapshot BEFORE prompt or kill
-                        if let Some(snap_path) = take_btrfs_snapshot(fd_id).await {
+                        // Take atomic Bcachefs subvolume snapshot BEFORE prompt or kill
+                        if let Some(snap_path) = take_bcachefs_snapshot(fd_id).await {
                             pending_snapshots.lock().unwrap_or_else(|e| e.into_inner()).insert(fd_id, snap_path);
                         }
                         
@@ -461,7 +461,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         if let Err(e) = GatekeeperManager::prompt_required(&signal_ctxt, fd_id, &target_path_str).await {
                             eprintln!("Failed to send prompt_required signal: {}", e);
                             // Fallback deny if UI is dead: trigger instant restore and deny execution
-                            let _ = restore_btrfs_snapshot_impl(fd_id, &pending_snapshots).await;
+                            let _ = restore_bcachefs_snapshot_impl(fd_id, &pending_snapshots).await;
                             respond_and_close(fanotify_fd, metadata.fd, FAN_DENY);
                         }
                     } else {

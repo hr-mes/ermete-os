@@ -1,5 +1,5 @@
 [Unit]
-Description=Ermete OS Hourly Btrfs Home Snapshot Trigger
+Description=Ermete OS Hourly Bcachefs Home Snapshot Trigger
 Documentation=https://github.com/hr-mes/ermete-forge
 
 [Service]

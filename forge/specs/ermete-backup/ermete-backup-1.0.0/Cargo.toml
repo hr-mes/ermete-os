@@ -3,7 +3,7 @@ name = "ermete-backup"
 version = "1.0.0"
 edition = "2021"
 authors = ["Ermete Forge <forge@ermete.os>"]
-description = "Instant Btrfs Home Snapshot Manager & Time Machine GUI for Ermete OS"
+description = "Instant Bcachefs Home Snapshot Manager & Time Machine GUI for Ermete OS"
 license = "MIT"
 
 [[bin]]

@@ -179,7 +179,7 @@ L'immagine immutabile dell'OS viene compilata tramite un Containerfile multi-sta
 6. **Hardening & Linting**: Rimuove i tool di build residui (`gcc`, `make`, `llvm-static`), resetta `/etc/machine-id` ed esegue la validazione formale via `bootc container lint`.
 
 ### 4.2 Configurazione Dischi (`system/disk_config/`)
-* **`disk.toml`**: Utilizzato da `bootc-image-builder` per la generazione di dischi VM (QCOW2). Imposta rootfs Btrfs con dimensione minima 20 GiB e utente predefinito `hermes`.
+* **`disk.toml`**: Utilizzato da `bootc-image-builder` per la generazione di dischi VM (QCOW2). Imposta rootfs Bcachefs con dimensione minima 20 GiB e utente predefinito `hermes`.
 * **`iso.toml`**: Utilizzato per la generazione dell'ISO Anaconda installabile. Inietta lo script Kickstart `%post` per eseguire `bootc switch --mutate-in-place --transport registry ghcr.io/hr-mes/ermete-os:latest` al termine dell'installazione.
 
 ---

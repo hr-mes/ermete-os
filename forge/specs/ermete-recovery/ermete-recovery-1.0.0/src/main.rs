@@ -70,10 +70,10 @@ async fn execute_rollback(
         return Ok(());
     }
 
-    eprintln!("Rollback OSTree fallito. Tento fallback su BTRFS subvolume snapshot...");
+    eprintln!("Rollback OSTree fallito. Tento fallback su Bcachefs subvolume snapshot...");
 
-    // Fallback btrfs snapshot
-    let btrfs_output = Command::new("btrfs")
+    // Fallback bcachefs snapshot
+    let bcachefs_output = Command::new("bcachefs")
         .arg("subvolume")
         .arg("snapshot")
         .arg("/")
@@ -81,8 +81,8 @@ async fn execute_rollback(
         .output()
         .await?;
 
-    if btrfs_output.status.success() {
-        println!("Snapshot BTRFS creato con successo.");
+    if bcachefs_output.status.success() {
+        println!("Snapshot Bcachefs creato con successo.");
         send_success_signal(connection).await?;
         return Ok(());
     }

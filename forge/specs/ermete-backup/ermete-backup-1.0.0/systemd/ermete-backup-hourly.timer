@@ -1,5 +1,5 @@
 [Unit]
-Description=Ermete OS Hourly Btrfs Home Snapshot Timer
+Description=Ermete OS Hourly Bcachefs Home Snapshot Timer
 Documentation=https://github.com/hr-mes/ermete-forge
 
 [Timer]

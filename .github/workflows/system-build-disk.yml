@@ -77,7 +77,7 @@ jobs:
           image: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
           chown: ${{ env.USER_UID }}:${{ env.USER_GID }}
           types: ${{ matrix.disk-type }}
-          additional-args: --use-librepo=True --rootfs=btrfs
+          additional-args: --use-librepo=True --rootfs=bcachefs
 
       - name: 📦 Upload disk images to Artifacts
         if: (github.event_name != 'workflow_dispatch' || inputs.upload-to-s3 != true) && github.event_name != 'pull_request'

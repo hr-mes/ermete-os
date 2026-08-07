@@ -1,5 +1,5 @@
 [Unit]
-Description=Ermete OS Btrfs Snapshot & Time Machine Daemon
+Description=Ermete OS Bcachefs Snapshot & Time Machine Daemon
 Documentation=https://github.com/hr-mes/ermete-forge
 PartOf=multi-user.target
 

@@ -2,16 +2,16 @@
 Name:           ermete-backup
 Version:        1.0.0
 Release:        2%{?dist}
-Summary:        Ermete OS Time Machine & Btrfs Home Snapshot Manager
+Summary:        Ermete OS Time Machine & Bcachefs Home Snapshot Manager
 
 License:        MIT
 Source0:        ermete-backup-%{version}.tar.gz
 
 BuildRequires:  rust cargo gcc gcc-c++ gtk4-devel glib2-devel pkgconf-pkg-config
-Requires:       gtk4 glib2 btrfs-progs systemd
+Requires:       gtk4 glib2 bcachefs-tools systemd
 
 %description
-Instant zero-overhead Btrfs Copy-on-Write (CoW) Home snapshot manager and Time Machine GUI (`ermete-backup-ui`).
+Instant zero-overhead Bcachefs Copy-on-Write (CoW) Home snapshot manager and Time Machine GUI (`ermete-backup-ui`).
 Includes user D-Bus daemon (`ermete-backup-daemon`) and automatic hourly timer (`ermete-backup-hourly.timer`).
 
 %prep
@@ -45,6 +45,6 @@ install -m 0644 systemd/org.ermete.Backup1.conf %{buildroot}/usr/share/dbus-1/sy
 
 %changelog
 * Wed Jul 15 2026 Ermete Forge <forge@ermete.os> - 1.0.0-1
-- Initial release of ermete-backup Btrfs CoW snapshot daemon and Time Machine GUI
+- Initial release of ermete-backup Bcachefs CoW snapshot daemon and Time Machine GUI
 - Automatic hourly snapshot creation via systemd user timer
 - Instant single-click rollback and snapshot creation
