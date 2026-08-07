@@ -118,6 +118,7 @@ jobs:
       with:
         name: ermete-chimera-kernel-rpms
         path: RPMS_OUT/*.rpm
+        compression-level: 1
         
     - name: Publish Kernel Micro-Container OCI
       run: |

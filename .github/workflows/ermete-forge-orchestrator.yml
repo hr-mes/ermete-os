@@ -18,6 +18,9 @@ env:
   FEDORA_VERSION: 43
   REDIS_HOST: redis
   REDIS_PORT: 6379
+  RUSTC_WRAPPER: sccache
+  SCCACHE_DIRECT: "true"
+  SCCACHE_CACHE_SIZE: "10G"
 
 defaults:
   run:
@@ -127,6 +130,7 @@ jobs:
           - 6379:6379
     strategy:
       fail-fast: false
+      max-parallel: 20
       matrix:
         package: ${{ fromJson(needs.orchestrator-brain.outputs.dag_level_0) }}
     permissions:
@@ -158,6 +162,13 @@ jobs:
           source ./idemp.out
           echo "hash=$CONTENT_HASH" >> $GITHUB_OUTPUT
           if [ "$CACHE_HIT" = "true" ]; then echo "skip=true" >> $GITHUB_OUTPUT; else echo "skip=false" >> $GITHUB_OUTPUT; fi
+
+      - name: Extreme Rust Cache (LLVM & Dependencies)
+        if: steps.check.outputs.skip != 'true'
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "sccache-level0-${{ matrix.package }}"
+          cache-on-failure: "true"
 
       - name: Cache sccache
         if: steps.check.outputs.skip != 'true'
@@ -304,6 +315,7 @@ jobs:
           - 6379:6379
     strategy:
       fail-fast: false
+      max-parallel: 20
       matrix:
         package: ${{ fromJson(needs.orchestrator-brain.outputs.dag_level_1) }}
     permissions:
@@ -335,6 +347,13 @@ jobs:
           source ./idemp.out
           echo "hash=$CONTENT_HASH" >> $GITHUB_OUTPUT
           if [ "$CACHE_HIT" = "true" ]; then echo "skip=true" >> $GITHUB_OUTPUT; else echo "skip=false" >> $GITHUB_OUTPUT; fi
+
+      - name: Extreme Rust Cache (LLVM & Dependencies)
+        if: steps.check.outputs.skip != 'true'
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "sccache-level1-${{ matrix.package }}"
+          cache-on-failure: "true"
 
       - name: Cache sccache
         if: steps.check.outputs.skip != 'true'
@@ -481,6 +500,7 @@ jobs:
           - 6379:6379
     strategy:
       fail-fast: false
+      max-parallel: 20
       matrix:
         package: ${{ fromJson(needs.orchestrator-brain.outputs.dag_level_2) }}
     permissions:
@@ -510,6 +530,13 @@ jobs:
           source ./idemp.out
           echo "hash=$CONTENT_HASH" >> $GITHUB_OUTPUT
           if [ "$CACHE_HIT" = "true" ]; then echo "skip=true" >> $GITHUB_OUTPUT; else echo "skip=false" >> $GITHUB_OUTPUT; fi
+
+      - name: Extreme Rust Cache (LLVM & Dependencies)
+        if: steps.check.outputs.skip != 'true'
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "sccache-level2-${{ matrix.package }}"
+          cache-on-failure: "true"
 
       - name: Cache sccache
         if: steps.check.outputs.skip != 'true'
@@ -651,6 +678,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
+      max-parallel: 20
       matrix:
         flatpak: ${{ fromJson(needs.orchestrator-brain.outputs.dag_flatpaks) }}
     steps:

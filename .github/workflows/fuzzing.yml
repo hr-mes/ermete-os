@@ -39,6 +39,7 @@ jobs:
       actions: read
     strategy:
       fail-fast: false
+      max-parallel: 20
       matrix:
         sanitizer: [address, thread, memory, leak]
         include:
@@ -63,17 +64,14 @@ jobs:
         with:
           components: llvm-tools-preview, rust-src
 
-      - name: ⚡ Cache Cargo Dependencies & Fuzz Build
-        uses: actions/cache@v4
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v2
+
+      - name: ⚡ Extreme Rust Cache (LLVM & Dependencies)
+        uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            tests/fuzz/target/
-          key: ${{ runner.os }}-cargo-fuzz-${{ matrix.sanitizer }}-${{ hashFiles('tests/fuzz/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-fuzz-${{ matrix.sanitizer }}-
+          shared-key: "cargo-fuzz-${{ matrix.sanitizer }}"
+          cache-on-failure: "true"
 
       - name: 📦 Install cargo-fuzz
         uses: taiki-e/install-action@v2
@@ -81,6 +79,9 @@ jobs:
           tool: cargo-fuzz
 
       - name: 🔍 Run Cargo Fuzz (${{ matrix.sanitizer_name }})
+        env:
+          RUSTC_WRAPPER: sccache
+          SCCACHE_DIRECT: "true"
         run: |
           set -e
           
@@ -105,7 +106,7 @@ jobs:
             cargo fuzz run --fuzz-dir . "$target" -- -max_total_time="$FUZZ_TIME" -sanitizer=${{ matrix.sanitizer }}
           done
 
-      - name: 🚨 Upload Fuzzing Crash Artifacts
+      - name: 🚨 Upload Fuzzing Crash Artifacts (ZSTD Compressed)
         if: failure() || always()
         uses: actions/upload-artifact@v4
         with:
@@ -114,3 +115,4 @@ jobs:
             tests/fuzz/artifacts/
             tests/fuzz/corpus/
           if-no-files-found: ignore
+          compression-level: 1
