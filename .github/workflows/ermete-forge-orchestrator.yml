@@ -61,7 +61,6 @@ jobs:
 
       - name: Compute Dependency DAG & Topological Matrix
         id: brain
-        env:
         run: ./scripts/dynamic-matrix.sh
 
       - name: 🧹 Cleanup Workspace Permissions
