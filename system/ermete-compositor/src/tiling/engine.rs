@@ -1,3 +1,4 @@
+use crate::animation::AnimationEngine;
 use crate::ipc::protocol::{LayoutMode, WindowInfo, WindowPlacement};
 use std::collections::HashMap;
 use tracing::{info, debug};
@@ -26,6 +27,7 @@ pub struct TilingEngine {
     windows: HashMap<u64, WindowInfo>,
     window_order: Vec<u64>,
     focused_window_id: Option<u64>,
+    pub animation_engine: AnimationEngine,
 }
 
 impl Default for TilingEngine {
@@ -45,6 +47,7 @@ impl TilingEngine {
             windows: HashMap::new(),
             window_order: Vec::new(),
             focused_window_id: None,
+            animation_engine: AnimationEngine::default(),
         }
     }
 
@@ -102,6 +105,7 @@ impl TilingEngine {
     pub fn remove_window(&mut self, id: u64) {
         self.windows.remove(&id);
         self.window_order.retain(|&win_id| win_id != id);
+        self.animation_engine.remove_window(id);
         if self.focused_window_id == Some(id) {
             self.focused_window_id = self.window_order.last().copied();
         }
@@ -127,9 +131,33 @@ impl TilingEngine {
                 win.geometry = placement;
             }
         }
+        self.sync_animation_targets();
+    }
+
+    pub fn sync_animation_targets(&mut self) {
+        for win in self.windows.values() {
+            self.animation_engine.update_window_target(win.geometry.clone());
+        }
+    }
+
+    pub fn tick_animation(&mut self, dt: f64) -> bool {
+        self.animation_engine.tick(dt)
     }
 
     pub fn windows(&self) -> Vec<WindowInfo> {
+        self.window_order
+            .iter()
+            .filter_map(|id| {
+                self.windows.get(id).map(|win| {
+                    let mut animated_win = win.clone();
+                    animated_win.geometry = self.animation_engine.current_placement(&win.geometry);
+                    animated_win
+                })
+            })
+            .collect()
+    }
+
+    pub fn target_windows(&self) -> Vec<WindowInfo> {
         self.window_order
             .iter()
             .filter_map(|id| self.windows.get(id).cloned())
@@ -160,6 +188,8 @@ impl TilingEngine {
             LayoutMode::Spiral => self.layout_spiral(),
             LayoutMode::AiDriven | LayoutMode::Floating => self.layout_ai_dynamic(),
         }
+
+        self.sync_animation_targets();
     }
 
     fn layout_master_stack(&mut self) {

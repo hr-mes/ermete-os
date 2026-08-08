@@ -1,9 +1,12 @@
 #![deny(unsafe_code)]
 
+mod animation;
 mod backend;
+mod desktop_state;
 mod ipc;
 mod state;
 mod tiling;
+
 
 use anyhow::{Context, Result};
 use backend::{DrmBackendConfig, DrmKmsBackend};
@@ -56,6 +59,23 @@ async fn main() -> Result<()> {
         }
     });
 
+    // Spawn 60 Hz Mass-Spring-Damper physics frame tick loop
+    let anim_state = Arc::clone(&state);
+    let anim_handle = tokio::spawn(async move {
+        let mut interval = tokio::time::interval(std::time::Duration::from_millis(16));
+        let mut last_tick = tokio::time::Instant::now();
+        loop {
+            interval.tick().await;
+            let now = tokio::time::Instant::now();
+            let dt = (now - last_tick).as_secs_f64();
+            last_tick = now;
+
+            let dt = dt.min(0.05); // Cap dt for numerical safety on lag spikes
+            let mut state_guard = anim_state.lock().await;
+            state_guard.tick_animation(dt);
+        }
+    });
+
     info!("Ermete Compositor scaffolding ready.");
     info!("Listening for AI-driven tiling commands at {:?}", socket_path);
 
@@ -66,6 +86,9 @@ async fn main() -> Result<()> {
         }
         _ = ipc_handle => {
             tracing::warn!("IPC server task terminated.");
+        }
+        _ = anim_handle => {
+            tracing::warn!("Animation frame tick task terminated.");
         }
     }
 
