@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: read
-  packages: write
+  packages: write  # FORGE_PAT has delete:packages scope
 
 jobs:
   cleanup-janitor:
@@ -20,7 +20,7 @@ jobs:
 
       - name: Autonomous OCI Merkle Tree Deduplication & GHCR Cleanup
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.FORGE_PAT }}
           REGISTRY: "ghcr.io"
         run: |
           set -euo pipefail
