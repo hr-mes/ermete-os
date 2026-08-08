@@ -115,7 +115,7 @@ jobs:
     - name: Publish Kernel Micro-Container OCI
       run: |
         podman exec chimera-builder bash -c "
-          export STORAGE_DRIVER=overlay
+          export STORAGE_DRIVER=vfs
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
           ctr=\$(buildah from scratch)
