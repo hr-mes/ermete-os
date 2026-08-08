@@ -51,27 +51,23 @@ impl KeyReleaseManager {
             }
         }
 
-        // Derive/unseal 256-bit key bound to hardware attestation state
+        // Derive/unseal 256-bit key bound to hardware attestation state using HKDF-SHA256
+        let (ikm, info_label): (&[u8], &[u8]) = match report {
+            VerifiedHardwareReport::SevSnp { measurement, .. } => (&measurement[..], b"ermete-sev-snp-luks-v1"),
+            VerifiedHardwareReport::Tdx { mrtd, .. } => (&mrtd[..], b"ermete-tdx-luks-v1"),
+            VerifiedHardwareReport::MockSimulated { measurement, .. } => (&measurement[..], b"ermete-simulated-luks-v1"),
+        };
+
+        let salt = ring::hkdf::Salt::new(ring::hkdf::HKDF_SHA256, b"ermete-zero-trust-luks-salt-v1");
+        let prk = salt.extract(ikm);
+        let info_slice = [info_label];
+        let okm = prk
+            .expand(&info_slice, ring::hkdf::HKDF_SHA256)
+            .map_err(|_| anyhow::anyhow!("HKDF expansion failed for LUKS key release"))?;
+
         let mut key_buffer = [0u8; 32];
-        match report {
-            VerifiedHardwareReport::SevSnp { measurement, .. } => {
-                // Key derivation bound to AMD SEV measurement & root secret
-                for i in 0..32 {
-                    key_buffer[i] = measurement[i] ^ 0x45; // 'E' for Ermete
-                }
-            }
-            VerifiedHardwareReport::Tdx { mrtd, .. } => {
-                // Key derivation bound to Intel TDX MRTD & root secret
-                for i in 0..32 {
-                    key_buffer[i] = mrtd[i] ^ 0x45;
-                }
-            }
-            VerifiedHardwareReport::MockSimulated { measurement, .. } => {
-                for i in 0..32 {
-                    key_buffer[i] = measurement[i] ^ 0x45;
-                }
-            }
-        }
+        okm.fill(&mut key_buffer)
+            .map_err(|_| anyhow::anyhow!("Failed to fill HKDF output key buffer"))?;
 
         let secret_key = SecretDecryptionKey::new(key_buffer);
 

@@ -51,6 +51,41 @@ pub struct HandshakeResponsePayload {
     pub signature: Vec<u8>,
 }
 
+pub struct HandshakeSession {
+    pub ephemeral_secret: EphemeralSecret,
+    #[allow(dead_code)]
+    pub timestamp: u64,
+}
+
+impl HandshakeSession {
+    pub fn complete_handshake(
+        self,
+        pqc_engine: &PqcEngine,
+        resp: &HandshakeResponsePayload,
+        peer_dilithium_pk: &[u8],
+    ) -> Result<[u8; 32]> {
+        let mut resp_msg = Vec::new();
+        resp_msg.extend_from_slice(resp.responder_node_id.as_bytes());
+        resp_msg.extend_from_slice(&resp.kyber_ciphertext);
+        resp_msg.extend_from_slice(&resp.ephemeral_x25519_pk);
+        resp_msg.extend_from_slice(&resp.timestamp.to_le_bytes());
+
+        if !PqcEngine::verify_signature(&resp_msg, &resp.signature, peer_dilithium_pk) {
+            return Err(anyhow!(
+                "Dilithium5 signature verification failed for response from node {}",
+                resp.responder_node_id
+            ));
+        }
+
+        let kyber_ss = pqc_engine.decapsulate_pqc_secret(&resp.kyber_ciphertext)?;
+        let peer_x25519_pk = X25519PublicKey::from(resp.ephemeral_x25519_pk);
+        let x25519_ss = self.ephemeral_secret.diffie_hellman(&peer_x25519_pk).to_bytes();
+
+        let session_key = PqcEngine::derive_session_key(&kyber_ss, &x25519_ss, &resp.timestamp.to_le_bytes());
+        Ok(session_key)
+    }
+}
+
 impl PqcEngine {
     pub fn new(node_id: Option<String>) -> Result<Self> {
         let mut rng = OsRng;
@@ -189,8 +224,8 @@ impl PqcEngine {
         session_key
     }
 
-    /// Build Handshake Init Payload signed with Dilithium5
-    pub fn build_handshake_init(&self, timestamp: u64) -> HandshakeInitPayload {
+    /// Build Handshake Init Payload signed with Dilithium5 and return HandshakeSession
+    pub fn build_handshake_init(&self, timestamp: u64) -> (HandshakeInitPayload, HandshakeSession) {
         let eph_secret = EphemeralSecret::random_from_rng(&mut OsRng);
         let eph_public = X25519PublicKey::from(&eph_secret);
         let eph_bytes = *eph_public.as_bytes();
@@ -203,13 +238,20 @@ impl PqcEngine {
 
         let signature = self.sign(&msg_to_sign);
 
-        HandshakeInitPayload {
+        let payload = HandshakeInitPayload {
             sender_node_id: self.inner.node_id.clone(),
             ephemeral_x25519_pk: eph_bytes,
             kyber_pk: self.inner.kyber_keypair.public.to_vec(),
             timestamp,
             signature,
-        }
+        };
+
+        let session = HandshakeSession {
+            ephemeral_secret: eph_secret,
+            timestamp,
+        };
+
+        (payload, session)
     }
 
     /// Process Handshake Init and create Handshake Response
@@ -310,13 +352,15 @@ mod tests {
         let alice_id = alice.get_node_identity();
         let alice_dilithium_pk = BASE64.decode(&alice_id.dilithium_public_b64)?;
 
+        let bob_id = bob.get_node_identity();
+        let bob_dilithium_pk = BASE64.decode(&bob_id.dilithium_public_b64)?;
+
         let timestamp = 1700000000;
-        let init = alice.build_handshake_init(timestamp);
+        let (init, session) = alice.build_handshake_init(timestamp);
 
         let (resp, bob_session_key) = bob.process_handshake_init(&init, &alice_dilithium_pk, timestamp)?;
 
-        let alice_kyber_ss = alice.decapsulate_pqc_secret(&resp.kyber_ciphertext)?;
-        let alice_session_key = PqcEngine::derive_session_key(&alice_kyber_ss, &[0x42u8; 32], &resp.timestamp.to_le_bytes());
+        let alice_session_key = session.complete_handshake(&alice, &resp, &bob_dilithium_pk)?;
 
         assert_eq!(alice_session_key, bob_session_key, "Derived session keys between Alice and Bob must match");
 

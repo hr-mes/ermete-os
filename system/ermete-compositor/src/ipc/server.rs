@@ -45,10 +45,10 @@ impl IpcServer {
         let listener = UnixListener::bind(&self.socket_path)
             .with_context(|| format!("Failed to bind UNIX socket at {:?}", self.socket_path))?;
 
-        // Set socket permissions (rw-rw-rw-) for system services
+        // Set socket permissions (rw-------) for IPC security
         if let Ok(metadata) = std::fs::metadata(&self.socket_path) {
             let mut perms = metadata.permissions();
-            perms.set_mode(0o666);
+            perms.set_mode(0o600);
             let _ = std::fs::set_permissions(&self.socket_path, perms);
         }
 

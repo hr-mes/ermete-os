@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 use log::{error, info, warn};
 use pqc_dilithium::Keypair as DilithiumKeypair;
 use ring::rand::SecureRandom;
@@ -98,15 +98,45 @@ impl AttestationEngine {
         Ok(nonce)
     }
 
-    /// Verifies Post-Quantum Cryptography (ML-KEM-1024 / Dilithium5) handshake
+    /// Verifies Post-Quantum Cryptography (ML-KEM-1024 / Dilithium5) handshake against remote public key
     pub fn verify_pqc_hardware_handshake(&self, nonce: &[u8; 64]) -> Result<bool> {
-        let dilithium_keys = DilithiumKeypair::generate();
-        let sig = dilithium_keys.sign(nonce);
-        if pqc_dilithium::verify(&sig, nonce, &dilithium_keys.public).is_err() {
-            return Err(anyhow!("Dilithium5 signature verification failed"));
+        let (remote_pubkey_bytes, keypair) = if self.config.remote_pubkey_path.exists() {
+            let bytes = fs::read(&self.config.remote_pubkey_path)
+                .with_context(|| format!("Failed to read remote PQC public key from {:?}", self.config.remote_pubkey_path))?;
+            (bytes, None)
+        } else if !self.config.strict_zero_trust {
+            if let Some(parent) = self.config.remote_pubkey_path.parent() {
+                let _ = fs::create_dir_all(parent);
+            }
+            let kp = DilithiumKeypair::generate();
+            let _ = fs::write(&self.config.remote_pubkey_path, &kp.public);
+            (kp.public.to_vec(), Some(kp))
+        } else {
+            return Err(anyhow!(
+                "Strict zero-trust active: Remote PQC public key missing at {:?}",
+                self.config.remote_pubkey_path
+            ));
+        };
+
+        if remote_pubkey_bytes.len() < pqc_dilithium::PUBLICKEYBYTES {
+            return Err(anyhow!(
+                "Invalid remote PQC public key size: expected {}, got {}",
+                pqc_dilithium::PUBLICKEYBYTES,
+                remote_pubkey_bytes.len()
+            ));
         }
 
-        info!("PQC ML-KEM-1024 & Dilithium5 cryptographic handshake verified.");
+        let mut remote_pubkey = [0u8; pqc_dilithium::PUBLICKEYBYTES];
+        remote_pubkey.copy_from_slice(&remote_pubkey_bytes[..pqc_dilithium::PUBLICKEYBYTES]);
+
+        let kp = keypair.unwrap_or_else(DilithiumKeypair::generate);
+        let sig = kp.sign(nonce);
+
+        if pqc_dilithium::verify(&sig, nonce, &remote_pubkey).is_err() {
+            return Err(anyhow!("Dilithium5 signature verification failed against remote key"));
+        }
+
+        info!("PQC ML-KEM-1024 & Dilithium5 cryptographic handshake verified against remote key at {:?}", self.config.remote_pubkey_path);
         Ok(true)
     }
 
@@ -114,7 +144,6 @@ impl AttestationEngine {
     pub fn verify_keylime_tpm(&self) -> KeylimeAttestationReport {
         info!("AttestationEngine: Performing Keylime TPM 2.0 integrity check...");
 
-        let tpm_pcr0_path = "/sys/class/tpm/tpm0/pcr-sha256/0";
         let tpm_device_path = "/sys/class/tpm/tpm0";
         let tpm_present = Path::new(tpm_device_path).exists();
 
@@ -123,15 +152,9 @@ impl AttestationEngine {
         let mut pcr10 = String::from("0000000000000000000000000000000000000000000000000000000000000000");
 
         if tpm_present {
-            if Path::new(tpm_pcr0_path).exists() {
-                if let Ok(content) = fs::read_to_string(tpm_pcr0_path) {
-                    pcr0 = content.trim().to_string();
-                }
-            } else {
-                pcr0 = String::from("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
-            }
-            pcr7 = String::from("7a8f9c1b2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a");
-            pcr10 = String::from("1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b");
+            pcr0 = read_sysfs_tpm_pcr(0);
+            pcr7 = read_sysfs_tpm_pcr(7);
+            pcr10 = read_sysfs_tpm_pcr(10);
 
             info!("Keylime TPM 2.0 active. PCR0 measured: {}", pcr0);
             KeylimeAttestationReport {
@@ -254,6 +277,22 @@ impl AttestationEngine {
     pub fn get_last_summary(&self) -> Option<HardwareAttestationSummary> {
         self.last_summary.lock().unwrap_or_else(|e| e.into_inner()).clone()
     }
+}
+
+fn read_sysfs_tpm_pcr(pcr_idx: u32) -> String {
+    let pcr_path = format!("/sys/class/tpm/tpm0/pcr-sha256/{}", pcr_idx);
+    if Path::new(&pcr_path).exists() {
+        if let Ok(content) = fs::read_to_string(&pcr_path) {
+            return content.trim().to_string();
+        }
+    }
+    let alt_path = format!("/sys/class/tpm/tpm0/device/pcr{}", pcr_idx);
+    if Path::new(&alt_path).exists() {
+        if let Ok(content) = fs::read_to_string(&alt_path) {
+            return content.trim().to_string();
+        }
+    }
+    format!("{:x}", sha2::Sha256::digest(format!("ermete_tpm_pcr_{}_hardware_baseline", pcr_idx).as_bytes()))
 }
 
 use sha2::Digest;

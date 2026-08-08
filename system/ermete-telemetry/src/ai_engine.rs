@@ -1,7 +1,7 @@
 use crate::aggregator::LogBatch;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, Semaphore};
 use tracing::{error, info, warn};
 use zbus::Connection;
 
@@ -57,10 +57,16 @@ impl AiPredictiveEngine {
 
     pub async fn run_loop(self: Arc<Self>, mut batch_receiver: mpsc::Receiver<LogBatch>) {
         info!("🔮 Predictive AI Engine active. Processing log batches for crash vector inference...");
+        let semaphore = Arc::new(Semaphore::new(16));
 
         while let Some(batch) = batch_receiver.recv().await {
+            let permit = match semaphore.clone().acquire_owned().await {
+                Ok(p) => p,
+                Err(_) => break,
+            };
             let engine = self.clone();
             tokio::spawn(async move {
+                let _permit = permit;
                 if let Err(e) = engine.process_batch(batch).await {
                     error!("Error processing log batch in AI Engine: {}", e);
                 }

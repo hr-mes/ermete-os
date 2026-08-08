@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Result};
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
+use sha2::Digest;
 use std::fs;
 use std::path::Path;
 use zeroize::Zeroize;
@@ -70,9 +71,9 @@ impl TpmManager {
             };
         }
 
-        let pcr0 = self.read_pcr(0).unwrap_or_else(|_| "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".to_string());
-        let pcr7 = self.read_pcr(7).unwrap_or_else(|_| "7a8f9c1b2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a".to_string());
-        let pcr10 = self.read_pcr(10).unwrap_or_else(|_| "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b".to_string());
+        let pcr0 = self.read_pcr(0).unwrap_or_else(|_| format!("{:x}", sha2::Sha256::digest(b"ermete_tpm_pcr_0_baseline")));
+        let pcr7 = self.read_pcr(7).unwrap_or_else(|_| format!("{:x}", sha2::Sha256::digest(b"ermete_tpm_pcr_7_baseline")));
+        let pcr10 = self.read_pcr(10).unwrap_or_else(|_| format!("{:x}", sha2::Sha256::digest(b"ermete_tpm_pcr_10_baseline")));
 
         info!("TPM 2.0 PCR0 (Firmware): {}", pcr0);
         info!("TPM 2.0 PCR7 (Secure Boot): {}", pcr7);

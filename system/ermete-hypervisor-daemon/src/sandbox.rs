@@ -46,8 +46,22 @@ impl EnclaveProcessSandbox {
         info!("Binary: {}, Category: {}", exec_path, category);
 
         // Standard bubblewrap / systemd-nspawn / isolate sandbox execution
-        let mut cmd = Command::new(exec_path);
-        cmd.args(args);
+        let mut cmd = Command::new("bwrap");
+        cmd.arg("--unshare-all")
+           .arg("--share-net")
+           .arg("--proc").arg("/proc")
+           .arg("--dev").arg("/dev")
+           .arg("--ro-bind").arg("/usr").arg("/usr")
+           .arg("--ro-bind-try").arg("/lib").arg("/lib")
+           .arg("--ro-bind-try").arg("/lib64").arg("/lib64")
+           .arg("--ro-bind-try").arg("/bin").arg("/bin")
+           .arg("--ro-bind-try").arg("/sbin").arg("/sbin")
+           .arg("--dir").arg("/tmp")
+           .arg("--dir").arg("/run")
+           .arg("--ro-bind-try").arg(exec_path).arg(exec_path)
+           .arg("--")
+           .arg(exec_path)
+           .args(args);
 
         // Configure process environment isolation
         cmd.env("ERMETE_ENCLAVE_ISOLATED", "1");

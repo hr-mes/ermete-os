@@ -46,9 +46,6 @@ pub fn start_udp_discovery(
                             }
                         }
                     }
-                } else if msg.starts_with("ERMETE_HELLO") {
-                    let mut p = peers_recv.lock().await;
-                    p.insert(ip, Instant::now());
                 }
             }
         }

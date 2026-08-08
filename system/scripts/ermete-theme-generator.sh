@@ -43,7 +43,7 @@ if [[ ! -f "$TEMPLATE_PATH" ]]; then
 fi
 
 # Apply wallpaper via swww if swww is running or available
-if command -v swww >/dev/null 2>&1; summit_swww=1; then
+if command -v swww >/dev/null 2>&1; then
     if swww query >/dev/null 2>&1; then
         if [[ -f "$WALLPAPER_PATH" ]]; then
             swww img "$WALLPAPER_PATH" --transition-type outer --transition-step 90 || true

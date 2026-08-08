@@ -68,7 +68,7 @@ podman build \
     --label "ermete.build.type=offline-fallback" \
     "${BUILD_ARGS[@]}" \
     -f "${SYSTEM_DIR}/Containerfile" \
-    "${SYSTEM_DIR}"
+    .
 
 echo ""
 echo "🔍 Validating local bootc container image structure..."

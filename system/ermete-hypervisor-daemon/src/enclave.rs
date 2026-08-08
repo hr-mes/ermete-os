@@ -26,6 +26,7 @@ pub struct MicroEnclaveDescriptor {
 pub struct EnclaveManager {
     attestation_engine: Arc<AttestationEngine>,
     enclaves: Arc<RwLock<HashMap<String, MicroEnclaveDescriptor>>>,
+    kvm_contexts: Arc<RwLock<HashMap<String, Arc<KvmMicroVmContext>>>>,
 }
 
 impl EnclaveManager {
@@ -33,6 +34,7 @@ impl EnclaveManager {
         Self {
             attestation_engine,
             enclaves: Arc::new(RwLock::new(HashMap::new())),
+            kvm_contexts: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
@@ -57,7 +59,7 @@ impl EnclaveManager {
         info!("Target App: '{}', Hardware Type: {}", app_name, enclave_type);
 
         // 1. Initialize KVM Micro-VM context via vmm-sys-util
-        let kvm_ctx = KvmMicroVmContext::new(enclave_type, 1024, 2)?;
+        let kvm_ctx = Arc::new(KvmMicroVmContext::new(enclave_type, 1024, 2)?);
 
         // 2. Perform hardware cryptographic attestation
         let attestation_summary = self
@@ -89,7 +91,11 @@ impl EnclaveManager {
             .map_err(|e| anyhow::anyhow!("Failed to acquire enclaves write lock: {}", e))?
             .insert(enclave_id.clone(), descriptor);
 
-        let _ = kvm_ctx.shutdown();
+        self.kvm_contexts
+            .write()
+            .map_err(|e| anyhow::anyhow!("Failed to acquire kvm_contexts write lock: {}", e))?
+            .insert(enclave_id.clone(), kvm_ctx);
+
         info!("Micro-VM Enclave {} launched successfully.", enclave_id);
         Ok(enclave_id)
     }
@@ -137,6 +143,12 @@ impl EnclaveManager {
     /// Terminates an active Micro-VM Enclave
     pub fn terminate_enclave(&self, enclave_id: &str) -> Result<bool> {
         info!("EnclaveManager: Terminating enclave {}", enclave_id);
+
+        if let Ok(mut ctx_lock) = self.kvm_contexts.write() {
+            if let Some(kvm_ctx) = ctx_lock.remove(enclave_id) {
+                let _ = kvm_ctx.shutdown();
+            }
+        }
 
         let mut lock = self
             .enclaves

@@ -93,7 +93,7 @@ impl EbpfMonitor {
             let bpf = bpf_arc.lock().await;
             if let Ok(map) = bpf.map_mut("BLOCKLIST_IPV4") {
                 if let Ok(mut blocklist) = HashMap::<_, u32, u32>::try_from(map) {
-                    let ip_u32 = u32::from_ne_bytes(ip.octets());
+                    let ip_u32 = u32::from_be_bytes(ip.octets());
                     blocklist
                         .insert(ip_u32, 1, 0)
                         .map_err(|e| format!("Failed to insert IP into eBPF map: {}", e))?;

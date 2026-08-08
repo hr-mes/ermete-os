@@ -1,15 +1,101 @@
 use smoltcp::iface::{Config, Interface, SocketHandle, SocketSet};
-use smoltcp::phy::Medium;
+use smoltcp::phy::{Device, DeviceCapabilities, Medium, RxToken};
 use smoltcp::socket::icmp::{Endpoint as IcmpEndpoint, PacketBuffer as IcmpPacketBuffer, PacketMetadata as IcmpPacketMetadata, Socket as IcmpSocket};
 use smoltcp::socket::tcp::{Socket as TcpSocket, SocketBuffer as TcpSocketBuffer};
 use smoltcp::socket::udp::{PacketBuffer as UdpPacketBuffer, PacketMetadata as UdpPacketMetadata, Socket as UdpSocket};
 use smoltcp::time::Instant;
-use smoltcp::wire::{EthernetAddress, HardwareAddress, IpAddress, IpCidr, Ipv4Address, Ipv6Address};
+use smoltcp::wire::{EthernetAddress, EthernetFrame, EthernetProtocol, HardwareAddress, IpAddress, IpCidr, Ipv4Address, Ipv4Packet, Ipv6Address, Ipv6Packet};
 use std::sync::Arc;
 
-use crate::device::DeviceManager;
+use crate::device::{DeviceManager, DeviceTxToken};
 use crate::metrics::NetworkMetrics;
 use crate::router::{IsolationPolicy, PacketRouter};
+
+/// Evaluates zero-trust packet flow authorization (src -> dst) before ingress into smoltcp stack
+fn is_flow_authorized(router: &PacketRouter, buffer: &[u8]) -> bool {
+    if let Ok(eth_frame) = EthernetFrame::new_checked(buffer) {
+        match eth_frame.ethertype() {
+            EthernetProtocol::Ipv4 => {
+                if let Ok(ipv4) = Ipv4Packet::new_checked(eth_frame.payload()) {
+                    let src = IpAddress::Ipv4(ipv4.src_addr());
+                    let dst = IpAddress::Ipv4(ipv4.dst_addr());
+                    return router.authorize_flow(src, dst);
+                }
+            }
+            EthernetProtocol::Ipv6 => {
+                if let Ok(ipv6) = Ipv6Packet::new_checked(eth_frame.payload()) {
+                    let src = IpAddress::Ipv6(ipv6.src_addr());
+                    let dst = IpAddress::Ipv6(ipv6.dst_addr());
+                    return router.authorize_flow(src, dst);
+                }
+            }
+            _ => return true,
+        }
+    } else if let Ok(ipv4) = Ipv4Packet::new_checked(buffer) {
+        let src = IpAddress::Ipv4(ipv4.src_addr());
+        let dst = IpAddress::Ipv4(ipv4.dst_addr());
+        return router.authorize_flow(src, dst);
+    } else if let Ok(ipv6) = Ipv6Packet::new_checked(buffer) {
+        let src = IpAddress::Ipv6(ipv6.src_addr());
+        let dst = IpAddress::Ipv6(ipv6.dst_addr());
+        return router.authorize_flow(src, dst);
+    }
+    true
+}
+
+struct FilteredDevice<'a> {
+    device: &'a mut DeviceManager,
+    router: &'a PacketRouter,
+}
+
+struct FilteredRxToken<'a> {
+    token: crate::device::DeviceRxToken<'a>,
+    router: &'a PacketRouter,
+}
+
+impl<'a> RxToken for FilteredRxToken<'a> {
+    fn consume<R, F>(self, f: F) -> R
+    where
+        F: FnOnce(&mut [u8]) -> R,
+    {
+        self.token.consume(|buffer| {
+            if is_flow_authorized(self.router, buffer) {
+                f(buffer)
+            } else {
+                tracing::warn!(
+                    target: "ermete_net",
+                    "SECURITY DENY: Packet flow dropped by zero-trust router before smoltcp ingress"
+                );
+                f(&mut [])
+            }
+        })
+    }
+}
+
+impl<'a> Device for FilteredDevice<'a> {
+    type RxToken<'b> = FilteredRxToken<'b> where Self: 'b;
+    type TxToken<'b> = DeviceTxToken<'b> where Self: 'b;
+
+    fn receive(&mut self, timestamp: Instant) -> Option<(Self::RxToken<'_>, Self::TxToken<'_>)> {
+        self.device.receive(timestamp).map(|(rx, tx)| {
+            (
+                FilteredRxToken {
+                    token: rx,
+                    router: self.router,
+                },
+                tx,
+            )
+        })
+    }
+
+    fn transmit(&mut self, timestamp: Instant) -> Option<Self::TxToken<'_>> {
+        self.device.transmit(timestamp)
+    }
+
+    fn capabilities(&self) -> DeviceCapabilities {
+        self.device.capabilities()
+    }
+}
 
 pub struct UnikernelNetworkStack {
     iface: Interface,
@@ -79,7 +165,11 @@ impl UnikernelNetworkStack {
     }
 
     pub fn poll_device(&mut self, device: &mut DeviceManager, timestamp: Instant) -> bool {
-        let updated = self.iface.poll(timestamp, device, &mut self.sockets);
+        let mut filtered_device = FilteredDevice {
+            device,
+            router: &self.router,
+        };
+        let updated = self.iface.poll(timestamp, &mut filtered_device, &mut self.sockets);
 
         // Handle active TCP socket state machine & zero-copy echo service
         let socket = self.sockets.get_mut::<TcpSocket>(self.tcp_handle);

@@ -72,6 +72,43 @@ impl TilingEngine {
         self.active_workspace
     }
 
+    pub fn add_window(&mut self, id: u64, title: String, app_id: String) {
+        let placement = WindowPlacement {
+            window_id: id,
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0,
+            workspace: self.active_workspace,
+        };
+        let info = WindowInfo {
+            id,
+            title,
+            app_id,
+            geometry: placement,
+            is_focused: false,
+        };
+        if !self.windows.contains_key(&id) {
+            self.window_order.push(id);
+        }
+        self.windows.insert(id, info);
+        if self.focused_window_id.is_none() {
+            self.focused_window_id = Some(id);
+        }
+        self.update_focus();
+        self.recalculate_layout();
+    }
+
+    pub fn remove_window(&mut self, id: u64) {
+        self.windows.remove(&id);
+        self.window_order.retain(|&win_id| win_id != id);
+        if self.focused_window_id == Some(id) {
+            self.focused_window_id = self.window_order.last().copied();
+        }
+        self.update_focus();
+        self.recalculate_layout();
+    }
+
 
     pub fn focus_window(&mut self, id: u64) -> bool {
         if self.windows.contains_key(&id) {

@@ -9,7 +9,7 @@ for crate in specs/*/; do
         comp=$(basename "$crate")
         if [ "$COMPONENT" = "all" ] || [ "$COMPONENT" = "$comp" ]; then
             echo "Fuzzing component $comp for ${TIME}s..."
-            (cd "$crate" && cargo fuzz run fuzz_target_1 -- -max_total_time="$TIME" -sanitizer=address || true)
+            (cd "$crate" && cargo fuzz run fuzz_target_1 -- -max_total_time="$TIME" -sanitizer=address)
         fi
     fi
 done

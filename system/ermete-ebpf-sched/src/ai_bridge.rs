@@ -83,6 +83,36 @@ impl AiDaemonBridge {
             {
                 if let Ok(resp_str) = reply.body().deserialize::<String>() {
                     info!("🤖 NPU AI Model Prediction response for PID {}: {}", pid, resp_str);
+                    if let Ok(classification) = serde_json::from_str::<AiProcessClassification>(&resp_str) {
+                        return classification;
+                    }
+                    if let Ok(val) = serde_json::from_str::<serde_json::Value>(&resp_str) {
+                        if let (Some(class_str), Some(weight), Some(slice)) = (
+                            val.get("recommended_sched_class").and_then(|v| v.as_str()),
+                            val.get("recommended_weight").and_then(|v| v.as_u64()),
+                            val.get("recommended_slice_us").and_then(|v| v.as_u64()),
+                        ) {
+                            let sched_class = match class_str {
+                                "InteractiveUi" => SchedClass::InteractiveUi,
+                                "RealtimeNpu" => SchedClass::RealtimeNpu,
+                                "BatchCompute" => SchedClass::BatchCompute,
+                                _ => SchedClass::IdleBackground,
+                            };
+                            let score = val
+                                .get("heuristic_score")
+                                .and_then(|v| v.as_f64())
+                                .map(|v| v as f32)
+                                .unwrap_or(0.90);
+                            return AiProcessClassification {
+                                pid,
+                                binary_name: comm.to_string(),
+                                recommended_sched_class: sched_class,
+                                recommended_weight: weight as u32,
+                                recommended_slice_us: slice,
+                                heuristic_score: score,
+                            };
+                        }
+                    }
                 }
             }
         }

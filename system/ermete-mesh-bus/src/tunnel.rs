@@ -4,8 +4,10 @@ use std::sync::Arc;
 use tokio::net::UdpSocket;
 use tracing::{debug, error, info, warn};
 
+use std::collections::HashMap;
+use tokio::sync::Mutex;
 use crate::peer::{PeerManager, PeerState};
-use crate::pqc::{HandshakeInitPayload, HandshakeResponsePayload, PqcEngine};
+use crate::pqc::{HandshakeInitPayload, HandshakeResponsePayload, HandshakeSession, PqcEngine};
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -21,6 +23,7 @@ pub struct MeshTunnel {
     socket: Arc<UdpSocket>,
     pqc_engine: PqcEngine,
     peer_manager: PeerManager,
+    pending_handshakes: Arc<Mutex<HashMap<String, HandshakeSession>>>,
     #[allow(dead_code)]
     bind_addr: SocketAddr,
 }
@@ -35,6 +38,7 @@ impl MeshTunnel {
             socket: Arc::new(socket),
             pqc_engine,
             peer_manager,
+            pending_handshakes: Arc::new(Mutex::new(HashMap::new())),
             bind_addr,
         })
     }
@@ -129,21 +133,14 @@ impl MeshTunnel {
             .get_dilithium_pk_bytes(&resp_data.responder_node_id)
             .await?;
 
-        let mut resp_msg = Vec::new();
-        resp_msg.extend_from_slice(resp_data.responder_node_id.as_bytes());
-        resp_msg.extend_from_slice(&resp_data.kyber_ciphertext);
-        resp_msg.extend_from_slice(&resp_data.ephemeral_x25519_pk);
-        resp_msg.extend_from_slice(&resp_data.timestamp.to_le_bytes());
+        let session = self
+            .pending_handshakes
+            .lock()
+            .await
+            .remove(&resp_data.responder_node_id)
+            .ok_or_else(|| anyhow!("No pending handshake session found for node {}", resp_data.responder_node_id))?;
 
-        if !PqcEngine::verify_signature(&resp_msg, &resp_data.signature, &peer_dilithium_pk) {
-            return Err(anyhow!("Dilithium5 signature verification failed for response from node {}", resp_data.responder_node_id));
-        }
-
-        // Decapsulate Kyber secret using local key
-        let kyber_ss = self.pqc_engine.decapsulate_pqc_secret(&resp_data.kyber_ciphertext)?;
-
-        let x25519_ss = [0x42u8; 32];
-        let _session_key = PqcEngine::derive_session_key(&kyber_ss, &x25519_ss, &resp_data.timestamp.to_le_bytes());
+        let _session_key = session.complete_handshake(&self.pqc_engine, &resp_data, &peer_dilithium_pk)?;
 
         // Mark peer active and zero-trust verified
         self.peer_manager
@@ -177,8 +174,13 @@ impl MeshTunnel {
             .unwrap_or_default()
             .as_secs();
 
-        let init_payload = self.pqc_engine.build_handshake_init(timestamp);
+        let (init_payload, session) = self.pqc_engine.build_handshake_init(timestamp);
         
+        self.pending_handshakes
+            .lock()
+            .await
+            .insert(target_node_id.to_string(), session);
+
         self.peer_manager
             .update_state(target_node_id, PeerState::Handshaking, false)
             .await?;

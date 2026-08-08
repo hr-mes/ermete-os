@@ -293,10 +293,19 @@ pub fn build_page() -> GtkBox {
     cache_btn.connect_clicked(move |_| {
         let status = cache_status.clone();
         relm4::spawn_local(async move {
-            let _ = tokio::process::Command::new("sh")
-                .args(["-c", "rm -rf ~/.cache/tmp/*"])
-                .output()
-                .await;
+            if let Ok(home) = std::env::var("HOME") {
+                let tmp_dir = std::path::PathBuf::from(home).join(".cache").join("tmp");
+                if let Ok(entries) = std::fs::read_dir(&tmp_dir) {
+                    for entry in entries.flatten() {
+                        let path = entry.path();
+                        if path.is_dir() {
+                            let _ = std::fs::remove_dir_all(&path);
+                        } else {
+                            let _ = std::fs::remove_file(&path);
+                        }
+                    }
+                }
+            }
             status.set_text("✅ Cache di sistema e file temporanei ripuliti con successo.");
         });
     });
