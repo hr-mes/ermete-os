@@ -122,10 +122,9 @@ jobs:
           buildah copy \$ctr /forge/RPMS_OUT/*.rpm /
           IMAGE_LOWER=\$(echo 'ghcr.io/hr-mes/ermete-os-kernel:latest' | tr '[:upper:]' '[:lower:]')
           buildah commit --omit-timestamp \$ctr \$IMAGE_LOWER
-          buildah push --digestfile kernel_digest.txt \$IMAGE_LOWER
-          cat kernel_digest.txt > /forge/kernel_digest.txt
+          buildah push --digestfile /forge/kernel_digest.txt \$IMAGE_LOWER docker://\$IMAGE_LOWER
         "
-        echo "KERNEL_DIGEST=$(cat kernel_digest.txt)" >> $GITHUB_ENV
+        echo "KERNEL_DIGEST=$(cat kernel_digest.txt | tr -d '\n')" >> $GITHUB_ENV
 
     - name: Generate Kernel SBOM (Syft)
       run: |
