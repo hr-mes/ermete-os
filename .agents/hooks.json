@@ -1,0 +1,11 @@
+{
+  "git-awareness": {
+    "PreInvocation": [
+      {
+        "type": "command",
+        "command": "./scripts/inject_git_status.sh",
+        "timeout": 5
+      }
+    ]
+  }
+}
