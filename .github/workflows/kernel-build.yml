@@ -60,13 +60,7 @@ jobs:
         podman exec chimera-builder bash -c "
           echo '=== Collecting AutoFDO Profiles ==='
           mkdir -p /forge/profiles
-          echo 'Generating LLVM AutoFDO / PGO profile data...'
-          touch /forge/profiles/kernel_autofdo.profdata
-
-          echo '=== Collecting BOLT Optimization Profiles ==='
-          echo 'Generating BOLT profile data...'
-          touch /forge/profiles/kernel_bolt.fdata
-          echo 'Profiles collected successfully.'
+          echo 'Profile collection placeholder.'
         "
 
     - name: "⚙️ Phase 2: LLVM/ThinLTO & AutoFDO/BOLT Macro Injection"
@@ -87,8 +81,8 @@ jobs:
         %_host_cxx clang++
         %_ld ld.lld
         %_ldflags -Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro -fuse-ld=lld
-        %optflags %{__global_compiler_flags} -march=x86-64-v3 -pipe -Wno-error -flto=thin -fprofile-sample-use=/forge/profiles/kernel_autofdo.profdata
-        %kcflags -march=x86-64-v3 -pipe -Wno-error -flto=thin -fprofile-sample-use=/forge/profiles/kernel_autofdo.profdata
+        %optflags %{__global_compiler_flags} -march=x86-64-v3 -pipe -Wno-error -flto=thin
+        %kcflags -march=x86-64-v3 -pipe -Wno-error -flto=thin
         MACRO
         "
         
