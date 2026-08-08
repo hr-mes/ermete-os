@@ -40,6 +40,7 @@ pub struct HypervisorCapabilities {
 /// Represents an active KVM Micro-VM context managed by vmm-sys-util
 pub struct KvmMicroVmContext {
     pub vm_fd: RawFd,
+    pub _kvm_file: Option<File>,
     pub enclave_type: HardwareEnclaveType,
     pub event_fd: EventFd,
     pub memory_size_mb: u64,
@@ -51,16 +52,18 @@ impl KvmMicroVmContext {
         let event_fd = EventFd::new(0).map_err(|e| anyhow!("EventFd creation failed: {}", e))?;
         
         // Open /dev/kvm if present or simulate FD in unprivileged mode
-        let vm_fd = if Path::new("/dev/kvm").exists() {
-            let kvm_file = File::open("/dev/kvm")?;
-            kvm_file.as_raw_fd()
+        let (vm_fd, _kvm_file) = if Path::new("/dev/kvm").exists() {
+            let file = File::open("/dev/kvm")?;
+            let fd = file.as_raw_fd();
+            (fd, Some(file))
         } else {
             warn!("KVM device (/dev/kvm) not accessible. Running micro-VM engine in zero-trust container mode.");
-            -1
+            (-1, None)
         };
 
         Ok(Self {
             vm_fd,
+            _kvm_file,
             enclave_type,
             event_fd,
             memory_size_mb,

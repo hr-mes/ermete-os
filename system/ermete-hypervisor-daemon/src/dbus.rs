@@ -85,17 +85,19 @@ impl HypervisorDbus {
 
     /// Retrieves status summary of a specific enclave as JSON
     async fn get_enclave_status(&self, enclave_id: String) -> String {
-        if let Some(desc) = self.enclave_manager.get_enclave_status(&enclave_id) {
-            serde_json::to_string_pretty(&desc).unwrap_or_default()
-        } else {
-            format!(r#"{{"error": "Enclave '{}' not found"}}"#, enclave_id)
+        match self.enclave_manager.get_enclave_status(&enclave_id) {
+            Ok(Some(desc)) => serde_json::to_string_pretty(&desc).unwrap_or_default(),
+            Ok(None) => format!(r#"{{"error": "Enclave '{}' not found"}}"#, enclave_id),
+            Err(e) => format!(r#"{{"error": "Failed to get enclave status: {}"}}"#, e),
         }
     }
 
     /// Lists all active micro-enclaves as JSON array
     async fn list_enclaves(&self) -> String {
-        let list = self.enclave_manager.list_enclaves();
-        serde_json::to_string_pretty(&list).unwrap_or_default()
+        match self.enclave_manager.list_enclaves() {
+            Ok(list) => serde_json::to_string_pretty(&list).unwrap_or_default(),
+            Err(e) => format!(r#"{{"error": "Failed to list enclaves: {}"}}"#, e),
+        }
     }
 
     /// Triggers dynamic attestation for a specific enclave
@@ -112,7 +114,7 @@ impl HypervisorDbus {
 
     /// Checks if specified app runs inside a Micro-VM Enclave
     async fn is_microvm_app(&self, app_id: String) -> bool {
-        self.enclave_manager.is_microvm_app(&app_id)
+        self.enclave_manager.is_microvm_app(&app_id).unwrap_or(false)
     }
 
     /// Opens a secure virtio-fs tunnel for Micro-VM file access

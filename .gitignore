@@ -16,6 +16,7 @@ __pycache__/
 # Tooling & Analysis Artifacts
 .graphify*.json
 .graphify_detect*.json
+.graphify_*.json
 graphify-out/
 **/graphify-out/
 .superpowers/
@@ -31,6 +32,7 @@ RPMS_OUT/
 .worktrees/
 output/
 _build*/
+forge/*.tar.gz
 
 # Security / Keys
 *.key

@@ -102,7 +102,7 @@ impl AiDaemonClient {
 
         let mut actions = Vec::new();
         let mut sysctls = Vec::new();
-        let mut ips = Vec::new();
+        let ips = Vec::new();
         let mut zero_trust = false;
 
         if is_anomalous {
@@ -118,7 +118,6 @@ impl AiDaemonClient {
             sysctls.push(("vm.dirty_ratio".to_string(), "15".to_string()));
 
             // Hot-rewrite eBPF blocklist
-            ips.push("192.168.1.250".to_string());
             zero_trust = true;
         }
 

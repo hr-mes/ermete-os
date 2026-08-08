@@ -57,12 +57,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     let ai_prediction = ai_bridge.predict_task_priority(event.pid, &event.comm, &event.filename).await;
 
                     info!(
-                        "🧠 [AI NPU Inference] Process '{}' (PID {}) -> Class: {:?}, Weight: {}, Confidence: {:.2}",
+                        "🧠 [AI NPU Inference] Process '{}' (PID {}) -> Class: {:?}, Weight: {}, Heuristic Score: {:.2}",
                         ai_prediction.binary_name,
                         ai_prediction.pid,
                         ai_prediction.recommended_sched_class,
                         ai_prediction.recommended_weight,
-                        ai_prediction.confidence_score
+                        ai_prediction.heuristic_score
                     );
 
                     // 3. Apply zero-latency kernel sched_ext task policy

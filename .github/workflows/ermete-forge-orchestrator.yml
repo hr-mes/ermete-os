@@ -41,7 +41,7 @@ jobs:
       dirty_count: ${{ steps.brain.outputs.dirty_count }}
       has_changes: ${{ steps.brain.outputs.has_changes }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           sparse-checkout: |
             forge
@@ -49,7 +49,7 @@ jobs:
       - name: Align Repositories
         run: cp builder/rpmfusion-custom.repo /etc/yum.repos.d/ 2>/dev/null || true
       - name: Persist DAG State Cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: .cache
           key: dag-cache-${{ github.run_id }}
@@ -76,7 +76,7 @@ jobs:
       packages: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           sparse-checkout: |
             forge
@@ -125,7 +125,7 @@ jobs:
       packages: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           sparse-checkout: |
             forge/config
@@ -150,14 +150,14 @@ jobs:
 
       - name: Extreme Rust Cache (LLVM & Dependencies)
         if: steps.check.outputs.skip != 'true'
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           shared-key: "sccache-level0-${{ matrix.package }}"
           cache-on-failure: "true"
 
       - name: Cache sccache
         if: steps.check.outputs.skip != 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: .sccache
           key: sccache-${{ matrix.package }}-${{ runner.os }}-${{ hashFiles(format('forge/specs/ermete-{0}/**', matrix.package)) }}
@@ -307,7 +307,7 @@ jobs:
       packages: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           sparse-checkout: |
             forge/config
@@ -332,14 +332,14 @@ jobs:
 
       - name: Extreme Rust Cache (LLVM & Dependencies)
         if: steps.check.outputs.skip != 'true'
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           shared-key: "sccache-level1-${{ matrix.package }}"
           cache-on-failure: "true"
 
       - name: Cache sccache
         if: steps.check.outputs.skip != 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: .sccache
           key: sccache-${{ matrix.package }}-${{ runner.os }}-${{ hashFiles(format('forge/specs/ermete-{0}/**', matrix.package)) }}
@@ -489,7 +489,7 @@ jobs:
       packages: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           sparse-checkout: |
             forge/config
@@ -512,14 +512,14 @@ jobs:
 
       - name: Extreme Rust Cache (LLVM & Dependencies)
         if: steps.check.outputs.skip != 'true'
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           shared-key: "sccache-level2-${{ matrix.package }}"
           cache-on-failure: "true"
 
       - name: Cache sccache
         if: steps.check.outputs.skip != 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: .sccache
           key: sccache-${{ matrix.package }}-${{ runner.os }}-${{ hashFiles(format('forge/specs/ermete-{0}/**', matrix.package)) }}
@@ -665,7 +665,7 @@ jobs:
       matrix:
         flatpak: ${{ fromJson(needs.orchestrator-brain.outputs.dag_flatpaks) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           sparse-checkout: |
             forge
@@ -688,7 +688,7 @@ jobs:
       packages: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           sparse-checkout: |
             forge
@@ -721,7 +721,7 @@ jobs:
 
       - name: Cache RPMs
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: nvidia_cache/
           key: rpm-nvidia-bedrock6-${{ steps.kernel.outputs.kernel_ver }}-${{ steps.kernel.outputs.nvidia_ver }}
@@ -814,7 +814,7 @@ jobs:
       packages: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           sparse-checkout: |
             forge
@@ -966,13 +966,13 @@ jobs:
           echo "IMAGE_NAME=ermete-os-system" >> ${GITHUB_ENV}
           echo "DEFAULT_TAG=latest" >> ${GITHUB_ENV}
       - name: 📥 Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           sparse-checkout: |
             system
             .github
       - name: 🧹 Maximize build space
-        uses: ublue-os/remove-unwanted-software@v9
+        uses: ublue-os/remove-unwanted-software@cc0becac701cf642c8f0a6613bbdaf5dc36b259e # v9
       - name: 🔑 Login to GHCR
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
@@ -981,7 +981,7 @@ jobs:
           podman run -i --rm --privileged -v ${{ github.workspace }}:/workspace -w /workspace ghcr.io/hr-mes/ermete-os-builder:latest bash -c "bwrap --unshare-net --dev-bind / / podman build --network=none --layers -t ghcr.io/hr-mes/ermete-os-system:latest -f ./system/Containerfile ./system && podman push ghcr.io/hr-mes/ermete-os-system:latest" || bwrap --unshare-net --dev-bind / / podman build --network=none --layers -t ghcr.io/hr-mes/ermete-os-system:latest -f ./system/Containerfile ./system
           podman push ghcr.io/hr-mes/ermete-os-system:latest || true
       - name: 💿 Build ISO (osbuild)
-        uses: osbuild/bootc-image-builder-action@v0.0.2
+        uses: osbuild/bootc-image-builder-action@019bb59c5100ecec4e78c9e94e18a840110f7a0b # v0.0.2
         with:
           builder-image: quay.io/centos-bootc/bootc-image-builder:latest
           config-file: ./system/disk_config/iso.toml
@@ -998,14 +998,14 @@ jobs:
       pull-requests: write
     steps:
       - name: 📥 Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           sparse-checkout: |
             openwiki
             docs
             .github
       - name: 🟢 Set up Node.js (v22)
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "22"
       - name: 🚀 Build Astro.js Portal
@@ -1025,7 +1025,7 @@ jobs:
       image: ghcr.io/hr-mes/ermete-os-builder:latest
     steps:
       - name: 📥 Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           sparse-checkout: |
             .github

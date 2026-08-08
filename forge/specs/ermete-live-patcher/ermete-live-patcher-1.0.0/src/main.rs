@@ -45,6 +45,39 @@ impl LivePatcher {
             }
         }
 
+        info!("Verifying module signature for patch: {}", patch_path);
+
+        let modinfo_output = Command::new("modinfo")
+            .arg("--field=signer")
+            .arg(patch_path)
+            .output()
+            .await;
+
+        match modinfo_output {
+            Ok(output) if output.status.success() => {
+                let signer = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                if signer.is_empty() {
+                    let err_msg = format!("Module signer is empty: {}", patch_path);
+                    error!("{}", err_msg);
+                    return Err(zbus::fdo::Error::Failed(err_msg));
+                }
+                info!("Module signer: {}", signer);
+            }
+            Ok(output) => {
+                let err_msg = format!(
+                    "Failed to check module signature: {}",
+                    String::from_utf8_lossy(&output.stderr)
+                );
+                error!("{}", err_msg);
+                return Err(zbus::fdo::Error::Failed(err_msg));
+            }
+            Err(e) => {
+                let err_msg = format!("Failed to execute modinfo: {}", e);
+                error!("{}", err_msg);
+                return Err(zbus::fdo::Error::Failed(err_msg));
+            }
+        }
+
         // Mocking the kpatch or livepatch execution
         // Example: kpatch load /path/to/patch.ko
         let output = Command::new("kpatch")

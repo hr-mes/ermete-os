@@ -45,7 +45,7 @@ fn respond_and_close(fanotify_fd: RawFd, event_fd: RawFd, response_code: u32) {
 }
 
 /// Takes an atomic Bcachefs subvolume snapshot of `/var/home/ermete` prior to prompt or kill.
-async fn take_bcachefs_snapshot(fd_id: u64) -> Option<PathBuf> {
+async fn take_bcachefs_snapshot(fd_id: &str) -> Option<PathBuf> {
     let snapshot_dir = PathBuf::from("/var/home/.snapshots");
     let _ = tokio::fs::create_dir_all(&snapshot_dir).await;
     let timestamp = std::time::SystemTime::now()
@@ -86,12 +86,12 @@ async fn take_bcachefs_snapshot(fd_id: u64) -> Option<PathBuf> {
 
 /// Restores `/var/home/ermete` instantly from the recorded snapshot upon confirmed infection / denial.
 async fn restore_bcachefs_snapshot_impl(
-    fd_id: u64,
-    pending_snapshots: &Arc<std::sync::Mutex<HashMap<u64, PathBuf>>>,
+    fd_id: &str,
+    pending_snapshots: &Arc<std::sync::Mutex<HashMap<String, PathBuf>>>,
 ) -> zbus::fdo::Result<bool> {
     let snapshot_path = {
         let mut snapshots = pending_snapshots.lock().unwrap_or_else(|e| e.into_inner());
-        snapshots.remove(&fd_id)
+        snapshots.remove(fd_id)
     };
 
     if let Some(snapshot_path) = snapshot_path {
@@ -155,7 +155,12 @@ async fn restore_bcachefs_snapshot_impl(
 /// Level 11 Micro-VM Hypervisor Isolation (Hardware Compartmentalization)
 /// Spawns untrusted applications inside a hardware-accelerated Micro-VM using `crosvm`
 /// with guest Kernel isolation, falling back to `cloud-hypervisor`, `firecracker`, or `bwrap`.
-async fn spawn_microvm_isolated_app(target_path: &PathBuf) -> Result<tokio::process::Child, std::io::Error> {
+async fn spawn_microvm_isolated_app(target_path: &PathBuf) -> Result<tokio::process::Child, anyhow::Error> {
+    let parent = match target_path.parent() {
+        Some(p) if p != std::path::Path::new("/") => p,
+        _ => anyhow::bail!("Parent path does not exist or is root ('/'), refusing root FS mount"),
+    };
+
     let target_str = target_path.to_string_lossy().to_string();
     println!(
         "[Level 11 Micro-VM Hypervisor] Intercepting execution. Launching hardware-isolated AppVM via crosvm for target: {}",
@@ -176,7 +181,7 @@ async fn spawn_microvm_isolated_app(target_path: &PathBuf) -> Result<tokio::proc
         .arg("run")
         .arg("--cpus").arg("2")
         .arg("--mem").arg("2048")
-        .arg("--rw-shared-dir").arg(format!("{}:/app:type=fs", target_path.parent().unwrap_or(std::path::Path::new("/")).display()))
+        .arg("--rw-shared-dir").arg(format!("{}:/app:type=fs", parent.display()))
         .arg("--params").arg(format!("init={} root=/dev/vda rw console=ttyS0", target_str))
         .arg(guest_kernel)
         .spawn();
@@ -226,19 +231,20 @@ async fn spawn_microvm_isolated_app(target_path: &PathBuf) -> Result<tokio::proc
         .arg("--ro-bind").arg(target_path).arg(target_path)
         .arg("--").arg(target_path)
         .spawn()
+        .map_err(Into::into)
 }
 
 struct GatekeeperManager {
     fanotify_fd: RawFd,
-    pending_events: Arc<std::sync::Mutex<HashMap<u64, i32>>>, // fd_id -> event_fd
-    pending_snapshots: Arc<std::sync::Mutex<HashMap<u64, PathBuf>>>, // fd_id -> snapshot_path
+    pending_events: Arc<std::sync::Mutex<HashMap<String, i32>>>, // fd_id -> event_fd
+    pending_snapshots: Arc<std::sync::Mutex<HashMap<String, PathBuf>>>, // fd_id -> snapshot_path
 }
 
 #[interface(name = "os.ermete.Gatekeeper")]
 impl GatekeeperManager {
     async fn approve_execution(
         &self,
-        fd_id: u64,
+        fd_id: String,
         #[zbus(header)] hdr: zbus::MessageHeader<'_>,
         #[zbus(connection)] _conn: &zbus::Connection,
     ) -> zbus::fdo::Result<()> {
@@ -295,8 +301,8 @@ impl GatekeeperManager {
         }
     }
 
-    async fn deny_execution(&self, fd_id: u64) -> zbus::fdo::Result<()> {
-        let _ = restore_bcachefs_snapshot_impl(fd_id, &self.pending_snapshots).await;
+    async fn deny_execution(&self, fd_id: String) -> zbus::fdo::Result<()> {
+        let _ = restore_bcachefs_snapshot_impl(&fd_id, &self.pending_snapshots).await;
         let event_fd = {
             let mut pending = self.pending_events.lock().unwrap_or_else(|e| e.into_inner());
             pending.remove(&fd_id)
@@ -309,14 +315,14 @@ impl GatekeeperManager {
         }
     }
 
-    async fn rollback_snapshot(&self, fd_id: u64) -> zbus::fdo::Result<bool> {
-        restore_bcachefs_snapshot_impl(fd_id, &self.pending_snapshots).await
+    async fn rollback_snapshot(&self, fd_id: String) -> zbus::fdo::Result<bool> {
+        restore_bcachefs_snapshot_impl(&fd_id, &self.pending_snapshots).await
     }
 
     #[zbus(signal)]
     async fn prompt_required(
         signal_ctxt: &zbus::SignalContext<'_>,
-        fd_id: u64,
+        fd_id: &str,
         app_name: &str,
     ) -> zbus::Result<()>;
 
@@ -451,7 +457,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let signal_ctxt = iface_ref.signal_context().clone();
 
     let async_fd = AsyncFd::new(fanotify_fd)?;
-    let mut next_id: u64 = 1;
 
     println!("Ermete Gatekeeper listening for execution events...");
 
@@ -508,24 +513,23 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     }).await.unwrap_or(false);
 
                     if is_quarantined {
-                        let fd_id = next_id;
-                        next_id += 1;
+                        let fd_id = uuid::Uuid::new_v4().to_string();
                         
                         println!("Intercepted execution of quarantined file: {}", target_path_str);
 
                         // Take atomic Bcachefs subvolume snapshot BEFORE prompt or kill
-                        if let Some(snap_path) = take_bcachefs_snapshot(fd_id).await {
-                            pending_snapshots.lock().unwrap_or_else(|e| e.into_inner()).insert(fd_id, snap_path);
+                        if let Some(snap_path) = take_bcachefs_snapshot(&fd_id).await {
+                            pending_snapshots.lock().unwrap_or_else(|e| e.into_inner()).insert(fd_id.clone(), snap_path);
                         }
                         
                         // Store the fd
-                        pending_events.lock().unwrap_or_else(|e| e.into_inner()).insert(fd_id, metadata.fd);
+                        pending_events.lock().unwrap_or_else(|e| e.into_inner()).insert(fd_id.clone(), metadata.fd);
                         
                         // Ask the UI to prompt the user
-                        if let Err(e) = GatekeeperManager::prompt_required(&signal_ctxt, fd_id, &target_path_str).await {
+                        if let Err(e) = GatekeeperManager::prompt_required(&signal_ctxt, &fd_id, &target_path_str).await {
                             eprintln!("Failed to send prompt_required signal: {}", e);
                             // Fallback deny if UI is dead: trigger instant restore and deny execution
-                            let _ = restore_bcachefs_snapshot_impl(fd_id, &pending_snapshots).await;
+                            let _ = restore_bcachefs_snapshot_impl(&fd_id, &pending_snapshots).await;
                             respond_and_close(fanotify_fd, metadata.fd, FAN_DENY);
                         }
                     } else {

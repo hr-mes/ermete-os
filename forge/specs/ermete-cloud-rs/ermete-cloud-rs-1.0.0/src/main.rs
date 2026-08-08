@@ -16,10 +16,39 @@ pub struct CloudSyncIface {}
 
 #[interface(name = "os.ermete.CloudSync")]
 impl CloudSyncIface {
-    async fn authenticate_oauth(&self, provider: String, _token: String) -> std::result::Result<String, zbus::fdo::Error> {
+    async fn authenticate_oauth(&self, provider: String, token: String) -> std::result::Result<String, zbus::fdo::Error> {
         info!("Authenticating OAuth with provider: {}", provider);
+
+        if token.trim().is_empty() {
+            return Err(zbus::fdo::Error::InvalidArgs("OAuth token cannot be empty".into()));
+        }
+
+        let client = reqwest::Client::new();
+        let url = match provider.to_lowercase().as_str() {
+            "google" => format!("https://oauth2.googleapis.com/tokeninfo?id_token={}", token),
+            "github" => "https://api.github.com/user".to_string(),
+            _ => format!("https://{}/userinfo", provider),
+        };
+
+        let response = client
+            .get(&url)
+            .header("Authorization", format!("Bearer {}", token))
+            .header("User-Agent", "ErmeteOS-CloudSync")
+            .send()
+            .await
+            .map_err(|e| zbus::fdo::Error::Failed(format!("HTTP request failed: {}", e)))?;
+
+        if !response.status().is_success() {
+            return Err(zbus::fdo::Error::Failed(format!(
+                "OAuth validation failed for provider '{}' with status {}",
+                provider,
+                response.status()
+            )));
+        }
+
         Ok(format!("Authenticated securely with {}", provider))
     }
+
 
     async fn mount_fuse(&self, remote: String, mountpoint: String) -> std::result::Result<String, zbus::fdo::Error> {
         info!("Orchestrating FUSE mount for remote '{}' at '{}'", remote, mountpoint);

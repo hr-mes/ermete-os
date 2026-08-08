@@ -134,10 +134,14 @@ impl EbpfFreezerHook {
             return false;
         }
         if let Ok(mut file) = fs::OpenOptions::new().write(true).open(EBPF_FREEZER_MAP_PATH) {
-            let _ = writeln!(file, "{}", pid);
+            if let Err(e) = writeln!(file, "{}", pid) {
+                tracing::warn!(pid, error = %e, "eBPF Scheduler: Failed to write register command to eBPF map");
+                return false;
+            }
             tracing::info!(pid, "eBPF Scheduler: Registered PID into eBPF zero-cpu map");
             true
         } else {
+            tracing::warn!(pid, map_path = EBPF_FREEZER_MAP_PATH, "eBPF Scheduler: Failed to open eBPF map interface to register PID");
             false
         }
     }
@@ -147,8 +151,17 @@ impl EbpfFreezerHook {
         if !Self::is_available() {
             return false;
         }
-        tracing::info!(pid, "eBPF Scheduler: Unregistered PID from eBPF map");
-        true
+        if let Ok(mut file) = fs::OpenOptions::new().write(true).open(EBPF_FREEZER_MAP_PATH) {
+            if let Err(e) = writeln!(file, "-{}", pid) {
+                tracing::warn!(pid, error = %e, "eBPF Scheduler: Failed to write unregister command to eBPF map");
+                return false;
+            }
+            tracing::info!(pid, "eBPF Scheduler: Unregistered PID from eBPF map");
+            true
+        } else {
+            tracing::warn!(pid, map_path = EBPF_FREEZER_MAP_PATH, "eBPF Scheduler: Failed to open eBPF map interface to unregister PID");
+            false
+        }
     }
 }
 
@@ -218,11 +231,12 @@ impl EnergyAwareScheduler {
     /// Thaws a background application (resumes execution immediately).
     pub async fn thaw_app(&self, pid: u32) -> io::Result<bool> {
         let success = CgroupFreezer::thaw_pid(pid)?;
-        EbpfFreezerHook::unregister_frozen_pid(pid);
+        let ebpf_unregistered = EbpfFreezerHook::unregister_frozen_pid(pid);
 
         let mut state = self.state.write().await;
         state.frozen_pids.remove(&pid);
-        tracing::info!(pid, cgroups_v2 = success, "Energy-Aware Scheduler: App thawed (normal CPU scheduling restored)");
+        state.background_pids.remove(&pid);
+        tracing::info!(pid, cgroups_v2 = success, ebpf_unregistered = ebpf_unregistered, "Energy-Aware Scheduler: App thawed (normal CPU scheduling restored)");
         Ok(success)
     }
 

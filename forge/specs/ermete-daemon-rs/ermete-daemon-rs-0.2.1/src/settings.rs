@@ -17,10 +17,6 @@ trait SettingsWorker {
     fn apply_voiceover(&self, enabled: bool) -> zbus::Result<()>;
 }
 
-async fn check_polkit_auth() -> bool {
-    // Legacy internal stub retained for internal actor compatibility
-    true
-}
 
 /// Domain micro-state for desktop appearance settings.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -230,17 +226,17 @@ use tokio::sync::{mpsc, oneshot};
 
 pub enum SettingsCommand {
     GetColorScheme(oneshot::Sender<String>),
-    SetColorScheme(String, oneshot::Sender<fdo::Result<()>>),
+    SetColorScheme(Option<String>, String, oneshot::Sender<fdo::Result<()>>),
     GetAccentColor(oneshot::Sender<String>),
-    SetAccentColor(String, oneshot::Sender<fdo::Result<()>>),
+    SetAccentColor(Option<String>, String, oneshot::Sender<fdo::Result<()>>),
     GetWallpaper(oneshot::Sender<String>),
-    SetWallpaper(String, oneshot::Sender<fdo::Result<()>>),
+    SetWallpaper(Option<String>, String, oneshot::Sender<fdo::Result<()>>),
     GetTrueToneEnabled(oneshot::Sender<bool>),
-    SetTrueToneEnabled(bool, oneshot::Sender<fdo::Result<()>>),
+    SetTrueToneEnabled(Option<String>, bool, oneshot::Sender<fdo::Result<()>>),
     GetTrueToneTemperature(oneshot::Sender<u32>),
-    SetTrueToneTemperature(u32, oneshot::Sender<fdo::Result<()>>),
+    SetTrueToneTemperature(Option<String>, u32, oneshot::Sender<fdo::Result<()>>),
     GetVoiceoverEnabled(oneshot::Sender<bool>),
-    SetVoiceoverEnabled(bool, oneshot::Sender<fdo::Result<()>>),
+    SetVoiceoverEnabled(Option<String>, bool, oneshot::Sender<fdo::Result<()>>),
 }
 
 use tokio_util::sync::CancellationToken;
@@ -294,8 +290,8 @@ impl SettingsService {
                     SettingsCommand::GetColorScheme(reply) => {
                         let _ = reply.send(appearance_state.color_scheme.clone());
                     }
-                    SettingsCommand::SetColorScheme(val, reply) => {
-                        if !check_polkit_auth().await {
+                    SettingsCommand::SetColorScheme(sender, val, reply) => {
+                        if !crate::bedrock::check_polkit_auth(sender.as_deref(), "os.ermete.settings.change").await {
                             let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
                             continue;
                         }
@@ -317,8 +313,8 @@ impl SettingsService {
                     SettingsCommand::GetAccentColor(reply) => {
                         let _ = reply.send(appearance_state.accent_color.clone());
                     }
-                    SettingsCommand::SetAccentColor(val, reply) => {
-                        if !check_polkit_auth().await {
+                    SettingsCommand::SetAccentColor(sender, val, reply) => {
+                        if !crate::bedrock::check_polkit_auth(sender.as_deref(), "os.ermete.settings.change").await {
                             let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
                             continue;
                         }
@@ -335,8 +331,8 @@ impl SettingsService {
                     SettingsCommand::GetWallpaper(reply) => {
                         let _ = reply.send(appearance_state.wallpaper.clone());
                     }
-                    SettingsCommand::SetWallpaper(val, reply) => {
-                        if !check_polkit_auth().await {
+                    SettingsCommand::SetWallpaper(sender, val, reply) => {
+                        if !crate::bedrock::check_polkit_auth(sender.as_deref(), "os.ermete.settings.change").await {
                             let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
                             continue;
                         }
@@ -358,8 +354,8 @@ impl SettingsService {
                     SettingsCommand::GetTrueToneEnabled(reply) => {
                         let _ = reply.send(appearance_state.true_tone_enabled);
                     }
-                    SettingsCommand::SetTrueToneEnabled(val, reply) => {
-                        if !check_polkit_auth().await {
+                    SettingsCommand::SetTrueToneEnabled(sender, val, reply) => {
+                        if !crate::bedrock::check_polkit_auth(sender.as_deref(), "os.ermete.settings.change").await {
                             let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
                             continue;
                         }
@@ -376,8 +372,8 @@ impl SettingsService {
                     SettingsCommand::GetTrueToneTemperature(reply) => {
                         let _ = reply.send(appearance_state.true_tone_temperature);
                     }
-                    SettingsCommand::SetTrueToneTemperature(val, reply) => {
-                        if !check_polkit_auth().await {
+                    SettingsCommand::SetTrueToneTemperature(sender, val, reply) => {
+                        if !crate::bedrock::check_polkit_auth(sender.as_deref(), "os.ermete.settings.change").await {
                             let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
                             continue;
                         }
@@ -394,8 +390,8 @@ impl SettingsService {
                     SettingsCommand::GetVoiceoverEnabled(reply) => {
                         let _ = reply.send(voiceover_state.enabled);
                     }
-                    SettingsCommand::SetVoiceoverEnabled(val, reply) => {
-                        if !check_polkit_auth().await {
+                    SettingsCommand::SetVoiceoverEnabled(sender, val, reply) => {
+                        if !crate::bedrock::check_polkit_auth(sender.as_deref(), "os.ermete.settings.change").await {
                             let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
                             continue;
                         }
@@ -432,12 +428,13 @@ impl SettingsService {
         val: String,
         #[zbus(header)] hdr: Option<zbus::message::Header<'_>>,
     ) -> fdo::Result<()> {
-        let sender = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
-        if !crate::bedrock::check_polkit_auth(sender, "os.ermete.settings.change").await {
+        let sender_str = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
+        if !crate::bedrock::check_polkit_auth(sender_str, "os.ermete.settings.change").await {
             return Err(fdo::Error::Failed("Polkit authorization failed".into()));
         }
+        let sender = sender_str.map(|s| s.to_string());
         let (reply, rx) = oneshot::channel();
-        let _ = self.tx.send(SettingsCommand::SetColorScheme(val, reply)).await;
+        let _ = self.tx.send(SettingsCommand::SetColorScheme(sender, val, reply)).await;
         rx.await.unwrap_or(Err(fdo::Error::Failed("Actor dead".into())))
     }
 
@@ -454,12 +451,13 @@ impl SettingsService {
         val: String,
         #[zbus(header)] hdr: Option<zbus::message::Header<'_>>,
     ) -> fdo::Result<()> {
-        let sender = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
-        if !crate::bedrock::check_polkit_auth(sender, "os.ermete.settings.change").await {
+        let sender_str = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
+        if !crate::bedrock::check_polkit_auth(sender_str, "os.ermete.settings.change").await {
             return Err(fdo::Error::Failed("Polkit authorization failed".into()));
         }
+        let sender = sender_str.map(|s| s.to_string());
         let (reply, rx) = oneshot::channel();
-        let _ = self.tx.send(SettingsCommand::SetAccentColor(val, reply)).await;
+        let _ = self.tx.send(SettingsCommand::SetAccentColor(sender, val, reply)).await;
         rx.await.unwrap_or(Err(fdo::Error::Failed("Actor dead".into())))
     }
 
@@ -476,12 +474,13 @@ impl SettingsService {
         val: String,
         #[zbus(header)] hdr: Option<zbus::message::Header<'_>>,
     ) -> fdo::Result<()> {
-        let sender = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
-        if !crate::bedrock::check_polkit_auth(sender, "os.ermete.settings.change").await {
+        let sender_str = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
+        if !crate::bedrock::check_polkit_auth(sender_str, "os.ermete.settings.change").await {
             return Err(fdo::Error::Failed("Polkit authorization failed".into()));
         }
+        let sender = sender_str.map(|s| s.to_string());
         let (reply, rx) = oneshot::channel();
-        let _ = self.tx.send(SettingsCommand::SetWallpaper(val, reply)).await;
+        let _ = self.tx.send(SettingsCommand::SetWallpaper(sender, val, reply)).await;
         rx.await.unwrap_or(Err(fdo::Error::Failed("Actor dead".into())))
     }
 
@@ -498,12 +497,13 @@ impl SettingsService {
         val: bool,
         #[zbus(header)] hdr: Option<zbus::message::Header<'_>>,
     ) -> fdo::Result<()> {
-        let sender = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
-        if !crate::bedrock::check_polkit_auth(sender, "os.ermete.settings.change").await {
+        let sender_str = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
+        if !crate::bedrock::check_polkit_auth(sender_str, "os.ermete.settings.change").await {
             return Err(fdo::Error::Failed("Polkit authorization failed".into()));
         }
+        let sender = sender_str.map(|s| s.to_string());
         let (reply, rx) = oneshot::channel();
-        let _ = self.tx.send(SettingsCommand::SetTrueToneEnabled(val, reply)).await;
+        let _ = self.tx.send(SettingsCommand::SetTrueToneEnabled(sender, val, reply)).await;
         rx.await.unwrap_or(Err(fdo::Error::Failed("Actor dead".into())))
     }
 
@@ -520,12 +520,13 @@ impl SettingsService {
         val: u32,
         #[zbus(header)] hdr: Option<zbus::message::Header<'_>>,
     ) -> fdo::Result<()> {
-        let sender = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
-        if !crate::bedrock::check_polkit_auth(sender, "os.ermete.settings.change").await {
+        let sender_str = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
+        if !crate::bedrock::check_polkit_auth(sender_str, "os.ermete.settings.change").await {
             return Err(fdo::Error::Failed("Polkit authorization failed".into()));
         }
+        let sender = sender_str.map(|s| s.to_string());
         let (reply, rx) = oneshot::channel();
-        let _ = self.tx.send(SettingsCommand::SetTrueToneTemperature(val, reply)).await;
+        let _ = self.tx.send(SettingsCommand::SetTrueToneTemperature(sender, val, reply)).await;
         rx.await.unwrap_or(Err(fdo::Error::Failed("Actor dead".into())))
     }
 
@@ -542,12 +543,13 @@ impl SettingsService {
         val: bool,
         #[zbus(header)] hdr: Option<zbus::message::Header<'_>>,
     ) -> fdo::Result<()> {
-        let sender = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
-        if !crate::bedrock::check_polkit_auth(sender, "os.ermete.settings.change").await {
+        let sender_str = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
+        if !crate::bedrock::check_polkit_auth(sender_str, "os.ermete.settings.change").await {
             return Err(fdo::Error::Failed("Polkit authorization failed".into()));
         }
+        let sender = sender_str.map(|s| s.to_string());
         let (reply, rx) = oneshot::channel();
-        let _ = self.tx.send(SettingsCommand::SetVoiceoverEnabled(val, reply)).await;
+        let _ = self.tx.send(SettingsCommand::SetVoiceoverEnabled(sender, val, reply)).await;
         rx.await.unwrap_or(Err(fdo::Error::Failed("Actor dead".into())))
     }
 }

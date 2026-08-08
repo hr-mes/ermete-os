@@ -10,7 +10,7 @@ pub struct AiProcessClassification {
     pub recommended_sched_class: SchedClass,
     pub recommended_weight: u32,
     pub recommended_slice_us: u64,
-    pub confidence_score: f32,
+    pub heuristic_score: f32,
 }
 
 pub struct AiDaemonBridge {
@@ -29,6 +29,35 @@ impl AiDaemonBridge {
         }
 
         Self { connection: conn }
+    }
+
+    /// Rule-based heuristic calculator for process classification and scoring
+    fn calculate_heuristic(comm: &str, filename: &str) -> (SchedClass, u32, u64, f32) {
+        let has_valid_path = filename.starts_with('/');
+
+        match comm {
+            "niri" | "waybar" | "ghostty" => {
+                let score = if has_valid_path { 0.95 } else { 0.90 };
+                (SchedClass::InteractiveUi, 800, 2000, score)
+            }
+            "ollama" | "torch" => {
+                let score = if has_valid_path { 0.99 } else { 0.95 };
+                (SchedClass::RealtimeNpu, 1000, 1000, score)
+            }
+            "rustc" | "cargo" | "gcc" => {
+                let score = if has_valid_path { 0.85 } else { 0.80 };
+                (SchedClass::BatchCompute, 400, 10000, score)
+            }
+            _ => {
+                if has_valid_path && filename.starts_with("/usr/") {
+                    (SchedClass::IdleBackground, 100, 20000, 0.60)
+                } else if !filename.is_empty() {
+                    (SchedClass::IdleBackground, 100, 20000, 0.50)
+                } else {
+                    (SchedClass::IdleBackground, 100, 20000, 0.35)
+                }
+            }
+        }
     }
 
     /// Query `ermete-ai-daemon` for AI weights/predictions for a newly executed process
@@ -59,12 +88,7 @@ impl AiDaemonBridge {
         }
 
         // Local low-latency fallback classification heuristics (mimicking local NPU output)
-        let (sched_class, weight, slice_us) = match comm {
-            "niri" | "waybar" | "ghostty" => (SchedClass::InteractiveUi, 800, 2000),
-            "ollama" | "torch" => (SchedClass::RealtimeNpu, 1000, 1000),
-            "rustc" | "cargo" | "gcc" => (SchedClass::BatchCompute, 400, 10000),
-            _ => (SchedClass::IdleBackground, 100, 20000),
-        };
+        let (sched_class, weight, slice_us, heuristic_score) = Self::calculate_heuristic(comm, filename);
 
         AiProcessClassification {
             pid,
@@ -72,7 +96,7 @@ impl AiDaemonBridge {
             recommended_sched_class: sched_class,
             recommended_weight: weight,
             recommended_slice_us: slice_us,
-            confidence_score: 0.98,
+            heuristic_score,
         }
     }
 }

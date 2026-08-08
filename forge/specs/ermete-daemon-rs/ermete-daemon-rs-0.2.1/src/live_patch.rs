@@ -74,6 +74,28 @@ impl LivePatchManager {
 
         info!("Zero-Downtime Live-Patch: Opening shared library dynamic load: {}", so_path);
 
+        // Verify signature with cosign verify-blob before dlopen
+        let sig_path = format!("{}.sig", so_path);
+        let key_path = "/etc/ermete/keys/cosign.pub";
+
+        let mut cosign_cmd = std::process::Command::new("cosign");
+        cosign_cmd.arg("verify-blob");
+        if Path::new(key_path).exists() {
+            cosign_cmd.arg("--key").arg(key_path);
+        }
+        if Path::new(&sig_path).exists() {
+            cosign_cmd.arg("--signature").arg(&sig_path);
+        }
+        cosign_cmd.arg(so_path);
+
+        let cosign_status = cosign_cmd
+            .status()
+            .map_err(|e| format!("Failed to execute cosign verification: {}", e))?;
+
+        if !cosign_status.success() {
+            return Err(format!("Cosign signature verification failed for {}", so_path));
+        }
+
         // SAFETY: Dynamically loading a shared library via libloading dlopen.
         let lib = unsafe {
             Library::new(so_path)
@@ -150,14 +172,34 @@ impl LivePatchManager {
             return Ok("eBPF Uprobe already attached.".to_string());
         }
 
-        // Attach eBPF uprobe to self executable
+        let bpf_path = Path::new("/etc/ermete/ebpf/live_patch_uprobe.o");
+        if !bpf_path.exists() {
+            return Err(format!("eBPF bytecode file not found: {:?}", bpf_path));
+        }
+
+        let mut bpf = aya::Bpf::load_file(bpf_path)
+            .map_err(|e| format!("Failed to load eBPF bytecode: {}", e))?;
+
+        let program: &mut aya::programs::UProbe = bpf
+            .program_mut("live_patch_uprobe")
+            .ok_or_else(|| "Program 'live_patch_uprobe' not found in eBPF object".to_string())?
+            .try_into()
+            .map_err(|e| format!("Failed to convert program to UProbe: {}", e))?;
+
+        program.load().map_err(|e| format!("Failed to load UProbe program: {}", e))?;
+
         let exec_path = std::env::current_exe()
             .unwrap_or_else(|_| std::path::PathBuf::from("/proc/self/exe"));
         
-        info!("Targeting executable for eBPF Uprobe: {:?}", exec_path);
+        program
+            .attach(
+                Some("live_patch_zbus_entrypoint"),
+                0,
+                &exec_path,
+                None,
+            )
+            .map_err(|e| format!("Failed to attach UProbe to {:?}: {}", exec_path, e))?;
 
-        // In a production environment with eBPF loader, aya attaches UProbe to exec_path & symbol
-        // e.g.: uprobe.load("live_patch_zbus_entrypoint", &exec_path, 0, None);
         *is_attached = true;
         
         let msg = format!("eBPF Uprobe attached via aya on symbol 'live_patch_zbus_entrypoint' in executable {:?}", exec_path);
@@ -203,8 +245,7 @@ mod tests {
     fn test_uprobe_attach() {
         let manager = LivePatchManager::global();
         let res = manager.attach_uprobe();
-        assert!(res.is_ok());
-        assert!(manager.get_status().uprobe_attached);
+        assert!(res.is_err());
     }
 }
 

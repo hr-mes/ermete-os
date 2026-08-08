@@ -3,7 +3,7 @@ use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64;
 use pqc_dilithium::Keypair as DilithiumKeypair;
 use pqc_kyber::{Keypair as KyberKeypair, KYBER_CIPHERTEXTBYTES, KYBER_PUBLICKEYBYTES, KYBER_SSBYTES};
-use rand_core::OsRng;
+use rand::rngs::OsRng;
 use ring::hkdf;
 use sha2::{Digest, Sha256};
 use std::sync::Arc;
@@ -92,6 +92,35 @@ impl PqcEngine {
             dilithium_public_b64: BASE64.encode(&self.inner.dilithium_keypair.public),
             pqc_level: "Level 13 (Kyber-1024 / Dilithium5 Zero-Trust)".to_string(),
         }
+    }
+
+    /// Regenerate Kyber, Dilithium, and X25519 keypairs for this node engine
+    pub fn rotate_keys(&mut self) -> Result<(), anyhow::Error> {
+        let mut rng = OsRng;
+
+        let secret = EphemeralSecret::random_from_rng(&mut rng);
+        let x25519_public = X25519PublicKey::from(&secret);
+
+        let kyber_keypair = pqc_kyber::keypair(&mut rng)
+            .map_err(|e| anyhow!("Failed to generate Kyber-1024 ML-KEM keypair: {:?}", e))?;
+
+        let dilithium_keypair = DilithiumKeypair::generate();
+
+        let node_id = self.inner.node_id.clone();
+
+        self.inner = Arc::new(PqcEngineInner {
+            x25519_public,
+            kyber_keypair,
+            dilithium_keypair,
+            node_id,
+        });
+
+        info!(
+            "PQC Cryptographic keypair rotated successfully for node '{}' (ML-KEM-1024 / Dilithium5)",
+            self.inner.node_id
+        );
+
+        Ok(())
     }
 
     pub fn node_id(&self) -> &str {
@@ -204,10 +233,11 @@ impl PqcEngine {
         // 2. Encapsulate PQC secret against peer's Kyber PK
         let (ct, kyber_ss) = Self::encapsulate_pqc_secret(&init.kyber_pk)?;
 
-        // 3. Perform ephemeral ECDH (simulated static X25519 salt for session derivation)
+        // 3. Perform ephemeral ECDH
         let eph_resp = EphemeralSecret::random_from_rng(&mut OsRng);
         let eph_resp_pk = X25519PublicKey::from(&eph_resp);
-        let x25519_ss = [0x42u8; 32]; // Zero-trust hybrid salt component
+        let peer_x25519_pk = X25519PublicKey::from(init.ephemeral_x25519_pk);
+        let x25519_ss = eph_resp.diffie_hellman(&peer_x25519_pk).to_bytes();
 
         let session_key = Self::derive_session_key(&kyber_ss, &x25519_ss, &init.timestamp.to_le_bytes());
 
@@ -252,6 +282,22 @@ mod tests {
         let dilithium_pk_bytes = BASE64.decode(&identity.dilithium_public_b64)?;
         let verified = PqcEngine::verify_signature(data, &signature, &dilithium_pk_bytes);
         assert!(verified, "Dilithium5 signature verification failed");
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_pqc_engine_rotate_keys() -> Result<()> {
+        let mut engine = PqcEngine::new(Some("test-node-rotate".to_string()))?;
+        let identity_before = engine.get_node_identity();
+
+        engine.rotate_keys()?;
+        let identity_after = engine.get_node_identity();
+
+        assert_eq!(identity_before.node_id, identity_after.node_id);
+        assert_ne!(identity_before.kyber_public_b64, identity_after.kyber_public_b64);
+        assert_ne!(identity_before.dilithium_public_b64, identity_after.dilithium_public_b64);
+        assert_ne!(identity_before.x25519_public_b64, identity_after.x25519_public_b64);
 
         Ok(())
     }

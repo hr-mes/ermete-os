@@ -19,10 +19,7 @@ impl AutoHealer {
                     info!("Successfully updated kernel parameter {} to {} via sysfs/procfs", param, value);
                     Ok(())
                 }
-                Err(e) => {
-                    warn!("Failed writing to {}: {}. Logged for root execution context.", path, e);
-                    Ok(())
-                }
+                Err(e) => Err(format!("Failed to write sysctl parameter {}: {}", param, e)),
             }
         } else {
             info!("Kernel sysctl path {} simulated (not present in build sandbox)", path);
@@ -35,7 +32,7 @@ impl AutoHealer {
         info!("⚡ Executing Autonomic Kernel Resource Re-allocation (Zero-Touch Auto-Healing)...");
         for (param, val) in mitigations {
             if let Err(e) = self.inject_sysctl(param, val) {
-                warn!("Auto-healing sysctl injection warning for {}: {}", param, e);
+                warn!("Auto-healing sysctl injection warning: {}", e);
             }
         }
         info!("Autonomic Kernel Healing cycle complete. System state optimized.");

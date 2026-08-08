@@ -46,18 +46,19 @@ async fn main() -> Result<(), Box<dyn Error>> {
     init_telemetry();
     info!("Initializing Ermete Daemon telemetry and subsystems...");
 
+    let cancel_token = CancellationToken::new();
+
     info!("Connecting to system D-Bus for NetworkManager & BlueZ integration...");
     let sys_conn = zbus::Connection::system().await?;
 
     info!("Skipping PowerManager and Gatekeeper Listener (now independent microservices)...");
 
     info!("Starting Spatial Audio Raytracing engine & App Nap QoS observer...");
-    qos::start_qos_observer(cancel_token_qos()).await;
+    qos::start_qos_observer(cancel_token.clone()).await;
 
     info!("Starting Continuity & Handoff daemon...");
 
     info!("Initializing ACID Settings Engine and XDG Desktop Portal backend...");
-    let cancel_token = CancellationToken::new();
     let appearance_store = settings::AppearanceStateStore::new_async().await;
     let voiceover_store = settings::VoiceOverStateStore::new_async().await;
 
@@ -147,10 +148,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     info!("Ermete daemon shutdown complete.");
     Ok(())
-}
-
-fn cancel_token_qos() -> CancellationToken {
-    CancellationToken::new()
 }
 
 

@@ -56,7 +56,7 @@ async fn main() -> Result<()> {
         Some(tunnel.clone()),
     );
 
-    let _connection = Builder::session()?
+    let _connection = Builder::system()?
         .name("org.ermete.MeshBus")?
         .serve_at("/org/ermete/MeshBus", dbus_interface)?
         .build()

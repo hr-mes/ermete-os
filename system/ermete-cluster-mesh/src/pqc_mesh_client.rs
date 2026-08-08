@@ -17,7 +17,7 @@ impl PqcMeshClient {
     }
 
     pub async fn check_status(&self) -> Result<String> {
-        let connection = Connection::session().await?;
+        let connection = Connection::system().await?;
         let reply: String = connection
             .call_method(
                 Some(self.dbus_service_name.as_str()),
@@ -34,7 +34,7 @@ impl PqcMeshClient {
 
     #[allow(dead_code)]
     pub async fn get_local_identity(&self) -> Result<serde_json::Value> {
-        let connection = Connection::session().await?;
+        let connection = Connection::system().await?;
         let reply: String = connection
             .call_method(
                 Some(self.dbus_service_name.as_str()),
@@ -58,11 +58,11 @@ impl PqcMeshClient {
         kyber_pk_b64: &str,
         x25519_pk_b64: &str,
     ) -> Result<()> {
-        let connection = match Connection::session().await {
+        let connection = match Connection::system().await {
             Ok(conn) => conn,
             Err(e) => {
-                warn!("Unable to connect to Session DBus for MeshBus: {}", e);
-                return Err(anyhow!("DBus session connection failed: {}", e));
+                warn!("Unable to connect to System DBus for MeshBus: {}", e);
+                return Err(anyhow!("DBus system connection failed: {}", e));
             }
         };
 

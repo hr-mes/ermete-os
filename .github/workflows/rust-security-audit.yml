@@ -20,10 +20,10 @@ jobs:
       SCCACHE_DIR: /tmp/sccache
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: ⚡ Restore sccache Cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: /tmp/sccache
           key: sccache-security-audit-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
@@ -31,7 +31,7 @@ jobs:
             sccache-security-audit-${{ runner.os }}-
 
       - name: Extreme Rust Cache (LLVM & Dependencies)
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           shared-key: "rust-security-audit"
           cache-on-failure: "true"
@@ -129,10 +129,10 @@ jobs:
             harness: bft
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: ⚡ Restore sccache Cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: /tmp/sccache
           key: sccache-kani-${{ matrix.module }}-${{ matrix.shard }}-${{ hashFiles('**/Cargo.lock') }}
@@ -140,7 +140,7 @@ jobs:
             sccache-kani-${{ matrix.module }}-${{ matrix.shard }}-
 
       - name: Extreme Rust Cache (Kani Proof Artifacts)
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           shared-key: "kani-${{ matrix.module }}-${{ matrix.shard }}"
           cache-on-failure: "true"
@@ -156,7 +156,7 @@ jobs:
 
       - name: 📦 Upload Formal Verification Artifacts (ZSTD Compressed)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: kani-proof-shard-${{ matrix.shard }}-${{ matrix.module }}
           path: ${{ matrix.dir }}/target/**/*.sarif
@@ -175,10 +175,10 @@ jobs:
 
     steps:
       - name: Checkout Codebase
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: ⚡ Restore sccache Cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: /tmp/sccache
           key: sccache-kani-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
@@ -224,10 +224,10 @@ jobs:
             cmd: cargo build --release
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: ⚡ Restore sccache Cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: /tmp/sccache
           key: sccache-baremetal-${{ matrix.target_name }}-${{ hashFiles('**/Cargo.lock') }}
@@ -235,7 +235,7 @@ jobs:
             sccache-baremetal-${{ matrix.target_name }}-
 
       - name: Extreme Rust Cache (Bare Metal & eBPF)
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           shared-key: "bare-metal-${{ matrix.target_name }}"
           cache-on-failure: "true"
@@ -247,7 +247,7 @@ jobs:
 
       - name: 📦 Upload Bare-Metal Audit Artifacts (ZSTD Compressed)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: baremetal-artifact-${{ matrix.target_name }}
           path: ${{ matrix.dir }}/target/**/*.sarif

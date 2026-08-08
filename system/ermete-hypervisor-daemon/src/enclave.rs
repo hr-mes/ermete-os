@@ -86,7 +86,7 @@ impl EnclaveManager {
 
         self.enclaves
             .write()
-            .unwrap()
+            .map_err(|e| anyhow::anyhow!("Failed to acquire enclaves write lock: {}", e))?
             .insert(enclave_id.clone(), descriptor);
 
         let _ = kvm_ctx.shutdown();
@@ -127,7 +127,7 @@ impl EnclaveManager {
 
         self.enclaves
             .write()
-            .unwrap()
+            .map_err(|e| anyhow::anyhow!("Failed to acquire enclaves write lock: {}", e))?
             .insert(enclave_id.clone(), descriptor);
 
         info!("Untrusted PID {} is now securely trapped in enclave {}", pid, enclave_id);
@@ -138,7 +138,10 @@ impl EnclaveManager {
     pub fn terminate_enclave(&self, enclave_id: &str) -> Result<bool> {
         info!("EnclaveManager: Terminating enclave {}", enclave_id);
 
-        let mut lock = self.enclaves.write().unwrap();
+        let mut lock = self
+            .enclaves
+            .write()
+            .map_err(|e| anyhow::anyhow!("Failed to acquire enclaves write lock: {}", e))?;
         if let Some(mut desc) = lock.remove(enclave_id) {
             if let Some(pid) = desc.pid {
                 let _ = EnclaveProcessSandbox::terminate_pid(pid);
@@ -153,28 +156,39 @@ impl EnclaveManager {
     }
 
     /// Retrieves status summary of a specific enclave
-    pub fn get_enclave_status(&self, enclave_id: &str) -> Option<MicroEnclaveDescriptor> {
-        self.enclaves.read().unwrap().get(enclave_id).cloned()
+    pub fn get_enclave_status(&self, enclave_id: &str) -> Result<Option<MicroEnclaveDescriptor>> {
+        let lock = self
+            .enclaves
+            .read()
+            .map_err(|e| anyhow::anyhow!("Failed to acquire enclaves read lock: {}", e))?;
+        Ok(lock.get(enclave_id).cloned())
     }
 
     /// Lists all active micro-enclaves
-    pub fn list_enclaves(&self) -> Vec<MicroEnclaveDescriptor> {
-        self.enclaves.read().unwrap().values().cloned().collect()
+    pub fn list_enclaves(&self) -> Result<Vec<MicroEnclaveDescriptor>> {
+        let lock = self
+            .enclaves
+            .read()
+            .map_err(|e| anyhow::anyhow!("Failed to acquire enclaves read lock: {}", e))?;
+        Ok(lock.values().cloned().collect())
     }
 
     /// Checks if an app_id or process corresponds to an active Micro-VM enclave
-    pub fn is_microvm_app(&self, app_id: &str) -> bool {
-        let lock = self.enclaves.read().unwrap();
+    pub fn is_microvm_app(&self, app_id: &str) -> Result<bool> {
+        let lock = self
+            .enclaves
+            .read()
+            .map_err(|e| anyhow::anyhow!("Failed to acquire enclaves read lock: {}", e))?;
         if lock.contains_key(app_id) {
-            return true;
+            return Ok(true);
         }
         for desc in lock.values() {
             if desc.app_name == app_id || desc.enclave_id == app_id {
-                return true;
+                return Ok(true);
             }
         }
         let lower = app_id.to_lowercase();
-        lower.contains("microvm") || lower.contains("enclave") || lower.contains("untrusted")
+        Ok(lower.contains("microvm") || lower.contains("enclave") || lower.contains("untrusted"))
     }
 
     /// Establishes a virtio-fs secure filesystem tunnel for a Micro-VM enclave
@@ -246,11 +260,11 @@ mod tests {
         let id = enclave_id.unwrap();
         assert!(id.starts_with("enclave-"));
 
-        let list = manager.list_enclaves();
+        let list = manager.list_enclaves().unwrap();
         assert_eq!(list.len(), 1);
 
         assert!(manager.terminate_enclave(&id).unwrap());
-        assert_eq!(manager.list_enclaves().len(), 0);
+        assert_eq!(manager.list_enclaves().unwrap().len(), 0);
     }
 }
 

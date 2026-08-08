@@ -2,6 +2,8 @@ use std::path::PathBuf;
 use std::process::Command;
 use tracing::{info, warn};
 
+const DEFAULT_TEMPLATE: &str = include_str!("../assets/matugen_theme.template.default");
+
 pub fn config_dir() -> PathBuf {
     if let Ok(xdg) = std::env::var("XDG_CONFIG_HOME") {
         PathBuf::from(xdg).join("ermete")
@@ -58,7 +60,8 @@ pub async fn apply_dynamic_theme(wallpaper_path: &str, color_scheme: &str) {
 
             let template_path = cfg_dir.join("matugen_theme.template");
             if !template_path.exists() {
-                let default_tpl = include_str!("../../../../../system/scripts/matugen_theme.template");
+                let default_tpl = std::fs::read_to_string("/usr/share/ermete/matugen_theme.template")
+                    .unwrap_or_else(|_| DEFAULT_TEMPLATE.to_string());
                 let _ = std::fs::write(&template_path, default_tpl);
             }
 

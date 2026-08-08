@@ -99,10 +99,14 @@ impl MeshBusInterface {
         serde_json::to_string_pretty(&identity).unwrap_or_default()
     }
 
-    async fn rotate_keys(&self) -> String {
-        format!(
+    async fn rotate_keys(&mut self) -> Result<String, zbus::fdo::Error> {
+        self.pqc_engine
+            .rotate_keys()
+            .map_err(|e| zbus::fdo::Error::Failed(format!("PQC key rotation failed: {}", e)))?;
+
+        Ok(format!(
             "PQC Keys rotated for node '{}'. New ML-KEM-1024 and Dilithium5 keypairs active.",
             self.pqc_engine.node_id()
-        )
+        ))
     }
 }

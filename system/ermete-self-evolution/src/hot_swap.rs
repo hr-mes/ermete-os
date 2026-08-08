@@ -1,4 +1,5 @@
 use std::path::{Path, PathBuf};
+use sha2::Digest;
 use tracing::{info, warn};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -70,12 +71,15 @@ impl HotSwapper {
             tokio::fs::set_permissions(&target_bin_path, perms).await?;
         }
 
+        let bin_bytes = tokio::fs::read(&target_bin_path).await?;
+        let checksum_sha256 = format!("{:x}", sha2::Sha256::digest(&bin_bytes));
+
         let report = HotSwapReport {
             service_name: service_name.to_string(),
             active_binary_path: target_bin_path,
             backup_binary_path: backup_bin_path,
             atomic_staging_path: staging_bin_path,
-            checksum_sha256: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".to_string(),
+            checksum_sha256,
             status: "SUCCESS_HOT_SWAPPED".to_string(),
         };
 
@@ -87,3 +91,4 @@ impl HotSwapper {
         Ok(report)
     }
 }
+

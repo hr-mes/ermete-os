@@ -24,11 +24,8 @@ members = [
     "system/ebpf/ebpf-core",
     "system/ebpf/ebpf-loader",
     "system/ermete-agentic-kernel",
-    "system/ermete-audio-bus",
     "system/ermete-cluster-mesh",
-    "system/ermete-compositor",
     "system/ermete-ebpf-sched",
-    "system/ermete-greeter",
     "system/ermete-hypervisor-daemon",
     "system/ermete-init-oracle",
     "system/ermete-kernel-forge",
@@ -42,7 +39,11 @@ members = [
 ]
 
 exclude = [
-    "tests/fuzz"
+    "tests/fuzz",
+    # Esclusi dal workspace Cargo perché costituiscono build esterni/nativi:
+    "system/ermete-audio-bus",
+    "system/ermete-compositor",
+    "system/ermete-greeter"
 ]
 
 
