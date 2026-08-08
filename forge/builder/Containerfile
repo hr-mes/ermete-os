@@ -73,11 +73,15 @@ RUN dnf install -y \
     && dnf clean all
 
 
-# Install Syft, Cosign, bpf-linker, and Kani Verifier
+# Install Syft, Cosign, bpf-linker, and Kani Verifier (which requires rustup)
 RUN curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin \
     && curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64" \
     && mv cosign-linux-amd64 /usr/local/bin/cosign \
     && chmod +x /usr/local/bin/cosign \
     && cargo install bpf-linker \
+    && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
+    && export PATH="$HOME/.cargo/bin:$PATH" \
     && cargo install --locked kani-verifier \
     && cargo kani setup
+
+ENV PATH="/root/.cargo/bin:${PATH}"
