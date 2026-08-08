@@ -92,7 +92,11 @@ def build_dag(manifest):
     
     all_custom = set(custom_pkgs)
     all_upstream = set(upstream_core + upstream_desktop + upstream_media + upstream_cli)
-    all_nodes = all_custom | all_upstream | set(flatpaks)
+    
+    # Exclude external packages handled by dedicated workflows (e.g., self-hosted kernel)
+    external_pkgs = {"kernel", "kernel-forge"}
+    
+    all_nodes = (all_custom | all_upstream | set(flatpaks)) - external_pkgs
     
     graph = defaultdict(set)       # node -> set of nodes depending on node (outgoing edges)
     in_degree = defaultdict(int)   # node -> number of prerequisites
