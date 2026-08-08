@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 use greetd_ipc::{Request, Response};
 use std::io::{Read, Write};
 use std::os::unix::net::UnixStream;

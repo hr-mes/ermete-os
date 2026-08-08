@@ -49,7 +49,7 @@ impl DrmKmsBackend {
                 let path = entry.path();
                 if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
                     if name.starts_with("card") {
-                        cards.push(path.to_string_lossy().to_string());
+                        cards.push(path.to_string_lossy().into_owned());
                     }
                 }
             }

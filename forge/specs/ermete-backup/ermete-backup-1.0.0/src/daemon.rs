@@ -65,7 +65,7 @@ impl BackupServer {
             id: id.clone(),
             timestamp,
             note: note.to_string(),
-            path: target_dir.to_string_lossy().to_string(),
+            path: target_dir.to_string_lossy().into_owned(),
             size_estimate: "0 B (Bcachefs CoW)".to_string(),
         };
 

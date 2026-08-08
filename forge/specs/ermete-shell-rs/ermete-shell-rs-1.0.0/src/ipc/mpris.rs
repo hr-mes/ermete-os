@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 use zbus::proxy;
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, oneshot};

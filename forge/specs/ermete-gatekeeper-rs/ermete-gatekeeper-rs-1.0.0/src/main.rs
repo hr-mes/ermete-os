@@ -1,4 +1,3 @@
-
 #![allow(unsafe_code)]
 
 use ermete_gatekeeper_rs::allocator::BareMetalScudoAllocator;
@@ -6,395 +5,24 @@ use ermete_gatekeeper_rs::allocator::BareMetalScudoAllocator;
 #[global_allocator]
 static GLOBAL: BareMetalScudoAllocator = BareMetalScudoAllocator::new();
 
+mod bcachefs;
+mod dbus;
+mod fanotify;
+mod hypervisor;
 
 use std::collections::HashMap;
 use std::error::Error;
-use std::os::unix::io::RawFd;
-use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::io::unix::AsyncFd;
-use zbus::{connection::Builder, interface};
-use libc::{c_void, fanotify_event_metadata, fanotify_response};
+use zbus::connection::Builder;
+use libc::{c_void, fanotify_event_metadata};
 
-const FAN_CLASS_CONTENT: u32 = 0x00000004;
-const FAN_NONBLOCK: u32 = 0x00000002;
-const FAN_MARK_ADD: u32 = 0x00000001;
-const FAN_MARK_MOUNT: u32 = 0x00000010;
-const FAN_OPEN_EXEC_PERM: u64 = 0x00010000;
-const FAN_ALLOW: u32 = 0x01;
-const FAN_DENY: u32 = 0x02;
-const FAN_EVENT_METADATA_LEN: usize = std::mem::size_of::<fanotify_event_metadata>();
-
-fn respond_and_close(fanotify_fd: RawFd, event_fd: RawFd, response_code: u32) {
-    let mut response = fanotify_response {
-        fd: event_fd,
-        response: response_code,
-    };
-    // SAFETY: Write fanotify response to fanotify_fd file descriptor.
-    unsafe {
-        libc::write(
-            fanotify_fd,
-            &mut response as *mut _ as *const c_void,
-            std::mem::size_of::<fanotify_response>(),
-        );
-    }
-    // SAFETY: Close fanotify event file descriptor.
-    unsafe {
-        libc::close(event_fd);
-    }
-}
-
-/// Takes an atomic Bcachefs subvolume snapshot of `/var/home/ermete` prior to prompt or kill.
-async fn take_bcachefs_snapshot(fd_id: &str) -> Option<PathBuf> {
-    let snapshot_dir = PathBuf::from("/var/home/.snapshots");
-    let _ = tokio::fs::create_dir_all(&snapshot_dir).await;
-    let timestamp = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_secs();
-    let snapshot_path = snapshot_dir.join(format!("gatekeeper-pre-exec-{}-{}", fd_id, timestamp));
-
-    println!(
-        "[Bcachefs Rollback Architect] Creating atomic CoW snapshot of /var/home/ermete at {:?}",
-        snapshot_path
-    );
-
-    let status = tokio::process::Command::new("bcachefs")
-        .args([
-            "subvolume",
-            "snapshot",
-            "/var/home/ermete",
-            snapshot_path.to_str().unwrap_or(""),
-        ])
-        .status()
-        .await;
-
-    if matches!(status, Ok(ref s) if s.success()) {
-        println!(
-            "[Bcachefs Rollback Architect] Atomic snapshot successfully created: {:?}",
-            snapshot_path
-        );
-        Some(snapshot_path)
-    } else {
-        eprintln!(
-            "[Bcachefs Rollback Architect] Failed to create Bcachefs snapshot for fd_id {}",
-            fd_id
-        );
-        None
-    }
-}
-
-/// Restores `/var/home/ermete` instantly from the recorded snapshot upon confirmed infection / denial.
-async fn restore_bcachefs_snapshot_impl(
-    fd_id: &str,
-    pending_snapshots: &Arc<std::sync::Mutex<HashMap<String, PathBuf>>>,
-) -> zbus::fdo::Result<bool> {
-    let snapshot_path = {
-        let mut snapshots = pending_snapshots.lock().unwrap_or_else(|e| e.into_inner());
-        snapshots.remove(fd_id)
-    };
-
-    if let Some(snapshot_path) = snapshot_path {
-        println!(
-            "[Bcachefs Rollback Architect] Confirmed infection / execution denial for fd_id {}. Triggering instant Bcachefs restore from {:?}",
-            fd_id, snapshot_path
-        );
-
-        let target_subvol = "/var/home/ermete";
-        let del_status = tokio::process::Command::new("bcachefs")
-            .args(["subvolume", "delete", target_subvol])
-            .status()
-            .await;
-
-        if !matches!(del_status, Ok(ref s) if s.success()) {
-            eprintln!("[Bcachefs Rollback Architect] Subvolume delete returned non-zero; attempting snapshot restore & fallback...");
-        }
-
-        let restore_status = tokio::process::Command::new("bcachefs")
-            .args([
-                "subvolume",
-                "snapshot",
-                snapshot_path.to_str().unwrap_or(""),
-                target_subvol,
-            ])
-            .status()
-            .await;
-
-        if matches!(restore_status, Ok(ref s) if s.success()) {
-            println!(
-                "[Bcachefs Rollback Architect] Instant restore completed successfully from {:?}",
-                snapshot_path
-            );
-            Ok(true)
-        } else {
-            println!("[Bcachefs Rollback Architect] Executing file-level restore fallback via rsync...");
-            let fallback_status = tokio::process::Command::new("rsync")
-                .args([
-                    "-a",
-                    "--delete",
-                    &format!("{}/", snapshot_path.to_string_lossy()),
-                    &format!("{}/", target_subvol),
-                ])
-                .status()
-                .await;
-
-            if matches!(fallback_status, Ok(ref s) if s.success()) {
-                println!("[Bcachefs Rollback Architect] Fallback file-level restore succeeded.");
-                Ok(true)
-            } else {
-                eprintln!("[Bcachefs Rollback Architect] Bcachefs restore failed!");
-                Err(zbus::fdo::Error::Failed("Bcachefs instant restore failed".into()))
-            }
-        }
-    } else {
-        println!("[Bcachefs Rollback Architect] No snapshot registered for fd_id {}", fd_id);
-        Ok(false)
-    }
-}
-
-/// Level 11 Micro-VM Hypervisor Isolation (Hardware Compartmentalization)
-/// Spawns untrusted applications inside a hardware-accelerated Micro-VM using `crosvm`
-/// with guest Kernel isolation, falling back to `cloud-hypervisor`, `firecracker`, or `bwrap`.
-async fn spawn_microvm_isolated_app(target_path: &PathBuf) -> Result<tokio::process::Child, anyhow::Error> {
-    let parent = match target_path.parent() {
-        Some(p) if p != std::path::Path::new("/") => p,
-        _ => anyhow::bail!("Parent path does not exist or is root ('/'), refusing root FS mount"),
-    };
-
-    let target_str = target_path.to_string_lossy().to_string();
-    println!(
-        "[Level 11 Micro-VM Hypervisor] Intercepting execution. Launching hardware-isolated AppVM via crosvm for target: {}",
-        target_str
-    );
-
-    // Locate guest Kernel image for hardware virtualization
-    let guest_kernel = if std::path::Path::new("/boot/vmlinuz-ermete").exists() {
-        "/boot/vmlinuz-ermete"
-    } else if std::path::Path::new("/boot/vmlinuz").exists() {
-        "/boot/vmlinuz"
-    } else {
-        "/boot/vmlinuz-linux"
-    };
-
-    // 1. Primary: Spawns inside a hardware-accelerated crosvm Micro-VM
-    let crosvm_res = tokio::process::Command::new("crosvm")
-        .arg("run")
-        .arg("--cpus").arg("2")
-        .arg("--mem").arg("2048")
-        .arg("--rw-shared-dir").arg(format!("{}:/app:type=fs", parent.display()))
-        .arg("--params").arg(format!("init={} root=/dev/vda rw console=ttyS0", target_str))
-        .arg(guest_kernel)
-        .spawn();
-
-    if let Ok(child) = crosvm_res {
-        println!("[Level 11 Micro-VM Hypervisor] Hardware-isolated AppVM spawned via crosvm.");
-        return Ok(child);
-    }
-
-    // 2. Secondary: Cloud-hypervisor Micro-VM fallback
-    println!("[Level 11 Micro-VM Hypervisor] crosvm execution bypassed/unavailable. Trying cloud-hypervisor...");
-    let cloud_res = tokio::process::Command::new("cloud-hypervisor")
-        .arg("--cpus").arg("boot=2")
-        .arg("--memory").arg("size=2048M")
-        .arg("--kernel").arg(guest_kernel)
-        .arg("--cmdline").arg(format!("init={} console=ttyS0", target_str))
-        .spawn();
-
-    if let Ok(child) = cloud_res {
-        println!("[Level 11 Micro-VM Hypervisor] Hardware-isolated AppVM spawned via cloud-hypervisor.");
-        return Ok(child);
-    }
-
-    // 3. Tertiary: Firecracker Micro-VM fallback
-    println!("[Level 11 Micro-VM Hypervisor] cloud-hypervisor bypassed. Trying firecracker...");
-    let fc_res = tokio::process::Command::new("firecracker")
-        .arg("--api-sock").arg("/tmp/firecracker.socket")
-        .spawn();
-
-    if let Ok(child) = fc_res {
-        println!("[Level 11 Micro-VM Hypervisor] Hardware-isolated AppVM spawned via firecracker.");
-        return Ok(child);
-    }
-
-    // 4. Lightweight container fallback via Bubblewrap
-    println!("[Level 11 Micro-VM Hypervisor] Hypervisor backends unexecutable. Falling back to bwrap sandbox.");
-    tokio::process::Command::new("bwrap")
-        .arg("--unshare-all")
-        .arg("--share-net")
-        .arg("--ro-bind").arg("/usr").arg("/usr")
-        .arg("--ro-bind").arg("/lib").arg("/lib")
-        .arg("--ro-bind").arg("/lib64").arg("/lib64")
-        .arg("--ro-bind").arg("/etc").arg("/etc")
-        .arg("--proc").arg("/proc")
-        .arg("--dev").arg("/dev")
-        .arg("--dir").arg("/tmp")
-        .arg("--ro-bind").arg(target_path).arg(target_path)
-        .arg("--").arg(target_path)
-        .spawn()
-        .map_err(Into::into)
-}
-
-struct GatekeeperManager {
-    fanotify_fd: RawFd,
-    pending_events: Arc<std::sync::Mutex<HashMap<String, i32>>>, // fd_id -> event_fd
-    pending_snapshots: Arc<std::sync::Mutex<HashMap<String, PathBuf>>>, // fd_id -> snapshot_path
-}
-
-#[interface(name = "os.ermete.Gatekeeper")]
-impl GatekeeperManager {
-    async fn approve_execution(
-        &self,
-        fd_id: String,
-        #[zbus(header)] hdr: zbus::MessageHeader<'_>,
-        #[zbus(connection)] _conn: &zbus::Connection,
-    ) -> zbus::fdo::Result<()> {
-        let sender = hdr.sender().ok_or(zbus::fdo::Error::Failed("No sender".into()))?;
-        let status = tokio::process::Command::new("pkcheck")
-            .arg("--system-bus-name")
-            .arg(sender.as_str())
-            .arg("--action-id")
-            .arg("os.ermete.gatekeeper.approve")
-            .status()
-            .await
-            .map_err(|e| zbus::fdo::Error::Failed(format!("pkcheck failed: {}", e)))?;
-            
-        if !status.success() {
-            return Err(zbus::fdo::Error::Failed("Polkit authorization failed".into()));
-        }
-
-        // Clean up pending snapshot registration on approval
-        let _ = self.pending_snapshots.lock().unwrap_or_else(|e| e.into_inner()).remove(&fd_id);
-
-        let event_fd = {
-            let mut pending = self.pending_events.lock().unwrap_or_else(|e| e.into_inner());
-            pending.remove(&fd_id)
-        };
-
-        if let Some(event_fd) = event_fd {
-            let fd_path = format!("/proc/self/fd/{}", event_fd);
-            let target_path = tokio::fs::read_link(&fd_path).await
-                .map_err(|e| zbus::fdo::Error::Failed(format!("Failed to resolve fd: {}", e)))?;
-
-            // Remove quarantine xattr via stable /proc/self/fd path (TOCTOU-safe) offloaded to blocking pool
-            let fd_path_clone = fd_path.clone();
-            let _ = tokio::task::spawn_blocking(move || {
-                xattr::remove(&fd_path_clone, "user.ermete.quarantine")
-            }).await;
-
-            // Spawn inside Level 11 hardware-isolated Micro-VM (crosvm / cloud-hypervisor / firecracker), then DENY original unsandboxed execution
-            let sandbox_result = spawn_microvm_isolated_app(&target_path).await;
-
-            match sandbox_result {
-                Ok(_child) => {
-                    // Micro-VM spawned — DENY original unsandboxed execution
-                    respond_and_close(self.fanotify_fd, event_fd, FAN_DENY);
-                }
-                Err(e) => {
-                    let target_str = target_path.to_string_lossy().to_string();
-                    eprintln!("Micro-VM isolation failed for {}: {}. Denying.", target_str, e);
-                    respond_and_close(self.fanotify_fd, event_fd, FAN_DENY);
-                }
-            }
-            Ok(())
-        } else {
-            Err(zbus::fdo::Error::InvalidArgs(format!("No pending event for id {}", fd_id)))
-        }
-    }
-
-    async fn deny_execution(&self, fd_id: String) -> zbus::fdo::Result<()> {
-        let _ = restore_bcachefs_snapshot_impl(&fd_id, &self.pending_snapshots).await;
-        let event_fd = {
-            let mut pending = self.pending_events.lock().unwrap_or_else(|e| e.into_inner());
-            pending.remove(&fd_id)
-        };
-        if let Some(event_fd) = event_fd {
-            respond_and_close(self.fanotify_fd, event_fd, FAN_DENY);
-            Ok(())
-        } else {
-            Err(zbus::fdo::Error::InvalidArgs(format!("No pending event for id {}", fd_id)))
-        }
-    }
-
-    async fn rollback_snapshot(&self, fd_id: String) -> zbus::fdo::Result<bool> {
-        restore_bcachefs_snapshot_impl(&fd_id, &self.pending_snapshots).await
-    }
-
-    #[zbus(signal)]
-    async fn prompt_required(
-        signal_ctxt: &zbus::SignalContext<'_>,
-        fd_id: &str,
-        app_name: &str,
-    ) -> zbus::Result<()>;
-
-    async fn request_root_privilege(
-        &self,
-        req_id: u64,
-        reason: &str,
-        #[zbus(header)] hdr: zbus::MessageHeader<'_>,
-        #[zbus(connection)] conn: &zbus::Connection,
-    ) -> zbus::fdo::Result<()> {
-        let sender = hdr.sender().ok_or(zbus::fdo::Error::Failed("No sender".into()))?.to_owned();
-        let reason = reason.to_string();
-        let conn = conn.clone();
-
-        tokio::spawn(async move {
-            let iface_ref = match conn.object_server().interface::<_, GatekeeperManager>("/os/ermete/Gatekeeper").await {
-                Ok(iface) => iface,
-                Err(e) => { eprintln!("Failed to get iface: {}", e); return; }
-            };
-            let signal_ctxt = iface_ref.signal_context().clone();
-
-            let polkit_status = tokio::process::Command::new("pkcheck")
-                .arg("--system-bus-name")
-                .arg(sender.as_str())
-                .arg("--action-id")
-                .arg("os.ermete.gatekeeper.root")
-                .status()
-                .await;
-
-            let mut authorized = false;
-            if let Ok(status) = polkit_status {
-                if status.success() {
-                    authorized = true;
-                }
-            }
-
-            if !authorized {
-                let proxy_res = zbus::ProxyBuilder::<'_, zbus::Proxy>::new(&conn)
-                    .destination("os.ermete.Fido2Mock")
-                    .and_then(|b| b.path("/os/ermete/Fido2Mock"))
-                    .and_then(|b| b.interface("os.ermete.Fido2Mock"));
-                if let Ok(builder) = proxy_res {
-                    if let Ok(p) = builder.build().await {
-                        if let Ok(true) = p.call::<_, _, bool>("Authenticate", &(reason,)).await {
-                            authorized = true;
-                        }
-                    }
-                }
-            }
-
-            if authorized {
-                let _ = GatekeeperManager::permit(&signal_ctxt, req_id).await;
-            } else {
-                let _ = GatekeeperManager::deny(&signal_ctxt, req_id).await;
-            }
-        });
-
-        Ok(())
-    }
-
-    #[zbus(signal)]
-    async fn permit(
-        signal_ctxt: &zbus::SignalContext<'_>,
-        req_id: u64,
-    ) -> zbus::Result<()>;
-
-    #[zbus(signal)]
-    async fn deny(
-        signal_ctxt: &zbus::SignalContext<'_>,
-        req_id: u64,
-    ) -> zbus::Result<()>;
-}
+use bcachefs::{restore_bcachefs_snapshot_impl, take_bcachefs_snapshot};
+use dbus::GatekeeperManager;
+use fanotify::{
+    respond_and_close, FAN_ALLOW, FAN_CLASS_CONTENT, FAN_DENY, FAN_EVENT_METADATA_LEN,
+    FAN_MARK_ADD, FAN_MARK_MOUNT, FAN_NONBLOCK, FAN_OPEN_EXEC_PERM,
+};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -441,11 +69,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let pending_events = Arc::new(std::sync::Mutex::new(HashMap::new()));
     let pending_snapshots = Arc::new(std::sync::Mutex::new(HashMap::new()));
-    let manager = GatekeeperManager {
+    let manager = GatekeeperManager::new(
         fanotify_fd,
-        pending_events: pending_events.clone(),
-        pending_snapshots: pending_snapshots.clone(),
-    };
+        pending_events.clone(),
+        pending_snapshots.clone(),
+    );
 
     let conn = Builder::system()?
         .name("os.ermete.Gatekeeper")?
@@ -501,7 +129,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 if metadata.fd >= 0 {
                     let path_str = format!("/proc/self/fd/{}", metadata.fd);
                     let target_path = tokio::fs::read_link(&path_str).await.unwrap_or_default();
-                    let target_path_str = target_path.to_string_lossy().to_string();
+                    let target_path_str = target_path.to_string_lossy().into_owned();
 
                     // Check for quarantine attribute via stable /proc/self/fd path (TOCTOU-safe) offloaded to spawn_blocking
                     let path_str_clone = path_str.clone();
@@ -544,4 +172,3 @@ async fn main() -> Result<(), Box<dyn Error>> {
         guard.clear_ready();
     }
 }
-

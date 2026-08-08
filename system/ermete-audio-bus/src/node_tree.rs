@@ -128,22 +128,6 @@ impl NodeTree {
         }
     }
 
-    #[allow(dead_code)]
-    pub async fn remove_node(&self, node_id: u32) {
-        let mut guard = self.state.write().await;
-        guard.sinks.retain(|n| n.id != node_id);
-        guard.sources.retain(|n| n.id != node_id);
-        guard.streams.retain(|n| n.id != node_id);
-        guard.links.retain(|l| l.output_node_id != node_id && l.input_node_id != node_id);
-
-        if guard.default_sink_id == Some(node_id) {
-            guard.default_sink_id = guard.sinks.first().map(|n| n.id);
-        }
-        if guard.default_source_id == Some(node_id) {
-            guard.default_source_id = guard.sources.first().map(|n| n.id);
-        }
-    }
-
     pub async fn set_default_sink(&self, sink_id: u32) -> Result<(), String> {
         let mut guard = self.state.write().await;
         if !guard.sinks.iter().any(|n| n.id == sink_id) {

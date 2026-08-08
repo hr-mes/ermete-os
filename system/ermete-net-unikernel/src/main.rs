@@ -2,7 +2,6 @@ mod device;
 mod metrics;
 mod router;
 mod stack;
-mod virtio;
 
 use std::env;
 use std::sync::Arc;

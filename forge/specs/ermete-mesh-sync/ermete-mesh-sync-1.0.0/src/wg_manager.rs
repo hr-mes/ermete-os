@@ -30,48 +30,6 @@ impl WgMeshManager {
         }
     }
 
-    #[allow(dead_code)]
-    pub fn kyber_public_key(&self) -> &pqc_kyber::PublicKey {
-        &self.kyber_keypair.public
-    }
-
-    #[allow(dead_code)]
-    pub fn dilithium_public_key(&self) -> &[u8] {
-        &self.dilithium_keypair.public
-    }
-
-    /// Encapsulate a shared secret for a peer using peer's Kyber-1024 public key
-    #[allow(dead_code)]
-    pub fn encapsulate_pqc_secret(
-        peer_pk: &pqc_kyber::PublicKey,
-    ) -> Result<([u8; KYBER_CIPHERTEXTBYTES], [u8; KYBER_SSBYTES]), String> {
-        let mut rng = OsRng;
-        pqc_kyber::encapsulate(peer_pk, &mut rng)
-            .map_err(|e| format!("Kyber encapsulation error: {:?}", e))
-    }
-
-    /// Decapsulate a ciphertext received from a peer using local Kyber-1024 secret key
-    #[allow(dead_code)]
-    pub fn decapsulate_pqc_secret(
-        &self,
-        ciphertext: &[u8; KYBER_CIPHERTEXTBYTES],
-    ) -> Result<[u8; KYBER_SSBYTES], String> {
-        pqc_kyber::decapsulate(ciphertext, &self.kyber_keypair.secret)
-            .map_err(|e| format!("Kyber decapsulation error: {:?}", e))
-    }
-
-    /// Sign mesh data using local Dilithium5 private key
-    #[allow(dead_code)]
-    pub fn sign_node_identity(&self, data: &[u8]) -> Vec<u8> {
-        self.dilithium_keypair.sign(data).to_vec()
-    }
-
-    /// Verify a peer's mesh signature using peer's Dilithium5 public key bytes
-    #[allow(dead_code)]
-    pub fn verify_node_identity(data: &[u8], sig: &[u8], peer_pk: &[u8]) -> bool {
-        pqc_dilithium::verify(sig, data, peer_pk).is_ok()
-    }
-
     pub async fn initialize_tunnel(&self) -> Result<(), Box<dyn std::error::Error>> {
         info!("Initializing Post-Quantum WireGuard Mesh Tunnel...");
         

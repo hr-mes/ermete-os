@@ -99,13 +99,8 @@ pub fn ensure_index_loaded() {
     });
 }
 
-pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_filter: &str, is_spotlight: bool, pop: &ApplicationWindow) {
-    while let Some(child) = list_box.first_child() {
-        list_box.remove(&child);
-    }
-    let filter_lower = filter_text.to_lowercase();
-
-    if is_spotlight && filter_lower.starts_with('=') {
+fn try_parse_calculator(list_box: &GtkBox, filter_lower: &str, pop: &ApplicationWindow) -> bool {
+    if filter_lower.starts_with('=') {
         let expr = filter_lower.trim_start_matches('=').trim();
         if let Ok(res) = meval::eval_str(expr) {
             let res_str = res.to_string();
@@ -127,10 +122,13 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
             }));
             list_box.append(&row);
         }
-        return;
+        return true;
     }
+    false
+}
 
-    if is_spotlight && filter_lower.starts_with('>') {
+fn try_parse_terminal_command(list_box: &GtkBox, filter_text: &str, filter_lower: &str, pop: &ApplicationWindow) -> bool {
+    if filter_lower.starts_with('>') {
         let cmd = filter_text.trim_start_matches('>').trim();
         let row = Button::builder().css_classes(["spotlight-item"]).build();
         let hbox = GtkBox::builder().orientation(Orientation::Horizontal).spacing(16).build();
@@ -149,14 +147,13 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
             pop.close();
         }));
         list_box.append(&row);
-        return;
+        return true;
     }
+    false
+}
 
-    if is_spotlight && filter_lower.starts_with("ai:") {
-        // Keeps backwards compatibility with explicit 'ai:' prefix
-    }
-
-    if is_spotlight && filter_lower.starts_with('?') {
+fn try_parse_web_search(list_box: &GtkBox, filter_text: &str, filter_lower: &str, pop: &ApplicationWindow) -> bool {
+    if filter_lower.starts_with('?') {
         let query = filter_text.trim_start_matches('?').trim();
         if !query.is_empty() {
             let row = Button::builder().css_classes(["spotlight-item"]).build();
@@ -170,7 +167,7 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
             vbox.append(&desc_lbl);
             hbox.append(&vbox);
             row.set_child(Some(&hbox));
-            let query_encoded = query.replace(" ", "+");
+            let query_encoded = query.replace(' ', "+");
             let search_url = format!("https://duckduckgo.com/?q={}", query_encoded);
             row.connect_clicked(glib::clone!(@weak pop => move |_| {
                 let _ = std::process::Command::new("xdg-open").arg(&search_url).spawn();
@@ -178,10 +175,13 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
             }));
             list_box.append(&row);
         }
-        return;
+        return true;
     }
+    false
+}
 
-    if is_spotlight && filter_lower.starts_with('/') {
+fn try_parse_file_search(list_box: &GtkBox, filter_text: &str, filter_lower: &str, pop: &ApplicationWindow) -> bool {
+    if filter_lower.starts_with('/') {
         let query = filter_text.trim_start_matches('/').trim();
         if !query.is_empty() {
             let query_str = query.to_string();
@@ -227,11 +227,13 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
                 }
             });
         }
-        return;
+        return true;
     }
+    false
+}
 
-    // AI Daemon Integration for Natural Language (Omni-Spotlight Feature)
-    if is_spotlight && !filter_lower.is_empty() && !filter_lower.starts_with('/') && !filter_lower.starts_with('?') && !filter_lower.starts_with('=') && !filter_lower.starts_with('>') {
+fn try_parse_ai_suggestion(list_box: &GtkBox, filter_text: &str, filter_lower: &str, pop: &ApplicationWindow) {
+    if !filter_lower.is_empty() && !filter_lower.starts_with('/') && !filter_lower.starts_with('?') && !filter_lower.starts_with('=') && !filter_lower.starts_with('>') {
         let query = filter_text.trim_start_matches("ai:").trim();
         let row = Button::builder().css_classes(["spotlight-item"]).build();
         let hbox = GtkBox::builder().orientation(Orientation::Horizontal).spacing(16).build();
@@ -254,9 +256,10 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
             pop.close();
         }));
         list_box.append(&row);
-        // We still show the static apps below the AI suggestion
     }
+}
 
+fn populate_indexed_items(list_box: &GtkBox, filter_lower: &str, category_filter: &str, pop: &ApplicationWindow) {
     ensure_index_loaded();
 
     let mut count = 0;
@@ -276,7 +279,7 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
                 if !match_found { continue; }
             }
 
-            if !filter_lower.is_empty() && !item.title.to_lowercase().contains(&filter_lower) && !item.description.to_lowercase().contains(&filter_lower) && !item.keywords.contains(&filter_lower) {
+            if !filter_lower.is_empty() && !item.title.to_lowercase().contains(filter_lower) && !item.description.to_lowercase().contains(filter_lower) && !item.keywords.contains(filter_lower) {
                 continue;
             }
 
@@ -321,6 +324,31 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
         let no_res = Label::builder().label("Nessun risultato trovato.").css_classes(["cc-label-sub"]).margin_top(20).build();
         list_box.append(&no_res);
     }
+}
+
+pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_filter: &str, is_spotlight: bool, pop: &ApplicationWindow) {
+    while let Some(child) = list_box.first_child() {
+        list_box.remove(&child);
+    }
+    let filter_lower = filter_text.to_lowercase();
+
+    if is_spotlight {
+        if try_parse_calculator(list_box, &filter_lower, pop) {
+            return;
+        }
+        if try_parse_terminal_command(list_box, filter_text, &filter_lower, pop) {
+            return;
+        }
+        if try_parse_web_search(list_box, filter_text, &filter_lower, pop) {
+            return;
+        }
+        if try_parse_file_search(list_box, filter_text, &filter_lower, pop) {
+            return;
+        }
+        try_parse_ai_suggestion(list_box, filter_text, &filter_lower, pop);
+    }
+
+    populate_indexed_items(list_box, &filter_lower, category_filter, pop);
 }
 
 pub fn show_spotlight_modal(app: &Application) {

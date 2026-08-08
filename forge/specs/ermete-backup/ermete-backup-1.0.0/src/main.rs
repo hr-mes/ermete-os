@@ -9,19 +9,24 @@ struct BackupService;
 impl BackupService {
     /// Esegue il backup chiamando borg create in background, emettendo segnali di progresso
     #[zbus(name = "PerformBackup")]
-    async fn perform_backup(&self, #[zbus(signal_context)] ctxt: SignalContext<'_>) {
+    async fn perform_backup(
+        &self,
+        repo_path: String,
+        source_path: String,
+        #[zbus(signal_context)] ctxt: SignalContext<'_>,
+    ) {
         let ctxt = ctxt.into_owned();
 
         // Spawn asincrono per l'esecuzione di borg
         tokio::spawn(async move {
-            let _ = BackupService::backup_progress(&ctxt, "Avvio pipeline deduplicazione borg...".to_string()).await;
+            let _ = BackupService::backup_progress(&ctxt, format!("Avvio pipeline deduplicazione borg per {} -> {}...", source_path, repo_path)).await;
             
             let mut cmd = Command::new("borg");
             cmd.arg("create")
                 .arg("--info")
                 .arg("--progress")
-                .arg("/var/backup/borg-repo::backup-{now}") // TODO: path reali
-                .arg("/var/home/ermete") // TODO: path reali
+                .arg(&repo_path)
+                .arg(&source_path)
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped());
 

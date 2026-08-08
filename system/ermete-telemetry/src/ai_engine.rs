@@ -69,12 +69,21 @@ impl AiPredictiveEngine {
     }
 
     async fn process_batch(&self, batch: LogBatch) -> anyhow::Result<()> {
-        let combined_text: String = batch
-            .records
-            .iter()
-            .map(|r| format!("[{}] {} ({}): {}", r.priority, r.unit, r.pid.unwrap_or(0), r.message))
-            .collect::<Vec<_>>()
-            .join("\n");
+        use std::fmt::Write;
+        let mut combined_text = String::new();
+        for (i, r) in batch.records.iter().enumerate() {
+            if i > 0 {
+                combined_text.push('\n');
+            }
+            let _ = write!(
+                combined_text,
+                "[{}] {} ({}): {}",
+                r.priority,
+                r.unit,
+                r.pid.unwrap_or(0),
+                r.message
+            );
+        }
 
         // 1. Attempt Llama 3.2 embedding generation via REST
         let embedding = self.generate_embedding(&combined_text).await;
@@ -161,26 +170,33 @@ impl AiPredictiveEngine {
         let mut target_unit = "systemd".to_string();
 
         for record in &batch.records {
-            let msg_upper = record.message.to_uppercase();
-            if msg_upper.contains("MEMORY USAGE REACHED") || msg_upper.contains("OUT OF MEMORY") || msg_upper.contains("OOM-KILL") {
+            if contains_ignore_ascii_case(&record.message, "MEMORY USAGE REACHED")
+                || contains_ignore_ascii_case(&record.message, "OUT OF MEMORY")
+                || contains_ignore_ascii_case(&record.message, "OOM-KILL")
+            {
                 score = 0.95;
                 failure_mode = "IMMINENT_OOM_CRASH".to_string();
                 target_unit = record.unit.clone();
                 suggested_intent = format!("RESTART_UNIT: {}", record.unit);
                 break;
-            } else if msg_upper.contains("CHECKSUM ERROR") || msg_upper.contains("I/O ERROR") || msg_upper.contains("CORRUPTION") {
+            } else if contains_ignore_ascii_case(&record.message, "CHECKSUM ERROR")
+                || contains_ignore_ascii_case(&record.message, "I/O ERROR")
+                || contains_ignore_ascii_case(&record.message, "CORRUPTION")
+            {
                 score = 0.88;
                 failure_mode = "STORAGE_CORRUPTION_PREVENTATIVE".to_string();
                 target_unit = record.unit.clone();
                 suggested_intent = format!("QUARANTINE_UNIT: {}", record.unit);
                 break;
-            } else if msg_upper.contains("HIGH RESTART COUNT") || msg_upper.contains("CRASH LOOP") {
+            } else if contains_ignore_ascii_case(&record.message, "HIGH RESTART COUNT")
+                || contains_ignore_ascii_case(&record.message, "CRASH LOOP")
+            {
                 score = 0.78;
                 failure_mode = "SERVICE_CRASH_LOOP".to_string();
                 target_unit = record.unit.clone();
                 suggested_intent = format!("REVERT_SERVICE: {}", record.unit.replace(".service", ""));
                 break;
-            } else if record.priority == "CRIT" || record.priority == "EMERG" {
+            } else if record.priority.eq_ignore_ascii_case("CRIT") || record.priority.eq_ignore_ascii_case("EMERG") {
                 if score < 0.70 {
                     score = 0.72;
                     failure_mode = "CRITICAL_DAEMON_FAULT".to_string();
@@ -209,4 +225,17 @@ impl AiPredictiveEngine {
         }
         vec
     }
+}
+
+fn contains_ignore_ascii_case(haystack: &str, needle: &str) -> bool {
+    if needle.is_empty() {
+        return true;
+    }
+    if haystack.len() < needle.len() {
+        return false;
+    }
+    haystack
+        .as_bytes()
+        .windows(needle.len())
+        .any(|window| window.eq_ignore_ascii_case(needle.as_bytes()))
 }

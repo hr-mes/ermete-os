@@ -207,7 +207,7 @@ thread_local! {
     static DOCK_INSTANCES: RefCell<Vec<DockMonitorInstance>> = const { RefCell::new(Vec::new()) };
 }
 
-fn animate_dock_visibility(container: &GtkBox, hide: bool) {
+pub fn animate_dock_visibility(container: &GtkBox, hide: bool) {
     if hide {
         if !container.has_css_class("dock-hidden") {
             container.add_css_class("dock-hidden");
@@ -217,6 +217,16 @@ fn animate_dock_visibility(container: &GtkBox, hide: bool) {
             container.remove_css_class("dock-hidden");
         }
     }
+}
+
+pub fn toggle_dock_visibility() {
+    DOCK_INSTANCES.with(|insts| {
+        for inst in insts.borrow_mut().iter_mut() {
+            let container = &inst.container;
+            let is_hidden = container.has_css_class("dock-hidden");
+            animate_dock_visibility(container, !is_hidden);
+        }
+    });
 }
 
 fn should_autohide_for_monitor(state: &DockState, monitor_connector: &str, screen_height: i32) -> bool {
@@ -527,20 +537,6 @@ fn create_dock_for_monitor(
     });
 
     window
-}
-
-#[allow(dead_code)]
-pub fn toggle_dock_visibility() {
-    DOCK_INSTANCES.with(|instances| {
-        for inst in instances.borrow().iter() {
-            if let Some(win) = inst.window.upgrade() {
-                win.set_visible(true);
-                win.present();
-                let is_hidden = inst.container.has_css_class("dock-hidden");
-                animate_dock_visibility(&inst.container, !is_hidden);
-            }
-        }
-    });
 }
 
 fn refresh_monitor_instance(inst: &mut DockMonitorInstance) {

@@ -63,11 +63,12 @@ impl BpfExecTracer {
                         let comm_str = String::from_utf8_lossy(&event.comm)
                             .trim_matches('\0')
                             .to_string();
+                        let filename = format!("/usr/bin/{}", comm_str);
                         events.push(ExecveEvent {
                             pid: event.pid,
                             ppid: event.ppid,
-                            comm: comm_str.clone(),
-                            filename: format!("/usr/bin/{}", comm_str),
+                            comm: comm_str,
+                            filename,
                             timestamp_ns: event.timestamp_ns,
                         });
                     }

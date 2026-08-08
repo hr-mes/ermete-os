@@ -8,10 +8,9 @@ use core::alloc::{GlobalAlloc, Layout};
 use core::sync::atomic::{AtomicUsize, Ordering};
 
 // Direct FFI bindings to libscudo
+#[cfg(feature = "scudo_ffi")]
 extern "C" {
-    #[allow(dead_code)]
     fn scudo_malloc(size: usize) -> *mut u8;
-    #[allow(dead_code)]
     fn scudo_free(ptr: *mut u8);
 }
 

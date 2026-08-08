@@ -79,7 +79,7 @@ pub fn build_page() -> Box {
 async fn get_ethernet_status_async() -> String {
     if let Ok(mut dir) = tokio::fs::read_dir("/sys/class/net").await {
         while let Ok(Some(entry)) = dir.next_entry().await {
-            let name = entry.file_name().to_string_lossy().to_string();
+            let name = entry.file_name().to_string_lossy().into_owned();
             if (name.starts_with("eth") || name.starts_with("en"))
                 && !name.starts_with("enx")
                 && !name.starts_with("lo")

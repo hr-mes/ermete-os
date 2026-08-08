@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 use arc_swap::ArcSwap;
 use std::sync::{Arc, Mutex, OnceLock};
 use tokio::sync::{mpsc, oneshot};

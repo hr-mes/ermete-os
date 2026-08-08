@@ -1662,21 +1662,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ermete-semantic-db"
-version = "1.0.0"
-dependencies = [
- "anyhow",
- "chrono",
- "serde",
- "serde_json",
- "tokio",
- "tokio-stream",
- "tracing",
- "tracing-subscriber",
- "zbus 4.4.0",
-]
-
-[[package]]
 name = "ermete-settings-rs"
 version = "1.0.0"
 dependencies = [
@@ -1777,10 +1762,6 @@ dependencies = [
  "tracing-subscriber",
  "zbus 4.4.0",
 ]
-
-[[package]]
-name = "ermete-unikernel-daemon"
-version = "1.0.0"
 
 [[package]]
 name = "errno"

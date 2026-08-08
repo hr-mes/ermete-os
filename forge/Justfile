@@ -50,43 +50,14 @@ fetch-repo-rpms owner="hr-mes":
 clean-ghcr owner="hr-mes":
     #!/usr/bin/env bash
     set -euo pipefail
-    PACKAGES=$(gh api --paginate /users/{{ owner }}/packages?package_type=container | jq -r '.[].name' 2>/dev/null || echo "")
-    if [ -z "$PACKAGES" ]; then echo "No container packages found."; exit 0; fi
-    for PACKAGE in $PACKAGES; do
-        ENC_PACKAGE=$(jq -rn --arg x "$PACKAGE" '$x|@uri')
-        VERSIONS_JSON=$(gh api --paginate /users/{{ owner }}/packages/container/$ENC_PACKAGE/versions 2>/dev/null || echo "[]")
-        KEEP_IDS=$(echo "$VERSIONS_JSON" | jq -r '[.[] | select(.metadata.container.tags | length > 0)] | sort_by(.created_at) | reverse | .[0:2] | .[].id')
-        echo "$VERSIONS_JSON" | jq -c '.[]' | while read -r version; do
-            VERSION_ID=$(echo "$version" | jq -r '.id')
-            TAG_COUNT=$(echo "$version" | jq -r '.metadata.container.tags | length')
-            if [[ "$TAG_COUNT" -eq 0 ]]; then
-                echo "Deleting untagged version $VERSION_ID..."
-                gh api -X DELETE /users/{{ owner }}/packages/container/$ENC_PACKAGE/versions/$VERSION_ID || true
-            elif ! echo "$KEEP_IDS" | grep -q "^$VERSION_ID$"; then
-                echo "Deleting old version $VERSION_ID..."
-                gh api -X DELETE /users/{{ owner }}/packages/container/$ENC_PACKAGE/versions/$VERSION_ID || true
-            fi
-        done
-    done
+    bash scripts/clean_ghcr.sh "{{ owner }}"
 
 # Auto-updates RPM spec versions from upstream GitHub releases
 [group('CI/CD Pipeline')]
 update-specs:
     #!/usr/bin/env bash
     set -euo pipefail
-    update_spec() {
-        local repo=$1 spec_file=$2
-        local latest_tag=$(curl -sL https://api.github.com/repos/${repo}/releases/latest | jq -r .tag_name | sed 's/^v//')
-        if [ -z "$latest_tag" ] || [ "$latest_tag" == "null" ]; then echo "Could not fetch $repo"; return; fi
-        local current_ver=$(grep -E '^Version:' "$spec_file" | awk '{print $2}')
-        if [ "$latest_tag" != "$current_ver" ]; then
-            echo "Updating $spec_file from $current_ver to $latest_tag"
-            sed -i "s/^Version:.*$/Version:        $latest_tag/" "$spec_file"
-        fi
-    }
-    update_spec "starship/starship" "specs/ermete-starship/ermete-starship.spec"
-    update_spec "InioX/matugen" "specs/ermete-matugen/ermete-matugen.spec"
-    update_spec "ful1e5/Bibata_Cursor" "specs/ermete-bibata/ermete-bibata.spec"
+    bash scripts/update_specs.sh
 
 # Fetches upstream kernel SRPM, applies CachyOS BORE patches, computes NVIDIA shield ceiling, and merges Kconfig tuning
 [group('Kernel Build')]
@@ -138,15 +109,7 @@ audit:
 fuzz component="all" time="60":
     #!/usr/bin/env bash
     set -euo pipefail
-    for crate in specs/*/; do
-        if [ -f "${crate}Cargo.toml" ] && [ -d "${crate}fuzz" ]; then
-            comp=$(basename "$crate")
-            if [ "{{ component }}" = "all" ] || [ "{{ component }}" = "$comp" ]; then
-                echo "Fuzzing component $comp for {{ time }}s..."
-                (cd "$crate" && cargo fuzz run fuzz_target_1 -- -max_total_time={{ time }} -sanitizer=address || true)
-            fi
-        fi
-    done
+    bash scripts/run_fuzz.sh "{{ component }}" "{{ time }}"
 
 # Runs AWS Kani formal verification proof harnesses on Rust spec targets
 [group('QA & Validation')]

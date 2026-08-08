@@ -137,7 +137,7 @@ pub fn build_page() -> Box {
 
             let path_clone = path.clone();
             btn.connect_clicked(move |_| {
-                let abs_path = path_clone.to_string_lossy().to_string();
+                let abs_path = path_clone.to_string_lossy().into_owned();
                 let abs_path_clone = abs_path.clone();
                 relm4::spawn_local(async move {
                     if let Ok(conn) = crate::get_connection().await {

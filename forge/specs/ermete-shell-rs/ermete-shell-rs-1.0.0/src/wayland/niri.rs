@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
@@ -40,10 +39,5 @@ pub struct NiriState {
 }
 
 pub fn get_niri_state() -> NiriState {
-    NiriState {
-        active_workspace_id: Some(1),
-        total_workspaces: 4,
-        focused_window_title: Some("Ermete OS".to_string()),
-    }
+    NiriState::default()
 }
-

@@ -11,6 +11,9 @@ mod dbus;
 mod sync;
 mod zk;
 mod bft;
+mod discovery;
+mod listener;
+mod clipboard;
 
 pub struct CloudSyncIface {}
 

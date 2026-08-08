@@ -1,7 +1,0 @@
-[package]
-name = "ermete-unikernel-daemon"
-version = "1.0.0"
-edition = "2021"
-description = "Ermete OS Zero-Latency Ring-0 Unikernel Network Daemon (RustyHermit)"
-
-[dependencies]

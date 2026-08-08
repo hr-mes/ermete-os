@@ -179,9 +179,9 @@ impl AttestationEngine {
         info!("Enclave ID: {}, Hardware Type: {}", enclave_id, enclave_type);
         info!("============================================================");
 
-        *self.state.lock().unwrap() = EnclaveLifecycleState::Launching;
+        *self.state.lock().unwrap_or_else(|e| e.into_inner()) = EnclaveLifecycleState::Launching;
         let nonce = self.generate_attestation_nonce()?;
-        *self.state.lock().unwrap() = EnclaveLifecycleState::Attesting;
+        *self.state.lock().unwrap_or_else(|e| e.into_inner()) = EnclaveLifecycleState::Attesting;
 
         let _pqc_ok = self.verify_pqc_hardware_handshake(&nonce);
 
@@ -221,7 +221,7 @@ impl AttestationEngine {
             }
             let _ = fs::write(&self.config.key_output_path, b"ERMETE_ZERO_TRUST_ENCLAVE_SECRET_KEY_RELEASE");
 
-            *self.state.lock().unwrap() = EnclaveLifecycleState::SecretReleased;
+            *self.state.lock().unwrap_or_else(|e| e.into_inner()) = EnclaveLifecycleState::SecretReleased;
 
             let summary = HardwareAttestationSummary {
                 enclave_id: enclave_id.to_string(),
@@ -237,22 +237,22 @@ impl AttestationEngine {
                     .unwrap_or(0),
             };
 
-            *self.last_summary.lock().unwrap() = Some(summary.clone());
+            *self.last_summary.lock().unwrap_or_else(|e| e.into_inner()) = Some(summary.clone());
             info!("AttestationEngine: Enclave {} attestation SUCCESSFUL!", enclave_id);
             Ok(summary)
         } else {
             let reason = "Hardware attestation or Keylime integrity check failed";
-            *self.state.lock().unwrap() = EnclaveLifecycleState::Failed(reason.to_string());
+            *self.state.lock().unwrap_or_else(|e| e.into_inner()) = EnclaveLifecycleState::Failed(reason.to_string());
             Err(anyhow!("Enclave Attestation Refused: {}", reason))
         }
     }
 
     pub fn get_state(&self) -> EnclaveLifecycleState {
-        self.state.lock().unwrap().clone()
+        self.state.lock().unwrap_or_else(|e| e.into_inner()).clone()
     }
 
     pub fn get_last_summary(&self) -> Option<HardwareAttestationSummary> {
-        self.last_summary.lock().unwrap().clone()
+        self.last_summary.lock().unwrap_or_else(|e| e.into_inner()).clone()
     }
 }
 

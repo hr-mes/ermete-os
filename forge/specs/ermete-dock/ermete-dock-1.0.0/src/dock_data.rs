@@ -71,6 +71,14 @@ fn capitalize(s: &str) -> String {
 pub fn reconcile_dock_items(pinned: &[String], windows: &[NiriWindowInfo]) -> Vec<DockItem> {
     let mut items = Vec::new();
     let mut matched_window_ids = HashSet::new();
+    
+    // O(P+W): Pre-index windows by lowercased app_id
+    use std::collections::HashMap;
+    let mut window_map: HashMap<String, Vec<&NiriWindowInfo>> = HashMap::new();
+    for win in windows {
+        let app_id = win.app_id.clone().unwrap_or_else(|| "unknown".to_string()).to_lowercase();
+        window_map.entry(app_id).or_default().push(win);
+    }
 
     // 1. Process pinned items first
     for pin in pinned {
@@ -79,9 +87,11 @@ pub fn reconcile_dock_items(pinned: &[String], windows: &[NiriWindowInfo]) -> Ve
         let mut window_titles = Vec::new();
         let mut is_focused = false;
 
-        for win in windows {
-            if let Some(ref app_id) = win.app_id {
-                if matches_desktop_or_app_id(pin, app_id) {
+        let clean_pin = pin.trim_end_matches(".desktop").to_lowercase();
+
+        for (app_id, wins) in &window_map {
+            if clean_pin == *app_id || clean_pin.ends_with(app_id) || app_id.ends_with(&clean_pin) {
+                for win in wins {
                     window_ids.push(win.id);
                     window_titles.push(win.title.clone().unwrap_or_else(|| display_name.clone()));
                     if win.is_focused {
@@ -109,8 +119,13 @@ pub fn reconcile_dock_items(pinned: &[String], windows: &[NiriWindowInfo]) -> Ve
             continue;
         }
         let app_id = win.app_id.clone().unwrap_or_else(|| "unknown".to_string());
+        let clean_app = app_id.to_lowercase();
         
-        if let Some(existing) = items.iter_mut().find(|it| !it.is_pinned && matches_desktop_or_app_id(&it.key_id, &app_id)) {
+        if let Some(existing) = items.iter_mut().find(|it| {
+            if it.is_pinned { return false; }
+            let clean_it = it.key_id.trim_end_matches(".desktop").to_lowercase();
+            clean_it == clean_app || clean_it.ends_with(&clean_app) || clean_app.ends_with(&clean_it)
+        }) {
             existing.window_ids.push(win.id);
             existing.window_titles.push(win.title.clone().unwrap_or_else(|| existing.display_name.clone()));
             if win.is_focused {

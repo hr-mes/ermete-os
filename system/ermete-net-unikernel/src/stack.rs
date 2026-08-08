@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use smoltcp::iface::{Config, Interface, SocketHandle, SocketSet};
 use smoltcp::phy::Medium;
 use smoltcp::socket::icmp::{Endpoint as IcmpEndpoint, PacketBuffer as IcmpPacketBuffer, PacketMetadata as IcmpPacketMetadata, Socket as IcmpSocket};
@@ -18,7 +16,6 @@ pub struct UnikernelNetworkStack {
     sockets: SocketSet<'static>,
     tcp_handle: SocketHandle,
     udp_handle: SocketHandle,
-    icmp_handle: SocketHandle,
     router: PacketRouter,
     metrics: Arc<NetworkMetrics>,
 }
@@ -57,7 +54,7 @@ impl UnikernelNetworkStack {
         let icmp_tx_buf = IcmpPacketBuffer::new(vec![IcmpPacketMetadata::EMPTY; 16], vec![0u8; 65536]);
         let mut icmp_socket = IcmpSocket::new(icmp_rx_buf, icmp_tx_buf);
         icmp_socket.bind(IcmpEndpoint::Ident(0x1337)).expect("Failed to bind ICMP socket");
-        let icmp_handle = sockets.add(icmp_socket);
+        let _icmp_handle = sockets.add(icmp_socket);
 
         let router = PacketRouter::new(policy);
 
@@ -72,7 +69,6 @@ impl UnikernelNetworkStack {
             sockets,
             tcp_handle,
             udp_handle,
-            icmp_handle,
             router,
             metrics,
         }

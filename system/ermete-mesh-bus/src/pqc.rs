@@ -174,9 +174,9 @@ impl PqcEngine {
         x25519_ss: &[u8; 32],
         salt: &[u8],
     ) -> [u8; 32] {
-        let mut ikm = Vec::with_capacity(KYBER_SSBYTES + 32);
-        ikm.extend_from_slice(kyber_ss);
-        ikm.extend_from_slice(x25519_ss);
+        let mut ikm = [0u8; 64];
+        ikm[..KYBER_SSBYTES].copy_from_slice(kyber_ss);
+        ikm[KYBER_SSBYTES..64].copy_from_slice(x25519_ss);
 
         let salt = hkdf::Salt::new(hkdf::HKDF_SHA256, salt);
         let prk = salt.extract(&ikm);

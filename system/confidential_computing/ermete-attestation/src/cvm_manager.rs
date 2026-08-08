@@ -174,7 +174,7 @@ impl CvmManager {
         info!("CVM Manager: Initiating Dynamic Hardware Enclave Attestation");
         info!("============================================================");
 
-        *self.state.lock().unwrap() = EnclaveState::Launching;
+        *self.state.lock().unwrap_or_else(|e| e.into_inner()) = EnclaveState::Launching;
 
         // 1. Generate 512-bit challenge nonce
         let nonce = crate::generate_hardware_nonce();
@@ -183,7 +183,7 @@ impl CvmManager {
         let enclave_type = self.detect_hardware_enclave();
         info!("Detected hardware enclave: {}", enclave_type);
 
-        *self.state.lock().unwrap() = EnclaveState::Attesting;
+        *self.state.lock().unwrap_or_else(|e| e.into_inner()) = EnclaveState::Attesting;
 
         let mut verified_report: Option<VerifiedHardwareReport> = None;
 
@@ -262,7 +262,7 @@ impl CvmManager {
             // Release secret key for /var/home LUKS decryption
             self.key_manager.release_var_home_key(report)?;
 
-            *self.state.lock().unwrap() = EnclaveState::SecretReleased;
+            *self.state.lock().unwrap_or_else(|e| e.into_inner()) = EnclaveState::SecretReleased;
 
             let summary = CvmStatusSummary {
                 enclave_state: EnclaveState::SecretReleased,
@@ -277,7 +277,7 @@ impl CvmManager {
                     .unwrap_or(0),
             };
 
-            *self.last_summary.lock().unwrap() = Some(summary.clone());
+            *self.last_summary.lock().unwrap_or_else(|e| e.into_inner()) = Some(summary.clone());
             info!("CVM Manager: Dynamic Hardware Enclave Attestation SUCCESSFUL!");
             Ok(summary)
         } else {
@@ -289,7 +289,7 @@ impl CvmManager {
 
             error!("CVM Manager: Attestation check failed! Reason: {}", reason);
             self.key_manager.revoke_and_purge();
-            *self.state.lock().unwrap() = EnclaveState::Failed(reason.to_string());
+            *self.state.lock().unwrap_or_else(|e| e.into_inner()) = EnclaveState::Failed(reason.to_string());
 
             Err(anyhow!("CVM Enclave Attestation Refused: {}", reason))
         }
@@ -297,12 +297,12 @@ impl CvmManager {
 
     /// Returns the current state of the CVM enclave
     pub fn get_state(&self) -> EnclaveState {
-        self.state.lock().unwrap().clone()
+        self.state.lock().unwrap_or_else(|e| e.into_inner()).clone()
     }
 
     /// Returns the last status summary if available
     pub fn get_last_summary(&self) -> Option<CvmStatusSummary> {
-        self.last_summary.lock().unwrap().clone()
+        self.last_summary.lock().unwrap_or_else(|e| e.into_inner()).clone()
     }
 }
 

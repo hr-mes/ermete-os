@@ -32,10 +32,8 @@ members = [
     "system/ermete-mesh-bus",
     "system/ermete-net-unikernel",
     "system/ermete-self-evolution",
-    "system/ermete-semantic-db",
     "system/ermete-store",
-    "system/ermete-telemetry",
-    "system/unikernel"
+    "system/ermete-telemetry"
 ]
 
 exclude = [

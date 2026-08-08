@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 pub mod types;
 pub mod system_proxies;
 pub mod audio;

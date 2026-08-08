@@ -7,4 +7,4 @@ pub mod ui;
 pub use dock_config::*;
 pub use dock_data::*;
 pub use dock_watcher::*;
-pub use ui::{build_ui, toggle_dock_visibility};
+pub use ui::{build_ui, animate_dock_visibility, toggle_dock_visibility};

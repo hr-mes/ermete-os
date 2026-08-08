@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 use gtk4::prelude::*;
 use gtk4::{Align, Box as GtkBox, Button, Label, Orientation};
 
