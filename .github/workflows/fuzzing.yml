@@ -75,8 +75,6 @@ jobs:
           workspaces: "tests/fuzz -> target"
       - name: 🔍 Run Cargo Fuzz (${{ matrix.sanitizer_name }})
         run: |
-          set -e
-          
           FUZZ_TIME="${{ github.event.inputs.fuzz_seconds }}"
           if [ -z "$FUZZ_TIME" ]; then
             FUZZ_TIME="60"
@@ -93,10 +91,12 @@ jobs:
 
           echo "🎯 Target di Fuzzing individuati: $TARGETS"
           
+          FAILED=0
           for target in $TARGETS; do
             echo "🔥 Running cargo fuzz su target '$target' per ${FUZZ_TIME}s con ${{ matrix.sanitizer_name }}..."
-            cargo fuzz run --fuzz-dir . "$target" -- -max_total_time="$FUZZ_TIME" -sanitizer=${{ matrix.sanitizer }} -Zbuild-std
+            cargo fuzz run --fuzz-dir . "$target" -- -max_total_time="$FUZZ_TIME" -sanitizer=${{ matrix.sanitizer }} -Zbuild-std || FAILED=$((FAILED+1))
           done
+          exit $FAILED
 
       - name: 🚨 Upload Fuzzing Crash Artifacts (ZSTD Compressed)
         if: failure() || always()

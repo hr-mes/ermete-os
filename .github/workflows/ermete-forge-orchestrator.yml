@@ -7,9 +7,6 @@ on:
     paths:
       - 'forge/**'
       - '.github/workflows/ermete-forge-orchestrator.yml'
-  workflow_run:
-    workflows: ["Kernel Chimera Build"]
-    types: [completed]
   workflow_dispatch:
   schedule:
     - cron: '0 4 * * *'
@@ -1032,34 +1029,35 @@ jobs:
         with:
           sparse-checkout: |
             .github
-      - name: 📸 Visual Rendering Check & Performance Audit
-        run: |
-          echo "Simulating Visual Regression, Lighthouse & Playwright checks..."
-          sleep 2
-          echo "All visual checks passed with ZERO DESYNC."
-      - name: 🎨 Generate Spectacular Job Summary
-        run: |
-          cat << 'EOF' >> $GITHUB_STEP_SUMMARY
-          # 👁️ Nodo Supremo Visivo - Zero-Desync Architecture 🚀
-          
-          ![Quality](https://img.shields.io/badge/Quality-Supreme-success?style=for-the-badge)
-          ![Visual](https://img.shields.io/badge/Visual_Regression-0%25_Desync-brightgreen?style=for-the-badge)
-          ![Performance](https://img.shields.io/badge/UI_Performance-100%25-blue?style=for-the-badge)
-          
-          ### 📊 DAG Execution Graph (Topological Topology)
-          
-          ```mermaid
-          graph TD
-            A[Level 0: Tier 0/1] --> B[Level 1: Core]
-            B --> C[Level 2: Apps]
-            C --> D[Build Repositories]
-            D --> E[dag-system-image]
-            D --> F[dag-openwiki-portal]
-            E --> G[👁️ Visual Regression & UI]
-            F --> G
-            
-            style G fill:#f9f,stroke:#333,stroke-width:4px,color:#000
-          ```
-          
-          *L'Infrastruttura Suprema è stata forgiata.* ✅
-          EOF
+      # TODO: Implement real visual regression tests
+      # - name: 📸 Visual Rendering Check & Performance Audit
+      #   run: |
+      #     echo "Simulating Visual Regression, Lighthouse & Playwright checks..."
+      #     sleep 2
+      #     echo "All visual checks passed with ZERO DESYNC."
+      # - name: 🎨 Generate Spectacular Job Summary
+      #   run: |
+      #     cat << 'EOF' >> $GITHUB_STEP_SUMMARY
+      #     # 👁️ Nodo Supremo Visivo - Zero-Desync Architecture 🚀
+      #     
+      #     ![Quality](https://img.shields.io/badge/Quality-Supreme-success?style=for-the-badge)
+      #     ![Visual](https://img.shields.io/badge/Visual_Regression-0%25_Desync-brightgreen?style=for-the-badge)
+      #     ![Performance](https://img.shields.io/badge/UI_Performance-100%25-blue?style=for-the-badge)
+      #     
+      #     ### 📊 DAG Execution Graph (Topological Topology)
+      #     
+      #     ```mermaid
+      #     graph TD
+      #       A[Level 0: Tier 0/1] --> B[Level 1: Core]
+      #       B --> C[Level 2: Apps]
+      #       C --> D[Build Repositories]
+      #       D --> E[dag-system-image]
+      #       D --> F[dag-openwiki-portal]
+      #       E --> G[👁️ Visual Regression & UI]
+      #       F --> G
+      #       
+      #       style G fill:#f9f,stroke:#333,stroke-width:4px,color:#000
+      #     ```
+      #     
+      #     *L'Infrastruttura Suprema è stata forgiata.* ✅
+      #     EOF
