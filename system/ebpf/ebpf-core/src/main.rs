@@ -66,7 +66,7 @@ fn ptr_at<T>(ctx: &XdpContext, offset: usize) -> Result<*const T, ()> {
     let end = ctx.data_end();
     let len = mem::size_of::<T>();
 
-    if start + offset + len > end {
+    if start.checked_add(offset).and_then(|p| p.checked_add(len)).map_or(true, |ptr_end| ptr_end > end) {
         return Err(());
     }
 
@@ -85,6 +85,13 @@ pub fn xdp_firewall(ctx: XdpContext) -> u32 {
 }
 
 fn try_xdp_firewall(ctx: &XdpContext) -> Result<u32, ()> {
+    let data = ctx.data();
+    let data_end = ctx.data_end();
+
+    if data_end < data + mem::size_of::<EthHdr>() {
+        return Ok(xdp_action::XDP_ABORTED);
+    }
+
     let ethhdr: *const EthHdr = ptr_at(ctx, 0)?;
 
     match unsafe { (*ethhdr).ether_type } {
@@ -107,6 +114,13 @@ fn try_xdp_firewall(ctx: &XdpContext) -> Result<u32, ()> {
 }
 
 fn process_ipv4(ctx: &XdpContext) -> Result<u32, ()> {
+    let data = ctx.data();
+    let data_end = ctx.data_end();
+
+    if data_end < data + EthHdr::LEN + mem::size_of::<Ipv4Hdr>() {
+        return Ok(xdp_action::XDP_ABORTED);
+    }
+
     let ipv4hdr: *const Ipv4Hdr = ptr_at(ctx, EthHdr::LEN)?;
 
     // Validate IPv4 Header Length (IHL)
@@ -115,6 +129,12 @@ fn process_ipv4(ctx: &XdpContext) -> Result<u32, ()> {
         increment_stat(STAT_DROP_INVALID_HDR);
         warn!(ctx, "XDP_DROP: Invalid IPv4 IHL < 20 bytes");
         return Ok(xdp_action::XDP_DROP);
+    }
+
+    if data_end < data + EthHdr::LEN + ihl {
+        increment_stat(STAT_DROP_INVALID_HDR);
+        warn!(ctx, "XDP_DROP: Packet smaller than IPv4 IHL");
+        return Ok(xdp_action::XDP_ABORTED);
     }
 
     let src_addr = unsafe { (*ipv4hdr).src_addr };
@@ -157,6 +177,13 @@ fn process_ipv4(ctx: &XdpContext) -> Result<u32, ()> {
 }
 
 fn process_ipv6(ctx: &XdpContext) -> Result<u32, ()> {
+    let data = ctx.data();
+    let data_end = ctx.data_end();
+
+    if data_end < data + EthHdr::LEN + mem::size_of::<Ipv6Hdr>() {
+        return Ok(xdp_action::XDP_ABORTED);
+    }
+
     let ipv6hdr: *const Ipv6Hdr = ptr_at(ctx, EthHdr::LEN)?;
     let src_bytes = unsafe { (*ipv6hdr).src_addr.in6_u.u6_addr8 };
     let dst_bytes = unsafe { (*ipv6hdr).dst_addr.in6_u.u6_addr8 };
@@ -198,6 +225,13 @@ fn process_ipv6(ctx: &XdpContext) -> Result<u32, ()> {
 }
 
 fn process_tcp(ctx: &XdpContext, offset: usize) -> Result<u32, ()> {
+    let data = ctx.data();
+    let data_end = ctx.data_end();
+
+    if data_end < data + offset + mem::size_of::<TcpHdr>() {
+        return Ok(xdp_action::XDP_ABORTED);
+    }
+
     let tcphdr: *const TcpHdr = ptr_at(ctx, offset)?;
     let dest_port = u16::from_be(unsafe { (*tcphdr).dest });
 
@@ -238,6 +272,13 @@ fn process_tcp(ctx: &XdpContext, offset: usize) -> Result<u32, ()> {
 }
 
 fn process_udp(ctx: &XdpContext, offset: usize) -> Result<u32, ()> {
+    let data = ctx.data();
+    let data_end = ctx.data_end();
+
+    if data_end < data + offset + mem::size_of::<UdpHdr>() {
+        return Ok(xdp_action::XDP_ABORTED);
+    }
+
     let udphdr: *const UdpHdr = ptr_at(ctx, offset)?;
     let dest_port = u16::from_be(unsafe { (*udphdr).dest });
 

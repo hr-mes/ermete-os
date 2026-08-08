@@ -70,7 +70,8 @@
     "kernel-forge",
     "git-native",
     "openssl-native",
-    "ripgrep-native"
+    "ripgrep-native",
+    "ermete-semantic-db"
   ],
   "custom_tier0": [
     "stage0-bootstrap",
@@ -149,7 +150,8 @@
     "ermete-compositor",
     "ermete-audio-bus",
     "ermete-telemetry",
-    "ermete-net-unikernel"
+    "ermete-net-unikernel",
+    "ermete-semantic-db"
   ],
   "cachyos_addons": [],
   "upstream_core": [
