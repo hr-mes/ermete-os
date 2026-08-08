@@ -451,3 +451,169 @@ button.suggested-action:hover {
     border-color: @error;
     box-shadow: 0 4px 20px alpha(@error, 0.5);
 }
+
+/* Desktop Stacks */
+.desktop-stack-pile {
+    background: linear-gradient(135deg, alpha(@surface_container_high, 0.85), alpha(@surface_container, 0.75));
+    backdrop-filter: blur(20px);
+    border: 1px solid alpha(@primary, 0.4);
+    border-radius: 20px;
+    padding: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 1px 1px alpha(@outline_variant, 0.4);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.desktop-stack-pile:hover {
+    border-color: @primary;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5), 0 0 15px alpha(@primary, 0.3);
+    transform: translateY(-2px) scale(1.03);
+}
+
+.desktop-stack-badge {
+    background-color: @primary;
+    color: @on_primary;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.desktop-stack-item {
+    background-color: alpha(@surface_variant, 0.85);
+    backdrop-filter: blur(16px);
+    border: 1px solid alpha(@outline_variant, 0.5);
+    border-radius: 14px;
+    padding: 8px 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.desktop-stack-item:hover {
+    background-color: alpha(@primary_container, 0.9);
+    border-color: @primary;
+    transform: scale(1.05) translateY(-2px);
+    box-shadow: 0 10px 25px alpha(@primary, 0.35);
+}
+
+/* Snap Layout Overlay */
+.snap-overlay-window {
+    background-color: alpha(@surface_container_highest, 0.88);
+    backdrop-filter: blur(32px);
+    border: 1px solid alpha(@outline, 0.35);
+    border-radius: 24px;
+    padding: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 1px alpha(@outline_variant, 0.3);
+}
+
+.snap-layout-card {
+    background-color: alpha(@surface_variant, 0.4);
+    border: 1px solid alpha(@outline_variant, 0.3);
+    border-radius: 16px;
+    padding: 12px;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.snap-layout-card:hover {
+    background-color: alpha(@surface_variant, 0.7);
+    border-color: alpha(@primary, 0.5);
+}
+
+.snap-tile-slot {
+    background-color: alpha(@primary_container, 0.35);
+    border: 2px dashed alpha(@primary, 0.5);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.snap-tile-slot:hover {
+    background-color: alpha(@primary, 0.45);
+    border-style: solid;
+    border-color: @primary;
+    box-shadow: 0 0 12px alpha(@primary, 0.5);
+    transform: scale(1.02);
+}
+
+.snap-preview-screen {
+    background-color: alpha(@primary, 0.25);
+    border: 2px solid @primary;
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 30px alpha(@primary, 0.4);
+}
+
+/* Morphic Pill (Dynamic Island) Styling */
+.morphic-pill-container {
+    background-color: rgba(18, 18, 26, 0.85);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 20px;
+    padding: 3px 12px;
+    margin: 2px 4px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.morphic-pill-container:hover {
+    background-color: rgba(30, 30, 44, 0.95);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+}
+
+.morphic-pill-compact {
+    font-size: 12px;
+    font-weight: 700;
+    color: #cdd6f4;
+}
+
+.morphic-pill-title {
+    font-size: 12px;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+.morphic-pill-subtitle {
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.morphic-pill-icon {
+    font-size: 14px;
+    color: #89b4fa;
+}
+
+.morphic-pill-btn {
+    background-color: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #ffffff;
+    transition: all 0.2s ease;
+}
+
+.morphic-pill-btn:hover {
+    background-color: rgba(255, 255, 255, 0.28);
+    transform: scale(1.05);
+}
+
+.morphic-pill-btn:active {
+    transform: scale(0.95);
+}
+
+.morphic-pill-progress progressbar trough {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    min-height: 4px;
+    border: none;
+}
+
+.morphic-pill-progress progressbar progress {
+    background-color: #89b4fa;
+    border-radius: 4px;
+    min-height: 4px;
+    border: none;
+}
+
+

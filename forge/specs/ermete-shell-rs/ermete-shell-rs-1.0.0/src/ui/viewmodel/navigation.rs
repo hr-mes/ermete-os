@@ -28,7 +28,7 @@ impl NavigationViewModel {
                 toggle_or_open_popup("launcher", || crate::ui::control_center::show_start_menu_popover(app));
             }
             UiPopoverTarget::ControlCenter => {
-                toggle_or_open_popup("control-center", || crate::ui::control_center::show_control_center_popover(app));
+                crate::control_center::show_control_center_panel(app);
             }
             UiPopoverTarget::AudioMixer => {
                 toggle_or_open_popup("media-player", || crate::ui::control_center::show_audio_mixer_popover(app));

@@ -1,4 +1,4 @@
-use relm4::{gtk, ComponentParts, ComponentSender, SimpleComponent};
+use relm4::{gtk, Component, ComponentController, ComponentParts, ComponentSender, SimpleComponent};
 use relm4::factory::{FactoryComponent, FactoryVecDeque, FactorySender};
 use gtk::prelude::*;
 use gtk4::Application;
@@ -63,6 +63,7 @@ pub struct TopbarModel {
     pub network_icon: String,
     pub focused_app_title: String,
     pub workspaces: FactoryVecDeque<WorkspaceItem>,
+    pub morphic_pill: relm4::Controller<crate::morphic_pill::MorphicPillModel>,
 }
 
 #[derive(Debug)]
@@ -143,39 +144,8 @@ impl SimpleComponent for TopbarModel {
                         set_spacing: 2,
                         set_valign: gtk::Align::Center,
                         
-                        #[name = "morphic_pill"]
-                        gtk::Box {
-                            set_orientation: gtk::Orientation::Horizontal,
-                            add_css_class: "macos-status-item",
-                            add_css_class: "morphic-pill",
-                            
-                            gtk::Label {
-                                set_label: "✨",
-                                set_margin_start: 4,
-                                set_margin_end: 4,
-                            },
-                            
-                            #[name = "pill_revealer"]
-                            gtk::Revealer {
-                                set_transition_type: gtk::RevealerTransitionType::SlideLeft,
-                                set_transition_duration: 300,
-                                
-                                gtk::Label {
-                                    set_label: "AI Tasks bg...",
-                                    set_margin_end: 8,
-                                    add_css_class: "pill-text",
-                                }
-                            },
-                            
-                            add_controller = gtk::EventControllerMotion {
-                                connect_enter [pill_revealer] => move |_, _, _| {
-                                    pill_revealer.set_reveal_child(true);
-                                },
-                                connect_leave [pill_revealer] => move |_| {
-                                    pill_revealer.set_reveal_child(false);
-                                }
-                            }
-                        },
+                        #[local_ref]
+                        morphic_pill_widget -> gtk::Box {},
                         
                         gtk::Button {
                             #[watch]
@@ -258,6 +228,10 @@ impl SimpleComponent for TopbarModel {
             .launch(gtk::Box::default())
             .detach();
 
+        let morphic_pill = crate::morphic_pill::MorphicPillModel::builder()
+            .launch(())
+            .detach();
+
         let model = TopbarModel {
             app: app.clone(),
             clock_text: "Caricamento...".to_string(),
@@ -266,9 +240,11 @@ impl SimpleComponent for TopbarModel {
             network_icon: "󰤨".to_string(),
             focused_app_title: "Ermete OS".to_string(),
             workspaces,
+            morphic_pill,
         };
 
         let workspaces_box = model.workspaces.widget();
+        let morphic_pill_widget = model.morphic_pill.widget();
         let widgets = view_output!();
 
         let sender_slow = sender.clone();

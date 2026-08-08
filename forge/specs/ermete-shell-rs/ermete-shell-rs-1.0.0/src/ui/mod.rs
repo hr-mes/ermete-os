@@ -12,8 +12,10 @@ pub mod mission_control;
 pub mod desktop_widgets;
 pub mod store;
 pub mod viewmodel;
+pub mod snap_overlay;
 
 
 pub use crate::wayland::popup as popup_manager;
 pub use prompts::gatekeeper as gatekeeper_prompt;
 pub use prompts::privacy as privacy_prompt;
+

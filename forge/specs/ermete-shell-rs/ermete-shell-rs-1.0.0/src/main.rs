@@ -11,6 +11,9 @@ mod ipc;
 mod sys;
 mod ui;
 mod core;
+pub mod morphic_pill;
+pub mod control_center;
+pub mod desktop_canvas;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -45,7 +48,12 @@ struct Args {
     overview: bool,
     #[arg(long)]
     store: bool,
+    #[arg(long)]
+    snap_overlay: bool,
+    #[arg(long)]
+    desktop_stacks: bool,
 }
+
 
 const APP_ID: &str = "os.ermete.Shell";
 
@@ -122,6 +130,29 @@ fn main() -> glib::ExitCode {
         });
         return app.run_with_args(&Vec::<String>::new());
     }
+
+    if args.snap_overlay {
+        let app = Application::builder()
+            .application_id("os.ermete.SnapOverlay")
+            .build();
+        app.connect_activate(|app| {
+            crate::theme::init_css();
+            crate::ui::snap_overlay::show_snap_overlay(app, None);
+        });
+        return app.run_with_args(&Vec::<String>::new());
+    }
+
+    if args.desktop_stacks {
+        let app = Application::builder()
+            .application_id("os.ermete.DesktopCanvas")
+            .build();
+        app.connect_activate(|app| {
+            crate::theme::init_css();
+            crate::desktop_canvas::build_desktop_canvas(app);
+        });
+        return app.run_with_args(&Vec::<String>::new());
+    }
+
 
     // If greeter or lock mode is requested explicitly, run standalone authentication app
     if args.greeter || args.lock {
