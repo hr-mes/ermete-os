@@ -9,14 +9,14 @@ use gtk4::{
 };
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::os::unix::io::RawFd;
+use std::os::fd::OwnedFd;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
 /// Represents a shared GPU Linux DMA-BUF frame (EGLImage / DMA-BUF zero-copy pipeline).
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct DmaBufBuffer {
-    pub fd: RawFd,
+    pub fd: OwnedFd,
     pub width: u32,
     pub height: u32,
     pub format: u32,   // DRM FOURCC format (e.g. DRM_FORMAT_ARGB8888 = 0x34325241)
@@ -27,7 +27,7 @@ pub struct DmaBufBuffer {
 
 impl DmaBufBuffer {
     pub fn new(
-        fd: RawFd,
+        fd: OwnedFd,
         width: u32,
         height: u32,
         format: u32,
@@ -112,7 +112,18 @@ impl DmaBufPreviewManager {
 
     /// Retrieve the current DMA-BUF buffer for a window if available.
     pub fn get_window_dmabuf(&self, window_id: u64) -> Option<DmaBufBuffer> {
-        self.buffers.lock().ok()?.get(&window_id).cloned()
+        let map = self.buffers.lock().ok()?;
+        let buf = map.get(&window_id)?;
+        let cloned_fd = buf.fd.try_clone().ok()?;
+        Some(DmaBufBuffer {
+            fd: cloned_fd,
+            width: buf.width,
+            height: buf.height,
+            format: buf.format,
+            modifier: buf.modifier,
+            stride: buf.stride,
+            offset: buf.offset,
+        })
     }
 
     /// Register foreign toplevel handle from `wlr_foreign_toplevel_management_v1`.
