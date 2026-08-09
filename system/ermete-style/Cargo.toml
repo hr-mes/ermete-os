@@ -1,9 +1,9 @@
 [package]
-name = "ermete-dock"
+name = "ermete-style"
 version = "1.0.0"
 edition = "2021"
-authors = ["Ermete Forge <forge@ermete.os>"]
-description = "Visual Dock and taskbar application logic for Ermete OS"
+description = "Centralized Glassmorphism, Accent Color Engine, and Appearance Layout System for Ermete OS"
+authors = ["Ermete Architect <architect@ermete.os>"]
 
 [dependencies]
 gtk4 = { workspace = true }
@@ -11,8 +11,7 @@ gtk4-layer-shell = { workspace = true }
 glib = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
-notify = "6.1.1"
-ermete-style = { path = "../../../../system/ermete-style" }
-ermete-niri-ipc = { path = "../../ermete-niri-ipc" }
+toml = "0.8"
+zbus = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
-
+tracing = { workspace = true }

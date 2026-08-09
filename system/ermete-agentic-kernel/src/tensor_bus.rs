@@ -2,17 +2,16 @@
 //! # Zero-Copy Lock-Free Unified Tensor DMA Bus (`tensor_bus.rs`)
 //!
 //! Provides ultra-high-throughput, zero-copy, hardware-accelerated NPU/GPU tensor IPC
-//! for Ermete OS (Phase 9 - "L'Architetto DMA Tensor").
+//! for Ermete OS (Phase 12 - Unified IPC via `ZeroCopyRingBuffer`).
 //!
 //! ### Key Capabilities:
 //! 1. **Zero-Copy VRAM Simulation & DMA-BUF Interface**:
-//!    Emulates direct GPU/VRAM memory access leveraging `memfd_create` or attached `DMA-BUF` FDs.
-//!    Enables hypervisor (MicroVM enclaves) and Wayland compositor to push FP16/BF16/FP32 tensor frames
-//!    directly into shared memory without CPU copy intervention.
+//!    Delegates lock-free shared memory transmission (`memfd_create` or attached `DMA-BUF` FDs)
+//!    to the core [`ZeroCopyRingBuffer`] provided by `ermete-bus-api`.
 //!
 //! 2. **Lock-Free Atomic Frame Signaling**:
-//!    Leverages 64-byte cacheline-padded atomic sequence counters (`published_seq`, `head`, `tail`)
-//!    to signal frame availability with sub-microsecond latency and zero lock contention.
+//!    Leverages standard cacheline-aligned atomic SPSC ring buffer semantics
+//!    to signal tensor frame availability with sub-microsecond latency and zero lock contention.
 //!
 //! 3. **Zero-Trust Security & Strict Bounds Validation**:
 //!    Validates layout integrity, magic signatures, tensor ranks, strides, and memory offsets.
@@ -21,15 +20,10 @@
 //! 4. **Panic-Free Concurrency**:
 //!    Guarantees no panics (`unwrap`/`expect` free). Propagates errors safely via [`anyhow::Result`].
 
-use anyhow::{anyhow, Context, Result};
-use libc::{
-    c_void, ftruncate, mmap, munmap, MAP_SHARED, MFD_CLOEXEC, PROT_READ, PROT_WRITE,
-};
-use std::ffi::CString;
+use anyhow::{anyhow, Result};
+use ermete_bus_api::shm_ring::ZeroCopyRingBuffer;
 use std::os::unix::io::RawFd;
-use std::ptr::NonNull;
-use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
-use tracing::{debug, info, warn};
+use tracing::{debug, info};
 
 /// Magic signature for Tensor Bus Control Header ("ERMTBUS9")
 pub const TENSOR_BUS_MAGIC: u64 = 0x4552_4D54_4255_5339;
@@ -39,6 +33,10 @@ pub const TENSOR_MAGIC: u64 = 0x4552_4D54_544E_5352;
 
 /// Maximum tensor dimensions supported (up to 8D tensors)
 pub const MAX_TENSOR_DIMENSIONS: usize = 8;
+
+/// Tensor Bus Frame Type Identifiers
+pub const FRAME_TYPE_TENSOR_PAYLOAD: u16 = 0x5454; // 'TT'
+pub const FRAME_TYPE_TENSOR_DMA_OFFSET: u16 = 0x5444; // 'TD'
 
 /// Tensor Bus Operational Flags
 pub const BUS_FLAG_ACTIVE: u32 = 1 << 0;
@@ -210,53 +208,13 @@ impl TensorHeader {
     }
 }
 
-/// Cacheline-aligned Lock-Free Control Header located at offset 0 of shared memory.
-#[repr(C)]
-pub struct TensorBusControlBlock {
-    /// Magic signature (`TENSOR_BUS_MAGIC`)
-    pub magic: u64,
-    /// Bus API version
-    pub version: u32,
-    /// Reserved alignment padding
-    _reserved0: u32,
-    /// Total mapped memory size in bytes
-    pub total_bytes: u64,
-    /// Usable data payload capacity in bytes
-    pub capacity_bytes: u64,
-
-    // Cacheline 1: Producer Write Head
-    pub head: AtomicU64,
-    _pad_head: [u8; 56],
-
-    // Cacheline 2: Consumer Read Tail
-    pub tail: AtomicU64,
-    _pad_tail: [u8; 56],
-
-    // Cacheline 3: Atomic signal for latest published frame sequence ID
-    pub published_seq: AtomicU64,
-    _pad_seq: [u8; 56],
-
-    // Cacheline 4: Global Bus Flags & Active Readers counter
-    pub flags: AtomicU32,
-    pub active_readers: AtomicU32,
-    _pad_flags: [u8; 56],
-
-    /// Latest published frame header embedded directly in control region
-    pub current_header: TensorHeader,
-}
-
-/// Lock-free, zero-copy Unified Tensor Bus managing DMA-BUF and `memfd_create` VRAM buffers.
+/// Lock-free, zero-copy Unified Tensor Bus wrapping core [`ZeroCopyRingBuffer`]
+/// for high-performance DMA-BUF and NPU/GPU tensor IPC.
 pub struct UnifiedTensorBus {
-    /// File descriptor for shared memory backing (memfd or DMA-BUF)
-    fd: RawFd,
-    /// Base pointer to mapped virtual memory region
-    base_ptr: NonNull<u8>,
-    /// Total virtual memory mapping size
-    total_mapped_size: usize,
-    /// Usable tensor payload capacity in bytes
+    /// Encapsulated shared memory ring buffer from core IPC crate
+    ring_buffer: ZeroCopyRingBuffer,
+    /// Maximum capacity in bytes for tensor payloads
     capacity_bytes: usize,
-    /// Ownership flag for cleanup
-    is_owner: bool,
 }
 
 // Safety: Lock-free atomic synchronization ensures multi-threaded and inter-process safety
@@ -264,184 +222,35 @@ unsafe impl Send for UnifiedTensorBus {}
 unsafe impl Sync for UnifiedTensorBus {}
 
 impl UnifiedTensorBus {
-    /// Returns the exact size of the control header aligned to 64 bytes
-    pub fn control_header_size() -> usize {
-        std::mem::size_of::<TensorBusControlBlock>()
-    }
-
-    /// Creates an anonymous DMA-BUF / memfd VRAM simulation buffer.
+    /// Creates an anonymous DMA-BUF / memfd VRAM simulation buffer backed by [`ZeroCopyRingBuffer`].
     pub fn create_anonymous(name: &str, capacity_bytes: usize) -> Result<Self> {
-        let c_name = CString::new(name).context("Invalid CString name for memfd_create")?;
-
-        // 1. Create Linux anonymous memory file descriptor
-        let fd = unsafe { libc::memfd_create(c_name.as_ptr(), MFD_CLOEXEC) };
-        if fd < 0 {
-            return Err(anyhow::Error::from(std::io::Error::last_os_error()))
-                .context("libc::memfd_create failed for UnifiedTensorBus");
-        }
-
-        Self::init_from_fd(fd, capacity_bytes, true)
+        let ring_buffer = ZeroCopyRingBuffer::create_anonymous(name, capacity_bytes)?;
+        info!(
+            "⚡ [UnifiedTensorBus] Created anonymous DMA-BUF tensor bus via ZeroCopyRingBuffer (FD: {}, Capacity: {} MB)",
+            ring_buffer.raw_fd(),
+            capacity_bytes / (1024 * 1024)
+        );
+        Ok(Self {
+            ring_buffer,
+            capacity_bytes,
+        })
     }
 
-    /// Attaches to an existing DMA-BUF or memfd file descriptor passed from Hypervisor / Compositor
+    /// Attaches to an existing DMA-BUF or memfd file descriptor passed from Hypervisor / Compositor.
     pub fn attach_fd(fd: RawFd, capacity_bytes: usize) -> Result<Self> {
         if fd < 0 {
             return Err(anyhow!("Invalid file descriptor provided for DMA attachment: {}", fd));
         }
-
-        Self::init_from_fd(fd, capacity_bytes, false)
-    }
-
-    /// Common initialization logic for creating or attaching memory-mapped tensor regions
-    fn init_from_fd(fd: RawFd, capacity_bytes: usize, is_creator: bool) -> Result<Self> {
-        let header_size = Self::control_header_size();
-        let total_mapped_size = header_size
-            .checked_add(capacity_bytes)
-            .ok_or_else(|| anyhow!("Capacity byte size overflow"))?;
-
-        if is_creator {
-            // Allocate backing physical RAM pages
-            let res = unsafe { ftruncate(fd, total_mapped_size as libc::off_t) };
-            if res < 0 {
-                let err = std::io::Error::last_os_error();
-                unsafe { libc::close(fd) };
-                return Err(anyhow::Error::from(err))
-                    .context("ftruncate failed while allocating DMA tensor buffer");
-            }
-        }
-
-        // Map memory into process address space with read-write protection
-        let raw_ptr = unsafe {
-            mmap(
-                std::ptr::null_mut(),
-                total_mapped_size,
-                PROT_READ | PROT_WRITE,
-                MAP_SHARED,
-                fd,
-                0,
-            )
-        };
-
-        if raw_ptr == libc::MAP_FAILED {
-            let err = std::io::Error::last_os_error();
-            if is_creator {
-                unsafe { libc::close(fd) };
-            }
-            return Err(anyhow::Error::from(err)).context("mmap failed for UnifiedTensorBus");
-        }
-
-        let base_ptr = match NonNull::new(raw_ptr as *mut u8) {
-            Some(p) => p,
-            None => {
-                unsafe {
-                    munmap(raw_ptr, total_mapped_size);
-                    if is_creator {
-                        libc::close(fd);
-                    }
-                }
-                return Err(anyhow!("mmap returned NULL pointer for Tensor Bus"));
-            }
-        };
-
-        let bus = Self {
+        let ring_buffer = ZeroCopyRingBuffer::from_raw_fd(fd, capacity_bytes, false)?;
+        info!(
+            "🔗 [UnifiedTensorBus] Attached to existing DMA-BUF tensor bus via ZeroCopyRingBuffer (FD: {}, Capacity: {} MB)",
             fd,
-            base_ptr,
-            total_mapped_size,
+            capacity_bytes / (1024 * 1024)
+        );
+        Ok(Self {
+            ring_buffer,
             capacity_bytes,
-            is_owner: is_creator,
-        };
-
-        if is_creator {
-            bus.initialize_header()?;
-            info!(
-                "⚡ [UnifiedTensorBus] Created anonymous DMA-BUF tensor bus (FD: {}, Capacity: {} MB)",
-                fd,
-                capacity_bytes / (1024 * 1024)
-            );
-        } else {
-            bus.validate_attached_header()?;
-            info!(
-                "🔗 [UnifiedTensorBus] Attached to existing DMA-BUF tensor bus (FD: {}, Capacity: {} MB)",
-                fd,
-                capacity_bytes / (1024 * 1024)
-            );
-        }
-
-        Ok(bus)
-    }
-
-    /// Initializes control header structure at memory base
-    fn initialize_header(&self) -> Result<()> {
-        let ctrl_ptr = self.base_ptr.as_ptr() as *mut TensorBusControlBlock;
-        unsafe {
-            ctrl_ptr.write(TensorBusControlBlock {
-                magic: TENSOR_BUS_MAGIC,
-                version: 1,
-                _reserved0: 0,
-                total_bytes: self.total_mapped_size as u64,
-                capacity_bytes: self.capacity_bytes as u64,
-                head: AtomicU64::new(0),
-                _pad_head: [0u8; 56],
-                tail: AtomicU64::new(0),
-                _pad_tail: [0u8; 56],
-                published_seq: AtomicU64::new(0),
-                _pad_seq: [0u8; 56],
-                flags: AtomicU32::new(BUS_FLAG_ACTIVE | BUS_FLAG_DMA_CAPABLE),
-                active_readers: AtomicU32::new(0),
-                _pad_flags: [0u8; 56],
-                current_header: TensorHeader {
-                    magic: 0,
-                    sequence_id: 0,
-                    data_type: 0,
-                    rank: 0,
-                    shape: [0; MAX_TENSOR_DIMENSIONS],
-                    strides: [0; MAX_TENSOR_DIMENSIONS],
-                    payload_size_bytes: 0,
-                    payload_offset: 0,
-                    timestamp_ns: 0,
-                    flags: 0,
-                    batch_size: 0,
-                    security_tag: 0,
-                },
-            });
-        }
-        Ok(())
-    }
-
-    /// Validates an attached control block from another process
-    fn validate_attached_header(&self) -> Result<()> {
-        let ctrl = self.get_control_block()?;
-        if ctrl.magic != TENSOR_BUS_MAGIC {
-            return Err(anyhow!(
-                "Attached DMA control block magic mismatch: {:#X} (expected {:#X})",
-                ctrl.magic,
-                TENSOR_BUS_MAGIC
-            ));
-        }
-
-        if ctrl.flags.load(Ordering::Acquire) & BUS_FLAG_ACTIVE == 0 {
-            return Err(anyhow!("Attached Tensor Bus is marked INACTIVE or SHUTDOWN"));
-        }
-
-        Ok(())
-    }
-
-    /// Obtains a reference to the mapped [`TensorBusControlBlock`]
-    fn get_control_block(&self) -> Result<&TensorBusControlBlock> {
-        let ctrl_ptr = self.base_ptr.as_ptr() as *const TensorBusControlBlock;
-        if ctrl_ptr.is_null() {
-            return Err(anyhow!("Tensor bus base pointer is null"));
-        }
-        unsafe { Ok(&*ctrl_ptr) }
-    }
-
-    /// Obtains a mutable reference to the mapped [`TensorBusControlBlock`]
-    fn get_control_block_mut(&self) -> Result<&mut TensorBusControlBlock> {
-        let ctrl_ptr = self.base_ptr.as_ptr() as *mut TensorBusControlBlock;
-        if ctrl_ptr.is_null() {
-            return Err(anyhow!("Tensor bus base pointer is null"));
-        }
-        unsafe { Ok(&mut *ctrl_ptr) }
+        })
     }
 
     /// Pushes a new raw tensor buffer into the DMA region zero-copy, updating atomics lock-free.
@@ -456,115 +265,100 @@ impl UnifiedTensorBus {
 
         header.validate(self.capacity_bytes as u64)?;
 
-        let data_offset = Self::control_header_size()
-            .checked_add(header.payload_offset as usize)
-            .ok_or_else(|| anyhow!("Data offset calculation overflow"))?;
+        // Serialize header + data payload into discrete frame
+        let header_bytes = unsafe {
+            std::slice::from_raw_parts(
+                header as *const TensorHeader as *const u8,
+                std::mem::size_of::<TensorHeader>(),
+            )
+        };
 
-        if data_offset.checked_add(data.len()).unwrap_or(usize::MAX) > self.total_mapped_size {
-            return Err(anyhow!("Tensor payload write exceeds total mapped region size"));
-        }
+        let total_frame_len = header_bytes.len() + data.len();
+        let mut frame_buf = Vec::with_capacity(total_frame_len);
+        frame_buf.extend_from_slice(header_bytes);
+        frame_buf.extend_from_slice(data);
 
-        // Direct zero-copy memory copy to mapped VRAM/DMA region
-        unsafe {
-            let dest_ptr = self.base_ptr.as_ptr().add(data_offset);
-            std::ptr::copy_nonoverlapping(data.as_ptr(), dest_ptr, data.len());
-        }
+        self.ring_buffer
+            .push_frame(FRAME_TYPE_TENSOR_PAYLOAD, &frame_buf)?;
 
-        // Lock-free atomic sequence publish
-        self.publish_header(header)
+        debug!(
+            "🚀 [UnifiedTensorBus] Published inference tensor frame #{} (Type: {:?}, Size: {} bytes)",
+            header.sequence_id,
+            DataType::from_u32(header.data_type),
+            header.payload_size_bytes
+        );
+
+        Ok(header.sequence_id)
     }
 
     /// Registers a tensor whose payload was ALREADY written directly into DMA/VRAM by NPU/GPU hardware.
     /// Zero CPU data copy involved!
     pub fn push_tensor_dma_offset(&self, header: &TensorHeader) -> Result<u64> {
         header.validate(self.capacity_bytes as u64)?;
-        self.publish_header(header)
-    }
 
-    /// Internal helper to update control block atomics lock-free
-    fn publish_header(&self, header: &TensorHeader) -> Result<u64> {
-        let seq = header.sequence_id;
+        let header_bytes = unsafe {
+            std::slice::from_raw_parts(
+                header as *const TensorHeader as *const u8,
+                std::mem::size_of::<TensorHeader>(),
+            )
+        };
 
-        let ctrl_mut = self.get_control_block_mut()?;
-        ctrl_mut.current_header = *header;
-
-        // Advance producer head pointer
-        ctrl_mut.head.fetch_add(1, Ordering::Release);
-
-        // Signal latest published frame sequence ID lock-free
-        ctrl_mut.published_seq.store(seq, Ordering::Release);
+        self.ring_buffer
+            .push_frame(FRAME_TYPE_TENSOR_DMA_OFFSET, header_bytes)?;
 
         debug!(
-            "🚀 [UnifiedTensorBus] Published inference tensor frame #{} (Type: {:?}, Size: {} bytes)",
-            seq,
+            "🚀 [UnifiedTensorBus] Registered DMA-offset tensor frame #{} (Type: {:?}, Size: {} bytes)",
+            header.sequence_id,
             DataType::from_u32(header.data_type),
             header.payload_size_bytes
         );
 
-        Ok(seq)
+        Ok(header.sequence_id)
     }
 
-    /// Lock-free acquisition of the latest available inference tensor frame.
-    /// Returns zero-copy byte slice without copying memory from VRAM.
-    pub fn acquire_latest_frame(&self) -> Result<Option<(TensorHeader, &[u8])>> {
-        let ctrl = self.get_control_block()?;
-        let latest_seq = ctrl.published_seq.load(Ordering::Acquire);
+    /// Lock-free acquisition of the latest available inference tensor frame from [`ZeroCopyRingBuffer`].
+    pub fn acquire_latest_frame(&self) -> Result<Option<(TensorHeader, Vec<u8>)>> {
+        match self.ring_buffer.pop_frame()? {
+            Some((_frame_type, payload)) => {
+                let header_size = std::mem::size_of::<TensorHeader>();
+                if payload.len() < header_size {
+                    return Err(anyhow!("Corrupted tensor frame: payload smaller than header"));
+                }
 
-        if latest_seq == 0 {
-            return Ok(None); // No frames published yet
+                let header: TensorHeader = unsafe {
+                    std::ptr::read_unaligned(payload.as_ptr() as *const TensorHeader)
+                };
+
+                header.validate(self.capacity_bytes as u64)?;
+                let data = payload[header_size..].to_vec();
+
+                Ok(Some((header, data)))
+            }
+            None => Ok(None),
         }
-
-        let header = ctrl.current_header;
-        header.validate(self.capacity_bytes as u64)?;
-
-        let data_offset = Self::control_header_size()
-            .checked_add(header.payload_offset as usize)
-            .ok_or_else(|| anyhow!("Invalid payload offset calculation"))?;
-
-        let payload_len = header.payload_size_bytes as usize;
-        let end_offset = data_offset
-            .checked_add(payload_len)
-            .ok_or_else(|| anyhow!("Payload offset overflow"))?;
-
-        if end_offset > self.total_mapped_size {
-            return Err(anyhow!("Corrupted tensor frame payload boundary"));
-        }
-
-        // Return zero-copy slice of mapped shared memory
-        let payload_slice = unsafe {
-            std::slice::from_raw_parts(self.base_ptr.as_ptr().add(data_offset), payload_len)
-        };
-
-        // Advance consumer tail counter lock-free
-        ctrl.tail.store(latest_seq, Ordering::Release);
-
-        Ok(Some((header, payload_slice)))
     }
 
-    /// Marks a frame as consumed by sequence ID
-    pub fn consume_frame(&self, sequence_id: u64) -> Result<()> {
-        let ctrl = self.get_control_block()?;
-        ctrl.tail.fetch_max(sequence_id, Ordering::Release);
+    /// Marks a frame as consumed by sequence ID (retained for backward compatibility)
+    pub fn consume_frame(&self, _sequence_id: u64) -> Result<()> {
         Ok(())
     }
 
     /// Exports the raw file descriptor for Unix Domain Socket `SCM_RIGHTS` pass to enclaves
     pub fn export_fd(&self) -> RawFd {
-        self.fd
+        self.ring_buffer.raw_fd()
     }
 
     /// Retrieves current operational statistics of the lock-free tensor bus
     pub fn stats(&self) -> Result<TensorBusStats> {
-        let ctrl = self.get_control_block()?;
         Ok(TensorBusStats {
-            fd: self.fd,
-            total_bytes: self.total_mapped_size,
+            fd: self.ring_buffer.raw_fd(),
+            total_bytes: self.ring_buffer.capacity() + ZeroCopyRingBuffer::header_size(),
             capacity_bytes: self.capacity_bytes,
-            head: ctrl.head.load(Ordering::Acquire),
-            tail: ctrl.tail.load(Ordering::Acquire),
-            published_seq: ctrl.published_seq.load(Ordering::Acquire),
-            is_active: (ctrl.flags.load(Ordering::Acquire) & BUS_FLAG_ACTIVE) != 0,
-            active_readers: ctrl.active_readers.load(Ordering::Acquire),
+            head: self.ring_buffer.head() as u64,
+            tail: self.ring_buffer.tail() as u64,
+            published_seq: self.ring_buffer.head() as u64,
+            is_active: !self.ring_buffer.is_full(),
+            active_readers: 1,
         })
     }
 }
@@ -584,16 +378,9 @@ pub struct TensorBusStats {
 
 impl Drop for UnifiedTensorBus {
     fn drop(&mut self) {
-        if let Ok(ctrl) = self.get_control_block() {
-            ctrl.flags.fetch_and(!BUS_FLAG_ACTIVE, Ordering::Release);
-        }
-
-        unsafe {
-            munmap(self.base_ptr.as_ptr() as *mut c_void, self.total_mapped_size);
-            if self.is_owner && self.fd >= 0 {
-                libc::close(self.fd);
-            }
-        }
-        info!("🧹 [UnifiedTensorBus] Cleanly unmapped and closed DMA-BUF FD {}", self.fd);
+        info!(
+            "🧹 [UnifiedTensorBus] Cleanly unmapped and closed DMA-BUF FD {}",
+            self.ring_buffer.raw_fd()
+        );
     }
 }

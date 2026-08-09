@@ -111,37 +111,8 @@ impl JournalCollector {
         })
     }
 
-    /// Fallback stream simulator when systemd journalctl is not available (e.g. container / test sandbox)
+    /// Fallback handler when systemd journalctl is not available
     async fn run_fallback_syslog_stream(self) -> Result<()> {
-        info!("📡 Synthetic syslog stream active for testing & sandboxed execution.");
-        let mut interval = tokio::time::interval(tokio::time::Duration::from_millis(1500));
-        let mut count = 0u64;
-
-        loop {
-            interval.tick().await;
-            count += 1;
-
-            let (unit, priority, message) = match count % 5 {
-                0 => ("systemd-oomd.service", "CRIT", "Memory usage reached 95%. Triggering cgroup pressure kill."),
-                1 => ("kernel", "ERR", "bcachefs: checksum error detected on block 0x7f4a210."),
-                2 => ("ermete-ai-daemon.service", "INFO", "NPU inference offload active (0% CPU impact)."),
-                3 => ("ermete-init-oracle.service", "WARNING", "High restart count detected for unit network-manager.service."),
-                _ => ("systemd-journald.service", "INFO", "Journal log batch flushed."),
-            };
-
-            let record = LogRecord {
-                timestamp: chrono::Utc::now().to_rfc3339(),
-                unit: unit.to_string(),
-                priority: priority.to_string(),
-                message: message.to_string(),
-                pid: Some(1000 + (count as u32 % 500)),
-                sys_facility: Some("daemon".to_string()),
-            };
-
-            if self.sender.send(record).await.is_err() {
-                break;
-            }
-        }
-        Ok(())
+        anyhow::bail!("Systemd journalctl log stream unavailable")
     }
 }

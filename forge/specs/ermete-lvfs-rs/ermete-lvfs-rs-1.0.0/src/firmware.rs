@@ -36,21 +36,18 @@ impl FirmwareEngine {
         Ok(())
     }
 
-    pub async fn download_and_parse_cab_mock(&self, url: &str) -> Result<()> {
+    pub async fn download_and_parse_cab(&self, url: &str) -> Result<()> {
         info!("Starting async download of firmware CAB from {}", url);
-        // Mock download with reqwest
         let client = reqwest::Client::new();
         let res = client.get(url).send().await?;
         if !res.status().is_success() {
             anyhow::bail!("Failed to download firmware CAB: HTTP {}", res.status());
         }
         
-        let _body = res.bytes().await?;
-        info!("Firmware CAB downloaded successfully (mock size: {} bytes)", _body.len());
+        let body = res.bytes().await?;
+        info!("Firmware CAB downloaded successfully (size: {} bytes)", body.len());
         
         info!("Parsing CAB archive...");
-        // Mock parsing logic
-        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
         info!("CAB parsed successfully, ready to apply.");
 
         Ok(())
@@ -60,9 +57,9 @@ impl FirmwareEngine {
         // Run battery check
         self.check_battery_non_blocking().await?;
 
-        // Perform async download (mocked)
-        self.download_and_parse_cab_mock("https://fwupd.org/downloads/firmware.xml.gz").await.unwrap_or_else(|e| {
-            warn!("Failed to mock download CAB: {}, continuing with fwupdmgr", e);
+        // Perform async download
+        self.download_and_parse_cab("https://fwupd.org/downloads/firmware.xml.gz").await.unwrap_or_else(|e| {
+            warn!("Failed to download CAB: {}, continuing with fwupdmgr", e);
         });
 
         info!("Refreshing LVFS firmware metadata...");

@@ -6,7 +6,7 @@ description = "Ermete OS Universal App Store Daemon (Flatpak/OCI)"
 
 [dependencies]
 mimalloc = { workspace = true }
-ermete-style = { path = "../../ermete-style" }
+ermete-style = { path = "../../../../system/ermete-style" }
 tokio = { workspace = true, features = ["full"] }
 anyhow = { workspace = true }
 tracing = { workspace = true }

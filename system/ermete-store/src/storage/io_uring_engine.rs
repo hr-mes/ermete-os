@@ -370,7 +370,7 @@ impl IoUringEngine {
 
         let ring = Arc::new(SharedMemoryRing::new(sq_depth, cq_depth)?);
         
-        let ring_fd: RawFd = 1024;
+        let ring_fd: RawFd = -1;
 
         Ok(Self {
             ring,
@@ -478,14 +478,67 @@ impl IoUringEngine {
                 let cq_head = cq_hdr.head.load(Ordering::Acquire);
                 let cq_tail = cq_hdr.tail.load(Ordering::Relaxed);
 
+                // Real storage I/O execution on native kernel file descriptor
+                let res = match sqe.opcode {
+                    1 | 22 => { // Readv / Read
+                        if sqe.fd >= 0 && sqe.addr != 0 {
+                            let r = libc::pread(
+                                sqe.fd,
+                                sqe.addr as *mut libc::c_void,
+                                sqe.len as usize,
+                                sqe.off as libc::off_t,
+                            );
+                            if r >= 0 {
+                                r as i32
+                            } else {
+                                -std::io::Error::last_os_error().raw_os_error().unwrap_or(1)
+                            }
+                        } else {
+                            -libc::EBADF
+                        }
+                    }
+                    2 | 23 => { // Writev / Write
+                        if sqe.fd >= 0 && sqe.addr != 0 {
+                            let r = libc::pwrite(
+                                sqe.fd,
+                                sqe.addr as *const libc::c_void,
+                                sqe.len as usize,
+                                sqe.off as libc::off_t,
+                            );
+                            if r >= 0 {
+                                r as i32
+                            } else {
+                                -std::io::Error::last_os_error().raw_os_error().unwrap_or(1)
+                            }
+                        } else {
+                            -libc::EBADF
+                        }
+                    }
+                    3 => { // Fsync
+                        if sqe.fd >= 0 {
+                            let r = libc::fsync(sqe.fd);
+                            if r >= 0 {
+                                0
+                            } else {
+                                -std::io::Error::last_os_error().raw_os_error().unwrap_or(1)
+                            }
+                        } else {
+                            -libc::EBADF
+                        }
+                    }
+                    _ => 0,
+                };
+
+                let cq_head = cq_hdr.head.load(Ordering::Acquire);
+                let cq_tail = cq_hdr.tail.load(Ordering::Relaxed);
+
                 if cq_tail.wrapping_sub(cq_head) < self.ring.cq_capacity {
                     let cq_idx = (cq_tail & cq_hdr.ring_mask) as usize;
                     let cqe_slot = self.ring.cqes_ptr.add(cq_idx);
 
-                    // Simulate zero-copy result
                     let cqe = CompletionQueueEntry {
                         user_data: sqe.user_data,
-                        res: sqe.len as i32,
+                        res,
                         flags: 0,
                     };
                     std::ptr::write(cqe_slot, cqe);

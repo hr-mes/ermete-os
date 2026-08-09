@@ -72,7 +72,10 @@ impl HardwareOffloader {
     }
 
     pub async fn process_inference(&self, intent: &AiIntent) -> Result<(Vec<f32>, HardwareDeviceInfo), String> {
-        let mock_input = vec![0.1f32; 768];
+        let mut input_tensor = vec![0.0f32; 768];
+        for (i, b) in intent.text.as_bytes().iter().take(768).enumerate() {
+            input_tensor[i] = (*b as f32) / 255.0;
+        }
 
         info!(
             "Offloading AI query '{}' [intent: '{}'] exclusively to hardware accelerators...",
@@ -81,7 +84,7 @@ impl HardwareOffloader {
 
         // Priority 1: OpenVINO NPU Engine
         if self.openvino_engine.is_available() {
-            match self.openvino_engine.execute_npu_inference(&mock_input, &[1, 768]) {
+            match self.openvino_engine.execute_npu_inference(&input_tensor, &[1, 768]) {
                 Ok(output) => {
                     let info = HardwareDeviceInfo {
                         backend: AccelerationBackend::OpenVinoNpu,
@@ -96,7 +99,7 @@ impl HardwareOffloader {
 
         // Priority 2: Vulkan Compute & Tensor Cores
         if self.vulkan_engine.is_available() {
-            match self.vulkan_engine.execute_vulkan_compute(&mock_input) {
+            match self.vulkan_engine.execute_vulkan_compute(&input_tensor) {
                 Ok(output) => {
                     let info = HardwareDeviceInfo {
                         backend: AccelerationBackend::VulkanTensorCores,

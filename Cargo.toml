@@ -16,7 +16,6 @@ members = [
     "forge/specs/ermete-sysmon-ebpf/ermete-sysmon-ebpf-1.0.0",
     "forge/specs/ermete-xdg-desktop-portal-ermete/xdg-desktop-portal-ermete-1.0.0",
     "forge/specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0",
-    "forge/specs/ermete-style",
     "forge/specs/ermete-niri-ipc",
     "forge/specs/ermete-live-patcher/ermete-live-patcher-1.0.0",
     "forge/specs/ermete-daemon-patch-plugin",
@@ -36,6 +35,7 @@ members = [
     "system/ermete-mesh-bus",
     "system/ermete-net-unikernel",
     "system/ermete-store",
+    "system/ermete-style",
     "system/ermete-telemetry"
 ]
 

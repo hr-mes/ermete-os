@@ -2,6 +2,10 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use zbus::proxy;
 
+pub mod shm_ring;
+pub use shm_ring::*;
+
+
 /// Common telemetry payload collected from Ring-0 eBPF probes.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct KernelTelemetry {

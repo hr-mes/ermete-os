@@ -1417,8 +1417,10 @@ version = "1.0.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "libc",
  "serde",
  "serde_json",
+ "tracing",
  "zbus",
 ]
 
@@ -1511,6 +1513,7 @@ name = "ermete-daemon-rs"
 version = "0.2.1"
 dependencies = [
  "aya",
+ "ermete-style",
  "futures-util",
  "libc",
  "libloading 0.8.9",
@@ -1840,9 +1843,17 @@ dependencies = [
 
 [[package]]
 name = "ermete-style"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
+ "glib",
  "gtk4",
+ "gtk4-layer-shell",
+ "serde",
+ "serde_json",
+ "tokio",
+ "toml",
+ "tracing",
+ "zbus",
 ]
 
 [[package]]
