@@ -23,5 +23,7 @@ sha2 = { workspace = true }
 ring = "0.17"
 hex = { workspace = true }
 ermete-bus-api = { path = "../ermete-bus-api" }
+libc = { workspace = true }
+
 
 

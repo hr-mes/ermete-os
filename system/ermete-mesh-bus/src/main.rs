@@ -5,8 +5,11 @@ use tracing_subscriber::FmtSubscriber;
 use zbus::connection::Builder;
 
 mod dbus;
+pub mod ipc;
+pub mod network;
 mod peer;
 mod pqc;
+pub mod protocol;
 mod tunnel;
 
 use dbus::MeshBusInterface;

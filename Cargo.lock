@@ -1693,6 +1693,7 @@ dependencies = [
  "base64 0.21.7",
  "ermete-bus-api",
  "hex",
+ "libc",
  "pqc_dilithium",
  "pqc_kyber",
  "rand 0.8.7",
