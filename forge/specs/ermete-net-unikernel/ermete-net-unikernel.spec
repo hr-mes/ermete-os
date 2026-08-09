@@ -47,10 +47,11 @@ ExecStart=%{_bindir}/ermete-net-unikernel
 Restart=on-failure
 RestartSec=3s
 ProtectSystem=strict
-ProtectHome=read-only
+ProtectHome=yes
 PrivateTmp=true
-NoNewPrivileges=true
-CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW
+NoNewPrivileges=yes
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW CAP_BPF
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW CAP_BPF
 
 [Install]
 WantedBy=multi-user.target

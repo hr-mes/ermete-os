@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 use std::os::unix::io::RawFd;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use zbus::interface;
+use zbus::message::Header;
+use zbus::object_server::SignalEmitter;
 
 use crate::bcachefs::restore_bcachefs_snapshot_impl;
 use crate::fanotify::{respond_and_close, FAN_DENY};
@@ -33,7 +35,7 @@ impl GatekeeperManager {
     async fn approve_execution(
         &self,
         fd_id: String,
-        #[zbus(header)] hdr: zbus::MessageHeader<'_>,
+        #[zbus(header)] hdr: Header<'_>,
         #[zbus(connection)] _conn: &zbus::Connection,
     ) -> zbus::fdo::Result<()> {
         let sender = hdr.sender().ok_or(zbus::fdo::Error::Failed("No sender".into()))?;
@@ -70,7 +72,7 @@ impl GatekeeperManager {
             }).await;
 
             // Spawn inside Level 11 hardware-isolated Micro-VM (crosvm / cloud-hypervisor / firecracker), then DENY original unsandboxed execution
-            let sandbox_result = spawn_microvm_isolated_app(&target_path).await;
+            let sandbox_result = spawn_microvm_isolated_app(Path::new(&target_path)).await;
 
             match sandbox_result {
                 Ok(_child) => {
@@ -109,7 +111,7 @@ impl GatekeeperManager {
 
     #[zbus(signal)]
     pub async fn prompt_required(
-        signal_ctxt: &zbus::SignalContext<'_>,
+        signal_ctxt: &SignalEmitter<'_>,
         fd_id: &str,
         app_name: &str,
     ) -> zbus::Result<()>;
@@ -118,7 +120,7 @@ impl GatekeeperManager {
         &self,
         req_id: u64,
         reason: &str,
-        #[zbus(header)] hdr: zbus::MessageHeader<'_>,
+        #[zbus(header)] hdr: Header<'_>,
         #[zbus(connection)] conn: &zbus::Connection,
     ) -> zbus::fdo::Result<()> {
         let sender = hdr.sender().ok_or(zbus::fdo::Error::Failed("No sender".into()))?.to_owned();
@@ -130,7 +132,7 @@ impl GatekeeperManager {
                 Ok(iface) => iface,
                 Err(e) => { eprintln!("Failed to get iface: {}", e); return; }
             };
-            let signal_ctxt = iface_ref.signal_context().clone();
+            let signal_ctxt = iface_ref.signal_emitter().clone();
 
             let polkit_status = tokio::process::Command::new("pkcheck")
                 .arg("--system-bus-name")
@@ -148,7 +150,7 @@ impl GatekeeperManager {
             }
 
             if !authorized {
-                let proxy_res = zbus::ProxyBuilder::<'_, zbus::Proxy>::new(&conn)
+                let proxy_res = zbus::proxy::Builder::<'_, zbus::Proxy>::new(&conn)
                     .destination("os.ermete.Fido2Mock")
                     .and_then(|b| b.path("/os/ermete/Fido2Mock"))
                     .and_then(|b| b.interface("os.ermete.Fido2Mock"));
@@ -173,13 +175,13 @@ impl GatekeeperManager {
 
     #[zbus(signal)]
     pub async fn permit(
-        signal_ctxt: &zbus::SignalContext<'_>,
+        signal_ctxt: &SignalEmitter<'_>,
         req_id: u64,
     ) -> zbus::Result<()>;
 
     #[zbus(signal)]
     pub async fn deny(
-        signal_ctxt: &zbus::SignalContext<'_>,
+        signal_ctxt: &SignalEmitter<'_>,
         req_id: u64,
     ) -> zbus::Result<()>;
 }

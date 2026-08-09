@@ -82,7 +82,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .await?;
 
     let iface_ref = conn.object_server().interface::<_, GatekeeperManager>("/os/ermete/Gatekeeper").await?;
-    let signal_ctxt = iface_ref.signal_context().clone();
+    let signal_ctxt = iface_ref.signal_emitter().clone();
 
     let async_fd = AsyncFd::new(fanotify_fd)?;
 

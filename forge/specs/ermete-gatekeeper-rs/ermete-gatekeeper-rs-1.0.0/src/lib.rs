@@ -1,7 +1,9 @@
-#![no_std]
+#![cfg_attr(not(feature = "std"), no_std)]
 #![allow(unsafe_code)]
 
 extern crate alloc;
+#[cfg(feature = "std")]
+extern crate std;
 
 pub mod allocator;
 pub mod security;

@@ -16,9 +16,9 @@ RestartSec=3
 
 # Extreme Sandboxing
 ProtectSystem=strict
-ProtectHome=read-only
+ProtectHome=yes
 PrivateTmp=true
-NoNewPrivileges=true
+NoNewPrivileges=yes
 SystemCallFilter=@system-service
 ProtectKernelTunables=true
 ProtectKernelModules=true

@@ -22,10 +22,10 @@ StandardOutput=tty
 StandardError=journal
 
 # systemd hardening
-NoNewPrivileges=no
+NoNewPrivileges=yes
 ProtectSystem=strict
 ReadWritePaths=/etc /var
-ProtectHome=read-only
+ProtectHome=yes
 PrivateTmp=yes
 PrivateDevices=no
 ProtectKernelTunables=yes

@@ -1,6 +1,15 @@
 #!/bin/bash
 set -euo pipefail
 
+# ==============================================================================
+# 🌋 Ermete OS - UKI Secure Boot Assembly & Key Isolation Engine
+# ==============================================================================
+# Strictly isolates Secure Boot signing keys (KEK, PK, db, UKI key).
+# Private keys are read from secret mounts (/run/secrets) or isolated storage,
+# assigned restrictive 0400 permissions in a temporary 0700 enclave,
+# and automatically shredded on exit to prevent supply-chain leakage.
+# ==============================================================================
+
 QUALIFIED_KERNEL=""
 for k in /lib/modules/*; do
     if [ -e "$k/vmlinuz" ] || [ -L "$k/vmlinuz" ]; then
@@ -34,7 +43,21 @@ dracut --no-hostonly --kver "${QUALIFIED_KERNEL}" --reproducible --compress "zst
 chmod 0644 "/usr/lib/modules/${QUALIFIED_KERNEL}/initramfs.img"
 
 echo "Assembling Unified Kernel Image (UKI) using systemd-stub and ukify..."
-mkdir -p /etc/pki/uki /boot/efi/EFI/Linux
+mkdir -p /etc/pki/uki /boot/efi/EFI/Linux /etc/pki/secureboot/private
+chmod 0700 /etc/pki/secureboot/private
+
+# Create isolated temporary directory for signing operations
+TMP_KEY_DIR=$(mktemp -d -t uki-signing-enclave-XXXXXX)
+chmod 0700 "${TMP_KEY_DIR}"
+
+# Guarantee scrubbing and destruction of temporary private keys on exit
+cleanup_keys() {
+    if [ -n "${TMP_KEY_DIR:-}" ] && [ -d "${TMP_KEY_DIR}" ]; then
+        shred -u "${TMP_KEY_DIR}"/* 2>/dev/null || rm -rf "${TMP_KEY_DIR}"
+    fi
+    rm -f /etc/pki/uki/*.key /etc/pki/secureboot/private/*.key 2>/dev/null || true
+}
+trap cleanup_keys EXIT
 
 KEY_SRC=""
 if [ -f /run/secrets/uki_key ]; then
@@ -43,10 +66,12 @@ elif [ -f /run/secrets/uki-signing.key ]; then
     KEY_SRC="/run/secrets/uki-signing.key"
 elif [ -f /run/secrets/uki.key ]; then
     KEY_SRC="/run/secrets/uki.key"
+elif [ -f /etc/pki/secureboot/private/db.key ]; then
+    KEY_SRC="/etc/pki/secureboot/private/db.key"
 fi
 
 if [ -z "$KEY_SRC" ]; then
-    echo "ERROR: UKI signing key missing in /run/secrets!"
+    echo "ERROR: UKI / Secure Boot signing key missing in /run/secrets or isolated storage!"
     exit 1
 fi
 
@@ -59,17 +84,24 @@ elif [ -f /run/secrets/uki-signing.crt ]; then
     CRT_SRC="/run/secrets/uki-signing.crt"
 elif [ -f /run/secrets/uki.crt ]; then
     CRT_SRC="/run/secrets/uki.crt"
+elif [ -f /etc/pki/secureboot/db.crt ]; then
+    CRT_SRC="/etc/pki/secureboot/db.crt"
 fi
 
 if [ -z "$CRT_SRC" ]; then
-    echo "ERROR: UKI signing certificate missing in /run/secrets!"
+    echo "ERROR: UKI / Secure Boot signing certificate missing in /run/secrets or isolated storage!"
     exit 1
 fi
 
-echo "Installing UKI signing keys from /run/secrets/..."
-cp "$KEY_SRC" /etc/pki/uki/uki-signing.key
-chmod 0600 /etc/pki/uki/uki-signing.key
-cp "$CRT_SRC" /etc/pki/uki/uki-signing.crt
+echo "Copying signing key into isolated temporary enclave..."
+KEY_FILE="${TMP_KEY_DIR}/signing.key"
+CRT_FILE="/etc/pki/uki/uki-signing.crt"
+
+cp "$KEY_SRC" "$KEY_FILE"
+chmod 0400 "$KEY_FILE" # Strictly restrictive read-only permissions for key owner
+
+cp "$CRT_SRC" "$CRT_FILE"
+chmod 0644 "$CRT_FILE"
 
 STUB_PATH=$(find /usr/lib/systemd/boot/efi/ /usr/lib/systemd/ /usr/share/systemd/ -name "linuxx64.efi.stub" -o -name "systemd-stub.efi" 2>/dev/null | head -n 1)
 if [ -z "$STUB_PATH" ]; then
@@ -86,15 +118,15 @@ if command -v "$UKIFY_BIN" >/dev/null 2>&1 || [ -f "$UKIFY_BIN" ]; then
         --stub="$STUB_PATH" \
         --cmdline="$CMDLINE_STR" \
         --os-release="@/etc/os-release" \
-        --secureboot-private-key=/etc/pki/uki/uki-signing.key \
-        --secureboot-certificate=/etc/pki/uki/uki-signing.crt \
+        --secureboot-private-key="$KEY_FILE" \
+        --secureboot-certificate="$CRT_FILE" \
         --output="/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi" || true
 fi
 
 if [ -f "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi" ] && command -v sbsign >/dev/null 2>&1; then
     echo "Signing UKI EFI binary with sbsign..."
-    sbsign --key /etc/pki/uki/uki-signing.key \
-           --cert /etc/pki/uki/uki-signing.crt \
+    sbsign --key "$KEY_FILE" \
+           --cert "$CRT_FILE" \
            --output "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi.signed" \
            "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi"
     mv -f "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi.signed" "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi"
@@ -107,3 +139,4 @@ if [ -f "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi" ]; then
 fi
 
 ldconfig
+

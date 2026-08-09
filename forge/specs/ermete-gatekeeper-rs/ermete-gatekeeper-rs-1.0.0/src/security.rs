@@ -14,6 +14,8 @@ pub enum SecurityError {
     BufferTooSmall,
     InvalidEventLength,
     Overflow,
+    InsecureKeyPermissions,
+    InsecureKeyPath,
 }
 
 /// Constant-time memory comparison to prevent timing side-channel leaks.
@@ -84,6 +86,39 @@ pub fn verify_pqc_auth_token(
     }
 }
 
+/// Verifies signature of an open file descriptor directly from the FD (TOCTOU-safe),
+/// opening the file as a file descriptor first (`File::open`), reading and verifying the FD contents,
+/// to prevent symlink race conditions where a file path is modified after check.
+#[cfg(feature = "std")]
+pub fn verify_file_fd_signature(
+    file: &mut std::fs::File,
+    signature: &[u8],
+    public_key: &[u8],
+) -> Result<bool, SecurityError> {
+    use std::io::{Read, Seek, SeekFrom};
+    file.seek(SeekFrom::Start(0)).map_err(|_| SecurityError::BufferTooSmall)?;
+
+    let mut contents = Vec::new();
+    file.read_to_end(&mut contents).map_err(|_| SecurityError::BufferTooSmall)?;
+
+    verify_pqc_auth_token(&contents, signature, public_key)
+}
+
+/// Executes a verified binary via its open file descriptor path `/proc/self/fd/{fd}`
+/// to prevent TOCTOU symlink and path swapping attacks.
+#[cfg(feature = "std")]
+pub fn execute_verified_fd(
+    file: &std::fs::File,
+    args: &[&str],
+) -> Result<std::process::Child, std::io::Error> {
+    use std::os::unix::io::AsRawFd;
+    let fd = file.as_raw_fd();
+    let proc_fd_path = format!("/proc/self/fd/{}", fd);
+    std::process::Command::new(proc_fd_path)
+        .args(args)
+        .spawn()
+}
+
 
 /// Safely parses fanotify event metadata buffer offsets without panics or infinite loops.
 pub fn parse_next_fanotify_offset(
@@ -151,9 +186,26 @@ pub fn evaluate_execution_rate_limit(
     }
 }
 
+/// Enforces strict restrictive permissions (chmod 0400 or 0700) on Secure Boot / UKI keys.
+/// Returns true only if group and world permission bits are clear (mode & 0o077 == 0).
+pub fn verify_key_permissions(mode: u32) -> bool {
+    (mode & 0o077) == 0
+}
+
 #[cfg(kani)]
 mod proof {
     use super::*;
+
+    #[kani::proof]
+    pub fn proof_verify_key_permissions() {
+        let mode: u32 = kani::any();
+        let is_secure = verify_key_permissions(mode);
+        if (mode & 0o077) != 0 {
+            kani::assert(!is_secure, "Modes with group/other bits must evaluate as insecure");
+        } else {
+            kani::assert(is_secure, "Modes with 0 group/other bits must evaluate as secure");
+        }
+    }
 
     #[kani::proof]
     #[kani::unwind(17)]

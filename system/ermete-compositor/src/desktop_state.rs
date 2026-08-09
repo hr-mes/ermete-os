@@ -218,9 +218,12 @@ pub struct DesktopRenderLayout {
     pub pip_overlays: Vec<PipSurface>,
 }
 
+use crate::backend::shm::{CompositorShmState, ShmBufferLimits};
+
 /// Main Smithay Desktop State managing tiled layout engine, snap engine, spatial overview, and PiP layer.
 pub struct DesktopState {
     pub drm_backend: DrmKmsBackend,
+    pub shm_state: CompositorShmState,
     pub tiling_engine: TilingEngine,
     pub snap_engine: SnapEngine,
     pub overview: SpatialOverview,
@@ -232,6 +235,7 @@ impl DesktopState {
     pub fn new(drm_backend: DrmKmsBackend) -> Self {
         Self {
             drm_backend,
+            shm_state: CompositorShmState::with_default_limits(),
             tiling_engine: TilingEngine::new(),
             snap_engine: SnapEngine::new(),
             overview: SpatialOverview::new(),
@@ -239,6 +243,7 @@ impl DesktopState {
             screen: ScreenGeometry::default(),
         }
     }
+
 
     pub fn set_screen_geometry(&mut self, width: u32, height: u32) {
         self.screen = ScreenGeometry { width, height };

@@ -32,24 +32,27 @@ if [[ -z "$STUB_PATH" ]]; then
 fi
 
 # Key management
-KEY_DIR="/etc/pki/uki"
-mkdir -p "$KEY_DIR" "$(dirname "$UKI_IMAGE")"
+KEY_DIR="/etc/pki/secureboot/private"
+mkdir -p "$KEY_DIR" "$(dirname "$UKI_IMAGE")" /etc/pki/uki
+chmod 0700 "$KEY_DIR"
+
 if [[ ! -f "$KEY_DIR/uki-signing.key" ]]; then
     if [[ -f "/etc/keys/ermete-secure-boot.key" ]]; then
         cp /etc/keys/ermete-secure-boot.key "$KEY_DIR/uki-signing.key"
-        cp /etc/keys/ermete-secure-boot.crt "$KEY_DIR/uki-signing.crt"
+        cp /etc/keys/ermete-secure-boot.crt /etc/pki/uki/uki-signing.crt
+        chmod 0400 "$KEY_DIR/uki-signing.key"
     else
         openssl req -new -x509 -newkey rsa:2048 -nodes \
             -keyout "$KEY_DIR/uki-signing.key" \
-            -out "$KEY_DIR/uki-signing.crt" \
+            -out /etc/pki/uki/uki-signing.crt \
             -days 3650 \
             -subj "/CN=Ermete OS Root of Trust UKI Key/"
-        chmod 0600 "$KEY_DIR/uki-signing.key"
+        chmod 0400 "$KEY_DIR/uki-signing.key"
     fi
 fi
 
 KEY_FILE="$KEY_DIR/uki-signing.key"
-CRT_FILE="$KEY_DIR/uki-signing.crt"
+CRT_FILE="/etc/pki/uki/uki-signing.crt"
 
 # Cmdline extraction
 if [[ -f "$CMDLINE" ]]; then

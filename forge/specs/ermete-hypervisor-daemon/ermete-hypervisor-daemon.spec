@@ -47,9 +47,11 @@ ExecStart=%{_bindir}/ermete-hypervisor-daemon
 Restart=on-failure
 RestartSec=3s
 ProtectSystem=strict
-ProtectHome=read-only
+ProtectHome=yes
 PrivateTmp=true
-NoNewPrivileges=true
+NoNewPrivileges=yes
+AmbientCapabilities=CAP_SYS_ADMIN CAP_NET_ADMIN CAP_BPF
+CapabilityBoundingSet=CAP_SYS_ADMIN CAP_NET_ADMIN CAP_BPF
 SystemCallFilter=@system-service
 
 [Install]

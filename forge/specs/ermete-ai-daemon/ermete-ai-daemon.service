@@ -15,11 +15,13 @@ ExecStart=/usr/bin/ermete-ai-daemon
 Restart=always
 RestartSec=5s
 
+DynamicUser=yes
+
 # Extreme Sandboxing
 ProtectSystem=strict
-ProtectHome=read-only
+ProtectHome=yes
 PrivateTmp=true
-NoNewPrivileges=true
+NoNewPrivileges=yes
 SystemCallFilter=@system-service
 ProtectKernelTunables=true
 ProtectKernelModules=true
