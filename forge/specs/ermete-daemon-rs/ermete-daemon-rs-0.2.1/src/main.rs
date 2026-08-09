@@ -2,6 +2,7 @@
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
+mod accent_engine;
 mod bedrock;
 mod network;
 mod bluetooth;
@@ -19,7 +20,7 @@ use zbus::connection::Builder;
 use bedrock::Bedrock;
 use network::Network;
 use bluetooth::Bluetooth;
-use settings::SettingsService;
+use settings::{AppearanceService, SettingsService};
 use portal::PortalSettingsService;
 use portal_screencast::{PortalScreenCastService, PortalRemoteDesktopService};
 
@@ -65,6 +66,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let init_app = appearance_store.state_rx.borrow().clone();
     tokio::spawn(async move {
         theme::apply_dynamic_theme(&init_app.wallpaper, &init_app.color_scheme).await;
+        let _ = accent_engine::apply_accent_color(&init_app.accent_color);
     });
 
     let settings_srv = SettingsService::new_with_token(
@@ -72,6 +74,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         voiceover_store.state_tx.clone(),
         cancel_token.clone(),
     );
+    let appearance_srv = AppearanceService::new(settings_srv.clone());
     let portal_srv = PortalSettingsService::new(appearance_store.state_rx.clone());
     let screencast_srv = PortalScreenCastService::new();
     let remotedesktop_srv = PortalRemoteDesktopService::new(screencast_srv.clone());
@@ -81,12 +84,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let session_conn = Builder::session()?
         .name("os.ermete.Bedrock")?
         .name("org.ermete.Settings")?
+        .name("org.ermete.Settings.Appearance")?
         .name("os.ermete.VoiceOver")?
         .name("org.freedesktop.impl.portal.desktop.ermete")?
         .serve_at("/os/ermete/Bedrock", Bedrock::new())?
         .serve_at("/os/ermete/Bedrock/Network", Network::new(sys_conn.clone()))?
         .serve_at("/os/ermete/Bedrock/Bluetooth", Bluetooth::new(sys_conn.clone()))?
         .serve_at("/org/ermete/Settings", settings_srv.clone())?
+        .serve_at("/org/ermete/Settings/Appearance", appearance_srv.clone())?
+        .serve_at("/org/ermete/Settings", appearance_srv)?
         .serve_at("/os/ermete/Bedrock/Settings", settings_srv)?
         .serve_at("/os/ermete/VoiceOver", voiceover_srv)?
         .serve_at("/org/freedesktop/portal/desktop", portal_srv)?

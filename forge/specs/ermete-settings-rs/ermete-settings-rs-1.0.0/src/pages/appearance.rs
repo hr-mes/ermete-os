@@ -114,8 +114,9 @@ pub fn build_page() -> Box {
         let hex_clone = hex_val.to_string();
         btn.connect_clicked(move |_| {
             let hex_c = hex_clone.clone();
+            let _ = crate::accent_engine::apply_accent_color(&hex_c);
             relm4::spawn_local(async move {
-                with_settings_proxy(move |proxy| async move {
+                crate::settings_proxy::with_appearance_proxy(move |proxy| async move {
                     let _ = proxy.set_accent_color(&hex_c).await;
                 }).await;
             });

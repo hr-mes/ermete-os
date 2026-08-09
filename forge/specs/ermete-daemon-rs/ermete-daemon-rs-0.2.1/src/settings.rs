@@ -322,6 +322,10 @@ impl SettingsService {
                         let res = AppearanceStateStore::save_async(&appearance_state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
                         if res.is_ok() {
                             let _ = appearance_tx.send(appearance_state.clone());
+                            let accent_val = val.clone();
+                            tokio::spawn(async move {
+                                let _ = crate::accent_engine::apply_accent_color(&accent_val);
+                            });
                             if let Some(ref w) = worker {
                                 let _ = w.apply_accent_color(&val).await;
                             }
@@ -551,6 +555,62 @@ impl SettingsService {
         let (reply, rx) = oneshot::channel();
         let _ = self.tx.send(SettingsCommand::SetVoiceoverEnabled(sender, val, reply)).await;
         rx.await.unwrap_or(Err(fdo::Error::Failed("Actor dead".into())))
+    }
+}
+
+#[derive(Clone)]
+pub struct AppearanceService {
+    settings: SettingsService,
+}
+
+impl AppearanceService {
+    pub fn new(settings: SettingsService) -> Self {
+        Self { settings }
+    }
+}
+
+#[interface(name = "org.ermete.Settings.Appearance")]
+impl AppearanceService {
+    #[zbus(property, name = "ColorScheme")]
+    async fn color_scheme(&self) -> String {
+        self.settings.color_scheme().await
+    }
+
+    #[zbus(property, name = "ColorScheme")]
+    async fn set_color_scheme(
+        &self,
+        val: String,
+        #[zbus(header)] hdr: Option<zbus::message::Header<'_>>,
+    ) -> fdo::Result<()> {
+        self.settings.set_color_scheme(val, hdr).await
+    }
+
+    #[zbus(property, name = "AccentColor")]
+    async fn accent_color(&self) -> String {
+        self.settings.accent_color().await
+    }
+
+    #[zbus(property, name = "AccentColor")]
+    async fn set_accent_color(
+        &self,
+        val: String,
+        #[zbus(header)] hdr: Option<zbus::message::Header<'_>>,
+    ) -> fdo::Result<()> {
+        self.settings.set_accent_color(val, hdr).await
+    }
+
+    #[zbus(property, name = "Wallpaper")]
+    async fn wallpaper(&self) -> String {
+        self.settings.wallpaper().await
+    }
+
+    #[zbus(property, name = "Wallpaper")]
+    async fn set_wallpaper(
+        &self,
+        val: String,
+        #[zbus(header)] hdr: Option<zbus::message::Header<'_>>,
+    ) -> fdo::Result<()> {
+        self.settings.set_wallpaper(val, hdr).await
     }
 }
 

@@ -10,6 +10,7 @@ pub mod prompts;
 pub mod greeter;
 pub mod mission_control;
 pub mod desktop_widgets;
+pub mod widgets_board;
 pub mod store;
 pub mod viewmodel;
 pub mod snap_overlay;
