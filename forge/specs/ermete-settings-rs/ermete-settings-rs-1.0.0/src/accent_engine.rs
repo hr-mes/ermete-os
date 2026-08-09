@@ -145,6 +145,7 @@ impl ColorHsl {
 }
 
 /// Full derived accent color palette (Feren OS / XeroLinux reverse-engineered engine)
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct AccentPalette {
     pub base: ColorRgb,

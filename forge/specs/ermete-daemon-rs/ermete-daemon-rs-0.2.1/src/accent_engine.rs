@@ -141,6 +141,7 @@ impl ColorHsl {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct AccentPalette {
     pub base: ColorRgb,
