@@ -1,4 +1,5 @@
 mod attestation;
+mod crosvm;
 mod dbus;
 mod enclave;
 mod kvm;

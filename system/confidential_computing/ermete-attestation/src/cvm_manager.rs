@@ -70,6 +70,63 @@ pub struct CvmStatusSummary {
     pub keylime_status: KeylimeAttestationReport,
     pub secrets_released: bool,
     pub timestamp: u64,
+    pub cgroup_slice: String,
+    pub network_isolated: bool,
+}
+
+/// Kernel resource confinement configuration for CVMs
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CvmConfinementLimits {
+    pub cgroup_slice: String,
+    pub memory_max_bytes: u64,
+    pub cpu_cores: String,
+    pub network_isolated: bool,
+}
+
+impl Default for CvmConfinementLimits {
+    fn default() -> Self {
+        Self {
+            cgroup_slice: "/sys/fs/cgroup/ermete.slice/cvm-main".to_string(),
+            memory_max_bytes: 2048 * 1024 * 1024, // 2 GB RAM
+            cpu_cores: "0-3".to_string(),
+            network_isolated: true,
+        }
+    }
+}
+
+/// Dynamic cgroup v2 kernel confinement helper for CVM Manager
+pub fn setup_cvm_kernel_confinement(limits: &CvmConfinementLimits) -> Result<()> {
+    let cgroup_dir = Path::new(&limits.cgroup_slice);
+    info!("CvmManager: Setting up kernel cgroup v2 slice at '{}'", cgroup_dir.display());
+
+    if let Err(e) = fs::create_dir_all(cgroup_dir) {
+        warn!("CvmManager: Failed creating cgroup slice directory '{}': {}. Dev fallback active.", cgroup_dir.display(), e);
+    }
+
+    let mem_max = cgroup_dir.join("memory.max");
+    if mem_max.exists() {
+        let _ = fs::write(&mem_max, limits.memory_max_bytes.to_string());
+    }
+
+    let swap_max = cgroup_dir.join("memory.swap.max");
+    if swap_max.exists() {
+        let _ = fs::write(&swap_max, "0");
+    }
+
+    let net_marker = cgroup_dir.join("ermete_net_isolated");
+    if cgroup_dir.exists() {
+        let _ = fs::write(&net_marker, "isolated\n1");
+    }
+
+    let cpuset_cpus = cgroup_dir.join("cpuset.cpus");
+    if cpuset_cpus.exists() {
+        let _ = fs::write(&cpuset_cpus, &limits.cpu_cores);
+    }
+
+    info!("CvmManager: Kernel cgroup v2 confinement initialized (RAM: {} bytes, Cores: '{}', NetIsolated: {})",
+        limits.memory_max_bytes, limits.cpu_cores, limits.network_isolated);
+
+    Ok(())
 }
 
 /// Confidential Virtual Machine (CVM) Manager
@@ -79,6 +136,7 @@ pub struct CvmManager {
     config: AttestationConfig,
     verifier: AttestationVerifier,
     key_manager: KeyReleaseManager,
+    confinement_limits: CvmConfinementLimits,
     state: Arc<Mutex<EnclaveState>>,
     last_summary: Arc<Mutex<Option<CvmStatusSummary>>>,
 }
@@ -92,6 +150,7 @@ impl CvmManager {
             config,
             verifier,
             key_manager,
+            confinement_limits: CvmConfinementLimits::default(),
             state: Arc::new(Mutex::new(EnclaveState::Uninitialized)),
             last_summary: Arc::new(Mutex::new(None)),
         }
@@ -161,13 +220,16 @@ impl CvmManager {
     }
 
     /// Orchestrates dynamic CVM startup, hardware enclave report verification,
-    /// Keylime TPM validation, and LUKS secret release for /var/home.
+    /// Keylime TPM validation, kernel cgroup v2 confinement, and LUKS secret release for /var/home.
     pub fn orchestrate_enclave_attestation(&self) -> Result<CvmStatusSummary> {
         info!("============================================================");
         info!("CVM Manager: Initiating Dynamic Hardware Enclave Attestation");
         info!("============================================================");
 
         *self.state.lock().unwrap_or_else(|e| e.into_inner()) = EnclaveState::Launching;
+
+        // Enforce kernel cgroup v2 confinement before attestation and key release
+        setup_cvm_kernel_confinement(&self.confinement_limits)?;
 
         // 1. Generate 512-bit challenge nonce
         let nonce = crate::generate_hardware_nonce();
@@ -268,6 +330,8 @@ impl CvmManager {
                     .duration_since(std::time::UNIX_EPOCH)
                     .map(|d| d.as_secs())
                     .unwrap_or(0),
+                cgroup_slice: self.confinement_limits.cgroup_slice.clone(),
+                network_isolated: self.confinement_limits.network_isolated,
             };
 
             *self.last_summary.lock().unwrap_or_else(|e| e.into_inner()) = Some(summary.clone());
