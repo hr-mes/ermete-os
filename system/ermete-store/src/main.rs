@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Arc;
 
+pub mod crdt;
 pub mod storage;
 use storage::{DatabaseEngine, DEFAULT_CQ_DEPTH, DEFAULT_SQ_DEPTH};
 

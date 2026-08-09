@@ -25,6 +25,7 @@ pub enum MeshMessageType {
     Heartbeat = 0x04,
     KeyExchange = 0x05,
     ControlSignal = 0x06,
+    CrdtSyncFrame = 0x07,
     Unknown = 0xFF,
 }
 
@@ -37,6 +38,7 @@ impl From<u8> for MeshMessageType {
             0x04 => MeshMessageType::Heartbeat,
             0x05 => MeshMessageType::KeyExchange,
             0x06 => MeshMessageType::ControlSignal,
+            0x07 => MeshMessageType::CrdtSyncFrame,
             _ => MeshMessageType::Unknown,
         }
     }

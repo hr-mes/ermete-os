@@ -9,13 +9,16 @@ pub mod network;
 mod peer;
 mod pqc;
 pub mod protocol;
+pub mod sync;
 mod tunnel;
 
+use std::sync::Arc;
 use dbus::MeshBusInterface;
 use network::{AfXdpConfig, AfXdpSocket};
 use peer::PeerManager;
 use pqc::PqcEngine;
 use protocol::ZeroCopyParser;
+use sync::{CrdtBroadcaster, StorageBridge};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -40,8 +43,14 @@ async fn main() -> Result<()> {
     info!("ML-KEM-1024 Public Key: {}", identity.kyber_public_b64);
     info!("Dilithium5 Public Key: {}", identity.dilithium_public_b64);
 
-    // 3. Initialize Peer Manager
+    // 3. Initialize Peer Manager & IPC Storage Bridge (Fase 11)
     let peer_manager = PeerManager::new();
+    let storage_bridge = Arc::new(StorageBridge::new(None, None)?);
+    let (crdt_broadcaster, _background_dispatcher) = CrdtBroadcaster::new(
+        pqc_engine.clone(),
+        peer_manager.clone(),
+        storage_bridge,
+    );
 
     // 4. Initialize AF_XDP Kernel Bypass Socket with mock network interface parameters (Kernel Bypass mode)
     let af_xdp_config = AfXdpConfig {
@@ -90,6 +99,9 @@ async fn main() -> Result<()> {
                     Ok(packets) => {
                         for packet in packets {
                             if let Ok(payload) = packet.payload() {
+                                // First pass packet to CRDT zero-trust broadcaster engine
+                                let _ = crdt_broadcaster.process_afxdp_packet(payload);
+
                                 match ZeroCopyParser::parse_frame(payload) {
                                     Ok(frame) => {
                                         info!(
