@@ -219,10 +219,11 @@ pub struct DesktopRenderLayout {
 }
 
 use crate::backend::shm::{CompositorShmState, ShmBufferLimits};
+use crate::ecs::SharedEcsWorld;
 use crate::input_routing::InputRouter;
 use crate::screencopy::ScreencopyManager;
 
-/// Main Smithay Desktop State managing tiled layout engine, snap engine, spatial overview, PiP layer, screencopy manager, and input router.
+/// Main Smithay Desktop State managing tiled layout engine, snap engine, spatial overview, PiP layer, screencopy manager, input router, and Data-Oriented ECS core.
 pub struct DesktopState {
     pub drm_backend: DrmKmsBackend,
     pub shm_state: CompositorShmState,
@@ -232,6 +233,7 @@ pub struct DesktopState {
     pub pip_manager: PipLayerManager,
     pub screencopy_manager: ScreencopyManager,
     pub input_router: InputRouter,
+    pub ecs_world: SharedEcsWorld,
     pub screen: ScreenGeometry,
 }
 
@@ -246,6 +248,7 @@ impl DesktopState {
             pip_manager: PipLayerManager::new(),
             screencopy_manager: ScreencopyManager::new(),
             input_router: InputRouter::new(),
+            ecs_world: SharedEcsWorld::new(),
             screen: ScreenGeometry::default(),
         }
     }
