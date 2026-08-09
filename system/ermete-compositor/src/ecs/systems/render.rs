@@ -9,6 +9,7 @@
 
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
+use crate::ecs::world::SharedEcsWorld;
 
 /// Entity position component in 2D/3D compositor space.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -161,17 +162,62 @@ pub fn compute_transform_matrix(pos: &Position, geom: &Geometry, out_matrix: &mu
     out_matrix[15] = 1.0;
 }
 
-/// Core Wayland Render System (Phase 4).
+/// Core Wayland Render System (Phase 4 & Phase 6).
 ///
-/// Iterates over all active entities possessing `(Position, Geometry, WaylandSurface)`
-/// and submits transformation matrices to the GPU via `submit_dma_buf`.
+/// Queries `SharedEcsWorld` for active entities possessing `(Position, Geometry, WaylandSurface)`,
+/// computes transformation matrices on the stack, and submits DMA-BUF frames to `CompositorState`.
 ///
 /// Decoupled from 1000Hz physics loop: Designed to be called at monitor refresh frequency
 /// (e.g., 144Hz, 240Hz, 360Hz).
-///
-/// STRICT PERFORMANCE REQUIREMENT: Zero memory allocations inside the loop.
 #[inline(always)]
 pub fn render_system(
+    world: &SharedEcsWorld,
+    compositor_state: &mut CompositorState,
+) -> usize {
+    let world_guard = match world.read() {
+        Ok(guard) => guard,
+        Err(_) => return 0,
+    };
+
+    let query_results = world_guard.query_3::<crate::ecs::components::Position, crate::ecs::components::Geometry, crate::ecs::components::WaylandSurface>();
+    let mut matrix_buffer = [0.0f32; 16];
+    let mut rendered_count = 0usize;
+
+    for (_entity, pos, geom, surface) in query_results {
+        let render_pos = Position {
+            x: pos.x,
+            y: pos.y,
+            z: 0.0,
+        };
+        let render_geom = Geometry {
+            width: geom.scaled_width(),
+            height: geom.scaled_height(),
+            scale_x: geom.scale_factor,
+            scale_y: geom.scale_factor,
+            rotation_rad: 0.0,
+        };
+        let render_surface = WaylandSurface {
+            surface_id: surface.surface_id,
+            dma_buf_fd: surface.dma_buf_fd.unwrap_or(-1),
+            width: surface.width,
+            height: surface.height,
+            drm_format: surface.buffer_format,
+            modifier: surface.modifier,
+            is_visible: surface.is_active,
+        };
+
+        compute_transform_matrix(&render_pos, &render_geom, &mut matrix_buffer);
+        if compositor_state.submit_dma_buf(&render_surface, &matrix_buffer).is_ok() {
+            rendered_count += 1;
+        }
+    }
+
+    rendered_count
+}
+
+/// Helper for rendering from a slice of component references.
+#[inline(always)]
+pub fn render_system_slice(
     entities: &[(&Position, &Geometry, &WaylandSurface)],
     compositor_state: &CompositorState,
 ) -> usize {
@@ -179,10 +225,7 @@ pub fn render_system(
     let mut rendered_count = 0usize;
 
     for (pos, geom, surface) in entities {
-        // Compute 4x4 affine matrix directly into stack-allocated array
         compute_transform_matrix(pos, geom, &mut matrix_buffer);
-
-        // Zero-copy DMA-BUF GPU submission
         if compositor_state.submit_dma_buf(surface, &matrix_buffer).is_ok() {
             rendered_count += 1;
         }
@@ -217,9 +260,9 @@ impl RenderLoopRunner {
     }
 
     /// Single render frame execution step.
-    /// High-performance stack-only invocation of `render_system`.
+    /// High-performance stack-only invocation of `render_system_slice`.
     pub fn step_frame(&self, entities: &[(&Position, &Geometry, &WaylandSurface)]) -> usize {
-        render_system(entities, &self.compositor_state)
+        render_system_slice(entities, &self.compositor_state)
     }
 
     /// Helper calculating target frame duration for VSync sleep interval (nanoseconds).
@@ -252,8 +295,9 @@ mod tests {
 
         let entities = [(&pos1, &geom1, &surf1)];
 
-        let rendered = render_system(&entities, &state);
+        let rendered = render_system_slice(&entities, &state);
         assert_eq!(rendered, 1);
         assert_eq!(state.submitted_frames.load(Ordering::Relaxed), 1);
     }
 }
+

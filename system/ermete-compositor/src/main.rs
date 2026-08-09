@@ -13,6 +13,7 @@ mod tiling;
 
 use anyhow::{Context, Result};
 use backend::{DrmBackendConfig, DrmKmsBackend};
+use ecs::SharedEcsWorld;
 use ipc::IpcServer;
 use state::CompositorState;
 use std::sync::atomic::Ordering;
@@ -35,6 +36,9 @@ async fn main() -> Result<()> {
 
     info!("Starting Ermete OS Native AI-Driven Wayland Compositor (ermete-compositor)...");
 
+    // Step 1: Initialize SharedEcsWorld at compositor startup
+    let ecs_world = SharedEcsWorld::new();
+
     // Initialize DRM/KMS backend
     let mut drm_backend = DrmKmsBackend::new(DrmBackendConfig::default());
     drm_backend
@@ -50,8 +54,9 @@ async fn main() -> Result<()> {
         active_cards
     );
 
-    // Initialize shared compositor state
+    // Initialize shared compositor state with connected SharedEcsWorld
     let state = Arc::new(Mutex::new(CompositorState::new(drm_backend)));
+    state.lock().await.desktop_state.ecs_world = ecs_world.clone();
 
     // Initialize and run IPC server for AI auto-tiling instructions
     let ipc_server = IpcServer::new(Arc::clone(&state));
@@ -63,7 +68,19 @@ async fn main() -> Result<()> {
         }
     });
 
-    // Spawn 1000 Hz Mass-Spring-Damper physics frame tick loop (Unlocked Framerate for 360Hz+ Monitors)
+    // Step 2: Spawn dedicated 1000Hz ECS Mass-Spring-Damper spring_physics_system_batch loop
+    let phys_ecs_world = ecs_world.clone();
+    let ecs_physics_handle = tokio::spawn(async move {
+        let mut interval = tokio::time::interval(std::time::Duration::from_millis(1));
+        loop {
+            interval.tick().await;
+            if let Ok(mut world) = phys_ecs_world.write() {
+                ecs::systems::physics::spring_physics_system_batch(&mut world, 0.001);
+            }
+        }
+    });
+
+    // Spawn 1000 Hz legacy desktop state animation tick loop
     let anim_state = Arc::clone(&state);
     let anim_handle = tokio::spawn(async move {
         let mut interval = tokio::time::interval(std::time::Duration::from_millis(1));
@@ -88,6 +105,17 @@ async fn main() -> Result<()> {
         }
     });
 
+    // Step 3: Main Smithay/DRM VSync rendering loop injecting ecs::systems::render::render_system(&ecs_world, &mut compositor_state)
+    let render_ecs_world = ecs_world.clone();
+    let render_handle = tokio::spawn(async move {
+        let mut render_state = ecs::systems::render::CompositorState::new(144.0);
+        let mut interval = tokio::time::interval(std::time::Duration::from_nanos(6_944_444)); // ~144Hz VSync interval
+        loop {
+            interval.tick().await;
+            ecs::systems::render::render_system(&render_ecs_world, &mut render_state);
+        }
+    });
+
     info!("Ermete Compositor scaffolding ready.");
     info!("Listening for AI-driven tiling commands at {:?}", socket_path);
 
@@ -99,8 +127,14 @@ async fn main() -> Result<()> {
         _ = ipc_handle => {
             tracing::warn!("IPC server task terminated.");
         }
+        _ = ecs_physics_handle => {
+            tracing::warn!("ECS 1000Hz Physics loop task terminated.");
+        }
         _ = anim_handle => {
             tracing::warn!("Animation frame tick task terminated.");
+        }
+        _ = render_handle => {
+            tracing::warn!("ECS Render loop task terminated.");
         }
     }
 
