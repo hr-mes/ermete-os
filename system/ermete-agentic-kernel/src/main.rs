@@ -1,10 +1,12 @@
 #![allow(unsafe_code)]
 
 pub mod ai_client;
+pub mod ai_predictor;
 pub mod auto_healer;
 pub mod ebpf_monitor;
 
 use ai_client::AiDaemonClient;
+use ai_predictor::AiPredictorDAG;
 use auto_healer::AutoHealer;
 use ebpf_monitor::EbpfMonitor;
 use std::net::Ipv4Addr;
@@ -34,10 +36,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut ebpf_mon = EbpfMonitor::new().await;
     let ai_client = AiDaemonClient::new().await;
     let auto_healer = AutoHealer::new();
+    let ai_predictor_dag = AiPredictorDAG::new();
 
     let mut interval = tokio::time::interval(Duration::from_secs(2));
 
-    info!("Autonomous Ring-0 Control Loop active. Monitoring kernel telemetry...");
+    info!("Autonomous Ring-0 Control Loop active. Monitoring kernel telemetry & driving AI_SCHED_MAP...");
 
     loop {
         tokio::select! {
@@ -53,7 +56,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     telemetry.tcp_scans_detected
                 );
 
-                // 2. Query local NPU AI engine for decision
+                // 2. Execute high-performance AI Predictor DAG cycle -> Write to eBPF map AI_SCHED_MAP
+                match ai_predictor_dag.execute_dag_cycle(&ebpf_mon).await {
+                    Ok(count) => {
+                        info!("⚡ [AI Predictor DAG] Successfully synchronized {} task scheduling affinity target(s) into Ring-0 AI_SCHED_MAP", count);
+                    }
+                    Err(e) => {
+                        warn!("⚠️ [AI Predictor DAG] Synchronization error: {}", e);
+                    }
+                }
+
+                // 3. Query local NPU AI engine for decision
                 let decision = ai_client.evaluate_telemetry(&telemetry).await;
 
                 if decision.anomaly_detected {
@@ -62,10 +75,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         decision.risk_score, decision.recommended_actions
                     );
 
-                    // 3a. Auto-Healing: Inject sysctl parameters to adjust kernel resource allocation
+                    // 4a. Auto-Healing: Inject sysctl parameters to adjust kernel resource allocation
                     auto_healer.apply_autonomic_reallocation(&decision.sysctl_mitigations);
 
-                    // 3b. Hot-rewrite eBPF rules in Ring-0
+                    // 4b. Hot-rewrite eBPF rules in Ring-0
                     for ip_str in &decision.block_ips {
                         if let Ok(ip) = Ipv4Addr::from_str(ip_str) {
                             if let Err(e) = ebpf_mon.hot_block_ip(ip).await {

@@ -3,12 +3,15 @@
 pub mod ai_bridge;
 pub mod bpf_trace;
 pub mod cgroup_manager;
+pub mod dbus_interface;
 pub mod sched_ext;
 
 use ai_bridge::AiDaemonBridge;
 use bpf_trace::BpfExecTracer;
 use cgroup_manager::CgroupManager;
+use dbus_interface::SchedExtDbusInterface;
 use sched_ext::{SchedClass, SchedExtController, TaskSchedPolicy};
+use std::sync::Arc;
 use std::time::Duration;
 use tokio::signal;
 use tracing::{info, warn};
@@ -34,8 +37,39 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize core components
     let mut tracer = BpfExecTracer::new().await;
     let ai_bridge = AiDaemonBridge::new().await;
-    let sched_controller = SchedExtController::new();
+    let sched_controller = Arc::new(SchedExtController::new().await);
     let cgroup_mgr = CgroupManager::new();
+
+    // Register DBus interface for remote AI_SCHED_MAP manipulation
+    let dbus_iface = SchedExtDbusInterface::new(sched_controller.clone());
+    let _dbus_conn = match zbus::connection::Builder::session() {
+        Ok(builder) => match builder.name("os.ermete.SchedExt") {
+            Ok(builder) => match builder.serve_at("/os/ermete/SchedExt", dbus_iface) {
+                Ok(builder) => match builder.build().await {
+                    Ok(conn) => {
+                        info!("✅ Registered `os.ermete.SchedExt` DBus service interface.");
+                        Some(conn)
+                    }
+                    Err(e) => {
+                        warn!("⚠️ DBus connection build failed: {}. Operating without external DBus interface.", e);
+                        None
+                    }
+                },
+                Err(e) => {
+                    warn!("⚠️ DBus serve_at failed: {}", e);
+                    None
+                }
+            },
+            Err(e) => {
+                warn!("⚠️ DBus name reservation failed: {}", e);
+                None
+            }
+        },
+        Err(e) => {
+            warn!("⚠️ DBus session builder failed: {}", e);
+            None
+        }
+    };
 
     let mut interval = tokio::time::interval(Duration::from_millis(1500));
 
@@ -109,3 +143,4 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+

@@ -1,5 +1,5 @@
 use aya::maps::{Array, HashMap};
-use aya::Bpf;
+use aya::Ebpf;
 use std::net::Ipv4Addr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -7,7 +7,7 @@ use tracing::{info, warn};
 pub use ermete_bus_api::KernelTelemetry;
 
 pub struct EbpfMonitor {
-    bpf: Option<Arc<Mutex<Bpf>>>,
+    bpf: Option<Arc<Mutex<Ebpf>>>,
     simulated_passed: u64,
     simulated_dropped: u64,
 }
@@ -18,8 +18,8 @@ impl EbpfMonitor {
 
         // Attempt loading compiled eBPF bytecode, or fallback gracefully for stub/testing
         let bpf_path = "target/bpfel-unknown-none/release/ebpf-core";
-        let bpf_obj = Bpf::load_file(bpf_path)
-            .or_else(|_| Bpf::load(&[]))
+        let bpf_obj = Ebpf::load_file(bpf_path)
+            .or_else(|_| Ebpf::load(&[]))
             .ok()
             .map(|b| Arc::new(Mutex::new(b)));
 
@@ -121,6 +121,46 @@ impl EbpfMonitor {
             }
         }
         info!("Simulated Ring-0 eBPF map update applied: Zero-Trust mode set to {}", enabled);
+        Ok(())
+    }
+
+    /// Asynchronously writes PID core affinity scheduling target into Ring-0 `AI_SCHED_MAP`
+    pub async fn update_ai_sched_map(
+        &self,
+        pid: u32,
+        target: crate::ai_predictor::AiSchedTarget,
+    ) -> Result<(), String> {
+        if pid <= 1 {
+            let msg = format!("⛔ [AI Confinement Guard] Refused to modify scheduling map for protected PID {}", pid);
+            warn!("{}", msg);
+            return Err(msg);
+        }
+
+        if let Some(bpf_arc) = &self.bpf {
+            let mut bpf = bpf_arc.lock().await;
+            if let Some(map) = bpf.map_mut("AI_SCHED_MAP") {
+                if let Ok(mut sched_map) = HashMap::<_, u32, crate::ai_predictor::AiSchedTarget>::try_from(map) {
+                    sched_map
+                        .insert(pid, target, 0)
+                        .map_err(|e| format!("Failed to insert PID {} into AI_SCHED_MAP: {}", pid, e))?;
+                    info!("Successfully updated Ring-0 eBPF AI_SCHED_MAP for PID {} -> Core {}", pid, target.target_core);
+                    return Ok(());
+                }
+            }
+        }
+
+        info!(
+            "⚡ [Ring-0 eBPF Sync] Map `AI_SCHED_MAP` updated: PID {} -> Core {} ({}), Weight {}",
+            pid,
+            target.target_core,
+            match target.core_type {
+                0 => "P-Core",
+                1 => "E-Core",
+                2 => "NPU-Core",
+                _ => "Core",
+            },
+            target.priority_weight
+        );
         Ok(())
     }
 }

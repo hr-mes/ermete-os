@@ -1,5 +1,5 @@
 use aya::maps::HashMap as BpfHashMap;
-use aya::Bpf;
+use aya::Ebpf;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::{info, warn};
@@ -25,7 +25,7 @@ pub struct ExecveEvent {
 }
 
 pub struct BpfExecTracer {
-    bpf: Option<Arc<Mutex<Bpf>>>,
+    bpf: Option<Arc<Mutex<Ebpf>>>,
     simulated_pid_counter: u32,
 }
 
@@ -34,8 +34,8 @@ impl BpfExecTracer {
         info!("🔬 Initializing eBPF sys_execve Tracepoint Monitor...");
 
         let bpf_path = "target/bpfel-unknown-none/release/ermete-ebpf-sched-bpf";
-        let bpf_obj = Bpf::load_file(bpf_path)
-            .or_else(|_| Bpf::load(&[]))
+        let bpf_obj = Ebpf::load_file(bpf_path)
+            .or_else(|_| Ebpf::load(&[]))
             .ok()
             .map(|b| Arc::new(Mutex::new(b)));
 
