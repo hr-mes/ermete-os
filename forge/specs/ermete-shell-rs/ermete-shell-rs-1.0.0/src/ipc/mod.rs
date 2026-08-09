@@ -26,7 +26,12 @@ pub fn init_system_controller() {
         if let (Ok(session), Ok(system)) = (Connection::session().await, Connection::system().await) {
             tracing::info!("Connected to Session and System D-Bus buses cleanly");
             
-            let backend = types::IpcBackend::Dbus { session, system };
+            let backend = types::IpcBackend::Dbus { session: session.clone(), system };
+            
+            let appearance_engine = std::sync::Arc::new(crate::appearance_engine::AppearanceEngine::new());
+            if let Err(err) = crate::appearance_engine::register_layout_dbus(&session, appearance_engine).await {
+                tracing::warn!(error = %err, "Failed registering org.ermete.Shell.Layout DBus interface");
+            }
             
             let audio: Box<dyn ControllerBackend> = Box::new(AudioController::new(backend.clone(), system_proxies::get_audio_bus()));
             let network_ctrl = NetworkController::new(backend.clone(), system_proxies::get_net_bus());

@@ -14,6 +14,7 @@ mod core;
 pub mod morphic_pill;
 pub mod control_center;
 pub mod desktop_canvas;
+pub mod appearance_engine;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]

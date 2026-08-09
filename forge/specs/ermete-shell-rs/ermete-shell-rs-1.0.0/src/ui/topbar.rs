@@ -224,6 +224,8 @@ impl SimpleComponent for TopbarModel {
         root.set_anchor(Edge::Right, true);
         root.set_height_request(28);
 
+        crate::appearance_engine::register_topbar_window(&root);
+
         let workspaces = FactoryVecDeque::builder()
             .launch(gtk::Box::default())
             .detach();

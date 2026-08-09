@@ -11,6 +11,6 @@ pub use sysmon::*;
 pub use wifi::*;
 pub use bluetooth::*;
 pub use audio::*;
-pub use main_cc::*;
+
 pub use start_menu::*;
 pub use calendar::*;

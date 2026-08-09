@@ -1,3 +1,4 @@
+use crate::dock_engine::DockMode;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
@@ -5,6 +6,8 @@ use std::path::PathBuf;
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct DockConfig {
     pub pinned: Vec<String>,
+    #[serde(default)]
+    pub mode: DockMode,
 }
 
 impl Default for DockConfig {
@@ -16,6 +19,7 @@ impl Default for DockConfig {
                 "nautilus.desktop".to_string(),
                 "os.ermete.Settings.desktop".to_string(),
             ],
+            mode: DockMode::Fashion,
         }
     }
 }
@@ -73,10 +77,25 @@ pub fn remove_pin(desktop_id: &str) -> Result<DockConfig, String> {
     Ok(config)
 }
 
+pub fn set_dock_mode(mode: DockMode) -> Result<DockConfig, String> {
+    let mut config = load_dock_config();
+    config.mode = mode;
+    save_dock_config(&config)?;
+    Ok(config)
+}
+
+pub fn toggle_dock_mode() -> Result<DockConfig, String> {
+    let mut config = load_dock_config();
+    config.mode = config.mode.toggle();
+    save_dock_config(&config)?;
+    Ok(config)
+}
+
 pub fn is_pinned(desktop_id: &str) -> bool {
     let config = load_dock_config();
     config.is_pinned(desktop_id)
 }
+
 
 #[cfg(test)]
 pub(crate) static TEST_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
@@ -90,6 +109,7 @@ mod tests {
     fn test_add_and_remove_pin_logic() {
         let mut config = DockConfig {
             pinned: vec!["app1.desktop".to_string()],
+            mode: Default::default(),
         };
         
         // Test add
@@ -116,12 +136,14 @@ mod tests {
         let _lock = TEST_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
         let tmp_dir = std::env::temp_dir().join("ermete_test_dock_config_api");
         let _ = fs::remove_dir_all(&tmp_dir);
-
+        let _ = fs::create_dir_all(&tmp_dir);
+        std::env::set_var("HOME", &tmp_dir);
 
         // Initial load should create default config
         let initial = load_dock_config();
         assert_eq!(initial, DockConfig::default());
         assert!(get_dock_config_path().exists(), "load_dock_config should save default if file didn't exist");
+
 
         // Test add_pin
         let added = add_pin("custom.app.desktop").unwrap_or_default();

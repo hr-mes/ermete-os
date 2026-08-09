@@ -1,5 +1,6 @@
-use crate::dock_config::{add_pin, load_dock_config, remove_pin, DockConfig};
+use crate::dock_config::{add_pin, load_dock_config, remove_pin, toggle_dock_mode, DockConfig};
 use crate::dock_data::{reconcile_dock_items, DockItem, NiriWindowInfo, NiriWorkspaceInfo};
+use crate::dock_engine::{DockEngine, DockMode};
 use crate::dock_watcher::{fetch_current_niri_windows, fetch_current_workspaces, spawn_dock_watchers};
 use crate::controller::DockController;
 use gtk4::glib;
@@ -17,15 +18,19 @@ struct DockState {
     windows: Vec<NiriWindowInfo>,
     workspaces: Vec<NiriWorkspaceInfo>,
     is_hovered: bool,
+    mode: DockMode,
 }
 
+#[allow(dead_code)]
 struct DockItemWidget {
     item_rc: Rc<RefCell<DockItem>>,
     button: Button,
+    icon: Image,
     overlay: gtk4::Overlay,
     badge: Option<gtk4::Label>,
     indicator: GtkBox,
 }
+
 
 impl DockItemWidget {
     fn new(item: DockItem) -> Self {
@@ -86,7 +91,8 @@ impl DockItemWidget {
         let btn_c2 = btn.clone();
         gesture_right.connect_released(move |_, _, _, _| {
             let it = item_c2.borrow();
-            show_dock_context_menu(&btn_c2, &it);
+            let current_mode = load_dock_config().mode;
+            show_dock_context_menu(&btn_c2, &it, current_mode);
         });
         btn.add_controller(gesture_right);
 
@@ -123,9 +129,12 @@ impl DockItemWidget {
         });
         btn.add_controller(drop_ctrl);
 
+        crate::preview_popup::attach_hover_preview(&btn, item_rc.clone());
+
         DockItemWidget {
             item_rc,
             button: btn,
+            icon,
             overlay,
             badge,
             indicator,
@@ -199,12 +208,37 @@ struct DockMonitorInstance {
     container: GtkBox,
     trigger_win: glib::WeakRef<ApplicationWindow>,
     state: Rc<RefCell<DockState>>,
+    engine: Rc<RefCell<DockEngine>>,
     widgets: Vec<DockItemWidget>,
     separator: Option<gtk4::Separator>,
 }
 
 thread_local! {
     static DOCK_INSTANCES: RefCell<Vec<DockMonitorInstance>> = const { RefCell::new(Vec::new()) };
+}
+
+pub fn apply_dock_mode_layout(window: &ApplicationWindow, container: &GtkBox, mode: DockMode) {
+    container.remove_css_class("dock-container-fashion");
+    container.remove_css_class("dock-container-efficient");
+
+    match mode {
+        DockMode::Fashion => {
+            window.set_anchor(Edge::Left, false);
+            window.set_anchor(Edge::Right, false);
+            window.set_anchor(Edge::Bottom, true);
+            window.set_margin(Edge::Bottom, 12);
+            container.add_css_class("dock-container-fashion");
+            container.set_halign(Align::Center);
+        }
+        DockMode::Efficient => {
+            window.set_anchor(Edge::Left, true);
+            window.set_anchor(Edge::Right, true);
+            window.set_anchor(Edge::Bottom, true);
+            window.set_margin(Edge::Bottom, 0);
+            container.add_css_class("dock-container-efficient");
+            container.set_halign(Align::Fill);
+        }
+    }
 }
 
 pub fn animate_dock_visibility(container: &GtkBox, hide: bool) {
@@ -338,8 +372,13 @@ pub fn build_ui(app: &Application) -> ApplicationWindow {
     rx_cfg.attach(None, move |cfg| {
         DOCK_INSTANCES.with(|insts| {
             for inst in insts.borrow_mut().iter_mut() {
-                if inst.state.borrow().pinned != cfg.pinned {
-                    inst.state.borrow_mut().pinned = cfg.pinned.clone();
+                let mut state = inst.state.borrow_mut();
+                let pinned_changed = state.pinned != cfg.pinned;
+                let mode_changed = state.mode != cfg.mode;
+                if pinned_changed || mode_changed {
+                    state.pinned = cfg.pinned.clone();
+                    state.mode = cfg.mode;
+                    drop(state);
                     refresh_monitor_instance(inst);
                 }
             }
@@ -395,8 +434,6 @@ fn create_dock_for_monitor(
     }
     window.set_layer(Layer::Top);
     window.set_namespace("dock");
-    window.set_anchor(Edge::Bottom, true);
-    window.set_margin(Edge::Bottom, 12);
 
     let container = GtkBox::new(Orientation::Horizontal, 8);
     container.add_css_class("dock-container");
@@ -404,6 +441,8 @@ fn create_dock_for_monitor(
     container.set_valign(Align::Center);
     container.set_size_request(64, 48);
     window.set_child(Some(&container));
+
+    apply_dock_mode_layout(&window, &container, initial_config.mode);
 
     let trigger_win = ApplicationWindow::builder()
         .application(app)
@@ -434,7 +473,10 @@ fn create_dock_for_monitor(
         windows: initial_windows.to_vec(),
         workspaces: initial_workspaces.to_vec(),
         is_hovered: false,
+        mode: initial_config.mode,
     }));
+
+    let engine = Rc::new(RefCell::new(DockEngine::new(initial_config.mode)));
 
     let motion_trigger = EventControllerMotion::new();
     let container_weak = container.downgrade();
@@ -477,12 +519,37 @@ fn create_dock_for_monitor(
     });
     container.add_controller(motion_dock_enter);
 
+    let motion_dock_hover = EventControllerMotion::new();
+    let engine_hover = engine.clone();
+    let container_weak_hover = container.downgrade();
+    motion_dock_hover.connect_motion(move |_, x, _| {
+        let mut eng = engine_hover.borrow_mut();
+        if eng.mode.is_fashion() {
+            let mut centers = Vec::new();
+            if let Some(cont) = container_weak_hover.upgrade() {
+                let mut child = cont.first_child();
+                while let Some(c) = child {
+                    if c.has_css_class("dock-item-btn") {
+                        let alloc = c.allocation();
+                        let cx = alloc.x() as f64 + (alloc.width() as f64) / 2.0;
+                        centers.push(cx);
+                    }
+                    child = c.next_sibling();
+                }
+            }
+            eng.update_cursor(Some(x), &centers);
+        }
+    });
+    container.add_controller(motion_dock_hover);
+
     let motion_dock_leave = EventControllerMotion::new();
     let container_weak_leave = container.downgrade();
     let state_leave = state.clone();
+    let engine_leave = engine.clone();
     let connector_clone = connector.clone();
     motion_dock_leave.connect_leave(move |_| {
         state_leave.borrow_mut().is_hovered = false;
+        engine_leave.borrow_mut().update_cursor(None, &[]);
         let cont_weak = container_weak_leave.clone();
         let st = state_leave.clone();
         let conn = connector_clone.clone();
@@ -517,6 +584,37 @@ fn create_dock_for_monitor(
     });
     trigger_box.add_controller(motion_trig_leave);
 
+    let engine_tick = engine.clone();
+    let container_weak_tick = container.downgrade();
+    glib::timeout_add_local(std::time::Duration::from_millis(16), move || {
+        let mut eng = engine_tick.borrow_mut();
+        let scales = eng.step_physics(0.016);
+
+        if let Some(cont) = container_weak_tick.upgrade() {
+            let mut idx = 0;
+            let mut child = cont.first_child();
+            while let Some(c) = child {
+                if c.has_css_class("dock-item-btn") {
+                    if let Some(&scale) = scales.get(idx) {
+                        if let Some(btn) = c.downcast_ref::<Button>() {
+                            if let Some(box_inner) = btn.child().and_then(|w| w.downcast::<GtkBox>().ok()) {
+                                if let Some(overlay) = box_inner.first_child().and_then(|w| w.downcast::<gtk4::Overlay>().ok()) {
+                                    if let Some(img) = overlay.child().and_then(|w| w.downcast::<Image>().ok()) {
+                                        img.set_pixel_size((44.0 * scale).round() as i32);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    idx += 1;
+                }
+                child = c.next_sibling();
+            }
+        }
+
+        glib::ControlFlow::Continue
+    });
+
     trigger_win.present();
 
     let mut inst = DockMonitorInstance {
@@ -526,6 +624,7 @@ fn create_dock_for_monitor(
         container: container.clone(),
         trigger_win: trigger_win.downgrade(),
         state,
+        engine,
         widgets: Vec::new(),
         separator: None,
     };
@@ -541,6 +640,13 @@ fn create_dock_for_monitor(
 
 fn refresh_monitor_instance(inst: &mut DockMonitorInstance) {
     let state = inst.state.borrow();
+    let mode = state.mode;
+    inst.engine.borrow_mut().set_mode(mode);
+
+    if let Some(win) = inst.window.upgrade() {
+        apply_dock_mode_layout(&win, &inst.container, mode);
+    }
+
     let new_items = reconcile_dock_items(&state.pinned, &state.windows);
     let is_hovered = state.is_hovered;
 
@@ -629,7 +735,7 @@ fn show_window_picker_popover(anchor: &Button, item: &DockItem) {
     popover.popup();
 }
 
-fn show_dock_context_menu(anchor: &Button, item: &DockItem) {
+fn show_dock_context_menu(anchor: &Button, item: &DockItem, mode: DockMode) {
     let popover = Popover::builder()
         .autohide(true)
         .css_classes(["dock-popover"])
@@ -691,6 +797,22 @@ fn show_dock_context_menu(anchor: &Button, item: &DockItem) {
         });
         box_inner.append(&btn_close);
     }
+
+    let mode_label = if mode.is_fashion() {
+        "Passa a Modalità Efficiente (Taskbar)"
+    } else {
+        "Passa a Modalità Fashion (Pill Floating)"
+    };
+    let btn_mode = Button::builder()
+        .label(mode_label)
+        .css_classes(["dock-popover-btn"])
+        .build();
+    let pop_close_m = popover.clone();
+    btn_mode.connect_clicked(move |_| {
+        let _ = toggle_dock_mode();
+        pop_close_m.popdown();
+    });
+    box_inner.append(&btn_mode);
 
     let sep1 = gtk4::Separator::new(Orientation::Horizontal);
     sep1.set_margin_top(4);
