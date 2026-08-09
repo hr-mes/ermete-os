@@ -42,13 +42,25 @@ pub fn build_page() -> GtkBox {
 
     settings_card.append(&battery_row);
 
-    // Asynchronously fetch sysfs capacity
+    // Asynchronously fetch capacity via UPower DBus proxy (Zero-Trust compliant)
     let progress_bar_clone = progress_bar.clone();
     relm4::spawn_local(async move {
-        let capacity = match tokio::fs::read_to_string("/sys/class/power_supply/BAT0/capacity").await {
-            Ok(s) => s.trim().parse::<u32>().ok(),
-            Err(_) => None,
-        };
+        let mut capacity: Option<u32> = None;
+        if let Ok(conn) = zbus::Connection::system().await {
+            if let Ok(msg) = conn.call_method(
+                Some("org.freedesktop.UPower"),
+                "/org/freedesktop/UPower/devices/DisplayDevice",
+                Some("org.freedesktop.DBus.Properties"),
+                "Get",
+                &("org.freedesktop.UPower.Device", "Percentage"),
+            ).await {
+                if let Ok(val) = msg.body().deserialize::<zbus::zvariant::OwnedValue>() {
+                    if let Ok(pct) = f64::try_from(val) {
+                        capacity = Some(pct.round() as u32);
+                    }
+                }
+            }
+        }
 
         let (fraction, progress_text) = match capacity {
             Some(cap) => {

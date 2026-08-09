@@ -6,13 +6,13 @@ description = "Ermete OS AI Predictive Telemetry & Log-Aggregator Self-Healing D
 authors = ["Predictive Telemetry Architect <telemetry@ermete.os>"]
 
 [dependencies]
-tokio = { version = "1.37", features = ["full"] }
+tokio = { workspace = true, features = ["full"] }
 tokio-stream = "0.1"
-zbus = "4.1"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-tracing = "0.1"
-tracing-subscriber = "0.3"
-anyhow = "1.0"
-reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
+zbus = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = { workspace = true }
+reqwest = { workspace = true }
 chrono = { version = "0.4", features = ["serde"] }

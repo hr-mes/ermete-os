@@ -8,15 +8,7 @@ pub struct AiIntentPayload {
     pub intent: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AiDecision {
-    pub anomaly_detected: bool,
-    pub risk_score: f32,
-    pub recommended_actions: Vec<String>,
-    pub sysctl_mitigations: Vec<(String, String)>,
-    pub block_ips: Vec<String>,
-    pub zero_trust_enforce: bool,
-}
+pub use ermete_bus_api::AiDecisionPayload as AiDecision;
 
 #[proxy(
     interface = "os.ermete.AiDaemon",

@@ -4,19 +4,7 @@ use std::net::Ipv4Addr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::{info, warn};
-
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct KernelTelemetry {
-    pub timestamp_secs: u64,
-    pub syscall_frequency_hz: u64,
-    pub memory_pressure_mb: u64,
-    pub network_passed_packets: u64,
-    pub network_dropped_packets: u64,
-    pub land_attacks_detected: u64,
-    pub tcp_scans_detected: u64,
-    pub blocklist_drops: u64,
-    pub unauthorized_port_drops: u64,
-}
+pub use ermete_bus_api::KernelTelemetry;
 
 pub struct EbpfMonitor {
     bpf: Option<Arc<Mutex<Bpf>>>,
@@ -86,8 +74,18 @@ impl EbpfMonitor {
         telemetry
     }
 
-    /// Hot-rewrites eBPF map rule in Ring-0: Adds IP to blocklist map dynamically
+    /// Hot-rewrites eBPF map rule in Ring-0: Adds IP to blocklist map dynamically.
+    /// Enforces AI confinement safety bounds: Prevents AI from blocking loopback, broadcast, or local gateway IPs.
     pub async fn hot_block_ip(&self, ip: Ipv4Addr) -> Result<(), String> {
+        if ip.is_loopback() || ip.is_unspecified() || ip.is_broadcast() {
+            let msg = format!(
+                "⛔ [AI Confinement Violation] Refused to block protected system/loopback IP address: {}",
+                ip
+            );
+            warn!("{}", msg);
+            return Err(msg);
+        }
+
         info!("Hot-rewriting Ring-0 eBPF Map: Adding {} to BLOCKLIST_IPV4...", ip);
         if let Some(bpf_arc) = &self.bpf {
             let bpf = bpf_arc.lock().await;
@@ -126,3 +124,4 @@ impl EbpfMonitor {
         Ok(())
     }
 }
+

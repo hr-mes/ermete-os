@@ -51,16 +51,8 @@ impl DisplayActor {
                 let val = (brightness * 100.0) as u32;
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), LogindSessionProxy::new(system)).await {
                     proxy.set_brightness("backlight", "intel_backlight", val).await?;
-                } else if let Ok(entries) = std::fs::read_dir("/sys/class/backlight") {
-                    for entry in entries.flatten() {
-                        let path = entry.path();
-                        if let Ok(max_str) = std::fs::read_to_string(path.join("max_brightness")) {
-                            if let Ok(max_val) = max_str.trim().parse::<f64>() {
-                                let target = (brightness * max_val).round() as u64;
-                                let _ = std::fs::write(path.join("brightness"), target.to_string());
-                            }
-                        }
-                    }
+                } else {
+                    tracing::warn!("[Zero-Trust] LogindSessionProxy unavailable for setting brightness via DBus; direct sysfs write bypass blocked.");
                 }
             }
             IpcBackend::Mock(state) => {

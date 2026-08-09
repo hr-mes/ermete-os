@@ -1,7 +1,11 @@
 use crate::backend::render::{KawaseBlurConfig, KawaseBlurPipeline};
 use crate::backend::DrmKmsBackend;
+use crate::dbus_listener::{spawn_dbus_appearance_listener, AppearanceSettings};
 use crate::desktop_state::DesktopState;
 use crate::ipc::protocol::{AiLayoutCommand, CompositorStatus, IpcResponse};
+use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
+use tokio::sync::watch;
 use tracing::info;
 
 pub struct CompositorState {
@@ -10,15 +14,38 @@ pub struct CompositorState {
     pub blur_pipeline: KawaseBlurPipeline,
     #[allow(dead_code)]
     pub is_running: bool,
+    pub appearance_dirty: Arc<AtomicBool>,
+    pub appearance_rx: watch::Receiver<AppearanceSettings>,
+    pub current_appearance: AppearanceSettings,
+    #[allow(dead_code)]
+    dbus_listener_handle: tokio::task::JoinHandle<()>,
 }
 
 impl CompositorState {
     pub fn new(drm_backend: DrmKmsBackend) -> Self {
+        let appearance_dirty = Arc::new(AtomicBool::new(false));
+        let (tx, rx) = watch::channel(AppearanceSettings::default());
+
+        let listener_handle = spawn_dbus_appearance_listener(Arc::clone(&appearance_dirty), tx);
+
         Self {
             desktop_state: DesktopState::new(drm_backend),
             blur_pipeline: KawaseBlurPipeline::new(KawaseBlurConfig::default()),
             is_running: true,
+            appearance_dirty,
+            appearance_rx: rx,
+            current_appearance: AppearanceSettings::default(),
+            dbus_listener_handle: listener_handle,
         }
+    }
+
+    pub fn apply_pending_appearance(&mut self) {
+        let updated = self.appearance_rx.borrow().clone();
+        info!(
+            "Applying pre-parsed DBus appearance update without blocking 1000Hz loop: color_scheme={}, accent={}",
+            updated.color_scheme, updated.accent_color
+        );
+        self.current_appearance = updated;
     }
 
     pub fn tick_animation(&mut self, dt: f64) {

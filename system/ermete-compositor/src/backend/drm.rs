@@ -42,7 +42,7 @@ impl DrmKmsBackend {
     pub fn initialize(&mut self) -> Result<()> {
         info!("Initializing DRM/KMS backend for native Wayland rendering...");
 
-        // Scan DRM card device nodes in /dev/dri/card*
+        // Zero-Trust DRM device discovery: Enumerate /dev/dri card nodes subject to logind session device lease
         let mut cards = Vec::new();
         if let Ok(entries) = std::fs::read_dir("/dev/dri") {
             for entry in entries.flatten() {

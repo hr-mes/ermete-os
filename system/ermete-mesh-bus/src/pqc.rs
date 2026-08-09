@@ -24,14 +24,7 @@ struct PqcEngineInner {
     node_id: String,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct NodeIdentity {
-    pub node_id: String,
-    pub x25519_public_b64: String,
-    pub kyber_public_b64: String,
-    pub dilithium_public_b64: String,
-    pub pqc_level: String,
-}
+pub use ermete_bus_api::NodeIdentityPayload as NodeIdentity;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct HandshakeInitPayload {

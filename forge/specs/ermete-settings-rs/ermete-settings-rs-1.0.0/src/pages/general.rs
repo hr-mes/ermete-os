@@ -30,10 +30,22 @@ pub fn build_page() -> Box {
 
     let kernel_sub_clone = kernel_subtitle.clone();
     relm4::spawn_local(async move {
-        let ver = match tokio::fs::read_to_string("/proc/sys/kernel/osrelease").await {
-            Ok(o) => o.trim().to_string(),
-            Err(_) => "6.12.0-chimera".to_string(),
-        };
+        let mut ver = "6.12.0-ermete".to_string();
+        if let Ok(conn) = zbus::Connection::system().await {
+            if let Ok(msg) = conn.call_method(
+                Some("org.freedesktop.hostname1"),
+                "/org/freedesktop/hostname1",
+                Some("org.freedesktop.DBus.Properties"),
+                "Get",
+                &("org.freedesktop.hostname1", "KernelRelease"),
+            ).await {
+                if let Ok(val) = msg.body().deserialize::<zbus::zvariant::OwnedValue>() {
+                    if let Ok(kver) = String::try_from(val) {
+                        ver = kver;
+                    }
+                }
+            }
+        }
         kernel_sub_clone.set_label(&ver);
     });
 

@@ -2,16 +2,17 @@
 
 mod animation;
 mod backend;
+mod dbus_listener;
 mod desktop_state;
 mod ipc;
 mod state;
 mod tiling;
 
-
 use anyhow::{Context, Result};
 use backend::{DrmBackendConfig, DrmKmsBackend};
 use ipc::IpcServer;
 use state::CompositorState;
+use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::{info, Level};
@@ -71,7 +72,15 @@ async fn main() -> Result<()> {
             last_tick = now;
 
             let dt = dt.min(0.05); // Cap dt for numerical safety on lag spikes
+
             let mut state_guard = anim_state.lock().await;
+            // Lock-free atomic dirty flag check prevents synchronous I/O or Mutex contention during DBus storms
+            if state_guard
+                .appearance_dirty
+                .swap(false, Ordering::Acquire)
+            {
+                state_guard.apply_pending_appearance();
+            }
             state_guard.tick_animation(dt);
         }
     });

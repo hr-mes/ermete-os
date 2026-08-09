@@ -4,14 +4,14 @@ version = "1.0.0"
 edition = "2021"
 
 [dependencies]
-tokio = { version = "1.37", features = ["full"] }
-zbus = "4.0"
-tracing = "0.1"
+tokio = { workspace = true, features = ["full"] }
+zbus = { workspace = true }
+tracing = { workspace = true }
 boringtun = "0.6"
 x25519-dalek = "=2.0.0-rc.3"
 base64 = "0.21"
 rand_core = "0.6"
-pqc_kyber = { version = "0.7.1", features = ["kyber1024"] }
-pqc_dilithium = "0.2.0"
+pqc_kyber = { workspace = true, features = ["kyber1024"] }
+pqc_dilithium = { workspace = true }
 
 

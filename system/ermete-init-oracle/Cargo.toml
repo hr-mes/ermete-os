@@ -6,12 +6,12 @@ description = "Ermete OS Autonomous AI Systemd Init Oracle Daemon"
 authors = ["ermete-init-oracle-architect"]
 
 [dependencies]
-tokio = { version = "1.37", features = ["full"] }
-zbus = "4.1"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-tracing = "0.1"
-tracing-subscriber = "0.3"
-anyhow = "1.0"
+tokio = { workspace = true, features = ["full"] }
+zbus = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = { workspace = true }
 regex = "1.10"
 

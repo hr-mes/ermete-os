@@ -292,6 +292,40 @@ pub fn get_theme_css_path() -> PathBuf {
     get_config_dir().join("theme.css")
 }
 
+pub async fn apply_accent_color_async(hex_color: &str) -> Result<String, String> {
+    let palette = AccentPalette::from_hex(hex_color);
+    let css_content = palette.generate_gtk_css();
+
+    let config_dir = get_config_dir();
+    if let Err(e) = tokio::fs::create_dir_all(&config_dir).await {
+        return Err(format!("Failed to create config dir: {}", e));
+    }
+
+    let accent_path = get_accent_css_path();
+    if let Err(e) = tokio::fs::write(&accent_path, &css_content).await {
+        return Err(format!("Failed to write accent.css: {}", e));
+    }
+
+    let theme_path = get_theme_css_path();
+    let updated_theme_css = if tokio::fs::metadata(&theme_path).await.is_ok() {
+        if let Ok(existing) = tokio::fs::read_to_string(&theme_path).await {
+            if let Some(pos) = existing.find("/* Dynamic Global Accent Color Engine") {
+                format!("{}\n{}", &existing[..pos], css_content)
+            } else {
+                format!("{}\n\n{}", existing, css_content)
+            }
+        } else {
+            css_content.clone()
+        }
+    } else {
+        css_content.clone()
+    };
+
+    let _ = tokio::fs::write(&theme_path, updated_theme_css).await;
+
+    Ok(css_content)
+}
+
 pub fn apply_accent_color(hex_color: &str) -> Result<String, String> {
     let palette = AccentPalette::from_hex(hex_color);
     let css_content = palette.generate_gtk_css();

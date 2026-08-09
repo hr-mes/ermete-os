@@ -324,7 +324,7 @@ impl SettingsService {
                             let _ = appearance_tx.send(appearance_state.clone());
                             let accent_val = val.clone();
                             tokio::spawn(async move {
-                                let _ = crate::accent_engine::apply_accent_color(&accent_val);
+                                let _ = crate::accent_engine::apply_accent_color_async(&accent_val).await;
                             });
                             if let Some(ref w) = worker {
                                 let _ = w.apply_accent_color(&val).await;

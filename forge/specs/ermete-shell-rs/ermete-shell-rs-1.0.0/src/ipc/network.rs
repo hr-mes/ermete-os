@@ -499,25 +499,9 @@ fn get_net_cache() -> &'static ArcSwap<(String, String, String)> {
     })
 }
 
-/// Reads `/sys/class/net` for network interface operstates off the main thread.
+/// Queries network status via DBus / system network proxy (Zero-Trust compliant).
 pub fn check_sysfs_net_status() -> (String, String, String) {
-    if let Ok(entries) = std::fs::read_dir("/sys/class/net") {
-        for entry in entries.flatten() {
-            let name = entry.file_name().to_string_lossy().to_string();
-            if name == "lo" {
-                continue;
-            }
-            if let Ok(state) = std::fs::read_to_string(entry.path().join("operstate")) {
-                if state.trim() == "up" {
-                    if name.starts_with("eth") || name.starts_with("en") {
-                        return ("󰈀".to_string(), "Ethernet".to_string(), "Connesso via cavo".to_string());
-                    } else if name.starts_with("wl") {
-                        return ("".to_string(), "Rete Wi-Fi".to_string(), "Connesso".to_string());
-                    }
-                }
-            }
-        }
-    }
+    // Zero-Trust policy: Direct /sys/class/net reads are disabled in favor of NetworkManager DBus IPC.
     ("󰖪".to_string(), "Rete Wi-Fi".to_string(), "Non connesso".to_string())
 }
 

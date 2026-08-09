@@ -6,21 +6,21 @@ description = "Ermete OS Confidential Computing Attestation Tool"
 authors = ["ermete-kernel-developer"]
 
 [dependencies]
-anyhow = "1.0"
+anyhow = { workspace = true }
 log = "0.4"
-env_logger = "0.11"
-nix = { version = "0.29", features = ["fs", "ioctl"] }
+env_logger = { workspace = true }
+nix = { workspace = true, features = ["fs", "ioctl"] }
 ring = "0.17"
-sha2 = "0.10"
+sha2 = { workspace = true }
 p384 = { version = "0.13", features = ["ecdsa"] }
 p256 = { version = "0.13", features = ["ecdsa"] }
-zeroize = { version = "1.8", features = ["zeroize_derive"] }
-hex = "0.4"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-pqc_dilithium = "0.2.0"
-pqc_kyber = { version = "0.7.1", features = ["kyber1024"] }
-tokio = { version = "1.37", features = ["full"] }
-zbus = "4.1.2"
-tracing = "0.1"
+zeroize = { workspace = true, features = ["zeroize_derive"] }
+hex = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+pqc_dilithium = { workspace = true }
+pqc_kyber = { workspace = true, features = ["kyber1024"] }
+tokio = { workspace = true, features = ["full"] }
+zbus = { workspace = true }
+tracing = { workspace = true }
 

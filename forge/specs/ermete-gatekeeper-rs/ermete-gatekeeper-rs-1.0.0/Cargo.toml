@@ -12,14 +12,14 @@ name = "ermete-gatekeeper-rs"
 path = "src/main.rs"
 
 [dependencies]
-libc = { version = "0.2", default-features = false }
-tokio = { version = "1.0", features = ["full"] }
-zbus = "4.4.0"
+libc = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+zbus = { workspace = true }
 xattr = "1.0"
-gtk4 = "0.7.3"
-pqc_dilithium = "0.2.0"
+gtk4 = { workspace = true }
+pqc_dilithium = { workspace = true }
 uuid = { version = "1.0", features = ["v4"] }
-anyhow = "1.0"
+anyhow = { workspace = true }
 
 
 

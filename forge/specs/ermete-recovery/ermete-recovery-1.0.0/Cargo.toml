@@ -11,8 +11,8 @@ name = "ermete-recovery-ui"
 path = "src/main.rs"
 
 [dependencies]
-tokio = { version = "1.52.3", features = ["full"] }
-zbus = { version = "5.17.0", features = ["tokio"] }
-futures-util = "0.3.30"
+tokio = { workspace = true, features = ["full"] }
+zbus = { workspace = true, features = ["tokio"] }
+futures-util = { workspace = true }
 
 

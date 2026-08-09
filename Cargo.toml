@@ -24,8 +24,12 @@ members = [
     "system/ebpf/ebpf-core",
     "system/ebpf/ebpf-loader",
     "system/ermete-agentic-kernel",
+    "system/ermete-audio-bus",
+    "system/ermete-bus-api",
     "system/ermete-cluster-mesh",
+    "system/ermete-compositor",
     "system/ermete-ebpf-sched",
+    "system/ermete-greeter",
     "system/ermete-hypervisor-daemon",
     "system/ermete-init-oracle",
     "system/ermete-kernel-forge",
@@ -37,15 +41,64 @@ members = [
 ]
 
 exclude = [
-    "tests/fuzz",
-    # Esclusi dal workspace Cargo perché costituiscono build esterni/nativi:
-    "system/ermete-audio-bus",
-    "system/ermete-compositor",
-    "system/ermete-greeter"
+    "tests/fuzz"
 ]
 
-
 resolver = "2"
+
+[workspace.dependencies]
+# Async Runtime & Core Utilities
+tokio = { version = "1.53.1", features = ["full"] }
+tokio-util = { version = "0.7.13", features = ["codec"] }
+async-trait = "0.1.91"
+futures-util = "0.3.30"
+bytes = "1.10.1"
+libc = "0.2.189"
+
+# D-Bus & Inter-Process Communication
+zbus = { version = "5.18.0", features = ["tokio"] }
+
+# HTTP & Network Clients
+reqwest = { version = "0.13.4", features = ["stream", "rustls", "json"] }
+
+# GUI, Display & Wayland Ecosystem
+gtk4 = "0.7.3"
+gtk4-layer-shell = "0.2.0"
+glib = "0.18.5"
+relm4 = "0.7.1"
+smithay = { version = "0.3.0", default-features = false }
+wayland-server = "0.31.0"
+wayland-client = "0.31.0"
+
+# Serialization & Error Handling
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+thiserror = "2.0.19"
+anyhow = "1.0.99"
+
+# Logging & Telemetry
+tracing = "0.1.44"
+tracing-subscriber = "0.3.23"
+log = "0.4.29"
+env_logger = "0.11.11"
+
+# Post-Quantum & Security Cryptography
+pqc_kyber = "0.7.1"
+pqc_dilithium = "0.2.0"
+x25519-dalek = "=2.0.0-rc.3"
+sha2 = "0.10.9"
+hex = "0.4.3"
+ring = "0.17.14"
+zeroize = "1.8.1"
+
+# eBPF / Kernel Instrumentation
+aya = "0.13.1"
+
+# System Utilities & CLI
+nix = "0.29.0"
+clap = { version = "4.6.4", features = ["derive"] }
+mimalloc = { version = "0.1.43", default-features = false }
+rand = "0.8.5"
 
 [profile.release]
 opt-level = "z"

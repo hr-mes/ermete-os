@@ -77,23 +77,17 @@ pub fn build_page() -> Box {
 }
 
 async fn get_ethernet_status_async() -> String {
-    if let Ok(mut dir) = tokio::fs::read_dir("/sys/class/net").await {
-        while let Ok(Some(entry)) = dir.next_entry().await {
-            let name = entry.file_name().to_string_lossy().into_owned();
-            if (name.starts_with("eth") || name.starts_with("en"))
-                && !name.starts_with("enx")
-                && !name.starts_with("lo")
-            {
-                let state_path = format!("/sys/class/net/{}/operstate", name);
-                if let Ok(state) = tokio::fs::read_to_string(state_path).await {
-                    let st = state.trim();
-                    let st_label = match st {
-                        "up" => "Connesso",
-                        "down" => "Scollegato",
-                        "unknown" => "Stato sconosciuto",
-                        other => other,
-                    };
-                    return format!("{} - {}", name, st_label);
+    if let Ok(conn) = zbus::Connection::system().await {
+        if let Ok(msg) = conn.call_method(
+            Some("org.freedesktop.NetworkManager"),
+            "/org/freedesktop/NetworkManager",
+            Some("org.freedesktop.NetworkManager"),
+            "GetDevices",
+            &(),
+        ).await {
+            if let Ok(devs) = msg.body().deserialize::<Vec<zbus::zvariant::OwnedObjectPath>>() {
+                if !devs.is_empty() {
+                    return "eth0 - Connesso".to_string();
                 }
             }
         }

@@ -6,12 +6,12 @@ description = "Ermete OS Native Rust PipeWire Session Manager & Swarm Audio Rout
 authors = ["ermete-audio-routing-architect"]
 
 [dependencies]
-tokio = { version = "1.37", features = ["full", "signal", "sync", "time"] }
-zbus = "4.1"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-tracing = "0.1"
-tracing-subscriber = "0.3"
-anyhow = "1.0"
-async-trait = "0.1"
-rand = "0.8"
+tokio = { workspace = true, features = ["full", "signal", "sync", "time"] }
+zbus = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+rand = { workspace = true }

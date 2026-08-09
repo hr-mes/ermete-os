@@ -6,15 +6,17 @@ description = "Ermete OS Native AI-Driven Wayland Compositor (Smithay DRM/KMS & 
 authors = ["ermete-compositor-architect"]
 
 [dependencies]
-tokio = { version = "1.37", features = ["full"] }
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-anyhow = "1.0"
-thiserror = "1.0"
-nix = { version = "0.28", features = ["fs", "process", "signal"] }
-smithay = { version = "0.3.0", default-features = false, features = [
+tokio = { workspace = true, features = ["full"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+zbus = { workspace = true }
+futures-util = "0.3"
+nix = { workspace = true, features = ["fs", "process", "signal"] }
+smithay = { workspace = true, features = [
     "backend_drm",
     "backend_udev",
     "backend_egl",
@@ -24,4 +26,4 @@ smithay = { version = "0.3.0", default-features = false, features = [
     "renderer_gl",
     "wayland_frontend"
 ] }
-wayland-server = "0.31"
+wayland-server = { workspace = true }

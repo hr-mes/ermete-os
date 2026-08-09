@@ -21,6 +21,12 @@ pub struct SchedExtController {
     sched_ext_enabled: bool,
 }
 
+/// Critical process PIDs that AI agent scheduling must never deprioritize or manipulate
+const PROTECTED_PIDS: &[u32] = &[
+    0, // Kernel idle process
+    1, // Init / systemd / system-oracle process
+];
+
 impl SchedExtController {
     pub fn new() -> Self {
         let is_sched_ext_available = std::path::Path::new("/sys/kernel/sched_ext").exists();
@@ -36,8 +42,39 @@ impl SchedExtController {
         }
     }
 
-    /// Apply zero-latency task priority decision directly into kernel sched_ext BPF maps
+    /// Apply zero-latency task priority decision directly into kernel sched_ext BPF maps.
+    /// Validates safety boundaries to prevent AI manipulation of PID 1 or out-of-range slice values.
     pub async fn apply_task_policy(&self, policy: &TaskSchedPolicy) -> Result<(), String> {
+        // 1. PID Protection Check (PID 1 / Kernel Idle protection)
+        if PROTECTED_PIDS.contains(&policy.pid) {
+            let msg = format!(
+                "⛔ [AI Confinement Violation] Refused to modify scheduling metrics for critical system PID {}. PID 1 / Gatekeeper protection active.",
+                policy.pid
+            );
+            warn!("{}", msg);
+            return Err(msg);
+        }
+
+        // 2. CPU Weight Boundary Check (cgroup v2 range 1..=10000)
+        if policy.cpu_weight < 1 || policy.cpu_weight > 10000 {
+            let msg = format!(
+                "⛔ [AI Confinement Violation] Invalid cpu_weight {} for PID {}. Weight must be between 1 and 10000.",
+                policy.cpu_weight, policy.pid
+            );
+            warn!("{}", msg);
+            return Err(msg);
+        }
+
+        // 3. Time Slice Boundary Check (100us to 100,000us max slice)
+        if policy.slice_us < 100 || policy.slice_us > 100_000 {
+            let msg = format!(
+                "⛔ [AI Confinement Violation] Invalid time slice {}us for PID {}. Slice must be between 100us and 100,000us.",
+                policy.slice_us, policy.pid
+            );
+            warn!("{}", msg);
+            return Err(msg);
+        }
+
         info!(
             "⚡ [sched_ext] Applying policy for PID {} ('{:?}'): Weight={}, Slice={}us, TargetLatency={}us",
             policy.pid, policy.class, policy.cpu_weight, policy.slice_us, policy.latency_target_us
@@ -53,3 +90,4 @@ impl SchedExtController {
         Ok(())
     }
 }
+

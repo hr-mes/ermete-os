@@ -6,24 +6,24 @@ authors = ["Ermete Forge <forge@ermete.os>"]
 description = "Pure Rust native shell for Ermete OS"
 
 [dependencies]
-mimalloc = { version = "0.1", default-features = false }
-gtk4 = "0.7"
-gtk4-layer-shell = "0.2"
-glib = "0.18"
+mimalloc = { workspace = true }
+gtk4 = { workspace = true }
+gtk4-layer-shell = { workspace = true }
+glib = { workspace = true }
 chrono = "0.4"
-serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.120"
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 toml = "0.8"
-zbus = "4.4.0"
-tokio = { version = "1.52.3", features = ["rt-multi-thread", "macros", "net", "rt", "sync", "time"] }
+zbus = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "net", "rt", "sync", "time"] }
 notify = "6.1.1"
-clap = { version = "4.6.1", features = ["derive"] }
+clap = { workspace = true, features = ["derive"] }
 greetd_ipc = "0.10.3"
 meval = "0.2"
-relm4 = "0.7"
+relm4 = { workspace = true }
 landlock = "0.4"
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
 
 arc-swap = "1.6"
 

@@ -1,5 +1,5 @@
 use aya::programs::TracePoint;
-use aya::Bpf;
+use aya::Ebpf;
 use aya::maps::perf::PerfEventArray;
 use aya::util::online_cpus;
 use bytes::BytesMut;
@@ -15,7 +15,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Load the compiled eBPF bytecode.
     // (Falling back to empty load for compilation/stub logic if path missing)
     let bpf_path = "target/bpfel-unknown-none/release/ermete-sysmon-ebpf";
-    let mut bpf = Bpf::load_file(bpf_path).or_else(|_| Bpf::load(&[]))?;
+    let bpf = Ebpf::load_file(bpf_path).or_else(|_| Ebpf::load(&[]))?;
+    let bpf: &'static mut Ebpf = Box::leak(Box::new(bpf));
     
     // Attach to the tracepoint
     let program: &mut TracePoint = bpf.program_mut("sched_process_exec").ok_or("program 'sched_process_exec' not found")?.try_into()?;
@@ -24,9 +25,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("eBPF hooks attached to sched:sched_process_exec.");
     
     // Read events from the kernel via PerfEventArray
-    if let Ok(events_map) = bpf.map_mut("EVENTS") {
+    if let Some(events_map) = bpf.map_mut("EVENTS") {
         let mut perf_array = PerfEventArray::try_from(events_map)?;
-        for cpu_id in online_cpus()? {
+        for cpu_id in online_cpus().map_err(|(s, e)| format!("{s}: {e}"))? {
             let mut buf = perf_array.open(cpu_id, None)?;
             task::spawn(async move {
                 let mut buffers = (0..10).map(|_| BytesMut::with_capacity(1024)).collect::<Vec<_>>();

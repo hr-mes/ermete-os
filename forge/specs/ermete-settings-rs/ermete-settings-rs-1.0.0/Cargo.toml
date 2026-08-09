@@ -6,13 +6,13 @@ authors = ["Ermete Forge <forge@ermete.os>"]
 description = "Pure Rust native System Settings for Ermete OS"
 
 [dependencies]
-mimalloc = { version = "0.1", default-features = false }
-gtk4 = "0.7"
-glib = "0.18"
-zbus = "4.4.0"
-tokio = { version = "1.28", features = ["full"] }
+mimalloc = { workspace = true }
+gtk4 = { workspace = true }
+glib = { workspace = true }
+zbus = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
 rustix = { version = "0.38", features = ["process"] }
-relm4 = "0.7"
+relm4 = { workspace = true }
 ermete-style = { path = "../../ermete-style" }
 ermete-niri-ipc = { version = "0.1.0", path = "../../ermete-niri-ipc" }
 
