@@ -126,7 +126,7 @@ pub fn spawn_notification_daemon(app: &Application) {
         };
 
         let builder = match zbus::connection::Builder::session() {
-            Ok(b) => b,
+            Ok(b) => b.max_queued(1024),
             Err(e) => {
                 tracing::error!("Failed to get session bus: {}", e);
                 return;

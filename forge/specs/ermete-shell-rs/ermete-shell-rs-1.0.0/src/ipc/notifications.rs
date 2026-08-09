@@ -56,6 +56,63 @@ thread_local! {
     pub static NOTIFICATIONS: std::cell::RefCell<Vec<NotificationData>> = const { std::cell::RefCell::new(Vec::new()) };
 }
 
+const MAX_APP_NAME_LEN: usize = 256;
+const MAX_SUMMARY_LEN: usize = 1024;
+const MAX_BODY_LEN: usize = 4096;
+const MAX_ACTIONS_COUNT: usize = 32;
+const MAX_ACTION_STR_LEN: usize = 256;
+const MAX_HINT_DEPTH: usize = 8;
+const MAX_HINT_NODES: usize = 64;
+
+pub fn validate_zvariant_value_depth(
+    val: &zbus::zvariant::Value<'_>,
+    current_depth: usize,
+    max_depth: usize,
+    count: &mut usize,
+    max_nodes: usize,
+) -> bool {
+    if current_depth > max_depth {
+        return false;
+    }
+    *count += 1;
+    if *count > max_nodes {
+        return false;
+    }
+
+    match val {
+        zbus::zvariant::Value::Value(inner) => {
+            validate_zvariant_value_depth(inner, current_depth + 1, max_depth, count, max_nodes)
+        }
+        zbus::zvariant::Value::Array(arr) => {
+            for element in arr.inner() {
+                if !validate_zvariant_value_depth(element, current_depth + 1, max_depth, count, max_nodes) {
+                    return false;
+                }
+            }
+            true
+        }
+        zbus::zvariant::Value::Dict(dict) => {
+            for (k, v) in dict.iter() {
+                if !validate_zvariant_value_depth(k, current_depth + 1, max_depth, count, max_nodes)
+                    || !validate_zvariant_value_depth(v, current_depth + 1, max_depth, count, max_nodes)
+                {
+                    return false;
+                }
+            }
+            true
+        }
+        zbus::zvariant::Value::Structure(structure) => {
+            for field in structure.fields() {
+                if !validate_zvariant_value_depth(field, current_depth + 1, max_depth, count, max_nodes) {
+                    return false;
+                }
+            }
+            true
+        }
+        _ => true,
+    }
+}
+
 pub struct NotificationServer {
     pub sender: glib::Sender<NotificationData>,
     pub counter: std::sync::atomic::AtomicU32,
@@ -75,6 +132,35 @@ impl NotificationServer {
         _hints: std::collections::HashMap<&str, zbus::zvariant::Value<'_>>,
         _expire_timeout: i32,
     ) -> u32 {
+        // Enforce strict byte bounds on input strings to prevent OOM / IPC payload bombs
+        let bounded_app_name = if app_name.len() > MAX_APP_NAME_LEN {
+            &app_name[..MAX_APP_NAME_LEN]
+        } else {
+            app_name
+        };
+        let bounded_summary = if summary.len() > MAX_SUMMARY_LEN {
+            &summary[..MAX_SUMMARY_LEN]
+        } else {
+            summary
+        };
+        let bounded_body = if body.len() > MAX_BODY_LEN {
+            &body[..MAX_BODY_LEN]
+        } else {
+            body
+        };
+
+        // Enforce hint recursion & total node limits (Billion Laughs IPC protection)
+        for (k, v) in &_hints {
+            if k.len() > 256 {
+                tracing::warn!("Ignored oversized DBus notification hint key");
+                continue;
+            }
+            let mut node_count = 0;
+            if !validate_zvariant_value_depth(v, 0, MAX_HINT_DEPTH, &mut node_count, MAX_HINT_NODES) {
+                tracing::warn!(key = %k, "Rejected recursive/oversized DBus hint payload (Billion Laughs IPC protection)");
+            }
+        }
+
         let id = if replaces_id == 0 {
             self.counter.fetch_add(1, std::sync::atomic::Ordering::SeqCst)
         } else {
@@ -84,25 +170,36 @@ impl NotificationServer {
         let mut parsed_actions = Vec::new();
         let mut has_inline = false;
         let mut i = 0;
-        while i + 1 < _actions.len() {
-            let key = _actions[i].to_string();
-            let label = _actions[i + 1].to_string();
+        while i + 1 < _actions.len() && parsed_actions.len() < MAX_ACTIONS_COUNT {
+            let key_str = _actions[i];
+            let label_str = _actions[i + 1];
+            let key = if key_str.len() > MAX_ACTION_STR_LEN {
+                key_str[..MAX_ACTION_STR_LEN].to_string()
+            } else {
+                key_str.to_string()
+            };
+            let label = if label_str.len() > MAX_ACTION_STR_LEN {
+                label_str[..MAX_ACTION_STR_LEN].to_string()
+            } else {
+                label_str.to_string()
+            };
             if key == "inline-reply" || key.contains("reply") {
                 has_inline = true;
             }
             parsed_actions.push((key, label));
             i += 2;
         }
-        let app_lower = app_name.to_lowercase();
+
+        let app_lower = bounded_app_name.to_lowercase();
         if app_lower.contains("telegram") || app_lower.contains("slack") || app_lower.contains("whatsapp") || app_lower.contains("discord") || app_lower.contains("matrix") || app_lower.contains("element") || app_lower.contains("mail") {
             has_inline = true;
         }
 
         let notif = NotificationData {
             id,
-            app_name: app_name.to_string(),
-            summary: summary.to_string(),
-            body: body.to_string(),
+            app_name: bounded_app_name.to_string(),
+            summary: bounded_summary.to_string(),
+            body: bounded_body.to_string(),
             timestamp: default_timestamp(),
             actions: parsed_actions,
             has_inline_reply: has_inline,

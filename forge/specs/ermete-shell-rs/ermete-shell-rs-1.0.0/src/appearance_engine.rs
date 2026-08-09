@@ -542,6 +542,9 @@ impl LayoutDbusServer {
 impl LayoutDbusServer {
     /// Hot-swaps the layout preset by name
     async fn set_layout(&self, preset_name: &str) -> zbus::fdo::Result<bool> {
+        if preset_name.len() > 256 {
+            return Err(zbus::fdo::Error::InvalidArgs("Preset name exceeds 256 byte limit".into()));
+        }
         info!(preset_name = %preset_name, "DBus org.ermete.Shell.Layout.SetLayout called");
         match self.engine.set_layout_by_name(preset_name) {
             Ok(res) => Ok(res),
@@ -564,11 +567,17 @@ impl LayoutDbusServer {
 
     /// Get TOML definition for a layout preset
     async fn get_layout_details(&self, preset_name: &str) -> String {
+        if preset_name.len() > 256 {
+            return String::new();
+        }
         self.engine.get_layout_toml(preset_name).unwrap_or_default()
     }
 
     /// Apply custom TOML layout on the fly
     async fn apply_custom_toml(&self, toml_content: &str) -> zbus::fdo::Result<bool> {
+        if toml_content.len() > 1_048_576 {
+            return Err(zbus::fdo::Error::InvalidArgs("Custom TOML payload exceeds 1MB limit".into()));
+        }
         info!("DBus org.ermete.Shell.Layout.ApplyCustomToml called");
         match parse_preset_toml(toml_content) {
             Ok(preset) => match self.engine.apply_preset(preset) {

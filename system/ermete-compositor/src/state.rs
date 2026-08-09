@@ -62,10 +62,12 @@ impl CompositorState {
             windows: self.desktop_state.tiling_engine.windows(),
             inner_gap: inner,
             outer_gap: outer,
+            active_screencopy_frames: self.desktop_state.screencopy_manager.active_frame_count(),
+            active_input_grabs: self.desktop_state.input_router.active_grab_count(),
         }
     }
 
-    pub fn process_command(&mut self, cmd: AiLayoutCommand) -> IpcResponse {
+    pub async fn process_command(&mut self, cmd: AiLayoutCommand) -> IpcResponse {
         match cmd {
             AiLayoutCommand::Ping => {
                 IpcResponse::success("PONG", Some(self.status()))
@@ -89,6 +91,7 @@ impl CompositorState {
             }
             AiLayoutCommand::FocusWindow { window_id } => {
                 if self.desktop_state.tiling_engine.focus_window(window_id) {
+                    self.desktop_state.input_router.set_focused_surface(Some(window_id));
                     IpcResponse::success(
                         format!("Focused window {}", window_id),
                         Some(self.status()),
@@ -104,6 +107,24 @@ impl CompositorState {
                     "Applied AI-driven window placements",
                     Some(self.status()),
                 )
+            }
+            AiLayoutCommand::RequestScreenCapture { app_id, pid, output_id } => {
+                match self.desktop_state.screencopy_manager.request_capture_output(&app_id, pid, output_id, true, None).await {
+                    Ok(frame_id) => IpcResponse::success(
+                        format!("Screen capture request (Frame #{}) AUTHORIZED by Gatekeeper for '{}'", frame_id, app_id),
+                        Some(self.status()),
+                    ),
+                    Err(err) => IpcResponse::error(format!("Screen capture request DENIED: {}", err)),
+                }
+            }
+            AiLayoutCommand::RequestGlobalInputGrab { app_id, pid } => {
+                match self.desktop_state.input_router.request_global_input_grab(&app_id, pid).await {
+                    Ok(grab_id) => IpcResponse::success(
+                        format!("Global input grab #{ } AUTHORIZED by Gatekeeper for '{}'", grab_id, app_id),
+                        Some(self.status()),
+                    ),
+                    Err(err) => IpcResponse::error(format!("Global input grab DENIED: {}", err)),
+                }
             }
         }
     }

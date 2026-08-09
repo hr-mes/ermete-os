@@ -4,7 +4,9 @@ mod animation;
 mod backend;
 mod dbus_listener;
 mod desktop_state;
+mod input_routing;
 mod ipc;
+mod screencopy;
 mod state;
 mod tiling;
 

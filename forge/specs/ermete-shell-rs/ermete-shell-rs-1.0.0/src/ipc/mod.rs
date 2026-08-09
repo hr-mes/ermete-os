@@ -23,8 +23,17 @@ use system_proxies::ControllerBackend;
 pub fn init_system_controller() {
     tracing::info!("Initializing IPC system controllers and event bus listeners");
     glib::MainContext::default().spawn_local(async {
-        if let (Ok(session), Ok(system)) = (Connection::session().await, Connection::system().await) {
-            tracing::info!("Connected to Session and System D-Bus buses cleanly");
+        let session_res = match zbus::connection::Builder::session() {
+            Ok(b) => b.max_queued(1024).build().await,
+            Err(e) => Err(e),
+        };
+        let system_res = match zbus::connection::Builder::system() {
+            Ok(b) => b.max_queued(1024).build().await,
+            Err(e) => Err(e),
+        };
+
+        if let (Ok(session), Ok(system)) = (session_res, system_res) {
+            tracing::info!("Connected to Session and System D-Bus buses cleanly with max_queued limits");
             
             let backend = types::IpcBackend::Dbus { session: session.clone(), system };
             

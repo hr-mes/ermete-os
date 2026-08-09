@@ -12,6 +12,10 @@ pub enum AiLayoutCommand {
     SetGaps { inner: u32, outer: u32 },
     /// Focus a specific window by its numeric ID.
     FocusWindow { window_id: u64 },
+    /// Request screen capture (invokes Gatekeeper DBus auth).
+    RequestScreenCapture { app_id: String, pid: u32, output_id: u64 },
+    /// Request global input grab (invokes Gatekeeper DBus auth).
+    RequestGlobalInputGrab { app_id: String, pid: u32 },
     /// Query the current compositor state and active tiling layout.
     QueryState,
     /// Ping request for health check.
@@ -67,6 +71,8 @@ pub struct CompositorStatus {
     pub windows: Vec<WindowInfo>,
     pub inner_gap: u32,
     pub outer_gap: u32,
+    pub active_screencopy_frames: usize,
+    pub active_input_grabs: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

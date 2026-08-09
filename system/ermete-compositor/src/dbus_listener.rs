@@ -29,7 +29,16 @@ pub fn spawn_dbus_appearance_listener(
     tx: watch::Sender<AppearanceSettings>,
 ) -> tokio::task::JoinHandle<()> {
     tokio::spawn(async move {
-        let conn = match zbus::Connection::session().await {
+        let builder = match zbus::connection::Builder::session() {
+            Ok(b) => b,
+            Err(e) => {
+                warn!("DBus session builder unavailable for compositor appearance listener: {}", e);
+                return;
+            }
+        };
+
+        // Enforce strict queue limit to prevent IPC message flooding / OOM
+        let conn = match builder.max_queued(1024).build().await {
             Ok(c) => c,
             Err(e) => {
                 warn!("DBus session connection unavailable for compositor appearance listener: {}", e);
@@ -44,6 +53,12 @@ pub fn spawn_dbus_appearance_listener(
         use futures_util::StreamExt;
         while let Some(msg_res) = stream.next().await {
             if let Ok(msg) = msg_res {
+                // Enforce strict 1MB byte payload limit on incoming DBus messages
+                if msg.data().len() > 1_048_576 {
+                    warn!("Dropped DBus message exceeding 1MB payload limit");
+                    continue;
+                }
+
                 let header = msg.header();
                 if let Some(interface) = header.interface() {
                     let iface_str = interface.as_str();

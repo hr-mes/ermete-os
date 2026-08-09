@@ -91,7 +91,7 @@ impl IpcServer {
             let response = match serde_json::from_str::<AiLayoutCommand>(line) {
                 Ok(cmd) => {
                     let mut lock = state.lock().await;
-                    lock.process_command(cmd)
+                    lock.process_command(cmd).await
                 }
                 Err(err) => IpcResponse::error(format!("Invalid IPC JSON payload: {}", err)),
             };

@@ -142,16 +142,21 @@ impl LiveActivityZbusServer {
         icon: String,
         progress: f64,
     ) {
+        let b_id = if id.len() > 256 { id[..256].to_string() } else { id };
+        let b_title = if title.len() > 1024 { title[..1024].to_string() } else { title };
+        let b_subtitle = if subtitle.len() > 1024 { subtitle[..1024].to_string() } else { subtitle };
+        let b_icon = if icon.len() > 256 { icon[..256].to_string() } else { icon };
+
         let state = match state_str.to_lowercase().as_str() {
             "expanded" => PillState::Expanded,
             "interactive" => PillState::Interactive,
             _ => PillState::Compact,
         };
         let payload = LiveActivityPayload {
-            id,
-            title,
-            subtitle,
-            icon,
+            id: b_id,
+            title: b_title,
+            subtitle: b_subtitle,
+            icon: b_icon,
             progress: if progress >= 0.0 { Some(progress) } else { None },
             state,
             category: "zbus".to_string(),
@@ -178,7 +183,7 @@ pub fn spawn_zbus_listener(sender: relm4::ComponentSender<MorphicPillModel>) {
         let server = LiveActivityZbusServer { sender };
 
         let builder = match zbus::connection::Builder::session() {
-            Ok(b) => b,
+            Ok(b) => b.max_queued(1024),
             Err(e) => {
                 tracing::warn!(error = %e, "Failed to get session bus for LiveActivity");
                 return;
