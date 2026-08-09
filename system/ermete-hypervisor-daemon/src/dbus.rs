@@ -1,7 +1,7 @@
 use anyhow::Result;
 use log::{error, info};
 use std::sync::Arc;
-use zbus::{connection, interface, SignalContext};
+use zbus::{connection, interface, object_server::SignalEmitter};
 
 use crate::attestation::{AttestationEngine, EnclaveLifecycleState};
 use crate::enclave::EnclaveManager;
@@ -18,7 +18,7 @@ impl HypervisorDbus {
     /// Launches a new Micro-VM Hardware Enclave for an untrusted binary or application
     async fn launch_enclave(
         &self,
-        #[zbus(signal_context)] signal_ctxt: SignalContext<'_>,
+        #[zbus(signal_emitter)] signal_ctxt: SignalEmitter<'_>,
         app_name: String,
         exec_path: String,
         args: Vec<String>,
@@ -51,7 +51,7 @@ impl HypervisorDbus {
     /// Automatically encloses an untrusted process PID into a zero-trust hardware enclave
     async fn enclose_untrusted_agent(
         &self,
-        #[zbus(signal_context)] signal_ctxt: SignalContext<'_>,
+        #[zbus(signal_emitter)] signal_ctxt: SignalEmitter<'_>,
         pid: u32,
         app_type: String,
     ) -> String {
@@ -69,7 +69,7 @@ impl HypervisorDbus {
     /// Terminates an active Micro-VM Enclave
     async fn terminate_enclave(
         &self,
-        #[zbus(signal_context)] signal_ctxt: SignalContext<'_>,
+        #[zbus(signal_emitter)] signal_ctxt: SignalEmitter<'_>,
         enclave_id: String,
     ) -> bool {
         match self.enclave_manager.terminate_enclave(&enclave_id) {
@@ -141,7 +141,7 @@ impl HypervisorDbus {
     /// Signal emitted when a new enclave is created
     #[zbus(signal)]
     pub async fn enclave_created(
-        signal_ctxt: &SignalContext<'_>,
+        signal_ctxt: &SignalEmitter<'_>,
         enclave_id: &str,
         app_name: &str,
     ) -> zbus::Result<()>;
@@ -149,14 +149,14 @@ impl HypervisorDbus {
     /// Signal emitted when an enclave is terminated
     #[zbus(signal)]
     pub async fn enclave_terminated(
-        signal_ctxt: &SignalContext<'_>,
+        signal_ctxt: &SignalEmitter<'_>,
         enclave_id: &str,
     ) -> zbus::Result<()>;
 
     /// Signal emitted when an untrusted agent PID is trapped into an enclave
     #[zbus(signal)]
     pub async fn untrusted_agent_trapped(
-        signal_ctxt: &SignalContext<'_>,
+        signal_ctxt: &SignalEmitter<'_>,
         pid: u32,
         enclave_id: &str,
     ) -> zbus::Result<()>;
@@ -190,7 +190,7 @@ impl AttestationAlarmDbus {
     /// Triggers dynamic hardware attestation
     async fn trigger_attestation(
         &self,
-        #[zbus(signal_context)] signal_ctxt: SignalContext<'_>,
+        #[zbus(signal_emitter)] signal_ctxt: SignalEmitter<'_>,
     ) -> String {
         let caps = crate::kvm::detect_capabilities();
         match self
@@ -221,13 +221,13 @@ impl AttestationAlarmDbus {
     /// Alarm event signal when attestation fails
     #[zbus(signal)]
     pub async fn attestation_failed(
-        signal_ctxt: &SignalContext<'_>,
+        signal_ctxt: &SignalEmitter<'_>,
         reason: &str,
     ) -> zbus::Result<()>;
 
     /// Event signal when attestation succeeds
     #[zbus(signal)]
-    pub async fn attestation_success(signal_ctxt: &SignalContext<'_>) -> zbus::Result<()>;
+    pub async fn attestation_success(signal_ctxt: &SignalEmitter<'_>) -> zbus::Result<()>;
 }
 
 /// Helper function to register and run DBus services for Hypervisor and AttestationAlarm

@@ -19,10 +19,4 @@ ermete-settings-rs = { path = "../../forge/specs/ermete-settings-rs/ermete-setti
 ermete-shell-rs = { path = "../../forge/specs/ermete-shell-rs/ermete-shell-rs-1.0.0" }
 ermete-store-rs = { path = "../../forge/specs/ermete-store-rs/ermete-store-rs-1.0.0" }
 
-[[bin]]
-name = "fuzz_target_1"
-path = "fuzz_targets/fuzz_target_1.rs"
-test = false
-doc = false
-
 [workspace]

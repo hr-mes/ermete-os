@@ -1,7 +1,7 @@
 use tracing::info;
 use x25519_dalek::{EphemeralSecret, PublicKey};
 use rand_core::OsRng;
-use pqc_kyber::{Keypair as KyberKeypair, KYBER_CIPHERTEXTBYTES, KYBER_SSBYTES};
+use pqc_kyber::Keypair as KyberKeypair;
 use pqc_dilithium::Keypair as DilithiumKeypair;
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64;
@@ -28,6 +28,10 @@ impl WgMeshManager {
             kyber_keypair,
             dilithium_keypair,
         }
+    }
+
+    pub fn kyber_public_key(&self) -> &[u8] {
+        &self.kyber_keypair.public
     }
 
     pub async fn initialize_tunnel(&self) -> Result<(), Box<dyn std::error::Error>> {

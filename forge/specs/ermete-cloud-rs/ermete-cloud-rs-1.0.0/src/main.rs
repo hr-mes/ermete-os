@@ -1,7 +1,3 @@
-#[cfg(not(target_os = "hermit"))]
-#[global_allocator]
-static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
-
 use anyhow::Result;
 use zbus::interface;
 use tokio::process::Command;
@@ -95,7 +91,7 @@ async fn main() -> Result<()> {
     let sync_engine = std::sync::Arc::new(sync::SyncEngine::new());
     
     // Export D-Bus interfaces
-    let _conn = zbus::ConnectionBuilder::session()?
+    let _conn = zbus::connection::Builder::session()?
         .name("os.ermete.CloudSync")?
         .serve_at("/os/ermete/CloudSync", CloudSyncIface {})?
         .serve_at("/os/ermete/Cloud", dbus::CloudIface { engine: sync_engine.clone() })?

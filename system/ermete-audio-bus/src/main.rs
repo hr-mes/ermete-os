@@ -4,10 +4,14 @@ use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
 use zbus::connection::Builder;
 
+mod controller;
 mod dbus;
+mod inspector;
 mod node_tree;
 mod pipewire_manager;
 mod routing;
+mod routing_service;
+mod virtual_device;
 
 use dbus::AudioBusInterface;
 use node_tree::NodeTree;

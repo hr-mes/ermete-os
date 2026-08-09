@@ -34,12 +34,12 @@ impl PortalSettingsService {
         if namespace == "org.freedesktop.appearance" {
             match key.as_str() {
                 "color-scheme" => {
-                    let val: u32 = if st.color_scheme == "prefer-dark" { 1 } else { 0 };
+                    let val: u32 = if st.theme.color_scheme == "prefer-dark" { 1 } else { 0 };
                     let v = Value::from(val);
                     v.try_into().map_err(|e| zbus::fdo::Error::Failed(format!("Conversion error: {}", e)))
                 }
                 "accent-color" => {
-                    let (r, g, b) = Self::parse_hex_rgb(&st.accent_color);
+                    let (r, g, b) = Self::parse_hex_rgb(&st.theme.accent_color);
                     let v = Value::from((r, g, b));
                     v.try_into().map_err(|e| zbus::fdo::Error::Failed(format!("Conversion error: {}", e)))
                 }
@@ -61,12 +61,12 @@ impl PortalSettingsService {
         if namespaces.is_empty() || namespaces.iter().any(|n| n == "org.freedesktop.appearance") {
             let mut appearance = HashMap::new();
             
-            let scheme_val: u32 = if st.color_scheme == "prefer-dark" { 1 } else { 0 };
+            let scheme_val: u32 = if st.theme.color_scheme == "prefer-dark" { 1 } else { 0 };
             if let Ok(ov) = Value::from(scheme_val).try_into() {
                 appearance.insert("color-scheme".to_string(), ov);
             }
 
-            let (r, g, b) = Self::parse_hex_rgb(&st.accent_color);
+            let (r, g, b) = Self::parse_hex_rgb(&st.theme.accent_color);
             if let Ok(ov) = Value::from((r, g, b)).try_into() {
                 appearance.insert("accent-color".to_string(), ov);
             }

@@ -18,33 +18,7 @@ trait SettingsWorker {
 }
 
 
-/// Domain micro-state for desktop appearance settings.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AppearanceDomainState {
-    pub color_scheme: String,  // "prefer-dark" or "default" (light)
-    pub accent_color: String,  // hex e.g. "#89b4fa"
-    pub wallpaper: String,     // e.g. "/usr/share/backgrounds/ermete-default.png"
-    pub dock_pinned: Vec<String>,
-    pub true_tone_enabled: bool,
-    pub true_tone_temperature: u32,
-}
-
-impl Default for AppearanceDomainState {
-    fn default() -> Self {
-        Self {
-            color_scheme: "prefer-dark".to_string(),
-            accent_color: "#89b4fa".to_string(),
-            wallpaper: "/usr/share/backgrounds/ermete-default.png".to_string(),
-            dock_pinned: vec![
-                "org.gnome.Terminal.desktop".to_string(),
-                "org.mozilla.firefox.desktop".to_string(),
-                "os.ermete.Settings.desktop".to_string(),
-            ],
-            true_tone_enabled: false,
-            true_tone_temperature: 4500,
-        }
-    }
-}
+pub use crate::appearance_domain::*;
 
 /// Domain micro-state for accessibility / voiceover settings.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -288,18 +262,18 @@ impl SettingsService {
 
                 match cmd {
                     SettingsCommand::GetColorScheme(reply) => {
-                        let _ = reply.send(appearance_state.color_scheme.clone());
+                        let _ = reply.send(appearance_state.theme.color_scheme.clone());
                     }
                     SettingsCommand::SetColorScheme(sender, val, reply) => {
                         if !crate::bedrock::check_polkit_auth(sender.as_deref(), "os.ermete.settings.change").await {
                             let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
                             continue;
                         }
-                        appearance_state.color_scheme = val.clone();
+                        appearance_state.theme.color_scheme = val.clone();
                         let res = AppearanceStateStore::save_async(&appearance_state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
                         if res.is_ok() {
                             let _ = appearance_tx.send(appearance_state.clone());
-                            let wall = appearance_state.wallpaper.clone();
+                            let wall = appearance_state.wallpaper.wallpaper.clone();
                             let scheme = val.clone();
                             tokio::spawn(async move {
                                 crate::theme::apply_dynamic_theme(&wall, &scheme).await;
@@ -311,14 +285,14 @@ impl SettingsService {
                         let _ = reply.send(res);
                     }
                     SettingsCommand::GetAccentColor(reply) => {
-                        let _ = reply.send(appearance_state.accent_color.clone());
+                        let _ = reply.send(appearance_state.theme.accent_color.clone());
                     }
                     SettingsCommand::SetAccentColor(sender, val, reply) => {
                         if !crate::bedrock::check_polkit_auth(sender.as_deref(), "os.ermete.settings.change").await {
                             let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
                             continue;
                         }
-                        appearance_state.accent_color = val.clone();
+                        appearance_state.theme.accent_color = val.clone();
                         let res = AppearanceStateStore::save_async(&appearance_state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
                         if res.is_ok() {
                             let _ = appearance_tx.send(appearance_state.clone());
@@ -333,19 +307,19 @@ impl SettingsService {
                         let _ = reply.send(res);
                     }
                     SettingsCommand::GetWallpaper(reply) => {
-                        let _ = reply.send(appearance_state.wallpaper.clone());
+                        let _ = reply.send(appearance_state.wallpaper.wallpaper.clone());
                     }
                     SettingsCommand::SetWallpaper(sender, val, reply) => {
                         if !crate::bedrock::check_polkit_auth(sender.as_deref(), "os.ermete.settings.change").await {
                             let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
                             continue;
                         }
-                        appearance_state.wallpaper = val.clone();
+                        appearance_state.wallpaper.wallpaper = val.clone();
                         let res = AppearanceStateStore::save_async(&appearance_state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
                         if res.is_ok() {
                             let _ = appearance_tx.send(appearance_state.clone());
                             let wall = val.clone();
-                            let scheme = appearance_state.color_scheme.clone();
+                            let scheme = appearance_state.theme.color_scheme.clone();
                             tokio::spawn(async move {
                                 crate::theme::apply_dynamic_theme(&wall, &scheme).await;
                             });
@@ -356,37 +330,37 @@ impl SettingsService {
                         let _ = reply.send(res);
                     }
                     SettingsCommand::GetTrueToneEnabled(reply) => {
-                        let _ = reply.send(appearance_state.true_tone_enabled);
+                        let _ = reply.send(appearance_state.display.true_tone_enabled);
                     }
                     SettingsCommand::SetTrueToneEnabled(sender, val, reply) => {
                         if !crate::bedrock::check_polkit_auth(sender.as_deref(), "os.ermete.settings.change").await {
                             let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
                             continue;
                         }
-                        appearance_state.true_tone_enabled = val;
+                        appearance_state.display.true_tone_enabled = val;
                         let res = AppearanceStateStore::save_async(&appearance_state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
                         if res.is_ok() {
                             let _ = appearance_tx.send(appearance_state.clone());
                             if let Some(ref w) = worker {
-                                let _ = w.apply_true_tone(appearance_state.true_tone_enabled, appearance_state.true_tone_temperature).await;
+                                let _ = w.apply_true_tone(appearance_state.display.true_tone_enabled, appearance_state.display.true_tone_temperature).await;
                             }
                         }
                         let _ = reply.send(res);
                     }
                     SettingsCommand::GetTrueToneTemperature(reply) => {
-                        let _ = reply.send(appearance_state.true_tone_temperature);
+                        let _ = reply.send(appearance_state.display.true_tone_temperature);
                     }
                     SettingsCommand::SetTrueToneTemperature(sender, val, reply) => {
                         if !crate::bedrock::check_polkit_auth(sender.as_deref(), "os.ermete.settings.change").await {
                             let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
                             continue;
                         }
-                        appearance_state.true_tone_temperature = val;
+                        appearance_state.display.true_tone_temperature = val;
                         let res = AppearanceStateStore::save_async(&appearance_state).await.map_err(|e| fdo::Error::Failed(e.to_string()));
                         if res.is_ok() {
                             let _ = appearance_tx.send(appearance_state.clone());
                             if let Some(ref w) = worker {
-                                let _ = w.apply_true_tone(appearance_state.true_tone_enabled, appearance_state.true_tone_temperature).await;
+                                let _ = w.apply_true_tone(appearance_state.display.true_tone_enabled, appearance_state.display.true_tone_temperature).await;
                             }
                         }
                         let _ = reply.send(res);

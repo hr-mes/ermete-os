@@ -55,7 +55,7 @@ impl EbpfMonitor {
 
         if let Some(bpf_arc) = &self.bpf {
             let bpf = bpf_arc.lock().await;
-            if let Ok(stats_map) = bpf.map("FIREWALL_STATS") {
+            if let Some(stats_map) = bpf.map("FIREWALL_STATS") {
                 if let Ok(array) = Array::<_, u64>::try_from(stats_map) {
                     telemetry.network_passed_packets = array.get(&0, 0).unwrap_or(telemetry.network_passed_packets);
                     telemetry.network_dropped_packets = array.get(&1, 0).unwrap_or(telemetry.network_dropped_packets);
@@ -88,8 +88,8 @@ impl EbpfMonitor {
 
         info!("Hot-rewriting Ring-0 eBPF Map: Adding {} to BLOCKLIST_IPV4...", ip);
         if let Some(bpf_arc) = &self.bpf {
-            let bpf = bpf_arc.lock().await;
-            if let Ok(map) = bpf.map_mut("BLOCKLIST_IPV4") {
+            let mut bpf = bpf_arc.lock().await;
+            if let Some(map) = bpf.map_mut("BLOCKLIST_IPV4") {
                 if let Ok(mut blocklist) = HashMap::<_, u32, u32>::try_from(map) {
                     let ip_u32 = u32::from_be_bytes(ip.octets());
                     blocklist
@@ -109,8 +109,8 @@ impl EbpfMonitor {
         let val: u32 = if enabled { 1 } else { 0 };
         info!("Hot-rewriting Ring-0 eBPF Map: Setting CONFIG_FLAGS[0] (Zero-Trust) = {}...", val);
         if let Some(bpf_arc) = &self.bpf {
-            let bpf = bpf_arc.lock().await;
-            if let Ok(map) = bpf.map_mut("CONFIG_FLAGS") {
+            let mut bpf = bpf_arc.lock().await;
+            if let Some(map) = bpf.map_mut("CONFIG_FLAGS") {
                 if let Ok(mut flags) = Array::<_, u32>::try_from(map) {
                     flags
                         .set(0, val, 0)

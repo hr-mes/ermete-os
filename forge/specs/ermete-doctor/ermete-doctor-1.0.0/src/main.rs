@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tokio::process::Command;
 use tokio::time;
-use zbus::{ConnectionBuilder, interface, SignalContext};
+use zbus::{connection::Builder, interface, object_server::SignalEmitter};
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 struct HealthReport {
@@ -16,7 +16,7 @@ struct SystemHealth;
 impl SystemHealth {
     #[zbus(signal)]
     async fn system_health_update(
-        ctxt: &SignalContext<'_>,
+        ctxt: &SignalEmitter<'_>,
         health_json: &str,
     ) -> zbus::Result<()>;
 }
@@ -52,14 +52,15 @@ async fn get_bcachefs_health() -> Option<String> {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let system_health = SystemHealth;
-    let _conn = ConnectionBuilder::system()?
+    let conn = Builder::system()?
         .name("os.ermete.SystemHealth")?
         .serve_at("/os/ermete/SystemHealth", system_health)?
         .build()
         .await?;
 
     // Wait for the object to be registered and name to be acquired
-    let context = SignalContext::new(&_conn, "/os/ermete/SystemHealth")?;
+    let iface_ref = conn.object_server().interface::<_, SystemHealth>("/os/ermete/SystemHealth").await?;
+    let context = iface_ref.signal_emitter().clone();
 
     let mut interval = time::interval(Duration::from_secs(60));
 

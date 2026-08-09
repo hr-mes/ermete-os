@@ -1,4 +1,4 @@
-use zbus::{interface, ConnectionBuilder, SignalContext};
+use zbus::{connection::Builder, interface, object_server::SignalEmitter};
 use std::process::Stdio;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
@@ -13,7 +13,7 @@ impl BackupService {
         &self,
         repo_path: String,
         source_path: String,
-        #[zbus(signal_context)] ctxt: SignalContext<'_>,
+        #[zbus(signal_emitter)] ctxt: SignalEmitter<'_>,
     ) {
         let ctxt = ctxt.into_owned();
 
@@ -69,7 +69,7 @@ impl BackupService {
 
     /// Segnale DBus per il progresso del backup
     #[zbus(signal)]
-    async fn backup_progress(ctxt: &SignalContext<'_>, log_line: String) -> zbus::Result<()>;
+    async fn backup_progress(ctxt: &SignalEmitter<'_>, log_line: String) -> zbus::Result<()>;
 }
 
 #[tokio::main]
@@ -77,7 +77,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let service = BackupService;
 
     // Crea la connessione e registra il servizio
-    let _connection = ConnectionBuilder::session()?
+    let _connection = Builder::session()?
         .name("org.ermete.Backup")?
         .serve_at("/org/ermete/Backup", service)?
         .build()

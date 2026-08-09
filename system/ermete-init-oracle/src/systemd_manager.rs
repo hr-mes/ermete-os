@@ -72,10 +72,11 @@ impl SystemdManager {
     }
 
     pub async fn apply_intent(&self, intent: ServiceIntent) -> Result<ManagedServiceRecord> {
-        let unit_name = format!("{}.service", intent.service_name);
+        let service_name = intent.service_name();
+        let unit_name = format!("{}.service", service_name);
         let unit_path = self.target_dir.join(&unit_name);
 
-        info!("Generating systemd unit for intent '{}' at path {:?}", intent.service_name, unit_path);
+        info!("Generating systemd unit for intent '{}' at path {:?}", service_name, unit_path);
 
         // 1. Try Primary Unit deployment
         let primary_content = IntentParser::generate_systemd_unit(&intent, false);
@@ -97,13 +98,13 @@ impl SystemdManager {
             if start_res.is_ok() {
                 service_status = self.check_service_status(&unit_name).await;
             } else {
-                warn!("Primary service '{}' failed to start: {:?}. Triggering autonomous fallback...", intent.service_name, start_res);
+                warn!("Primary service '{}' failed to start: {:?}. Triggering autonomous fallback...", service_name, start_res);
             }
         }
 
         // Check if primary service is running or if fallback is required
         if service_status != "active" {
-            info!("Initiating autonomous fallback for service '{}' without human intervention...", intent.service_name);
+            info!("Initiating autonomous fallback for service '{}' without human intervention...", service_name);
             fallback_active = true;
             let fallback_content = IntentParser::generate_systemd_unit(&intent, true);
             let _ = tokio::fs::write(&unit_path, &fallback_content).await;
@@ -121,18 +122,18 @@ impl SystemdManager {
             .as_secs();
 
         let record = ManagedServiceRecord {
-            service_name: intent.service_name.clone(),
+            service_name: service_name.to_string(),
             unit_name,
             unit_path,
-            primary_exec: intent.exec_start,
-            fallback_exec: intent.fallback_exec_start,
+            primary_exec: intent.exec_start().to_string(),
+            fallback_exec: intent.fallback_exec_start().map(|s| s.to_string()),
             is_fallback_active: fallback_active,
             status: service_status,
             created_at_secs: now,
         };
 
         let mut lock = self.records.lock().await;
-        lock.insert(intent.service_name.clone(), record.clone());
+        lock.insert(service_name.to_string(), record.clone());
 
         Ok(record)
     }
@@ -263,7 +264,7 @@ mod tests {
     #[tokio::test]
     async fn test_systemd_manager_apply_intent_and_fallback() {
         let manager = SystemdManager::new();
-        let intent = IntentParser::parse("assicurati che il server Nginx sia attivo e riavvialo se cade");
+        let intent = IntentParser::parse(r#"{"action": "restart", "target": "nginx"}"#);
         
         let record = manager.apply_intent(intent).await.expect("Apply intent failed");
         assert_eq!(record.service_name, "nginx");

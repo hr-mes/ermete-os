@@ -117,7 +117,7 @@ impl MdmDBusInterface {
     }
 
     #[zbus(signal)]
-    async fn policy_applied(ctxt: &zbus::SignalContext<'_>, action: &str) -> zbus::Result<()>;
+    async fn policy_applied(ctxt: &zbus::object_server::SignalEmitter<'_>, action: &str) -> zbus::Result<()>;
 }
 
 #[tokio::main]
@@ -146,9 +146,9 @@ async fn main() -> anyhow::Result<()> {
 
     info!("DBus interface os.ermete.Mdm is ready.");
 
-    // Retrieve the SignalContext to emit signals across DBus
+    // Retrieve the SignalEmitter to emit signals across DBus
     let iface_ref = _conn.object_server().interface::<_, MdmDBusInterface>("/os/ermete/Mdm").await?;
-    let signal_context = iface_ref.signal_context().clone();
+    let signal_context = iface_ref.signal_emitter().clone();
 
     // A separate async task to handle MPSC notifications and forward to DBus
     tokio::spawn(async move {

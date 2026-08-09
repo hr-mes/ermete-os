@@ -3,16 +3,17 @@
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 mod accent_engine;
+mod appearance_domain;
 mod bedrock;
-mod network;
 mod bluetooth;
-mod settings;
+mod live_patch;
+mod network;
 mod portal;
 mod portal_screencast;
-mod voiceover;
 mod qos;
-mod live_patch;
+mod settings;
 mod theme;
+mod voiceover;
 
 
 use std::error::Error;
@@ -65,8 +66,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let init_app = appearance_store.state_rx.borrow().clone();
     tokio::spawn(async move {
-        theme::apply_dynamic_theme(&init_app.wallpaper, &init_app.color_scheme).await;
-        let _ = accent_engine::apply_accent_color(&init_app.accent_color);
+        theme::apply_dynamic_theme(&init_app.wallpaper.wallpaper, &init_app.theme.color_scheme).await;
+        let _ = accent_engine::apply_accent_color(&init_app.theme.accent_color);
     });
 
     let settings_srv = SettingsService::new_with_token(

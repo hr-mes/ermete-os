@@ -176,26 +176,27 @@ impl AiPredictiveEngine {
         let mut target_unit = "systemd".to_string();
 
         for record in &batch.records {
-            if contains_ignore_ascii_case(&record.message, "MEMORY USAGE REACHED")
-                || contains_ignore_ascii_case(&record.message, "OUT OF MEMORY")
-                || contains_ignore_ascii_case(&record.message, "OOM-KILL")
+            let msg_lower = record.message.to_lowercase();
+            if msg_lower.contains("memory usage reached")
+                || msg_lower.contains("out of memory")
+                || msg_lower.contains("oom-kill")
             {
                 score = 0.95;
                 failure_mode = "IMMINENT_OOM_CRASH".to_string();
                 target_unit = record.unit.clone();
                 suggested_intent = format!("RESTART_UNIT: {}", record.unit);
                 break;
-            } else if contains_ignore_ascii_case(&record.message, "CHECKSUM ERROR")
-                || contains_ignore_ascii_case(&record.message, "I/O ERROR")
-                || contains_ignore_ascii_case(&record.message, "CORRUPTION")
+            } else if msg_lower.contains("checksum error")
+                || msg_lower.contains("i/o error")
+                || msg_lower.contains("corruption")
             {
                 score = 0.88;
                 failure_mode = "STORAGE_CORRUPTION_PREVENTATIVE".to_string();
                 target_unit = record.unit.clone();
                 suggested_intent = format!("QUARANTINE_UNIT: {}", record.unit);
                 break;
-            } else if contains_ignore_ascii_case(&record.message, "HIGH RESTART COUNT")
-                || contains_ignore_ascii_case(&record.message, "CRASH LOOP")
+            } else if msg_lower.contains("high restart count")
+                || msg_lower.contains("crash loop")
             {
                 score = 0.78;
                 failure_mode = "SERVICE_CRASH_LOOP".to_string();
@@ -231,17 +232,4 @@ impl AiPredictiveEngine {
         }
         vec
     }
-}
-
-fn contains_ignore_ascii_case(haystack: &str, needle: &str) -> bool {
-    if needle.is_empty() {
-        return true;
-    }
-    if haystack.len() < needle.len() {
-        return false;
-    }
-    haystack
-        .as_bytes()
-        .windows(needle.len())
-        .any(|window| window.eq_ignore_ascii_case(needle.as_bytes()))
 }

@@ -19,7 +19,7 @@ async fn main() -> Result<()> {
     info!("Starting Ermete LVFS Daemon (Firmware Update Engine)");
 
     // Export D-Bus interface
-    let _conn = zbus::ConnectionBuilder::system()?
+    let _conn = zbus::connection::Builder::system()?
         .name("os.ermete.Lvfs")?
         .serve_at("/os/ermete/Lvfs", dbus::LvfsIface)?
         .build()

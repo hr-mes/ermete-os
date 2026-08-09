@@ -57,7 +57,7 @@ impl BpfExecTracer {
 
         if let Some(bpf_arc) = &self.bpf {
             let bpf = bpf_arc.lock().await;
-            if let Ok(map) = bpf.map("EXEC_EVENTS") {
+            if let Some(map) = bpf.map("EXEC_EVENTS") {
                 if let Ok(events_map) = BpfHashMap::<_, u32, ExecvePodEvent>::try_from(map) {
                     if let Ok(event) = events_map.get(&0, 0) {
                         let comm_str = String::from_utf8_lossy(&event.comm)

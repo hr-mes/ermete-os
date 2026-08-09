@@ -35,7 +35,6 @@ members = [
     "system/ermete-kernel-forge",
     "system/ermete-mesh-bus",
     "system/ermete-net-unikernel",
-    "system/ermete-self-evolution",
     "system/ermete-store",
     "system/ermete-telemetry"
 ]
@@ -99,6 +98,9 @@ nix = "0.29.0"
 clap = { version = "4.6.4", features = ["derive"] }
 mimalloc = { version = "0.1.43", default-features = false }
 rand = "0.8.5"
+
+[profile.dev]
+panic = "abort"
 
 [profile.release]
 opt-level = "z"

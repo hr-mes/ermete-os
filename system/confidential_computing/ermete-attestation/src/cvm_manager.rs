@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
-use zbus::{connection, interface, SignalContext};
+use zbus::{connection, interface, object_server::SignalEmitter};
 
 use crate::config::AttestationConfig;
 use crate::key_release::KeyReleaseManager;
@@ -327,7 +327,7 @@ impl AttestationAlarmDbus {
     /// Triggers dynamic hardware attestation on demand
     async fn trigger_attestation(
         &self,
-        #[zbus(signal_context)] signal_ctxt: SignalContext<'_>,
+        #[zbus(signal_emitter)] signal_ctxt: SignalEmitter<'_>,
     ) -> String {
         match self.manager.orchestrate_enclave_attestation() {
             Ok(summary) => {
@@ -354,13 +354,13 @@ impl AttestationAlarmDbus {
     /// Alarm event signal for when attestation fails
     #[zbus(signal)]
     pub async fn attestation_failed(
-        signal_ctxt: &SignalContext<'_>,
+        signal_ctxt: &SignalEmitter<'_>,
         reason: &str,
     ) -> zbus::Result<()>;
 
     /// Event signal for when attestation succeeds
     #[zbus(signal)]
-    pub async fn attestation_success(signal_ctxt: &SignalContext<'_>) -> zbus::Result<()>;
+    pub async fn attestation_success(signal_ctxt: &SignalEmitter<'_>) -> zbus::Result<()>;
 }
 
 /// Helper function to launch the D-Bus service for CvmManager
@@ -388,12 +388,12 @@ pub async fn run_cvm_dbus_service(manager: Arc<CvmManager>) -> Result<()> {
     match manager.orchestrate_enclave_attestation() {
         Ok(_) => {
             info!("Initial CVM enclave attestation succeeded.");
-            AttestationAlarmDbus::attestation_success(iface_ref.signal_context()).await?;
+            AttestationAlarmDbus::attestation_success(iface_ref.signal_emitter()).await?;
         }
         Err(e) => {
             let err_msg = e.to_string();
             error!("Initial CVM enclave attestation failed: {}", err_msg);
-            AttestationAlarmDbus::attestation_failed(iface_ref.signal_context(), &err_msg).await?;
+            AttestationAlarmDbus::attestation_failed(iface_ref.signal_emitter(), &err_msg).await?;
         }
     }
 
