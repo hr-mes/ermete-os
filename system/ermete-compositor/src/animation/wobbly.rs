@@ -4,7 +4,7 @@
 //! When a window is dragged or moved, inertial resistance and spring forces
 //! cause the corners and edges to lag behind and oscillate naturally (elastic wobble effect).
 
-use super::solver::{MassSpringDamperSolver, SpringConfig};
+use super::solver::{MassSpringDamperSolver, Matrix4, SpringConfig};
 use crate::ipc::protocol::WindowPlacement;
 use tracing::debug;
 
@@ -169,6 +169,60 @@ impl WobblyWindowAnimator {
         true
     }
 
+    /// Returns 4x4 transformation matrices for each quad grid cell in the deformed wobbly mesh.
+    pub fn compute_quad_transforms(&self) -> Vec<[f32; 16]> {
+        let cols = self.config.grid_cols.max(2);
+        let rows = self.config.grid_rows.max(2);
+        let num_quads = (cols - 1) * (rows - 1);
+        let mut matrices = Vec::with_capacity(num_quads);
+
+        for r in 0..(rows - 1) {
+            for c in 0..(cols - 1) {
+                let idx_top_left = r * cols + c;
+                let idx_top_right = r * cols + c + 1;
+                let idx_bottom_right = (r + 1) * cols + c + 1;
+                let idx_bottom_left = (r + 1) * cols + c;
+
+                let p0 = &self.nodes[idx_top_left];
+                let p1 = &self.nodes[idx_top_right];
+                let p2 = &self.nodes[idx_bottom_right];
+                let p3 = &self.nodes[idx_bottom_left];
+
+                let matrix = Matrix4::quad_transform(
+                    p0.x as f32, p0.y as f32,
+                    p1.x as f32, p1.y as f32,
+                    p2.x as f32, p2.y as f32,
+                    p3.x as f32, p3.y as f32,
+                );
+
+                matrices.push(matrix);
+            }
+        }
+
+        matrices
+    }
+
+    /// Computes overall 4x4 transformation matrix for the wobbly window bounding box.
+    pub fn overall_transform_matrix(&self) -> [f32; 16] {
+        let cur = self.current_placement();
+        let tgt = &self.target_placement;
+
+        let tx = cur.x as f32;
+        let ty = cur.y as f32;
+        let sx = cur.width as f32 / tgt.width.max(1) as f32;
+        let sy = cur.height as f32 / tgt.height.max(1) as f32;
+
+        let cols = self.config.grid_cols.max(2);
+        let top_left = &self.nodes[0];
+        let top_right = &self.nodes[cols - 1];
+
+        let dx = top_right.x - top_left.x;
+        let dy = top_right.y - top_left.y;
+        let tilt_rad = dy.atan2(dx) as f32;
+
+        Matrix4::affine_2d(tx, ty, sx, sy, 0.0, 0.0, tilt_rad)
+    }
+
     /// Advances physics simulation for all wobbly mesh nodes by `dt` seconds.
     pub fn update(&mut self, dt: f64) {
         if self.is_settled() && !self.is_dragging {
@@ -186,9 +240,43 @@ impl WobblyWindowAnimator {
         let placement = self.target_placement.clone();
         let max_disp = self.config.max_displacement;
 
-        for node in &mut self.nodes {
-            let target_x = placement.x as f64 + node.u * placement.width as f64;
-            let target_y = placement.y as f64 + node.v * placement.height as f64;
+        // Compute inter-node mesh structural spring forces
+        let cols = self.config.grid_cols.max(2);
+        let rows = self.config.grid_rows.max(2);
+        let mesh_k = 30.0;
+
+        let mut forces_x = vec![0.0f64; self.nodes.len()];
+        let mut forces_y = vec![0.0f64; self.nodes.len()];
+
+        for r in 0..rows {
+            for c in 0..cols {
+                let idx = r * cols + c;
+                let u = self.nodes[idx].u;
+                let v = self.nodes[idx].v;
+
+                if c + 1 < cols {
+                    let r_idx = r * cols + c + 1;
+                    let rest_dx = (self.nodes[r_idx].u - u) * placement.width as f64;
+                    let cur_dx = self.nodes[r_idx].x - self.nodes[idx].x;
+                    let force = (cur_dx - rest_dx) * mesh_k;
+                    forces_x[idx] += force;
+                    forces_x[r_idx] -= force;
+                }
+
+                if r + 1 < rows {
+                    let b_idx = (r + 1) * cols + c;
+                    let rest_dy = (self.nodes[b_idx].v - v) * placement.height as f64;
+                    let cur_dy = self.nodes[b_idx].y - self.nodes[idx].y;
+                    let force = (cur_dy - rest_dy) * mesh_k;
+                    forces_y[idx] += force;
+                    forces_y[b_idx] -= force;
+                }
+            }
+        }
+
+        for (idx, node) in self.nodes.iter_mut().enumerate() {
+            let target_x = placement.x as f64 + node.u * placement.width as f64 + forces_x[idx] * 0.05;
+            let target_y = placement.y as f64 + node.v * placement.height as f64 + forces_y[idx] * 0.05;
 
             // Solve X component spring physics
             let (nx, nvx) = MassSpringDamperSolver::step_rk4(
@@ -209,8 +297,10 @@ impl WobblyWindowAnimator {
             );
 
             // Clamp max displacement strain to prevent extreme mesh tearing
-            node.x = nx.clamp(target_x - max_disp, target_x + max_disp);
-            node.y = ny.clamp(target_y - max_disp, target_y + max_disp);
+            let base_target_x = placement.x as f64 + node.u * placement.width as f64;
+            let base_target_y = placement.y as f64 + node.v * placement.height as f64;
+            node.x = nx.clamp(base_target_x - max_disp, base_target_x + max_disp);
+            node.y = ny.clamp(base_target_y - max_disp, base_target_y + max_disp);
             node.vx = nvx;
             node.vy = nvy;
         }

@@ -37,6 +37,7 @@ impl SimpleComponent for ControlCenterPanel {
             set_title: Some("Ermete OS - Unified Control Center"),
             add_css_class: "popup-window",
             add_css_class: "cc-slideover-panel",
+            add_css_class: "glassmorphism",
             set_default_width: 380,
             #[watch]
             set_visible: model.visible,

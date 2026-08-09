@@ -3,7 +3,7 @@ use gtk4::prelude::*;
 use gtk4::{Align, Box, Button, DropDown, Entry, Label, ListBox, Orientation};
 use crate::components::action_row::ActionRow;
 
-#[zbus::dbus_proxy(
+#[zbus::proxy(
     interface = "os.ermete.Bedrock.Network",
     default_service = "os.ermete.Bedrock",
     default_path = "/os/ermete/Bedrock/Network"

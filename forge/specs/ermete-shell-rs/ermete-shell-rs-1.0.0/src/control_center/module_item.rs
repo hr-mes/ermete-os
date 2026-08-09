@@ -53,6 +53,7 @@ impl FactoryComponent for CcModuleItem {
             set_orientation: Orientation::Vertical,
             add_css_class: "cc-card",
             add_css_class: "cc-module-card",
+            add_css_class: "glassmorphism",
             set_spacing: 8,
             set_margin_start: 12,
             set_margin_end: 12,

@@ -4,7 +4,7 @@
 //! Transforms window bounding geometry into horizontal curved slices that deform
 //! along Bezier / S-curve trajectories toward a target dock/panel region.
 
-use super::solver::SpringConfig;
+use super::solver::{MassSpringDamperSolver, Matrix4, SpringConfig};
 use super::spring::Spring1D;
 use crate::ipc::protocol::WindowPlacement;
 use tracing::debug;
@@ -56,6 +56,15 @@ pub struct GenieSlice {
     pub width: f64,
     /// Current height of slice.
     pub height: f64,
+    /// 4x4 column-major transformation matrix mapping normalized slice [0,1]^2 to screen geometry.
+    pub transform_matrix: [f32; 16],
+}
+
+impl GenieSlice {
+    /// Returns 4x4 transformation matrix of the slice.
+    pub fn transform_matrix(&self) -> [f32; 16] {
+        self.transform_matrix
+    }
 }
 
 /// Animator managing Magic Lamp (Genie) window minimize/maximize physics state.
@@ -183,23 +192,59 @@ impl MagicLampAnimator {
                 + curved_t.powi(2) * tgt_cx;
 
             // Interpolate width and Y position
-            let width = (1.0 - curved_t) * src_w + curved_t * tgt_w;
+            let width = ((1.0 - curved_t) * src_w + curved_t * tgt_w).max(1.0);
             let target_slice_y = tgt_y + y_ratio * tgt_h;
             let orig_slice_y = src_y + i as f64 * slice_src_h;
 
             let slice_y = (1.0 - curved_t) * orig_slice_y + curved_t * target_slice_y;
-            let slice_h = (1.0 - curved_t) * slice_src_h + curved_t * (tgt_h / n as f64);
+            let slice_h = ((1.0 - curved_t) * slice_src_h + curved_t * (tgt_h / n as f64)).max(1.0);
+
+            let slice_left = center_x - width / 2.0;
+            let transform_matrix = Matrix4::affine_2d(
+                slice_left as f32,
+                slice_y as f32,
+                width as f32,
+                slice_h as f32,
+                0.0,
+                0.0,
+                0.0,
+            );
 
             slices.push(GenieSlice {
                 y_ratio,
                 center_x,
                 y: slice_y,
-                width: width.max(1.0),
-                height: slice_h.max(1.0),
+                width,
+                height: slice_h,
+                transform_matrix,
             });
         }
 
         slices
+    }
+
+    /// Returns transformation matrices for all mesh slices in the Magic Lamp effect.
+    pub fn compute_transform_matrices(&self) -> Vec<[f32; 16]> {
+        self.compute_genie_mesh()
+            .into_iter()
+            .map(|slice| slice.transform_matrix)
+            .collect()
+    }
+
+    /// Computes an overall 4x4 transformation matrix for the entire window bounding box.
+    pub fn overall_transform_matrix(&self) -> [f32; 16] {
+        let cur = self.current_placement();
+        let src = &self.source_rect;
+
+        let tx = cur.x as f32;
+        let ty = cur.y as f32;
+        let sx = cur.width as f32 / src.width.max(1) as f32;
+        let sy = cur.height as f32 / src.height.max(1) as f32;
+
+        let p = self.current_progress();
+        let tilt = (p * (std::f64::consts::PI / 16.0)) as f32;
+
+        Matrix4::affine_2d(tx, ty, sx, sy, 0.0, 0.0, tilt)
     }
 
     /// Returns current interpolated overall bounding placement of the window.
@@ -236,6 +281,7 @@ impl MagicLampAnimator {
         }
     }
 }
+
 
 #[cfg(test)]
 mod tests {

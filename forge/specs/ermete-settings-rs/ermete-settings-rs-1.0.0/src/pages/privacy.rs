@@ -3,8 +3,7 @@ use gtk4::prelude::*;
 use gtk4::{Align, Box as GtkBox, Button, CheckButton, Entry, Label, Orientation, Switch};
 use crate::components::action_row::ActionRow;
 
-#[allow(deprecated)]
-#[zbus::dbus_proxy(
+#[zbus::proxy(
     interface = "org.freedesktop.impl.portal.PermissionStore",
     default_service = "org.freedesktop.impl.portal.PermissionStore",
     default_path = "/org/freedesktop/impl/portal/PermissionStore"

@@ -198,6 +198,45 @@ impl AnimationEngine {
         }
     }
 
+    /// Returns active Magic Lamp slice transformation matrices for a window if animating.
+    pub fn get_magic_lamp_matrices(&self, window_id: u64) -> Option<Vec<[f32; 16]>> {
+        self.magic_lamps
+            .get(&window_id)
+            .filter(|g| g.is_animating())
+            .map(|g| g.compute_transform_matrices())
+    }
+
+    /// Returns active Wobbly Windows quad transformation matrices for a window if active.
+    pub fn get_wobbly_matrices(&self, window_id: u64) -> Option<Vec<[f32; 16]>> {
+        self.wobbly_windows
+            .get(&window_id)
+            .filter(|w| !w.is_settled())
+            .map(|w| w.compute_quad_transforms())
+    }
+
+    /// Computes overall 4x4 transformation matrix for a window.
+    pub fn get_window_transform_matrix(&self, window_id: u64, target: &WindowPlacement) -> [f32; 16] {
+        if let Some(genie) = self.magic_lamps.get(&window_id) {
+            if genie.is_animating() {
+                return genie.overall_transform_matrix();
+            }
+        }
+
+        if let Some(wobbly) = self.wobbly_windows.get(&window_id) {
+            if !wobbly.is_settled() {
+                return wobbly.overall_transform_matrix();
+            }
+        }
+
+        let cur = self.current_placement(target);
+        let tx = cur.x as f32;
+        let ty = cur.y as f32;
+        let sx = cur.width as f32 / target.width.max(1) as f32;
+        let sy = cur.height as f32 / target.height.max(1) as f32;
+
+        super::solver::Matrix4::affine_2d(tx, ty, sx, sy, 0.0, 0.0, 0.0)
+    }
+
     /// Returns `true` if any window in the compositor is currently animating or wobbling.
     pub fn is_animating(&self) -> bool {
         self.animators.values().any(|a| !a.is_settled())
@@ -285,12 +324,25 @@ mod tests {
         let active = engine.tick(0.016);
         assert!(active);
 
+        // Check magic lamp transformation matrices
+        let genie_mats = engine.get_magic_lamp_matrices(42);
+        assert!(genie_mats.is_some());
+        assert!(!genie_mats.unwrap().is_empty());
+
+        let window_mat = engine.get_window_transform_matrix(42, &src);
+        assert_ne!(window_mat, [0.0; 16]);
+
         // Wobbly drag test
         engine.start_wobbly_drag(100, src.clone(), 200.0, 200.0);
         assert!(engine.is_animating());
 
         engine.move_wobbly_drag(100, src.clone(), 250.0, 250.0);
         engine.tick(0.016);
+
+        let wobbly_mats = engine.get_wobbly_matrices(100);
+        assert!(wobbly_mats.is_some());
+        assert!(!wobbly_mats.unwrap().is_empty());
+
         engine.end_wobbly_drag(100);
     }
 }

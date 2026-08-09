@@ -3,23 +3,21 @@ use gtk4::prelude::*;
 use gtk4::{Align, Box, Button, Label, ListBox, Orientation, Switch};
 use crate::components::action_row::ActionRow;
 
-#[allow(deprecated)]
-#[zbus::dbus_proxy(
+#[zbus::proxy(
     interface = "os.ermete.Bedrock.Bluetooth",
     default_service = "os.ermete.Bedrock",
     default_path = "/os/ermete/Bedrock/Bluetooth"
 )]
 trait Bluetooth {
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn power(&self) -> zbus::Result<bool>;
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn set_power(&self, value: bool) -> zbus::Result<()>;
 
     fn get_devices(&self) -> zbus::Result<Vec<(String, String)>>;
 }
 
-#[allow(deprecated)]
-#[zbus::dbus_proxy(
+#[zbus::proxy(
     interface = "org.bluez.Device1",
     default_service = "org.bluez"
 )]

@@ -62,6 +62,77 @@ impl SpringConfig {
     }
 }
 
+/// 4x4 Column-Major Matrix utilities for GPU render transformations.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Matrix4;
+
+impl Matrix4 {
+    /// Returns identity matrix [f32; 16] in column-major order.
+    pub fn identity() -> [f32; 16] {
+        [
+            1.0, 0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 1.0,
+        ]
+    }
+
+    /// Creates a 2D affine 4x4 matrix given scale (sx, sy), translation (tx, ty), shear (shear_x, shear_y), and rotation angle in radians.
+    pub fn affine_2d(tx: f32, ty: f32, sx: f32, sy: f32, shear_x: f32, shear_y: f32, rotation_rad: f32) -> [f32; 16] {
+        let cos_r = (rotation_rad as f64).cos() as f32;
+        let sin_r = (rotation_rad as f64).sin() as f32;
+
+        let m00 = cos_r * sx + sin_r * shear_x;
+        let m01 = sin_r * sx - cos_r * shear_x;
+        let m10 = -sin_r * sy + cos_r * shear_y;
+        let m11 = cos_r * sy + sin_r * shear_y;
+
+        [
+            m00, m01, 0.0, 0.0,
+            m10, m11, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            tx,  ty,  0.0, 1.0,
+        ]
+    }
+
+    /// Computes quad bilinear mapping transformation matrix for mapping unit quad [0,1]^2 to quadrilateral (p0, p1, p2, p3).
+    pub fn quad_transform(
+        x0: f32, y0: f32,
+        x1: f32, y1: f32,
+        x2: f32, y2: f32,
+        x3: f32, y3: f32,
+    ) -> [f32; 16] {
+        let min_x = x0.min(x1).min(x2).min(x3);
+        let max_x = x0.max(x1).max(x2).max(x3);
+        let min_y = y0.min(y1).min(y2).min(y3);
+        let max_y = y0.max(y1).max(y2).max(y3);
+
+        let width = (max_x - min_x).max(1e-4);
+        let height = (max_y - min_y).max(1e-4);
+
+        let shear_x = ((x1 - x0) - (x2 - x3)) / width;
+        let shear_y = ((y3 - y0) - (y2 - y1)) / height;
+
+        Self::affine_2d(min_x, min_y, width, height, shear_x, shear_y, 0.0)
+    }
+
+    /// Multiplies two 4x4 column-major matrices.
+    pub fn multiply(a: &[f32; 16], b: &[f32; 16]) -> [f32; 16] {
+        let mut out = [0.0f32; 16];
+        for col in 0..4 {
+            for row in 0..4 {
+                out[col * 4 + row] =
+                    a[0 * 4 + row] * b[col * 4 + 0] +
+                    a[1 * 4 + row] * b[col * 4 + 1] +
+                    a[2 * 4 + row] * b[col * 4 + 2] +
+                    a[3 * 4 + row] * b[col * 4 + 3];
+            }
+        }
+        out
+    }
+}
+
+
 /// 4th-Order Runge-Kutta (RK4) and analytical solvers for Mass-Spring-Damper systems.
 pub struct MassSpringDamperSolver;
 

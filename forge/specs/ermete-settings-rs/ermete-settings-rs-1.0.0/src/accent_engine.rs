@@ -1,4 +1,7 @@
 use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
+use zbus::interface;
+use zbus::object_server::SignalEmitter;
 
 /// RGB Color representation with floating point and hex conversions
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -340,6 +343,40 @@ pub fn apply_accent_color(hex_color: &str) -> Result<String, String> {
     Ok(css_content)
 }
 
+pub async fn apply_accent_color_async(hex_color: &str) -> Result<String, String> {
+    let palette = AccentPalette::from_hex(hex_color);
+    let css_content = palette.generate_gtk_css();
+
+    let config_dir = get_config_dir();
+    if let Err(e) = tokio::fs::create_dir_all(&config_dir).await {
+        return Err(format!("Failed to create config dir: {}", e));
+    }
+
+    let accent_path = get_accent_css_path();
+    if let Err(e) = tokio::fs::write(&accent_path, &css_content).await {
+        return Err(format!("Failed to write accent.css: {}", e));
+    }
+
+    let theme_path = get_theme_css_path();
+    let updated_theme_css = if tokio::fs::metadata(&theme_path).await.is_ok() {
+        if let Ok(existing) = tokio::fs::read_to_string(&theme_path).await {
+            if let Some(pos) = existing.find("/* Dynamic Global Accent Color Engine") {
+                format!("{}\n{}", &existing[..pos], css_content)
+            } else {
+                format!("{}\n\n{}", existing, css_content)
+            }
+        } else {
+            css_content.clone()
+        }
+    } else {
+        css_content.clone()
+    };
+
+    let _ = tokio::fs::write(&theme_path, updated_theme_css).await;
+
+    Ok(css_content)
+}
+
 /// Inject generated CSS string into the default GTK4 display
 pub fn inject_gtk_css(css: &str) {
     ACCENT_CSS_PROVIDER.with(|provider_cell| {
@@ -355,6 +392,97 @@ pub fn inject_gtk_css(css: &str) {
             );
         }
     });
+}
+
+/// DBus Service implementation for Global Accent Color Engine
+#[derive(Clone, Debug)]
+pub struct AccentEngineService {
+    current_hex: Arc<Mutex<String>>,
+}
+
+impl Default for AccentEngineService {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl AccentEngineService {
+    pub fn new() -> Self {
+        Self {
+            current_hex: Arc::new(Mutex::new("#89b4fa".to_string())),
+        }
+    }
+}
+
+#[interface(name = "org.ermete.AccentEngine")]
+impl AccentEngineService {
+    /// Dynamically generates and applies GTK CSS definitions for the given hex color,
+    /// persists to config, injects into GTK display, and emits DBus AccentChanged signal.
+    pub async fn set_accent_color(
+        &self,
+        #[zbus(signal_emitter)] emitter: SignalEmitter<'_>,
+        hex: String,
+    ) -> zbus::fdo::Result<String> {
+        let css = apply_accent_color(&hex).map_err(|e| zbus::fdo::Error::Failed(e))?;
+        if let Ok(mut lock) = self.current_hex.lock() {
+            *lock = hex.clone();
+        }
+        let _ = Self::accent_changed(&emitter, &hex, &css).await;
+        Ok(css)
+    }
+
+    /// Read-only method to retrieve current hex color
+    pub fn get_accent_color(&self) -> String {
+        if let Ok(lock) = self.current_hex.lock() {
+            lock.clone()
+        } else {
+            "#89b4fa".to_string()
+        }
+    }
+
+    /// Property getter for AccentColor
+    #[zbus(property)]
+    pub fn accent_color(&self) -> String {
+        self.get_accent_color()
+    }
+
+    /// Property setter for AccentColor
+    #[zbus(property)]
+    pub async fn set_accent_color_prop(
+        &self,
+        #[zbus(signal_emitter)] emitter: SignalEmitter<'_>,
+        hex: String,
+    ) -> zbus::fdo::Result<()> {
+        self.set_accent_color(emitter, hex).await?;
+        Ok(())
+    }
+
+    /// Returns generated GTK CSS definitions without applying them to system/display
+    pub fn generate_gtk_css(&self, hex: String) -> String {
+        let palette = AccentPalette::from_hex(&hex);
+        palette.generate_gtk_css()
+    }
+
+    /// DBus signal emitted whenever the accent color is updated.
+    /// Parameters: hex color string, generated GTK CSS definition string.
+    #[zbus(signal)]
+    pub async fn accent_changed(
+        emitter: &SignalEmitter<'_>,
+        hex: &str,
+        css: &str,
+    ) -> zbus::Result<()>;
+}
+
+/// Helper function to register and serve the AccentEngine DBus interface
+pub async fn start_accent_engine_service(conn: &zbus::Connection) -> zbus::Result<()> {
+    let service = AccentEngineService::new();
+    conn.object_server()
+        .at("/org/ermete/AccentEngine", service.clone())
+        .await?;
+    conn.object_server()
+        .at("/os/ermete/AccentEngine", service)
+        .await?;
+    Ok(())
 }
 
 #[cfg(test)]
@@ -417,5 +545,13 @@ mod tests {
 
         let accent_content = std::fs::read_to_string(&accent_file).unwrap();
         assert!(accent_content.contains("#cba6f7"));
+    }
+
+    #[test]
+    fn test_accent_engine_service_dbus_generation() {
+        let service = AccentEngineService::new();
+        let css = service.generate_gtk_css("#a6e3a1".to_string());
+        assert!(css.contains("@define-color accent_color #a6e3a1"));
+        assert_eq!(service.get_accent_color(), "#89b4fa");
     }
 }

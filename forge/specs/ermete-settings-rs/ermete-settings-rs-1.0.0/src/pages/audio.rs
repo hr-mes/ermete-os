@@ -3,16 +3,15 @@ use gtk4::prelude::*;
 use gtk4::{Align, Box, Label, Orientation, Scale};
 use crate::components::action_row::ActionRow;
 
-#[allow(deprecated)]
-#[zbus::dbus_proxy(
+#[zbus::proxy(
     interface = "os.ermete.Bedrock",
     default_service = "os.ermete.Bedrock",
     default_path = "/os/ermete/Bedrock"
 )]
 trait Bedrock {
-    #[dbus_proxy(property, name = "Volume")]
+    #[zbus(property, name = "Volume")]
     fn audio_volume(&self) -> zbus::Result<f64>;
-    #[dbus_proxy(property, name = "Volume")]
+    #[zbus(property, name = "Volume")]
     fn set_audio_volume(&self, value: f64) -> zbus::Result<()>;
 }
 

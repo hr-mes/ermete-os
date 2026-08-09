@@ -3,8 +3,7 @@ use gtk4::prelude::*;
 use gtk4::{Align, Box as GtkBox, Button, Image, Label, Orientation, Switch};
 use crate::components::action_row::ActionRow;
 
-#[allow(deprecated)]
-#[zbus::dbus_proxy(
+#[zbus::proxy(
     interface = "org.freedesktop.Accounts.User",
     default_service = "org.freedesktop.Accounts"
 )]
@@ -12,8 +11,7 @@ trait AccountsUser {
     fn set_password(&self, password: &str, hint: &str) -> zbus::Result<()>;
 }
 
-#[allow(deprecated)]
-#[zbus::dbus_proxy(
+#[zbus::proxy(
     interface = "org.ermete.Bedrock",
     default_service = "org.ermete.Bedrock",
     default_path = "/org/ermete/Bedrock"

@@ -38,6 +38,16 @@
 @define-color window_bg alpha(@surface, 0.85);
 @define-color window_fg @on_surface;
 
+/* Modern Glassmorphism Utility Class */
+.glassmorphism {
+    background-color: alpha(@surface_container_highest, 0.75);
+    color: @on_surface;
+    backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid alpha(@outline, 0.25);
+    border-radius: 24px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), inset 0 1px 1px alpha(white, 0.15);
+}
+
 /* Core Glassmorphism Base */
 window.popup-window, popover {
     background-color: @glass_bg;
@@ -47,6 +57,14 @@ window.popup-window, popover {
     border-radius: 24px;
     padding: 16px;
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.cc-slideover-panel {
+    background-color: alpha(@surface_container, 0.78);
+    backdrop-filter: blur(24px) saturate(180%);
+    border-left: 1px solid alpha(@outline, 0.25);
+    border-radius: 24px 0 0 24px;
+    box-shadow: -12px 0 40px rgba(0, 0, 0, 0.5);
 }
 
 /* Control Center Main Container */
