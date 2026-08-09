@@ -1809,8 +1809,16 @@ name = "ermete-store"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bytes",
  "clap",
+ "libc",
  "pqc_dilithium",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.19",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
