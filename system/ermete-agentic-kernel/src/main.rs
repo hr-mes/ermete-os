@@ -4,6 +4,7 @@ pub mod ai_client;
 pub mod ai_predictor;
 pub mod auto_healer;
 pub mod ebpf_monitor;
+pub mod hot_patcher;
 
 use ai_client::AiDaemonClient;
 use ai_predictor::AiPredictorDAG;
