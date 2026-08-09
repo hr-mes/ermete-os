@@ -59,10 +59,10 @@ async fn main() -> Result<()> {
         }
     });
 
-    // Spawn 60 Hz Mass-Spring-Damper physics frame tick loop
+    // Spawn 1000 Hz Mass-Spring-Damper physics frame tick loop (Unlocked Framerate for 360Hz+ Monitors)
     let anim_state = Arc::clone(&state);
     let anim_handle = tokio::spawn(async move {
-        let mut interval = tokio::time::interval(std::time::Duration::from_millis(16));
+        let mut interval = tokio::time::interval(std::time::Duration::from_millis(1));
         let mut last_tick = tokio::time::Instant::now();
         loop {
             interval.tick().await;
