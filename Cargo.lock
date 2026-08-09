@@ -1763,10 +1763,12 @@ dependencies = [
 name = "ermete-settings-rs"
 version = "1.0.0"
 dependencies = [
+ "anyhow",
  "ermete-niri-ipc",
  "ermete-style",
  "glib",
  "gtk4",
+ "libc",
  "mimalloc",
  "relm4",
  "rustix 0.38.44",

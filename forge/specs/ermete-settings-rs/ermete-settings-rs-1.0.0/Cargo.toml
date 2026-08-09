@@ -13,6 +13,8 @@ zbus = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 rustix = { version = "0.38", features = ["process"] }
 relm4 = { workspace = true }
+anyhow = { workspace = true }
+libc = { workspace = true }
 ermete-style = { path = "../../ermete-style" }
 ermete-niri-ipc = { version = "0.1.0", path = "../../ermete-niri-ipc" }
 

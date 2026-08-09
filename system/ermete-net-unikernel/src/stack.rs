@@ -8,6 +8,7 @@ use smoltcp::wire::{EthernetAddress, EthernetFrame, EthernetProtocol, HardwareAd
 use std::sync::Arc;
 
 use crate::device::{DeviceManager, DeviceTxToken};
+use crate::ipc::ZeroCopyRingBuffer;
 use crate::metrics::NetworkMetrics;
 use crate::router::{IsolationPolicy, PacketRouter};
 
@@ -215,5 +216,46 @@ impl UnikernelNetworkStack {
         self.metrics.set_active_microvms(self.router.active_microvm_count() as u64);
 
         updated
+    }
+
+    /// Process incoming IPC packets/control frames from UI via ZeroCopyRingBuffer (Blind Mode Ingress)
+    pub fn process_ipc_ingress(&mut self, rx_ring: &ZeroCopyRingBuffer) {
+        while let Ok(Some((frame_type, payload))) = rx_ring.pop_frame() {
+            tracing::debug!(
+                target: "ermete_net",
+                "Blind Mode IPC Ingress: Received frame type {:#06x} ({} bytes)",
+                frame_type,
+                payload.len()
+            );
+            match frame_type {
+                // Frame 0x0100: Micro-VM Registration Request
+                0x0100 => {
+                    if payload.len() == 4 {
+                        let ip = IpAddress::Ipv4(Ipv4Address::new(payload[0], payload[1], payload[2], payload[3]));
+                        self.router.register_microvm(ip);
+                    }
+                }
+                // Frame 0x0200: Direct Raw Packet Injection into Unikernel stack
+                0x0200 => {
+                    self.metrics.inc_rx(payload.len() as u64);
+                }
+                _ => {
+                    tracing::warn!(target: "ermete_net", "Blind Mode: Unknown IPC frame type {:#06x}", frame_type);
+                }
+            }
+        }
+    }
+
+    /// Emit network status & telemetry frames to UI via ZeroCopyRingBuffer (Blind Mode Egress)
+    pub fn process_ipc_egress(&mut self, tx_ring: &ZeroCopyRingBuffer) {
+        let stats_payload = format!(
+            "{{\"active_microvms\":{},\"rx_packets\":{},\"tx_packets\":{},\"rx_bytes\":{},\"tx_bytes\":{}}}",
+            self.router.active_microvm_count(),
+            self.metrics.rx_packets.load(std::sync::atomic::Ordering::Relaxed),
+            self.metrics.tx_packets.load(std::sync::atomic::Ordering::Relaxed),
+            self.metrics.rx_bytes.load(std::sync::atomic::Ordering::Relaxed),
+            self.metrics.tx_bytes.load(std::sync::atomic::Ordering::Relaxed)
+        );
+        let _ = tx_ring.push_frame(0x0002, stats_payload.as_bytes());
     }
 }

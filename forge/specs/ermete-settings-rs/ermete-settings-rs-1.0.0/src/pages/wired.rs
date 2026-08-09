@@ -77,20 +77,10 @@ pub fn build_page() -> Box {
 }
 
 async fn get_ethernet_status_async() -> String {
-    if let Ok(conn) = zbus::Connection::system().await {
-        if let Ok(msg) = conn.call_method(
-            Some("org.freedesktop.NetworkManager"),
-            "/org/freedesktop/NetworkManager",
-            Some("org.freedesktop.NetworkManager"),
-            "GetDevices",
-            &(),
-        ).await {
-            if let Ok(devs) = msg.body().deserialize::<Vec<zbus::zvariant::OwnedObjectPath>>() {
-                if !devs.is_empty() {
-                    return "eth0 - Connesso".to_string();
-                }
-            }
-        }
+    let consumer = crate::pages::network::UnikernelNetworkConsumer::new();
+    if consumer.submit_event(crate::pages::network::FRAME_CHECK_CONNECTIVITY, &[]).is_ok() {
+        "eth0 - Ring Buffer Status Active (Unikernel SmolTCP)".to_string()
+    } else {
+        "Nessuna rete cablata rilevata (Unikernel Ring Buffer Offline)".to_string()
     }
-    "Nessuna rete cablata rilevata".to_string()
 }

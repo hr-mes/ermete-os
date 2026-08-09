@@ -1,4 +1,5 @@
 mod device;
+mod ipc;
 mod metrics;
 mod router;
 mod stack;
@@ -13,6 +14,7 @@ use smoltcp::wire::IpAddress;
 use tokio::signal;
 
 use device::DeviceManager;
+use ipc::ZeroCopyRingBuffer;
 use metrics::NetworkMetrics;
 use router::IsolationPolicy;
 use stack::UnikernelNetworkStack;
@@ -25,9 +27,10 @@ async fn main() -> Result<()> {
         .init();
 
     tracing::info!("=================================================================");
-    tracing::info!("🌋 Ermete OS - Network Unikernel Stack Daemon (smoltcp TCP/IP Bypass)");
+    tracing::info!("🌋 Ermete OS - Sealed Network Unikernel Stack (Blind Mode / Phase 7)");
     tracing::info!("=================================================================");
-    tracing::info!("Bypassing Linux kernel C-networking module -> Operating in Rust userspace");
+    tracing::info!("🔒 Zero-Trust Isolation: Direct DBus / RPC Exports Eradicated.");
+    tracing::info!("⚡ IPC Channel: Lock-Free Shared Memory ZeroCopyRingBuffer exclusively.");
 
     let interface_name = env::var("TAP_INTERFACE").unwrap_or_else(|_| "tap-ermete0".to_string());
     let policy_str = env::var("ISOLATION_POLICY").unwrap_or_else(|_| "enclave".to_string());
@@ -40,7 +43,18 @@ async fn main() -> Result<()> {
 
     let metrics = Arc::new(NetworkMetrics::new());
 
-    // Attempt to bind to host TUN/TAP interface; fallback to isolated Loopback device if unavailable
+    // Initialize Shared Memory ZeroCopyRingBuffer IPC channels for UI integration (Blind Mode)
+    let rx_ring_buffer = ZeroCopyRingBuffer::create_named("ermete-net-ui-rx", 2 * 1024 * 1024)
+        .or_else(|_| ZeroCopyRingBuffer::create_anonymous("ermete-net-ui-rx", 2 * 1024 * 1024))?;
+    let tx_ring_buffer = ZeroCopyRingBuffer::create_named("ermete-net-ui-tx", 2 * 1024 * 1024)
+        .or_else(|_| ZeroCopyRingBuffer::create_anonymous("ermete-net-ui-tx", 2 * 1024 * 1024))?;
+
+    tracing::info!(
+        target: "ermete_net",
+        "Blind Mode IPC active: rx_ring (2MB) & tx_ring (2MB) bound for UI communication."
+    );
+
+    // Attempt to bind to host TUN/TAP interface; fallback to synthetic Loopback device if unavailable
     let mut device = match DeviceManager::new_tuntap(&interface_name, Medium::Ethernet) {
         Ok(tuntap) => tuntap,
         Err(err) => {
@@ -66,7 +80,7 @@ async fn main() -> Result<()> {
 
     tracing::info!(
         target: "ermete_net",
-        "Stack listening on interface '{}' with Zero-Trust Policy {:?}",
+        "Sealed Unikernel listening on interface '{}' with Zero-Trust Policy {:?}",
         device.interface_name(),
         policy
     );
@@ -77,22 +91,33 @@ async fn main() -> Result<()> {
     let shutdown_signal = signal::ctrl_c();
     tokio::pin!(shutdown_signal);
 
+    // Async main loop operating in sealed Blind Mode
     loop {
         tokio::select! {
             _ = poll_interval.tick() => {
                 let now = Instant::now();
+
+                // 1. Process ingress IPC frame requests from UI via ZeroCopyRingBuffer
+                stack.process_ipc_ingress(&rx_ring_buffer);
+
+                // 2. Poll hardware TUN/TAP device & execute smoltcp network stack
                 let _updated = stack.poll_device(&mut device, now);
+
+                // 3. Process egress IPC frames / telemetry push to UI via ZeroCopyRingBuffer
+                stack.process_ipc_egress(&tx_ring_buffer);
             }
             _ = metrics_interval.tick() => {
-                tracing::info!(target: "ermete_net", "📊 Telemetry: {}", metrics.summary());
+                tracing::info!(target: "ermete_net", "📊 Telemetry [Blind Mode]: {}", metrics.summary());
+                let telemetry_frame = metrics.summary().into_bytes();
+                let _ = tx_ring_buffer.push_frame(0x0001, &telemetry_frame);
             }
             _ = &mut shutdown_signal => {
-                tracing::info!(target: "ermete_net", "Received shutdown signal. Stopping Network Unikernel Daemon cleanly...");
+                tracing::info!(target: "ermete_net", "Received shutdown signal. Stopping Sealed Network Unikernel Daemon cleanly...");
                 break;
             }
         }
     }
 
-    tracing::info!(target: "ermete_net", "Daemon stopped. Final Telemetry: {}", metrics.summary());
+    tracing::info!(target: "ermete_net", "Sealed Daemon stopped. Final Telemetry: {}", metrics.summary());
     Ok(())
 }
