@@ -140,7 +140,7 @@ fi
 
 # Auto-detect EFI systemd stub if not specified
 if [[ -z "${EFI_STUB}" ]]; then
-    EFI_STUB=$(find /usr/lib/systemd/boot/efi /usr/lib/systemd /usr/share/systemd /boot/efi -name "linuxx64.efi.stub" -o -name "systemd-stub.efi" 2>/dev/null | sort -V | head -n 1)
+    EFI_STUB=$(find /usr/lib/systemd/boot/efi /usr/lib/systemd /usr/share/systemd /boot/efi -name "linuxx64.efi.stub" -o -name "systemd-stub.efi" 2>/dev/null | sort -V | head -n 1 || true)
 fi
 
 # Validation check
@@ -187,7 +187,7 @@ trap cleanup EXIT
 # 2. SELECT BUILD BACKEND (ukify vs objcopy)
 # ------------------------------------------------------------------------------
 
-UKIFY_BIN=$(command -v ukify || find /usr/lib/systemd /usr/bin -name "ukify" 2>/dev/null | sort -V | head -n 1)
+UKIFY_BIN=$(command -v ukify || find /usr/lib/systemd /usr/bin -name "ukify" 2>/dev/null | sort -V | head -n 1 || true)
 OBJCOPY_BIN=$(command -v objcopy || command -v llvm-objcopy)
 
 build_with_ukify() {
