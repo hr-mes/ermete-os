@@ -1800,8 +1800,15 @@ dependencies = [
 name = "ermete-recovery"
 version = "1.0.0"
 dependencies = [
+ "anyhow",
+ "ermete-style",
  "futures-util",
+ "glib",
+ "gtk4",
+ "relm4",
  "tokio",
+ "tracing",
+ "tracing-subscriber",
  "zbus",
 ]
 
@@ -1927,6 +1934,19 @@ dependencies = [
  "sha2",
  "tokio",
  "tokio-stream",
+ "tracing",
+ "tracing-subscriber",
+ "zbus",
+]
+
+[[package]]
+name = "ermete-updater-rs"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "serde",
+ "serde_json",
+ "tokio",
  "tracing",
  "tracing-subscriber",
  "zbus",

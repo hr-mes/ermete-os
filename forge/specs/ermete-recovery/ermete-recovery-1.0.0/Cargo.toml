@@ -11,8 +11,13 @@ name = "ermete-recovery-ui"
 path = "src/main.rs"
 
 [dependencies]
+gtk4 = { workspace = true }
+relm4 = { workspace = true }
+glib = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 zbus = { workspace = true, features = ["tokio"] }
 futures-util = { workspace = true }
-
-
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = { workspace = true }
+ermete-style = { path = "../../../../system/ermete-style" }

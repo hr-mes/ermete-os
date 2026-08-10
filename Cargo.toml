@@ -35,9 +35,10 @@ members = [
     "system/ermete-mesh-bus",
     "system/ermete-net-unikernel",
     "system/ermete-store",
-    "system/ermete-style",
-    "system/ermete-telemetry"
-, "system/ermete-oobe"]
+    "system/ermete-telemetry",
+    "system/ermete-oobe",
+    "system/ermete-updater-rs"
+]
 
 exclude = [
     "tests/fuzz"

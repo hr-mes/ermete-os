@@ -1,0 +1,15 @@
+[package]
+name = "ermete-updater-rs"
+version = "0.1.0"
+edition = "2021"
+description = "Ermete OS OTA & Bootc/OSTree Update Manager Daemon"
+authors = ["Ermete Architect <architect@ermete.os>"]
+
+[dependencies]
+tokio = { workspace = true, features = ["full"] }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+zbus = { workspace = true, features = ["tokio"] }
