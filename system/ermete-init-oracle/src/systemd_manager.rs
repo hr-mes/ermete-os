@@ -50,7 +50,7 @@ impl SystemdManager {
             primary_path.to_path_buf()
         } else {
             let fb = PathBuf::from(FALLBACK_SYSTEMD_DIR);
-            let _ = fs::create_dir_all(&fb);
+            fs::create_dir_all(&fb).expect("CRITICAL: Failed to create fallback directory");
             warn!(
                 "Primary systemd directory {} not writable, using fallback location {:?}",
                 PRIMARY_SYSTEMD_DIR, fb

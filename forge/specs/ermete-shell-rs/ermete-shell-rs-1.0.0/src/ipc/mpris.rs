@@ -1,7 +1,7 @@
 use zbus::proxy;
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, oneshot};
-use crate::ipc::types::{IpcBackend, MprisBus, MprisEvent, MockState};
+use crate::ipc::types::{IpcBackend, MprisBus, MprisEvent};
 pub use crate::ipc::types::MprisState;
 
 #[proxy(
@@ -86,10 +86,6 @@ impl MprisActor {
                 let _ = self.handle_refresh_mpris().await;
             }
             IpcBackend::Disconnected => {}
-            IpcBackend::Mock(state) => {
-                state.lock().unwrap_or_else(|e| e.into_inner()).last_player_command = Some(cmd.to_string());
-                let _ = self.handle_refresh_mpris().await;
-            }
         }
         self.event_bus.emit(MprisEvent::MprisUpdated(self.cached_mpris.clone()));
         Ok(())
@@ -161,16 +157,6 @@ impl MprisActor {
                 self.cached_mpris = None;
                 Ok(())
             }
-            IpcBackend::Mock(_) => {
-                if self.cached_mpris.is_none() {
-                    self.cached_mpris = Some(MprisState {
-                        title: "Track Title".to_string(),
-                        artist: "Artist".to_string(),
-                        status: "Playing".to_string(),
-                    });
-                }
-                Ok(())
-            }
         }
     }
 }
@@ -192,15 +178,6 @@ impl MprisController {
         }
     }
 
-    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: MprisBus) -> Self {
-        let backend = IpcBackend::Mock(state);
-        let sender = MprisActor::spawn(backend, event_bus);
-        Self {
-            sender,
-            cached_mpris: Arc::new(Mutex::new(None)),
-            last_player_command: Arc::new(Mutex::new(None)),
-        }
-    }
 
     pub async fn player_command(&self, cmd: &str) -> zbus::Result<()> {
         if let Ok(mut lock) = self.last_player_command.lock() {
@@ -247,7 +224,6 @@ pub fn get_mpris_controller() -> MprisController {
         ctrl
     } else {
         let bus = crate::ipc::system_proxies::get_mpris_bus();
-        let state = Arc::new(Mutex::new(MockState::default_mock()));
-        MprisController::new_mock(state, bus)
+        MprisController::new(IpcBackend::Disconnected, bus)
     }
 }

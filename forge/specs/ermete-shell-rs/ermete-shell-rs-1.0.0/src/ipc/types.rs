@@ -155,36 +155,7 @@ pub struct MprisState {
     pub status: String,
 }
 
-#[derive(Debug, Clone)]
-pub struct MockState {
-    pub wifi_enabled: bool,
-    pub bt_enabled: bool,
-    pub mute: bool,
-    pub source_mute: bool,
-    pub volume: f64,
-    pub source_volume: f64,
-    pub brightness: f64,
-    pub last_player_command: Option<String>,
-    pub wifi_networks: Vec<WifiNetworkInfo>,
-    pub bt_devices: Vec<BluetoothDeviceInfo>,
-}
 
-impl MockState {
-    pub fn default_mock() -> Self {
-        Self {
-            wifi_enabled: false,
-            bt_enabled: false,
-            mute: false,
-            source_mute: false,
-            volume: 0.5,
-            source_volume: 0.5,
-            brightness: 0.5,
-            last_player_command: None,
-            wifi_networks: vec![],
-            bt_devices: vec![],
-        }
-    }
-}
 
 #[derive(Clone, Debug)]
 pub enum IpcBackend {
@@ -193,7 +164,6 @@ pub enum IpcBackend {
         system: Connection,
     },
     Disconnected,
-    Mock(Arc<Mutex<MockState>>),
 }
 
 

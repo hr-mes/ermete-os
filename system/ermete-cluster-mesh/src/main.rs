@@ -76,9 +76,9 @@ async fn main() -> Result<()> {
         ipc_port,
         local_node_id,
         hostname,
-        "dummy_dilithium_pk_b64".to_string(),
-        "dummy_kyber_pk_b64".to_string(),
-        "dummy_x25519_pk_b64".to_string(),
+        std::env::var("DILITHIUM_PK").expect("CRITICAL: DILITHIUM_PK env var missing").to_string(),
+        std::env::var("KYBER_PK").expect("CRITICAL: KYBER_PK env var missing").to_string(),
+        std::env::var("X25519_PK").expect("CRITICAL: X25519_PK env var missing").to_string(),
         local_npu,
     ));
 

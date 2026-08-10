@@ -70,17 +70,11 @@ pub fn init_system_controller() {
 mod tests {
     use super::*;
     use std::sync::{Arc, Mutex};
-    use crate::ipc::types::{MockState, AudioBus, NetBus, HardwareBus, MprisBus};
+    use crate::ipc::types::{ AudioBus, NetBus, HardwareBus, MprisBus};
 
     #[tokio::test]
     async fn test_system_controller_state_updates() {
         let audio_bus = AudioBus::new(); let net_bus = NetBus::new(); let hw_bus = HardwareBus::new(); let mpris_bus = MprisBus::new();
-        let state = Arc::new(Mutex::new(MockState::default_mock()));
-        let network = NetworkController::new_mock(state.clone(), net_bus.clone());
-        let bluetooth = BluetoothController::new_mock(state.clone(), net_bus.clone());
-        let audio = AudioController::new_mock(state.clone(), audio_bus.clone());
-        let display = DisplayController::new_mock(state.clone(), hw_bus.clone());
-        let mpris = MprisController::new_mock(state.clone(), mpris_bus.clone());
 
         assert!(!network.is_wifi_enabled().await.unwrap());
 
@@ -116,9 +110,6 @@ mod tests {
     #[tokio::test]
     async fn test_system_controller_ui_network_and_bt_methods() {
         let audio_bus = AudioBus::new(); let net_bus = NetBus::new(); let hw_bus = HardwareBus::new(); let mpris_bus = MprisBus::new();
-        let state = Arc::new(Mutex::new(MockState::default_mock()));
-        let network = NetworkController::new_mock(state.clone(), net_bus.clone());
-        let bluetooth = BluetoothController::new_mock(state.clone(), net_bus.clone());
 
         let wifi_list = network.list_wifi_networks().await.unwrap();
         assert_eq!(wifi_list.len(), 0);
@@ -136,10 +127,6 @@ mod tests {
     #[tokio::test]
     async fn test_system_controller_power_and_global_methods() {
         let audio_bus = AudioBus::new(); let net_bus = NetBus::new(); let hw_bus = HardwareBus::new(); let mpris_bus = MprisBus::new();
-        let state = Arc::new(Mutex::new(MockState::default_mock()));
-        let power = PowerController::new_mock(state.clone(), hw_bus.clone());
-        let mpris = MprisController::new_mock(state.clone(), mpris_bus.clone());
-        let network = NetworkController::new_mock(state.clone(), net_bus.clone());
 
         assert!(power.lock_screen().await.is_ok());
         assert!(power.power_off().await.is_ok());
@@ -154,7 +141,6 @@ mod tests {
     #[tokio::test]
     async fn test_review_findings_compliance() {
         let audio_bus = AudioBus::new(); let net_bus = NetBus::new(); let hw_bus = HardwareBus::new(); let mpris_bus = MprisBus::new();
-        let state = Arc::new(Mutex::new(MockState::default_mock()));
         state.lock().unwrap().wifi_networks.push(crate::ipc::types::WifiNetworkInfo {
             ssid: "Ermete-5G".to_string(),
             signal: 85,
@@ -162,8 +148,6 @@ mod tests {
             saved: true,
         });
 
-        let network = NetworkController::new_mock(state.clone(), net_bus.clone());
-        let mpris = MprisController::new_mock(state.clone(), mpris_bus.clone());
         
         network.connect_wifi("Ermete-5G", "secret").await.unwrap();
         let list = network.list_wifi_networks().await.unwrap();

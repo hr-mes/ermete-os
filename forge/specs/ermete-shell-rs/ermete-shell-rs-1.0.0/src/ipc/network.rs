@@ -2,7 +2,7 @@ use arc_swap::ArcSwap;
 use std::sync::{Arc, Mutex, OnceLock};
 use tokio::sync::{mpsc, oneshot};
 use crate::ipc::types::{
-    IpcBackend, NetBus, NetEvent, MockState, WifiNetworkInfo,
+    IpcBackend, NetBus, NetEvent, WifiNetworkInfo,
     NetworkManagerProxy, NmDeviceProxy, NmWirelessProxy, NmAccessPointProxy, 
     NmSettingsProxy, NmSettingsConnectionProxy, NmActiveConnectionProxy, NmIP4ConfigProxy
 };
@@ -101,11 +101,6 @@ impl NetworkActor {
                 }
             }
             IpcBackend::Disconnected => return Err(zbus::Error::Failure("NetworkManager DBus service unavailable".into())),
-            IpcBackend::Mock(state) => {
-                let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
-                s.wifi_enabled = !s.wifi_enabled;
-                s.wifi_enabled
-            }
         };
         self.event_bus.emit(NetEvent::WifiToggled(new_state));
         Ok(new_state)
@@ -120,7 +115,7 @@ impl NetworkActor {
                 Err(zbus::Error::Failure("NetworkManager DBus service unavailable".into()))
             }
             IpcBackend::Disconnected => Err(zbus::Error::Failure("NetworkManager DBus service unavailable".into())),
-            IpcBackend::Mock(state) => Ok(state.lock().unwrap_or_else(|e| e.into_inner()).wifi_enabled),
+            
         }
     }
 
@@ -136,11 +131,6 @@ impl NetworkActor {
                 }
             }
             IpcBackend::Disconnected => Err(zbus::Error::Failure("NetworkManager DBus service unavailable".into())),
-            IpcBackend::Mock(state) => {
-                state.lock().unwrap_or_else(|e| e.into_inner()).wifi_enabled = powered;
-                self.event_bus.emit(NetEvent::WifiToggled(powered));
-                Ok(())
-            }
         }
     }
 
@@ -184,7 +174,7 @@ impl NetworkActor {
                 Err(zbus::Error::Failure("NetworkManager DBus service unavailable".into()))
             }
             IpcBackend::Disconnected => Err(zbus::Error::Failure("NetworkManager DBus service unavailable".into())),
-            IpcBackend::Mock(state) => Ok(state.lock().unwrap_or_else(|e| e.into_inner()).wifi_networks.clone()),
+            
         }
     }
 
@@ -245,14 +235,6 @@ impl NetworkActor {
                 Err(zbus::Error::Failure("NetworkManager service unavailable or connection not found".into()))
             }
             IpcBackend::Disconnected => Err(zbus::Error::Failure("NetworkManager DBus service unavailable".into())),
-            IpcBackend::Mock(state) => {
-                let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
-                for net in &mut s.wifi_networks {
-                    net.active = net.ssid == ssid;
-                }
-                self.event_bus.emit(NetEvent::NetworkUpdated(ssid.to_string()));
-                Ok(())
-            }
         }
     }
 
@@ -278,16 +260,6 @@ impl NetworkActor {
                 Err(zbus::Error::Failure("NetworkManager service unavailable or active connection not found".into()))
             }
             IpcBackend::Disconnected => Err(zbus::Error::Failure("NetworkManager DBus service unavailable".into())),
-            IpcBackend::Mock(state) => {
-                let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
-                for net in &mut s.wifi_networks {
-                    if net.ssid == ssid {
-                        net.active = false;
-                    }
-                }
-                self.event_bus.emit(NetEvent::NetworkUpdated("Disconnected".to_string()));
-                Ok(())
-            }
         }
     }
 
@@ -317,11 +289,6 @@ impl NetworkActor {
                 Err(zbus::Error::Failure("NetworkManager service unavailable or connection not found".into()))
             }
             IpcBackend::Disconnected => Err(zbus::Error::Failure("NetworkManager DBus service unavailable".into())),
-            IpcBackend::Mock(state) => {
-                let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
-                s.wifi_networks.retain(|net| net.ssid != ssid);
-                Ok(())
-            }
         }
     }
 
@@ -417,7 +384,6 @@ impl NetworkActor {
                 }
             }
             IpcBackend::Disconnected => Err(zbus::Error::Failure("NetworkManager DBus service unavailable".into())),
-            IpcBackend::Mock(_state) => Ok(("auto".to_string(), "N/A".to_string(), "N/A".to_string(), "N/A".to_string(), true)),
         }
     }
 
@@ -443,7 +409,6 @@ impl NetworkActor {
                 self.active_wifi_ssid = None;
                 Ok(())
             }
-            IpcBackend::Mock(_) => Ok(()),
         }
     }
 }
@@ -472,14 +437,6 @@ impl NetworkController {
         }
     }
 
-    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: NetBus) -> Self {
-        let backend = IpcBackend::Mock(state);
-        let sender = NetworkActor::spawn(backend, event_bus, None);
-        Self {
-            sender,
-            active_wifi_ssid: Arc::new(Mutex::new(None)),
-        }
-    }
 
     pub async fn toggle_wifi(&self) -> zbus::Result<bool> {
         let (tx, rx) = oneshot::channel();

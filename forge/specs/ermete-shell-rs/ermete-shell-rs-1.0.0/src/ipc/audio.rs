@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, oneshot};
-use crate::ipc::types::{IpcBackend, AudioBus, AudioEvent, MockState, BedrockAudioProxy};
+use crate::ipc::types::{IpcBackend, AudioBus, AudioEvent,  BedrockAudioProxy};
 
 pub enum AudioCommand {
     ToggleMute(oneshot::Sender<zbus::Result<bool>>),
@@ -65,11 +65,6 @@ impl AudioActor {
                 }
             }
             IpcBackend::Disconnected => return Err(zbus::Error::Failure("Audio service offline".into())),
-            IpcBackend::Mock(state) => {
-                let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
-                s.mute = !s.mute;
-                s.mute
-            }
         };
         self.event_bus.emit(AudioEvent::MuteToggled(new_state));
         Ok(new_state)
@@ -87,11 +82,6 @@ impl AudioActor {
                 Err(zbus::Error::Failure("Audio service offline".into()))
             }
             IpcBackend::Disconnected => Err(zbus::Error::Failure("Audio service offline".into())),
-            IpcBackend::Mock(state) => {
-                let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
-                s.source_mute = !s.source_mute;
-                Ok(s.source_mute)
-            }
         }
     }
 
@@ -104,11 +94,6 @@ impl AudioActor {
                 }
             }
             IpcBackend::Disconnected => {}
-            IpcBackend::Mock(state) => {
-                self.cached_volume = volume;
-                let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
-                s.volume = volume;
-            }
         }
         self.event_bus.emit(AudioEvent::VolumeChanged(volume));
         Ok(())
@@ -123,11 +108,6 @@ impl AudioActor {
                 Ok(())
             }
             IpcBackend::Disconnected => Ok(()),
-            IpcBackend::Mock(state) => {
-                let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
-                s.source_volume = volume;
-                Ok(())
-            }
         }
     }
 
@@ -148,14 +128,6 @@ impl AudioController {
         }
     }
 
-    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: AudioBus) -> Self {
-        let backend = IpcBackend::Mock(state);
-        let sender = AudioActor::spawn(backend, event_bus);
-        Self {
-            sender,
-            cached_volume: Arc::new(Mutex::new(0.5)),
-        }
-    }
 
     pub async fn toggle_mute(&self) -> zbus::Result<bool> {
         let (tx, rx) = oneshot::channel();
@@ -215,7 +187,6 @@ pub fn get_audio_controller() -> AudioController {
         ctrl
     } else {
         let bus = crate::ipc::system_proxies::get_audio_bus();
-        let state = Arc::new(Mutex::new(MockState::default_mock()));
-        AudioController::new_mock(state, bus)
+        AudioController::new(IpcBackend::Disconnected, bus)
     }
 }

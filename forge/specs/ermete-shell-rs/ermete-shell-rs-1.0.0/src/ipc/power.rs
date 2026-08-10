@@ -1,7 +1,7 @@
 use zbus::proxy;
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, oneshot};
-use crate::ipc::types::{IpcBackend, MockState, HardwareBus};
+use crate::ipc::types::{IpcBackend,  HardwareBus};
 
 #[proxy(
     interface = "org.freedesktop.login1.Manager",
@@ -71,7 +71,7 @@ impl PowerActor {
                 }
                 Ok(())
             }
-            IpcBackend::Mock(_) | IpcBackend::Disconnected => Ok(()),
+            IpcBackend::Disconnected => Ok(()),
         }
     }
 
@@ -83,7 +83,7 @@ impl PowerActor {
                 }
                 Ok(())
             }
-            IpcBackend::Mock(_) | IpcBackend::Disconnected => Ok(()),
+            IpcBackend::Disconnected => Ok(()),
         }
     }
 
@@ -95,7 +95,7 @@ impl PowerActor {
                 }
                 Ok(())
             }
-            IpcBackend::Mock(_) | IpcBackend::Disconnected => Ok(()),
+            IpcBackend::Disconnected => Ok(()),
         }
     }
 
@@ -107,7 +107,7 @@ impl PowerActor {
                 }
                 Ok(())
             }
-            IpcBackend::Mock(_) | IpcBackend::Disconnected => Ok(()),
+            IpcBackend::Disconnected => Ok(()),
         }
     }
 }
@@ -123,11 +123,6 @@ impl PowerController {
         Self { sender }
     }
 
-    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: HardwareBus) -> Self {
-        let backend = IpcBackend::Mock(state);
-        let sender = PowerActor::spawn(backend, event_bus);
-        Self { sender }
-    }
 
     pub async fn lock_screen(&self) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
@@ -180,7 +175,6 @@ pub fn get_power_controller() -> PowerController {
         ctrl
     } else {
         let bus = crate::ipc::system_proxies::get_hardware_bus();
-        let state = Arc::new(Mutex::new(MockState::default_mock()));
-        PowerController::new_mock(state, bus)
+        PowerController::new(IpcBackend::Disconnected, bus)
     }
 }

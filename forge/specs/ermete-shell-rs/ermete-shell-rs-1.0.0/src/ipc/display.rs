@@ -1,7 +1,7 @@
 use zbus::proxy;
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, oneshot};
-use crate::ipc::types::{IpcBackend, HardwareBus, HardwareEvent, MockState};
+use crate::ipc::types::{IpcBackend, HardwareBus, HardwareEvent};
 
 #[proxy(
     interface = "org.freedesktop.login1.Session",
@@ -56,10 +56,6 @@ impl DisplayActor {
                 }
             }
             IpcBackend::Disconnected => {}
-            IpcBackend::Mock(state) => {
-                let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
-                s.brightness = brightness;
-            }
         }
         self.event_bus.emit(HardwareEvent::BrightnessChanged(brightness));
         Ok(())
@@ -77,11 +73,6 @@ impl DisplayController {
         Self { sender }
     }
 
-    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: HardwareBus) -> Self {
-        let backend = IpcBackend::Mock(state);
-        let sender = DisplayActor::spawn(backend, event_bus);
-        Self { sender }
-    }
 
     pub async fn set_brightness(&self, brightness: f64) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
@@ -107,7 +98,6 @@ pub fn get_display_controller() -> DisplayController {
         ctrl
     } else {
         let bus = crate::ipc::system_proxies::get_hardware_bus();
-        let state = Arc::new(Mutex::new(MockState::default_mock()));
-        DisplayController::new_mock(state, bus)
+        DisplayController::new(IpcBackend::Disconnected, bus)
     }
 }
