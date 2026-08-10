@@ -3,11 +3,35 @@
 #![allow(unsafe_code)]
 
 use aya_ebpf::{
-    macros::{map, sched_ext},
+    macros::map,
     maps::{Array, HashMap},
-    programs::SchedExtContext,
+    EbpfContext,
 };
 use aya_log_ebpf::info;
+
+pub struct SchedExtContext {
+    ctx: *mut core::ffi::c_void,
+}
+
+impl EbpfContext for SchedExtContext {
+    fn as_ptr(&self) -> *mut core::ffi::c_void {
+        self.ctx
+    }
+}
+
+impl SchedExtContext {
+    pub fn new(ctx: *mut core::ffi::c_void) -> Self {
+        Self { ctx }
+    }
+
+    pub fn cpu(&self) -> u32 {
+        unsafe { aya_ebpf::helpers::bpf_get_smp_processor_id() }
+    }
+
+    pub fn runtime_ns(&self) -> u64 {
+        unsafe { aya_ebpf::helpers::bpf_ktime_get_ns() }
+    }
+}
 
 /// AI Scheduling parameters per PID set by user-space AI engine
 #[repr(C)]
@@ -52,8 +76,10 @@ fn increment_stat(index: u32) {
 /// Triggered when kernel requests to enqueue a task (PID).
 /// Reads `AI_SCHED_MAP`. If AI priority/CPU is specified for PID, overrides latency target.
 /// -----------------------------------------------------------------------------
-#[sched_ext]
-pub fn scx_enqueue(ctx: SchedExtContext) -> i32 {
+#[no_mangle]
+#[link_section = "struct_ops/scx_enqueue"]
+pub fn scx_enqueue(ctx: *mut core::ffi::c_void) -> i32 {
+    let ctx = SchedExtContext::new(ctx);
     let pid = ctx.pid();
     increment_stat(STAT_ENQUEUED);
 
@@ -89,8 +115,10 @@ pub fn scx_enqueue(ctx: SchedExtContext) -> i32 {
 /// Called when kernel queries next task for execution on target CPU core.
 /// Bypasses Linux CFS scheduler if AI policy exists for PID, forcing CPU & latency.
 /// -----------------------------------------------------------------------------
-#[sched_ext]
-pub fn scx_dispatch(ctx: SchedExtContext) -> i32 {
+#[no_mangle]
+#[link_section = "struct_ops/scx_dispatch"]
+pub fn scx_dispatch(ctx: *mut core::ffi::c_void) -> i32 {
+    let ctx = SchedExtContext::new(ctx);
     let cpu = ctx.cpu();
     let pid = ctx.pid();
 
@@ -122,8 +150,10 @@ pub fn scx_dispatch(ctx: SchedExtContext) -> i32 {
 /// Called on scheduler timer ticks for active task.
 /// Checks runtime nanoseconds against AI slice_ns to enforce zero-latency preemption.
 /// -----------------------------------------------------------------------------
-#[sched_ext]
-pub fn scx_tick(ctx: SchedExtContext) -> i32 {
+#[no_mangle]
+#[link_section = "struct_ops/scx_tick"]
+pub fn scx_tick(ctx: *mut core::ffi::c_void) -> i32 {
+    let ctx = SchedExtContext::new(ctx);
     let pid = ctx.pid();
     let runtime_ns = ctx.runtime_ns();
 
@@ -149,8 +179,10 @@ pub fn scx_tick(ctx: SchedExtContext) -> i32 {
 /// Selects target CPU core during task wakeup.
 /// Forces CPU affinity to `param.target_cpu` dictated by AI model.
 /// -----------------------------------------------------------------------------
-#[sched_ext]
-pub fn scx_select_cpu(ctx: SchedExtContext) -> i32 {
+#[no_mangle]
+#[link_section = "struct_ops/scx_select_cpu"]
+pub fn scx_select_cpu(ctx: *mut core::ffi::c_void) -> i32 {
+    let ctx = SchedExtContext::new(ctx);
     let pid = ctx.pid();
     let prev_cpu = ctx.cpu();
 

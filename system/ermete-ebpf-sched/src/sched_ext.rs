@@ -158,35 +158,54 @@ const PROTECTED_PIDS: &[u32] = &[
     1, // Init / systemd / system-oracle process
 ];
 
+const EBPF_BYTECODE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/ermete-ebpf-sched-bpf"));
+
 impl SchedExtController {
     pub async fn new() -> Self {
         info!("==========================================================================");
         info!("🧠 Initializing User-Space eBPF Scheduler Loader (`aya`) & sched_ext...");
         info!("==========================================================================");
 
-        let candidate_paths = [
-            "target/bpfel-unknown-none/release/ermete-ebpf-sched-bpf",
-            "target/bpfel-unknown-none/debug/ermete-ebpf-sched-bpf",
-            "/usr/lib/ermete/ebpf/sched_ext.bpf.o",
-            "system/ebpf/target/bpfel-unknown-none/release/ebpf-core",
-        ];
-
         let mut loaded_ebpf = None;
-        for path in candidate_paths {
-            if std::path::Path::new(path).exists() {
-                info!("🔍 Found candidate BPF bytecode object at: {}", path);
-                match Ebpf::load_file(path) {
-                    Ok(bpf) => {
-                        info!("✅ Successfully loaded eBPF object file from {}", path);
-                        loaded_ebpf = Some(bpf);
-                        break;
-                    }
-                    Err(e) => {
-                        warn!("⚠️ Failed to parse BPF object file {}: {}", path, e);
+
+        if !EBPF_BYTECODE.is_empty() {
+            info!("⚡ Loading embedded eBPF bytecode (0 external runtime dependencies)...");
+            match Ebpf::load(EBPF_BYTECODE) {
+                Ok(bpf) => {
+                    info!("✅ Successfully loaded embedded eBPF object bytecode ({} bytes)", EBPF_BYTECODE.len());
+                    loaded_ebpf = Some(bpf);
+                }
+                Err(e) => {
+                    warn!("⚠️ Failed to parse embedded eBPF bytecode: {}", e);
+                }
+            }
+        }
+
+        if loaded_ebpf.is_none() {
+            let candidate_paths = [
+                "target/bpfel-unknown-none/release/ermete-ebpf-sched-bpf",
+                "target/bpfel-unknown-none/debug/ermete-ebpf-sched-bpf",
+                "/usr/lib/ermete/ebpf/sched_ext.bpf.o",
+                "system/ebpf/target/bpfel-unknown-none/release/ebpf-core",
+            ];
+
+            for path in candidate_paths {
+                if std::path::Path::new(path).exists() {
+                    info!("🔍 Found candidate BPF bytecode object at: {}", path);
+                    match Ebpf::load_file(path) {
+                        Ok(bpf) => {
+                            info!("✅ Successfully loaded eBPF object file from {}", path);
+                            loaded_ebpf = Some(bpf);
+                            break;
+                        }
+                        Err(e) => {
+                            warn!("⚠️ Failed to parse BPF object file {}: {}", path, e);
+                        }
                     }
                 }
             }
         }
+
 
         let is_sysfs_sched_ext = std::path::Path::new("/sys/kernel/sched_ext").exists();
 

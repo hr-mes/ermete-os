@@ -3,6 +3,8 @@ name = "ermete-ebpf-sched"
 version = "0.1.0"
 edition = "2021"
 description = "AI-Driven eBPF Kernel Scheduler Bridge (sched_ext & cgroup priority manager)"
+build = "build.rs"
+
 
 [dependencies]
 tokio = { workspace = true, features = ["full", "signal", "time"] }
