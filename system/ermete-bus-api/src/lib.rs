@@ -5,6 +5,9 @@ use zbus::proxy;
 pub mod shm_ring;
 pub use shm_ring::*;
 
+pub mod pqc;
+pub mod socket;
+
 
 /// Common telemetry payload collected from Ring-0 eBPF probes.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

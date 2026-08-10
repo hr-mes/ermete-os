@@ -8,16 +8,7 @@ use std::collections::HashMap;
 use tokio::sync::Mutex;
 use crate::peer::{PeerManager, PeerState};
 use crate::pqc::{HandshakeInitPayload, HandshakeResponsePayload, HandshakeSession, PqcEngine};
-
-#[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[allow(dead_code)]
-pub enum PacketType {
-    HandshakeInit = 0x01,
-    HandshakeResp = 0x02,
-    DataFrame = 0x03,
-    Heartbeat = 0x04,
-}
+pub use ermete_bus_api::socket::MeshPacketType as PacketType;
 
 #[derive(Debug, Clone)]
 pub struct IngressDataFrame {
@@ -158,7 +149,7 @@ impl MeshTunnel {
             .remove(&resp_data.responder_node_id)
             .ok_or_else(|| anyhow!("No pending handshake session found for node {}", resp_data.responder_node_id))?;
 
-        let _session_key = session.complete_handshake(&self.pqc_engine, &resp_data, &peer_dilithium_pk)?;
+        let _session_key = session.complete_handshake(self.pqc_engine.keys(), &resp_data, &peer_dilithium_pk)?;
 
         // Mark peer active and zero-trust verified
         self.peer_manager

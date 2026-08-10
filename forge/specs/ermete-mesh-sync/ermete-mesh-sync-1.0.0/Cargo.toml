@@ -13,5 +13,6 @@ base64 = "0.21"
 rand_core = "0.6"
 pqc_kyber = { workspace = true, features = ["kyber1024"] }
 pqc_dilithium = { workspace = true }
+ermete-bus-api = { path = "../../../../system/ermete-bus-api" }
 
 
