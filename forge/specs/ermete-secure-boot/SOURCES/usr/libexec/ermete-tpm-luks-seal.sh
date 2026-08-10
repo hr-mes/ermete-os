@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# Deterministic Build Timestamp (Reproducible Builds)
+export SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-1723320000}
 set -euo pipefail
 
 # ==============================================================================
@@ -24,7 +27,7 @@ if [ -d "/var/home" ]; then
         MAP_NAME=$(basename "$MOUNT_DEV")
         SLAVE_DEV=$(ls /sys/block/dm-*/slaves 2>/dev/null | grep "$MAP_NAME" || true)
         if [ -n "$SLAVE_DEV" ]; then
-            PHYS_NAME=$(ls "/sys/block/$(echo "$SLAVE_DEV" | cut -d/ -f4)/slaves" 2>/dev/null | head -n 1 || true)
+            PHYS_NAME=$(ls "/sys/block/$(echo "$SLAVE_DEV" | cut -d/ -f4)/slaves" 2>/dev/null | sort -V | head -n 1 || true)
             if [ -n "$PHYS_NAME" ]; then
                 TARGET_DEV="/dev/$PHYS_NAME"
             fi

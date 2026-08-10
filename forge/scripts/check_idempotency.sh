@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# Deterministic Build Timestamp (Reproducible Builds)
+export SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-1723320000}
 set -euo pipefail
 # Bedrock Pure Bash Idempotency Checker
 # Replaces python3 idempotency_checker.py with native system tools (find, sha256sum, skopeo)

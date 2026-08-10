@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# Deterministic Build Timestamp (Reproducible Builds)
+export SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-1723320000}
 set -euo pipefail
 
 # ==============================================================================
@@ -99,12 +102,12 @@ chmod 0400 "$KEY_FILE" # Strictly restrictive read-only permissions for key owne
 cp "$CRT_SRC" "$CRT_FILE"
 chmod 0644 "$CRT_FILE"
 
-STUB_PATH=$(find /usr/lib/systemd/boot/efi/ /usr/lib/systemd/ /usr/share/systemd/ -name "linuxx64.efi.stub" -o -name "systemd-stub.efi" 2>/dev/null | head -n 1)
+STUB_PATH=$(find /usr/lib/systemd/boot/efi/ /usr/lib/systemd/ /usr/share/systemd/ -name "linuxx64.efi.stub" -o -name "systemd-stub.efi" 2>/dev/null | sort -V | head -n 1)
 if [ -z "$STUB_PATH" ]; then
     STUB_PATH="/usr/lib/systemd/boot/efi/linuxx64.efi.stub"
 fi
 
-UKIFY_BIN=$(command -v ukify || find /usr/lib/systemd /usr/bin -name "ukify" 2>/dev/null | head -n 1 || echo "ukify")
+UKIFY_BIN=$(command -v ukify || find /usr/lib/systemd /usr/bin -name "ukify" 2>/dev/null | sort -V | head -n 1 || echo "ukify")
 CMDLINE_STR="quiet splash fastboot iommu=pt intel_iommu=on amd_iommu=on efi=disable_early_pci_dma zswap.enabled=1 zswap.compressor=zstd rootflags=noatime slab_nomerge pti=on randomize_kstack_offset=on vsyscall=none debugfs=off oops=panic module.sig_enforce=1 lockdown=integrity init_on_free=1"
 
 if command -v "$UKIFY_BIN" >/dev/null 2>&1 || [ -f "$UKIFY_BIN" ]; then

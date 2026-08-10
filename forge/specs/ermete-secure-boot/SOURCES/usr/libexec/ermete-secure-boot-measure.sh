@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# Deterministic Build Timestamp (Reproducible Builds)
+export SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-1723320000}
 set -eo pipefail
 
 # Ermete OS - Measured Boot & UKI Signer Script
@@ -17,7 +20,7 @@ INITRD="/usr/lib/modules/${KVER}/initramfs.img"
 
 if [[ ! -f "$KERNEL" ]]; then
     echo "Kernel not found at $KERNEL. Locating vmlinuz..."
-    KERNEL=$(find /usr/lib/modules/ -name "vmlinuz" 2>/dev/null | head -n 1 || true)
+    KERNEL=$(find /usr/lib/modules/ -name "vmlinuz" 2>/dev/null | sort -V | head -n 1 || true)
 fi
 
 if [[ -z "$KERNEL" || ! -f "$KERNEL" ]]; then
@@ -26,7 +29,7 @@ if [[ -z "$KERNEL" || ! -f "$KERNEL" ]]; then
 fi
 
 # Locate systemd-stub EFI binary
-STUB_PATH=$(find /usr/lib/systemd/boot/efi/ /usr/lib/systemd/ /usr/share/systemd/ -name "linuxx64.efi.stub" -o -name "systemd-stub.efi" 2>/dev/null | head -n 1 || echo "")
+STUB_PATH=$(find /usr/lib/systemd/boot/efi/ /usr/lib/systemd/ /usr/share/systemd/ -name "linuxx64.efi.stub" -o -name "systemd-stub.efi" 2>/dev/null | sort -V | head -n 1 || echo "")
 if [[ -z "$STUB_PATH" ]]; then
     STUB_PATH="/usr/lib/systemd/boot/efi/linuxx64.efi.stub"
 fi
@@ -62,7 +65,7 @@ else
 fi
 
 # 1. Generate UKI (Unified Kernel Image) using systemd-stub and ukify
-UKIFY_BIN=$(command -v ukify || find /usr/lib/systemd /usr/bin -name "ukify" 2>/dev/null | head -n 1 || echo "ukify")
+UKIFY_BIN=$(command -v ukify || find /usr/lib/systemd /usr/bin -name "ukify" 2>/dev/null | sort -V | head -n 1 || echo "ukify")
 
 echo ">>> Assembling UKI with systemd-stub ($STUB_PATH) and ukify ($UKIFY_BIN)..."
 "$UKIFY_BIN" build \

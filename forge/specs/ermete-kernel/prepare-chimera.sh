@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# Deterministic Build Timestamp (Reproducible Builds)
+export SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-1723320000}
 set -euo pipefail
 # Ermete OS: The Ultimate Chimera Kernel Bedrock Builder (Fedora Upstream Zero-Trust)
 
@@ -125,7 +128,7 @@ echo "========================================================="
 echo ">>> Scaricamento kernel.src.rpm puro (Releasever: $TARGET_RELEASEVER)..."
 dnf download --source kernel --releasever=$TARGET_RELEASEVER
 rpm -ivh kernel-*.src.rpm
-KERNEL_SRPM=$(ls kernel-*.src.rpm | head -n 1)
+KERNEL_SRPM=$(ls kernel-*.src.rpm | sort -V | head -n 1)
 KERNEL_VER=$(rpm -qp --qf '%{VERSION}' "$KERNEL_SRPM" | cut -d. -f1,2)
 rm -f kernel-*.src.rpm
 
@@ -431,7 +434,7 @@ export MAKEFLAGS="LLVM=1 LLVM_IAS=1"
 rpmbuild -bp --with toolchain_clang --with clang_lto SPECS/kernel.spec --target x86_64
 
 echo ">>> Rilevamento della directory di build del kernel preparata..."
-KERNEL_BUILD_DIR=$(find "$WORKSPACE_DIR/BUILD" -maxdepth 6 -name "Makefile" -exec grep -l "^VERSION =" {} + 2>/dev/null | head -n 1 | xargs -r dirname)
+KERNEL_BUILD_DIR=$(find "$WORKSPACE_DIR/BUILD" -maxdepth 6 -name "Makefile" -exec grep -l "^VERSION =" {} + 2>/dev/null | sort -V | head -n 1 | xargs -r dirname)
 if [ -z "$KERNEL_BUILD_DIR" ]; then
     echo "ERRORE FATALE: Directory di build del kernel non trovata dopo rpmbuild -bp!"
     exit 1
