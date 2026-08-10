@@ -141,7 +141,7 @@ mod tests {
     #[tokio::test]
     async fn test_review_findings_compliance() {
         let audio_bus = AudioBus::new(); let net_bus = NetBus::new(); let hw_bus = HardwareBus::new(); let mpris_bus = MprisBus::new();
-        state.lock().unwrap().wifi_networks.push(crate::ipc::types::WifiNetworkInfo {
+        state.lock().expect("Mutex poisoned in test").wifi_networks.push(crate::ipc::types::WifiNetworkInfo {
             ssid: "Ermete-5G".to_string(),
             signal: 85,
             active: false,
