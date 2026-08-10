@@ -6,6 +6,70 @@ use std::os::unix::ffi::OsStrExt;
 use std::os::unix::io::AsRawFd;
 use std::path::{Path, PathBuf};
 use zbus::interface;
+use std::collections::HashMap;
+use zbus::message::Header;
+use zbus::zvariant::{OwnedValue, Type, Value};
+
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct PolkitSubject {
+    pub kind: String,
+    pub details: HashMap<String, OwnedValue>,
+}
+
+impl PolkitSubject {
+    pub fn system_bus_name(name: impl Into<String>) -> Self {
+        let mut details = HashMap::new();
+        let val: Value = Value::from(name.into());
+        if let Ok(owned) = val.try_into() {
+            details.insert("name".to_string(), owned);
+        }
+        Self {
+            kind: "system-bus-name".to_string(),
+            details,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct PolkitAuthorizationResult {
+    pub is_authorized: bool,
+    pub is_challenge: bool,
+    pub details: HashMap<String, String>,
+}
+
+#[zbus::proxy(
+    interface = "org.freedesktop.PolicyKit1.Authority",
+    default_service = "org.freedesktop.PolicyKit1",
+    default_path = "/org/freedesktop/PolicyKit1/Authority"
+)]
+pub trait PolicyKitAuthority {
+    fn check_authorization(
+        &self,
+        subject: &PolkitSubject,
+        action_id: &str,
+        details: &HashMap<&str, &str>,
+        flags: u32,
+        cancellation_id: &str,
+    ) -> zbus::Result<PolkitAuthorizationResult>;
+}
+
+pub async fn check_polkit_auth_zbus(
+    conn: &zbus::Connection,
+    sender: &str,
+    action_id: &str,
+    allow_user_interaction: bool,
+) -> Result<bool, zbus::Error> {
+    let proxy = PolicyKitAuthorityProxy::new(conn).await?;
+    let subject = PolkitSubject::system_bus_name(sender);
+    let details = HashMap::<&str, &str>::new();
+    let flags = if allow_user_interaction { 1u32 } else { 0u32 };
+
+    let result = proxy
+        .check_authorization(&subject, action_id, &details, flags, "")
+        .await?;
+
+    Ok(result.is_authorized)
+}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Default)]
@@ -138,7 +202,21 @@ impl BackupServer {
 
 #[interface(name = "org.ermete.Backup1")]
 impl BackupServer {
-    async fn create_snapshot(&self, note: &str) -> SnapshotInfo {
+    async fn create_snapshot(
+        &self,
+        note: &str,
+        #[zbus(header)] hdr: Header<'_>,
+        #[zbus(connection)] conn: &zbus::Connection,
+    ) -> zbus::fdo::Result<SnapshotInfo> {
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::Failed("No sender".into()))?;
+        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "org.ermete.backup.create", true)
+            .await
+            .map_err(|e| zbus::fdo::Error::Failed(format!("Polkit check failed: {}", e)))?;
+
+        if !is_auth {
+            return Err(zbus::fdo::Error::Failed("Polkit authorization failed for create_snapshot".into()));
+        }
+
         let now = Local::now();
         let id = format!("snap-{}", now.format("%Y%m%d-%H%M%S"));
         let timestamp = now.format("%d/%m/%Y %H:%M:%S").to_string();
@@ -167,10 +245,23 @@ impl BackupServer {
             let _ = fs::write(self.get_manifest_path(&id), json);
         }
 
-        info
+        Ok(info)
     }
 
-    async fn list_snapshots(&self) -> Vec<SnapshotInfo> {
+    async fn list_snapshots(
+        &self,
+        #[zbus(header)] hdr: Header<'_>,
+        #[zbus(connection)] conn: &zbus::Connection,
+    ) -> zbus::fdo::Result<Vec<SnapshotInfo>> {
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::Failed("No sender".into()))?;
+        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "org.ermete.backup.list", false)
+            .await
+            .map_err(|e| zbus::fdo::Error::Failed(format!("Polkit check failed: {}", e)))?;
+
+        if !is_auth {
+            return Err(zbus::fdo::Error::Failed("Polkit authorization failed for list_snapshots".into()));
+        }
+
         let mut list = Vec::new();
         if let Ok(entries) = fs::read_dir(&self.snapshot_dir) {
             for entry in entries.flatten() {
@@ -185,12 +276,26 @@ impl BackupServer {
             }
         }
         list.sort_by(|a, b| b.id.cmp(&a.id));
-        list
+        Ok(list)
     }
 
-    async fn delete_snapshot(&self, id: &str) -> bool {
+    async fn delete_snapshot(
+        &self,
+        id: &str,
+        #[zbus(header)] hdr: Header<'_>,
+        #[zbus(connection)] conn: &zbus::Connection,
+    ) -> zbus::fdo::Result<bool> {
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::Failed("No sender".into()))?;
+        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "org.ermete.backup.delete", true)
+            .await
+            .map_err(|e| zbus::fdo::Error::Failed(format!("Polkit check failed: {}", e)))?;
+
+        if !is_auth {
+            return Err(zbus::fdo::Error::Failed("Polkit authorization failed for delete_snapshot".into()));
+        }
+
         if id.contains('/') || id.contains('.') || id.contains('\\') {
-            return false;
+            return Ok(false);
         }
         let mut target_dir = self.snapshot_dir.clone();
         target_dir.push(id);
@@ -198,12 +303,26 @@ impl BackupServer {
         println!("[BackupDaemon] Deleting Bcachefs subvolume snapshot {:?}", target_dir);
         let _ = native_bcachefs_delete(&target_dir);
         let _ = fs::remove_file(self.get_manifest_path(id));
-        true
+        Ok(true)
     }
 
-    async fn restore_snapshot(&self, id: &str) -> bool {
+    async fn restore_snapshot(
+        &self,
+        id: &str,
+        #[zbus(header)] hdr: Header<'_>,
+        #[zbus(connection)] conn: &zbus::Connection,
+    ) -> zbus::fdo::Result<bool> {
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::Failed("No sender".into()))?;
+        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "org.ermete.backup.restore", true)
+            .await
+            .map_err(|e| zbus::fdo::Error::Failed(format!("Polkit check failed: {}", e)))?;
+
+        if !is_auth {
+            return Err(zbus::fdo::Error::Failed("Polkit authorization failed for restore_snapshot".into()));
+        }
+
         if id.contains('/') || id.contains('.') || id.contains('\\') {
-            return false;
+            return Ok(false);
         }
         println!("[BackupDaemon] Restoring home directory from snapshot ID: {}", id);
         let manifest_path = self.get_manifest_path(id);
@@ -212,7 +331,7 @@ impl BackupServer {
 
         if !manifest_path.exists() && !target_dir.exists() {
             println!("[BackupDaemon] Snapshot ID {} not found (no manifest or target dir).", id);
-            return false;
+            return Ok(false);
         }
 
         let home = std::env::var("HOME").unwrap_or_else(|_| dirs::home_dir().unwrap_or(std::path::PathBuf::from("/home")).to_string_lossy().into_owned().to_string());
@@ -222,10 +341,10 @@ impl BackupServer {
 
         if res.is_err() {
             println!("[BackupDaemon] Bcachefs subvolume restore failed.");
-            return false;
+            return Ok(false);
         }
 
-        true
+        Ok(true)
     }
 }
 

@@ -150,7 +150,21 @@ impl GatekeeperManager {
         }
     }
 
-    async fn deny_execution(&self, fd_id: String) -> zbus::fdo::Result<()> {
+    async fn deny_execution(
+        &self,
+        fd_id: String,
+        #[zbus(header)] hdr: Header<'_>,
+        #[zbus(connection)] conn: &zbus::Connection,
+    ) -> zbus::fdo::Result<()> {
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::Failed("No sender".into()))?;
+        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "os.ermete.gatekeeper.deny", false)
+            .await
+            .map_err(|e| zbus::fdo::Error::Failed(format!("Polkit zbus check failed: {}", e)))?;
+
+        if !is_auth {
+            return Err(zbus::fdo::Error::Failed("Polkit authorization failed for deny_execution".into()));
+        }
+
         let _ = restore_bcachefs_snapshot_impl(&fd_id, &self.pending_snapshots).await;
         let event_fd = {
             let mut pending = self.pending_events.lock().unwrap_or_else(|e| e.into_inner());
@@ -164,7 +178,21 @@ impl GatekeeperManager {
         }
     }
 
-    async fn rollback_snapshot(&self, fd_id: String) -> zbus::fdo::Result<bool> {
+    async fn rollback_snapshot(
+        &self,
+        fd_id: String,
+        #[zbus(header)] hdr: Header<'_>,
+        #[zbus(connection)] conn: &zbus::Connection,
+    ) -> zbus::fdo::Result<bool> {
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::Failed("No sender".into()))?;
+        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "os.ermete.gatekeeper.rollback", false)
+            .await
+            .map_err(|e| zbus::fdo::Error::Failed(format!("Polkit zbus check failed: {}", e)))?;
+
+        if !is_auth {
+            return Err(zbus::fdo::Error::Failed("Polkit authorization failed for rollback_snapshot".into()));
+        }
+
         restore_bcachefs_snapshot_impl(&fd_id, &self.pending_snapshots).await
     }
 
@@ -183,7 +211,7 @@ impl GatekeeperManager {
         #[zbus(connection)] conn: &zbus::Connection,
     ) -> zbus::fdo::Result<()> {
         let sender = hdr.sender().ok_or(zbus::fdo::Error::Failed("No sender".into()))?.to_owned();
-        let reason = reason.to_string();
+        let _reason = reason.to_string();
         let conn = conn.clone();
 
         tokio::spawn(async move {
@@ -194,21 +222,7 @@ impl GatekeeperManager {
             let signal_ctxt = iface_ref.signal_emitter().clone();
 
             let polkit_status = check_polkit_auth_zbus(&conn, sender.as_str(), "os.ermete.gatekeeper.root", true).await;
-            let mut authorized = polkit_status.unwrap_or(false);
-
-            if !authorized {
-                let proxy_res = zbus::proxy::Builder::<'_, zbus::Proxy>::new(&conn)
-                    .destination("os.ermete.Fido2Mock")
-                    .and_then(|b| b.path("/os/ermete/Fido2Mock"))
-                    .and_then(|b| b.interface("os.ermete.Fido2Mock"));
-                if let Ok(builder) = proxy_res {
-                    if let Ok(p) = builder.build().await {
-                        if let Ok(true) = p.call::<_, _, bool>("Authenticate", &(reason,)).await {
-                            authorized = true;
-                        }
-                    }
-                }
-            }
+            let authorized = polkit_status.unwrap_or(false);
 
             if authorized {
                 let _ = GatekeeperManager::permit(&signal_ctxt, req_id).await;
