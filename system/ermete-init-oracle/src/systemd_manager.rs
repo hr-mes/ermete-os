@@ -72,7 +72,7 @@ impl SystemdManager {
 
 
 
-    pub async fn reload_daemon(&self) -> bool {
+    pub async fn reload_daemon(&self) -> Result<()> {
         info!("Executing systemctl daemon-reload...");
         let is_user_mode = self.target_dir != Path::new(PRIMARY_SYSTEMD_DIR);
         let mut cmd = tokio::process::Command::new("systemctl");
@@ -85,16 +85,14 @@ impl SystemdManager {
         match cmd.output().await {
             Ok(out) if out.status.success() => {
                 info!("systemctl daemon-reload succeeded.");
-                true
+                Ok(())
             }
             Ok(out) => {
                 let err_msg = String::from_utf8_lossy(&out.stderr);
-                warn!("systemctl daemon-reload returned non-zero exit code: {}. Simulation active.", err_msg);
-                true
+                anyhow::bail!("systemctl daemon-reload returned non-zero exit code: {}", err_msg);
             }
             Err(e) => {
-                warn!("systemctl command not available or failed: {}. Operating in systemd simulation mode.", e);
-                true
+                anyhow::bail!("systemctl command not available or failed: {}", e);
             }
         }
     }
@@ -116,45 +114,55 @@ impl SystemdManager {
             }
             Ok(out) => {
                 let err = String::from_utf8_lossy(&out.stderr);
-                anyhow::bail!("systemctl start error: {}", err);
+                anyhow::bail!("systemctl start error for unit '{}': {}", unit_name, err);
             }
             Err(e) => {
-                info!("Systemctl not available ({}), simulating unit start for {}", e, unit_name);
-                Ok(())
+                anyhow::bail!("systemctl start command failed for unit '{}': {}", unit_name, e);
             }
         }
     }
 
     pub async fn stop_service(&self, unit_name: &str) -> Result<()> {
+        info!("Stopping systemd unit '{}'...", unit_name);
         let is_user_mode = self.target_dir != Path::new(PRIMARY_SYSTEMD_DIR);
-        let mut args = vec!["--no-ask-password"];
+        let mut cmd = tokio::process::Command::new("systemctl");
+        cmd.arg("--no-ask-password");
         if is_user_mode {
-            args.push("--user");
+            cmd.arg("--user");
         }
-        args.extend_from_slice(&["stop", unit_name]);
-        let _ = tokio::process::Command::new("systemctl").args(&args).output().await;
-        Ok(())
+        cmd.args(["stop", unit_name]);
+
+        match cmd.output().await {
+            Ok(out) if out.status.success() => {
+                info!("Unit '{}' stopped successfully.", unit_name);
+                Ok(())
+            }
+            Ok(out) => {
+                let err = String::from_utf8_lossy(&out.stderr);
+                anyhow::bail!("systemctl stop error for unit '{}': {}", unit_name, err);
+            }
+            Err(e) => {
+                anyhow::bail!("systemctl stop command failed for unit '{}': {}", unit_name, e);
+            }
+        }
     }
 
-    pub async fn check_service_status(&self, unit_name: &str) -> String {
+    pub async fn check_service_status(&self, unit_name: &str) -> Result<String> {
         let is_user_mode = self.target_dir != Path::new(PRIMARY_SYSTEMD_DIR);
         let mut args = vec!["--no-ask-password"];
         if is_user_mode {
             args.push("--user");
         }
         args.extend_from_slice(&["is-active", unit_name]);
-        let output = tokio::process::Command::new("systemctl").args(&args).output().await;
+        let output = tokio::process::Command::new("systemctl").args(&args).output().await?;
 
-        match output {
-            Ok(out) => {
-                let status_str = String::from_utf8_lossy(&out.stdout).trim().to_string();
-                if !status_str.is_empty() {
-                    return status_str;
-                }
-            }
-            Err(_) => {}
+        let status_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        if !status_str.is_empty() {
+            Ok(status_str)
+        } else {
+            let err_str = String::from_utf8_lossy(&output.stderr).trim().to_string();
+            anyhow::bail!("systemctl is-active returned empty output for unit '{}'. Stderr: {}", unit_name, err_str);
         }
-        "active".to_string() // Simulation default
     }
 
     pub async fn list_services(&self) -> Vec<ManagedServiceRecord> {
@@ -165,30 +173,32 @@ impl SystemdManager {
     pub async fn revert_service(&self, service_name: &str) -> Result<String> {
         let mut lock = self.records.lock().await;
         if let Some(record) = lock.remove(service_name) {
-            let _ = self.stop_service(&record.unit_name).await;
+            self.stop_service(&record.unit_name).await?;
             if record.unit_path.exists() {
-                let _ = tokio::fs::remove_file(&record.unit_path).await;
+                tokio::fs::remove_file(&record.unit_path).await?;
             }
-            let _ = self.reload_daemon().await;
+            self.reload_daemon().await?;
             Ok(format!("Service '{}' reverted and unit file {:?} removed.", service_name, record.unit_path))
         } else {
             anyhow::bail!("Service '{}' is not currently managed by Init Oracle", service_name)
         }
     }
 
-    pub async fn run_health_audit_cycle(&self) {
+    pub async fn run_health_audit_cycle(&self) -> Result<()> {
         let services = self.list_services().await;
         for record in services {
-            let current_status = self.check_service_status(&record.unit_name).await;
+            let current_status = self.check_service_status(&record.unit_name).await?;
             if current_status == "failed" || current_status == "inactive" {
                 warn!(
                     "Audit detected service '{}' in state '{}'. Triggering autonomous recovery...",
                     record.service_name, current_status
                 );
-                let _ = self.start_service(&record.unit_name).await;
+                self.start_service(&record.unit_name).await?;
             }
         }
+        Ok(())
     }
+
 }
 
 

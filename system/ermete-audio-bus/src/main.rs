@@ -40,8 +40,14 @@ async fn main() -> Result<()> {
 
     // 4. Initialize Native PipeWire Session Manager Engine
     let pw_manager = Arc::new(PipewireManager::new(node_tree.clone(), routing_engine.clone()));
-    if let Err(err) = pw_manager.initialize().await {
-        tracing::error!("Failed to initialize PipeWire manager: {}", err);
+    let pw_init_task = tokio::spawn({
+        let pw_manager = pw_manager.clone();
+        async move { pw_manager.initialize().await }
+    });
+    match pw_init_task.await {
+        Ok(Ok(())) => info!("PipeWire manager initialized successfully."),
+        Ok(Err(err)) => tracing::error!("Failed to initialize PipeWire manager: {}", err),
+        Err(e) => tracing::warn!("PipeWire manager initialization status: {}", e),
     }
 
     // 5. Expose ZBus D-Bus Interface org.ermete.AudioBus

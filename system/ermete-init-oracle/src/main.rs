@@ -43,7 +43,9 @@ async fn main() -> Result<()> {
         let mut interval = tokio::time::interval(Duration::from_secs(30));
         loop {
             interval.tick().await;
-            manager_clone.run_health_audit_cycle().await;
+            if let Err(e) = manager_clone.run_health_audit_cycle().await {
+                tracing::error!("Health audit cycle failed: {}", e);
+            }
         }
     });
 
