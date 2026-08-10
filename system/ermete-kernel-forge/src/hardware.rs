@@ -9,7 +9,6 @@ pub struct HardwareProfile {
     pub lto_mode: String,
     pub autofdo_enabled: bool,
     pub active_modules_count: usize,
-    pub unused_drivers_pruned: usize,
     pub detected_features: Vec<String>,
 }
 
@@ -51,7 +50,6 @@ pub fn detect_hardware_profile() -> HardwareProfile {
         lto_mode: "ThinLTO (LLVM)".to_string(),
         autofdo_enabled: true,
         active_modules_count: active_modules,
-        unused_drivers_pruned: 1450, // Typical Gentoo driver reduction vs distro monolithic kernel
         detected_features: features,
     }
 }

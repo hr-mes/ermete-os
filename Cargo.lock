@@ -1919,10 +1919,12 @@ name = "ermete-telemetry"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "aya",
  "chrono",
  "reqwest",
  "serde",
  "serde_json",
+ "sha2",
  "tokio",
  "tokio-stream",
  "tracing",
