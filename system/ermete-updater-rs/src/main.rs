@@ -52,11 +52,26 @@ impl UpdaterEngine {
             *st = UpdateState::CheckingForUpdates;
         }
 
-        // Simula o interroga bootc/OSTree inspect
-        tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+        let output = tokio::process::Command::new("bootc")
+            .arg("upgrade")
+            .arg("--check")
+            .output()
+            .await?;
 
-        let has_update = false; // In produzione verrebbe eseguito `bootc upgrade --check` o HTTP registry check
-        info!("Verifica completata: nessun nuovo aggiornamento pendente trovato.");
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            let err_msg = format!("Controllo aggiornamenti bootc fallito: {}", stderr);
+            {
+                let mut st = self.state.write().await;
+                *st = UpdateState::Failed(err_msg.clone());
+            }
+            anyhow::bail!(err_msg);
+        }
+
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let has_update = stdout.contains("queued") || stdout.contains("Available") || stdout.contains("update available");
+
+        info!("Verifica completata. Aggiornamento disponibile: {}", has_update);
 
         {
             let mut st = self.state.write().await;
@@ -73,15 +88,29 @@ impl UpdaterEngine {
             *st = UpdateState::Downloading;
         }
 
-        // Simula la fase di download e applicazione dello stage bootc/OSTree
-        tokio::time::sleep(tokio::time::Duration::from_millis(800)).await;
+        let mut cmd = tokio::process::Command::new("bootc");
+        if image_ref.is_empty() {
+            cmd.arg("upgrade");
+        } else {
+            cmd.arg("switch").arg(image_ref);
+        }
 
         {
             let mut st = self.state.write().await;
             *st = UpdateState::Staging;
         }
 
-        tokio::time::sleep(tokio::time::Duration::from_millis(400)).await;
+        let output = cmd.output().await?;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            let err_msg = format!("Staging immagine bootc fallito: {}", stderr);
+            {
+                let mut st = self.state.write().await;
+                *st = UpdateState::Failed(err_msg.clone());
+            }
+            anyhow::bail!(err_msg);
+        }
 
         {
             let mut status = self.status.write().await;

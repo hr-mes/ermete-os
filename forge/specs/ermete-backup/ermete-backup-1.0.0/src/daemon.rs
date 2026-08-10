@@ -226,11 +226,9 @@ impl BackupServer {
         target_dir.push(&id);
 
         println!("[BackupDaemon] Creating Bcachefs CoW snapshot of {} at {:?}", home, target_dir);
-        let res = native_bcachefs_snapshot(Path::new(&home), &target_dir);
-
-        if res.is_err() {
-            println!("[BackupDaemon] Bcachefs subvolume snapshot command failed or unsupported on current fs. Creating manifest snapshot dir.");
-            let _ = fs::create_dir_all(&target_dir);
+        if let Err(e) = native_bcachefs_snapshot(Path::new(&home), &target_dir) {
+            println!("[BackupDaemon] Bcachefs subvolume snapshot command failed: {:?}", e);
+            return Err(zbus::fdo::Error::Failed("Filesystem non supporta CoW o comando bcachefs fallito".to_string()));
         }
 
         let info = SnapshotInfo {

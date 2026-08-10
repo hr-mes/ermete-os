@@ -10,21 +10,17 @@ struct SecureBootAttestation {
 #[interface(name = "org.ermete.SecureBoot")]
 impl SecureBootAttestation {
     /// Measure PCRs and return attestation status.
-    async fn get_attestation(&self) -> String {
+    async fn get_attestation(&self) -> zbus::fdo::Result<String> {
         if !self.tpm_available {
-            return "Fallback: TPM not found. System running without hardware attestation.".to_string();
+            return Ok("Fallback: TPM not found. System running without hardware attestation.".to_string());
         }
 
-        // Dummy implementation of reading PCR registers from sysfs
-        // In reality, this would read from /sys/class/tpm/tpm0/pcr-sha256/0 etc.
-        let pcr_path = "/sys/class/class/tpm/tpm0/pcr-sha256/0";
-        if Path::new(pcr_path).exists() {
-            if let Ok(content) = fs::read_to_string(pcr_path) {
-                return format!("Attestation OK: PCR0={}", content.trim());
-            }
-        }
-        
-        "Attestation OK: TPM present but PCR reading mocked.".to_string()
+        let pcr_path = "/sys/class/tpm/tpm0/pcr-sha256/0";
+        let content = fs::read_to_string(pcr_path).map_err(|e| {
+            zbus::fdo::Error::Failed(format!("Impossibile leggere il registro PCR0 da {}: {}", pcr_path, e))
+        })?;
+
+        Ok(format!("Attestation OK: PCR0={}", content.trim()))
     }
 }
 
