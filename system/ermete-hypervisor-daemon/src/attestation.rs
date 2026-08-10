@@ -212,12 +212,24 @@ impl AttestationEngine {
 
         let hardware_valid = match enclave_type {
             HardwareEnclaveType::SevSnp => {
-                info!("Verifying AMD SEV-SNP VCEK hardware measurement...");
-                true
+                info!("Verifying AMD SEV-SNP hardware device at /dev/sev-guest...");
+                if Path::new("/dev/sev-guest").exists() {
+                    info!("AMD SEV-SNP hardware device /dev/sev-guest detected.");
+                    true
+                } else {
+                    error!("AMD SEV-SNP device /dev/sev-guest not found on host system.");
+                    false
+                }
             }
             HardwareEnclaveType::IntelTdx => {
-                info!("Verifying Intel TDX MRTD/RTMR enclave measurement...");
-                true
+                info!("Verifying Intel TDX hardware device at /dev/tdx_guest or /dev/tdx-attest...");
+                if Path::new("/dev/tdx_guest").exists() || Path::new("/dev/tdx-attest").exists() {
+                    info!("Intel TDX hardware device detected.");
+                    true
+                } else {
+                    error!("Intel TDX hardware device (/dev/tdx_guest or /dev/tdx-attest) not found on host system.");
+                    false
+                }
             }
             HardwareEnclaveType::SoftwareEnclave => {
                 if self.config.strict_zero_trust {

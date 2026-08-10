@@ -87,64 +87,15 @@ button.mc-workspace-action:hover {
 }
 "#;
 
-/// Asynchronous dummy abstraction to fetch window GPU preview thumbnails.
-/// In production, this can be wired to Screencopy / DMA-BUF buffers.
-/// Currently renders a high quality 16:9 procedural gradient preview buffer.
-pub async fn fetch_window_thumbnail(app_id: &str, window_id: u64) -> Option<gdk::Texture> {
+/// Honest stub for window GPU preview thumbnails.
+///
+/// Direct attachment point for Wayland Screencopy & DMA-BUF buffer rendering
+/// (`zwp_linux_dmabuf_v1` / `zwlr_screencopy_manager_v1`).
+/// Returns an empty frame buffer until Wayland Screencopy protocol FFI bindings are mapped.
+pub async fn fetch_window_thumbnail(_app_id: &str, _window_id: u64) -> Option<gdk::Texture> {
     let width = 320;
     let height = 180;
-    let mut pixels = Vec::with_capacity(width * height * 4);
-
-    // Compute base colors based on app_id and window_id hash
-    let mut hash = window_id.wrapping_add(14695981039346656037);
-    for b in app_id.bytes() {
-        hash = hash.wrapping_mul(1099511628211) ^ (b as u64);
-    }
-
-    let r1 = ((hash & 0xFF) as f32 / 255.0) * 0.7 + 0.15;
-    let g1 = (((hash >> 8) & 0xFF) as f32 / 255.0) * 0.7 + 0.15;
-    let b1 = (((hash >> 16) & 0xFF) as f32 / 255.0) * 0.7 + 0.15;
-
-    let r2 = (((hash >> 24) & 0xFF) as f32 / 255.0) * 0.7 + 0.2;
-    let g2 = (((hash >> 32) & 0xFF) as f32 / 255.0) * 0.7 + 0.2;
-    let b2 = (((hash >> 40) & 0xFF) as f32 / 255.0) * 0.7 + 0.2;
-
-    for y in 0..height {
-        let vy = y as f32 / height as f32;
-        for x in 0..width {
-            let vx = x as f32 / width as f32;
-
-            // Simulated window titlebar (top 22px dark bar with window frame border)
-            if y < 22 {
-                if y < 20 {
-                    pixels.push(30);
-                    pixels.push(33);
-                    pixels.push(42);
-                    pixels.push(255);
-                } else {
-                    pixels.push(50);
-                    pixels.push(55);
-                    pixels.push(70);
-                    pixels.push(255);
-                }
-                continue;
-            }
-
-            // High-quality smooth spatial gradient
-            let blend_x = (vx * std::f32::consts::PI).sin();
-            let blend_y = (vy * std::f32::consts::PI).sin();
-            let factor = (blend_x * 0.5 + blend_y * 0.5).clamp(0.0, 1.0);
-
-            let r = (r1 * (1.0 - factor) + r2 * factor) * 255.0;
-            let g = (g1 * (1.0 - factor) + g2 * factor) * 255.0;
-            let b = (b1 * (1.0 - factor) + b2 * factor) * 255.0;
-
-            pixels.push(r as u8);
-            pixels.push(g as u8);
-            pixels.push(b as u8);
-            pixels.push(255);
-        }
-    }
+    let pixels = vec![0u8; width * height * 4];
 
     let bytes = glib::Bytes::from_owned(pixels);
     let stride = width * 4;
@@ -240,13 +191,9 @@ pub fn build_ui(app: &Application) {
         let ws_id = ws.id;
         let win_clone = window.clone();
         ws_btn.connect_clicked(move |_| {
-            let _ = std::process::Command::new("niri")
-                .arg("msg")
-                .arg("action")
-                .arg("focus-workspace")
-                .arg("--id")
-                .arg(ws_id.to_string())
-                .spawn();
+            glib::MainContext::default().spawn_local(async move {
+                ermete_niri_ipc::async_client::focus_workspace_by_id(ws_id).await;
+            });
             win_clone.close();
         });
         ws_box.append(&ws_container);
@@ -344,13 +291,9 @@ pub fn build_ui(app: &Application) {
 
         let win_clone = window.clone();
         card_btn.connect_clicked(move |_| {
-            let _ = std::process::Command::new("niri")
-                .arg("msg")
-                .arg("action")
-                .arg("focus-window")
-                .arg("--id")
-                .arg(win_id.to_string())
-                .spawn();
+            glib::MainContext::default().spawn_local(async move {
+                ermete_niri_ipc::async_client::focus_window(win_id).await;
+            });
             win_clone.close();
         });
 

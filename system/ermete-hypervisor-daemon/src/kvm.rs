@@ -1,3 +1,5 @@
+#![allow(unsafe_code)]
+
 use anyhow::{anyhow, Result};
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
@@ -47,15 +49,47 @@ pub struct KvmMicroVmContext {
     pub vcpu_count: u32,
 }
 
+const KVM_GET_API_VERSION: libc::c_ulong = 0xAE00;
+const KVM_CREATE_VM: libc::c_ulong = 0xAE01;
+
 impl KvmMicroVmContext {
+    #[allow(unsafe_code)]
     pub fn new(enclave_type: HardwareEnclaveType, memory_size_mb: u64, vcpu_count: u32) -> Result<Self> {
         let event_fd = EventFd::new(0).map_err(|e| anyhow!("EventFd creation failed: {}", e))?;
         
-        // Open /dev/kvm if present or simulate FD in unprivileged mode
+        // Open /dev/kvm if present and issue ioctls to retrieve API version and create VM file descriptor
         let (vm_fd, _kvm_file) = if Path::new("/dev/kvm").exists() {
-            let file = File::open("/dev/kvm")?;
-            let fd = file.as_raw_fd();
-            (fd, Some(file))
+            match File::open("/dev/kvm") {
+                Ok(file) => {
+                    let kvm_fd = file.as_raw_fd();
+                    
+                    let api_version = unsafe { libc::ioctl(kvm_fd, KVM_GET_API_VERSION, 0) };
+                    if api_version < 0 {
+                        warn!(
+                            "KVM_GET_API_VERSION ioctl failed: {}. Falling back to zero-trust container mode.",
+                            std::io::Error::last_os_error()
+                        );
+                        (-1, Some(file))
+                    } else {
+                        info!("KVM API version: {}", api_version);
+                        let created_vm_fd = unsafe { libc::ioctl(kvm_fd, KVM_CREATE_VM, 0) };
+                        if created_vm_fd < 0 {
+                            warn!(
+                                "KVM_CREATE_VM ioctl failed: {}. Falling back to zero-trust container mode.",
+                                std::io::Error::last_os_error()
+                            );
+                            (-1, Some(file))
+                        } else {
+                            info!("KVM_CREATE_VM ioctl succeeded: created VM file descriptor {}", created_vm_fd);
+                            (created_vm_fd, Some(file))
+                        }
+                    }
+                }
+                Err(e) => {
+                    warn!("Failed to open /dev/kvm: {}. Running micro-VM engine in zero-trust container mode.", e);
+                    (-1, None)
+                }
+            }
         } else {
             warn!("KVM device (/dev/kvm) not accessible. Running micro-VM engine in zero-trust container mode.");
             (-1, None)
@@ -71,7 +105,13 @@ impl KvmMicroVmContext {
         })
     }
 
+    #[allow(unsafe_code)]
     pub fn shutdown(&self) -> Result<()> {
+        if self.vm_fd >= 0 {
+            unsafe {
+                libc::close(self.vm_fd);
+            }
+        }
         info!("KVM Micro-VM context (Type: {}) shut down cleanly.", self.enclave_type);
         Ok(())
     }

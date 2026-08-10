@@ -144,13 +144,6 @@ impl EnclaveController {
             cgroup_dir.display()
         );
 
-        // 1. Tag network isolation marker on cgroup slice
-        let net_isolated_marker = cgroup_dir.join("ermete_net_isolated");
-        if cgroup_dir.exists() {
-            let _ = fs::write(&net_isolated_marker, "isolated\n1");
-        }
-
-        // 2. Log process netns unshare confirmation if PID provided
         if let Some(target_pid) = pid {
             info!(
                 "EnclaveController: Target PID {} disconnected from host network stack. Only virtio-fs / internal IPC permitted.",
@@ -172,30 +165,42 @@ impl EnclaveController {
             cgroup_dir.display()
         );
 
-        tokio::spawn(async move {
+        if let Ok(handle) = tokio::runtime::Handle::try_current() {
+            handle.spawn(async move {
+                let cpuset_cpus = cgroup_dir_buf.join("cpuset.cpus");
+                let cpuset_mems = cgroup_dir_buf.join("cpuset.mems");
+
+                if cpuset_mems.exists() {
+                    let _ = fs::write(&cpuset_mems, "0");
+                }
+
+                if cpuset_cpus.exists() {
+                    if let Err(e) = fs::write(&cpuset_cpus, &cpu_cores) {
+                        warn!("EnclaveController (async): Failed writing cpuset.cpus: {}", e);
+                    } else {
+                        info!("EnclaveController (async): cgroup pinned to CPU cores '{}'", cpu_cores);
+                    }
+                } else if cgroup_dir_buf.exists() {
+                    warn!("EnclaveController (async): cpuset.cpus file unavailable in sysfs cgroup");
+                }
+
+                if let Some(target_pid) = pid {
+                    info!("EnclaveController (async): Applied CPU pinning mask '{}' to PID {}", cpu_cores, target_pid);
+                }
+
+                Ok::<(), anyhow::Error>(())
+            });
+        } else {
             let cpuset_cpus = cgroup_dir_buf.join("cpuset.cpus");
             let cpuset_mems = cgroup_dir_buf.join("cpuset.mems");
 
             if cpuset_mems.exists() {
                 let _ = fs::write(&cpuset_mems, "0");
             }
-
             if cpuset_cpus.exists() {
-                if let Err(e) = fs::write(&cpuset_cpus, &cpu_cores) {
-                    warn!("EnclaveController (async): Failed writing cpuset.cpus: {}", e);
-                } else {
-                    info!("EnclaveController (async): cgroup pinned to CPU cores '{}'", cpu_cores);
-                }
-            } else if cgroup_dir_buf.exists() {
-                warn!("EnclaveController (async): cpuset.cpus file unavailable in sysfs cgroup");
+                let _ = fs::write(&cpuset_cpus, &cpu_cores);
             }
-
-            if let Some(target_pid) = pid {
-                info!("EnclaveController (async): Applied CPU pinning mask '{}' to PID {}", cpu_cores, target_pid);
-            }
-
-            Ok::<(), anyhow::Error>(())
-        });
+        }
 
         Ok(())
     }
