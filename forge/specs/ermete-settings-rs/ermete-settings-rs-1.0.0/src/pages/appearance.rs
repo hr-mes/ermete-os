@@ -138,6 +138,11 @@ pub fn build_page() -> Box {
 
     container.append(&settings_card);
 
+    // Zorin-Style System Layout Switcher Section
+    let layout_switcher = crate::pages::layout_switcher::build_switcher_section();
+    container.append(&layout_switcher);
+
+
     // Load current state from D-Bus on page initialization
     let bl = btn_light.clone();
     let bd = btn_dark.clone();

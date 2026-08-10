@@ -1,5 +1,7 @@
 pub mod appearance;
+pub mod layout_switcher;
 pub mod desktop;
+
 pub mod displays;
 pub mod network;
 pub mod audio;

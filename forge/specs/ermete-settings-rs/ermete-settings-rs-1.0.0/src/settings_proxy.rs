@@ -18,6 +18,11 @@ pub trait Settings {
     fn wallpaper(&self) -> zbus::Result<String>;
     #[zbus(property, name = "Wallpaper")]
     fn set_wallpaper(&self, value: &str) -> zbus::Result<()>;
+
+    #[zbus(property, name = "DesktopLayout")]
+    fn desktop_layout(&self) -> zbus::Result<String>;
+    #[zbus(property, name = "DesktopLayout")]
+    fn set_desktop_layout(&self, value: &str) -> zbus::Result<()>;
 }
 
 #[zbus::proxy(
@@ -40,6 +45,25 @@ pub trait Appearance {
     fn wallpaper(&self) -> zbus::Result<String>;
     #[zbus(property, name = "Wallpaper")]
     fn set_wallpaper(&self, value: &str) -> zbus::Result<()>;
+
+    #[zbus(property, name = "DesktopLayout")]
+    fn desktop_layout(&self) -> zbus::Result<String>;
+    #[zbus(property, name = "DesktopLayout")]
+    fn set_desktop_layout(&self, value: &str) -> zbus::Result<()>;
+}
+
+#[zbus::proxy(
+    interface = "org.ermete.Settings.Layout",
+    default_service = "org.ermete.Settings",
+    default_path = "/org/ermete/Settings/Layout"
+)]
+pub trait Layout {
+    #[zbus(property, name = "DesktopLayout")]
+    fn desktop_layout(&self) -> zbus::Result<String>;
+    #[zbus(property, name = "DesktopLayout")]
+    fn set_desktop_layout(&self, value: &str) -> zbus::Result<()>;
+
+    fn apply_desktop_layout(&self, layout_id: &str) -> zbus::Result<()>;
 }
 
 /// Consolidated helper for executing async operations on SettingsProxy without boilerplate
@@ -67,4 +91,18 @@ where
         }
     }
 }
+
+/// Consolidated helper for executing async operations on LayoutProxy without boilerplate
+pub async fn with_layout_proxy<F, Fut>(f: F)
+where
+    F: FnOnce(LayoutProxy<'static>) -> Fut,
+    Fut: std::future::Future<Output = ()>,
+{
+    if let Ok(conn) = crate::get_connection().await {
+        if let Ok(proxy) = LayoutProxy::new(&conn).await {
+            f(proxy).await;
+        }
+    }
+}
+
 

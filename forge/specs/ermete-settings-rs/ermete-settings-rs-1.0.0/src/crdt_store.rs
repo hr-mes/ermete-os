@@ -152,3 +152,9 @@ pub async fn update_audio_crdt(volume: f64) {
 pub async fn update_dnd_crdt(enabled: bool) {
     let _ = update_setting_crdt("dnd_mode", if enabled { "active" } else { "inactive" }).await;
 }
+
+/// Asynchronously updates Desktop Layout CRDT in local store and mesh cluster
+pub async fn update_layout_crdt(layout_id: &str) {
+    let _ = update_setting_crdt("desktop_layout", layout_id).await;
+}
+

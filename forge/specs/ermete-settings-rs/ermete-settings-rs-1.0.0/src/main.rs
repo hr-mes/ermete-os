@@ -104,7 +104,9 @@ impl SimpleComponent for AppModel {
             ("focus", "Focus", crate::pages::focus::build_page),
             ("general", "Generali", crate::pages::general::build_page),
             ("appearance", "Aspetto", crate::pages::appearance::build_page),
+            ("layout", "Layout Switcher", crate::pages::layout_switcher::build_page),
             ("desktop", "Desktop & Dock", crate::pages::desktop::build_page),
+
             ("displays", "Schermi", crate::pages::displays::build_page),
             ("ecosystem", "Ecosistema", crate::pages::ecosystem::build_page),
             ("updates", "Aggiornamenti", crate::pages::updates::build_page),
@@ -180,7 +182,10 @@ impl SimpleComponent for AppModel {
                     sender.input(AppMsg::SelectPage("battery".to_string()));
                 } else if q.contains("aspetto") || q.contains("tema") || q.contains("dark") {
                     sender.input(AppMsg::SelectPage("appearance".to_string()));
+                } else if q.contains("layout") || q.contains("zorin") || q.contains("dock") || q.contains("taskbar") {
+                    sender.input(AppMsg::SelectPage("layout".to_string()));
                 }
+
             }
         }
     }
