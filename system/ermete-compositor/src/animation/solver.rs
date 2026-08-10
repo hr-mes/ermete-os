@@ -122,10 +122,10 @@ impl Matrix4 {
         for col in 0..4 {
             for row in 0..4 {
                 out[col * 4 + row] =
-                    a[0 * 4 + row] * b[col * 4 + 0] +
-                    a[1 * 4 + row] * b[col * 4 + 1] +
-                    a[2 * 4 + row] * b[col * 4 + 2] +
-                    a[3 * 4 + row] * b[col * 4 + 3];
+                    a[row] * b[col * 4] +
+                    a[4 + row] * b[col * 4 + 1] +
+                    a[8 + row] * b[col * 4 + 2] +
+                    a[12 + row] * b[col * 4 + 3];
             }
         }
         out
