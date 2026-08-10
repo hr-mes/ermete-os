@@ -1,9 +1,54 @@
 use zbus::interface;
+use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
+use serde::{Deserialize, Serialize};
 use zbus::fdo;
-
 use zbus::message::Header;
+use zbus::zvariant::{OwnedValue, Type, Value};
+
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct PolkitSubject {
+    pub kind: String,
+    pub details: HashMap<String, OwnedValue>,
+}
+
+impl PolkitSubject {
+    pub fn system_bus_name(name: impl Into<String>) -> Self {
+        let mut details = HashMap::new();
+        let val: Value = Value::from(name.into());
+        if let Ok(owned) = val.try_into() {
+            details.insert("name".to_string(), owned);
+        }
+        Self {
+            kind: "system-bus-name".to_string(),
+            details,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct PolkitAuthorizationResult {
+    pub is_authorized: bool,
+    pub is_challenge: bool,
+    pub details: HashMap<String, String>,
+}
+
+#[zbus::proxy(
+    interface = "org.freedesktop.PolicyKit1.Authority",
+    default_service = "org.freedesktop.PolicyKit1",
+    default_path = "/org/freedesktop/PolicyKit1/Authority"
+)]
+pub trait PolicyKitAuthority {
+    fn check_authorization(
+        &self,
+        subject: &PolkitSubject,
+        action_id: &str,
+        details: &HashMap<&str, &str>,
+        flags: u32,
+        cancellation_id: &str,
+    ) -> zbus::Result<PolkitAuthorizationResult>;
+}
 
 pub async fn check_polkit_auth(sender: Option<&str>, action_id: &str) -> bool {
     let sender_str = match sender {
@@ -11,17 +56,29 @@ pub async fn check_polkit_auth(sender: Option<&str>, action_id: &str) -> bool {
         _ => return false,
     };
 
-    match tokio::process::Command::new("pkcheck")
-        .arg("--system-bus-name")
-        .arg(sender_str)
-        .arg("--action-id")
-        .arg(action_id)
-        .status()
-        .await
-    {
-        Ok(status) => status.success(),
+    let conn = match zbus::Connection::system().await {
+        Ok(c) => c,
         Err(e) => {
-            eprintln!("[Polkit Zero-Trust] pkcheck failed for action {}: {}", action_id, e);
+            eprintln!("[Polkit Zero-Trust] Failed to connect to system bus: {}", e);
+            return false;
+        }
+    };
+
+    let proxy = match PolicyKitAuthorityProxy::new(&conn).await {
+        Ok(p) => p,
+        Err(e) => {
+            eprintln!("[Polkit Zero-Trust] Failed to create PolicyKit authority proxy: {}", e);
+            return false;
+        }
+    };
+
+    let subject = PolkitSubject::system_bus_name(sender_str);
+    let details = HashMap::<&str, &str>::new();
+
+    match proxy.check_authorization(&subject, action_id, &details, 0, "").await {
+        Ok(result) => result.is_authorized,
+        Err(e) => {
+            eprintln!("[Polkit Zero-Trust] CheckAuthorization D-Bus call failed for action {}: {}", action_id, e);
             false
         }
     }

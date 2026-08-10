@@ -1579,6 +1579,7 @@ dependencies = [
  "gtk4",
  "libc",
  "pqc_dilithium",
+ "serde",
  "tokio",
  "uuid",
  "xattr",
@@ -1660,6 +1661,7 @@ dependencies = [
 name = "ermete-live-patcher"
 version = "1.0.0"
 dependencies = [
+ "serde",
  "tokio",
  "tracing",
  "tracing-subscriber",

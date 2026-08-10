@@ -2,13 +2,77 @@ use std::collections::HashMap;
 use std::os::unix::io::RawFd;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use serde::{Deserialize, Serialize};
 use zbus::interface;
 use zbus::message::Header;
 use zbus::object_server::SignalEmitter;
+use zbus::zvariant::{OwnedValue, Type, Value};
+
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct PolkitSubject {
+    pub kind: String,
+    pub details: HashMap<String, OwnedValue>,
+}
+
+impl PolkitSubject {
+    pub fn system_bus_name(name: impl Into<String>) -> Self {
+        let mut details = HashMap::new();
+        let val: Value = Value::from(name.into());
+        if let Ok(owned) = val.try_into() {
+            details.insert("name".to_string(), owned);
+        }
+        Self {
+            kind: "system-bus-name".to_string(),
+            details,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct PolkitAuthorizationResult {
+    pub is_authorized: bool,
+    pub is_challenge: bool,
+    pub details: HashMap<String, String>,
+}
+
+#[zbus::proxy(
+    interface = "org.freedesktop.PolicyKit1.Authority",
+    default_service = "org.freedesktop.PolicyKit1",
+    default_path = "/org/freedesktop/PolicyKit1/Authority"
+)]
+pub trait PolicyKitAuthority {
+    fn check_authorization(
+        &self,
+        subject: &PolkitSubject,
+        action_id: &str,
+        details: &HashMap<&str, &str>,
+        flags: u32,
+        cancellation_id: &str,
+    ) -> zbus::Result<PolkitAuthorizationResult>;
+}
+
+pub async fn check_polkit_auth_zbus(
+    conn: &zbus::Connection,
+    sender: &str,
+    action_id: &str,
+    allow_user_interaction: bool,
+) -> Result<bool, zbus::Error> {
+    let proxy = PolicyKitAuthorityProxy::new(conn).await?;
+    let subject = PolkitSubject::system_bus_name(sender);
+    let details = HashMap::<&str, &str>::new();
+    let flags = if allow_user_interaction { 1u32 } else { 0u32 };
+
+    let result = proxy
+        .check_authorization(&subject, action_id, &details, flags, "")
+        .await?;
+
+    Ok(result.is_authorized)
+}
 
 use crate::bcachefs::restore_bcachefs_snapshot_impl;
 use crate::fanotify::{respond_and_close, FAN_DENY};
 use crate::hypervisor::spawn_microvm_isolated_app;
+
 
 pub struct GatekeeperManager {
     pub fanotify_fd: RawFd,
@@ -36,19 +100,14 @@ impl GatekeeperManager {
         &self,
         fd_id: String,
         #[zbus(header)] hdr: Header<'_>,
-        #[zbus(connection)] _conn: &zbus::Connection,
+        #[zbus(connection)] conn: &zbus::Connection,
     ) -> zbus::fdo::Result<()> {
         let sender = hdr.sender().ok_or(zbus::fdo::Error::Failed("No sender".into()))?;
-        let status = tokio::process::Command::new("pkcheck")
-            .arg("--system-bus-name")
-            .arg(sender.as_str())
-            .arg("--action-id")
-            .arg("os.ermete.gatekeeper.approve")
-            .status()
+        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "os.ermete.gatekeeper.approve", false)
             .await
-            .map_err(|e| zbus::fdo::Error::Failed(format!("pkcheck failed: {}", e)))?;
-            
-        if !status.success() {
+            .map_err(|e| zbus::fdo::Error::Failed(format!("Polkit zbus check failed: {}", e)))?;
+
+        if !is_auth {
             return Err(zbus::fdo::Error::Failed("Polkit authorization failed".into()));
         }
 
@@ -134,20 +193,8 @@ impl GatekeeperManager {
             };
             let signal_ctxt = iface_ref.signal_emitter().clone();
 
-            let polkit_status = tokio::process::Command::new("pkcheck")
-                .arg("--system-bus-name")
-                .arg(sender.as_str())
-                .arg("--action-id")
-                .arg("os.ermete.gatekeeper.root")
-                .status()
-                .await;
-
-            let mut authorized = false;
-            if let Ok(status) = polkit_status {
-                if status.success() {
-                    authorized = true;
-                }
-            }
+            let polkit_status = check_polkit_auth_zbus(&conn, sender.as_str(), "os.ermete.gatekeeper.root", true).await;
+            let mut authorized = polkit_status.unwrap_or(false);
 
             if !authorized {
                 let proxy_res = zbus::proxy::Builder::<'_, zbus::Proxy>::new(&conn)

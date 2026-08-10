@@ -1,7 +1,71 @@
 use tokio::process::Command;
 use tracing::{error, info};
 use zbus::{connection, interface};
+use std::collections::HashMap;
 use std::future::pending;
+use serde::{Deserialize, Serialize};
+use zbus::zvariant::{OwnedValue, Type, Value};
+
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct PolkitSubject {
+    pub kind: String,
+    pub details: HashMap<String, OwnedValue>,
+}
+
+impl PolkitSubject {
+    pub fn system_bus_name(name: impl Into<String>) -> Self {
+        let mut details = HashMap::new();
+        let val: Value = Value::from(name.into());
+        if let Ok(owned) = val.try_into() {
+            details.insert("name".to_string(), owned);
+        }
+        Self {
+            kind: "system-bus-name".to_string(),
+            details,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct PolkitAuthorizationResult {
+    pub is_authorized: bool,
+    pub is_challenge: bool,
+    pub details: HashMap<String, String>,
+}
+
+#[zbus::proxy(
+    interface = "org.freedesktop.PolicyKit1.Authority",
+    default_service = "org.freedesktop.PolicyKit1",
+    default_path = "/org/freedesktop/PolicyKit1/Authority"
+)]
+pub trait PolicyKitAuthority {
+    fn check_authorization(
+        &self,
+        subject: &PolkitSubject,
+        action_id: &str,
+        details: &HashMap<&str, &str>,
+        flags: u32,
+        cancellation_id: &str,
+    ) -> zbus::Result<PolkitAuthorizationResult>;
+}
+
+pub async fn check_polkit_auth_zbus(
+    conn: &zbus::Connection,
+    sender: &str,
+    action_id: &str,
+    allow_user_interaction: bool,
+) -> Result<bool, zbus::Error> {
+    let proxy = PolicyKitAuthorityProxy::new(conn).await?;
+    let subject = PolkitSubject::system_bus_name(sender);
+    let details = HashMap::<&str, &str>::new();
+    let flags = if allow_user_interaction { 1u32 } else { 0u32 };
+
+    let result = proxy
+        .check_authorization(&subject, action_id, &details, flags, "")
+        .await?;
+
+    Ok(result.is_authorized)
+}
 
 struct LivePatcher;
 
@@ -10,6 +74,7 @@ impl LivePatcher {
     async fn apply_kernel_patch(
         &self,
         #[zbus(header)] header: zbus::message::Header<'_>,
+        #[zbus(connection)] conn: &zbus::Connection,
         patch_path: &str,
     ) -> zbus::fdo::Result<String> {
         info!("Received request to apply kernel live patch: {}", patch_path);
@@ -20,29 +85,16 @@ impl LivePatcher {
 
         info!("Verifying Polkit authorization for DBus caller: {}", sender);
 
-        let polkit_status = Command::new("pkcheck")
-            .arg("--system-bus-name")
-            .arg(sender.as_str())
-            .arg("--action-id")
-            .arg("os.ermete.livepatcher.apply")
-            .arg("--allow-user-interaction")
-            .status()
-            .await;
+        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "os.ermete.livepatcher.apply", true)
+            .await
+            .map_err(|e| zbus::fdo::Error::Failed(format!("Failed to query PolicyKit authority: {}", e)))?;
 
-        match polkit_status {
-            Ok(status) if status.success() => {
-                info!("Polkit authorization granted for sender {}", sender);
-            }
-            Ok(_) => {
-                let err_msg = "Polkit authorization denied: insufficient privileges".to_string();
-                error!("{}", err_msg);
-                return Err(zbus::fdo::Error::Failed(err_msg));
-            }
-            Err(e) => {
-                let err_msg = format!("Failed to execute pkcheck for authorization: {}", e);
-                error!("{}", err_msg);
-                return Err(zbus::fdo::Error::Failed(err_msg));
-            }
+        if is_auth {
+            info!("Polkit authorization granted for sender {}", sender);
+        } else {
+            let err_msg = "Polkit authorization denied: insufficient privileges".to_string();
+            error!("{}", err_msg);
+            return Err(zbus::fdo::Error::Failed(err_msg));
         }
 
         info!("Verifying module signature for patch: {}", patch_path);
