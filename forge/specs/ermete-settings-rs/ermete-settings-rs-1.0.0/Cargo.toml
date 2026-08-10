@@ -20,6 +20,7 @@ serde_json = { workspace = true }
 ermete-style = { path = "../../../../system/ermete-style" }
 ermete-niri-ipc = { version = "0.1.0", path = "../../ermete-niri-ipc" }
 ermete-bus-api = { path = "../../../../system/ermete-bus-api" }
+pqc_dilithium = { workspace = true }
 
 
 

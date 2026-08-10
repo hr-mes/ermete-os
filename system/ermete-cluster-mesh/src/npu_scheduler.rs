@@ -2,7 +2,14 @@ use crate::types::{NodeLayerAssignment, NpuCapabilities, SwarmNode};
 use anyhow::Result;
 use serde_json::json;
 use std::collections::HashMap;
+use thiserror::Error;
 use tracing::info;
+
+#[derive(Debug, Error)]
+pub enum NpuError {
+    #[error("NpuOffline")]
+    NpuOffline,
+}
 
 pub struct NpuScheduler {
     pub model_name: String,
@@ -117,8 +124,20 @@ impl NpuScheduler {
             self.local_npu.device_name, self.local_npu.backend, task_id, layer_start, layer_end
         );
 
-        // Simulate Hardware NPU matrix multiplication pass (Vulkan / NPU Direct pipeline)
-        tokio::time::sleep(std::time::Duration::from_millis(15)).await;
+        // Probe hardware NPU device presence (accel device nodes)
+        let npu_device_paths = [
+            "/dev/accel/accel0",
+            "/sys/class/accel/accel0",
+            "/dev/galcore",
+            "/dev/davinci_manager",
+        ];
+
+        let has_npu_hardware = npu_device_paths.iter().any(|path| std::path::Path::new(path).exists());
+
+        if !has_npu_hardware {
+            return Err(NpuError::NpuOffline.into());
+        }
+
         let latency_ms = start_time.elapsed().as_millis() as u64;
 
         let output_payload = json!({

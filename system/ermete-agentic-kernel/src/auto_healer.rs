@@ -1,3 +1,4 @@
+use anyhow::{bail, Result};
 use std::fs;
 use tracing::{info, warn};
 
@@ -23,12 +24,12 @@ impl AutoHealer {
 
     /// Injects sysctl parameters dynamically into /proc/sys to heal kernel sub-optimal state or mitigate attacks.
     /// Enforces strict whitelist safety boundaries to prevent AI Ring-0 overreach or arbitrary kernel memory corruption.
-    pub fn inject_sysctl(&self, param: &str, value: &str) -> Result<(), String> {
+    pub fn inject_sysctl(&self, param: &str, value: &str) -> Result<()> {
         // 1. Path traversal & shell injection guard
         if param.contains("..") || param.contains('/') {
             let msg = format!("⛔ [AI Confinement Violation] Rejected sysctl injection with invalid characters/path traversal: {}", param);
             warn!("{}", msg);
-            return Err(msg);
+            bail!(msg);
         }
 
         // 2. Safety Whitelist Validation
@@ -38,31 +39,22 @@ impl AutoHealer {
                 param
             );
             warn!("{}", msg);
-            return Err(msg);
+            bail!(msg);
         }
 
         // 3. Value sanitization: ensure numeric/space payload
         if !value.chars().all(|c| c.is_ascii_digit() || c == ' ') {
             let msg = format!("⛔ [AI Confinement Violation] Rejected non-numeric sysctl value '{}' for parameter '{}'", value, param);
             warn!("{}", msg);
-            return Err(msg);
+            bail!(msg);
         }
 
         info!("Injecting Sysctl Parameter (Auto-Healing): {} = {}", param, value);
         
         let path = format!("/proc/sys/{}", param.replace('.', "/"));
-        if std::path::Path::new(&path).exists() {
-            match fs::write(&path, value) {
-                Ok(_) => {
-                    info!("Successfully updated kernel parameter {} to {} via sysfs/procfs", param, value);
-                    Ok(())
-                }
-                Err(e) => Err(format!("Failed to write sysctl parameter {}: {}", param, e)),
-            }
-        } else {
-            info!("Kernel sysctl path {} simulated (not present in build sandbox)", path);
-            Ok(())
-        }
+        fs::write(&path, value)?;
+        info!("Successfully updated kernel parameter {} to {} via sysfs/procfs", param, value);
+        Ok(())
     }
 
     /// Reallocates system resources dynamically based on NPU AI decisions
@@ -70,7 +62,7 @@ impl AutoHealer {
         info!("⚡ Executing Autonomic Kernel Resource Re-allocation (Zero-Touch Auto-Healing)...");
         for (param, val) in mitigations {
             if let Err(e) = self.inject_sysctl(param, val) {
-                warn!("Auto-healing sysctl injection rejected by safety boundary: {}", e);
+                warn!("Auto-healing sysctl injection rejected or failed: {:#}", e);
             }
         }
         info!("Autonomic Kernel Healing cycle complete. System state optimized within safety boundaries.");

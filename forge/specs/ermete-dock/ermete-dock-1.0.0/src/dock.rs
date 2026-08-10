@@ -56,63 +56,6 @@ pub struct EcsWorldState {
 }
 
 impl EcsWorldState {
-    pub fn new_mock() -> Self {
-        let mut entities = HashMap::new();
-        entities.insert(
-            1,
-            AppEntityComponent {
-                entity_id: 1,
-                app_id: "org.gnome.Terminal.desktop".to_string(),
-                title: "Ermete Terminal".to_string(),
-                icon_name: "utilities-terminal".to_string(),
-                is_focused: true,
-                workspace_id: 1,
-                is_pinned: true,
-            },
-        );
-        entities.insert(
-            2,
-            AppEntityComponent {
-                entity_id: 2,
-                app_id: "firefox.desktop".to_string(),
-                title: "Mozilla Firefox".to_string(),
-                icon_name: "firefox".to_string(),
-                is_focused: false,
-                workspace_id: 1,
-                is_pinned: true,
-            },
-        );
-        entities.insert(
-            3,
-            AppEntityComponent {
-                entity_id: 3,
-                app_id: "nautilus.desktop".to_string(),
-                title: "Files".to_string(),
-                icon_name: "system-file-manager".to_string(),
-                is_focused: false,
-                workspace_id: 1,
-                is_pinned: false,
-            },
-        );
-        entities.insert(
-            4,
-            AppEntityComponent {
-                entity_id: 4,
-                app_id: "code.desktop".to_string(),
-                title: "VS Code".to_string(),
-                icon_name: "com.visualstudio.code".to_string(),
-                is_focused: false,
-                workspace_id: 2,
-                is_pinned: false,
-            },
-        );
-
-        Self {
-            entities,
-            active_workspace: 1,
-        }
-    }
-
     pub fn process_event(&mut self, event: ZeroCopyIpcEvent) {
         match event {
             ZeroCopyIpcEvent::AppSpawned {
@@ -186,7 +129,7 @@ impl DockTaskbar {
 
         window.set_child(Some(&container));
 
-        let ecs_state = Arc::new(RwLock::new(EcsWorldState::new_mock()));
+        let ecs_state = Arc::new(RwLock::new(EcsWorldState::default()));
 
         let taskbar = Self {
             window,
@@ -196,6 +139,7 @@ impl DockTaskbar {
         };
 
         taskbar.refresh_items()?;
+        taskbar.start_zero_copy_ipc_listener()?;
 
         Ok(taskbar)
     }
@@ -296,24 +240,41 @@ impl DockTaskbar {
     }
 
     pub fn start_zero_copy_ipc_listener(&self) -> Result<()> {
+        use std::io::{BufRead, BufReader};
+        use std::os::unix::net::UnixStream;
+        use std::path::Path;
+
+        let socket_path = std::env::var("COMPOSITOR_SOCKET")
+            .ok()
+            .or_else(|| std::env::var("NIRI_SOCKET").ok())
+            .unwrap_or_else(|| {
+                if Path::new("/run/ermete/compositor.sock").exists() {
+                    "/run/ermete/compositor.sock".to_string()
+                } else {
+                    "/tmp/ermete-compositor.sock".to_string()
+                }
+            });
+
+        let stream = UnixStream::connect(&socket_path).map_err(|e| {
+            anyhow!(
+                "Failed to connect to real Compositor IPC socket stream at {}: {}",
+                socket_path,
+                e
+            )
+        })?;
+
         let (tx, rx) = glib::MainContext::channel::<ZeroCopyIpcEvent>(Priority::DEFAULT);
 
-        // Simulate zero-copy IPC stream emitting events from ECS
         std::thread::spawn(move || {
-            let events = vec![
-                ZeroCopyIpcEvent::AppSpawned {
-                    entity_id: 5,
-                    app_id: "org.gnome.Calculator.desktop".to_string(),
-                    title: "Calculator".to_string(),
-                    icon_name: "org.gnome.Calculator".to_string(),
-                    workspace_id: 1,
-                },
-                ZeroCopyIpcEvent::AppFocused { entity_id: 5 },
-            ];
-
-            for ev in events {
-                std::thread::sleep(std::time::Duration::from_secs(3));
-                let _ = tx.send(ev);
+            let reader = BufReader::new(stream);
+            for line in reader.lines() {
+                if let Ok(line_str) = line {
+                    if let Ok(ev) = serde_json::from_str::<ZeroCopyIpcEvent>(&line_str) {
+                        let _ = tx.send(ev);
+                    }
+                } else {
+                    break;
+                }
             }
         });
 

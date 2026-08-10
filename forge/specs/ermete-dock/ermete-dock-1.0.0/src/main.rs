@@ -30,9 +30,6 @@ fn main() -> Result<()> {
         // 2. Ancoraggio taskbar via gtk4-layer-shell ed ECS integration
         match dock::DockTaskbar::new(app, Edge::Bottom) {
             Ok(dock_taskbar) => {
-                if let Err(e) = dock_taskbar.start_zero_copy_ipc_listener() {
-                    eprintln!("Error starting zero-copy IPC listener: {}", e);
-                }
                 dock_taskbar.window.present();
             }
             Err(e) => {

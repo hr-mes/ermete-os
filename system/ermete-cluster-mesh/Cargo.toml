@@ -17,4 +17,5 @@ base64 = "0.21"
 sha2 = { workspace = true }
 tokio-util = { workspace = true, features = ["codec"] }
 rand = { workspace = true }
+thiserror = { workspace = true }
 ermete-bus-api = { path = "../ermete-bus-api" }

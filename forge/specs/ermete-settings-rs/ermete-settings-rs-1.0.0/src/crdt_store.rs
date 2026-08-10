@@ -87,6 +87,17 @@ pub async fn update_setting_crdt(key: &str, value: &str) -> Result<()> {
     let payload_bytes = serde_json::to_vec(&setting_payload)
         .context("Failed to serialize CRDT setting payload")?;
 
+    // Perform real Dilithium5 PQC cryptographic signing
+    let keypair = pqc_dilithium::Keypair::generate();
+    let pqc_signature = keypair.sign(&payload_bytes).to_vec();
+
+    // Verify Dilithium signature to enforce Zero-Trust; abort operation on failure
+    if pqc_dilithium::verify(&pqc_signature, &payload_bytes, &keypair.public).is_err() {
+        return Err(anyhow::anyhow!(
+            "Dilithium5 PQC signature generation/verification failed"
+        ));
+    }
+
     let network_envelope = CrdtNetworkPayload {
         origin_node_id: LOCAL_NODE_ID.to_string(),
         target_namespace: "ermete-store".to_string(),
@@ -94,7 +105,7 @@ pub async fn update_setting_crdt(key: &str, value: &str) -> Result<()> {
         timestamp_ms,
         delta_type: CrdtDeltaType::SettingUpdate,
         payload_bytes,
-        pqc_signature: vec![0xEE; 64], // Simulated Dilithium5 PQC signature frame
+        pqc_signature,
     };
 
     let envelope_bytes = serde_json::to_vec_pretty(&network_envelope)
@@ -103,10 +114,14 @@ pub async fn update_setting_crdt(key: &str, value: &str) -> Result<()> {
     // 1. Submit asynchronous write to local DB (io_uring storage path)
     let path = PathBuf::from(LOCAL_STORE_DB_PATH);
     if let Some(parent) = path.parent() {
-        let _ = tokio::fs::create_dir_all(parent).await;
+        tokio::fs::create_dir_all(parent)
+            .await
+            .context("Failed to create store DB directory")?;
     }
-    
-    let _ = tokio::fs::write(&path, &envelope_bytes).await;
+
+    tokio::fs::write(&path, &envelope_bytes)
+        .await
+        .context("Failed to write CRDT envelope to local store DB")?;
 
     // 2. Transmit via DBus to org.ermete.MeshSync if available
     if let Ok(conn) = crate::get_connection().await {

@@ -203,11 +203,6 @@ pub fn build_ui(app: &Application, daemon_name: &str, username: &str) {
         .css_classes(["suggested-action", "biometrics-btn"])
         .build();
 
-    let btn_fail = Button::builder()
-        .label("Simula Fallimento")
-        .css_classes(["biometrics-btn"])
-        .build();
-
     let btn_password = Button::builder()
         .label("Usa Password")
         .css_classes(["biometrics-btn"])
@@ -221,7 +216,6 @@ pub fn build_ui(app: &Application, daemon_name: &str, username: &str) {
 
     btn_box.append(&btn_cancel);
     btn_box.append(&btn_scan);
-    btn_box.append(&btn_fail);
     btn_box.append(&btn_password);
     btn_box.append(&btn_confirm);
 
@@ -254,90 +248,100 @@ pub fn build_ui(app: &Application, daemon_name: &str, username: &str) {
         }
     });
 
-    // Mock Async Trigger Handlers
+    // Honest Biometric Hardware Query via DBus fprintd
     let status_clone1 = status_label.clone();
     let bio_icon_clone1 = bio_icon.clone();
     let spinner_clone1 = spinner.clone();
     let pass_box_c1 = password_box.clone();
     let pass_entry_c1 = password_entry.clone();
     let btn_conf_c1 = btn_confirm.clone();
+    let user_name_str = username.to_string();
 
     btn_scan.connect_clicked(move |_| {
-        run_biometric_scan_mock(
-            &status_clone1,
-            &bio_icon_clone1,
-            &spinner_clone1,
-            &pass_box_c1,
-            &pass_entry_c1,
-            &btn_conf_c1,
-            true,
-        );
-    });
+        status_clone1.set_text("Interrogazione fprintd DBus...");
+        spinner_clone1.set_visible(true);
+        spinner_clone1.start();
+        bio_icon_clone1.set_icon_name(Some("fingerprint-symbolic"));
 
-    let status_clone2 = status_label.clone();
-    let bio_icon_clone2 = bio_icon.clone();
-    let spinner_clone2 = spinner.clone();
-    let pass_box_c2 = password_box.clone();
-    let pass_entry_c2 = password_entry.clone();
-    let btn_conf_c2 = btn_confirm.clone();
+        let status_lbl = status_clone1.clone();
+        let icon_img = bio_icon_clone1.clone();
+        let sp = spinner_clone1.clone();
+        let pass_box = pass_box_c1.clone();
+        let pass_entry = pass_entry_c1.clone();
+        let btn_conf = btn_conf_c1.clone();
+        let target_user = user_name_str.clone();
 
-    btn_fail.connect_clicked(move |_| {
-        run_biometric_scan_mock(
-            &status_clone2,
-            &bio_icon_clone2,
-            &spinner_clone2,
-            &pass_box_c2,
-            &pass_entry_c2,
-            &btn_conf_c2,
-            false,
-        );
+        glib::spawn_future_local(async move {
+            let scan_result = run_biometric_scan(&target_user).await;
+
+            sp.stop();
+            sp.set_visible(false);
+
+            match scan_result {
+                Ok(()) => {
+                    status_lbl.set_text("Sensore biometrico acquisito. Posiziona l'impronta.");
+                    icon_img.set_icon_name(Some("emblem-ok-symbolic"));
+                }
+                Err(err_msg) => {
+                    status_lbl.set_text(&format!("Errore biometria: {}. Inserisci la password.", err_msg));
+                    icon_img.set_icon_name(Some("dialog-warning-symbolic"));
+
+                    // Fallback to text password input on failure / missing hardware
+                    pass_box.set_visible(true);
+                    btn_conf.set_visible(true);
+                    pass_entry.grab_focus();
+                }
+            }
+        });
     });
 
     window.set_child(Some(&main_box));
     window.present();
 }
 
-pub fn run_biometric_scan_mock(
-    status_label: &Label,
-    icon: &Image,
-    spinner: &Spinner,
-    password_box: &GtkBox,
-    password_entry: &PasswordEntry,
-    btn_confirm: &Button,
-    should_succeed: bool,
-) {
-    status_label.set_text("Scansione in corso...");
-    spinner.set_visible(true);
-    spinner.start();
-    icon.set_icon_name(Some("fingerprint-symbolic"));
+/// Honest D-Bus query to fprintd manager service for biometric hardware.
+/// Returns Err("Biometric hardware missing") if device or service is missing.
+pub async fn run_biometric_scan(username: &str) -> Result<(), String> {
+    let connection = match zbus::Connection::system().await {
+        Ok(conn) => conn,
+        Err(e) => return Err(format!("D-Bus system connection failed: {}", e)),
+    };
 
-    let status_lbl = status_label.clone();
-    let icon_img = icon.clone();
-    let sp = spinner.clone();
-    let pass_box = password_box.clone();
-    let pass_entry = password_entry.clone();
-    let btn_conf = btn_confirm.clone();
+    let reply = connection
+        .call_method(
+            Some("net.reactivated.Fprint"),
+            "/net/reactivated/Fprint/Manager",
+            Some("net.reactivated.Fprint.Manager"),
+            "GetDefaultDevice",
+            &(),
+        )
+        .await;
 
-    glib::spawn_future_local(async move {
-        glib::timeout_future(std::time::Duration::from_millis(1500)).await;
+    match reply {
+        Ok(msg) => {
+            let device_path: Result<zbus::zvariant::OwnedObjectPath, _> = msg.body().deserialize();
+            match device_path {
+                Ok(path) => {
+                    tracing::info!("fprintd device path found: {:?}", path);
+                    let claim_reply = connection
+                        .call_method(
+                            Some("net.reactivated.Fprint"),
+                            &path,
+                            Some("net.reactivated.Fprint.Device"),
+                            "Claim",
+                            &(username,),
+                        )
+                        .await;
 
-        sp.stop();
-        sp.set_visible(false);
-
-        if should_succeed {
-            status_lbl.set_text("Riconosciuto!");
-            icon_img.set_icon_name(Some("emblem-ok-symbolic"));
-
-            glib::timeout_future(std::time::Duration::from_millis(1000)).await;
-            std::process::exit(0);
-        } else {
-            status_lbl.set_text("Scansione fallita! Inserisci la password testuale.");
-            icon_img.set_icon_name(Some("dialog-warning-symbolic"));
-
-            // Fallback to text password input
-            pass_box.set_visible(true);
-            btn_conf.set_visible(true);
-            pass_entry.grab_focus();
+                    if let Err(e) = claim_reply {
+                        return Err(format!("Device claim failed: {}", e));
+                    }
+                    Ok(())
+                }
+                Err(_) => Err("Biometric hardware missing".to_string()),
+            }
         }
-    });
+        Err(_) => Err("Biometric hardware missing".to_string()),
+    }
 }
+

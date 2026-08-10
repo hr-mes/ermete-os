@@ -163,61 +163,35 @@ fn hide_snap_preview() {
     });
 }
 
-// --- RAM State for Mock Running Apps & Snap Groups ---
+// --- Dynamic Running Apps IPC Query ---
 
 #[derive(Debug, Clone)]
 pub struct RunningApp {
-    pub id: &'static str,
-    pub title: &'static str,
-    pub subtitle: &'static str,
-    pub icon_glyph: &'static str,
-    pub window_class: &'static str,
+    pub id: String,
+    pub title: String,
+    pub subtitle: String,
+    pub icon_glyph: String,
+    pub window_class: String,
 }
 
-pub static MOCK_RUNNING_APPS: &[RunningApp] = &[
-    RunningApp {
-        id: "terminal",
-        title: "Ermete Terminal",
-        subtitle: "zsh - ermete-core-rs",
-        icon_glyph: "💻",
-        window_class: "org.ermete.Terminal",
-    },
-    RunningApp {
-        id: "browser",
-        title: "Firefox Web Browser",
-        subtitle: "Ermete OS Architecture Docs",
-        icon_glyph: "🌐",
-        window_class: "org.mozilla.firefox",
-    },
-    RunningApp {
-        id: "files",
-        title: "Files Manager",
-        subtitle: "/var/home/ermete/GEMINI",
-        icon_glyph: "📁",
-        window_class: "org.gnome.Nautilus",
-    },
-    RunningApp {
-        id: "editor",
-        title: "VS Code Editor",
-        subtitle: "snap_overlay.rs - Ermete Shell",
-        icon_glyph: "📝",
-        window_class: "code",
-    },
-    RunningApp {
-        id: "settings",
-        title: "System Settings",
-        subtitle: "Display & Window Tiling",
-        icon_glyph: "⚙️",
-        window_class: "org.ermete.Settings",
-    },
-    RunningApp {
-        id: "music",
-        title: "Lo-Fi Music Player",
-        subtitle: "Synthwave Chill Beats - Playing",
-        icon_glyph: "🎵",
-        window_class: "org.ermete.Music",
-    },
-];
+pub fn fetch_running_apps() -> Vec<RunningApp> {
+    let windows = crate::core::dock_watcher::fetch_current_niri_windows();
+    windows
+        .into_iter()
+        .map(|win| {
+            let app_id = win.app_id.unwrap_or_else(|| "unknown".to_string());
+            let title = win.title.unwrap_or_else(|| app_id.clone());
+            RunningApp {
+                id: win.id.to_string(),
+                title: title.clone(),
+                subtitle: format!("App ID: {}", app_id),
+                icon_glyph: "🪟".to_string(),
+                window_class: app_id,
+            }
+        })
+        .collect()
+}
+
 
 // --- Snap Layout Specifications & Visual Previews ---
 
@@ -781,8 +755,8 @@ fn render_snap_assist_view(app: &Application, win: &ApplicationWindow) {
         // All slots filled! Commit Snap Group
         let mut group_allocations = Vec::new();
         for (slot_info, app_opt) in &session.slot_assignments {
-            let app_name = app_opt.as_ref().map(|a| a.title).unwrap_or("Active Window");
-            group_allocations.push((slot_info.label, slot_info.zone, app_name.to_string()));
+            let app_name = app_opt.as_ref().map(|a| a.title.clone()).unwrap_or_else(|| "Active Window".to_string());
+            group_allocations.push((slot_info.label, slot_info.zone, app_name));
         }
 
         let completed = ActiveSnapGroup {
@@ -896,108 +870,130 @@ fn render_snap_assist_view(app: &Application, win: &ApplicationWindow) {
     }
     main_box.append(&chips_row);
 
-    // Grid of Running Apps for Snap Assist
-    let grid = Grid::builder()
-        .row_spacing(10)
-        .column_spacing(10)
-        .row_homogeneous(true)
-        .column_homogeneous(true)
-        .build();
+    // Dynamic Running Apps Grid for Snap Assist
+    let running_apps = fetch_running_apps();
 
-    for (idx, app_item) in MOCK_RUNNING_APPS.iter().enumerate() {
-        let app_card = Box::builder()
-            .orientation(Orientation::Horizontal)
-            .spacing(12)
-            .css_classes(vec!["snap-assist-app-card"])
-            .build();
-
-        let app_badge = Label::builder()
-            .label(app_item.icon_glyph)
-            .css_classes(vec!["cc-circle-blue"])
-            .build();
-
-        let app_info = Box::builder()
+    if running_apps.is_empty() {
+        let empty_card = Box::builder()
             .orientation(Orientation::Vertical)
-            .spacing(2)
-            .hexpand(true)
+            .spacing(8)
+            .margin_top(16)
+            .margin_bottom(16)
+            .halign(Align::Center)
             .build();
 
-        let app_title = Label::builder()
-            .label(app_item.title)
-            .css_classes(vec!["cc-label-main"])
-            .halign(Align::Start)
-            .build();
-
-        let app_sub = Label::builder()
-            .label(app_item.subtitle)
+        let empty_lbl = Label::builder()
+            .label("Nessuna applicazione in esecuzione per lo Snap Assist (IPC compositor)")
             .css_classes(vec!["cc-label-sub"])
-            .halign(Align::Start)
+            .halign(Align::Center)
             .build();
 
-        app_info.append(&app_title);
-        app_info.append(&app_sub);
-
-        let snap_badge = Label::builder()
-            .label("Snap")
-            .css_classes(vec!["snap-assist-badge"])
-            .valign(Align::Center)
+        empty_card.append(&empty_lbl);
+        main_box.append(&empty_card);
+    } else {
+        let grid = Grid::builder()
+            .row_spacing(10)
+            .column_spacing(10)
+            .row_homogeneous(true)
+            .column_homogeneous(true)
             .build();
 
-        app_card.append(&app_badge);
-        app_card.append(&app_info);
-        app_card.append(&snap_badge);
+        for (idx, app_item) in running_apps.into_iter().enumerate() {
+            let app_card = Box::builder()
+                .orientation(Orientation::Horizontal)
+                .spacing(12)
+                .css_classes(vec!["snap-assist-app-card"])
+                .build();
 
-        // Motion hover controller for live preview
-        let app_shell = app.clone();
-        let target_bounds = target_slot.bounds;
-        let motion = EventControllerMotion::new();
-        motion.connect_enter(move |_, _, _| {
-            let (px, py, pw, ph) = target_bounds;
-            show_snap_preview(&app_shell, px, py, pw, ph);
-        });
-        motion.connect_leave(move |_| {
-            hide_snap_preview();
-        });
-        app_card.add_controller(motion);
+            let app_badge = Label::builder()
+                .label(&app_item.icon_glyph)
+                .css_classes(vec!["cc-circle-blue"])
+                .build();
 
-        // Click controller to snap selected app
-        let click = GestureClick::new();
-        let app_selected = app_item.clone();
-        let target_slot_snap = target_slot.clone();
-        let app_ctx = app.clone();
-        let win_ctx = win.clone();
+            let app_info = Box::builder()
+                .orientation(Orientation::Vertical)
+                .spacing(2)
+                .hexpand(true)
+                .build();
 
-        click.connect_pressed(move |_, _, _, _| {
-            hide_snap_preview();
+            let app_title = Label::builder()
+                .label(&app_item.title)
+                .css_classes(vec!["cc-label-main"])
+                .halign(Align::Start)
+                .build();
 
-            // Dispatch Snap Protocol for selected app
-            SnapProtocolClient::set_snap_zone(
-                target_slot_snap.zone,
-                SnapFlag::ANIMATE | SnapFlag::AUTO_REFLOW,
-                None,
-            );
-            SnapProtocolClient::commit_snap();
+            let app_sub = Label::builder()
+                .label(&app_item.subtitle)
+                .css_classes(vec!["cc-label-sub"])
+                .halign(Align::Start)
+                .build();
 
-            // Advance Session state
-            CURRENT_ASSIST_SESSION.with(|s| {
-                if let Some(ref mut sess) = *s.borrow_mut() {
-                    sess.slot_assignments.push((target_slot_snap.clone(), Some(app_selected.clone())));
-                    sess.current_remaining_step += 1;
-                }
+            app_info.append(&app_title);
+            app_info.append(&app_sub);
+
+            let snap_badge = Label::builder()
+                .label("Snap")
+                .css_classes(vec!["snap-assist-badge"])
+                .valign(Align::Center)
+                .build();
+
+            app_card.append(&app_badge);
+            app_card.append(&app_info);
+            app_card.append(&snap_badge);
+
+            // Motion hover controller for live preview
+            let app_shell = app.clone();
+            let target_bounds = target_slot.bounds;
+            let motion = EventControllerMotion::new();
+            motion.connect_enter(move |_, _, _| {
+                let (px, py, pw, ph) = target_bounds;
+                show_snap_preview(&app_shell, px, py, pw, ph);
             });
+            motion.connect_leave(move |_| {
+                hide_snap_preview();
+            });
+            app_card.add_controller(motion);
 
-            render_snap_assist_view(&app_ctx, &win_ctx);
-        });
-        app_card.add_controller(click);
+            // Click controller to snap selected app
+            let click = GestureClick::new();
+            let app_selected = app_item.clone();
+            let target_slot_snap = target_slot.clone();
+            let app_ctx = app.clone();
+            let win_ctx = win.clone();
 
-        let row = (idx / 2) as i32;
-        let col = (idx % 2) as i32;
-        grid.attach(&app_card, col, row, 1, 1);
+            click.connect_pressed(move |_, _, _, _| {
+                hide_snap_preview();
+
+                // Dispatch Snap Protocol for selected app
+                SnapProtocolClient::set_snap_zone(
+                    target_slot_snap.zone,
+                    SnapFlag::ANIMATE | SnapFlag::AUTO_REFLOW,
+                    None,
+                );
+                SnapProtocolClient::commit_snap();
+
+                // Advance Session state
+                CURRENT_ASSIST_SESSION.with(|s| {
+                    if let Some(ref mut sess) = *s.borrow_mut() {
+                        sess.slot_assignments.push((target_slot_snap.clone(), Some(app_selected.clone())));
+                        sess.current_remaining_step += 1;
+                    }
+                });
+
+                render_snap_assist_view(&app_ctx, &win_ctx);
+            });
+            app_card.add_controller(click);
+
+            let row = (idx / 2) as i32;
+            let col = (idx % 2) as i32;
+            grid.attach(&app_card, col, row, 1, 1);
+        }
+
+        main_box.append(&grid);
     }
-
-    main_box.append(&grid);
     win.set_child(Some(&main_box));
 }
+
 
 // --- Main Visual Snap Selector Entry Point ---
 

@@ -317,30 +317,19 @@ fn build_calendar_widget() -> GtkBox {
 
     card.append(&grid);
 
-    // Upcoming Event Mock
-    let event_box = GtkBox::new(Orientation::Vertical, 2);
-    event_box.add_css_class("calendar-event-item");
-
-    let event_time = Label::builder()
-        .label("14:30 • Upcoming Meeting")
-        .css_classes(vec!["calendar-event-time".to_string()])
-        .halign(Align::Start)
+    // Calendar Events (No mock events: empty state if no IPC backend)
+    let no_event_lbl = Label::builder()
+        .label("Nessun evento in programma (IPC calendar offline)")
+        .css_classes(vec!["widgets-board-subtitle".to_string()])
+        .halign(Align::Center)
+        .margin_top(8)
         .build();
 
-    let event_title = Label::builder()
-        .label("Ermete OS v1.0 Architecture Sync")
-        .css_classes(vec!["calendar-event-text".to_string()])
-        .halign(Align::Start)
-        .build();
-
-    event_box.append(&event_time);
-    event_box.append(&event_title);
-    card.append(&event_box);
-
+    card.append(&no_event_lbl);
     card
 }
 
-/// Builds the Weather Widget section
+/// Builds the Weather Widget section (Disconnected state without IPC backend)
 fn build_weather_widget() -> GtkBox {
     let card = GtkBox::new(Orientation::Vertical, 12);
     card.add_css_class("widget-card");
@@ -348,129 +337,48 @@ fn build_weather_widget() -> GtkBox {
     // Header
     let header = GtkBox::new(Orientation::Horizontal, 8);
     let icon = Image::builder()
-        .icon_name("weather-clear-symbolic")
+        .icon_name("weather-severe-alert-symbolic")
         .pixel_size(18)
         .css_classes(vec!["widget-header-icon".to_string()])
         .build();
 
     let title = Label::builder()
-        .label("Weather")
+        .label("Meteo")
         .css_classes(vec!["widget-header-title".to_string()])
         .halign(Align::Start)
         .hexpand(true)
         .build();
 
-    let location = Label::builder()
-        .label("Milan / Cupertino")
+    let status = Label::builder()
+        .label("Errore Connessione")
         .css_classes(vec!["widgets-board-subtitle".to_string()])
         .halign(Align::End)
         .build();
 
     header.append(&icon);
     header.append(&title);
-    header.append(&location);
+    header.append(&status);
     card.append(&header);
 
-    // Main Temp Display Row
-    let temp_row = GtkBox::new(Orientation::Horizontal, 14);
-    temp_row.set_valign(Align::Center);
+    // Empty / Error State (No fake temperatures or mock forecasts)
+    let err_box = GtkBox::new(Orientation::Vertical, 6);
+    err_box.set_halign(Align::Center);
+    err_box.set_margin_top(8);
+    err_box.set_margin_bottom(8);
 
-    let temp_label = Label::builder()
-        .label("24°C")
-        .css_classes(vec!["weather-temp-main".to_string()])
-        .halign(Align::Start)
-        .build();
-
-    let condition_box = GtkBox::new(Orientation::Vertical, 2);
-    condition_box.set_valign(Align::Center);
-
-    let city_label = Label::builder()
-        .label("Sunny & Clear")
-        .css_classes(vec!["weather-city".to_string()])
-        .halign(Align::Start)
-        .build();
-
-    let details_label = Label::builder()
-        .label("H: 27° L: 16° • AQI 24 (Good)")
-        .css_classes(vec!["weather-condition".to_string()])
-        .halign(Align::Start)
-        .build();
-
-    condition_box.append(&city_label);
-    condition_box.append(&details_label);
-
-    temp_row.append(&temp_label);
-    temp_row.append(&condition_box);
-    card.append(&temp_row);
-
-    // Weather Metrics Row
-    let metrics_row = GtkBox::new(Orientation::Horizontal, 8);
-    metrics_row.set_halign(Align::Fill);
-    metrics_row.set_hexpand(true);
-
-    let humidity = Label::builder()
-        .label("💧 42% Humidity")
-        .css_classes(vec!["weather-detail-badge".to_string()])
-        .hexpand(true)
+    let err_msg = Label::builder()
+        .label("Nessun dato meteo IPC disponibile. Demone Meteo offline.")
+        .css_classes(vec!["widgets-board-subtitle".to_string()])
         .halign(Align::Center)
         .build();
 
-    let wind = Label::builder()
-        .label("💨 14 km/h Wind")
-        .css_classes(vec!["weather-detail-badge".to_string()])
-        .hexpand(true)
-        .halign(Align::Center)
-        .build();
+    err_box.append(&err_msg);
+    card.append(&err_box);
 
-    metrics_row.append(&humidity);
-    metrics_row.append(&wind);
-    card.append(&metrics_row);
-
-    // 4-Day Forecast Strip
-    let forecast_box = GtkBox::new(Orientation::Horizontal, 6);
-    forecast_box.set_halign(Align::Center);
-    forecast_box.set_margin_top(4);
-
-    let forecast_data = [
-        ("Today", "☀️", "24°"),
-        ("Mon", "🌤️", "26°"),
-        ("Tue", "🌧️", "21°"),
-        ("Wed", "🌤️", "25°"),
-    ];
-
-    for (day, weather_icon, temp) in forecast_data {
-        let col = GtkBox::new(Orientation::Vertical, 4);
-        col.add_css_class("weather-forecast-col");
-        col.set_halign(Align::Center);
-
-        let d_lbl = Label::builder()
-            .label(day)
-            .css_classes(vec!["weather-forecast-day".to_string()])
-            .halign(Align::Center)
-            .build();
-
-        let i_lbl = Label::builder()
-            .label(weather_icon)
-            .halign(Align::Center)
-            .build();
-
-        let t_lbl = Label::builder()
-            .label(temp)
-            .css_classes(vec!["weather-forecast-temp".to_string()])
-            .halign(Align::Center)
-            .build();
-
-        col.append(&d_lbl);
-        col.append(&i_lbl);
-        col.append(&t_lbl);
-        forecast_box.append(&col);
-    }
-
-    card.append(&forecast_box);
     card
 }
 
-/// Builds the Stocks Watchlist Mock Widget section
+/// Builds the Stocks Watchlist Widget section (Disconnected state without IPC backend)
 fn build_stocks_widget() -> GtkBox {
     let card = GtkBox::new(Orientation::Vertical, 10);
     card.add_css_class("widget-card");
@@ -484,78 +392,37 @@ fn build_stocks_widget() -> GtkBox {
         .build();
 
     let title = Label::builder()
-        .label("Markets & Stocks")
+        .label("Mercati & Azioni")
         .css_classes(vec!["widget-header-title".to_string()])
         .halign(Align::Start)
         .hexpand(true)
         .build();
 
-    let live_badge = Label::builder()
-        .label("LIVE")
-        .css_classes(vec!["stock-pill-positive".to_string()])
+    let offline_badge = Label::builder()
+        .label("OFFLINE")
+        .css_classes(vec!["stock-pill-negative".to_string()])
         .halign(Align::End)
         .build();
 
     header.append(&icon);
     header.append(&title);
-    header.append(&live_badge);
+    header.append(&offline_badge);
     card.append(&header);
 
-    // Mock Stocks List
-    let stocks = [
-        ("ERMT", "Ermete OS Core", "$342.80", "+4.12 (+1.22%)", true),
-        ("AAPL", "Apple Inc.", "$225.40", "+1.85 (+0.83%)", true),
-        ("NVDA", "NVIDIA Corp.", "$128.90", "-0.65 (-0.50%)", false),
-        ("GOOGL", "Alphabet Inc.", "$178.50", "+2.10 (+1.19%)", true),
-        ("MSFT", "Microsoft Corp.", "$448.20", "+3.40 (+0.76%)", true),
-    ];
+    // Empty / Error State (No fake stock tickers)
+    let err_box = GtkBox::new(Orientation::Vertical, 6);
+    err_box.set_halign(Align::Center);
+    err_box.set_margin_top(8);
+    err_box.set_margin_bottom(8);
 
-    for (symbol, name, price, change, is_positive) in stocks {
-        let row = GtkBox::new(Orientation::Horizontal, 10);
-        row.add_css_class("stock-row");
-        row.set_valign(Align::Center);
+    let err_msg = Label::builder()
+        .label("Nessun provider IPC per dati finanziari connesso.")
+        .css_classes(vec!["widgets-board-subtitle".to_string()])
+        .halign(Align::Center)
+        .build();
 
-        let sym_box = GtkBox::new(Orientation::Vertical, 1);
-        sym_box.set_hexpand(true);
-
-        let sym_lbl = Label::builder()
-            .label(symbol)
-            .css_classes(vec!["stock-symbol".to_string()])
-            .halign(Align::Start)
-            .build();
-
-        let name_lbl = Label::builder()
-            .label(name)
-            .css_classes(vec!["stock-name".to_string()])
-            .halign(Align::Start)
-            .build();
-
-        sym_box.append(&sym_lbl);
-        sym_box.append(&name_lbl);
-
-        let price_lbl = Label::builder()
-            .label(price)
-            .css_classes(vec!["stock-price".to_string()])
-            .halign(Align::End)
-            .build();
-
-        let pill_class = if is_positive {
-            "stock-pill-positive"
-        } else {
-            "stock-pill-negative"
-        };
-
-        let change_lbl = Label::builder()
-            .label(change)
-            .css_classes(vec![pill_class.to_string()])
-            .halign(Align::End)
-            .build();
-
-        row.append(&sym_box);
-        row.append(&price_lbl);
-        row.append(&change_lbl);
-        card.append(&row);
-    }
+    err_box.append(&err_msg);
+    card.append(&err_box);
 
     card
 }
@@ -678,16 +545,15 @@ pub fn show_widgets_board(app: &Application) {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn test_mock_weather_data() {
-        let temp = "24°C";
-        assert!(temp.contains("24"));
+    fn test_weather_widget_no_fake_data() {
+        let error_text = "Nessun dato meteo IPC disponibile";
+        assert!(error_text.contains("IPC"));
     }
 
     #[test]
-    fn test_stock_formatting() {
-        let ticker = "ERMT";
-        let price = "$342.80";
-        assert_eq!(ticker, "ERMT");
-        assert!(price.starts_with('$'));
+    fn test_stocks_widget_offline_state() {
+        let offline_text = "OFFLINE";
+        assert_eq!(offline_text, "OFFLINE");
     }
 }
+
