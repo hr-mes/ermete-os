@@ -184,11 +184,39 @@ pub fn spawn_osd(app: &Application) {
         .css_classes(vec!["deepin-osd-progress".to_string()])
         .build();
 
+    let fft_area = gtk4::DrawingArea::builder()
+        .content_width(48)
+        .content_height(18)
+        .valign(Align::Center)
+        .halign(Align::End)
+        .css_classes(vec!["deepin-osd-fft".to_string()])
+        .build();
+
     content_box.append(&header_box);
     content_box.append(&progress);
 
     osd_box.append(&icon);
     osd_box.append(&content_box);
+    osd_box.append(&fft_area);
+
+    let osd_vol_ref = Rc::new(RefCell::new(0.5f64));
+    let osd_tick_ref = Rc::new(RefCell::new(0u64));
+
+    let draw_vol_ref = osd_vol_ref.clone();
+    let draw_tick_ref = osd_tick_ref.clone();
+    fft_area.set_draw_func(move |area, cr, w, h| {
+        let tick = *draw_tick_ref.borrow();
+        let vol = *draw_vol_ref.borrow();
+        crate::ui::morphic_pill::draw_fft_waveform(area, cr, w, h, tick, vol, true);
+    });
+
+    let fft_queue = fft_area.clone();
+    let tick_inc = osd_tick_ref.clone();
+    window.add_tick_callback(move |_, _| {
+        *tick_inc.borrow_mut() = tick_inc.borrow().wrapping_add(1);
+        fft_queue.queue_draw();
+        glib::ControlFlow::Continue
+    });
 
     window.set_child(Some(&osd_box));
 
@@ -204,10 +232,12 @@ pub fn spawn_osd(app: &Application) {
     let badge_label_rc = badge_label.clone();
     let progress_rc = progress.clone();
 
+    let vol_update_ref = osd_vol_ref.clone();
     OsdViewModel::subscribe(move |event| {
         let (icon_name, title, val_text, is_badge, badge_text, badge_active, pct) = match event {
             OsdEvent::Volume(v) => {
                 let clamped = v.clamp(0.0, 1.0);
+                *vol_update_ref.borrow_mut() = clamped;
                 let icon_str = if clamped <= 0.001 {
                     "audio-volume-muted-symbolic"
                 } else if clamped < 0.33 {

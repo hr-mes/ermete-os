@@ -3,6 +3,7 @@ pub use ermete_dock::ui as dock;
 pub mod control_center;
 pub mod notifications;
 pub mod osd;
+pub mod morphic_pill;
 pub mod powermenu;
 pub mod spotlight;
 pub mod clipboard;
