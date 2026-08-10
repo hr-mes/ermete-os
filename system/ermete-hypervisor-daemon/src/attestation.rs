@@ -152,9 +152,48 @@ impl AttestationEngine {
         let mut pcr10 = String::from("0000000000000000000000000000000000000000000000000000000000000000");
 
         if tpm_present {
-            pcr0 = read_sysfs_tpm_pcr(0);
-            pcr7 = read_sysfs_tpm_pcr(7);
-            pcr10 = read_sysfs_tpm_pcr(10);
+            pcr0 = match read_sysfs_tpm_pcr(0) {
+                Ok(val) => val,
+                Err(e) => {
+                    error!("Keylime TPM 2.0 PCR0 read error: {}", e);
+                    return KeylimeAttestationReport {
+                        tpm_present: true,
+                        pcr0: String::new(),
+                        pcr7: String::new(),
+                        pcr10: String::new(),
+                        keylime_verifying_state: KeylimeStatus::Untrusted(format!("PCR0 read error: {}", e)),
+                        agent_id: String::from("ermete-keylime-agent-hypervisor-v1"),
+                    };
+                }
+            };
+            pcr7 = match read_sysfs_tpm_pcr(7) {
+                Ok(val) => val,
+                Err(e) => {
+                    error!("Keylime TPM 2.0 PCR7 read error: {}", e);
+                    return KeylimeAttestationReport {
+                        tpm_present: true,
+                        pcr0,
+                        pcr7: String::new(),
+                        pcr10: String::new(),
+                        keylime_verifying_state: KeylimeStatus::Untrusted(format!("PCR7 read error: {}", e)),
+                        agent_id: String::from("ermete-keylime-agent-hypervisor-v1"),
+                    };
+                }
+            };
+            pcr10 = match read_sysfs_tpm_pcr(10) {
+                Ok(val) => val,
+                Err(e) => {
+                    error!("Keylime TPM 2.0 PCR10 read error: {}", e);
+                    return KeylimeAttestationReport {
+                        tpm_present: true,
+                        pcr0,
+                        pcr7,
+                        pcr10: String::new(),
+                        keylime_verifying_state: KeylimeStatus::Untrusted(format!("PCR10 read error: {}", e)),
+                        agent_id: String::from("ermete-keylime-agent-hypervisor-v1"),
+                    };
+                }
+            };
 
             info!("Keylime TPM 2.0 active. PCR0 measured: {}", pcr0);
             KeylimeAttestationReport {
@@ -291,20 +330,20 @@ impl AttestationEngine {
     }
 }
 
-fn read_sysfs_tpm_pcr(pcr_idx: u32) -> String {
+fn read_sysfs_tpm_pcr(pcr_idx: u32) -> Result<String> {
     let pcr_path = format!("/sys/class/tpm/tpm0/pcr-sha256/{}", pcr_idx);
     if Path::new(&pcr_path).exists() {
         if let Ok(content) = fs::read_to_string(&pcr_path) {
-            return content.trim().to_string();
+            return Ok(content.trim().to_string());
         }
     }
     let alt_path = format!("/sys/class/tpm/tpm0/device/pcr{}", pcr_idx);
     if Path::new(&alt_path).exists() {
         if let Ok(content) = fs::read_to_string(&alt_path) {
-            return content.trim().to_string();
+            return Ok(content.trim().to_string());
         }
     }
-    format!("{:x}", sha2::Sha256::digest(format!("ermete_tpm_pcr_{}_hardware_baseline", pcr_idx).as_bytes()))
+    anyhow::bail!("TPM PCR sysfs entry not readable for index {}", pcr_idx)
 }
 
 use sha2::Digest;

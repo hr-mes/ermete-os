@@ -36,26 +36,22 @@ impl KeyReleaseManager {
         info!("HARDWARE ATTESTATION SUCCESSFUL! Proceeding with Key Release.");
         info!("============================================================");
 
-        match report {
+        let (ikm, info_label): (&[u8], &[u8]) = match report {
             VerifiedHardwareReport::SevSnp { measurement, .. } => {
                 info!("Hardware Tier: AMD SEV-SNP CVM");
                 info!("Attestor Measurement: {}", hex::encode(measurement));
+                (&measurement[..], b"ermete-sev-snp-luks-v1")
             }
             VerifiedHardwareReport::Tdx { mrtd, .. } => {
                 info!("Hardware Tier: Intel TDX CVM");
                 info!("Attestor MRTD: {}", hex::encode(mrtd));
+                (&mrtd[..], b"ermete-tdx-luks-v1")
             }
             VerifiedHardwareReport::MockSimulated { measurement, hardware_type } => {
-                warn!("Hardware Tier: SIMULATED ({})", hardware_type);
+                error!("LUKS key release DENIED: Hardware enclave tier is SIMULATED ({})!", hardware_type);
                 warn!("Attestor Measurement: {}", hex::encode(measurement));
+                return Err(anyhow::anyhow!("LUKS secret key release strictly prohibited for simulated enclaves"));
             }
-        }
-
-        // Derive/unseal 256-bit key bound to hardware attestation state using HKDF-SHA256
-        let (ikm, info_label): (&[u8], &[u8]) = match report {
-            VerifiedHardwareReport::SevSnp { measurement, .. } => (&measurement[..], b"ermete-sev-snp-luks-v1"),
-            VerifiedHardwareReport::Tdx { mrtd, .. } => (&mrtd[..], b"ermete-tdx-luks-v1"),
-            VerifiedHardwareReport::MockSimulated { measurement, .. } => (&measurement[..], b"ermete-simulated-luks-v1"),
         };
 
         let salt = ring::hkdf::Salt::new(ring::hkdf::HKDF_SHA256, b"ermete-zero-trust-luks-salt-v1");

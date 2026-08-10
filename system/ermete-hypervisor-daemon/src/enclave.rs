@@ -552,6 +552,18 @@ mod tests {
         let attestation_engine = Arc::new(AttestationEngine::new(AttestationConfig::default()));
         let manager = EnclaveManager::new(attestation_engine);
 
+        if !Path::new("/dev/kvm").exists() {
+            let enclave_id = manager.launch_enclave(
+                "test-app",
+                "/bin/sleep",
+                &["5".to_string()],
+                Some(HardwareEnclaveType::SoftwareEnclave),
+                UntrustedAgentCategory::UntrustedTool,
+            );
+            assert!(enclave_id.is_err(), "Enclave launch must fail when /dev/kvm is missing");
+            return;
+        }
+
         let enclave_id = manager.launch_enclave(
             "test-app",
             "/bin/sleep",

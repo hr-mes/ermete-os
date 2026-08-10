@@ -180,9 +180,48 @@ impl CvmManager {
         let mut pcr10 = String::from("0000000000000000000000000000000000000000000000000000000000000000");
 
         if tpm_present {
-            pcr0 = read_sysfs_tpm_pcr(0);
-            pcr7 = read_sysfs_tpm_pcr(7);
-            pcr10 = read_sysfs_tpm_pcr(10);
+            pcr0 = match read_sysfs_tpm_pcr(0) {
+                Ok(val) => val,
+                Err(e) => {
+                    error!("Keylime TPM 2.0 PCR0 read error: {}", e);
+                    return KeylimeAttestationReport {
+                        tpm_present: true,
+                        pcr0: String::new(),
+                        pcr7: String::new(),
+                        pcr10: String::new(),
+                        keylime_verifying_state: KeylimeStatus::Untrusted(format!("PCR0 read error: {}", e)),
+                        agent_id: String::from("ermete-keylime-agent-tpm20"),
+                    };
+                }
+            };
+            pcr7 = match read_sysfs_tpm_pcr(7) {
+                Ok(val) => val,
+                Err(e) => {
+                    error!("Keylime TPM 2.0 PCR7 read error: {}", e);
+                    return KeylimeAttestationReport {
+                        tpm_present: true,
+                        pcr0,
+                        pcr7: String::new(),
+                        pcr10: String::new(),
+                        keylime_verifying_state: KeylimeStatus::Untrusted(format!("PCR7 read error: {}", e)),
+                        agent_id: String::from("ermete-keylime-agent-tpm20"),
+                    };
+                }
+            };
+            pcr10 = match read_sysfs_tpm_pcr(10) {
+                Ok(val) => val,
+                Err(e) => {
+                    error!("Keylime TPM 2.0 PCR10 read error: {}", e);
+                    return KeylimeAttestationReport {
+                        tpm_present: true,
+                        pcr0,
+                        pcr7,
+                        pcr10: String::new(),
+                        keylime_verifying_state: KeylimeStatus::Untrusted(format!("PCR10 read error: {}", e)),
+                        agent_id: String::from("ermete-keylime-agent-tpm20"),
+                    };
+                }
+            };
 
             info!("Keylime TPM 2.0 active. PCR0 measured: {}", pcr0);
             KeylimeAttestationReport {
@@ -232,7 +271,7 @@ impl CvmManager {
         setup_cvm_kernel_confinement(&self.confinement_limits)?;
 
         // 1. Generate 512-bit challenge nonce
-        let nonce = crate::generate_hardware_nonce();
+        let nonce = crate::generate_hardware_nonce()?;
         info!("Generated cryptographic attestation challenge nonce.");
 
         let enclave_type = self.detect_hardware_enclave();
@@ -281,16 +320,8 @@ impl CvmManager {
                 }
             }
             EnclaveType::SimulatedDev => {
-                if !self.config.strict_zero_trust {
-                    warn!("Enclave hardware not available. Engaging dev simulation mode.");
-                    let mock_measurement = [0xABu8; 48];
-                    verified_report = Some(VerifiedHardwareReport::MockSimulated {
-                        measurement: mock_measurement,
-                        hardware_type: "Dev-Simulation".to_string(),
-                    });
-                } else {
-                    error!("Hardware enclave missing and strict zero-trust mode is enabled!");
-                }
+                error!("Enclave hardware missing (SimulatedDev mode). Attestation validation failed and secret release REFUSED!");
+                verified_report = None;
             }
         }
 
@@ -466,21 +497,20 @@ pub async fn run_cvm_dbus_service(manager: Arc<CvmManager>) -> Result<()> {
     Ok(())
 }
 
-fn read_sysfs_tpm_pcr(pcr_idx: u32) -> String {
+fn read_sysfs_tpm_pcr(pcr_idx: u32) -> Result<String> {
     let pcr_path = format!("/sys/class/tpm/tpm0/pcr-sha256/{}", pcr_idx);
     if Path::new(&pcr_path).exists() {
         if let Ok(content) = fs::read_to_string(&pcr_path) {
-            return content.trim().to_string();
+            return Ok(content.trim().to_string());
         }
     }
     let alt_path = format!("/sys/class/tpm/tpm0/device/pcr{}", pcr_idx);
     if Path::new(&alt_path).exists() {
         if let Ok(content) = fs::read_to_string(&alt_path) {
-            return content.trim().to_string();
+            return Ok(content.trim().to_string());
         }
     }
-    use sha2::Digest;
-    format!("{:x}", sha2::Sha256::digest(format!("ermete_tpm_pcr_{}_hardware_baseline", pcr_idx).as_bytes()))
+    anyhow::bail!("TPM PCR sysfs entry unreadable for index {}", pcr_idx)
 }
 
 #[cfg(test)]
@@ -488,7 +518,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_cvm_manager_flow_dev_mode() {
+    fn test_cvm_manager_flow_dev_mode_fails_without_hardware() {
         let mut config = AttestationConfig::default();
         config.strict_zero_trust = false;
         config.key_output_path = std::path::PathBuf::from("/tmp/test_var_home.key");
@@ -497,15 +527,9 @@ mod tests {
         assert_eq!(manager.get_state(), EnclaveState::Uninitialized);
 
         let result = manager.orchestrate_enclave_attestation();
-        assert!(result.is_ok());
-
-        let summary = result.unwrap();
-        assert_eq!(summary.enclave_state, EnclaveState::SecretReleased);
-        assert!(summary.secrets_released);
-        assert_eq!(manager.get_state(), EnclaveState::SecretReleased);
-
-        assert!(std::path::Path::new("/tmp/test_var_home.key").exists());
-        let _ = std::fs::remove_file("/tmp/test_var_home.key");
+        assert!(result.is_err(), "SimulatedDev mode without hardware enclave must fail attestation");
+        assert!(matches!(manager.get_state(), EnclaveState::Failed(_)));
+        assert!(!std::path::Path::new("/tmp/test_var_home.key").exists());
     }
 
     #[test]

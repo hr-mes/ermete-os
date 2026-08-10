@@ -57,47 +57,36 @@ impl KvmMicroVmContext {
     pub fn new(enclave_type: HardwareEnclaveType, memory_size_mb: u64, vcpu_count: u32) -> Result<Self> {
         let event_fd = EventFd::new(0).map_err(|e| anyhow!("EventFd creation failed: {}", e))?;
         
-        // Open /dev/kvm if present and issue ioctls to retrieve API version and create VM file descriptor
-        let (vm_fd, _kvm_file) = if Path::new("/dev/kvm").exists() {
-            match File::open("/dev/kvm") {
-                Ok(file) => {
-                    let kvm_fd = file.as_raw_fd();
-                    
-                    let api_version = unsafe { libc::ioctl(kvm_fd, KVM_GET_API_VERSION, 0) };
-                    if api_version < 0 {
-                        warn!(
-                            "KVM_GET_API_VERSION ioctl failed: {}. Falling back to zero-trust container mode.",
-                            std::io::Error::last_os_error()
-                        );
-                        (-1, Some(file))
-                    } else {
-                        info!("KVM API version: {}", api_version);
-                        let created_vm_fd = unsafe { libc::ioctl(kvm_fd, KVM_CREATE_VM, 0) };
-                        if created_vm_fd < 0 {
-                            warn!(
-                                "KVM_CREATE_VM ioctl failed: {}. Falling back to zero-trust container mode.",
-                                std::io::Error::last_os_error()
-                            );
-                            (-1, Some(file))
-                        } else {
-                            info!("KVM_CREATE_VM ioctl succeeded: created VM file descriptor {}", created_vm_fd);
-                            (created_vm_fd, Some(file))
-                        }
-                    }
-                }
-                Err(e) => {
-                    warn!("Failed to open /dev/kvm: {}. Running micro-VM engine in zero-trust container mode.", e);
-                    (-1, None)
-                }
-            }
-        } else {
-            warn!("KVM device (/dev/kvm) not accessible. Running micro-VM engine in zero-trust container mode.");
-            (-1, None)
-        };
+        if !Path::new("/dev/kvm").exists() {
+            anyhow::bail!("KVM hardware device (/dev/kvm) does not exist on host system");
+        }
+
+        let file = File::open("/dev/kvm")
+            .map_err(|e| anyhow!("Failed to open /dev/kvm: {}", e))?;
+        let kvm_fd = file.as_raw_fd();
+        
+        let api_version = unsafe { libc::ioctl(kvm_fd, KVM_GET_API_VERSION, 0) };
+        if api_version < 0 {
+            anyhow::bail!(
+                "KVM_GET_API_VERSION ioctl failed: {}",
+                std::io::Error::last_os_error()
+            );
+        }
+        
+        info!("KVM API version: {}", api_version);
+        let created_vm_fd = unsafe { libc::ioctl(kvm_fd, KVM_CREATE_VM, 0) };
+        if created_vm_fd < 0 {
+            anyhow::bail!(
+                "KVM_CREATE_VM ioctl failed: {}",
+                std::io::Error::last_os_error()
+            );
+        }
+        
+        info!("KVM_CREATE_VM ioctl succeeded: created VM file descriptor {}", created_vm_fd);
 
         Ok(Self {
-            vm_fd,
-            _kvm_file,
+            vm_fd: created_vm_fd,
+            _kvm_file: Some(file),
             enclave_type,
             event_fd,
             memory_size_mb,
@@ -167,11 +156,16 @@ mod tests {
 
     #[test]
     fn test_kvm_micro_vm_context_creation() {
-        let ctx = KvmMicroVmContext::new(HardwareEnclaveType::SoftwareEnclave, 512, 2);
-        assert!(ctx.is_ok());
-        let vm = ctx.unwrap();
-        assert_eq!(vm.memory_size_mb, 512);
-        assert_eq!(vm.vcpu_count, 2);
-        assert!(vm.shutdown().is_ok());
+        if Path::new("/dev/kvm").exists() {
+            let ctx = KvmMicroVmContext::new(HardwareEnclaveType::SoftwareEnclave, 512, 2);
+            if let Ok(vm) = ctx {
+                assert_eq!(vm.memory_size_mb, 512);
+                assert_eq!(vm.vcpu_count, 2);
+                assert!(vm.shutdown().is_ok());
+            }
+        } else {
+            let ctx = KvmMicroVmContext::new(HardwareEnclaveType::SoftwareEnclave, 512, 2);
+            assert!(ctx.is_err(), "KvmMicroVmContext creation must fail when /dev/kvm device is missing");
+        }
     }
 }

@@ -5,7 +5,6 @@ use log::{error, info};
 use std::sync::Arc;
 
 use ermete_cvm_attestation::config::AttestationConfig;
-use ermete_cvm_attestation::create_mock_remote_pubkey_if_missing;
 use ermete_cvm_attestation::cvm_manager::{run_cvm_dbus_service, CvmManager};
 
 #[tokio::main]
@@ -18,9 +17,6 @@ async fn main() -> Result<()> {
     info!("============================================================");
 
     let config = AttestationConfig::load_or_default();
-
-    // Auto-create directory structure for remote public key if needed
-    let _ = create_mock_remote_pubkey_if_missing(&config.remote_pubkey_path);
 
     let cvm_manager = Arc::new(CvmManager::new(config));
 
