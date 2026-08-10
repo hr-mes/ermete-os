@@ -26,7 +26,7 @@ async fn get_nvme_health() -> Option<String> {
     } else if let Ok(status) = tokio::fs::read_to_string("/sys/class/nvme/nvme0/device/status").await {
         Some(format!("NVMe Status: {}", status.trim()))
     } else {
-        Some("NVMe operational".to_string())
+        Some("NOT DETECTED".to_string())
     }
 }
 
@@ -34,7 +34,7 @@ async fn get_bcachefs_health() -> Option<String> {
     if tokio::fs::metadata("/sys/fs/bcachefs").await.is_ok() {
         Some("Bcachefs filesystem active & operational".to_string())
     } else {
-        Some("Bcachefs status OK".to_string())
+        Some("NOT DETECTED".to_string())
     }
 }
 
