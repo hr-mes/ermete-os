@@ -1432,6 +1432,7 @@ dependencies = [
  "dirs",
  "glib",
  "gtk4",
+ "libc",
  "serde",
  "serde_json",
  "tokio",
@@ -1575,6 +1576,7 @@ dependencies = [
 name = "ermete-doctor"
 version = "1.0.0"
 dependencies = [
+ "libc",
  "serde",
  "serde_json",
  "tokio",
@@ -1711,6 +1713,7 @@ name = "ermete-mdm-rs"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "libc",
  "mimalloc",
  "serde",
  "serde_json",
@@ -1805,6 +1808,7 @@ dependencies = [
  "futures-util",
  "glib",
  "gtk4",
+ "libc",
  "relm4",
  "tokio",
  "tracing",

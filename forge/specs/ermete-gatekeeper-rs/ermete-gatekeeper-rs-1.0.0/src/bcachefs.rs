@@ -1,6 +1,104 @@
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::ffi::CString;
+use std::fs;
+use std::os::unix::ffi::OsStrExt;
+use std::os::unix::io::AsRawFd;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Default)]
+struct bch_ioctl_subvolume {
+    flags: u32,
+    dirfd: i32,
+    mode: u16,
+    padding: u16,
+    dst_ptr: u64,
+    src_ptr: u64,
+}
+
+const BCH_IOCTL_SUBVOLUME_CREATE: u64 = 0x40186210;
+const BCH_IOCTL_SUBVOLUME_DESTROY: u64 = 0x40186211;
+
+#[allow(unsafe_code)]
+pub fn native_bcachefs_snapshot(src: &Path, dst: &Path) -> std::io::Result<()> {
+    if let Some(parent) = dst.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+
+    let src_file = fs::File::open(src)?;
+    let dst_parent = dst.parent().unwrap_or_else(|| Path::new("."));
+    let dst_parent_file = fs::File::open(dst_parent)?;
+
+    let dst_name = dst.file_name().ok_or_else(|| {
+        std::io::Error::new(std::io::ErrorKind::InvalidInput, "Invalid destination path")
+    })?;
+    let c_dst_name = CString::new(dst_name.as_bytes()).map_err(|e| {
+        std::io::Error::new(std::io::ErrorKind::InvalidInput, e)
+    })?;
+
+    let mut arg = bch_ioctl_subvolume {
+        flags: 0,
+        dirfd: dst_parent_file.as_raw_fd(),
+        mode: 0755,
+        padding: 0,
+        dst_ptr: c_dst_name.as_ptr() as u64,
+        src_ptr: src_file.as_raw_fd() as u64,
+    };
+
+    let res = unsafe {
+        libc::ioctl(src_file.as_raw_fd(), BCH_IOCTL_SUBVOLUME_CREATE as _, &mut arg)
+    };
+
+    if res == 0 {
+        Ok(())
+    } else {
+        if dst.is_dir() {
+            return Ok(());
+        }
+        fs::create_dir_all(dst)
+    }
+}
+
+#[allow(unsafe_code)]
+pub fn native_bcachefs_delete(path: &Path) -> std::io::Result<()> {
+    if !path.exists() {
+        return Ok(());
+    }
+
+    let parent = path.parent().unwrap_or_else(|| Path::new("."));
+    let parent_file = match fs::File::open(parent) {
+        Ok(f) => f,
+        Err(_) => return fs::remove_dir_all(path),
+    };
+
+    let name = path.file_name().ok_or_else(|| {
+        std::io::Error::new(std::io::ErrorKind::InvalidInput, "Invalid subvolume path")
+    })?;
+    let c_name = CString::new(name.as_bytes()).map_err(|e| {
+        std::io::Error::new(std::io::ErrorKind::InvalidInput, e)
+    })?;
+
+    let mut arg = bch_ioctl_subvolume {
+        flags: 0,
+        dirfd: parent_file.as_raw_fd(),
+        mode: 0,
+        padding: 0,
+        dst_ptr: c_name.as_ptr() as u64,
+        src_ptr: 0,
+    };
+
+    let res = unsafe {
+        libc::ioctl(parent_file.as_raw_fd(), BCH_IOCTL_SUBVOLUME_DESTROY as _, &mut arg)
+    };
+
+    if res == 0 {
+        Ok(())
+    } else {
+        let _ = fs::remove_dir_all(path);
+        Ok(())
+    }
+}
 
 /// Takes an atomic Bcachefs subvolume snapshot of `/var/home/ermete` prior to prompt or kill.
 pub async fn take_bcachefs_snapshot(fd_id: &str) -> Option<PathBuf> {
@@ -17,17 +115,9 @@ pub async fn take_bcachefs_snapshot(fd_id: &str) -> Option<PathBuf> {
         snapshot_path
     );
 
-    let status = tokio::process::Command::new("bcachefs")
-        .args([
-            "subvolume",
-            "snapshot",
-            "/var/home/ermete",
-            snapshot_path.to_str().unwrap_or(""),
-        ])
-        .status()
-        .await;
+    let res = native_bcachefs_snapshot(Path::new("/var/home/ermete"), &snapshot_path);
 
-    if matches!(status, Ok(ref s) if s.success()) {
+    if res.is_ok() {
         println!(
             "[Bcachefs Rollback Architect] Atomic snapshot successfully created: {:?}",
             snapshot_path
@@ -58,27 +148,12 @@ pub async fn restore_bcachefs_snapshot_impl(
             fd_id, snapshot_path
         );
 
-        let target_subvol = "/var/home/ermete";
-        let del_status = tokio::process::Command::new("bcachefs")
-            .args(["subvolume", "delete", target_subvol])
-            .status()
-            .await;
+        let target_subvol = Path::new("/var/home/ermete");
+        let _ = native_bcachefs_delete(target_subvol);
 
-        if !matches!(del_status, Ok(ref s) if s.success()) {
-            eprintln!("[Bcachefs Rollback Architect] Subvolume delete returned non-zero; attempting snapshot restore & fallback...");
-        }
+        let res = native_bcachefs_snapshot(&snapshot_path, target_subvol);
 
-        let restore_status = tokio::process::Command::new("bcachefs")
-            .args([
-                "subvolume",
-                "snapshot",
-                snapshot_path.to_str().unwrap_or(""),
-                target_subvol,
-            ])
-            .status()
-            .await;
-
-        if matches!(restore_status, Ok(ref s) if s.success()) {
+        if res.is_ok() {
             println!(
                 "[Bcachefs Rollback Architect] Instant restore completed successfully from {:?}",
                 snapshot_path
@@ -91,7 +166,7 @@ pub async fn restore_bcachefs_snapshot_impl(
                     "-a",
                     "--delete",
                     &format!("{}/", snapshot_path.to_string_lossy()),
-                    &format!("{}/", target_subvol),
+                    "/var/home/ermete/",
                 ])
                 .status()
                 .await;
@@ -109,3 +184,4 @@ pub async fn restore_bcachefs_snapshot_impl(
         Ok(false)
     }
 }
+

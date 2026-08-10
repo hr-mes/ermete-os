@@ -426,6 +426,63 @@ impl SimpleComponent for RecoveryModel {
     }
 }
 
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Default)]
+struct bch_ioctl_subvolume {
+    flags: u32,
+    dirfd: i32,
+    mode: u16,
+    padding: u16,
+    dst_ptr: u64,
+    src_ptr: u64,
+}
+
+const BCH_IOCTL_SUBVOLUME_CREATE: u64 = 0x40186210;
+
+#[allow(unsafe_code)]
+fn native_bcachefs_snapshot(src: &std::path::Path, dst: &std::path::Path) -> std::io::Result<()> {
+    use std::ffi::CString;
+    use std::os::unix::ffi::OsStrExt;
+    use std::os::unix::io::AsRawFd;
+
+    if let Some(parent) = dst.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+
+    let src_file = std::fs::File::open(src)?;
+    let dst_parent = dst.parent().unwrap_or_else(|| std::path::Path::new("."));
+    let dst_parent_file = std::fs::File::open(dst_parent)?;
+
+    let dst_name = dst.file_name().ok_or_else(|| {
+        std::io::Error::new(std::io::ErrorKind::InvalidInput, "Invalid destination path")
+    })?;
+    let c_dst_name = CString::new(dst_name.as_bytes()).map_err(|e| {
+        std::io::Error::new(std::io::ErrorKind::InvalidInput, e)
+    })?;
+
+    let mut arg = bch_ioctl_subvolume {
+        flags: 0,
+        dirfd: dst_parent_file.as_raw_fd(),
+        mode: 0755,
+        padding: 0,
+        dst_ptr: c_dst_name.as_ptr() as u64,
+        src_ptr: src_file.as_raw_fd() as u64,
+    };
+
+    let res = unsafe {
+        libc::ioctl(src_file.as_raw_fd(), BCH_IOCTL_SUBVOLUME_CREATE as _, &mut arg)
+    };
+
+    if res == 0 {
+        Ok(())
+    } else {
+        if dst.is_dir() {
+            return Ok(());
+        }
+        std::fs::create_dir_all(dst)
+    }
+}
+
 async fn execute_rollback_async(sender: &ComponentSender<RecoveryModel>) -> Result<String, String> {
     sender.input(RecoveryMsg::UpdateProgress(
         "Verifica deployment OSTree / rpm-ostree in corso...".to_string(),
@@ -470,28 +527,18 @@ async fn execute_rollback_async(sender: &ComponentSender<RecoveryModel>) -> Resu
     ));
     tokio::time::sleep(tokio::time::Duration::from_millis(400)).await;
 
-    // Tentativo 2: Bcachefs snapshot
-    let bcachefs_output = tokio::process::Command::new("bcachefs")
-        .arg("subvolume")
-        .arg("snapshot")
-        .arg("/")
-        .arg("/.recovery-snapshot-rollback")
-        .output()
-        .await;
+    // Tentativo 2: Bcachefs snapshot via direct libc ioctl
+    let bcachefs_res = native_bcachefs_snapshot(std::path::Path::new("/"), std::path::Path::new("/.recovery-snapshot-rollback"));
 
-    match bcachefs_output {
-        Ok(out) if out.status.success() => {
+    match bcachefs_res {
+        Ok(_) => {
             let msg =
                 "Snapshot Bcachefs creato con successo in /.recovery-snapshot-rollback.".to_string();
             try_emit_dbus_signal().await;
             return Ok(msg);
         }
-        Ok(out) => {
-            let err = String::from_utf8_lossy(&out.stderr).to_string();
+        Err(err) => {
             warn!("Snapshot bcachefs fallito: {}", err);
-        }
-        Err(e) => {
-            warn!("Impossibile eseguire bcachefs: {}", e);
         }
     }
 

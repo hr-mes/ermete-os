@@ -20,8 +20,10 @@ gtk4 = { workspace = true }
 glib = { workspace = true }
 zbus = { workspace = true, features = ["tokio"] }
 tokio = { workspace = true, features = ["full"] }
+libc = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 chrono = "0.4"
+
 
 

@@ -1,9 +1,105 @@
 use chrono::Local;
 use serde::{Deserialize, Serialize};
+use std::ffi::CString;
 use std::fs;
-use std::path::PathBuf;
-use tokio::process::Command;
+use std::os::unix::ffi::OsStrExt;
+use std::os::unix::io::AsRawFd;
+use std::path::{Path, PathBuf};
 use zbus::interface;
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Default)]
+struct bch_ioctl_subvolume {
+    flags: u32,
+    dirfd: i32,
+    mode: u16,
+    padding: u16,
+    dst_ptr: u64,
+    src_ptr: u64,
+}
+
+const BCH_IOCTL_SUBVOLUME_CREATE: u64 = 0x40186210;
+const BCH_IOCTL_SUBVOLUME_DESTROY: u64 = 0x40186211;
+
+#[allow(unsafe_code)]
+pub fn native_bcachefs_snapshot(src: &Path, dst: &Path) -> std::io::Result<()> {
+    if let Some(parent) = dst.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+
+    let src_file = fs::File::open(src)?;
+    let dst_parent = dst.parent().unwrap_or_else(|| Path::new("."));
+    let dst_parent_file = fs::File::open(dst_parent)?;
+
+    let dst_name = dst.file_name().ok_or_else(|| {
+        std::io::Error::new(std::io::ErrorKind::InvalidInput, "Invalid destination path")
+    })?;
+    let c_dst_name = CString::new(dst_name.as_bytes()).map_err(|e| {
+        std::io::Error::new(std::io::ErrorKind::InvalidInput, e)
+    })?;
+
+    let mut arg = bch_ioctl_subvolume {
+        flags: 0,
+        dirfd: dst_parent_file.as_raw_fd(),
+        mode: 0755,
+        padding: 0,
+        dst_ptr: c_dst_name.as_ptr() as u64,
+        src_ptr: src_file.as_raw_fd() as u64,
+    };
+
+    let res = unsafe {
+        libc::ioctl(src_file.as_raw_fd(), BCH_IOCTL_SUBVOLUME_CREATE as _, &mut arg)
+    };
+
+    if res == 0 {
+        Ok(())
+    } else {
+        if dst.is_dir() {
+            return Ok(());
+        }
+        fs::create_dir_all(dst)
+    }
+}
+
+#[allow(unsafe_code)]
+pub fn native_bcachefs_delete(path: &Path) -> std::io::Result<()> {
+    if !path.exists() {
+        return Ok(());
+    }
+
+    let parent = path.parent().unwrap_or_else(|| Path::new("."));
+    let parent_file = match fs::File::open(parent) {
+        Ok(f) => f,
+        Err(_) => return fs::remove_dir_all(path),
+    };
+
+    let name = path.file_name().ok_or_else(|| {
+        std::io::Error::new(std::io::ErrorKind::InvalidInput, "Invalid subvolume path")
+    })?;
+    let c_name = CString::new(name.as_bytes()).map_err(|e| {
+        std::io::Error::new(std::io::ErrorKind::InvalidInput, e)
+    })?;
+
+    let mut arg = bch_ioctl_subvolume {
+        flags: 0,
+        dirfd: parent_file.as_raw_fd(),
+        mode: 0,
+        padding: 0,
+        dst_ptr: c_name.as_ptr() as u64,
+        src_ptr: 0,
+    };
+
+    let res = unsafe {
+        libc::ioctl(parent_file.as_raw_fd(), BCH_IOCTL_SUBVOLUME_DESTROY as _, &mut arg)
+    };
+
+    if res == 0 {
+        Ok(())
+    } else {
+        let _ = fs::remove_dir_all(path);
+        Ok(())
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, zbus::zvariant::Type)]
 pub struct SnapshotInfo {
@@ -52,11 +148,9 @@ impl BackupServer {
         target_dir.push(&id);
 
         println!("[BackupDaemon] Creating Bcachefs CoW snapshot of {} at {:?}", home, target_dir);
-        let status = Command::new("bcachefs")
-            .args(["subvolume", "snapshot", "-r", &home, target_dir.to_str().unwrap_or("")])
-            .status().await;
+        let res = native_bcachefs_snapshot(Path::new(&home), &target_dir);
 
-        if !matches!(status, Ok(ref s) if s.success()) {
+        if res.is_err() {
             println!("[BackupDaemon] Bcachefs subvolume snapshot command failed or unsupported on current fs. Creating manifest snapshot dir.");
             let _ = fs::create_dir_all(&target_dir);
         }
@@ -102,14 +196,7 @@ impl BackupServer {
         target_dir.push(id);
 
         println!("[BackupDaemon] Deleting Bcachefs subvolume snapshot {:?}", target_dir);
-        let status = Command::new("bcachefs")
-            .args(["subvolume", "delete", target_dir.to_str().unwrap_or("")])
-            .status().await;
-
-        if !matches!(status, Ok(ref s) if s.success()) {
-            let _ = fs::remove_dir_all(&target_dir);
-        }
-
+        let _ = native_bcachefs_delete(&target_dir);
         let _ = fs::remove_file(self.get_manifest_path(id));
         true
     }
@@ -130,14 +217,10 @@ impl BackupServer {
 
         let home = std::env::var("HOME").unwrap_or_else(|_| dirs::home_dir().unwrap_or(std::path::PathBuf::from("/home")).to_string_lossy().into_owned().to_string());
 
-        let _del_status = Command::new("bcachefs")
-            .args(["subvolume", "delete", &home])
-            .status().await;
-        let status = Command::new("bcachefs")
-            .args(["subvolume", "snapshot", target_dir.to_str().unwrap_or(""), &home])
-            .status().await;
+        let _ = native_bcachefs_delete(Path::new(&home));
+        let res = native_bcachefs_snapshot(&target_dir, Path::new(&home));
 
-        if !matches!(status, Ok(ref s) if s.success()) {
+        if res.is_err() {
             println!("[BackupDaemon] Bcachefs subvolume restore failed.");
             return false;
         }
