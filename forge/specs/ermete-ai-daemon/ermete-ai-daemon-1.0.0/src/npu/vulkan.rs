@@ -50,9 +50,7 @@ impl VulkanTensorEngine {
         }
 
         if !available {
-            info!("Vulkan Compute target initialized with simulated Vulkano device queue");
-            available = true;
-            tensor_cores = true;
+            tracing::warn!("No compatible Vulkan compute queue or Tensor Cores detected on host.");
         }
 
         Self {
@@ -80,7 +78,7 @@ impl VulkanTensorEngine {
         }
 
         info!(
-            "Submitting Vulkan Compute & Tensor Core dispatch via Candle MLP engine to '{}' (CPU impact: 0%)",
+            "Submitting Vulkan Compute dispatch to '{}'",
             self.device_name
         );
 

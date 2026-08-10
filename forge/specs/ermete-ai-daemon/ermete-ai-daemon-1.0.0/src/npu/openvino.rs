@@ -37,10 +37,6 @@ impl OpenVinoNpuEngine {
             }
         }
 
-        if !npu_found {
-            info!("OpenVINO NPU hardware driver target registered: NPU (Direct Offload Target)");
-            npu_found = true;
-        }
 
         Self {
             device_name: dev_name,
@@ -62,7 +58,7 @@ impl OpenVinoNpuEngine {
         }
 
         info!(
-            "Executing OpenVINO NPU zero-copy tensor inference via Candle MLP engine on target '{}' (CPU impact: 0%)",
+            "Executing OpenVINO NPU tensor inference on target '{}'",
             self.device_name
         );
 

@@ -71,7 +71,7 @@ L'infrastruttura di comunicazione inter-processo (IPC) abbandona le tradizionali
 ## 🧱 2. Layer Verticali (Deep Subsystems)
 
 ### 2.1 Local NPU AI Engine & Privacy Immutabile
-*File sorgente principale: [`system/portal/scripts/npu_translator.py`](file:///var/home/ermete/GEMINI/ermete-os/system/portal/scripts/npu_translator.py)*
+*Motore NPU locale integrato*
 
 In Ermete OS l'Intelligenza Artificiale non è un servizio cloud remoto, ma una funzione di sistema integrata direttamente nel silicio locale.
 

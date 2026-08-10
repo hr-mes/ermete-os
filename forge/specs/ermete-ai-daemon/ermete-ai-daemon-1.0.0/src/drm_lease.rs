@@ -11,18 +11,8 @@ pub async fn acquire_drm_lease() -> Result<(), String> {
     // to bind to the `wp_drm_lease_device_v1` global, create a lease request,
     // and receive a leased FD.
     
-    let protocol_available = true; // Simulated check
-    
-    if protocol_available {
-        info!("wp-drm-lease-v1 protocol available.");
-        info!("Requesting exclusive DRM resources (GPU/NPU) for zero-copy inference...");
-        
-        // Simulating lease acquisition success
-        info!("DRM Lease acquired successfully. Bypassing compositor for 100% direct hardware access.");
-        Ok(())
-    } else {
-        error!("wp-drm-lease-v1 not supported by the compositor.");
-        Err("DRM Leasing not supported".into())
-    }
+    // Zero-Trust Enforcement: We do not simulate Wayland DRM leases.
+    error!("wp-drm-lease-v1 native negotiation is unimplemented.");
+    Err("CRITICAL: DRM Leasing unimplemented. Zero-Trust prevents simulated compositor bypass.".into())
 }
 
