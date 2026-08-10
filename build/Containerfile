@@ -1,0 +1,67 @@
+# ==============================================================================
+# 🌋 Ermete OS - Multistage Containerfile (Fase 14)
+# ==============================================================================
+# Multi-stage container build for Ermete OS Rust workspace binaries.
+# Stage 1: Rust Builder - Compiles entire workspace in release mode.
+# Stage 2: Minimal Runtime - Lightweight Fedora Minimal runtime environment.
+# Entrypoint: /usr/bin/ermete-init-oracle
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# STAGE 1: Rust Builder Stage
+# ------------------------------------------------------------------------------
+FROM docker.io/library/rust:1.85-slim-bookworm AS builder
+
+# Set build environment variables
+ENV CARGO_TERM_COLOR=always \
+    DEBIAN_FRONTEND=noninteractive
+
+# Install required native C/C++ compilation tools and system header dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    clang \
+    libclang-dev \
+    libdbus-1-dev \
+    libssl-dev \
+    pkg-config \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /usr/src/ermete-os
+
+# Copy Cargo configuration, lockfile, and workspace sources
+COPY Cargo.toml Cargo.lock ./
+COPY system/ system/
+COPY forge/ forge/
+COPY tests/ tests/
+
+# Execute release build for the entire workspace
+RUN cargo build --release --workspace
+
+# Collect all compiled release binary executables into staging area
+RUN mkdir -p /out/bin && \
+    find target/release -maxdepth 1 -type f -executable -exec cp {} /out/bin/ \;
+
+# ------------------------------------------------------------------------------
+# STAGE 2: Minimal Runtime Target Image
+# ------------------------------------------------------------------------------
+FROM registry.fedoraproject.org/fedora-minimal:latest AS runtime
+
+LABEL org.opencontainers.image.title="Ermete OS Init Oracle Container" \
+      org.opencontainers.image.description="Multistage container image for Ermete OS microservices" \
+      org.opencontainers.image.vendor="Ermete OS Core Team" \
+      containers.bootc="1"
+
+# Install minimal runtime shared libraries (OpenSSL, DBus libs, CA certs)
+RUN microdnf update -y && \
+    microdnf install -y ca-certificates dbus-libs openssl-libs && \
+    microdnf clean all
+
+# Copy compiled binaries from builder stage to /usr/bin/
+COPY --from=builder /out/bin/ /usr/bin/
+
+# Set working directory
+WORKDIR /root
+
+# Set /usr/bin/ermete-init-oracle as the default entrypoint
+ENTRYPOINT ["/usr/bin/ermete-init-oracle"]
