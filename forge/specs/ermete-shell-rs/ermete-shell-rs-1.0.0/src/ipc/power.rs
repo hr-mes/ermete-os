@@ -71,7 +71,7 @@ impl PowerActor {
                 }
                 Ok(())
             }
-            IpcBackend::Mock(_) => Ok(()),
+            IpcBackend::Mock(_) | IpcBackend::Disconnected => Ok(()),
         }
     }
 
@@ -83,7 +83,7 @@ impl PowerActor {
                 }
                 Ok(())
             }
-            IpcBackend::Mock(_) => Ok(()),
+            IpcBackend::Mock(_) | IpcBackend::Disconnected => Ok(()),
         }
     }
 
@@ -95,7 +95,7 @@ impl PowerActor {
                 }
                 Ok(())
             }
-            IpcBackend::Mock(_) => Ok(()),
+            IpcBackend::Mock(_) | IpcBackend::Disconnected => Ok(()),
         }
     }
 
@@ -107,7 +107,7 @@ impl PowerActor {
                 }
                 Ok(())
             }
-            IpcBackend::Mock(_) => Ok(()),
+            IpcBackend::Mock(_) | IpcBackend::Disconnected => Ok(()),
         }
     }
 }

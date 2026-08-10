@@ -53,6 +53,21 @@ pub trait NmActiveConnection {
     fn id(&self) -> zbus::Result<String>;
     #[zbus(property)]
     fn connection(&self) -> zbus::Result<zbus::zvariant::OwnedObjectPath>;
+    #[zbus(property)]
+    fn ip4_config(&self) -> zbus::Result<zbus::zvariant::OwnedObjectPath>;
+}
+
+#[proxy(
+    interface = "org.freedesktop.NetworkManager.IP4Config",
+    default_service = "org.freedesktop.NetworkManager"
+)]
+pub trait NmIP4Config {
+    #[zbus(property)]
+    fn gateway(&self) -> zbus::Result<String>;
+    #[zbus(property)]
+    fn nameservers(&self) -> zbus::Result<Vec<u32>>;
+    #[zbus(property)]
+    fn address_data(&self) -> zbus::Result<Vec<HashMap<String, zbus::zvariant::OwnedValue>>>;
 }
 
 #[proxy(
@@ -157,28 +172,16 @@ pub struct MockState {
 impl MockState {
     pub fn default_mock() -> Self {
         Self {
-            wifi_enabled: true,
-            bt_enabled: true,
+            wifi_enabled: false,
+            bt_enabled: false,
             mute: false,
             source_mute: false,
             volume: 0.5,
             source_volume: 0.5,
             brightness: 0.5,
             last_player_command: None,
-            wifi_networks: vec![
-                WifiNetworkInfo {
-                    ssid: "Ermete-5G".to_string(),
-                    signal: 85,
-                    active: true,
-                    saved: true,
-                },
-            ],
-            bt_devices: vec![
-                BluetoothDeviceInfo {
-                    name: "Ermete Headphones".to_string(),
-                    connected: true,
-                },
-            ],
+            wifi_networks: vec![],
+            bt_devices: vec![],
         }
     }
 }
@@ -189,6 +192,7 @@ pub enum IpcBackend {
         session: Connection,
         system: Connection,
     },
+    Disconnected,
     Mock(Arc<Mutex<MockState>>),
 }
 

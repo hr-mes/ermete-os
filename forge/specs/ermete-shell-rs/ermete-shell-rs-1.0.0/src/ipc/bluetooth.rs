@@ -72,9 +72,10 @@ impl BluetoothActor {
                     proxy.set_powered(new_st).await?;
                     new_st
                 } else {
-                    true
+                    return Err(zbus::Error::Failure("BlueZ Service Offline".into()));
                 }
             }
+            IpcBackend::Disconnected => return Err(zbus::Error::Failure("BlueZ Service Offline".into())),
             IpcBackend::Mock(state) => {
                 let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
                 s.bt_enabled = !s.bt_enabled;
@@ -89,10 +90,11 @@ impl BluetoothActor {
         match &self.backend {
             IpcBackend::Dbus { system, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BlueZProxy::new(system)).await {
-                    return Ok(proxy.powered().await.unwrap_or(true));
+                    return proxy.powered().await;
                 }
-                Ok(true)
+                Err(zbus::Error::Failure("BlueZ Service Offline".into()))
             }
+            IpcBackend::Disconnected => Err(zbus::Error::Failure("BlueZ Service Offline".into())),
             IpcBackend::Mock(state) => Ok(state.lock().unwrap_or_else(|e| e.into_inner()).bt_enabled),
         }
     }
@@ -102,24 +104,29 @@ impl BluetoothActor {
             IpcBackend::Dbus { system, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BlueZProxy::new(system)).await {
                     proxy.set_powered(powered).await?;
+                    self.event_bus.emit(NetEvent::BluetoothToggled(powered));
+                    Ok(())
+                } else {
+                    Err(zbus::Error::Failure("BlueZ Service Offline".into()))
                 }
             }
+            IpcBackend::Disconnected => Err(zbus::Error::Failure("BlueZ Service Offline".into())),
             IpcBackend::Mock(state) => {
                 state.lock().unwrap_or_else(|e| e.into_inner()).bt_enabled = powered;
+                self.event_bus.emit(NetEvent::BluetoothToggled(powered));
+                Ok(())
             }
         }
-        self.event_bus.emit(NetEvent::BluetoothToggled(powered));
-        Ok(())
     }
 
     async fn handle_list_bluetooth_devices(&self) -> zbus::Result<Vec<BluetoothDeviceInfo>> {
         match &self.backend {
             IpcBackend::Dbus { system, .. } => {
                 let mut results = Vec::new();
-                if let Ok(obj_mgr) = zbus::fdo::ObjectManagerProxy::builder(system)
+                if let Ok(Ok(obj_mgr)) = tokio::time::timeout(std::time::Duration::from_secs(5), zbus::fdo::ObjectManagerProxy::builder(system)
                     .destination("org.bluez")?
                     .path("/")?
-                    .build().await
+                    .build()).await
                 {
                     if let Ok(objects) = obj_mgr.get_managed_objects().await {
                         for (path, interfaces) in objects {
@@ -134,10 +141,12 @@ impl BluetoothActor {
                                 results.push(BluetoothDeviceInfo { name, connected });
                             }
                         }
+                        return Ok(results);
                     }
                 }
-                Ok(results)
+                Err(zbus::Error::Failure("BlueZ Service Offline".into()))
             }
+            IpcBackend::Disconnected => Err(zbus::Error::Failure("BlueZ Service Offline".into())),
             IpcBackend::Mock(state) => Ok(state.lock().unwrap_or_else(|e| e.into_inner()).bt_devices.clone()),
         }
     }
@@ -154,6 +163,12 @@ impl BluetoothController {
         Self { sender }
     }
 
+    pub fn new_disconnected(event_bus: NetBus) -> Self {
+        let backend = IpcBackend::Disconnected;
+        let sender = BluetoothActor::spawn(backend, event_bus);
+        Self { sender }
+    }
+
     pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: NetBus) -> Self {
         let backend = IpcBackend::Mock(state);
         let sender = BluetoothActor::spawn(backend, event_bus);
@@ -163,36 +178,36 @@ impl BluetoothController {
     pub async fn toggle_bluetooth(&self) -> zbus::Result<bool> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(BluetoothCommand::ToggleBluetooth(tx)).await.is_ok() {
-            rx.await.unwrap_or(Ok(false))
+            rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())))
         } else {
-            Ok(false)
+            Err(zbus::Error::Failure("BluetoothActor disconnected".into()))
         }
     }
 
     pub async fn is_bluetooth_enabled(&self) -> zbus::Result<bool> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(BluetoothCommand::IsBluetoothEnabled(tx)).await.is_ok() {
-            rx.await.unwrap_or(Ok(true))
+            rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())))
         } else {
-            Ok(true)
+            Err(zbus::Error::Failure("BluetoothActor disconnected".into()))
         }
     }
 
     pub async fn set_bluetooth_powered(&self, powered: bool) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(BluetoothCommand::SetBluetoothPowered(powered, tx)).await.is_ok() {
-            rx.await.unwrap_or(Ok(()))
+            rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())))
         } else {
-            Ok(())
+            Err(zbus::Error::Failure("BluetoothActor disconnected".into()))
         }
     }
 
     pub async fn list_bluetooth_devices(&self) -> zbus::Result<Vec<BluetoothDeviceInfo>> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(BluetoothCommand::ListBluetoothDevices(tx)).await.is_ok() {
-            rx.await.unwrap_or(Ok(Vec::new()))
+            rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())))
         } else {
-            Ok(Vec::new())
+            Err(zbus::Error::Failure("BluetoothActor disconnected".into()))
         }
     }
 }
@@ -211,7 +226,6 @@ pub fn get_bluetooth_controller() -> BluetoothController {
         ctrl
     } else {
         let bus = crate::ipc::system_proxies::get_net_bus();
-        let state = Arc::new(Mutex::new(MockState::default_mock()));
-        BluetoothController::new_mock(state, bus)
+        BluetoothController::new_disconnected(bus)
     }
 }

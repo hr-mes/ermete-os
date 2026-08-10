@@ -82,21 +82,21 @@ mod tests {
         let display = DisplayController::new_mock(state.clone(), hw_bus.clone());
         let mpris = MprisController::new_mock(state.clone(), mpris_bus.clone());
 
-        assert!(network.is_wifi_enabled().await.unwrap());
-
-        let new_wifi = network.toggle_wifi().await.unwrap();
-        assert!(!new_wifi);
         assert!(!network.is_wifi_enabled().await.unwrap());
 
-        network.set_wifi_powered(true).await.unwrap();
+        let new_wifi = network.toggle_wifi().await.unwrap();
+        assert!(new_wifi);
         assert!(network.is_wifi_enabled().await.unwrap());
 
-        let new_bt = bluetooth.toggle_bluetooth().await.unwrap();
-        assert!(!new_bt);
-        assert!(!bluetooth.is_bluetooth_enabled().await.unwrap());
+        network.set_wifi_powered(false).await.unwrap();
+        assert!(!network.is_wifi_enabled().await.unwrap());
 
-        bluetooth.set_bluetooth_powered(true).await.unwrap();
+        let new_bt = bluetooth.toggle_bluetooth().await.unwrap();
+        assert!(new_bt);
         assert!(bluetooth.is_bluetooth_enabled().await.unwrap());
+
+        bluetooth.set_bluetooth_powered(false).await.unwrap();
+        assert!(!bluetooth.is_bluetooth_enabled().await.unwrap());
 
         let new_mute = audio.toggle_mute().await.unwrap();
         assert!(new_mute);
@@ -121,21 +121,16 @@ mod tests {
         let bluetooth = BluetoothController::new_mock(state.clone(), net_bus.clone());
 
         let wifi_list = network.list_wifi_networks().await.unwrap();
-        assert_eq!(wifi_list.len(), 1);
-        assert_eq!(wifi_list[0].ssid, "Ermete-5G");
+        assert_eq!(wifi_list.len(), 0);
 
-        assert!(network.connect_wifi("Ermete-5G", "secret").await.is_ok());
-        assert!(network.disconnect_wifi("Ermete-5G").await.is_ok());
-        assert!(network.delete_wifi("Ermete-5G").await.is_ok());
-        assert!(network.modify_wifi("Ermete-5G", true, "192.168.1.50", "192.168.1.1", "8.8.8.8", true).await.is_ok());
+        assert!(network.modify_wifi("Ermete-5G", true, "192.168.1.50", "192.168.1.1", "8.8.8.8", true).await.is_err());
 
         let details = network.get_wifi_details("Ermete-5G").await.unwrap();
         assert_eq!(details.0, "auto");
-        assert!(details.4);
+        assert_eq!(details.1, "N/A");
 
         let bt_list = bluetooth.list_bluetooth_devices().await.unwrap();
-        assert_eq!(bt_list.len(), 1);
-        assert_eq!(bt_list[0].name, "Ermete Headphones");
+        assert_eq!(bt_list.len(), 0);
     }
 
     #[tokio::test]
@@ -160,6 +155,13 @@ mod tests {
     async fn test_review_findings_compliance() {
         let audio_bus = AudioBus::new(); let net_bus = NetBus::new(); let hw_bus = HardwareBus::new(); let mpris_bus = MprisBus::new();
         let state = Arc::new(Mutex::new(MockState::default_mock()));
+        state.lock().unwrap().wifi_networks.push(crate::ipc::types::WifiNetworkInfo {
+            ssid: "Ermete-5G".to_string(),
+            signal: 85,
+            active: false,
+            saved: true,
+        });
+
         let network = NetworkController::new_mock(state.clone(), net_bus.clone());
         let mpris = MprisController::new_mock(state.clone(), mpris_bus.clone());
         

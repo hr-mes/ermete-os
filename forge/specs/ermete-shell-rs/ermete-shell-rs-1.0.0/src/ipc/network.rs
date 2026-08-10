@@ -4,7 +4,7 @@ use tokio::sync::{mpsc, oneshot};
 use crate::ipc::types::{
     IpcBackend, NetBus, NetEvent, MockState, WifiNetworkInfo,
     NetworkManagerProxy, NmDeviceProxy, NmWirelessProxy, NmAccessPointProxy, 
-    NmSettingsProxy, NmSettingsConnectionProxy, NmActiveConnectionProxy
+    NmSettingsProxy, NmSettingsConnectionProxy, NmActiveConnectionProxy, NmIP4ConfigProxy
 };
 
 pub enum NetworkCommand {
@@ -73,10 +73,12 @@ impl NetworkActor {
                     let _ = resp.send(res);
                 }
                 NetworkCommand::ModifyWifi(responder) => {
-                    let _ = responder.send(Ok(()));
+                    let res = self.handle_modify_wifi().await;
+                    let _ = responder.send(res);
                 }
-                NetworkCommand::GetWifiDetails(_ssid, resp) => {
-                    let _ = resp.send(Ok(("auto".to_string(), "192.168.1.100".to_string(), "192.168.1.1".to_string(), "8.8.8.8".to_string(), true)));
+                NetworkCommand::GetWifiDetails(ssid, resp) => {
+                    let res = self.handle_get_wifi_details(&ssid).await;
+                    let _ = resp.send(res);
                 }
                 NetworkCommand::RefreshStatus(resp) => {
                     let res = self.handle_refresh_network_status().await;
@@ -90,14 +92,15 @@ impl NetworkActor {
         let new_state = match &self.backend {
             IpcBackend::Dbus { system, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
-                    let current = proxy.wireless_enabled().await.unwrap_or(true);
+                    let current = proxy.wireless_enabled().await.unwrap_or(false);
                     let new_state = !current;
                     proxy.set_wireless_enabled(new_state).await?;
                     new_state
                 } else {
-                    true
+                    return Err(zbus::Error::Failure("NetworkManager DBus service unavailable".into()));
                 }
             }
+            IpcBackend::Disconnected => return Err(zbus::Error::Failure("NetworkManager DBus service unavailable".into())),
             IpcBackend::Mock(state) => {
                 let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
                 s.wifi_enabled = !s.wifi_enabled;
@@ -112,10 +115,11 @@ impl NetworkActor {
         match &self.backend {
             IpcBackend::Dbus { system, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
-                    return Ok(proxy.wireless_enabled().await.unwrap_or(true));
+                    return proxy.wireless_enabled().await;
                 }
-                Ok(true)
+                Err(zbus::Error::Failure("NetworkManager DBus service unavailable".into()))
             }
+            IpcBackend::Disconnected => Err(zbus::Error::Failure("NetworkManager DBus service unavailable".into())),
             IpcBackend::Mock(state) => Ok(state.lock().unwrap_or_else(|e| e.into_inner()).wifi_enabled),
         }
     }
@@ -125,14 +129,19 @@ impl NetworkActor {
             IpcBackend::Dbus { system, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
                     proxy.set_wireless_enabled(powered).await?;
+                    self.event_bus.emit(NetEvent::WifiToggled(powered));
+                    Ok(())
+                } else {
+                    Err(zbus::Error::Failure("NetworkManager DBus service unavailable".into()))
                 }
             }
+            IpcBackend::Disconnected => Err(zbus::Error::Failure("NetworkManager DBus service unavailable".into())),
             IpcBackend::Mock(state) => {
                 state.lock().unwrap_or_else(|e| e.into_inner()).wifi_enabled = powered;
+                self.event_bus.emit(NetEvent::WifiToggled(powered));
+                Ok(())
             }
         }
-        self.event_bus.emit(NetEvent::WifiToggled(powered));
-        Ok(())
     }
 
     async fn handle_list_wifi_networks(&self) -> zbus::Result<Vec<WifiNetworkInfo>> {
@@ -170,9 +179,11 @@ impl NetworkActor {
                             }
                         }
                     }
+                    return Ok(results);
                 }
-                Ok(results)
+                Err(zbus::Error::Failure("NetworkManager DBus service unavailable".into()))
             }
+            IpcBackend::Disconnected => Err(zbus::Error::Failure("NetworkManager DBus service unavailable".into())),
             IpcBackend::Mock(state) => Ok(state.lock().unwrap_or_else(|e| e.into_inner()).wifi_networks.clone()),
         }
     }
@@ -231,8 +242,9 @@ impl NetworkActor {
                         }
                     }
                 }
-                Ok(())
+                Err(zbus::Error::Failure("NetworkManager service unavailable or connection not found".into()))
             }
+            IpcBackend::Disconnected => Err(zbus::Error::Failure("NetworkManager DBus service unavailable".into())),
             IpcBackend::Mock(state) => {
                 let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
                 for net in &mut s.wifi_networks {
@@ -263,8 +275,9 @@ impl NetworkActor {
                         }
                     }
                 }
-                Ok(())
+                Err(zbus::Error::Failure("NetworkManager service unavailable or active connection not found".into()))
             }
+            IpcBackend::Disconnected => Err(zbus::Error::Failure("NetworkManager DBus service unavailable".into())),
             IpcBackend::Mock(state) => {
                 let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
                 for net in &mut s.wifi_networks {
@@ -301,13 +314,110 @@ impl NetworkActor {
                         }
                     }
                 }
-                Ok(())
+                Err(zbus::Error::Failure("NetworkManager service unavailable or connection not found".into()))
             }
+            IpcBackend::Disconnected => Err(zbus::Error::Failure("NetworkManager DBus service unavailable".into())),
             IpcBackend::Mock(state) => {
                 let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
                 s.wifi_networks.retain(|net| net.ssid != ssid);
                 Ok(())
             }
+        }
+    }
+
+    async fn handle_modify_wifi(&self) -> zbus::Result<()> {
+        Err(zbus::Error::Failure("DBus network modifier in lavorazione".into()))
+    }
+
+    async fn handle_get_wifi_details(&self, ssid: &str) -> zbus::Result<(String, String, String, String, bool)> {
+        match &self.backend {
+            IpcBackend::Dbus { system, .. } => {
+                let mut method = "auto".to_string();
+                let mut autoconnect = true;
+                let mut ip = "N/A".to_string();
+                let mut gateway = "N/A".to_string();
+                let mut dns = "N/A".to_string();
+                let mut found_conn = false;
+
+                if let Ok(Ok(settings_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NmSettingsProxy::new(system)).await {
+                    if let Ok(conns) = settings_proxy.list_connections().await {
+                        for conn_path in conns {
+                            if let Ok(conn_proxy) = NmSettingsConnectionProxy::builder(system).path(conn_path)?.build().await {
+                                if let Ok(settings) = conn_proxy.get_settings().await {
+                                    if let Some(wifi_sec) = settings.get("802-11-wireless") {
+                                        if let Some(ssid_val) = wifi_sec.get("ssid") {
+                                            if let Some(s) = Self::extract_ssid(ssid_val) {
+                                                if s == ssid {
+                                                    found_conn = true;
+                                                    if let Some(conn_sec) = settings.get("connection") {
+                                                        if let Some(ac_val) = conn_sec.get("autoconnect") {
+                                                            if let zbus::zvariant::Value::Bool(b) = &**ac_val {
+                                                                autoconnect = *b;
+                                                            }
+                                                        }
+                                                    }
+                                                    if let Some(ipv4_sec) = settings.get("ipv4") {
+                                                        if let Some(m_val) = ipv4_sec.get("method") {
+                                                            if let zbus::zvariant::Value::Str(m) = &**m_val {
+                                                                method = m.as_str().to_string();
+                                                            }
+                                                        }
+                                                    }
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if let Ok(Ok(nm_proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
+                    if let Ok(active_conns) = nm_proxy.active_connections().await {
+                        for path in active_conns {
+                            if let Ok(ac_proxy) = NmActiveConnectionProxy::builder(system).path(path)?.build().await {
+                                if let Ok(id) = ac_proxy.id().await {
+                                    if id == ssid {
+                                        found_conn = true;
+                                        if let Ok(ip4_path) = ac_proxy.ip4_config().await {
+                                            if let Ok(ip4_proxy) = NmIP4ConfigProxy::builder(system).path(ip4_path)?.build().await {
+                                                if let Ok(gw) = ip4_proxy.gateway().await {
+                                                    if !gw.is_empty() { gateway = gw; }
+                                                }
+                                                if let Ok(ns) = ip4_proxy.nameservers().await {
+                                                    if let Some(first_ns) = ns.first() {
+                                                        let ip_bytes = first_ns.to_be_bytes();
+                                                        dns = format!("{}.{}.{}.{}", ip_bytes[3], ip_bytes[2], ip_bytes[1], ip_bytes[0]);
+                                                    }
+                                                }
+                                                if let Ok(addr_data) = ip4_proxy.address_data().await {
+                                                    if let Some(addr_map) = addr_data.first() {
+                                                        if let Some(ip_val) = addr_map.get("address") {
+                                                            if let zbus::zvariant::Value::Str(ip_str) = &**ip_val {
+                                                                ip = ip_str.as_str().to_string();
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if found_conn {
+                    Ok((method, ip, gateway, dns, autoconnect))
+                } else {
+                    Err(zbus::Error::Failure("Dettagli Wi-Fi non disponibili per la rete".into()))
+                }
+            }
+            IpcBackend::Disconnected => Err(zbus::Error::Failure("NetworkManager DBus service unavailable".into())),
+            IpcBackend::Mock(_state) => Ok(("auto".to_string(), "N/A".to_string(), "N/A".to_string(), "N/A".to_string(), true)),
         }
     }
 
@@ -326,6 +436,10 @@ impl NetworkActor {
                         }
                     }
                 }
+                self.active_wifi_ssid = None;
+                Ok(())
+            }
+            IpcBackend::Disconnected => {
                 self.active_wifi_ssid = None;
                 Ok(())
             }
@@ -349,108 +463,123 @@ impl NetworkController {
         }
     }
 
-    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: NetBus) -> Self {
-        let backend = IpcBackend::Mock(state);
-        let sender = NetworkActor::spawn(backend, event_bus, Some("Ermete-5G".to_string()));
+    pub fn new_disconnected(event_bus: NetBus) -> Self {
+        let backend = IpcBackend::Disconnected;
+        let sender = NetworkActor::spawn(backend, event_bus, None);
         Self {
             sender,
-            active_wifi_ssid: Arc::new(Mutex::new(Some("Ermete-5G".to_string()))),
+            active_wifi_ssid: Arc::new(Mutex::new(None)),
+        }
+    }
+
+    pub fn new_mock(state: Arc<Mutex<MockState>>, event_bus: NetBus) -> Self {
+        let backend = IpcBackend::Mock(state);
+        let sender = NetworkActor::spawn(backend, event_bus, None);
+        Self {
+            sender,
+            active_wifi_ssid: Arc::new(Mutex::new(None)),
         }
     }
 
     pub async fn toggle_wifi(&self) -> zbus::Result<bool> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::ToggleWifi(tx)).await.is_ok() {
-            rx.await.unwrap_or(Ok(true))
+            rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())))
         } else {
-            Ok(true)
+            Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
     }
 
     pub async fn is_wifi_enabled(&self) -> zbus::Result<bool> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::IsWifiEnabled(tx)).await.is_ok() {
-            rx.await.unwrap_or(Ok(true))
+            rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())))
         } else {
-            Ok(true)
+            Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
     }
 
     pub async fn set_wifi_powered(&self, powered: bool) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::SetWifiPowered(powered, tx)).await.is_ok() {
-            rx.await.unwrap_or(Ok(()))
+            rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())))
         } else {
-            Ok(())
+            Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
     }
 
     pub async fn list_wifi_networks(&self) -> zbus::Result<Vec<WifiNetworkInfo>> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::ListWifiNetworks(tx)).await.is_ok() {
-            rx.await.unwrap_or(Ok(Vec::new()))
+            rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())))
         } else {
-            Ok(Vec::new())
+            Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
     }
 
     pub async fn connect_wifi(&self, ssid: &str, password: &str) -> zbus::Result<()> {
-        if let Ok(mut l) = self.active_wifi_ssid.lock() {
-            *l = Some(ssid.to_string());
-        }
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::ConnectWifi(ssid.to_string(), password.to_string(), tx)).await.is_ok() {
-            rx.await.unwrap_or(Ok(()))
+            let res = rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())));
+            if res.is_ok() {
+                if let Ok(mut l) = self.active_wifi_ssid.lock() {
+                    *l = Some(ssid.to_string());
+                }
+            }
+            res
         } else {
-            Ok(())
+            Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
     }
 
     pub async fn disconnect_wifi(&self, ssid: &str) -> zbus::Result<()> {
-        if let Ok(mut l) = self.active_wifi_ssid.lock() {
-            *l = None;
-        }
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::DisconnectWifi(ssid.to_string(), tx)).await.is_ok() {
-            rx.await.unwrap_or(Ok(()))
+            let res = rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())));
+            if res.is_ok() {
+                if let Ok(mut l) = self.active_wifi_ssid.lock() {
+                    *l = None;
+                }
+            }
+            res
         } else {
-            Ok(())
+            Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
     }
 
     pub async fn delete_wifi(&self, ssid: &str) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::DeleteWifi(ssid.to_string(), tx)).await.is_ok() {
-            rx.await.unwrap_or(Ok(()))
+            rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())))
         } else {
-            Ok(())
+            Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
     }
 
     pub async fn modify_wifi(&self, _ssid: &str, _autoconnect: bool, _ip: &str, _gw: &str, _dns: &str, _ipv6: bool) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::ModifyWifi(tx)).await.is_ok() {
-            rx.await.unwrap_or(Ok(()))
+            rx.await.unwrap_or(Err(zbus::Error::Failure("ModifyWifi channel closed".into())))
         } else {
-            Ok(())
+            Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
     }
 
     pub async fn get_wifi_details(&self, ssid: &str) -> zbus::Result<(String, String, String, String, bool)> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::GetWifiDetails(ssid.to_string(), tx)).await.is_ok() {
-            rx.await.unwrap_or(Ok(("auto".to_string(), "192.168.1.100".to_string(), "192.168.1.1".to_string(), "8.8.8.8".to_string(), true)))
+            rx.await.unwrap_or(Err(zbus::Error::Failure("GetWifiDetails channel closed".into())))
         } else {
-            Ok(("auto".to_string(), "192.168.1.100".to_string(), "192.168.1.1".to_string(), "8.8.8.8".to_string(), true))
+            Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
     }
 
     pub async fn refresh_network_status(&self) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::RefreshStatus(tx)).await.is_ok() {
-            rx.await.unwrap_or(Ok(()))
+            rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())))
         } else {
-            Ok(())
+            Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
     }
 
@@ -519,8 +648,8 @@ pub fn get_network_controller() -> NetworkController {
         ctrl
     } else {
         let bus = crate::ipc::system_proxies::get_net_bus();
-        let state = Arc::new(Mutex::new(MockState::default_mock()));
-        NetworkController::new_mock(state, bus)
+        NetworkController::new_disconnected(bus)
     }
 }
+
 

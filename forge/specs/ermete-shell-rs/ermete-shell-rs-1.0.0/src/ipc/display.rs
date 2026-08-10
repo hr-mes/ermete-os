@@ -55,6 +55,7 @@ impl DisplayActor {
                     tracing::warn!("[Zero-Trust] LogindSessionProxy unavailable for setting brightness via DBus; direct sysfs write bypass blocked.");
                 }
             }
+            IpcBackend::Disconnected => {}
             IpcBackend::Mock(state) => {
                 let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
                 s.brightness = brightness;

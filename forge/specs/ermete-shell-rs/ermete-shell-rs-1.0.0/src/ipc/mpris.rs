@@ -85,6 +85,7 @@ impl MprisActor {
                 }
                 let _ = self.handle_refresh_mpris().await;
             }
+            IpcBackend::Disconnected => {}
             IpcBackend::Mock(state) => {
                 state.lock().unwrap_or_else(|e| e.into_inner()).last_player_command = Some(cmd.to_string());
                 let _ = self.handle_refresh_mpris().await;
@@ -153,6 +154,10 @@ impl MprisActor {
                         }
                     }
                 }
+                self.cached_mpris = None;
+                Ok(())
+            }
+            IpcBackend::Disconnected => {
                 self.cached_mpris = None;
                 Ok(())
             }

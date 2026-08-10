@@ -64,6 +64,7 @@ impl AudioActor {
                     true
                 }
             }
+            IpcBackend::Disconnected => return Err(zbus::Error::Failure("Audio service offline".into())),
             IpcBackend::Mock(state) => {
                 let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
                 s.mute = !s.mute;
@@ -83,8 +84,9 @@ impl AudioActor {
                     proxy.set_source_muted(new_state).await?;
                     return Ok(new_state);
                 }
-                Ok(true)
+                Err(zbus::Error::Failure("Audio service offline".into()))
             }
+            IpcBackend::Disconnected => Err(zbus::Error::Failure("Audio service offline".into())),
             IpcBackend::Mock(state) => {
                 let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
                 s.source_mute = !s.source_mute;
@@ -101,6 +103,7 @@ impl AudioActor {
                     self.cached_volume = volume;
                 }
             }
+            IpcBackend::Disconnected => {}
             IpcBackend::Mock(state) => {
                 self.cached_volume = volume;
                 let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
@@ -119,6 +122,7 @@ impl AudioActor {
                 }
                 Ok(())
             }
+            IpcBackend::Disconnected => Ok(()),
             IpcBackend::Mock(state) => {
                 let mut s = state.lock().unwrap_or_else(|e| e.into_inner());
                 s.source_volume = volume;
