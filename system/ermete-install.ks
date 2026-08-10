@@ -28,7 +28,7 @@ HOMED_PID=$!
 # TPM2 Monotonic Counter Initialization (NV Index 0x01800001)
 if tpm2_getcap properties-fixed | grep -q "TPM2_PT_TOTAL_COMMANDS"; then
     echo "Inizializzazione NV Monotonic Counter TPM2 a 0x01800001..."
-    tpm2_nvundefine 0x01800001 -C o 2>/dev/null || true
+    tpm2_nvundefine 0x01800001 -C o 2>/dev/null
     tpm2_nvdefine 0x01800001 -C o -s 8 -a "ownerread|ownerwrite|authread|authwrite|nt=counter"
     tpm2_nvincrement 0x01800001 -C o
 fi

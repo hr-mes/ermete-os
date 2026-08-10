@@ -168,7 +168,7 @@ async fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();
     if args.len() > 2 && args[1] == "--login" {
         let username = &args[2];
-        let password = env::var("GREETER_PASSWORD").unwrap_or_else(|_| "demo-pass".to_string());
+        let password = env::var("GREETER_PASSWORD").unwrap_or_else(|_| String::new());
         
         match greeter.authenticate_and_release_keys(username, &password).await {
             Ok((ctx, _keys)) => {

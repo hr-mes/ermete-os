@@ -67,18 +67,14 @@ impl OobeModel {
         if locale_res.is_err() || !locale_res.as_ref().map(|s| s.success()).unwrap_or(false) {
             println!("[ERMETE-OOBE] localectl set-locale failed or unavailable, writing directly to /etc/locale.conf");
             if let Err(e) = std::fs::write("/etc/locale.conf", format!("LANG={}\n", lang_code)) {
-                eprintln!("[ERMETE-OOBE] Failed to write /etc/locale.conf: {}, attempting /tmp fallback", e);
-                let _ = std::fs::create_dir_all("/tmp/ermete");
-                let _ = std::fs::write("/tmp/ermete/locale.conf", format!("LANG={}\n", lang_code));
+                panic!("[ERMETE-OOBE] CRITICAL: Failed to write /etc/locale.conf: {}", e);
             }
         }
 
         if kb_res.is_err() || !kb_res.as_ref().map(|s| s.success()).unwrap_or(false) {
             println!("[ERMETE-OOBE] localectl set-keymap failed or unavailable, writing directly to /etc/vconsole.conf");
             if let Err(e) = std::fs::write("/etc/vconsole.conf", format!("KEYMAP={}\n", kb_layout)) {
-                eprintln!("[ERMETE-OOBE] Failed to write /etc/vconsole.conf: {}, attempting /tmp fallback", e);
-                let _ = std::fs::create_dir_all("/tmp/ermete");
-                let _ = std::fs::write("/tmp/ermete/vconsole.conf", format!("KEYMAP={}\n", kb_layout));
+                panic!("[ERMETE-OOBE] CRITICAL: Failed to write /etc/vconsole.conf: {}", e);
             }
         }
 
