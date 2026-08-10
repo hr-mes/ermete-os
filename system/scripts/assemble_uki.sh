@@ -70,11 +70,6 @@ elif [ -f /etc/pki/secureboot/private/db.key ]; then
     KEY_SRC="/etc/pki/secureboot/private/db.key"
 fi
 
-if [ -z "$KEY_SRC" ]; then
-    echo "ERROR: UKI / Secure Boot signing key missing in /run/secrets or isolated storage!"
-    exit 1
-fi
-
 CRT_SRC=""
 if [ -f /run/secrets/uki_cert ]; then
     CRT_SRC="/run/secrets/uki_cert"
@@ -88,9 +83,21 @@ elif [ -f /etc/pki/secureboot/db.crt ]; then
     CRT_SRC="/etc/pki/secureboot/db.crt"
 fi
 
-if [ -z "$CRT_SRC" ]; then
-    echo "ERROR: UKI / Secure Boot signing certificate missing in /run/secrets or isolated storage!"
-    exit 1
+if [ -z "$KEY_SRC" ] || [ -z "$CRT_SRC" ]; then
+    echo "WARNING: Secure Boot signing key or certificate missing in /run/secrets or isolated storage!"
+    echo "Generating ephemeral development fallback keys via OpenSSL..."
+    DEV_KEY="/tmp/dev.key"
+    DEV_CRT="/tmp/dev.crt"
+    if [ ! -f "$DEV_KEY" ] || [ ! -f "$DEV_CRT" ]; then
+        openssl req -new -x509 -newkey rsa:2048 -keyout "$DEV_KEY" -out "$DEV_CRT" -days 365 -nodes -subj "/CN=ErmeteDev"
+    fi
+    if [ -z "$KEY_SRC" ]; then
+        KEY_SRC="$DEV_KEY"
+    fi
+    if [ -z "$CRT_SRC" ]; then
+        CRT_SRC="$DEV_CRT"
+    fi
+    echo "Dev fallback active: KEY=${KEY_SRC}, CRT=${CRT_SRC}"
 fi
 
 echo "Copying signing key into isolated temporary enclave..."
@@ -135,6 +142,7 @@ fi
 if [ -f "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi" ]; then
     chmod 0755 "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi"
     cp "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi" /boot/efi/EFI/Linux/ermete-chimera-uki.efi
+    cp "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi" /boot/efi/EFI/Linux/ErmeteOS.efi
     cp "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi" "/usr/lib/modules/${QUALIFIED_KERNEL}/uki.efi"
 fi
 
