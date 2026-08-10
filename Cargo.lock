@@ -1356,6 +1356,8 @@ dependencies = [
  "anyhow",
  "aya",
  "bytes",
+ "candle-core",
+ "candle-nn",
  "ermete-bus-api",
  "libc",
  "serde",
