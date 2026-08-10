@@ -357,14 +357,13 @@ pub fn attach_hover_preview(button: &Button, item_rc: Rc<RefCell<DockItem>>) {
     motion_ctrl.connect_enter(move |_, _, _| {
         *hovered_c.borrow_mut() = true;
         let item = item_c.borrow();
-        if !item.window_ids.is_empty() {
-            if pop_c.borrow().is_none() {
+        if !item.window_ids.is_empty()
+            && pop_c.borrow().is_none() {
                 if let Some(preview_pop) = LivePreviewPopover::new(&btn_clone, &item) {
                     preview_pop.popup();
                     *pop_c.borrow_mut() = Some(preview_pop.popover);
                 }
             }
-        }
     });
 
     let pop_c2 = active_popover.clone();

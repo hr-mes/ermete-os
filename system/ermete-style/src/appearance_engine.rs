@@ -4,24 +4,20 @@ use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
 use tracing::{error, info, warn};
 use zbus::interface;
-use glib::clone::Downgrade;
 use gtk4::prelude::*;
 
 /// Represents the physical position of a panel or dock
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
+#[derive(Default)]
 pub enum PanelPosition {
+    #[default]
     Top,
     Bottom,
     Left,
     Right,
 }
 
-impl Default for PanelPosition {
-    fn default() -> Self {
-        PanelPosition::Top
-    }
-}
 
 /// Widget layout within a shell panel
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
@@ -324,6 +320,12 @@ impl Default for AppearanceState {
 
 pub struct AppearanceEngine {
     state: Arc<RwLock<AppearanceState>>,
+}
+
+impl Default for AppearanceEngine {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl AppearanceEngine {

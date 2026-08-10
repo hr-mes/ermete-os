@@ -10,6 +10,12 @@ pub struct PqcMeshClient {
     ring_buffer: Arc<Mutex<Option<ZeroCopyRingBuffer>>>,
 }
 
+impl Default for PqcMeshClient {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PqcMeshClient {
     pub fn new() -> Self {
         let channel_name = "ermete-pqc-mesh-ringbuf".to_string();

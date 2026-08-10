@@ -1,7 +1,7 @@
 pub mod physics;
 pub mod render;
 
-pub use physics::{spring_physics_system, spring_physics_system_batch, DT_1000HZ};
+pub use physics::{spring_physics_system, spring_physics_system_batch};
 
 use crate::ecs::components::{
     Geometry, PhysicsSpring, Position, RenderLayer, Velocity, WaylandSurface,
@@ -57,7 +57,7 @@ pub fn physics_system(world: &SharedEcsWorld, dt: f32) -> Result<()> {
             }
         } else {
             // Euler velocity integration
-            if let (Some(pos), Some(vel)) = (
+            if let (Some(_pos), Some(vel)) = (
                 world_guard.get_component::<Position>(entity).cloned(),
                 world_guard.get_component::<Velocity>(entity).cloned(),
             ) {

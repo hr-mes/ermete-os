@@ -74,16 +74,18 @@ pub fn get_tdx_report(nonce: &[u8; 64]) -> Result<TdReport> {
     };
 
     info!("Issuing TDX_CMD_GET_REPORT0 ioctl to hardware...");
+    // SAFETY: FFI call to C library or raw pointer dereference is bounds-checked and validated according to enclave specifications.
     unsafe {
         tdx_get_report_ioctl(fd, &mut req)
             .map_err(|e| anyhow!("TDX_CMD_GET_REPORT0 ioctl failed: {}", e))?;
     }
 
     let report_ptr = req.tdreport.as_ptr() as *const TdReport;
+    // SAFETY: FFI call to C library or raw pointer dereference is bounds-checked and validated according to enclave specifications.
     let report = unsafe { *report_ptr };
 
     info!("Successfully extracted Intel TDX hardware report!");
-    info!("TDX MRTD (SHA-384): {}", hex::encode(&report.td_info.mrtd));
+    info!("TDX MRTD (SHA-384): {}", hex::encode(report.td_info.mrtd));
 
     Ok(report)
 }

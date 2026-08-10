@@ -98,7 +98,7 @@ impl CompositorState {
     pub fn submit_dma_buf(
         &self,
         surface: &WaylandSurface,
-        transform_matrix: &[f32; 16],
+        _transform_matrix: &[f32; 16],
     ) -> Result<(), RenderError> {
         if !surface.is_visible {
             return Err(RenderError::SurfaceNotVisible);

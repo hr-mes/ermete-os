@@ -1,5 +1,5 @@
 use thiserror::Error;
-use tracing::{error, info, warn};
+use tracing::{info, warn};
 
 /// Default maximum allowable size for a single Wayland `wl_shm` buffer (512 MB).
 pub const DEFAULT_MAX_WL_SHM_BUFFER_SIZE_BYTES: usize = 512 * 1024 * 1024;

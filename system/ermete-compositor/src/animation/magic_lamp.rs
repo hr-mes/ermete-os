@@ -4,7 +4,7 @@
 //! Transforms window bounding geometry into horizontal curved slices that deform
 //! along Bezier / S-curve trajectories toward a target dock/panel region.
 
-use super::solver::{MassSpringDamperSolver, Matrix4, SpringConfig};
+use super::solver::{Matrix4, SpringConfig};
 use super::spring::Spring1D;
 use crate::ipc::protocol::WindowPlacement;
 use tracing::debug;

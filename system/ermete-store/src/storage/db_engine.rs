@@ -115,12 +115,11 @@ pub async fn read_bytes_io_uring(path: &Path, engine: &IoUringEngine) -> Result<
 
 /// Writes file bytes asynchronously using Linux `io_uring` zero-copy interface + fsync.
 pub async fn write_bytes_io_uring(path: &Path, data: &[u8], engine: &IoUringEngine) -> Result<()> {
-    if let Some(parent) = path.parent() {
-        if !parent.exists() {
+    if let Some(parent) = path.parent()
+        && !parent.exists() {
             std::fs::create_dir_all(parent)
                 .with_context(|| format!("Failed to create parent directories for {}", path.display()))?;
         }
-    }
 
     let file = OpenOptions::new()
         .create(true)

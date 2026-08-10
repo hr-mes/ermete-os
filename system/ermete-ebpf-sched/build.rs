@@ -15,7 +15,7 @@ fn main() {
     // Try building eBPF bytecode target bpfel-unknown-none
     let status = Command::new(&cargo)
         .env("LD_LIBRARY_PATH", "/usr/lib64")
-        .args(&[
+        .args([
             "+nightly",
             "build",
             "-Z",
@@ -31,7 +31,7 @@ fn main() {
     if status.is_err() || !status.as_ref().unwrap().success() {
         let _ = Command::new(&cargo)
             .env("LD_LIBRARY_PATH", "/usr/lib64")
-            .args(&[
+            .args([
                 "build",
                 "--manifest-path",
                 "ebpf/Cargo.toml",
@@ -55,7 +55,7 @@ fn main() {
         println!("cargo:warning=eBPF scheduler bytecode compiled and copied to OUT_DIR successfully.");
     } else {
         // Fallback: Write empty byte array so include_bytes! macro does not panic during cargo check/build
-        fs::write(&out_path, &[]).expect("Failed to write placeholder file to OUT_DIR");
+        fs::write(&out_path, []).expect("Failed to write placeholder file to OUT_DIR");
         println!("cargo:warning=eBPF scheduler build failed or produced no output; placeholder created in OUT_DIR.");
     }
 }

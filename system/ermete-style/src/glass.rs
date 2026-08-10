@@ -58,8 +58,8 @@ fn setup_css_monitor(provider: gtk4::CssProvider, path: PathBuf, display: gdk::D
     if let Ok(monitor) = file.monitor_file(gio::FileMonitorFlags::NONE, gio::Cancellable::NONE) {
         let path_clone = path.clone();
         monitor.connect_changed(move |_, _, _, event_type| {
-            if event_type == gio::FileMonitorEvent::ChangesDoneHint || event_type == gio::FileMonitorEvent::Changed {
-                if path_clone.exists() {
+            if (event_type == gio::FileMonitorEvent::ChangesDoneHint || event_type == gio::FileMonitorEvent::Changed)
+                && path_clone.exists() {
                     provider.load_from_path(&path_clone);
                     gtk4::style_context_add_provider_for_display(
                         &display,
@@ -67,7 +67,6 @@ fn setup_css_monitor(provider: gtk4::CssProvider, path: PathBuf, display: gdk::D
                         gtk4::STYLE_PROVIDER_PRIORITY_USER + 100,
                     );
                 }
-            }
         });
         std::mem::forget(monitor);
     }

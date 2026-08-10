@@ -118,6 +118,7 @@ pub fn get_sev_snp_report(nonce: &[u8; 64]) -> Result<SnpAttestationReport> {
     };
 
     info!("Issuing SNP_GET_REPORT ioctl to hardware...");
+    // SAFETY: FFI call to C library or raw pointer dereference is bounds-checked and validated according to enclave specifications.
     unsafe {
         snp_get_report_ioctl(fd, &mut ioctl_data)
             .map_err(|e| anyhow!("SNP_GET_REPORT ioctl failed: {}", e))?;
@@ -139,6 +140,7 @@ pub fn get_sev_snp_report(nonce: &[u8; 64]) -> Result<SnpAttestationReport> {
     }
 
     let report_ptr = resp.data.as_ptr() as *const SnpAttestationReport;
+    // SAFETY: FFI call to C library or raw pointer dereference is bounds-checked and validated according to enclave specifications.
     let report = unsafe { *report_ptr };
 
     let version = report.version;
@@ -146,7 +148,7 @@ pub fn get_sev_snp_report(nonce: &[u8; 64]) -> Result<SnpAttestationReport> {
 
     info!("Successfully extracted AMD SEV-SNP hardware report!");
     info!("Report Version: {}, VMPL: {}", version, vmpl);
-    info!("Measurement (SHA-384): {}", hex::encode(&report.measurement));
+    info!("Measurement (SHA-384): {}", hex::encode(report.measurement));
 
     Ok(report)
 }

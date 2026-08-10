@@ -412,7 +412,7 @@ impl AccentEngineService {
         #[zbus(signal_emitter)] emitter: SignalEmitter<'_>,
         hex: String,
     ) -> zbus::fdo::Result<String> {
-        let css = apply_accent_color(&hex).map_err(|e| zbus::fdo::Error::Failed(e))?;
+        let css = apply_accent_color(&hex).map_err(zbus::fdo::Error::Failed)?;
         if let Ok(mut lock) = self.current_hex.lock() {
             *lock = hex.clone();
         }

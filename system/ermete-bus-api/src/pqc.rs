@@ -81,7 +81,7 @@ impl PqcKeys {
     pub fn new(node_id: Option<String>) -> Result<Self> {
         let mut rng = OsRng;
 
-        let secret = EphemeralSecret::random_from_rng(&mut rng);
+        let secret = EphemeralSecret::random_from_rng(rng);
         let x25519_public = X25519PublicKey::from(&secret);
 
         let kyber_keypair = pqc_kyber::keypair(&mut rng)
@@ -91,7 +91,7 @@ impl PqcKeys {
 
         let id = node_id.unwrap_or_else(|| {
             let mut hasher = Sha256::new();
-            hasher.update(&dilithium_keypair.public);
+            hasher.update(dilithium_keypair.public);
             format!("node-{}", hex::encode(&hasher.finalize()[..8]))
         });
 
@@ -131,11 +131,11 @@ impl PqcKeys {
     }
 
     pub fn kyber_pk_b64(&self) -> String {
-        BASE64.encode(&self.inner.kyber_keypair.public)
+        BASE64.encode(self.inner.kyber_keypair.public)
     }
 
     pub fn dilithium_pk_b64(&self) -> String {
-        BASE64.encode(&self.inner.dilithium_keypair.public)
+        BASE64.encode(self.inner.dilithium_keypair.public)
     }
 
     pub fn get_node_identity(&self) -> NodeIdentityPayload {
@@ -151,7 +151,7 @@ impl PqcKeys {
     pub fn rotate_keys(&mut self) -> Result<()> {
         let mut rng = OsRng;
 
-        let secret = EphemeralSecret::random_from_rng(&mut rng);
+        let secret = EphemeralSecret::random_from_rng(rng);
         let x25519_public = X25519PublicKey::from(&secret);
 
         let kyber_keypair = pqc_kyber::keypair(&mut rng)
@@ -242,7 +242,7 @@ impl PqcKeys {
     }
 
     pub fn build_handshake_init(&self, timestamp: u64) -> (HandshakeInitPayload, HandshakeSession) {
-        let eph_secret = EphemeralSecret::random_from_rng(&mut OsRng);
+        let eph_secret = EphemeralSecret::random_from_rng(OsRng);
         let eph_public = X25519PublicKey::from(&eph_secret);
         let eph_bytes = *eph_public.as_bytes();
 
@@ -291,7 +291,7 @@ impl PqcKeys {
 
         let (ct, kyber_ss) = Self::encapsulate_pqc_secret(&init.kyber_pk)?;
 
-        let eph_resp = EphemeralSecret::random_from_rng(&mut OsRng);
+        let eph_resp = EphemeralSecret::random_from_rng(OsRng);
         let eph_resp_pk = X25519PublicKey::from(&eph_resp);
         let peer_x25519_pk = X25519PublicKey::from(init.ephemeral_x25519_pk);
         let x25519_ss = eph_resp.diffie_hellman(&peer_x25519_pk).to_bytes();

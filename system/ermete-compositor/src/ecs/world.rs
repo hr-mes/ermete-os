@@ -214,7 +214,7 @@ impl World {
 
         let mut results = Vec::new();
         for id in 0..self.allocator.total_capacity() as u32 {
-            let entity = Entity::new(id, 0); // Generation check performed via allocator
+            let _entity = Entity::new(id, 0); // Generation check performed via allocator
             if let Some(c1) = s1.get(id) {
                 // Reconstruct exact entity key with valid generation
                 if self.is_alive(Entity::new(id, self.get_entity_generation(id))) {

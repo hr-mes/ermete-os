@@ -218,7 +218,7 @@ pub struct DesktopRenderLayout {
     pub pip_overlays: Vec<PipSurface>,
 }
 
-use crate::backend::shm::{CompositorShmState, ShmBufferLimits};
+use crate::backend::shm::CompositorShmState;
 use crate::ecs::SharedEcsWorld;
 use crate::input_routing::InputRouter;
 use crate::screencopy::ScreencopyManager;

@@ -345,7 +345,7 @@ impl TilingEngine {
         }
 
         // Binary partition according to window count
-        let left_count = (count + 1) / 2;
+        let left_count = count.div_ceil(2);
         let right_count = count - left_count;
 
         let left_w = (avail_w - inner) * left_count as i32 / count as i32;

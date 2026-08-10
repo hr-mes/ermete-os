@@ -114,21 +114,13 @@ impl Default for SubmissionQueueEntry {
 /// Completion Queue Entry (CQE) layout matching Linux kernel `struct io_uring_cqe` (16 bytes).
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
+#[derive(Default)]
 pub struct CompletionQueueEntry {
     pub user_data: u64,
     pub res: i32,
     pub flags: u32,
 }
 
-impl Default for CompletionQueueEntry {
-    fn default() -> Self {
-        Self {
-            user_data: 0,
-            res: 0,
-            flags: 0,
-        }
-    }
-}
 
 /// Shared Memory Submission Queue Ring Header
 #[repr(C)]
@@ -384,7 +376,7 @@ impl IoUringEngine {
     /// Verify Direct I/O memory buffer alignment requirement (NVMe 4KB sector requirement).
     pub fn validate_buffer_alignment(ptr: *const u8, align: usize) -> Result<(), IoUringEngineError> {
         let addr = ptr as usize;
-        if addr % align != 0 {
+        if !addr.is_multiple_of(align) {
             return Err(IoUringEngineError::BufferAlignmentError { required: align, addr });
         }
         Ok(())
@@ -475,8 +467,8 @@ impl IoUringEngine {
                 let index = (curr_sq & sq_hdr.ring_mask) as usize;
                 let sqe = std::ptr::read(self.ring.sqes_ptr.add(index));
 
-                let cq_head = cq_hdr.head.load(Ordering::Acquire);
-                let cq_tail = cq_hdr.tail.load(Ordering::Relaxed);
+                let _cq_head = cq_hdr.head.load(Ordering::Acquire);
+                let _cq_tail = cq_hdr.tail.load(Ordering::Relaxed);
 
                 // Real storage I/O execution on native kernel file descriptor
                 let res = match sqe.opcode {

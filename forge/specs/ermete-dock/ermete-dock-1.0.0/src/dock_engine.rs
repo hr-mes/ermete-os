@@ -5,16 +5,13 @@ use serde::{Deserialize, Serialize};
 /// - Efficient: Full-width taskbar spanning across the bottom of the screen
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
+#[derive(Default)]
 pub enum DockMode {
+    #[default]
     Fashion,
     Efficient,
 }
 
-impl Default for DockMode {
-    fn default() -> Self {
-        DockMode::Fashion
-    }
-}
 
 impl DockMode {
     pub fn toggle(&self) -> Self {

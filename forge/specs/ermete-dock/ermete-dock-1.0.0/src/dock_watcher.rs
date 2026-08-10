@@ -15,7 +15,7 @@ pub fn get_runtime() -> std::io::Result<&'static Runtime> {
             .map_err(|e| format!("Failed to initialize shared Tokio runtime for ermete-dock: {}", e))
     }) {
         Ok(rt) => Ok(rt),
-        Err(err_msg) => Err(std::io::Error::new(std::io::ErrorKind::Other, err_msg.clone())),
+        Err(err_msg) => Err(std::io::Error::other(err_msg.clone())),
     }
 }
 

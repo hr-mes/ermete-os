@@ -70,7 +70,7 @@ impl AttestationVerifier {
 
         // 2. Validate expected launch measurement if configured
         if let Some(ref expected_hex) = self.config.expected_measurement_hex {
-            let actual_hex = hex::encode(&report.measurement);
+            let actual_hex = hex::encode(report.measurement);
             if !actual_hex.eq_ignore_ascii_case(expected_hex) {
                 error!(
                     "Measurement mismatch! Hardware: {}, Expected: {}",
@@ -106,7 +106,7 @@ impl AttestationVerifier {
 
         // Validate expected launch measurement if configured
         if let Some(ref expected_hex) = self.config.expected_measurement_hex {
-            let actual_hex = hex::encode(&mrtd);
+            let actual_hex = hex::encode(mrtd);
             if !actual_hex.eq_ignore_ascii_case(expected_hex) {
                 error!(
                     "TDX MRTD mismatch! Hardware: {}, Expected: {}",
