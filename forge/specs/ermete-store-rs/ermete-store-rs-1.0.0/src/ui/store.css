@@ -1,0 +1,184 @@
+/* Ermete Store 2.0 - Apple App Store & Deepin Store Aesthetic CSS */
+
+/* Hero Banner Carousel Container (16:9 Aspect Ratio) */
+.hero-aspect-frame {
+    border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+}
+
+.hero-card-16-9 {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.92) 0%, rgba(15, 23, 42, 0.98) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 24px;
+    padding: 24px 32px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.hero-title {
+    font-size: 30px;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.5px;
+}
+
+.hero-developer {
+    font-size: 13px;
+    font-weight: 600;
+    color: #38bdf8;
+}
+
+.hero-subtitle {
+    font-size: 14px;
+    color: #cbd5e1;
+}
+
+.hero-rating {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.15);
+    padding: 4px 10px;
+    border-radius: 12px;
+}
+
+/* Visual Sandboxing Badges */
+.sandbox-badge {
+    padding: 6px 14px;
+    border-radius: 14px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.badge-microvm {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.35) 100%);
+    color: #6ee7b7;
+    border: 1px solid rgba(52, 211, 153, 0.5);
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+}
+
+.badge-flatpak {
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.25) 0%, rgba(2, 132, 199, 0.35) 100%);
+    color: #7dd3fc;
+    border: 1px solid rgba(56, 189, 248, 0.5);
+    box-shadow: 0 0 12px rgba(6, 182, 212, 0.25);
+}
+
+.badge-oci {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.25) 0%, rgba(124, 58, 237, 0.35) 100%);
+    color: #c4b5fd;
+    border: 1px solid rgba(167, 139, 250, 0.5);
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.25);
+}
+
+/* Pay-What-You-Can Model Buttons */
+.pay-container {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 8px 12px;
+}
+
+.pay-pill {
+    border-radius: 12px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #e2e8f0;
+}
+
+.pay-pill:hover {
+    background: rgba(236, 72, 153, 0.25);
+    border-color: rgba(236, 72, 153, 0.5);
+    color: #ffffff;
+}
+
+.pay-pill-active {
+    background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+    color: #ffffff;
+    font-weight: 700;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 10px rgba(236, 72, 153, 0.4);
+}
+
+.btn-donate {
+    background: linear-gradient(135deg, #ec4899 0%, #d946ef 100%);
+    color: #ffffff;
+    font-weight: 700;
+    border-radius: 14px;
+    padding: 6px 14px;
+    border: none;
+    box-shadow: 0 4px 14px rgba(236, 72, 153, 0.4);
+}
+
+.btn-donate:hover {
+    background: linear-gradient(135deg, #f43f5e 0%, #ec4899 100%);
+}
+
+/* Card Hover & Video Previews */
+.store-card {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 16px;
+    transition: all 0.25s ease-in-out;
+}
+
+.store-card.card-hover-active {
+    background: rgba(30, 41, 59, 0.95);
+    border-color: rgba(56, 189, 248, 0.5);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(56, 189, 248, 0.2);
+}
+
+.video-preview-badge {
+    background: rgba(0, 0, 0, 0.75);
+    color: #38bdf8;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(56, 189, 248, 0.4);
+}
+
+.video-preview-badge.playing {
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.6);
+    background: rgba(239, 68, 68, 0.15);
+}
+
+.carousel-nav-btn {
+    border-radius: 50%;
+    min-width: 38px;
+    min-height: 38px;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.carousel-nav-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.carousel-dot {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.3);
+    padding: 0 4px;
+}
+
+.carousel-dot.active {
+    color: #38bdf8;
+    font-weight: bold;
+}
+
+.notification-toast {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #ffffff;
+    font-weight: 700;
+    padding: 10px 18px;
+    border-radius: 14px;
+    box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+}

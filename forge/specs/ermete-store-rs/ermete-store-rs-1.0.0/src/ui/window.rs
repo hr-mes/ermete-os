@@ -144,8 +144,9 @@ impl SimpleComponent for AppModel {
         root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        // Applica le regole CSS Glassmorphism
+        // Applica le regole CSS Glassmorphism & Custom Store CSS
         ermete_style::load_glass_theme();
+        load_store_css();
 
         // Inizializza il sub-componente Showcase (Homepage)
         let showcase_controller = ShowcaseModel::builder().launch(()).detach();
@@ -211,6 +212,21 @@ fn build_placeholder_page(title: &str, subtitle: &str) -> gtk4::Box {
     container.append(&sub_label);
 
     container
+}
+
+/// Carica le regole CSS personalizzate per l'estetica Apple App Store / Deepin Store
+fn load_store_css() {
+    let css_provider = gtk4::CssProvider::new();
+    let css = include_str!("store.css");
+    css_provider.load_from_data(css);
+
+    if let Some(display) = gtk4::gdk::Display::default() {
+        gtk4::style_context_add_provider_for_display(
+            &display,
+            &css_provider,
+            gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION + 20,
+        );
+    }
 }
 
 /// Entry point helper per avviare l'applicazione `ermete-store-rs` UI
