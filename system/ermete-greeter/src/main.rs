@@ -1,4 +1,5 @@
 mod attestation;
+mod auth;
 mod tpm;
 
 use anyhow::{anyhow, Result};
@@ -69,6 +70,9 @@ impl ErmeteGreeter {
         password: &str,
     ) -> Result<(UserSessionContext, SessionKeyMaterial)> {
         info!("Initiating Zero-Trust login sequence for user '{}'...", username);
+
+        // Perform real PAM / UNIX authentication
+        auth::authenticate_user(username, password)?;
 
         let (tpm_report, att_report) = self.perform_preflight_checks().await?;
 

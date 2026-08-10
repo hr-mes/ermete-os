@@ -91,9 +91,8 @@ impl TpmManager {
 
     /// Zero-Trust TPM-backed key unsealing for user session key release
     pub fn unseal_login_key_share(&self, username: &str, secret: &str) -> Result<Vec<u8>> {
-        if secret.is_empty() {
-            return Err(anyhow!("Empty password provided for key unsealing"));
-        }
+        // Authenticate credentials via PAM / shadow before unsealing key share
+        crate::auth::authenticate_user(username, secret)?;
 
         info!("TPM 2.0: Unsealing Zero-Trust session key share for user '{}'...", username);
 

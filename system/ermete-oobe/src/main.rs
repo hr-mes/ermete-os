@@ -33,6 +33,80 @@ impl OobeModel {
             _ => "step_completion",
         }
     }
+
+    fn save_preferences(&self) {
+        println!("[ERMETE-OOBE] Persisting user preferences to system disk...");
+
+        let lang_code = if self.selected_language.contains("Italiano") {
+            "it_IT.UTF-8"
+        } else if self.selected_language.contains("Español") {
+            "es_ES.UTF-8"
+        } else if self.selected_language.contains("Deutsch") {
+            "de_DE.UTF-8"
+        } else if self.selected_language.contains("Français") {
+            "fr_FR.UTF-8"
+        } else {
+            "en_US.UTF-8"
+        };
+
+        let kb_layout = self
+            .selected_keyboard
+            .split(' ')
+            .next()
+            .unwrap_or("us");
+
+        // Try localectl via systemd-localed DBus/CLI wrapper
+        let locale_res = std::process::Command::new("localectl")
+            .args(["set-locale", &format!("LANG={}", lang_code)])
+            .status();
+
+        let kb_res = std::process::Command::new("localectl")
+            .args(["set-keymap", kb_layout])
+            .status();
+
+        if locale_res.is_err() || !locale_res.as_ref().map(|s| s.success()).unwrap_or(false) {
+            println!("[ERMETE-OOBE] localectl set-locale failed or unavailable, writing directly to /etc/locale.conf");
+            if let Err(e) = std::fs::write("/etc/locale.conf", format!("LANG={}\n", lang_code)) {
+                eprintln!("[ERMETE-OOBE] Failed to write /etc/locale.conf: {}, attempting /tmp fallback", e);
+                let _ = std::fs::create_dir_all("/tmp/ermete");
+                let _ = std::fs::write("/tmp/ermete/locale.conf", format!("LANG={}\n", lang_code));
+            }
+        }
+
+        if kb_res.is_err() || !kb_res.as_ref().map(|s| s.success()).unwrap_or(false) {
+            println!("[ERMETE-OOBE] localectl set-keymap failed or unavailable, writing directly to /etc/vconsole.conf");
+            if let Err(e) = std::fs::write("/etc/vconsole.conf", format!("KEYMAP={}\n", kb_layout)) {
+                eprintln!("[ERMETE-OOBE] Failed to write /etc/vconsole.conf: {}, attempting /tmp fallback", e);
+                let _ = std::fs::create_dir_all("/tmp/ermete");
+                let _ = std::fs::write("/tmp/ermete/vconsole.conf", format!("KEYMAP={}\n", kb_layout));
+            }
+        }
+
+        // Persist Ermete telemetry & system configuration to /etc/ermete/oobe.json
+        let target_dir = std::path::Path::new("/etc/ermete");
+        let target_file = if std::fs::create_dir_all(target_dir).is_ok() {
+            target_dir.join("oobe.json")
+        } else {
+            let user_dir = std::path::PathBuf::from("/tmp/ermete");
+            let _ = std::fs::create_dir_all(&user_dir);
+            user_dir.join("oobe.json")
+        };
+
+        let config_json = format!(
+            "{{\n  \"language\": \"{}\",\n  \"keyboard\": \"{}\",\n  \"telemetry_opt_in\": {},\n  \"crash_reports_opt_in\": {},\n  \"ebpf_ai_opt_in\": {}\n}}\n",
+            lang_code,
+            kb_layout,
+            self.telemetry_opt_in,
+            self.crash_reports_opt_in,
+            self.ebpf_ai_opt_in
+        );
+
+        if let Err(e) = std::fs::write(&target_file, config_json) {
+            eprintln!("[ERMETE-OOBE] Failed to save OOBE configuration to {}: {}", target_file.display(), e);
+        } else {
+            println!("[ERMETE-OOBE] Successfully saved configuration to {}", target_file.display());
+        }
+    }
 }
 
 fn load_custom_oobe_css() {
@@ -568,6 +642,7 @@ impl SimpleComponent for OobeModel {
                 self.ebpf_ai_opt_in = val;
             }
             OobeMsg::Finish => {
+                self.save_preferences();
                 println!("[ERMETE-OOBE] Configuration finished! Quitting wizard...");
                 relm4::main_application().quit();
             }

@@ -24,7 +24,6 @@ mkdir -p /run/dbus
 dbus-daemon --system --fork --nopidfile
 /usr/lib/systemd/systemd-homed &
 HOMED_PID=$!
-sleep 2
 
 # TPM2 Monotonic Counter Initialization (NV Index 0x01800001)
 if tpm2_getcap properties-fixed | grep -q "TPM2_PT_TOTAL_COMMANDS"; then
@@ -48,7 +47,7 @@ homectl create hermes \
 if command -v systemd-cryptenroll &>/dev/null; then
     echo "Esecuzione systemd-cryptenroll per sigillare la partizione LUKS /var/home a PCRs 0,2,7,11..."
     TARGET_LUKS=$(blkid -t TYPE=crypto_LUKS -o device 2>/dev/null | grep -E '/dev/vda|/dev/nvme|/dev/sda' | head -n 1 || echo "/dev/vda3")
-    systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=0,2,7,11 "$TARGET_LUKS" || true
+    systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=0,2,7,11 "$TARGET_LUKS"
 fi
 
 kill $HOMED_PID || true
