@@ -5,6 +5,7 @@ After=local-fs.target tpm2-abrmd.service systemd-tpm2-setup.service
 ConditionPathExists=!/etc/ermete/tpm2-luks-sealed.stamp
 
 [Service]
+MemoryDenyWriteExecute=true
 Type=oneshot
 RemainAfterExit=yes
 ExecStart=/usr/libexec/ermete-tpm-luks-seal.sh

@@ -5,6 +5,7 @@ After=systemd-hibernate.service
 After=systemd-suspend-then-hibernate.service
 
 [Service]
+MemoryDenyWriteExecute=true
 CPUWeight=50
 MemoryHigh=96M
 MemoryMax=128M

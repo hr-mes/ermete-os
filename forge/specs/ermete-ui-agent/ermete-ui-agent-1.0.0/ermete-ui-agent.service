@@ -3,6 +3,7 @@ Description=Ermete Generative UI Agent
 PartOf=graphical-session.target
 
 [Service]
+MemoryDenyWriteExecute=true
 CPUWeight=60
 MemoryHigh=768M
 MemoryMax=1024M

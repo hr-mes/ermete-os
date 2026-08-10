@@ -5,6 +5,7 @@ After=network-online.target dbus.service
 Requires=dbus.service
 
 [Service]
+MemoryDenyWriteExecute=true
 CPUWeight=100
 MemoryHigh=2048M
 MemoryMax=4096M

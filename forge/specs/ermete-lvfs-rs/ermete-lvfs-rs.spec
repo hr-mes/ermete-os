@@ -40,6 +40,7 @@ After=network-online.target dbus.service fwupd.service
 Requires=dbus.service fwupd.service
 
 [Service]
+MemoryDenyWriteExecute=true
 CPUWeight=30
 MemoryHigh=192M
 MemoryMax=256M

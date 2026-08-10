@@ -38,6 +38,14 @@ Description=Ermete OS Isolated Rust Userspace TCP/IP Network Unikernel Daemon
 After=network.target dbus.service
 
 [Service]
+LockPersonality=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+MemoryDenyWriteExecute=true
+ProtectControlGroups=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
 CPUWeight=200
 MemoryHigh=256M
 MemoryMax=512M

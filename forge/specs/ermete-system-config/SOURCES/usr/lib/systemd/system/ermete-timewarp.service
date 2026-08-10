@@ -4,6 +4,7 @@ Documentation=man:bcachefs(8)
 ConditionPathExists=/usr/libexec/ermete-snapshot-trigger.sh
 
 [Service]
+MemoryDenyWriteExecute=true
 CPUWeight=50
 MemoryHigh=96M
 MemoryMax=128M

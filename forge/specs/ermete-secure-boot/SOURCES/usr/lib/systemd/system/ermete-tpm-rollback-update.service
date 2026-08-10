@@ -3,6 +3,7 @@ Description=Ermete OS TPM2 Monotonic Counter Update on Successful Boot
 After=boot-complete.target
 
 [Service]
+MemoryDenyWriteExecute=true
 CPUWeight=50
 MemoryHigh=64M
 MemoryMax=128M

@@ -5,6 +5,14 @@ After=systemd-user-sessions.service plymouth-quit-wait.service
 Conflicts=getty@tty9.service
 
 [Service]
+LockPersonality=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+MemoryDenyWriteExecute=true
+ProtectControlGroups=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
 CPUWeight=100
 MemoryHigh=768M
 MemoryMax=1024M

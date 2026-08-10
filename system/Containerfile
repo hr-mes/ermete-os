@@ -83,6 +83,14 @@ After=network-online.target flatpak-system-helper.service
 Wants=network-online.target
 
 [Service]
+LockPersonality=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+MemoryDenyWriteExecute=true
+ProtectControlGroups=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
 Type=oneshot
 RemainAfterExit=yes
 ExecStart=/usr/libexec/ermete-flatpak-provisioner

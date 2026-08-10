@@ -5,6 +5,7 @@ Before=ermete-shell.service ermete-wallpaper.service niri-session.target
 DefaultDependencies=no
 
 [Service]
+MemoryDenyWriteExecute=true
 CPUWeight=50
 MemoryHigh=96M
 MemoryMax=128M

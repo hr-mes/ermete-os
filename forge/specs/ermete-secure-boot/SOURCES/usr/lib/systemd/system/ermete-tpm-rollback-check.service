@@ -6,6 +6,7 @@ After=tpm2-abrmd.service local-fs.target
 Wants=tpm2-abrmd.service
 
 [Service]
+MemoryDenyWriteExecute=true
 CPUWeight=50
 MemoryHigh=64M
 MemoryMax=128M

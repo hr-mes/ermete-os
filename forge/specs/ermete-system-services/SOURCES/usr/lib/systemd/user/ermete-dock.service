@@ -6,6 +6,7 @@ After=graphical-session.target ermete-shell.service
 PartOf=graphical-session.target
 
 [Service]
+MemoryDenyWriteExecute=true
 CPUWeight=150
 MemoryHigh=384M
 MemoryMax=512M

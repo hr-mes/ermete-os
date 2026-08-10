@@ -34,12 +34,28 @@ EOF
 # Greetd override
 cat <<EOF > %{buildroot}%{_unitdir}/greetd.service.d/override.conf
 [Service]
+LockPersonality=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+MemoryDenyWriteExecute=true
+ProtectControlGroups=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
 Environment="LD_PRELOAD="
 EOF
 
 # Ermete LLM override
 cat <<EOF > %{buildroot}%{_unitdir}/ermete-llm.service.d/override.conf
 [Service]
+LockPersonality=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+MemoryDenyWriteExecute=true
+ProtectControlGroups=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
 Environment="LD_PRELOAD="
 EOF
 

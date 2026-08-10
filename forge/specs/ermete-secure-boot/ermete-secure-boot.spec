@@ -42,6 +42,7 @@ Description=Ermete OS Measured Boot & UKI Signer
 ConditionPathExists=/etc/keys/ermete-secure-boot.key
 
 [Service]
+MemoryDenyWriteExecute=true
 CPUWeight=50
 MemoryHigh=384M
 MemoryMax=512M

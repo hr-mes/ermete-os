@@ -3,6 +3,7 @@ Description=Ermete OS Hourly Bcachefs Home Snapshot Trigger
 Documentation=https://github.com/hr-mes/ermete-forge
 
 [Service]
+MemoryDenyWriteExecute=true
 CPUWeight=50
 MemoryHigh=48M
 MemoryMax=64M

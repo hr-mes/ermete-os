@@ -40,6 +40,7 @@ After=network-online.target dbus.service graphical.target
 Requires=dbus.service
 
 [Service]
+MemoryDenyWriteExecute=true
 CPUWeight=50
 MemoryHigh=384M
 MemoryMax=512M

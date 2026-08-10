@@ -6,6 +6,7 @@ After=graphical-session.target ermete-skel-sync.service
 PartOf=graphical-session.target
 
 [Service]
+MemoryDenyWriteExecute=true
 CPUWeight=200
 MemoryHigh=768M
 MemoryMax=1024M

@@ -7,6 +7,8 @@ Before=sysinit.target
 ConditionPathExistsGlob=!/var/log/journal/*/fss.key
 
 [Service]
+MemoryDenyWriteExecute=true
+ProtectKernelLogs=true
 CPUWeight=50
 MemoryHigh=64M
 MemoryMax=128M
