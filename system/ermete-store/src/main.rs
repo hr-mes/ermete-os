@@ -107,19 +107,10 @@ async fn verify_pqc_package_signature(
     );
 
     if !Path::new(PQC_PUBLIC_KEY_PATH).exists() {
-        println!(
-            "Note: PQC key missing at {}. Simulating Dilithium5 verification check...",
+        anyhow::bail!(
+            "CRITICAL ZERO-TRUST ERROR: Post-Quantum Dilithium5 public key missing at {}. Verification blocked.",
             PQC_PUBLIC_KEY_PATH
         );
-        // Verify self-generated Dilithium5 signature test to ensure engine integrity
-        let keypair = pqc_dilithium::Keypair::generate();
-        let payload = format!("ERMETE_STORE_PACKAGE:{}:{}", app_id, oci_image);
-        let sig = keypair.sign(payload.as_bytes());
-        if pqc_dilithium::verify(&sig, payload.as_bytes(), &keypair.public).is_err() {
-            anyhow::bail!("Dilithium5 signature verification self-check failed!");
-        }
-        println!("Dilithium5 ML-DSA signature check passed!");
-        return Ok(());
     }
 
     // Read public key using Linux io_uring interface
@@ -129,21 +120,24 @@ async fn verify_pqc_package_signature(
         .context("Failed to read Dilithium5 public key via io_uring")?;
 
     let sig_path = PathBuf::from(format!("/etc/ermete/keys/signatures/{}.sig", app_id));
-    if sig_path.exists() {
-        // Read signature file using Linux io_uring interface
-        let sig_bytes = db_engine
-            .read_file_io_uring(&sig_path)
-            .await
-            .context("Failed to read signature file via io_uring")?;
-
-        let payload = format!("ERMETE_STORE_PACKAGE:{}:{}", app_id, oci_image);
-        pqc_dilithium::verify(&sig_bytes, payload.as_bytes(), &pubkey_bytes)
-            .map_err(|_| anyhow::anyhow!("Dilithium5 package signature verification failed"))?;
-
-        println!("Dilithium5 ML-DSA signature verified successfully!");
-    } else {
-        println!("Dilithium5 signature validated for package metadata.");
+    if !sig_path.exists() {
+        anyhow::bail!(
+            "CRITICAL ZERO-TRUST ERROR: Package signature file missing at {}. Cannot verify Dilithium5 signature.",
+            sig_path.display()
+        );
     }
+
+    // Read signature file using Linux io_uring interface
+    let sig_bytes = db_engine
+        .read_file_io_uring(&sig_path)
+        .await
+        .context("Failed to read signature file via io_uring")?;
+
+    let payload = format!("ERMETE_STORE_PACKAGE:{}:{}", app_id, oci_image);
+    pqc_dilithium::verify(&sig_bytes, payload.as_bytes(), &pubkey_bytes)
+        .map_err(|_| anyhow::anyhow!("Dilithium5 package signature verification failed"))?;
+
+    println!("Dilithium5 ML-DSA signature verified successfully!");
 
     Ok(())
 }
@@ -161,11 +155,11 @@ async fn install_app(app_id: &str, db_engine: &DatabaseEngine) -> Result<()> {
     verify_pqc_package_signature(app_id, &oci_image, db_engine).await?;
 
     // 2. Verify classical signature with cosign
-    println!("Verifying cryptographic signature (SLSA 4) for {}...", oci_image);
+    println!("Verifying cryptographic signature for {}...", oci_image);
 
     if !Path::new(PUBLIC_KEY_PATH).exists() {
-        eprintln!(
-            "Warning: Public key not found at {}. Make sure to provision the Ermete OS keys.",
+        anyhow::bail!(
+            "CRITICAL ZERO-TRUST ERROR: Cosign public key missing at {}. Installation blocked.",
             PUBLIC_KEY_PATH
         );
     }

@@ -87,7 +87,7 @@ impl SimpleComponent for ShowcaseModel {
                         gtk4::Box { set_hexpand: true },
 
                         gtk4::Label {
-                            set_label: "Card 16:9 • MicroVM Sandboxed • Anteprime Video",
+                            set_label: "Card 16:9 • Applicazioni Flatpak & Native",
                             add_css_class: "hero-developer",
                         }
                     },
@@ -224,7 +224,7 @@ impl SimpleComponent for ShowcaseModel {
 
                 // Intestazione sezione
                 gtk4::Label {
-                    set_label: "Tutte le Applicazioni (MicroVM & Flatpak)",
+                    set_label: "Tutte le Applicazioni (Flatpak & Native)",
                     set_halign: gtk4::Align::Start,
                     add_css_class: "section-heading",
                 },
@@ -330,8 +330,8 @@ impl SimpleComponent for ShowcaseModel {
                 self.notification_toast = Some(format!("❤️ Donazione di ${} inviata a {} per '{}'!", amount, dev, app_name));
             }
             ShowcaseMsg::Install(app_id) => {
-                tracing::info!("[OverlayFS/Nix] 🚀 Lancio immediato overlay fittizio per '{}'...", app_id);
-                tracing::info!("[Demone] ⬇️ Avvio download in background per '{}' (Lazy Loading)...", app_id);
+                tracing::info!("[Flatpak] 🚀 Avvio installazione per '{}'...", app_id);
+                tracing::info!("[Demone] ⬇️ Avvio download in background per '{}'...", app_id);
                 
                 if let Some(app) = self.apps.iter_mut().find(|a| a.id == app_id) {
                     app.installed = true;
