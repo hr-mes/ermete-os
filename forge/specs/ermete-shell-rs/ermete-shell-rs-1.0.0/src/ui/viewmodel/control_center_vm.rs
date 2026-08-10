@@ -13,6 +13,7 @@ pub struct ControlCenterState {
     pub volume: f64,
     pub true_tone: bool,
     pub focus_time: bool,
+    pub focus_mode: crate::ipc::notifications::FocusMode,
     pub mpris_title: String,
     pub mpris_artist: String,
     pub is_playing: bool,
@@ -31,6 +32,7 @@ impl Default for ControlCenterState {
             volume: 80.0,
             true_tone: false,
             focus_time: false,
+            focus_mode: crate::ipc::notifications::FocusMode::Off,
             mpris_title: "Nessun media in riproduzione".to_string(),
             mpris_artist: "-".to_string(),
             is_playing: false,
@@ -45,6 +47,7 @@ pub enum ControlCenterIntent {
     SetVolume(f64),
     ToggleTrueTone(bool),
     ToggleFocusTime(bool),
+    SetFocusMode(crate::ipc::notifications::FocusMode),
     MediaPrevious,
     MediaPlayPause,
     MediaNext,
@@ -70,7 +73,8 @@ impl ControlCenterViewModel {
         let init_volume = crate::core::get_audio_controller().get_cached_volume() * 100.0;
         let volume = if init_volume > 0.0 { init_volume } else { 80.0 };
 
-        let focus_time = crate::ipc::notifications::DND_ACTIVE.load(std::sync::atomic::Ordering::SeqCst);
+        let focus_mode = crate::ipc::notifications::get_focus_mode();
+        let focus_time = focus_mode.is_active();
         
         let initial_mpris = crate::core::get_mpris_controller().get_cached_mpris_state();
         let (mpris_title, mpris_artist, is_playing) = match initial_mpris {
@@ -89,6 +93,7 @@ impl ControlCenterViewModel {
             volume,
             true_tone: false,
             focus_time,
+            focus_mode,
             mpris_title,
             mpris_artist,
             is_playing,
@@ -191,7 +196,15 @@ impl ControlCenterViewModel {
                 });
             }
             ControlCenterIntent::ToggleFocusTime(enabled) => {
-                crate::ipc::notifications::DND_ACTIVE.store(enabled, std::sync::atomic::Ordering::SeqCst);
+                let mode = if enabled {
+                    crate::ipc::notifications::FocusMode::Personal
+                } else {
+                    crate::ipc::notifications::FocusMode::Off
+                };
+                crate::ipc::notifications::set_focus_mode(mode);
+            }
+            ControlCenterIntent::SetFocusMode(mode) => {
+                crate::ipc::notifications::set_focus_mode(mode);
             }
             ControlCenterIntent::MediaPrevious => {
                 gtk4::glib::MainContext::default().spawn_local(async move {

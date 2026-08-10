@@ -51,6 +51,99 @@ pub fn load_notification_history() {
 }
 
 pub static DND_ACTIVE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+pub static CURRENT_FOCUS_MODE: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub enum FocusMode {
+    Off,
+    Personal,
+    Work,
+    Sleep,
+}
+
+impl FocusMode {
+    pub fn name(&self) -> &'static str {
+        match self {
+            FocusMode::Off => "Disattivato",
+            FocusMode::Personal => "Personale",
+            FocusMode::Work => "Lavoro",
+            FocusMode::Sleep => "Sonno",
+        }
+    }
+
+    pub fn icon(&self) -> &'static str {
+        match self {
+            FocusMode::Off => "🔔",
+            FocusMode::Personal => "👤",
+            FocusMode::Work => "💼",
+            FocusMode::Sleep => "🌙",
+        }
+    }
+
+    pub fn description(&self) -> &'static str {
+        match self {
+            FocusMode::Off => "Notifiche popup attive",
+            FocusMode::Personal => "Filtro Personale attivo (Silenzia lavoro)",
+            FocusMode::Work => "Filtro Lavoro attivo (Silenzia social e messaggi)",
+            FocusMode::Sleep => "Filtro Sonno attivo (Tutte le notifiche silenziate)",
+        }
+    }
+
+    pub fn is_active(&self) -> bool {
+        !matches!(self, FocusMode::Off)
+    }
+
+    pub fn from_u8(val: u8) -> Self {
+        match val {
+            1 => FocusMode::Personal,
+            2 => FocusMode::Work,
+            3 => FocusMode::Sleep,
+            _ => FocusMode::Off,
+        }
+    }
+
+    pub fn to_u8(self) -> u8 {
+        match self {
+            FocusMode::Off => 0,
+            FocusMode::Personal => 1,
+            FocusMode::Work => 2,
+            FocusMode::Sleep => 3,
+        }
+    }
+
+    pub fn should_allow_notification(&self, app_name: &str) -> bool {
+        let app_lower = app_name.to_lowercase();
+        match self {
+            FocusMode::Off => true,
+            FocusMode::Sleep => false,
+            FocusMode::Work => {
+                !(app_lower.contains("telegram")
+                    || app_lower.contains("whatsapp")
+                    || app_lower.contains("discord")
+                    || app_lower.contains("game")
+                    || app_lower.contains("steam")
+                    || app_lower.contains("instagram"))
+            }
+            FocusMode::Personal => {
+                !(app_lower.contains("slack")
+                    || app_lower.contains("teams")
+                    || app_lower.contains("jira")
+                    || app_lower.contains("mail")
+                    || app_lower.contains("outlook")
+                    || app_lower.contains("zoom"))
+            }
+        }
+    }
+}
+
+pub fn get_focus_mode() -> FocusMode {
+    FocusMode::from_u8(CURRENT_FOCUS_MODE.load(std::sync::atomic::Ordering::SeqCst))
+}
+
+pub fn set_focus_mode(mode: FocusMode) {
+    CURRENT_FOCUS_MODE.store(mode.to_u8(), std::sync::atomic::Ordering::SeqCst);
+    DND_ACTIVE.store(mode.is_active(), std::sync::atomic::Ordering::SeqCst);
+}
 
 thread_local! {
     pub static NOTIFICATIONS: std::cell::RefCell<Vec<NotificationData>> = const { std::cell::RefCell::new(Vec::new()) };
@@ -218,4 +311,51 @@ impl NotificationServer {
     }
 
     async fn close_notification(&self, _id: u32) {}
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_focus_mode_conversions_and_state() {
+        assert_eq!(FocusMode::from_u8(0), FocusMode::Off);
+        assert_eq!(FocusMode::from_u8(1), FocusMode::Personal);
+        assert_eq!(FocusMode::from_u8(2), FocusMode::Work);
+        assert_eq!(FocusMode::from_u8(3), FocusMode::Sleep);
+
+        assert_eq!(FocusMode::Off.to_u8(), 0);
+        assert_eq!(FocusMode::Personal.to_u8(), 1);
+        assert_eq!(FocusMode::Work.to_u8(), 2);
+        assert_eq!(FocusMode::Sleep.to_u8(), 3);
+
+        set_focus_mode(FocusMode::Work);
+        assert_eq!(get_focus_mode(), FocusMode::Work);
+        assert!(DND_ACTIVE.load(std::sync::atomic::Ordering::SeqCst));
+
+        set_focus_mode(FocusMode::Off);
+        assert_eq!(get_focus_mode(), FocusMode::Off);
+        assert!(!DND_ACTIVE.load(std::sync::atomic::Ordering::SeqCst));
+    }
+
+    #[test]
+    fn test_focus_mode_notification_filtering() {
+        // Off allows everything
+        assert!(FocusMode::Off.should_allow_notification("Telegram"));
+        assert!(FocusMode::Off.should_allow_notification("Slack"));
+
+        // Sleep blocks everything
+        assert!(!FocusMode::Sleep.should_allow_notification("Telegram"));
+        assert!(!FocusMode::Sleep.should_allow_notification("Slack"));
+
+        // Work blocks social / personal (Telegram, Discord, Whatsapp, Steam) but allows Slack
+        assert!(!FocusMode::Work.should_allow_notification("Telegram"));
+        assert!(!FocusMode::Work.should_allow_notification("Discord"));
+        assert!(FocusMode::Work.should_allow_notification("Slack"));
+
+        // Personal blocks work (Slack, Teams, Jira, Mail) but allows Telegram
+        assert!(!FocusMode::Personal.should_allow_notification("Slack"));
+        assert!(!FocusMode::Personal.should_allow_notification("Teams"));
+        assert!(FocusMode::Personal.should_allow_notification("Telegram"));
+    }
 }

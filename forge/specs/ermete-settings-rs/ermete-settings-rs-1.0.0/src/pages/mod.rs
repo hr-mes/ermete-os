@@ -16,5 +16,7 @@ pub mod bluetooth;
 pub mod wired;
 pub mod focus;
 pub mod ecosystem;
+pub mod continuity;
+pub mod a11y;
 
 pub mod updates;

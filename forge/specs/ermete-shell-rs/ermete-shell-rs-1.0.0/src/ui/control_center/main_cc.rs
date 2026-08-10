@@ -174,34 +174,49 @@ pub fn show_control_center_popover(app: &Application) {
     });
     crate::core::attach_voiceover_hover(&tt_toggle_btn, "Attiva o disattiva il filtro True Tone per affaticamento visivo");
 
-    // Focus Time (Do Not Disturb) Quick Toggle
-    let ft_sub_str = if initial.focus_time { "Non Disturbare" } else { "Disattivato" };
-    let (ft_toggle_btn, _ft_badge, _ft_title_lbl, ft_sub_lbl) =
-        build_quick_toggle_pill("cc-circle-indigo", "🎯", "Focus Time", ft_sub_str);
-    if initial.focus_time {
+    // Focus Mode (macOS/iOS Style) Quick Toggle
+    let ft_sub_str = initial.focus_mode.name();
+    let ft_icon = initial.focus_mode.icon();
+    let (ft_toggle_btn, ft_badge, _ft_title_lbl, ft_sub_lbl) =
+        build_quick_toggle_pill("cc-circle-indigo", ft_icon, "Focus Mode", ft_sub_str);
+    if initial.focus_mode.is_active() {
         ft_toggle_btn.add_css_class("cc-focus-active");
     }
     let ft_btn_click = ft_toggle_btn.clone();
     let ft_sub_lbl_clone = ft_sub_lbl.clone();
+    let ft_badge_clone = ft_badge.clone();
     ft_toggle_btn.connect_clicked(move |_| {
-        let is_active = ft_btn_click.has_css_class("cc-focus-active");
-        let new_state = !is_active;
-        if new_state {
+        let current = crate::ipc::notifications::get_focus_mode();
+        let next = match current {
+            crate::ipc::notifications::FocusMode::Off => crate::ipc::notifications::FocusMode::Personal,
+            crate::ipc::notifications::FocusMode::Personal => crate::ipc::notifications::FocusMode::Work,
+            crate::ipc::notifications::FocusMode::Work => crate::ipc::notifications::FocusMode::Sleep,
+            crate::ipc::notifications::FocusMode::Sleep => crate::ipc::notifications::FocusMode::Off,
+        };
+        if next.is_active() {
             ft_btn_click.add_css_class("cc-focus-active");
-            ft_sub_lbl_clone.set_label("Non Disturbare");
         } else {
             ft_btn_click.remove_css_class("cc-focus-active");
-            ft_sub_lbl_clone.set_label("Disattivato");
         }
-        ControlCenterViewModel::execute_intent(ControlCenterIntent::ToggleFocusTime(new_state));
+        ft_badge_clone.set_label(next.icon());
+        ft_sub_lbl_clone.set_label(next.name());
+        ControlCenterViewModel::execute_intent(ControlCenterIntent::SetFocusMode(next));
     });
-    crate::core::attach_voiceover_hover(&ft_toggle_btn, "Attiva la modalità Focus Time e Non Disturbare");
+    crate::core::attach_voiceover_hover(&ft_toggle_btn, "Cambia modalità Focus (Personale, Lavoro, Sonno, Disattivato)");
 
     row2.append(&tt_toggle_btn);
     row2.append(&ft_toggle_btn);
 
     quick_toggles_grid.append(&row1);
     quick_toggles_grid.append(&row2);
+
+    // 1.5. FOCUS MODE INTERACTIVE PILL WIDGET (macOS / iOS Style Focus Filters)
+    let focus_card = build_focus_mode_widget(
+        initial.focus_mode,
+        Some(ft_badge.clone()),
+        Some(ft_sub_lbl.clone()),
+        Some(ft_toggle_btn.clone()),
+    );
 
     // 2. SLIDERS SECTION (Luminosità & Master Volume)
     // Slider Luminosità
@@ -416,6 +431,7 @@ pub fn show_control_center_popover(app: &Application) {
     // ASSEMBLY INTO CARD CONTAINER
     card.append(&header_box);
     card.append(&quick_toggles_grid);
+    card.append(&focus_card);
     card.append(&bright_card);
     card.append(&audio_card);
     card.append(&mpris_card);
@@ -486,5 +502,132 @@ pub fn show_control_center_popover(app: &Application) {
 
     pop.set_child(Some(&card));
     pop.present();
+}
+
+fn build_focus_mode_widget(
+    initial_mode: crate::ipc::notifications::FocusMode,
+    quick_badge: Option<Label>,
+    quick_sub: Option<Label>,
+    quick_btn: Option<Button>,
+) -> GtkBox {
+    use crate::ipc::notifications::FocusMode;
+
+    let card = GtkBox::builder()
+        .orientation(Orientation::Vertical)
+        .spacing(10)
+        .css_classes(["cc-card"])
+        .build();
+
+    let header_box = GtkBox::builder()
+        .orientation(Orientation::Horizontal)
+        .spacing(8)
+        .valign(Align::Center)
+        .build();
+
+    let icon_lbl = Label::builder()
+        .label(initial_mode.icon())
+        .css_classes(["cc-circle-indigo"])
+        .valign(Align::Center)
+        .halign(Align::Center)
+        .build();
+
+    let text_box = GtkBox::builder()
+        .orientation(Orientation::Vertical)
+        .spacing(1)
+        .hexpand(true)
+        .build();
+
+    let title_lbl = Label::builder()
+        .label("Filtri Focus")
+        .css_classes(["cc-label-main"])
+        .halign(Align::Start)
+        .build();
+
+    let sub_lbl = Label::builder()
+        .label(initial_mode.description())
+        .css_classes(["cc-label-sub"])
+        .halign(Align::Start)
+        .build();
+
+    text_box.append(&title_lbl);
+    text_box.append(&sub_lbl);
+    header_box.append(&icon_lbl);
+    header_box.append(&text_box);
+
+    card.append(&header_box);
+
+    // Interactive Pill Buttons (macOS / iOS style segmented pill bar)
+    let pills_box = GtkBox::builder()
+        .orientation(Orientation::Horizontal)
+        .spacing(6)
+        .homogeneous(true)
+        .build();
+
+    let modes = [
+        FocusMode::Off,
+        FocusMode::Personal,
+        FocusMode::Work,
+        FocusMode::Sleep,
+    ];
+
+    let mut pill_btns: Vec<(FocusMode, Button)> = Vec::new();
+
+    for mode in modes {
+        let label_text = format!("{} {}", mode.icon(), mode.name());
+        let btn = Button::builder()
+            .label(&label_text)
+            .css_classes(["cc-btn", "cc-quick-btn"])
+            .build();
+
+        if mode == initial_mode {
+            btn.add_css_class("cc-btn-active");
+        }
+
+        pill_btns.push((mode, btn.clone()));
+        pills_box.append(&btn);
+    }
+
+    let pill_btns_rc = std::rc::Rc::new(pill_btns);
+    for (mode, btn) in pill_btns_rc.iter() {
+        let mode_val = *mode;
+        let icon_lbl_clone = icon_lbl.clone();
+        let sub_lbl_clone = sub_lbl.clone();
+        let btns_clone = pill_btns_rc.clone();
+        let q_badge = quick_badge.clone();
+        let q_sub = quick_sub.clone();
+        let q_btn = quick_btn.clone();
+
+        btn.connect_clicked(move |_| {
+            for (m, b) in btns_clone.iter() {
+                if *m == mode_val {
+                    b.add_css_class("cc-btn-active");
+                } else {
+                    b.remove_css_class("cc-btn-active");
+                }
+            }
+            icon_lbl_clone.set_label(mode_val.icon());
+            sub_lbl_clone.set_label(mode_val.description());
+
+            if let Some(ref b) = q_badge {
+                b.set_label(mode_val.icon());
+            }
+            if let Some(ref s) = q_sub {
+                s.set_label(mode_val.name());
+            }
+            if let Some(ref btn_q) = q_btn {
+                if mode_val.is_active() {
+                    btn_q.add_css_class("cc-focus-active");
+                } else {
+                    btn_q.remove_css_class("cc-focus-active");
+                }
+            }
+
+            ControlCenterViewModel::execute_intent(ControlCenterIntent::SetFocusMode(mode_val));
+        });
+        crate::core::attach_voiceover_hover(btn, &format!("Seleziona filtro Focus {}", mode.name()));
+    }
+
+    card.append(&pills_box);
+    card
 }
 

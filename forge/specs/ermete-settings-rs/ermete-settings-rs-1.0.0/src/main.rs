@@ -109,12 +109,14 @@ impl SimpleComponent for AppModel {
 
             ("displays", "Schermi", crate::pages::displays::build_page),
             ("ecosystem", "Ecosistema", crate::pages::ecosystem::build_page),
+            ("continuity", "Continuity & Handoff", crate::pages::continuity::build_page),
             ("updates", "Aggiornamenti", crate::pages::updates::build_page),
             ("battery", "Batteria", crate::pages::battery::build_page),
             ("keyboard", "Tastiera", crate::pages::keyboard::build_page),
             ("mouse", "Mouse & Trackpad", crate::pages::mouse::build_page),
             ("accounts", "Account", crate::pages::accounts::build_page),
             ("privacy", "Privacy & Sicurezza", crate::pages::privacy::build_page),
+            ("a11y", "Accessibilità", crate::pages::a11y::build_page),
         ];
 
         let target_page = model.initial_page.as_deref().unwrap_or("wifi");
@@ -184,6 +186,10 @@ impl SimpleComponent for AppModel {
                     sender.input(AppMsg::SelectPage("appearance".to_string()));
                 } else if q.contains("layout") || q.contains("zorin") || q.contains("dock") || q.contains("taskbar") {
                     sender.input(AppMsg::SelectPage("layout".to_string()));
+                } else if q.contains("continuity") || q.contains("handoff") || q.contains("clipboard") || q.contains("appunti") {
+                    sender.input(AppMsg::SelectPage("continuity".to_string()));
+                } else if q.contains("accessib") || q.contains("a11y") || q.contains("sottotitol") || q.contains("daltonis") || q.contains("tts") || q.contains("voce") || q.contains("screen reader") {
+                    sender.input(AppMsg::SelectPage("a11y".to_string()));
                 }
 
             }

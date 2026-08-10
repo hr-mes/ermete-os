@@ -181,7 +181,8 @@ pub fn spawn_notification_daemon(app: &Application) {
             }
         });
         save_notification_history();
-        if !crate::core::DND_ACTIVE.load(std::sync::atomic::Ordering::SeqCst) {
+        let focus_mode = crate::ipc::notifications::get_focus_mode();
+        if focus_mode.should_allow_notification(&notif.app_name) {
             show_toast_popup(&app_clone, &notif);
         }
         glib::ControlFlow::Continue
@@ -396,34 +397,65 @@ pub fn show_notification_center(app: &Application) {
     main_vbox.append(&scroll);
 
     let footer_card = GtkBox::builder()
-        .orientation(Orientation::Horizontal)
-        .spacing(12)
+        .orientation(Orientation::Vertical)
+        .spacing(8)
         .halign(Align::Center)
         .build();
 
-    let is_dnd = crate::core::DND_ACTIVE.load(std::sync::atomic::Ordering::SeqCst);
-    let dnd_btn = Button::builder()
-        .label(if is_dnd { "󰂛 Non Disturbare: ATTIVO" } else { "󰂛 Non Disturbare: OFF" })
-        .css_classes(["cc-btn"])
-        .build();
+    let cur_focus = crate::ipc::notifications::get_focus_mode();
 
-    let dnd_status = Label::builder()
-        .label(if is_dnd { "Notifiche popup bloccate" } else { "Notifiche popup attive" })
+    let focus_status = Label::builder()
+        .label(cur_focus.description())
         .css_classes(["cc-label-sub"])
+        .halign(Align::Center)
         .build();
 
-    let dnd_btn_clone = dnd_btn.clone();
-    let dnd_stat_clone = dnd_status.clone();
-    dnd_btn.connect_clicked(move |_| {
-        let curr = crate::core::DND_ACTIVE.load(std::sync::atomic::Ordering::SeqCst);
-        let next = !curr;
-        crate::core::DND_ACTIVE.store(next, std::sync::atomic::Ordering::SeqCst);
-        dnd_btn_clone.set_label(if next { "󰂛 Non Disturbare: ATTIVO" } else { "󰂛 Non Disturbare: OFF" });
-        dnd_stat_clone.set_text(if next { "Notifiche popup bloccate" } else { "Notifiche popup attive" });
-    });
+    let pills_box = GtkBox::builder()
+        .orientation(Orientation::Horizontal)
+        .spacing(6)
+        .halign(Align::Center)
+        .build();
 
-    footer_card.append(&dnd_btn);
-    footer_card.append(&dnd_status);
+    let modes = [
+        crate::ipc::notifications::FocusMode::Off,
+        crate::ipc::notifications::FocusMode::Personal,
+        crate::ipc::notifications::FocusMode::Work,
+        crate::ipc::notifications::FocusMode::Sleep,
+    ];
+
+    let mut pill_btns = Vec::new();
+    for m in modes {
+        let btn = Button::builder()
+            .label(format!("{} {}", m.icon(), m.name()))
+            .css_classes(["cc-btn", "cc-quick-btn"])
+            .build();
+        if m == cur_focus {
+            btn.add_css_class("cc-btn-active");
+        }
+        pill_btns.push((m, btn.clone()));
+        pills_box.append(&btn);
+    }
+
+    let pill_btns_rc = std::rc::Rc::new(pill_btns);
+    for (m, btn) in pill_btns_rc.iter() {
+        let m_val = *m;
+        let stat_clone = focus_status.clone();
+        let btns_clone = pill_btns_rc.clone();
+        btn.connect_clicked(move |_| {
+            for (item_m, item_b) in btns_clone.iter() {
+                if *item_m == m_val {
+                    item_b.add_css_class("cc-btn-active");
+                } else {
+                    item_b.remove_css_class("cc-btn-active");
+                }
+            }
+            stat_clone.set_text(m_val.description());
+            crate::ipc::notifications::set_focus_mode(m_val);
+        });
+    }
+
+    footer_card.append(&focus_status);
+    footer_card.append(&pills_box);
     main_vbox.append(&footer_card);
 
     sidebar.set_child(Some(&main_vbox));
