@@ -14,6 +14,5 @@ tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 anyhow = { workspace = true }
 async-trait = { workspace = true }
-# Native PipeWire C API crate dependency (fallback to stub/unimplemented when build-time C toolchain is unavailable)
-# pipewire = "0.8"
+# Native PipeWire C API bindings via libpipewire-0.3 FFI
 rand = { workspace = true }

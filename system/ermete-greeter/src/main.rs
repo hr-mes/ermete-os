@@ -7,7 +7,7 @@ use attestation::{AttestationClient, AttestationReport};
 use log::{error, info, warn};
 use serde::{Deserialize, Serialize};
 use std::env;
-use tpm::{TpmBootChainReport, TpmManager};
+use tpm::{TpmBootChainReport, TpmError, TpmManager};
 use zeroize::ZeroizeOnDrop;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -43,16 +43,49 @@ impl ErmeteGreeter {
         }
     }
 
+    /// Renders extreme security lockdown UI banner when TPM hardware is missing or unreadable
+    pub fn render_system_halt_ui(&self, status_title: &str, error_details: &str) {
+        let lock_box = format!(
+            "\n\
+========================================================================\n\
+[!] CRITICAL SECURITY LOCKDOWN: {} [!]\n\
+========================================================================\n\
+REASON        : {}\n\
+SYSTEM STATUS : ZERO-TRUST ENFORCEMENT - SYSTEM HALTED\n\
+ACTION NEEDED : Connect an authorized TPM 2.0 Cryptographic Module.\n\
+========================================================================\n",
+            status_title, error_details
+        );
+        error!("{}", lock_box);
+        eprintln!("{}", lock_box);
+    }
+
     /// Performs pre-login boot chain and attestation integrity verification
     pub async fn perform_preflight_checks(&self) -> Result<(TpmBootChainReport, AttestationReport)> {
         info!("--- Ermete Greeter Zero-Trust Boot Chain Verification ---");
         
-        let tpm_report = self.tpm.verify_boot_chain();
-        if !tpm_report.is_trusted {
-            warn!("TPM 2.0 boot chain verification flagged untrusted state or missing hardware.");
-        } else {
-            info!("TPM 2.0 PCR registers verified (PCR0, PCR7, PCR10).");
-        }
+        let tpm_report = match self.tpm.verify_boot_chain() {
+            Ok(report) => {
+                info!("TPM 2.0 PCR registers verified (PCR0, PCR7, PCR10).");
+                report
+            }
+            Err(TpmError::HardwareMissing) => {
+                error!("TPM 2.0 hardware missing! Rendering lockdown UI and halting cleanly.");
+                self.render_system_halt_ui(
+                    "TPM HARDWARE MISSING - SYSTEM HALTED",
+                    "No TPM 2.0 hardware device detected (/dev/tpm0 or sysfs pcr path missing).",
+                );
+                return Err(anyhow!("TPM HARDWARE MISSING - SYSTEM HALTED"));
+            }
+            Err(e) => {
+                error!("TPM 2.0 verification failed: {}", e);
+                self.render_system_halt_ui(
+                    "TPM VERIFICATION FAILURE - SYSTEM HALTED",
+                    &e.to_string(),
+                );
+                return Err(anyhow!("TPM HARDWARE FAILURE - SYSTEM HALTED: {}", e));
+            }
+        };
 
         let attestation_report = self.attestation.query_attestation_status().await?;
         info!(
@@ -108,7 +141,14 @@ impl ErmeteGreeter {
     pub async fn run_service(&self) -> Result<()> {
         info!("Starting ermete-greeter daemon (greetd Zero-Trust replacement)...");
 
-        let (tpm_rep, att_rep) = self.perform_preflight_checks().await?;
+        let (tpm_rep, att_rep) = match self.perform_preflight_checks().await {
+            Ok(reports) => reports,
+            Err(e) => {
+                error!("Pre-flight boot integrity check failed: {}", e);
+                return Err(e);
+            }
+        };
+
         info!("Pre-flight boot integrity score: TPM Present={}, Attestation Status='{}'", tpm_rep.tpm_present, att_rep.status);
 
         info!("ermete-greeter ready. Listening for Zero-Trust authentication requests.");
@@ -140,7 +180,10 @@ async fn main() -> Result<()> {
             }
         }
     } else {
-        greeter.run_service().await?;
+        if let Err(e) = greeter.run_service().await {
+            error!("Greeter service error: {}", e);
+            std::process::exit(1);
+        }
     }
 
     Ok(())

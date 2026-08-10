@@ -37,6 +37,7 @@ enum Commands {
 const REGISTRY_URL: &str = "ghcr.io/hr-mes/ermete-store";
 const PUBLIC_KEY_PATH: &str = "/etc/ermete/keys/cosign.pub";
 const PQC_PUBLIC_KEY_PATH: &str = "/etc/ermete/keys/dilithium5.pub";
+const SIGNATURES_DIR: &str = "/etc/ermete/keys/signatures";
 const DEFAULT_DB_PATH: &str = "/var/lib/ermete/store_db.json";
 
 #[tokio::main]
@@ -96,6 +97,26 @@ fn disconnect_flathub() -> Result<()> {
     Ok(())
 }
 
+/// Consolidated helper to asynchronously read key/signature files using io_uring.
+async fn read_key_or_sig_io_uring(
+    db_engine: &DatabaseEngine,
+    path: &Path,
+    missing_msg: &str,
+    err_context: &str,
+) -> Result<Vec<u8>> {
+    if !path.exists() {
+        anyhow::bail!(
+            "CRITICAL ZERO-TRUST ERROR: {}. Verification blocked.",
+            missing_msg
+        );
+    }
+
+    db_engine
+        .read_file_io_uring(path)
+        .await
+        .context(err_context.to_string())
+}
+
 async fn verify_pqc_package_signature(
     app_id: &str,
     oci_image: &str,
@@ -106,32 +127,22 @@ async fn verify_pqc_package_signature(
         app_id
     );
 
-    if !Path::new(PQC_PUBLIC_KEY_PATH).exists() {
-        anyhow::bail!(
-            "CRITICAL ZERO-TRUST ERROR: Post-Quantum Dilithium5 public key missing at {}. Verification blocked.",
-            PQC_PUBLIC_KEY_PATH
-        );
-    }
+    let pubkey_bytes = read_key_or_sig_io_uring(
+        db_engine,
+        Path::new(PQC_PUBLIC_KEY_PATH),
+        &format!("Post-Quantum Dilithium5 public key missing at {}", PQC_PUBLIC_KEY_PATH),
+        "Failed to read Dilithium5 public key via io_uring",
+    )
+    .await?;
 
-    // Read public key using Linux io_uring interface
-    let pubkey_bytes = db_engine
-        .read_file_io_uring(Path::new(PQC_PUBLIC_KEY_PATH))
-        .await
-        .context("Failed to read Dilithium5 public key via io_uring")?;
-
-    let sig_path = PathBuf::from(format!("/etc/ermete/keys/signatures/{}.sig", app_id));
-    if !sig_path.exists() {
-        anyhow::bail!(
-            "CRITICAL ZERO-TRUST ERROR: Package signature file missing at {}. Cannot verify Dilithium5 signature.",
-            sig_path.display()
-        );
-    }
-
-    // Read signature file using Linux io_uring interface
-    let sig_bytes = db_engine
-        .read_file_io_uring(&sig_path)
-        .await
-        .context("Failed to read signature file via io_uring")?;
+    let sig_path = PathBuf::from(SIGNATURES_DIR).join(format!("{}.sig", app_id));
+    let sig_bytes = read_key_or_sig_io_uring(
+        db_engine,
+        &sig_path,
+        &format!("Package signature file missing at {}", sig_path.display()),
+        "Failed to read signature file via io_uring",
+    )
+    .await?;
 
     let payload = format!("ERMETE_STORE_PACKAGE:{}:{}", app_id, oci_image);
     pqc_dilithium::verify(&sig_bytes, payload.as_bytes(), &pubkey_bytes)

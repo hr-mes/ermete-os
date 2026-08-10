@@ -1,10 +1,32 @@
 use anyhow::{anyhow, Result};
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
-use sha2::Digest;
+use std::fmt;
 use std::fs;
 use std::path::Path;
 use zeroize::Zeroize;
+
+/// Custom error enum for TPM 2.0 operations
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum TpmError {
+    HardwareMissing,
+    PcrReadError { pcr: u32, reason: String },
+    UnsealError(String),
+}
+
+impl fmt::Display for TpmError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TpmError::HardwareMissing => write!(f, "TPM 2.0 hardware device not available"),
+            TpmError::PcrReadError { pcr, reason } => {
+                write!(f, "Failed to read PCR register {}: {}", pcr, reason)
+            }
+            TpmError::UnsealError(msg) => write!(f, "TPM 2.0 key unseal failed: {}", msg),
+        }
+    }
+}
+
+impl std::error::Error for TpmError {}
 
 /// Represents the integrity state of TPM 2.0 PCR registers
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -52,30 +74,38 @@ impl TpmManager {
         }
     }
 
-    /// Evaluates complete boot-chain integrity (PCR0, PCR7, PCR10)
-    pub fn verify_boot_chain(&self) -> TpmBootChainReport {
+    /// Evaluates complete boot-chain integrity (PCR0, PCR7, PCR10).
+    /// Returns `Result<TpmBootChainReport, TpmError>` instead of panicking on missing hardware or PCR read errors.
+    pub fn verify_boot_chain(&self) -> Result<TpmBootChainReport, TpmError> {
         info!("TPM 2.0: Reading PCR registers for Zero-Trust boot chain validation...");
 
         if !self.is_tpm_present() {
-            panic!("CRITICAL: TPM 2.0 hardware missing. Zero-Trust boot chain validation cannot proceed.");
+            warn!("TPM 2.0 hardware missing. Returning TpmError::HardwareMissing.");
+            return Err(TpmError::HardwareMissing);
         }
 
-        let pcr0 = self.read_pcr(0).expect("CRITICAL: Failed to read PCR0");
-        let pcr7 = self.read_pcr(7).expect("CRITICAL: Failed to read PCR7");
-        let pcr10 = self.read_pcr(10).expect("CRITICAL: Failed to read PCR10");
+        let pcr0 = self
+            .read_pcr(0)
+            .map_err(|e| TpmError::PcrReadError { pcr: 0, reason: e.to_string() })?;
+        let pcr7 = self
+            .read_pcr(7)
+            .map_err(|e| TpmError::PcrReadError { pcr: 7, reason: e.to_string() })?;
+        let pcr10 = self
+            .read_pcr(10)
+            .map_err(|e| TpmError::PcrReadError { pcr: 10, reason: e.to_string() })?;
 
         info!("TPM 2.0 PCR0 (Firmware): {}", pcr0);
         info!("TPM 2.0 PCR7 (Secure Boot): {}", pcr7);
         info!("TPM 2.0 PCR10 (Kernel IMA): {}", pcr10);
 
-        TpmBootChainReport {
+        Ok(TpmBootChainReport {
             tpm_present: true,
             pcr0_firmware: pcr0,
             pcr7_secure_boot: pcr7,
             pcr10_ima_kernel: pcr10,
             is_trusted: true,
             error_msg: None,
-        }
+        })
     }
 
     /// Zero-Trust TPM-backed key unsealing for user session key release
@@ -100,5 +130,35 @@ impl TpmManager {
         key_share.zeroize();
 
         Ok(key_copy)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_tpm_error_display() {
+        let err = TpmError::HardwareMissing;
+        assert_eq!(err.to_string(), "TPM 2.0 hardware device not available");
+
+        let err2 = TpmError::PcrReadError {
+            pcr: 0,
+            reason: "File not found".to_string(),
+        };
+        assert_eq!(err2.to_string(), "Failed to read PCR register 0: File not found");
+    }
+
+    #[test]
+    fn test_verify_boot_chain_returns_result() {
+        let tpm = TpmManager::new();
+        let res = tpm.verify_boot_chain();
+        if !tpm.is_tpm_present() {
+            assert!(res.is_err());
+            match res.unwrap_err() {
+                TpmError::HardwareMissing => {}
+                other => panic!("Expected HardwareMissing, got {:?}", other),
+            }
+        }
     }
 }

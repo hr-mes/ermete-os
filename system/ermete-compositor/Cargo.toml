@@ -27,3 +27,4 @@ smithay = { workspace = true, features = [
     "wayland_frontend"
 ] }
 wayland-server = { workspace = true }
+glam = { workspace = true }

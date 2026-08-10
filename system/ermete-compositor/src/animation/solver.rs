@@ -62,37 +62,27 @@ impl SpringConfig {
     }
 }
 
-/// 4x4 Column-Major Matrix utilities for GPU render transformations.
+/// 4x4 Column-Major Matrix utilities for GPU render transformations using glam primitives.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Matrix4;
 
 impl Matrix4 {
     /// Returns identity matrix [f32; 16] in column-major order.
     pub fn identity() -> [f32; 16] {
-        [
-            1.0, 0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0, 0.0,
-            0.0, 0.0, 1.0, 0.0,
-            0.0, 0.0, 0.0, 1.0,
-        ]
+        glam::Mat4::IDENTITY.to_cols_array()
     }
 
     /// Creates a 2D affine 4x4 matrix given scale (sx, sy), translation (tx, ty), shear (shear_x, shear_y), and rotation angle in radians.
     pub fn affine_2d(tx: f32, ty: f32, sx: f32, sy: f32, shear_x: f32, shear_y: f32, rotation_rad: f32) -> [f32; 16] {
-        let cos_r = (rotation_rad as f64).cos() as f32;
-        let sin_r = (rotation_rad as f64).sin() as f32;
-
-        let m00 = cos_r * sx + sin_r * shear_x;
-        let m01 = sin_r * sx - cos_r * shear_x;
-        let m10 = -sin_r * sy + cos_r * shear_y;
-        let m11 = cos_r * sy + sin_r * shear_y;
-
-        [
-            m00, m01, 0.0, 0.0,
-            m10, m11, 0.0, 0.0,
-            0.0, 0.0, 1.0, 0.0,
-            tx,  ty,  0.0, 1.0,
-        ]
+        let translation = glam::Mat4::from_translation(glam::Vec3::new(tx, ty, 0.0));
+        let rotation = glam::Mat4::from_rotation_z(rotation_rad);
+        let scale_shear = glam::Mat4::from_cols(
+            glam::Vec4::new(sx, -shear_x, 0.0, 0.0),
+            glam::Vec4::new(shear_y, sy, 0.0, 0.0),
+            glam::Vec4::new(0.0, 0.0, 1.0, 0.0),
+            glam::Vec4::new(0.0, 0.0, 0.0, 1.0),
+        );
+        (translation * rotation * scale_shear).to_cols_array()
     }
 
     /// Computes quad bilinear mapping transformation matrix for mapping unit quad [0,1]^2 to quadrilateral (p0, p1, p2, p3).
@@ -118,17 +108,9 @@ impl Matrix4 {
 
     /// Multiplies two 4x4 column-major matrices.
     pub fn multiply(a: &[f32; 16], b: &[f32; 16]) -> [f32; 16] {
-        let mut out = [0.0f32; 16];
-        for col in 0..4 {
-            for row in 0..4 {
-                out[col * 4 + row] =
-                    a[row] * b[col * 4] +
-                    a[4 + row] * b[col * 4 + 1] +
-                    a[8 + row] * b[col * 4 + 2] +
-                    a[12 + row] * b[col * 4 + 3];
-            }
-        }
-        out
+        let ma = glam::Mat4::from_cols_array(a);
+        let mb = glam::Mat4::from_cols_array(b);
+        (ma * mb).to_cols_array()
     }
 }
 
