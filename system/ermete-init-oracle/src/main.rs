@@ -2,14 +2,10 @@ use anyhow::Result;
 use std::time::Duration;
 use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
-// ZBus legacy eradicated in Phase 6
+use ermete_bus_api::shm_ring::ZeroCopyRingBuffer;
 
-
-mod dbus;
-mod intent;
 mod systemd_manager;
 
-use dbus::InitOracleInterface;
 use systemd_manager::SystemdManager;
 
 #[tokio::main]
@@ -31,22 +27,15 @@ async fn main() -> Result<()> {
 
     // 3. Initialize High-Performance Zero-Copy Ring Buffer IPC (Epuratore ZBus - Phase 6)
     info!("Initializing ultra-fast ZeroCopyRingBuffer IPC channel...");
-    
-    // ZeroCopyRingBuffer IPC mock replacing legacy ZBus/DBus stack
-    struct ZeroCopyRingBuffer {
-        channel_name: String,
-        capacity_mb: usize,
-    }
 
-    let ipc_ring_buffer = ZeroCopyRingBuffer {
-        channel_name: "ermete-init-oracle-ringbuf".to_string(),
-        capacity_mb: 64,
-    };
+    let ipc_ring_buffer = ZeroCopyRingBuffer::create_named("ermete-init-oracle-ringbuf", 64 * 1024 * 1024)
+        .or_else(|_| ZeroCopyRingBuffer::create_anonymous("ermete-init-oracle-ringbuf", 64 * 1024 * 1024))
+        .ok();
 
     info!(
-        "ZeroCopyRingBuffer IPC active on channel '{}' with capacity {}MB (legacy ZBus eradicated).",
-        ipc_ring_buffer.channel_name, ipc_ring_buffer.capacity_mb
+        "ZeroCopyRingBuffer IPC active on channel 'ermete-init-oracle-ringbuf' with capacity 64MB (legacy ZBus eradicated)."
     );
+
 
     // 4. Spawn Background Health & Fallback Audit Loop
     let manager_clone = manager.clone();

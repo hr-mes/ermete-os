@@ -1,5 +1,4 @@
-use crate::intent::{IntentParser, ServiceIntent};
-use anyhow::{Context, Result};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
@@ -71,72 +70,7 @@ impl SystemdManager {
         &self.target_dir
     }
 
-    pub async fn apply_intent(&self, intent: ServiceIntent) -> Result<ManagedServiceRecord> {
-        let service_name = intent.service_name();
-        let unit_name = format!("{}.service", service_name);
-        let unit_path = self.target_dir.join(&unit_name);
 
-        info!("Generating systemd unit for intent '{}' at path {:?}", service_name, unit_path);
-
-        // 1. Try Primary Unit deployment
-        let primary_content = IntentParser::generate_systemd_unit(&intent, false);
-        tokio::fs::write(&unit_path, &primary_content)
-            .await
-            .with_context(|| format!("Failed to write systemd unit file at {:?}", unit_path))?;
-
-        info!("Systemd unit file created: {:?}", unit_path);
-
-        // 2. Reload systemd daemon
-        let reload_ok = self.reload_daemon().await;
-        
-        // 3. Attempt to start primary service
-        let mut fallback_active = false;
-        let mut service_status = String::from("unknown");
-
-        if reload_ok {
-            let start_res = self.start_service(&unit_name).await;
-            if start_res.is_ok() {
-                service_status = self.check_service_status(&unit_name).await;
-            } else {
-                warn!("Primary service '{}' failed to start: {:?}. Triggering autonomous fallback...", service_name, start_res);
-            }
-        }
-
-        // Check if primary service is running or if fallback is required
-        if service_status != "active" {
-            info!("Initiating autonomous fallback for service '{}' without human intervention...", service_name);
-            fallback_active = true;
-            let fallback_content = IntentParser::generate_systemd_unit(&intent, true);
-            let _ = tokio::fs::write(&unit_path, &fallback_content).await;
-            let _ = self.reload_daemon().await;
-            let _ = self.start_service(&unit_name).await;
-            service_status = self.check_service_status(&unit_name).await;
-            if service_status != "active" {
-                service_status = String::from("fallback_provisioned");
-            }
-        }
-
-        let now = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_secs();
-
-        let record = ManagedServiceRecord {
-            service_name: service_name.to_string(),
-            unit_name,
-            unit_path,
-            primary_exec: intent.exec_start().to_string(),
-            fallback_exec: intent.fallback_exec_start().map(|s| s.to_string()),
-            is_fallback_active: fallback_active,
-            status: service_status,
-            created_at_secs: now,
-        };
-
-        let mut lock = self.records.lock().await;
-        lock.insert(service_name.to_string(), record.clone());
-
-        Ok(record)
-    }
 
     pub async fn reload_daemon(&self) -> bool {
         info!("Executing systemctl daemon-reload...");
@@ -257,28 +191,6 @@ impl SystemdManager {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
 
-    #[tokio::test]
-    async fn test_systemd_manager_apply_intent_and_fallback() {
-        let manager = SystemdManager::new();
-        let intent = IntentParser::parse(r#"{"action": "restart", "target": "nginx"}"#);
-        
-        let record = manager.apply_intent(intent).await.expect("Apply intent failed");
-        assert_eq!(record.service_name, "nginx");
-        assert_eq!(record.unit_name, "nginx.service");
-        assert!(record.unit_path.exists());
-
-        let content = tokio::fs::read_to_string(&record.unit_path).await.expect("Failed to read unit file");
-        assert!(content.contains("[Unit]"));
-
-        // Revert service test
-        let revert_res = manager.revert_service("nginx").await;
-        assert!(revert_res.is_ok());
-        assert!(!record.unit_path.exists());
-    }
-}
 
 

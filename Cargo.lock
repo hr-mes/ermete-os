@@ -1631,6 +1631,7 @@ name = "ermete-init-oracle"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "ermete-bus-api",
  "regex",
  "serde",
  "serde_json",
@@ -1735,6 +1736,7 @@ version = "1.0.0"
 dependencies = [
  "anyhow",
  "env_logger",
+ "ermete-bus-api",
  "libc",
  "log",
  "nix 0.29.0",
@@ -1769,6 +1771,7 @@ name = "ermete-settings-rs"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "ermete-bus-api",
  "ermete-niri-ipc",
  "ermete-style",
  "glib",
