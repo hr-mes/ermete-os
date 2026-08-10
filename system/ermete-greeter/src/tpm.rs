@@ -47,9 +47,6 @@ impl TpmManager {
         if Path::new(&pcr_file).exists() {
             let content = fs::read_to_string(&pcr_file)?;
             Ok(content.trim().to_string())
-        } else if self.is_tpm_present() {
-            // Fallback synthetic PCR hash representation when sysfs pcr-sha256 structure varies
-            Ok(format!("tpm20_pcr_{}_sha256_verified_digest", pcr_idx))
         } else {
             Err(anyhow!("TPM 2.0 hardware device not available"))
         }
@@ -60,20 +57,12 @@ impl TpmManager {
         info!("TPM 2.0: Reading PCR registers for Zero-Trust boot chain validation...");
 
         if !self.is_tpm_present() {
-            warn!("TPM 2.0 hardware absent. Boot chain running in simulated fallback mode.");
-            return TpmBootChainReport {
-                tpm_present: false,
-                pcr0_firmware: "0000000000000000000000000000000000000000000000000000000000000000".to_string(),
-                pcr7_secure_boot: "0000000000000000000000000000000000000000000000000000000000000000".to_string(),
-                pcr10_ima_kernel: "0000000000000000000000000000000000000000000000000000000000000000".to_string(),
-                is_trusted: false,
-                error_msg: Some("TPM 2.0 hardware missing".to_string()),
-            };
+            panic!("CRITICAL: TPM 2.0 hardware missing. Zero-Trust boot chain validation cannot proceed.");
         }
 
-        let pcr0 = self.read_pcr(0).unwrap_or_else(|_| format!("{:x}", sha2::Sha256::digest(b"ermete_tpm_pcr_0_baseline")));
-        let pcr7 = self.read_pcr(7).unwrap_or_else(|_| format!("{:x}", sha2::Sha256::digest(b"ermete_tpm_pcr_7_baseline")));
-        let pcr10 = self.read_pcr(10).unwrap_or_else(|_| format!("{:x}", sha2::Sha256::digest(b"ermete_tpm_pcr_10_baseline")));
+        let pcr0 = self.read_pcr(0).expect("CRITICAL: Failed to read PCR0");
+        let pcr7 = self.read_pcr(7).expect("CRITICAL: Failed to read PCR7");
+        let pcr10 = self.read_pcr(10).expect("CRITICAL: Failed to read PCR10");
 
         info!("TPM 2.0 PCR0 (Firmware): {}", pcr0);
         info!("TPM 2.0 PCR7 (Secure Boot): {}", pcr7);

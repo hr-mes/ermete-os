@@ -69,6 +69,7 @@ pub enum RenderError {
     SurfaceNotVisible,
     GpuFenceTimeout,
     BufferBusy,
+    UnimplementedNativeDrm,
 }
 
 /// Mock Compositor State representing the GPU/EGL engine interface.
@@ -107,14 +108,8 @@ impl CompositorState {
             return Err(RenderError::InvalidDmaBufFd);
         }
 
-        // Simulate zero-copy hardware submission by dereferencing matrix on stack
-        // and updating atomic frame metrics without lock acquisition or heap allocation.
-        let matrix_sum = transform_matrix[0] + transform_matrix[5] + transform_matrix[10] + transform_matrix[15];
-        let _ = matrix_sum;
-
-        let buffer_size_bytes = (surface.width as u64) * (surface.height as u64) * 4;
-        self.total_dma_bytes_pushed.fetch_add(buffer_size_bytes, Ordering::Relaxed);
-        self.submitted_frames.fetch_add(1, Ordering::Relaxed);
+        // Zero-Trust Enforcement: We explicitly reject faking DMA-BUF submissions.
+        return Err(RenderError::UnimplementedNativeDrm);
 
         Ok(())
     }

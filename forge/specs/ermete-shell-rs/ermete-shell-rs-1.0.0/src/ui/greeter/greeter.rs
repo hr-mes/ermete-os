@@ -478,7 +478,7 @@ pub fn build_ui(app: &Application, is_lockscreen: bool) {
             let app_quit = app_ref.clone();
 
             glib::MainContext::default().spawn_local(async move {
-                let res = authenticate_or_simulate(&password, is_lockscreen).await;
+                let res = authenticate(&password, is_lockscreen).await;
                 match res {
                     Ok(_) => {
                         app_quit.quit();

@@ -173,6 +173,6 @@ where
     Err("Timeout conversazione PAM (troppi passaggi di autenticazione)".to_string())
 }
 
-pub async fn authenticate_or_simulate(password: &str, is_lockscreen: bool) -> Result<(), String> {
+pub async fn authenticate(password: &str, is_lockscreen: bool) -> Result<(), String> {
     authenticate_interactive(password, is_lockscreen, &|_| {}).await
 }

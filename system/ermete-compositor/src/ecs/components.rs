@@ -192,8 +192,8 @@ impl Default for Geometry {
     }
 }
 
-/// Simulated DMA-BUF / Wayland Surface handle component.
-/// Contains surface metadata, DMA-BUF file descriptor simulation, FourCC format codes,
+/// DMA-BUF / Wayland Surface handle component.
+/// Contains surface metadata, DMA-BUF file descriptor, FourCC format codes,
 /// damage state, and process details.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WaylandSurface {
