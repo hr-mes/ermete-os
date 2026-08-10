@@ -51,7 +51,7 @@ pub fn start_udp_discovery(
         }
     });
 
-    // UDP Broadcast sender for Discovery (Announce ourselves with ZK-SNARK Proof)
+    // UDP Broadcast sender for Discovery (Announce ourselves with Dilithium Proof)
     let zk_prover = zk_engine.clone();
     tokio::spawn(async move {
         if let Ok(socket) = UdpSocket::bind("0.0.0.0:0").await {

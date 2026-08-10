@@ -61,11 +61,11 @@ impl SyncEngine {
     }
 
     pub fn get_zk_identity_info(&self) -> String {
-        format!("Node: {} (ZK-SNARK enabled)", self.node_id)
+        format!("Node: {} (Dilithium Auth enabled)", self.node_id)
     }
 
     pub async fn start_discovery(&self) -> Result<()> {
-        info!("Starting Continuity ZK-P2P engine on local network with ZK-SNARK Verification & BFT Consensus...");
+        info!("Starting Continuity P2P engine on local network with Dilithium Verification & BFT Consensus...");
         
         discovery::start_udp_discovery(self.known_peers.clone(), self.zk_engine.clone());
         listener::start_tcp_listener(

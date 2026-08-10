@@ -89,7 +89,7 @@ impl CrdtBroadcaster {
         let peer_manager = self.peer_manager.clone();
         let delta_tx = self.delta_tx.clone();
 
-        // 5. Asynchronously verify zero-trust peer status and dispatch merge in background
+        // 5. Asynchronously verify zero-trust peer status and PQC signature, then dispatch merge in background
         tokio::spawn(async move {
             if let Some(peer) = peer_manager.get_peer(&sender_node_id).await {
                 if !peer.zero_trust_verified {
@@ -99,19 +99,35 @@ impl CrdtBroadcaster {
                     );
                     return;
                 }
-
-                // Verify PQC Dilithium5 public key signature
-                if let Ok(dilithium_pk) = peer_manager.get_dilithium_pk_bytes(&sender_node_id).await {
-                    if dilithium_pk.is_empty() {
-                        warn!("Zero-Trust Reject: Empty Dilithium PK for peer '{}'", sender_node_id);
-                        return;
-                    }
-                }
             } else {
                 info!(
                     "Zero-Trust Audit: Processing CRDT delta from peer '{}' (unregistered/eval state)",
                     sender_node_id
                 );
+            }
+
+            // Verify PQC Dilithium5 public key signature
+            match peer_manager.get_dilithium_pk_bytes(&sender_node_id).await {
+                Ok(dilithium_pk) => {
+                    if dilithium_pk.is_empty() {
+                        warn!("Zero-Trust Reject: Empty Dilithium PK for peer '{}'", sender_node_id);
+                        return;
+                    }
+                    if !PqcEngine::verify_signature(&delta.payload_bytes, &delta.pqc_signature, &dilithium_pk) {
+                        warn!(
+                            "Zero-Trust Reject: Dilithium PQC signature verification failed for CRDT delta from peer '{}'",
+                            sender_node_id
+                        );
+                        return;
+                    }
+                }
+                Err(e) => {
+                    warn!(
+                        "Zero-Trust Reject: Failed to retrieve Dilithium PK for peer '{}': {}",
+                        sender_node_id, e
+                    );
+                    return;
+                }
             }
 
             info!(

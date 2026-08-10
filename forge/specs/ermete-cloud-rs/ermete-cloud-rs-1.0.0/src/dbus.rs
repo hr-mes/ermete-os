@@ -10,12 +10,12 @@ pub struct CloudIface {
 
 #[interface(name = "os.ermete.Cloud")]
 impl CloudIface {
-    /// Syncs local clipboard to trusted peers with ZK-SNARK authentication & BFT consensus
+    /// Syncs local clipboard to trusted peers with Dilithium authentication & BFT consensus
     async fn push_clipboard(&self, content: String) -> std::result::Result<String, zbus::fdo::Error> {
-        info!("Received D-Bus request to push clipboard with ZK-SNARK proof and BFT consensus.");
+        info!("Received D-Bus request to push clipboard with Dilithium proof and BFT consensus.");
         
         match self.engine.send_clipboard(&content).await {
-            Ok(_) => Ok("Clipboard pushed to fleet with ZK proof & BFT consensus validation.".into()),
+            Ok(_) => Ok("Clipboard pushed to fleet with Dilithium proof & BFT consensus validation.".into()),
             Err(e) => Ok(format!("Error: {}", e)),
         }
     }

@@ -23,7 +23,7 @@ pub fn start_tcp_listener(
     let bft_engine_ref = bft_engine.clone();
 
     tokio::spawn(async move {
-        info!("Initializing ZK-Mesh Sync TCP listener on port 9091 with Level 15 ZK-SNARKs and BFT Consensus...");
+        info!("Initializing Mesh Sync TCP listener on port 9091 with Dilithium Auth and BFT Consensus...");
         let listener = match TcpListener::bind("0.0.0.0:9091").await {
             Ok(l) => l,
             Err(e) => {

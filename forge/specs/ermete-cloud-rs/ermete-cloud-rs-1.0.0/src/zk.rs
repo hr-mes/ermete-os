@@ -6,7 +6,7 @@ use sha2::{Digest, Sha256};
 use std::time::{SystemTime, UNIX_EPOCH};
 use tracing::{info, warn};
 
-/// ZK-SNARK Zero-Knowledge Proof representing node membership proof without exposing secret credentials
+/// Dilithium & SHA-256 Auth Proof representing node membership authentication without exposing secret credentials
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ZkProof {
     pub node_id: String,
@@ -33,7 +33,7 @@ impl ZkProof {
     }
 }
 
-/// ZK Proof Engine managing non-interactive zero-knowledge proofs for Ermete fleet nodes
+/// Proof Engine managing Dilithium signature and shared-secret authentication for Ermete fleet nodes
 pub struct ZkProofEngine {
     fleet_secret: String,
     dilithium_keypair: DilithiumKeypair,
@@ -45,7 +45,7 @@ impl ZkProofEngine {
         let secret = fleet_secret.unwrap_or_else(|| "ERMETE_OS_GLOBAL_FLEET_SHARED_SECRET_KEY_V15".to_string());
         let dilithium_keypair = DilithiumKeypair::generate();
         
-        info!("Initialized ZK-SNARK Proof Engine (Level 15 ZK-Mesh) for node {}", node_id);
+        info!("Initialized Dilithium & SharedSecret Proof Engine for node {}", node_id);
         
         Self {
             fleet_secret: secret,
@@ -66,7 +66,7 @@ impl ZkProofEngine {
         BASE64.encode(hasher.finalize())
     }
 
-    /// Generate Zero-Knowledge proof of fleet membership without broadcasting secrets
+    /// Generate proof of fleet membership using Dilithium signature & SHA256 shared secret
     pub fn generate_proof(&self, nonce: u64) -> Result<ZkProof> {
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)?
@@ -84,7 +84,7 @@ impl ZkProofEngine {
         let sig = self.dilithium_keypair.sign(challenge_str.as_bytes());
         let challenge = BASE64.encode(&sig);
 
-        // Zero-Knowledge response r proves knowledge of w matching C and e without revealing w
+        // Response r proves knowledge of shared secret and key signature
         let response_str = format!("{}:{}:{}", challenge, self.node_id, nonce);
         let resp_sig = self.dilithium_keypair.sign(response_str.as_bytes());
         let response = BASE64.encode(&resp_sig);
@@ -100,15 +100,15 @@ impl ZkProofEngine {
             dilithium_pk_b64,
             nonce,
             timestamp,
-            proof_scheme: "ZK-SNARK-GROTH16-ERMETE-V15".to_string(),
+            proof_scheme: "DilithiumSignatureAuth".to_string(),
         })
     }
 
-    /// Verify ZK Proof from peer node without ever requesting their secret token
+    /// Verify Proof from peer node without ever requesting their secret token
     pub fn verify_proof(&self, proof: &ZkProof) -> bool {
         // 1. Verify scheme and timestamp freshness (max 300s clock drift)
-        if proof.proof_scheme != "ZK-SNARK-GROTH16-ERMETE-V15" {
-            warn!("Rejected ZK proof with unsupported scheme: {}", proof.proof_scheme);
+        if proof.proof_scheme != "DilithiumSignatureAuth" && proof.proof_scheme != "Sha256SharedSecretAuth" {
+            warn!("Rejected proof with unsupported scheme: {}", proof.proof_scheme);
             return false;
         }
 
@@ -118,21 +118,21 @@ impl ZkProofEngine {
             .unwrap_or(0);
 
         if now > 0 && (now.saturating_sub(proof.timestamp) > 300 && proof.timestamp.saturating_sub(now) > 300) {
-            warn!("Rejected expired ZK proof from node {}", proof.node_id);
+            warn!("Rejected expired proof from node {}", proof.node_id);
             return false;
         }
 
         // 2. Compute expected commitment matching fleet secret using SHA256
         let expected_commitment = Self::compute_commitment(&self.fleet_secret, &proof.node_id, proof.nonce);
         if proof.commitment != expected_commitment {
-            warn!("ZK commitment mismatch for node {}: proof does not belong to valid Ermete fleet secret!", proof.node_id);
+            warn!("Commitment mismatch for node {}: proof does not belong to valid Ermete fleet secret!", proof.node_id);
             return false;
         }
 
         // 3. Verify public input structure
         let expected_pub = BASE64.encode(format!("PUB:{}:{}:{}", proof.node_id, proof.timestamp, proof.nonce));
         if proof.public_input != expected_pub {
-            warn!("ZK public input validation failed for node {}", proof.node_id);
+            warn!("Public input validation failed for node {}", proof.node_id);
             return false;
         }
 
@@ -173,7 +173,7 @@ impl ZkProofEngine {
             return false;
         }
 
-        info!("Successfully verified Zero-Knowledge Membership Proof for fleet node {}", proof.node_id);
+        info!("Successfully verified Membership Proof for fleet node {}", proof.node_id);
         true
     }
 }

@@ -111,10 +111,7 @@ where
     let path = std::env::var("GREETD_SOCK").unwrap_or_else(|_| "/run/greetd.sock".to_string());
     if !std::path::Path::new(&path).exists() {
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
-        if password.is_empty() {
-            return Err("Inserisci la password o usa l'impronta digitale".to_string());
-        }
-        return Ok(());
+        return Err("Autenticazione fallita: demone auth irraggiungibile".to_string());
     }
 
     let mut stream = UnixStream::connect(path).map_err(|e| e.to_string())?;
