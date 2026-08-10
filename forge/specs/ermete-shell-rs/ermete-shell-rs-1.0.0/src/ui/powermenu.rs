@@ -5,7 +5,6 @@ use gtk4::{
     EventControllerKey, Label, Orientation,
 };
 use gtk4_layer_shell::{KeyboardMode, Layer, LayerShell};
-use std::process::Command;
 
 
 
@@ -53,14 +52,14 @@ pub fn show_powermenu_modal(app: &Application) {
     let btn_box = GtkBox::new(Orientation::Horizontal, 16);
 
     let actions = [
-        ("", "Blocca", "loginctl lock-session"),
-        ("󰍃", "Esci", "niri msg action quit"),
-        ("󰒲", "Sospendi", "systemctl suspend"),
-        ("󰜉", "Riavvia", "systemctl reboot"),
-        ("", "Spegni", "systemctl poweroff"),
+        ("", "Blocca", "lock"),
+        ("󰍃", "Esci", "quit"),
+        ("󰒲", "Sospendi", "suspend"),
+        ("󰜉", "Riavvia", "reboot"),
+        ("", "Spegni", "poweroff"),
     ];
 
-    for (icon, label, cmd) in actions {
+    for (icon, label, action) in actions {
         let btn = Button::new();
         btn.add_css_class("powermenu-btn");
         let box_inner = GtkBox::new(Orientation::Vertical, 4);
@@ -72,22 +71,49 @@ pub fn show_powermenu_modal(app: &Application) {
         box_inner.append(&lbl_text);
         btn.set_child(Some(&box_inner));
 
-        let cmd_str = cmd.to_string();
+        let action_str = action.to_string();
         let win_close = window.downgrade();
         btn.connect_clicked(move |_| {
             if let Some(w) = win_close.upgrade() {
                 w.close();
             }
-            if cmd_str == "niri msg action quit" {
-                glib::MainContext::default().spawn_local(async move {
-                    ermete_niri_ipc::async_client::quit_niri().await;
-                });
-            } else {
-                let mut parts = cmd_str.split_whitespace();
-                if let Some(prog) = parts.next() {
-                    let _ = Command::new(prog).args(parts).spawn();
+            let act = action_str.clone();
+            glib::MainContext::default().spawn_local(async move {
+                match act.as_str() {
+                    "quit" => {
+                        ermete_niri_ipc::async_client::quit_niri().await;
+                    }
+                    "lock" => {
+                        if let Ok(conn) = zbus::Connection::system().await {
+                            if let Ok(proxy) = crate::ipc::power::LogindProxy::new(&conn).await {
+                                let _ = proxy.lock_sessions().await;
+                            }
+                        }
+                    }
+                    "suspend" => {
+                        if let Ok(conn) = zbus::Connection::system().await {
+                            if let Ok(proxy) = crate::ipc::power::LogindProxy::new(&conn).await {
+                                let _ = proxy.suspend(true).await;
+                            }
+                        }
+                    }
+                    "reboot" => {
+                        if let Ok(conn) = zbus::Connection::system().await {
+                            if let Ok(proxy) = crate::ipc::power::LogindProxy::new(&conn).await {
+                                let _ = proxy.reboot(true).await;
+                            }
+                        }
+                    }
+                    "poweroff" => {
+                        if let Ok(conn) = zbus::Connection::system().await {
+                            if let Ok(proxy) = crate::ipc::power::LogindProxy::new(&conn).await {
+                                let _ = proxy.power_off(true).await;
+                            }
+                        }
+                    }
+                    _ => {}
                 }
-            }
+            });
         });
         btn_box.append(&btn);
     }

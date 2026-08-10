@@ -87,14 +87,9 @@ pub fn show_clipboard_modal(app: &Application) {
                                     let _ = stdin.write_all(line_cap.as_bytes()).await;
                                 }
                                 if let Ok(dec_out) = decode_proc.wait_with_output().await {
-                                    if let Ok(mut wl_proc) = tokio::process::Command::new("wl-copy")
-                                        .stdin(Stdio::piped())
-                                        .spawn()
-                                    {
-                                        if let Some(mut wl_in) = wl_proc.stdin.take() {
-                                            use tokio::io::AsyncWriteExt;
-                                            let _ = wl_in.write_all(&dec_out.stdout).await;
-                                        }
+                                    let text = String::from_utf8_lossy(&dec_out.stdout).to_string();
+                                    if let Some(display) = gtk4::gdk::Display::default() {
+                                        display.clipboard().set_text(&text);
                                     }
                                 }
                             }

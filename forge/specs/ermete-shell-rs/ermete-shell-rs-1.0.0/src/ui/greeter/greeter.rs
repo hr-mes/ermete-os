@@ -526,9 +526,15 @@ pub fn build_ui(app: &Application, is_lockscreen: bool) {
         .css_classes(["greeter-power-btn"])
         .build();
     suspend_btn.connect_clicked(|_| {
-        if let Err(e) = std::process::Command::new("systemctl").arg("suspend").spawn() {
-            tracing::error!("Failed to spawn systemctl suspend: {}", e);
-        }
+        glib::MainContext::default().spawn_local(async move {
+            if let Ok(conn) = zbus::Connection::system().await {
+                if let Ok(proxy) = crate::ipc::power::LogindProxy::new(&conn).await {
+                    if let Err(e) = proxy.suspend(true).await {
+                        tracing::error!("Failed login1 suspend: {}", e);
+                    }
+                }
+            }
+        });
     });
 
     let reboot_btn = Button::builder()
@@ -536,9 +542,15 @@ pub fn build_ui(app: &Application, is_lockscreen: bool) {
         .css_classes(["greeter-power-btn"])
         .build();
     reboot_btn.connect_clicked(|_| {
-        if let Err(e) = std::process::Command::new("systemctl").arg("reboot").spawn() {
-            tracing::error!("Failed to spawn systemctl reboot: {}", e);
-        }
+        glib::MainContext::default().spawn_local(async move {
+            if let Ok(conn) = zbus::Connection::system().await {
+                if let Ok(proxy) = crate::ipc::power::LogindProxy::new(&conn).await {
+                    if let Err(e) = proxy.reboot(true).await {
+                        tracing::error!("Failed login1 reboot: {}", e);
+                    }
+                }
+            }
+        });
     });
 
     let poweroff_btn = Button::builder()
@@ -546,9 +558,15 @@ pub fn build_ui(app: &Application, is_lockscreen: bool) {
         .css_classes(["greeter-power-btn"])
         .build();
     poweroff_btn.connect_clicked(|_| {
-        if let Err(e) = std::process::Command::new("systemctl").arg("poweroff").spawn() {
-            tracing::error!("Failed to spawn systemctl poweroff: {}", e);
-        }
+        glib::MainContext::default().spawn_local(async move {
+            if let Ok(conn) = zbus::Connection::system().await {
+                if let Ok(proxy) = crate::ipc::power::LogindProxy::new(&conn).await {
+                    if let Err(e) = proxy.power_off(true).await {
+                        tracing::error!("Failed login1 poweroff: {}", e);
+                    }
+                }
+            }
+        });
     });
 
     bottom_bar.append(&suspend_btn);

@@ -206,7 +206,10 @@ fn try_parse_system_actions(list_box: &GtkBox, filter_lower: &str, pop: &Applica
         row.set_child(Some(&hbox));
         row.connect_clicked(glib::clone!(@weak pop => move |_| {
             let _ = std::process::Command::new("ermete-settings-rs").arg("--toggle-dark-mode").spawn();
-            let _ = std::process::Command::new("notify-send").arg("Ermete OS").arg("Modalità visiva aggiornata").spawn();
+            let _ = notify_rust::Notification::new()
+                .summary("Ermete OS")
+                .body("Modalità visiva aggiornata")
+                .show();
             pop.close();
         }));
         list_box.append(&row);
@@ -227,7 +230,10 @@ fn try_parse_system_actions(list_box: &GtkBox, filter_lower: &str, pop: &Applica
         hbox.append(&vbox);
         row.set_child(Some(&hbox));
         row.connect_clicked(glib::clone!(@weak pop => move |_| {
-            let _ = std::process::Command::new("notify-send").arg("Ermete System Action").arg("Process Killer avviato").spawn();
+            let _ = notify_rust::Notification::new()
+                .summary("Ermete System Action")
+                .body("Process Killer avviato")
+                .show();
             let _ = std::process::Command::new("foot").arg("-e").arg("htop").spawn();
             pop.close();
         }));
