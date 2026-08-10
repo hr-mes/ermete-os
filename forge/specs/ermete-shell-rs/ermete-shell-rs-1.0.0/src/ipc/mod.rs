@@ -16,7 +16,6 @@ pub use mpris::{get_mpris_controller, MprisController};
 pub use network::{get_network_controller, NetworkController};
 pub use power::{get_power_controller, PowerController};
 
-use zbus::Connection;
 use system_proxies::ControllerBackend;
 
 #[tracing::instrument]

@@ -111,6 +111,7 @@ pub fn build_page() -> Box {
                     &("org.ermete.Settings", "VoiceOverEnabled", zbus::zvariant::Value::from(state))
                 ).await;
             }
+            let _ = crate::crdt_store::update_setting_crdt("voice_over_enabled", &state.to_string()).await;
         });
         glib::Propagation::Proceed
     });

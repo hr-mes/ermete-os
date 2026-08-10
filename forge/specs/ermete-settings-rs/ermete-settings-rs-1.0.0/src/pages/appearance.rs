@@ -52,6 +52,7 @@ pub fn build_page() -> Box {
                 with_settings_proxy(|proxy| async move {
                     let _ = proxy.set_color_scheme("prefer-light").await;
                 }).await;
+                crate::crdt_store::update_theme_crdt("prefer-light").await;
             });
         }
     });
@@ -62,6 +63,7 @@ pub fn build_page() -> Box {
                 with_settings_proxy(|proxy| async move {
                     let _ = proxy.set_color_scheme("prefer-dark").await;
                 }).await;
+                crate::crdt_store::update_theme_crdt("prefer-dark").await;
             });
         }
     });
@@ -72,6 +74,7 @@ pub fn build_page() -> Box {
                 with_settings_proxy(|proxy| async move {
                     let _ = proxy.set_color_scheme("default").await;
                 }).await;
+                crate::crdt_store::update_theme_crdt("default").await;
             });
         }
     });
@@ -115,10 +118,12 @@ pub fn build_page() -> Box {
         btn.connect_clicked(move |_| {
             let hex_c = hex_clone.clone();
             let _ = crate::accent_engine::apply_accent_color(&hex_c);
+            let hex_c2 = hex_c.clone();
             relm4::spawn_local(async move {
                 crate::settings_proxy::with_appearance_proxy(move |proxy| async move {
                     let _ = proxy.set_accent_color(&hex_c).await;
                 }).await;
+                crate::crdt_store::update_accent_color_crdt(&hex_c2).await;
             });
         });
         accent_box.append(&btn);

@@ -1,0 +1,48 @@
+//! Ermete Dock - Executable Main Entrypoint (Fase 13)
+//!
+//! Visual Dock and taskbar application for Ermete OS.
+//! Anchors to desktop shell edge via `gtk4-layer-shell`, injects Glassmorphism
+//! styling via `ermete_style::glass::load_glass_theme()`, and listens for ECS / zero-copy IPC events.
+
+use anyhow::Result;
+use gtk4::prelude::*;
+use gtk4::Application;
+use gtk4_layer_shell::Edge;
+
+mod controller;
+mod dock;
+mod dock_config;
+mod dock_data;
+mod dock_engine;
+mod dock_watcher;
+mod preview_popup;
+mod ui;
+
+fn main() -> Result<()> {
+    // 1. Inietta il design "Glassmorphism"
+    ermete_style::glass::load_glass_theme();
+
+    let app = Application::builder()
+        .application_id("org.ermete.dock")
+        .build();
+
+    app.connect_activate(|app| {
+        // 2. Ancoraggio taskbar via gtk4-layer-shell ed ECS integration
+        match dock::DockTaskbar::new(app, Edge::Bottom) {
+            Ok(dock_taskbar) => {
+                if let Err(e) = dock_taskbar.start_zero_copy_ipc_listener() {
+                    eprintln!("Error starting zero-copy IPC listener: {}", e);
+                }
+                dock_taskbar.window.present();
+            }
+            Err(e) => {
+                eprintln!("Failed to initialize DockTaskbar: {}, falling back to full UI builder", e);
+                let win = ui::build_ui(app);
+                win.present();
+            }
+        }
+    });
+
+    app.run();
+    Ok(())
+}

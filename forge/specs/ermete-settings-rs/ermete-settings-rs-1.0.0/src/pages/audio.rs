@@ -61,6 +61,7 @@ pub fn build_page() -> Box {
                     let _ = proxy.set_audio_volume(val).await;
                 }
             }
+            crate::crdt_store::update_audio_crdt(val).await;
         });
     });
 

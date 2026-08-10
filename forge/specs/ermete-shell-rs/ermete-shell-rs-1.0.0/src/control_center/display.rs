@@ -1,6 +1,6 @@
 use crate::ui::viewmodel::{ControlCenterViewModel, ControlCenterIntent};
 use gtk4::prelude::*;
-use gtk4::{Align, Box as GtkBox, Button, Label, Orientation, Scale, Switch};
+use gtk4::{Align, Box as GtkBox, Label, Orientation, Scale, Switch};
 
 #[derive(Debug, Clone)]
 pub struct DisplayModuleData {

@@ -1,12 +1,11 @@
 use gtk4::prelude::*;
 use gtk4::{
-    Align, Application, ApplicationWindow, Box as GtkBox, Button, Frame, Grid, Image, Label,
-    Orientation, ScrolledWindow, SelectionMode,
+    Align, Application, ApplicationWindow, Box as GtkBox, Button, Grid, Image, Label,
+    Orientation, ScrolledWindow,
 };
 use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
 use chrono::Local;
 use std::cell::RefCell;
-use std::rc::Rc;
 
 thread_local! {
     static WIDGETS_BOARD_WIN: RefCell<Option<glib::WeakRef<ApplicationWindow>>> = const { RefCell::new(None) };

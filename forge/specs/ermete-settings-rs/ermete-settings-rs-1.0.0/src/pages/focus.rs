@@ -47,6 +47,7 @@ pub fn build_page() -> GtkBox {
                     &("org.ermete.Settings", "DoNotDisturb", zbus::zvariant::Value::from(state))
                 ).await;
             }
+            crate::crdt_store::update_dnd_crdt(state).await;
         });
         glib::Propagation::Proceed
     });
@@ -95,9 +96,11 @@ pub fn build_page() -> GtkBox {
         };
         let name_str = name.to_string();
         let prof_res_c = prof_res_clone.clone();
+        let name_crdt = name_str.clone();
 
         relm4::spawn_local(async move {
             ermete_niri_ipc::async_client::update_niri_kdl_setting("focus-profile", &name_str).await;
+            let _ = crate::crdt_store::update_setting_crdt("focus_profile", &name_crdt).await;
             prof_res_c.set_text(&format!("✅ Profilo '{}' attivato su ermete-shell-rs e Niri IPC.", name_str));
         });
     });

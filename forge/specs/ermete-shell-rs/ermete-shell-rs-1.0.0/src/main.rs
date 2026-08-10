@@ -15,6 +15,8 @@ pub mod morphic_pill;
 pub mod control_center;
 pub mod desktop_canvas;
 pub mod appearance_engine;
+pub mod launcher;
+
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -167,6 +169,27 @@ fn main() -> glib::ExitCode {
             crate::ui::greeter::build_ui(app, is_lock);
         });
         return app.run_with_args(&Vec::<String>::new());
+    }
+
+    if args.launcher {
+        let app = Application::builder()
+            .application_id("os.ermete.Launcher")
+            .flags(gio::ApplicationFlags::HANDLES_COMMAND_LINE)
+            .build();
+        app.connect_activate(|app| {
+            crate::theme::init_css();
+            static ACTIVATED_LAUNCHER: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+            if !ACTIVATED_LAUNCHER.swap(true, std::sync::atomic::Ordering::SeqCst) {
+                launcher::show_launcher_window(app);
+            } else {
+                launcher::toggle_launcher_visibility();
+            }
+        });
+        app.connect_command_line(|app, _cmdline| {
+            app.activate();
+            0
+        });
+        return app.run();
     }
 
     if args.dock {

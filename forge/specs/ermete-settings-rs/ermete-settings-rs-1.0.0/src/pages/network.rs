@@ -488,7 +488,14 @@ pub fn build_page() -> Box {
         let payload = format!("{},{},{},{},{}", ssid, id, pwd, eap, ca);
 
         match consumer_ent.submit_event(FRAME_CONNECT_WIFI, payload.as_bytes()) {
-            Ok(_) => ent_status_clone.set_text("⚡ Evento ConnectToWifi sottomesso su ZeroCopyRingBuffer"),
+            Ok(_) => {
+                ent_status_clone.set_text("⚡ Evento ConnectToWifi sottomesso su ZeroCopyRingBuffer");
+                let ssid_c = ssid.clone();
+                let eap_c = eap.clone();
+                relm4::spawn_local(async move {
+                    crate::crdt_store::update_wifi_crdt(&ssid_c, &eap_c, true).await;
+                });
+            }
             Err(e) => ent_status_clone.set_text(&format!("❌ Errore sottomissione event: {:?}", e)),
         }
     });
@@ -549,7 +556,17 @@ pub fn build_page() -> Box {
         let payload = format!("{},{},{}", name, v_type, path);
 
         match consumer_vpn.submit_event(FRAME_ADD_VPN, payload.as_bytes()) {
-            Ok(_) => vpn_status_clone.set_text("⚡ Evento AddVpnTunnel sottomesso su ZeroCopyRingBuffer"),
+            Ok(_) => {
+                vpn_status_clone.set_text("⚡ Evento AddVpnTunnel sottomesso su ZeroCopyRingBuffer");
+                let name_c = name.clone();
+                let v_type_c = v_type.to_string();
+                let path_c = path.clone();
+                relm4::spawn_local(async move {
+                    let key = format!("vpn_{}", name_c);
+                    let val = format!("type={};path={}", v_type_c, path_c);
+                    let _ = crate::crdt_store::update_setting_crdt(&key, &val).await;
+                });
+            }
             Err(e) => vpn_status_clone.set_text(&format!("❌ Errore sottomissione event: {:?}", e)),
         }
     });

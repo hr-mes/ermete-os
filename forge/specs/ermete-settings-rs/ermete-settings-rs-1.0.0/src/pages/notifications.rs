@@ -25,6 +25,7 @@ pub fn build_page() -> Box {
                 .args(["mode", "-s", mode])
                 .output()
                 .await;
+            crate::crdt_store::update_dnd_crdt(is_active).await;
         });
     });
 
@@ -56,6 +57,16 @@ pub fn build_page() -> Box {
         let app_switch = Switch::new();
         app_switch.set_active(true);
         app_switch.set_valign(Align::Center);
+
+        let app_n = app_name.to_string();
+        app_switch.connect_active_notify(move |sw| {
+            let active = sw.is_active();
+            let name_c = app_n.clone();
+            relm4::spawn_local(async move {
+                let key = format!("notification_app_{}", name_c.to_lowercase());
+                let _ = crate::crdt_store::update_setting_crdt(&key, &active.to_string()).await;
+            });
+        });
 
         let row = ActionRow::builder(app_name)
             .subtitle(app_desc)

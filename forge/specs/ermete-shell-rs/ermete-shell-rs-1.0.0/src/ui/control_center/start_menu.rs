@@ -5,6 +5,10 @@ use gtk4::{Align, Application, ApplicationWindow, Box as GtkBox, Button, Entry, 
 use gtk4_layer_shell::{Edge, Layer, LayerShell};
 
 pub fn show_start_menu_popover(app: &Application) {
+    crate::launcher::show_launcher_window(app);
+}
+
+fn _legacy_start_menu(app: &Application) {
     let pop = ApplicationWindow::builder()
         .application(app)
         .title("Start Menu")

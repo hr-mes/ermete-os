@@ -14,7 +14,7 @@ pub struct NetworkModuleData {
 
 impl Default for NetworkModuleData {
     fn default() -> Self {
-        let (net_icon, _title, net_sub) = crate::core::get_network_controller().get_cached_network_status();
+        let (_net_icon, _title, net_sub) = crate::core::get_network_controller().get_cached_network_status();
         let connected = net_sub != "Disattivato" && net_sub != "Non connesso" && net_sub != "Off" && net_sub != "Disconnected";
         Self {
             connected,

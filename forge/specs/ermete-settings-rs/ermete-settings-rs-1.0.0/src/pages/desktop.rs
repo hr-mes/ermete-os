@@ -88,6 +88,7 @@ pub fn build_page() -> Box {
                 .args(["--user", action, "ermete-dock.service"])
                 .status()
                 .await;
+            let _ = crate::crdt_store::update_setting_crdt("dock_enabled", &state.to_string()).await;
         });
         gtk4::glib::Propagation::Proceed
     });
@@ -139,14 +140,15 @@ pub fn build_page() -> Box {
             btn.connect_clicked(move |_| {
                 let abs_path = path_clone.to_string_lossy().into_owned();
                 let abs_path_clone = abs_path.clone();
+                let abs_path_crdt = abs_path.clone();
                 relm4::spawn_local(async move {
                     if let Ok(conn) = crate::get_connection().await {
                         if let Ok(proxy) = crate::settings_proxy::SettingsProxy::new(&conn).await {
                             let _ = proxy.set_wallpaper(&abs_path_clone).await;
                         }
                     }
+                    crate::crdt_store::update_wallpaper_crdt(&abs_path_crdt).await;
                 });
-                println!("Wallpaper selected via D-Bus: {}", abs_path);
             });
 
             wallpaper_grid_clone.attach(&btn, col, row, 1, 1);

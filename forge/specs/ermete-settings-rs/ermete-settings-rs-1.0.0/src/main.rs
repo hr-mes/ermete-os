@@ -4,6 +4,7 @@ static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 pub mod accent_engine;
 pub mod components;
+pub mod crdt_store;
 pub mod pages;
 pub mod settings_proxy;
 
@@ -160,8 +161,11 @@ impl SimpleComponent for AppModel {
                 self.active_page = page_id;
             }
             AppMsg::RouteAi(query) => {
-                // Chiamata all'AI Daemon per il natural language routing
-                println!("AI Daemon Routing: analizzo l'intento '{}'", query);
+                // Chiamata all'AI Daemon per il natural language routing e propagazione CRDT
+                let q_clone = query.clone();
+                relm4::spawn_local(async move {
+                    let _ = crate::crdt_store::update_setting_crdt("ai_routing_intent", &q_clone).await;
+                });
 
                 let q = query.to_lowercase();
                 if q.contains("audio") || q.contains("suono") || q.contains("volume") {
