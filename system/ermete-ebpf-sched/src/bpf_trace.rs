@@ -35,7 +35,6 @@ impl BpfExecTracer {
 
         let bpf_path = "target/bpfel-unknown-none/release/ermete-ebpf-sched-bpf";
         let bpf_obj = Ebpf::load_file(bpf_path)
-            .or_else(|_| Ebpf::load(&[]))
             .ok()
             .map(|b| Arc::new(Mutex::new(b)));
 

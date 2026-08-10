@@ -50,8 +50,8 @@ bwrap \
         if [ -f "./build.sh" ]; then
             ./build.sh
         else
-            echo "Executing hermetic build script..."
-            ./build.sh
+            echo "ERROR: Build script ./build.sh not found." >&2
+            exit 1
         fi
     "
 

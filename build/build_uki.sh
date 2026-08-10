@@ -36,7 +36,6 @@ SB_CERT="${SB_CERT:-/etc/pki/uki/uki-signing.crt}"
 
 # Tool preference: 'auto', 'ukify', or 'objcopy'
 TOOL_BACKEND="${TOOL_BACKEND:-auto}"
-MOCK_MODE="${MOCK_MODE:-false}"
 
 # Usage / Help function
 usage() {
@@ -56,12 +55,11 @@ Options:
       --sign               Enable Secure Boot signing via sbsign
       --sb-key PATH        Path to Secure Boot private key
       --sb-cert PATH       Path to Secure Boot X.509 certificate
-      --mock               Enable mock mode (create dummy files if inputs missing)
   -h, --help               Show this help message
 
 Environment Variables:
   VMLINUZ, INITRAMFS, OS_RELEASE, CMDLINE, EFI_STUB, OUTPUT_EFI,
-  SIGN_IMAGE, SB_KEY, SB_CERT, TOOL_BACKEND, MOCK_MODE
+  SIGN_IMAGE, SB_KEY, SB_CERT, TOOL_BACKEND
 
 Examples:
   # Basic UKI build using defaults:
@@ -92,7 +90,6 @@ while [[ $# -gt 0 ]]; do
         --sign) SIGN_IMAGE="true"; shift ;;
         --sb-key) SB_KEY="$2"; shift 2 ;;
         --sb-cert) SB_CERT="$2"; shift 2 ;;
-        --mock) MOCK_MODE="true"; shift ;;
         -h|--help) usage ;;
         *) echo "[-] Unknown parameter: $1"; exit 1 ;;
     esac
@@ -106,7 +103,7 @@ echo "🌋 Ermete OS - UKI Assembly Engine (Fase 14)"
 echo "=============================================================================="
 
 # ------------------------------------------------------------------------------
-# 1. AUTO-DETECTION & MOCK FALLBACKS
+# 1. AUTO-DETECTION
 # ------------------------------------------------------------------------------
 
 # Auto-detect vmlinuz if not specified
@@ -143,58 +140,26 @@ if [[ -z "${EFI_STUB}" ]]; then
     EFI_STUB=$(find /usr/lib/systemd/boot/efi /usr/lib/systemd /usr/share/systemd /boot/efi -name "linuxx64.efi.stub" -o -name "systemd-stub.efi" 2>/dev/null | head -n 1 || true)
 fi
 
-# Handle mock generation if requested or if files are missing in mock mode
-if [[ "${MOCK_MODE}" == "true" ]]; then
-    MOCK_DIR="${BUILD_DIR}/mock_inputs"
-    mkdir -p "${MOCK_DIR}"
-    echo "[!] Mock mode active: Creating missing dummy inputs in ${MOCK_DIR}..."
-
-    if [[ -z "${VMLINUZ}" ]] || [[ ! -f "${VMLINUZ}" ]]; then
-        VMLINUZ="${MOCK_DIR}/vmlinuz-mock"
-        echo "Mock ErmeteOS Kernel Binary Image" > "${VMLINUZ}"
-    fi
-    if [[ -z "${INITRAMFS}" ]] || [[ ! -f "${INITRAMFS}" ]]; then
-        INITRAMFS="${MOCK_DIR}/initramfs-mock.img"
-        echo "Mock Initramfs Archive Image" > "${INITRAMFS}"
-    fi
-    if [[ -z "${OS_RELEASE}" ]] || [[ ! -f "${OS_RELEASE}" ]]; then
-        OS_RELEASE="${MOCK_DIR}/os-release"
-        cat << 'EOF_MOCK' > "${OS_RELEASE}"
-NAME="Ermete OS"
-ID=ermete
-VERSION="1.0-SINGULARITY"
-PRETTY_NAME="Ermete OS Singularity Edition"
-EOF_MOCK
-    fi
-    if [[ -z "${EFI_STUB}" ]] || [[ ! -f "${EFI_STUB}" ]]; then
-        EFI_STUB="${MOCK_DIR}/linuxx64.efi.stub"
-        # Create minimal 128-byte dummy binary for objcopy section embedding
-        dd if=/dev/zero of="${EFI_STUB}" bs=128 count=1 status=none
-    fi
-fi
-
 # Validation check
 MISSING=0
 if [[ -z "${VMLINUZ}" ]] || [[ ! -f "${VMLINUZ}" ]]; then
-    echo "[-] ERROR: vmlinuz kernel not found! Pass -k or set VMLINUZ (or use --mock)."
+    echo "[-] ERROR: vmlinuz kernel not found! Pass -k or set VMLINUZ."
     MISSING=1
 fi
 if [[ -z "${INITRAMFS}" ]] || [[ ! -f "${INITRAMFS}" ]]; then
-    echo "[-] ERROR: initramfs image not found! Pass -i or set INITRAMFS (or use --mock)."
+    echo "[-] ERROR: initramfs image not found! Pass -i or set INITRAMFS."
     MISSING=1
 fi
 if [[ -z "${OS_RELEASE}" ]] || [[ ! -f "${OS_RELEASE}" ]]; then
-    echo "[-] ERROR: os-release file not found! Pass -r or set OS_RELEASE (or use --mock)."
+    echo "[-] ERROR: os-release file not found! Pass -r or set OS_RELEASE."
     MISSING=1
 fi
 if [[ -z "${EFI_STUB}" ]] || [[ ! -f "${EFI_STUB}" ]]; then
-    echo "[-] ERROR: systemd EFI stub not found! Pass -s or set EFI_STUB (or use --mock)."
+    echo "[-] ERROR: systemd EFI stub not found! Pass -s or set EFI_STUB."
     MISSING=1
 fi
 
 if [[ $MISSING -eq 1 ]]; then
-    echo ""
-    echo "Tip: Re-run with '--mock' to generate mock input files for validation."
     exit 1
 fi
 

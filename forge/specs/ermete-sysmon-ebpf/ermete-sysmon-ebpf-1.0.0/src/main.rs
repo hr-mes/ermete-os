@@ -13,9 +13,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Ermete Sysmon eBPF (Ring-0 Analytics) starting...");
 
     // Load the compiled eBPF bytecode.
-    // (Falling back to empty load for compilation/stub logic if path missing)
     let bpf_path = "target/bpfel-unknown-none/release/ermete-sysmon-ebpf";
-    let bpf = Ebpf::load_file(bpf_path).or_else(|_| Ebpf::load(&[]))?;
+    let bpf = Ebpf::load_file(bpf_path).map_err(|e| format!("Failed to load eBPF bytecode from '{bpf_path}': {e}"))?;
     let bpf: &'static mut Ebpf = Box::leak(Box::new(bpf));
     
     // Attach to the tracepoint

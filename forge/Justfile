@@ -82,10 +82,11 @@ kernel-build-local:
 livepatch-build:
     #!/usr/bin/env bash
     set -euo pipefail
-    mkdir -p build/livepatch
-    touch build/livepatch/kpatch-stub.ko
     if [ -f specs/ermete-livepatch/ermete-livepatch.spec ]; then
         rpmbuild -ba specs/ermete-livepatch/ermete-livepatch.spec
+    else
+        echo "Error: specs/ermete-livepatch/ermete-livepatch.spec not found" >&2
+        exit 1
     fi
 
 # Inject livepatch kernel modules without reboot

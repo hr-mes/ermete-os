@@ -19,7 +19,6 @@ impl EbpfMonitor {
         // Attempt loading compiled eBPF bytecode, or fallback gracefully for stub/testing
         let bpf_path = "target/bpfel-unknown-none/release/ebpf-core";
         let bpf_obj = Ebpf::load_file(bpf_path)
-            .or_else(|_| Ebpf::load(&[]))
             .ok()
             .map(|b| Arc::new(Mutex::new(b)));
 

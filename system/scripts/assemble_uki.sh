@@ -84,20 +84,9 @@ elif [ -f /etc/pki/secureboot/db.crt ]; then
 fi
 
 if [ -z "$KEY_SRC" ] || [ -z "$CRT_SRC" ]; then
-    echo "WARNING: Secure Boot signing key or certificate missing in /run/secrets or isolated storage!"
-    echo "Generating ephemeral development fallback keys via OpenSSL..."
-    DEV_KEY="/tmp/dev.key"
-    DEV_CRT="/tmp/dev.crt"
-    if [ ! -f "$DEV_KEY" ] || [ ! -f "$DEV_CRT" ]; then
-        openssl req -new -x509 -newkey rsa:2048 -keyout "$DEV_KEY" -out "$DEV_CRT" -days 365 -nodes -subj "/CN=ErmeteDev"
-    fi
-    if [ -z "$KEY_SRC" ]; then
-        KEY_SRC="$DEV_KEY"
-    fi
-    if [ -z "$CRT_SRC" ]; then
-        CRT_SRC="$DEV_CRT"
-    fi
-    echo "Dev fallback active: KEY=${KEY_SRC}, CRT=${CRT_SRC}"
+    echo "ERROR: Secure Boot signing key or certificate missing in /run/secrets or /etc/pki/secureboot!" >&2
+    echo "Refusing to generate insecure development fallback keys. Exiting." >&2
+    exit 1
 fi
 
 echo "Copying signing key into isolated temporary enclave..."
@@ -127,7 +116,10 @@ if command -v "$UKIFY_BIN" >/dev/null 2>&1 || [ -f "$UKIFY_BIN" ]; then
         --os-release="@/etc/os-release" \
         --secureboot-private-key="$KEY_FILE" \
         --secureboot-certificate="$CRT_FILE" \
-        --output="/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi" || true
+        --output="/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi"
+else
+    echo "ERROR: ukify binary not found!" >&2
+    exit 1
 fi
 
 if [ -f "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi" ] && command -v sbsign >/dev/null 2>&1; then
@@ -144,6 +136,9 @@ if [ -f "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi" ]; then
     cp "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi" /boot/efi/EFI/Linux/ermete-chimera-uki.efi
     cp "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi" /boot/efi/EFI/Linux/ErmeteOS.efi
     cp "/usr/lib/modules/${QUALIFIED_KERNEL}/vmlinuz.efi" "/usr/lib/modules/${QUALIFIED_KERNEL}/uki.efi"
+else
+    echo "ERROR: Failed to generate UKI EFI binary!" >&2
+    exit 1
 fi
 
 ldconfig
