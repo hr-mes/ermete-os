@@ -136,10 +136,70 @@ pub struct AfXdpConfig {
     pub headroom: u32,
 }
 
+/// Autodetect active network interface on system (bypassing hardcoded "eth0").
+///
+/// 1. Inspects `/proc/net/route` for interface with default gateway route (`00000000`).
+/// 2. Scans `/sys/class/net/` for operational interface in state `up` or `unknown`.
+/// 3. Falls back across standard interface name candidates (`wlan0`, `enp3s0`, `eth0`, `enp0s3`, `end0`).
+pub fn detect_active_interface() -> String {
+    if let Ok(route_content) = std::fs::read_to_string("/proc/net/route") {
+        for line in route_content.lines().skip(1) {
+            let fields: Vec<&str> = line.split_whitespace().collect();
+            if fields.len() >= 4 {
+                let iface = fields[0];
+                let dest = fields[1];
+                let flags = fields[3];
+                if dest == "00000000" && iface != "lo" {
+                    if let Ok(flags_val) = u16::from_str_radix(flags, 16) {
+                        if flags_val & 0x0001 != 0 {
+                            info!("Autodetected active default route network interface: '{}'", iface);
+                            return iface.to_string();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if let Ok(entries) = std::fs::read_dir("/sys/class/net") {
+        for entry in entries.flatten() {
+            let if_name = entry.file_name().to_string_lossy().to_string();
+            if if_name == "lo"
+                || if_name.starts_with("veth")
+                || if_name.starts_with("docker")
+                || if_name.starts_with("br-")
+                || if_name.starts_with("virbr")
+            {
+                continue;
+            }
+            let operstate_path = entry.path().join("operstate");
+            if let Ok(state) = std::fs::read_to_string(&operstate_path) {
+                let state_str = state.trim();
+                if state_str == "up" || state_str == "unknown" {
+                    info!("Autodetected active network interface via sysfs operstate: '{}'", if_name);
+                    return if_name;
+                }
+            }
+        }
+    }
+
+    let candidates = ["wlan0", "enp3s0", "eth0", "enp0s3", "end0"];
+    for &iface in &candidates {
+        let sys_path = format!("/sys/class/net/{}", iface);
+        if std::path::Path::new(&sys_path).exists() {
+            info!("Selected fallback network interface present on system: '{}'", iface);
+            return iface.to_string();
+        }
+    }
+
+    info!("Fallback to default network interface 'eth0'");
+    "eth0".to_string()
+}
+
 impl Default for AfXdpConfig {
     fn default() -> Self {
         Self {
-            if_name: "eth0".to_string(),
+            if_name: detect_active_interface(),
             queue_id: 0,
             frame_size: 2048,
             frame_count: 4096,

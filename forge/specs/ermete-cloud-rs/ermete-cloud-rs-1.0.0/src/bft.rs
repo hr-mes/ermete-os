@@ -70,6 +70,22 @@ impl BftConsensusEngine {
         }
     }
 
+    /// Spawns background worker sweeping old proposal records (older than 300s) to prevent memory leak
+    pub fn spawn_proposal_pruner(self: &Arc<Self>) {
+        let engine = self.clone();
+        tokio::spawn(async move {
+            let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(30));
+            let ttl = tokio::time::Duration::from_secs(300);
+
+            loop {
+                interval.tick().await;
+                let mut proposals = engine.proposals.lock().await;
+                let now = Instant::now();
+                proposals.retain(|_, record| now.duration_since(record.created_at) < ttl);
+            }
+        });
+    }
+
     /// Calculate Byzantine Fault Tolerance Quorum Threshold (2f + 1)
     /// N = total active nodes, f = max faulty nodes
     pub fn calculate_quorum(total_nodes: usize) -> usize {

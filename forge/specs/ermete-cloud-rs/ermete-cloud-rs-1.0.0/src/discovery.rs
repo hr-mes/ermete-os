@@ -69,4 +69,31 @@ pub fn start_udp_discovery(
             }
         }
     });
+
+    // Async background task: Dead Node Pruning Sweep (Heartbeat Timeout > 60 seconds)
+    let peers_sweep = peers.clone();
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(Duration::from_secs(15));
+        let heartbeat_timeout = Duration::from_secs(60);
+
+        loop {
+            interval.tick().await;
+            let mut p = peers_sweep.lock().await;
+            let before_count = p.len();
+            let now = Instant::now();
+
+            p.retain(|peer_ip, last_seen| {
+                let alive = now.duration_since(*last_seen) < heartbeat_timeout;
+                if !alive {
+                    info!("Pruned inactive dead peer node [{}] due to heartbeat timeout (>60s)", peer_ip);
+                }
+                alive
+            });
+
+            let pruned = before_count - p.len();
+            if pruned > 0 {
+                info!("Discovery peer sweep completed: pruned {} dead peer(s). Active fleet nodes: {}", pruned, p.len());
+            }
+        }
+    });
 }

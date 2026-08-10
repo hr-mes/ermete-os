@@ -45,6 +45,7 @@ async fn main() -> Result<()> {
 
     // 3. Initialize Peer Manager & IPC Storage Bridge (Fase 11)
     let peer_manager = PeerManager::new();
+    peer_manager.spawn_heartbeat_pruner(60);
     let storage_bridge = Arc::new(StorageBridge::new(None, None)?);
     let (crdt_broadcaster, _background_dispatcher) = CrdtBroadcaster::new(
         pqc_engine.clone(),
@@ -52,9 +53,10 @@ async fn main() -> Result<()> {
         storage_bridge,
     );
 
-    // 4. Initialize AF_XDP Kernel Bypass Socket with mock network interface parameters (Kernel Bypass mode)
+    // 4. Initialize AF_XDP Kernel Bypass Socket with autodetected network interface parameters
+    let active_if_name = network::af_xdp::detect_active_interface();
     let af_xdp_config = AfXdpConfig {
-        if_name: "eth0".to_string(),
+        if_name: active_if_name,
         queue_id: 0,
         frame_size: 2048,
         frame_count: 4096,

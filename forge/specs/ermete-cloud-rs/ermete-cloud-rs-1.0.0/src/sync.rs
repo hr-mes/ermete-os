@@ -67,6 +67,7 @@ impl SyncEngine {
     pub async fn start_discovery(&self) -> Result<()> {
         info!("Starting Continuity P2P engine on local network with Dilithium Verification & BFT Consensus...");
         
+        self.bft_engine.spawn_proposal_pruner();
         discovery::start_udp_discovery(self.known_peers.clone(), self.zk_engine.clone());
         listener::start_tcp_listener(
             self.known_peers.clone(),

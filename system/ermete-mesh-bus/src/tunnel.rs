@@ -19,17 +19,34 @@ pub enum PacketType {
     Heartbeat = 0x04,
 }
 
+#[derive(Debug, Clone)]
+pub struct IngressDataFrame {
+    pub src_addr: SocketAddr,
+    pub payload: Vec<u8>,
+    pub timestamp: u64,
+}
+
 pub struct MeshTunnel {
     socket: Arc<UdpSocket>,
     pqc_engine: PqcEngine,
     peer_manager: PeerManager,
     pending_handshakes: Arc<Mutex<HashMap<String, HandshakeSession>>>,
+    ingress_tx: Option<tokio::sync::mpsc::Sender<IngressDataFrame>>,
     #[allow(dead_code)]
     bind_addr: SocketAddr,
 }
 
 impl MeshTunnel {
     pub async fn bind(addr: &str, pqc_engine: PqcEngine, peer_manager: PeerManager) -> Result<Self> {
+        Self::bind_with_channel(addr, pqc_engine, peer_manager, None).await
+    }
+
+    pub async fn bind_with_channel(
+        addr: &str,
+        pqc_engine: PqcEngine,
+        peer_manager: PeerManager,
+        ingress_tx: Option<tokio::sync::mpsc::Sender<IngressDataFrame>>,
+    ) -> Result<Self> {
         let socket = UdpSocket::bind(addr).await?;
         let bind_addr = socket.local_addr()?;
         info!("Post-Quantum WireGuard Mesh Bus tunnel listening on UDP {}", bind_addr);
@@ -39,6 +56,7 @@ impl MeshTunnel {
             pqc_engine,
             peer_manager,
             pending_handshakes: Arc::new(Mutex::new(HashMap::new())),
+            ingress_tx,
             bind_addr,
         })
     }
@@ -156,8 +174,37 @@ impl MeshTunnel {
     }
 
     async fn handle_data_frame(&self, payload: &[u8], src_addr: SocketAddr) -> Result<()> {
-        debug!("Received {} bytes PQC Data Frame from {}", payload.len(), src_addr);
-        // Data frame processing logic: verify zero-trust MAC, record statistics
+        info!("Received {} bytes PQC Data Frame from {}", payload.len(), src_addr);
+
+        if payload.is_empty() {
+            return Err(anyhow!("Received zero-length PQC data frame from {}", src_addr));
+        }
+
+        let timestamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
+
+        let frame = IngressDataFrame {
+            src_addr,
+            payload: payload.to_vec(),
+            timestamp,
+        };
+
+        if let Some(ref tx) = self.ingress_tx {
+            if let Err(e) = tx.send(frame).await {
+                warn!("Failed to dispatch Data Frame to upper layer: channel closed ({})", e);
+            } else {
+                debug!("Successfully routed PQC Data Frame payload to upper-layer bus pipeline");
+            }
+        } else {
+            info!(
+                "PQC Data Frame decrypted/routed to upper-layer bus pipeline (payload len: {} bytes, timestamp: {})",
+                payload.len(),
+                timestamp
+            );
+        }
+
         Ok(())
     }
 

@@ -144,4 +144,40 @@ impl PeerManager {
             .decode(&peer.kyber_pk_b64)
             .map_err(|e| anyhow!("Invalid Kyber base64 for peer {}: {}", node_id, e))
     }
+
+    /// Spawns an asynchronous background worker that periodically purges inactive peers
+    /// exceeding the specified heartbeat/handshake timeout in seconds.
+    pub fn spawn_heartbeat_pruner(&self, timeout_secs: u64) {
+        let peers_ref = self.peers.clone();
+        tokio::spawn(async move {
+            let mut interval = tokio::time::interval(std::time::Duration::from_secs(15));
+            loop {
+                interval.tick().await;
+                let now = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_secs();
+
+                let mut peers = peers_ref.write().await;
+                let before_count = peers.len();
+                peers.retain(|node_id, peer| {
+                    if peer.last_handshake == 0 {
+                        return true;
+                    }
+                    let active = (now - peer.last_handshake) < timeout_secs;
+                    if !active {
+                        info!(
+                            "Mesh Bus: Pruned dead peer '{}' (no heartbeat/handshake for >{}s)",
+                            node_id, timeout_secs
+                        );
+                    }
+                    active
+                });
+                let pruned = before_count - peers.len();
+                if pruned > 0 {
+                    info!("PeerManager sweep completed: pruned {} dead peer(s)", pruned);
+                }
+            }
+        });
+    }
 }
