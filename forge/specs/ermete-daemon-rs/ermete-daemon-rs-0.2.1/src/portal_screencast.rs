@@ -140,9 +140,10 @@ impl PortalScreenCastService {
         lock.insert(session_str, session);
 
         let mut results: HashMap<String, OwnedValue> = HashMap::new();
-        if let Ok(ov) = Value::from(session_handle).try_into() {
-            results.insert("session_handle".to_string(), ov);
-        }
+        let session_ov: OwnedValue = Value::from(session_handle)
+            .try_into()
+            .map_err(|e| zbus::fdo::Error::Failed(format!("Failed to convert session_handle: {}", e)))?;
+        results.insert("session_handle".to_string(), session_ov);
 
         Ok((0, results)) // 0 = Success
     }
@@ -205,22 +206,28 @@ impl PortalScreenCastService {
         session.pipewire_node_id = PipeWireStreamManager::resolve_pipewire_node(&session.selected_monitor, session.source_types).await;
 
         let mut stream_props: HashMap<String, OwnedValue> = HashMap::new();
-        if let Ok(ov) = Value::from(session.selected_monitor.clone()).try_into() {
-            stream_props.insert("id".to_string(), ov);
-        }
-        if let Ok(ov) = Value::from(session.selected_title.clone()).try_into() {
-            stream_props.insert("title".to_string(), ov);
-        }
-        if let Ok(ov) = Value::from(session.source_types).try_into() {
-            stream_props.insert("source_type".to_string(), ov);
-        }
+        let id_ov: OwnedValue = Value::from(session.selected_monitor.clone())
+            .try_into()
+            .map_err(|e| zbus::fdo::Error::Failed(format!("Failed to convert monitor id: {}", e)))?;
+        stream_props.insert("id".to_string(), id_ov);
+
+        let title_ov: OwnedValue = Value::from(session.selected_title.clone())
+            .try_into()
+            .map_err(|e| zbus::fdo::Error::Failed(format!("Failed to convert monitor title: {}", e)))?;
+        stream_props.insert("title".to_string(), title_ov);
+
+        let type_ov: OwnedValue = Value::from(session.source_types)
+            .try_into()
+            .map_err(|e| zbus::fdo::Error::Failed(format!("Failed to convert source_type: {}", e)))?;
+        stream_props.insert("source_type".to_string(), type_ov);
 
         let stream_tuple = (session.pipewire_node_id, stream_props);
 
         let mut results: HashMap<String, OwnedValue> = HashMap::new();
-        if let Ok(ov) = Value::from(vec![stream_tuple]).try_into() {
-            results.insert("streams".to_string(), ov);
-        }
+        let streams_ov: OwnedValue = Value::from(vec![stream_tuple])
+            .try_into()
+            .map_err(|e| zbus::fdo::Error::Failed(format!("Failed to convert streams: {}", e)))?;
+        results.insert("streams".to_string(), streams_ov);
 
         tracing::info!(node_id = session.pipewire_node_id, monitor = %session.selected_monitor, "ScreenCast Negotiated stream");
         Ok((0, results)) // 0 = Success

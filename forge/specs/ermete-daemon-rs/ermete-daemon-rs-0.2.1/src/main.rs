@@ -66,9 +66,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let init_app = appearance_store.state_rx.borrow().clone();
     tokio::spawn(async move {
-        theme::apply_dynamic_theme(&init_app.wallpaper.wallpaper, &init_app.theme.color_scheme).await;
+        if let Err(e) = theme::apply_dynamic_theme(&init_app.wallpaper.wallpaper, &init_app.theme.color_scheme).await {
+            warn!(error = %e, "Failed to apply dynamic theme on startup");
+        }
         let _ = accent_engine::apply_accent_color(&init_app.theme.accent_color);
     });
+
 
     let settings_srv = SettingsService::new_with_token(
         appearance_store.state_tx.clone(),

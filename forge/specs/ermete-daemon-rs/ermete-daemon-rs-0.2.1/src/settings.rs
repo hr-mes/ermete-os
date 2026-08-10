@@ -276,7 +276,9 @@ impl SettingsService {
                             let wall = appearance_state.wallpaper.wallpaper.clone();
                             let scheme = val.clone();
                             tokio::spawn(async move {
-                                crate::theme::apply_dynamic_theme(&wall, &scheme).await;
+                                if let Err(e) = crate::theme::apply_dynamic_theme(&wall, &scheme).await {
+                                    tracing::warn!(error = %e, "Failed to apply dynamic theme");
+                                }
                             });
                             if let Some(ref w) = worker {
                                 let _ = w.apply_color_scheme(&val).await;
@@ -321,7 +323,9 @@ impl SettingsService {
                             let wall = val.clone();
                             let scheme = appearance_state.theme.color_scheme.clone();
                             tokio::spawn(async move {
-                                crate::theme::apply_dynamic_theme(&wall, &scheme).await;
+                                if let Err(e) = crate::theme::apply_dynamic_theme(&wall, &scheme).await {
+                                    tracing::warn!(error = %e, "Failed to apply dynamic theme");
+                                }
                             });
                             if let Some(ref w) = worker {
                                 let _ = w.apply_wallpaper(&val).await;

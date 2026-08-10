@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 use std::process::Command;
 use tracing::{info, warn};
+use anyhow::{Context, Result};
 
 const DEFAULT_TEMPLATE: &str = include_str!("../assets/matugen_theme.template.default");
 
@@ -16,7 +17,7 @@ pub fn config_dir() -> PathBuf {
 
 /// Dynamic Theme Pipeline: extracts Material 3 color palette via Matugen / script
 /// and updates swww wallpaper + ~/.config/ermete/theme.css GTK4 directives.
-pub async fn apply_dynamic_theme(wallpaper_path: &str, color_scheme: &str) {
+pub async fn apply_dynamic_theme(wallpaper_path: &str, color_scheme: &str) -> Result<()> {
     info!(
         wallpaper = %wallpaper_path,
         scheme = %color_scheme,
@@ -26,7 +27,7 @@ pub async fn apply_dynamic_theme(wallpaper_path: &str, color_scheme: &str) {
     let wallpaper = wallpaper_path.to_string();
     let scheme = color_scheme.to_string();
 
-    tokio::task::spawn_blocking(move || {
+    tokio::task::spawn_blocking(move || -> Result<()> {
         let mode = if scheme == "default" { "light" } else { "dark" };
 
         let script_paths = [
@@ -50,7 +51,8 @@ pub async fn apply_dynamic_theme(wallpaper_path: &str, color_scheme: &str) {
 
         if !executed {
             let cfg_dir = config_dir();
-            let _ = std::fs::create_dir_all(&cfg_dir);
+            std::fs::create_dir_all(&cfg_dir)
+                .with_context(|| format!("Failed to create config directory {:?}", cfg_dir))?;
             let theme_css = cfg_dir.join("theme.css");
 
             // Apply wallpaper via swww if running
@@ -62,7 +64,8 @@ pub async fn apply_dynamic_theme(wallpaper_path: &str, color_scheme: &str) {
             if !template_path.exists() {
                 let default_tpl = std::fs::read_to_string("/usr/share/ermete/matugen_theme.template")
                     .unwrap_or_else(|_| DEFAULT_TEMPLATE.to_string());
-                let _ = std::fs::write(&template_path, default_tpl);
+                std::fs::write(&template_path, default_tpl)
+                    .with_context(|| format!("Failed to write template file {:?}", template_path))?;
             }
 
             let tmp_cfg = cfg_dir.join("matugen_tmp.toml");
@@ -72,16 +75,18 @@ pub async fn apply_dynamic_theme(wallpaper_path: &str, color_scheme: &str) {
                 theme_css.display()
             );
 
-            if std::fs::write(&tmp_cfg, cfg_content).is_ok() {
-                let mat_res = Command::new("matugen")
-                    .args(["image", &wallpaper, "--source-color-index", "0", "--mode", mode, "-c", tmp_cfg.to_str().unwrap_or("")])
-                    .status();
-                let _ = std::fs::remove_file(tmp_cfg);
+            std::fs::write(&tmp_cfg, &cfg_content)
+                .with_context(|| format!("Failed to write temp config file {:?}", tmp_cfg))?;
 
-                if mat_res.map(|s| s.success()).unwrap_or(false) {
-                    info!("Dynamic theme generated cleanly via matugen direct CLI.");
-                    return;
-                }
+            let tmp_cfg_str = tmp_cfg.to_str().ok_or_else(|| anyhow::anyhow!("Invalid temp config path"))?;
+            let mat_res = Command::new("matugen")
+                .args(["image", &wallpaper, "--source-color-index", "0", "--mode", mode, "-c", tmp_cfg_str])
+                .status();
+            let _ = std::fs::remove_file(&tmp_cfg);
+
+            if mat_res.map(|s| s.success()).unwrap_or(false) {
+                info!("Dynamic theme generated cleanly via matugen direct CLI.");
+                return Ok(());
             }
 
             // Fallback GTK4 CSS
@@ -121,12 +126,14 @@ pub async fn apply_dynamic_theme(wallpaper_path: &str, color_scheme: &str) {
 @define-color window_bg #1e1e2e;
 @define-color window_fg #cdd6f4;
 "#;
-            let _ = std::fs::write(&theme_css, fallback_css);
+            std::fs::write(&theme_css, fallback_css)
+                .with_context(|| format!("Failed to write fallback theme CSS: {:?}", theme_css))?;
             warn!("Matugen not available. Wrote fallback theme to theme.css.");
         }
+        Ok(())
     })
     .await
-    .unwrap_or_default();
+    .map_err(|e| anyhow::anyhow!("Spawn blocking task failed: {}", e))?
 }
 
 #[cfg(test)]
@@ -140,7 +147,8 @@ mod tests {
         let wallpaper = tmp_dir.join("test_bg.png");
         let _ = std::fs::write(&wallpaper, "fake_png_data");
 
-        apply_dynamic_theme(wallpaper.to_str().unwrap(), "prefer-dark").await;
+        let wallpaper_str = wallpaper.to_str().expect("wallpaper path UTF-8");
+        apply_dynamic_theme(wallpaper_str, "prefer-dark").await.unwrap();
 
         let cfg_dir = config_dir();
         let theme_css = cfg_dir.join("theme.css");
@@ -150,3 +158,4 @@ mod tests {
         assert!(content.contains("@define-color surface"));
     }
 }
+

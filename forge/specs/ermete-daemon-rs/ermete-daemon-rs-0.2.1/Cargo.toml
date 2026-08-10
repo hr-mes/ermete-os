@@ -19,6 +19,8 @@ aya = { workspace = true }
 
 # Decoupled domain crates
 ermete-style = { path = "../../../../system/ermete-style" }
+anyhow = { workspace = true }
+
 
 
 

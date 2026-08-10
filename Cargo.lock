@@ -1545,6 +1545,7 @@ dependencies = [
 name = "ermete-daemon-rs"
 version = "0.2.1"
 dependencies = [
+ "anyhow",
  "aya",
  "ermete-style",
  "futures-util",

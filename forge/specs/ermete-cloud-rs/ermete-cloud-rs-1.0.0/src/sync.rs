@@ -27,9 +27,10 @@ pub struct SyncEngine {
 }
 
 impl SyncEngine {
-    pub fn new() -> Self {
+    pub fn new() -> Result<Self> {
         let mut rng = OsRng;
-        let kyber_keypair = pqc_kyber::keypair(&mut rng).expect("Failed to generate Kyber-1024 keypair for SyncEngine");
+        let kyber_keypair = pqc_kyber::keypair(&mut rng)
+            .map_err(|e| anyhow::anyhow!("Failed to generate Kyber-1024 keypair for SyncEngine: {:?}", e))?;
         let dilithium_keypair = DilithiumKeypair::generate();
         
         let dilithium_pk_b64 = BASE64.encode(&dilithium_keypair.public);
@@ -41,7 +42,7 @@ impl SyncEngine {
 
         info!("SyncEngine Level 15 ZK-Mesh Computing & Byzantine Consensus Initialized for Node {}", node_id);
 
-        Self {
+        Ok(Self {
             known_peers: Arc::new(Mutex::new(HashMap::new())),
             auth_token: Arc::new(Mutex::new(None)),
             kyber_keypair,
@@ -49,7 +50,7 @@ impl SyncEngine {
             zk_engine,
             bft_engine,
             node_id,
-        }
+        })
     }
 
     pub fn get_kyber_public_key_b64(&self) -> String {

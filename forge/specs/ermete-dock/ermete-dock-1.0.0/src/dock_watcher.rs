@@ -5,27 +5,42 @@ use notify::{RecursiveMode, Watcher};
 use std::sync::OnceLock;
 use tokio::runtime::Runtime;
 
-static RUNTIME: OnceLock<Runtime> = OnceLock::new();
+static RUNTIME: OnceLock<Result<Runtime, String>> = OnceLock::new();
 
-pub fn get_runtime() -> &'static Runtime {
-    RUNTIME.get_or_init(|| {
+pub fn get_runtime() -> std::io::Result<&'static Runtime> {
+    match RUNTIME.get_or_init(|| {
         tokio::runtime::Builder::new_multi_thread()
             .enable_all()
             .build()
-            .expect("Failed to initialize shared Tokio runtime for ermete-dock")
-    })
+            .map_err(|e| format!("Failed to initialize shared Tokio runtime for ermete-dock: {}", e))
+    }) {
+        Ok(rt) => Ok(rt),
+        Err(err_msg) => Err(std::io::Error::new(std::io::ErrorKind::Other, err_msg.clone())),
+    }
 }
 
 pub fn fetch_current_niri_windows() -> Vec<NiriWindowInfo> {
-    get_runtime().block_on(async {
-        niri_client::fetch_niri_data::<Vec<NiriWindowInfo>>("Windows", "Windows").await.unwrap_or_default()
-    })
+    match get_runtime() {
+        Ok(rt) => rt.block_on(async {
+            niri_client::fetch_niri_data::<Vec<NiriWindowInfo>>("Windows", "Windows").await.unwrap_or_default()
+        }),
+        Err(e) => {
+            eprintln!("[ermete-dock] Runtime initialization error: {}", e);
+            Vec::new()
+        }
+    }
 }
 
 pub fn fetch_current_workspaces() -> Vec<NiriWorkspaceInfo> {
-    get_runtime().block_on(async {
-        niri_client::fetch_niri_data::<Vec<NiriWorkspaceInfo>>("Workspaces", "Workspaces").await.unwrap_or_default()
-    })
+    match get_runtime() {
+        Ok(rt) => rt.block_on(async {
+            niri_client::fetch_niri_data::<Vec<NiriWorkspaceInfo>>("Workspaces", "Workspaces").await.unwrap_or_default()
+        }),
+        Err(e) => {
+            eprintln!("[ermete-dock] Runtime initialization error: {}", e);
+            Vec::new()
+        }
+    }
 }
 
 pub fn fetch_current_active_workspace_id() -> Option<u64> {
@@ -51,12 +66,16 @@ pub fn spawn_dock_watchers(
         if line.contains("Window") || line.contains("Workspace") {
             let win_sender = win_sender.clone();
             let ws_sender = ws_sender.clone();
-            get_runtime().spawn(async move {
-                let windows = niri_client::fetch_niri_data::<Vec<NiriWindowInfo>>("Windows", "Windows").await.unwrap_or_default();
-                let _ = win_sender.send(windows);
-                let workspaces = niri_client::fetch_niri_data::<Vec<NiriWorkspaceInfo>>("Workspaces", "Workspaces").await.unwrap_or_default();
-                let _ = ws_sender.send(workspaces);
-            });
+            if let Ok(rt) = get_runtime() {
+                rt.spawn(async move {
+                    let windows = niri_client::fetch_niri_data::<Vec<NiriWindowInfo>>("Windows", "Windows").await.unwrap_or_default();
+                    let _ = win_sender.send(windows);
+                    let workspaces = niri_client::fetch_niri_data::<Vec<NiriWorkspaceInfo>>("Workspaces", "Workspaces").await.unwrap_or_default();
+                    let _ = ws_sender.send(workspaces);
+                });
+            } else {
+                eprintln!("[ermete-dock] Runtime initialization error in watch_niri_event_stream");
+            }
         }
     });
 

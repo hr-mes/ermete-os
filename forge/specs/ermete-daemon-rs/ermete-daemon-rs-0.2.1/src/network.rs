@@ -304,7 +304,27 @@ impl Network {
 
         dict
     }
+
+    /// Safe extractor for top-level DBus setting dictionary
+    pub fn extract_setting<'a>(
+        dict: &'a HashMap<&'static str, HashMap<&'static str, zbus::zvariant::Value<'static>>>,
+        setting_name: &str,
+    ) -> Result<&'a HashMap<&'static str, zbus::zvariant::Value<'static>>, anyhow::Error> {
+        dict.get(setting_name)
+            .ok_or_else(|| anyhow::anyhow!("Missing DBus setting: '{}'", setting_name))
+    }
+
+    /// Safe extractor for DBus setting value
+    pub fn extract_setting_value<'a>(
+        setting: &'a HashMap<&'static str, zbus::zvariant::Value<'static>>,
+        key: &str,
+    ) -> Result<&'a zbus::zvariant::Value<'static>, anyhow::Error> {
+        setting.get(key)
+            .ok_or_else(|| anyhow::anyhow!("Missing key '{}' in setting dictionary", key))
+    }
+
 }
+
 
 #[cfg(test)]
 mod tests {

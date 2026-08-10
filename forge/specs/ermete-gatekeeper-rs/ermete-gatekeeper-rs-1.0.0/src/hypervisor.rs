@@ -189,6 +189,25 @@ pub fn build_crosvm_command(
     cmd
 }
 
+/// Safely reads the seccomp BPF policy file without risking a process panic.
+#[allow(dead_code)]
+pub fn read_seccomp_policy(path: &Path) -> anyhow::Result<String> {
+    std::fs::read_to_string(path)
+        .map_err(|e| anyhow::anyhow!("Failed to read seccomp policy at {:?}: {}", path, e))
+}
+
+/// Safely parses argument values (e.g. `--mem`) from crosvm command line arguments without panicking.
+#[allow(dead_code)]
+pub fn parse_mem_arg(args: &[String]) -> anyhow::Result<String> {
+    let mem_idx = args
+        .iter()
+        .position(|r| r == "--mem")
+        .ok_or_else(|| anyhow::anyhow!("Missing '--mem' argument in crosvm command line"))?;
+    args.get(mem_idx + 1)
+        .cloned()
+        .ok_or_else(|| anyhow::anyhow!("Missing value after '--mem' flag"))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -199,7 +218,7 @@ mod tests {
         let path = Path::new(&policy_path_str);
         assert!(path.exists(), "Seccomp policy file must exist");
         
-        let content = std::fs::read_to_string(path).expect("Failed to read seccomp policy");
+        let content = read_seccomp_policy(path).unwrap_or_default();
         assert!(content.contains("bpf: return 1"), "Policy must block bpf syscalls");
         assert!(content.contains("ptrace: return 1"), "Policy must block ptrace syscalls");
         assert!(content.contains("userfaultfd: return 1"), "Policy must block userfaultfd syscalls");
@@ -217,8 +236,8 @@ mod tests {
 
         assert_eq!(std_cmd.get_program(), "crosvm");
         assert!(args.contains(&"--mem".to_string()), "Command must include --mem");
-        let mem_idx = args.iter().position(|r| r == "--mem").unwrap();
-        assert_eq!(args[mem_idx + 1], "512", "Default memory limit must be 512MB");
+        let mem_val = parse_mem_arg(&args).unwrap_or_default();
+        assert_eq!(mem_val, "512", "Default memory limit must be 512MB");
         assert!(args.contains(&"--balloon".to_string()), "Command must include --balloon");
     }
 }

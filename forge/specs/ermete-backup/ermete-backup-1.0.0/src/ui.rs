@@ -16,6 +16,15 @@ struct SnapshotInfo {
     pub size_estimate: String,
 }
 
+#[allow(dead_code)]
+fn serialize_snapshot_info(info: &SnapshotInfo) -> Result<String, serde_json::Error> {
+    serde_json::to_string(info)
+}
+
+fn parse_snapshot_info(json: &str) -> Result<SnapshotInfo, serde_json::Error> {
+    serde_json::from_str(json)
+}
+
 #[zbus::proxy(
     interface = "org.ermete.Backup1",
     default_service = "org.ermete.Backup1",
@@ -46,8 +55,9 @@ async fn get_snapshots_async() -> Vec<SnapshotInfo> {
             let p = entry.path();
             if p.extension().is_some_and(|ext| ext == "json") {
                 if let Ok(content) = fs::read_to_string(&p) {
-                    if let Ok(info) = serde_json::from_str::<SnapshotInfo>(&content) {
-                        list.push(info);
+                    match parse_snapshot_info(&content) {
+                        Ok(info) => list.push(info),
+                        Err(e) => eprintln!("[Time Machine] Error decoding snapshot at {:?}: {}", p, e),
                     }
                 }
             }
@@ -345,7 +355,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_snapshot_info_serialization_and_parsing() {
+    fn test_snapshot_info_serialization_and_parsing() -> Result<(), serde_json::Error> {
         let info = SnapshotInfo {
             id: "snap-20260715-120000".to_string(),
             timestamp: "15/07/2026 12:00:00".to_string(),
@@ -353,10 +363,11 @@ mod tests {
             path: "/var/home/ermete/.snapshots/snap-20260715-120000".to_string(),
             size_estimate: "0 B".to_string(),
         };
-        let json = serde_json::to_string(&info).expect("Failed to serialize SnapshotInfo");
-        let parsed: SnapshotInfo = serde_json::from_str(&json).expect("Failed to parse SnapshotInfo");
+        let json = serialize_snapshot_info(&info)?;
+        let parsed = parse_snapshot_info(&json)?;
         assert_eq!(parsed.id, info.id);
         assert_eq!(parsed.note, info.note);
+        Ok(())
     }
 
     #[test]

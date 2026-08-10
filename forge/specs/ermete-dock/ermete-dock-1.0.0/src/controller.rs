@@ -5,26 +5,38 @@ pub struct DockController;
 
 impl DockController {
     pub fn focus_window(win_id: u64) {
-        get_runtime().spawn(async move {
-            niri_client::focus_window(win_id).await;
-        });
+        if let Ok(rt) = get_runtime() {
+            rt.spawn(async move {
+                niri_client::focus_window(win_id).await;
+            });
+        } else {
+            eprintln!("[ermete-dock] Unable to focus window: Tokio runtime initialization failed");
+        }
     }
 
     pub fn close_window(win_id: u64) {
-        get_runtime().spawn(async move {
-            niri_client::close_window_by_id(win_id).await;
-        });
+        if let Ok(rt) = get_runtime() {
+            rt.spawn(async move {
+                niri_client::close_window_by_id(win_id).await;
+            });
+        } else {
+            eprintln!("[ermete-dock] Unable to close window: Tokio runtime initialization failed");
+        }
     }
 
     pub fn launch_app(desktop_id: &str) {
         let desktop_id = desktop_id.to_string();
-        get_runtime().spawn(async move {
-            let _ = niri_client::niri_action(serde_json::json!({
-                "Action": {
-                    "Spawn": { "command": ["gtk-launch", desktop_id] }
-                }
-            })).await;
-        });
+        if let Ok(rt) = get_runtime() {
+            rt.spawn(async move {
+                let _ = niri_client::niri_action(serde_json::json!({
+                    "Action": {
+                        "Spawn": { "command": ["gtk-launch", desktop_id] }
+                    }
+                })).await;
+            });
+        } else {
+            eprintln!("[ermete-dock] Unable to launch app: Tokio runtime initialization failed");
+        }
     }
 
     pub fn switch_context(context_id: &str) {

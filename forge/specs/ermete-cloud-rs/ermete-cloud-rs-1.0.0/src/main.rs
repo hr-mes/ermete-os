@@ -88,7 +88,7 @@ async fn main() -> Result<()> {
 
     info!("Starting Ermete Cloud Daemon (Level 15: ZK-Mesh Computing & Byzantine Consensus)");
 
-    let sync_engine = std::sync::Arc::new(sync::SyncEngine::new());
+    let sync_engine = std::sync::Arc::new(sync::SyncEngine::new()?);
     
     // Export D-Bus interfaces
     let _conn = zbus::connection::Builder::session()?
