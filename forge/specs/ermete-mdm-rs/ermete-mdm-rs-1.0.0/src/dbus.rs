@@ -90,7 +90,7 @@ impl MdmIface {
         let engine = WipeEngine::new();
         
         // This is extremely dangerous, requires Polkit auth
-        match engine.execute_cryptsetup_erase().await {
+        match engine.execute_cryptsetup_erase(None).await {
             Ok(_) => Ok("Wipe initiated. System halting.".into()),
             Err(e) => Ok(format!("Error: {}", e)),
         }

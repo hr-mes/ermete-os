@@ -260,7 +260,13 @@ fn try_parse_terminal_command(list_box: &GtkBox, filter_text: &str, filter_lower
         row.set_child(Some(&hbox));
         let cmd_clone = cmd.to_string();
         row.connect_clicked(glib::clone!(@weak pop => move |_| {
-            let _ = std::process::Command::new("foot").arg("-e").arg("sh").arg("-c").arg(format!("{}; read -p '\nPremi Invio per chiudere...'", cmd_clone)).spawn();
+            let parts: Vec<&str> = cmd_clone.split_whitespace().collect();
+            if !parts.is_empty() {
+                let _ = std::process::Command::new("foot")
+                    .arg("-e")
+                    .args(&parts)
+                    .spawn();
+            }
             pop.close();
         }));
         list_box.append(&row);

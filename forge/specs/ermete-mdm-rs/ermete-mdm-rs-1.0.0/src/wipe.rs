@@ -1,5 +1,6 @@
-use anyhow::Result;
-use tracing::{info, warn};
+use anyhow::{anyhow, Result};
+use tracing::{error, info, warn};
+use std::path::Path;
 
 #[zbus::proxy(
     default_service = "org.freedesktop.systemd1",
@@ -23,27 +24,81 @@ impl WipeEngine {
         Ok("OK".into())
     }
 
-    /// Native direct LUKS header key slots erasure via direct async file/block operations
+    /// Rilevamento dinamico del block device target tramite /etc/crypttab o /proc/mounts
+    pub async fn detect_target_device(&self) -> Result<String> {
+        if let Ok(content) = tokio::fs::read_to_string("/etc/crypttab").await {
+            for line in content.lines() {
+                let line = line.trim();
+                if line.is_empty() || line.starts_with('#') {
+                    continue;
+                }
+                let parts: Vec<&str> = line.split_whitespace().collect();
+                if parts.len() >= 2 {
+                    let dev = parts[1];
+                    if Path::new(dev).exists() {
+                        return Ok(dev.to_string());
+                    }
+                }
+            }
+        }
+
+        if let Ok(content) = tokio::fs::read_to_string("/proc/mounts").await {
+            for line in content.lines() {
+                let parts: Vec<&str> = line.split_whitespace().collect();
+                if parts.len() >= 2 && parts[1] == "/" {
+                    let dev = parts[0];
+                    if Path::new(dev).exists() {
+                        return Ok(dev.to_string());
+                    }
+                }
+            }
+        }
+
+        Err(anyhow!("Errore Critico: Impossibile rilevare dinamicamente il dispositivo di target per il wipe"))
+    }
+
+    /// Rimozione crittografica diretta degli slot chiave LUKS header
     pub async fn native_cryptsetup_erase(&self, dev_path: &str) -> Result<()> {
         info!("Executing direct cryptographic LUKS header wipe on {}", dev_path);
-        if let Ok(mut file) = tokio::fs::OpenOptions::new().write(true).open(dev_path).await {
-            use tokio::io::AsyncWriteExt;
-            let zeroes = vec![0u8; 1024 * 1024];
-            for _ in 0..16 {
-                let _ = file.write_all(&zeroes).await;
-            }
-            let _ = file.flush().await;
+        
+        if !Path::new(dev_path).exists() {
+            error!("Critical failure: Target device {} does not exist!", dev_path);
+            return Err(anyhow!("Errore Critico: Il dispositivo di target wipe '{}' non esiste", dev_path));
         }
+
+        use tokio::io::AsyncWriteExt;
+        let mut file = tokio::fs::OpenOptions::new()
+            .write(true)
+            .open(dev_path)
+            .await
+            .map_err(|e| anyhow!("Errore Critico: Impossibile aprire il dispositivo di target '{}' per la scrittura: {}", dev_path, e))?;
+
+        let zeroes = vec![0u8; 1024 * 1024];
+        for _ in 0..16 {
+            file.write_all(&zeroes)
+                .await
+                .map_err(|e| anyhow!("Errore Critico durante la scrittura dei byte zero su '{}': {}", dev_path, e))?;
+        }
+        file.flush()
+            .await
+            .map_err(|e| anyhow!("Errore Critico durante il flush del dispositivo '{}': {}", dev_path, e))?;
+
+        info!("Cryptographic LUKS header wipe completed successfully on {}", dev_path);
         Ok(())
     }
 
-    pub async fn execute_cryptsetup_erase(&self) -> Result<()> {
+    pub async fn execute_cryptsetup_erase(&self, target_device: Option<&str>) -> Result<()> {
         warn!("INITIATING CRYPTOGRAPHIC WIPE!");
         
-        // Native cryptsetup erase replacement
-        let _ = self.native_cryptsetup_erase("/dev/nvme0n1p3").await;
+        let dev_path = match target_device {
+            Some(dev) => dev.to_string(),
+            None => self.detect_target_device().await?,
+        };
 
-        // Immediately trigger poweroff over D-Bus via systemd Manager proxy
+        // Esecuzione erase nativo su device validato
+        self.native_cryptsetup_erase(&dev_path).await?;
+
+        // Arresto immediato del sistema tramite D-Bus systemd Manager proxy
         if let Ok(conn) = zbus::Connection::system().await {
             if let Ok(manager) = SystemdManagerProxy::new(&conn).await {
                 let _ = manager.stop_unit("systemd-cryptsetup@luks-root.service", "replace").await;
