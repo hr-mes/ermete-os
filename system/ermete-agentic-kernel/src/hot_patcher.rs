@@ -82,7 +82,6 @@ enum ActiveLink {
     KProbe { link_id: KProbeLinkId },
     UProbe { link_id: UProbeLinkId },
     Extension { link_id: ExtensionLinkId },
-    Simulated,
 }
 
 /// Internal storage record for an active patch instance
@@ -90,7 +89,7 @@ struct ActivePatchRecord {
     spec: PatchSpec,
     status: PatchStatus,
     ebpf_instance: Option<Ebpf>,
-    link: ActiveLink,
+    link: Option<ActiveLink>,
     error_count: u32,
     applied_timestamp_secs: u64,
 }
@@ -233,7 +232,7 @@ impl BpfTrampolineInjector {
                                 spec,
                                 status: PatchStatus::Applied,
                                 ebpf_instance: Some(ebpf),
-                                link: ActiveLink::KProbe { link_id },
+                                link: Some(ActiveLink::KProbe { link_id }),
                                 error_count: 0,
                                 applied_timestamp_secs: now_secs,
                             },
@@ -269,7 +268,7 @@ impl BpfTrampolineInjector {
                                 spec,
                                 status: PatchStatus::Applied,
                                 ebpf_instance: Some(ebpf),
-                                link: ActiveLink::UProbe { link_id },
+                                link: Some(ActiveLink::UProbe { link_id }),
                                 error_count: 0,
                                 applied_timestamp_secs: now_secs,
                             },
@@ -316,7 +315,7 @@ impl BpfTrampolineInjector {
                                 spec,
                                 status: PatchStatus::Applied,
                                 ebpf_instance: Some(ebpf),
-                                link: ActiveLink::Extension { link_id },
+                                link: Some(ActiveLink::Extension { link_id }),
                                 error_count: 0,
                                 applied_timestamp_secs: now_secs,
                             },
@@ -326,29 +325,11 @@ impl BpfTrampolineInjector {
                 Ok(())
             }
             Err(e) => {
-                warn!(
-                    "⚠️ [BPF Injector] Real eBPF loader returned error (e.g. no root/missing BTF): {}. Entering managed simulation mode for patch '{}'",
+                error!(
+                    "🔥 [BPF Injector] CRITICAL: Real eBPF loader failed: {}. Zero-Trust enforcement prevents simulation fallback for patch '{}'",
                     e, patch_id
                 );
-
-                // Fallback simulation mode for testing & non-root dev environments
-                info!(
-                    "⚡ [Simulated Patch Injected] Patch '{}' ({:?}) active in virtual Ring-0 harness",
-                    patch_id, spec.patch_type
-                );
-
-                self.patches.insert(
-                    patch_id.clone(),
-                    ActivePatchRecord {
-                        spec,
-                        status: PatchStatus::Applied,
-                        ebpf_instance: None,
-                        link: ActiveLink::Simulated,
-                        error_count: 0,
-                        applied_timestamp_secs: now_secs,
-                    },
-                );
-                Ok(())
+                Err(anyhow::anyhow!("eBPF Ring-0 injection failed: {}", e))
             }
         }
     }
@@ -372,32 +353,33 @@ impl BpfTrampolineInjector {
             patch_id, record.spec.name
         );
 
-        let link = std::mem::replace(&mut record.link, ActiveLink::Simulated);
+        let link = record.link.take();
 
         if let Some(ref mut ebpf) = record.ebpf_instance {
-            match link {
-                ActiveLink::KProbe { link_id } => {
-                    if let Some(prog) = ebpf.program_mut(&record.spec.program_name) {
-                        if let Ok(kprobe) = <&mut KProbe>::try_from(prog) {
-                            let _ = kprobe.detach(link_id);
+            if let Some(active_link) = link {
+                match active_link {
+                    ActiveLink::KProbe { link_id } => {
+                        if let Some(prog) = ebpf.program_mut(&record.spec.program_name) {
+                            if let Ok(kprobe) = <&mut KProbe>::try_from(prog) {
+                                let _ = kprobe.detach(link_id);
+                            }
+                        }
+                    }
+                    ActiveLink::UProbe { link_id } => {
+                        if let Some(prog) = ebpf.program_mut(&record.spec.program_name) {
+                            if let Ok(uprobe) = <&mut UProbe>::try_from(prog) {
+                                let _ = uprobe.detach(link_id);
+                            }
+                        }
+                    }
+                    ActiveLink::Extension { link_id } => {
+                        if let Some(prog) = ebpf.program_mut(&record.spec.program_name) {
+                            if let Ok(ext) = <&mut Extension>::try_from(prog) {
+                                let _ = ext.detach(link_id);
+                            }
                         }
                     }
                 }
-                ActiveLink::UProbe { link_id } => {
-                    if let Some(prog) = ebpf.program_mut(&record.spec.program_name) {
-                        if let Ok(uprobe) = <&mut UProbe>::try_from(prog) {
-                            let _ = uprobe.detach(link_id);
-                        }
-                    }
-                }
-                ActiveLink::Extension { link_id } => {
-                    if let Some(prog) = ebpf.program_mut(&record.spec.program_name) {
-                        if let Ok(ext) = <&mut Extension>::try_from(prog) {
-                            let _ = ext.detach(link_id);
-                        }
-                    }
-                }
-                ActiveLink::Simulated => {}
             }
         }
 

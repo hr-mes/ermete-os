@@ -26,7 +26,6 @@ pub struct ExecveEvent {
 
 pub struct BpfExecTracer {
     bpf: Option<Arc<Mutex<Ebpf>>>,
-    simulated_pid_counter: u32,
 }
 
 impl BpfExecTracer {
@@ -46,7 +45,6 @@ impl BpfExecTracer {
 
         Self {
             bpf: bpf_obj,
-            simulated_pid_counter: 4000,
         }
     }
 
@@ -73,32 +71,6 @@ impl BpfExecTracer {
                     }
                 }
             }
-        } else {
-            // Synthesize realistic system process spawns for sched_ext prioritization
-            self.simulated_pid_counter += 1;
-            let sample_binaries = [
-                ("niri", "/usr/bin/niri"),
-                ("waybar", "/usr/bin/waybar"),
-                ("ghostty", "/usr/bin/ghostty"),
-                ("rustc", "/usr/bin/rustc"),
-                ("ollama", "/usr/bin/ollama"),
-                ("firefox", "/usr/bin/firefox"),
-            ];
-
-            let (comm, filename) = sample_binaries[(self.simulated_pid_counter as usize) % sample_binaries.len()];
-            
-            let now = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_nanos() as u64;
-
-            events.push(ExecveEvent {
-                pid: self.simulated_pid_counter,
-                ppid: 1000,
-                comm: comm.to_string(),
-                filename: filename.to_string(),
-                timestamp_ns: now,
-            });
         }
 
         events

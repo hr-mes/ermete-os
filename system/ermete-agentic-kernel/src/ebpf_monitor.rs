@@ -8,8 +8,6 @@ pub use ermete_bus_api::KernelTelemetry;
 
 pub struct EbpfMonitor {
     bpf: Option<Arc<Mutex<Ebpf>>>,
-    simulated_passed: u64,
-    simulated_dropped: u64,
 }
 
 impl EbpfMonitor {
@@ -30,8 +28,6 @@ impl EbpfMonitor {
 
         Self {
             bpf: bpf_obj,
-            simulated_passed: 1000,
-            simulated_dropped: 5,
         }
     }
 
@@ -44,8 +40,8 @@ impl EbpfMonitor {
                 .as_secs(),
             syscall_frequency_hz: 18500,
             memory_pressure_mb: 2048,
-            network_passed_packets: self.simulated_passed,
-            network_dropped_packets: self.simulated_dropped,
+            network_passed_packets: 0,
+            network_dropped_packets: 0,
             land_attacks_detected: 0,
             tcp_scans_detected: 2,
             blocklist_drops: 1,
@@ -64,10 +60,6 @@ impl EbpfMonitor {
                     telemetry.unauthorized_port_drops = array.get(&5, 0).unwrap_or(2);
                 }
             }
-        } else {
-            // Update simulated metrics to mimic real kernel activity under load
-            self.simulated_passed += 150;
-            self.simulated_dropped += 8;
         }
 
         telemetry
@@ -99,8 +91,7 @@ impl EbpfMonitor {
                 }
             }
         }
-        info!("Simulated Ring-0 eBPF map update applied: BLOCKLIST_IPV4 += {}", ip);
-        Ok(())
+        Err(format!("CRITICAL: Failed to hot-update Ring-0 eBPF map. Zero-Trust prohibits simulation of IP block {}", ip))
     }
 
     /// Hot-rewrites eBPF map rule in Ring-0: Toggles strict Zero-Trust mode
@@ -119,8 +110,7 @@ impl EbpfMonitor {
                 }
             }
         }
-        info!("Simulated Ring-0 eBPF map update applied: Zero-Trust mode set to {}", enabled);
-        Ok(())
+        Err("CRITICAL: Failed to hot-update Ring-0 eBPF map. Zero-Trust prohibits simulation of security flags".to_string())
     }
 
     /// Asynchronously writes PID core affinity scheduling target into Ring-0 `AI_SCHED_MAP`
