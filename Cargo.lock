@@ -1758,6 +1758,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "ermete-oobe"
+version = "0.1.0"
+dependencies = [
+ "ermete-style",
+ "gtk4",
+ "relm4",
+ "tokio",
+]
+
+[[package]]
 name = "ermete-recovery"
 version = "1.0.0"
 dependencies = [

@@ -99,32 +99,143 @@ pub fn ensure_index_loaded() {
     });
 }
 
-fn try_parse_calculator(list_box: &GtkBox, filter_lower: &str, pop: &ApplicationWindow) -> bool {
-    if filter_lower.starts_with('=') {
-        let expr = filter_lower.trim_start_matches('=').trim();
-        if let Ok(res) = meval::eval_str(expr) {
-            let res_str = res.to_string();
-            let row = Button::builder().css_classes(["spotlight-item"]).build();
-            let hbox = GtkBox::builder().orientation(Orientation::Horizontal).spacing(16).build();
-            let img = Image::builder().icon_name("accessories-calculator").pixel_size(40).build();
-            hbox.append(&img);
-            let vbox = GtkBox::builder().orientation(Orientation::Vertical).valign(Align::Center).build();
-            let name_lbl = Label::builder().label(format!("= {}", res_str)).halign(Align::Start).css_classes(["spotlight-item-title"]).build();
-            vbox.append(&name_lbl);
-            let desc_lbl = Label::builder().label("Risultato calcolatrice (clicca per copiare e chiudere)").halign(Align::Start).css_classes(["spotlight-item-desc"]).build();
-            vbox.append(&desc_lbl);
-            hbox.append(&vbox);
-            row.set_child(Some(&hbox));
-            row.connect_clicked(glib::clone!(@weak pop => move |_| {
-                let clipboard = pop.clipboard();
-                clipboard.set_text(&res_str);
-                pop.close();
-            }));
-            list_box.append(&row);
-        }
-        return true;
+fn try_parse_conversions(filter_lower: &str) -> Option<(String, String, String)> {
+    let parts: Vec<&str> = filter_lower.split_whitespace().collect();
+    if parts.len() < 4 {
+        return None;
     }
-    false
+    let val: f64 = parts[0].parse().ok()?;
+    let from_unit = parts[1];
+    let sep = parts[2];
+    let to_unit = parts[3];
+
+    if sep != "to" && sep != "in" && sep != "=" {
+        return None;
+    }
+
+    let (res, symbol) = match (from_unit, to_unit) {
+        ("usd", "eur") => (val * 0.92, "EUR"),
+        ("eur", "usd") => (val * 1.09, "USD"),
+        ("usd", "gbp") => (val * 0.79, "GBP"),
+        ("gbp", "usd") => (val * 1.27, "USD"),
+        ("eur", "gbp") => (val * 0.86, "GBP"),
+        ("gbp", "eur") => (val * 1.16, "EUR"),
+        ("usd", "jpy") => (val * 155.0, "JPY"),
+        ("jpy", "usd") => (val * 0.0064, "USD"),
+        ("km", "m") => (val * 1000.0, "m"),
+        ("m", "km") => (val / 1000.0, "km"),
+        ("km", "miles") | ("km", "mi") => (val * 0.621371, "mi"),
+        ("miles", "km") | ("mi", "km") => (val * 1.60934, "km"),
+        ("cm", "inch") | ("cm", "in") => (val * 0.393701, "in"),
+        ("inch", "cm") | ("in", "cm") => (val * 2.54, "cm"),
+        ("kg", "lbs") | ("kg", "lb") => (val * 2.20462, "lbs"),
+        ("lbs", "kg") | ("lb", "kg") => (val * 0.453592, "kg"),
+        ("c", "f") => (val * 9.0 / 5.0 + 32.0, "°F"),
+        ("f", "c") => ((val - 32.0) * 5.0 / 9.0, "°C"),
+        _ => return None,
+    };
+
+    let res_fmt = if (res - res.round()).abs() < 1e-9 {
+        format!("{:.0}", res)
+    } else {
+        format!("{:.2}", res)
+    };
+
+    let title = format!("Conversione: {} {}", res_fmt, symbol);
+    let desc = format!("{} {} = {} {} (Clicca per copiare)", val, from_unit.to_uppercase(), res_fmt, symbol);
+    let copy_val = format!("{} {}", res_fmt, symbol);
+    Some((title, desc, copy_val))
+}
+
+fn try_eval_math(_filter_text: &str, filter_lower: &str) -> Option<(String, String, String)> {
+    let expr = filter_lower.trim_start_matches('=').trim_end_matches('=').trim();
+    if expr.is_empty() {
+        return None;
+    }
+
+    let has_explicit_equal = filter_lower.starts_with('=');
+    let has_math_op = expr.contains('+') || expr.contains('*') || expr.contains('/') || expr.contains('^') || expr.contains('%')
+        || expr.contains("sqrt") || expr.contains("sin") || expr.contains("cos") || expr.contains("abs");
+    let has_subtraction = expr.contains('-') && expr.chars().any(|c| c.is_ascii_digit());
+
+    if !has_explicit_equal && !has_math_op && !has_subtraction {
+        return None;
+    }
+
+    if let Ok(res) = meval::eval_str(expr) {
+        if res.is_finite() {
+            let res_str = if (res - res.round()).abs() < 1e-9 {
+                format!("{:.0}", res)
+            } else {
+                format!("{:.4}", res).trim_end_matches('0').trim_end_matches('.').to_string()
+            };
+            let title = format!("= {}", res_str);
+            let desc = format!("Risultato calcolatrice: {} = {} (Clicca per copiare)", expr, res_str);
+            let copy_val = res_str;
+            return Some((title, desc, copy_val));
+        }
+    }
+    None
+}
+
+fn try_parse_inline_action(filter_text: &str, filter_lower: &str) -> Option<(String, String, String)> {
+    if let Some(res) = try_parse_conversions(filter_lower) {
+        return Some(res);
+    }
+    if let Some(res) = try_eval_math(filter_text, filter_lower) {
+        return Some(res);
+    }
+    None
+}
+
+fn try_parse_system_actions(list_box: &GtkBox, filter_lower: &str, pop: &ApplicationWindow) -> bool {
+    let mut matched = false;
+
+    // Dark Mode Action
+    if filter_lower.contains("dark") || filter_lower.contains("light") || filter_lower.contains("tema") || filter_lower.contains("scuro") || filter_lower.contains("chiaro") {
+        let row = Button::builder().css_classes(["spotlight-item"]).build();
+        let hbox = GtkBox::builder().orientation(Orientation::Horizontal).spacing(16).build();
+        let img = Image::builder().icon_name("preferences-desktop-theme").pixel_size(40).build();
+        hbox.append(&img);
+        let vbox = GtkBox::builder().orientation(Orientation::Vertical).valign(Align::Center).build();
+        let name_lbl = Label::builder().label("Azione di Sistema: Toggle Dark Mode").halign(Align::Start).css_classes(["spotlight-item-title"]).build();
+        vbox.append(&name_lbl);
+        let desc_lbl = Label::builder().label("Alterna tra la modalità scura e chiara del desktop").halign(Align::Start).css_classes(["spotlight-item-desc"]).build();
+        vbox.append(&desc_lbl);
+        hbox.append(&vbox);
+        row.set_child(Some(&hbox));
+        row.connect_clicked(glib::clone!(@weak pop => move |_| {
+            let _ = std::process::Command::new("ermete-settings-rs").arg("--toggle-dark-mode").spawn();
+            let _ = std::process::Command::new("notify-send").arg("Ermete OS").arg("Modalità visiva aggiornata").spawn();
+            pop.close();
+        }));
+        list_box.append(&row);
+        matched = true;
+    }
+
+    // Kill Process Action
+    if filter_lower.contains("kill") || filter_lower.contains("termina") || filter_lower.contains("process") || filter_lower.contains("processo") {
+        let row = Button::builder().css_classes(["spotlight-item"]).build();
+        let hbox = GtkBox::builder().orientation(Orientation::Horizontal).spacing(16).build();
+        let img = Image::builder().icon_name("process-stop").pixel_size(40).build();
+        hbox.append(&img);
+        let vbox = GtkBox::builder().orientation(Orientation::Vertical).valign(Align::Center).build();
+        let name_lbl = Label::builder().label("Azione di Sistema: Kill Process (Termina Processi)").halign(Align::Start).css_classes(["spotlight-item-title"]).build();
+        vbox.append(&name_lbl);
+        let desc_lbl = Label::builder().label("Finta azione Raycast: ricerca e interrompi processi in esecuzione").halign(Align::Start).css_classes(["spotlight-item-desc"]).build();
+        vbox.append(&desc_lbl);
+        hbox.append(&vbox);
+        row.set_child(Some(&hbox));
+        row.connect_clicked(glib::clone!(@weak pop => move |_| {
+            let _ = std::process::Command::new("notify-send").arg("Ermete System Action").arg("Process Killer avviato").spawn();
+            let _ = std::process::Command::new("foot").arg("-e").arg("htop").spawn();
+            pop.close();
+        }));
+        list_box.append(&row);
+        matched = true;
+    }
+
+    matched
 }
 
 fn try_parse_terminal_command(list_box: &GtkBox, filter_text: &str, filter_lower: &str, pop: &ApplicationWindow) -> bool {
@@ -180,56 +291,79 @@ fn try_parse_web_search(list_box: &GtkBox, filter_text: &str, filter_lower: &str
     false
 }
 
-fn try_parse_file_search(list_box: &GtkBox, filter_text: &str, filter_lower: &str, pop: &ApplicationWindow) -> bool {
-    if filter_lower.starts_with('/') {
-        let query = filter_text.trim_start_matches('/').trim();
-        if !query.is_empty() {
-            let query_str = query.to_string();
-            let list_box_clone = list_box.clone();
-            let pop_clone = pop.clone();
-            glib::MainContext::default().spawn_local(async move {
+fn run_fuzzy_file_search(list_box: &GtkBox, query: &str, pop: &ApplicationWindow) {
+    if query.trim().is_empty() {
+        return;
+    }
+    let query_str = query.to_string();
+    let list_box_clone = list_box.clone();
+    let pop_clone = pop.clone();
+
+    glib::MainContext::default().spawn_local(async move {
+        let home_dir = std::env::var("HOME").unwrap_or_else(|_| "/home/ermete".to_string());
+        
+        let output_res = tokio::process::Command::new("fd")
+            .arg("--max-results")
+            .arg("5")
+            .arg("--hidden")
+            .arg("--exclude")
+            .arg(".git")
+            .arg("--exclude")
+            .arg("target")
+            .arg(&query_str)
+            .arg(&home_dir)
+            .output()
+            .await;
+
+        let stdout = match output_res {
+            Ok(output) if output.status.success() && !output.stdout.is_empty() => {
+                String::from_utf8_lossy(&output.stdout).to_string()
+            }
+            _ => {
                 if let Ok(output) = tokio::process::Command::new("plocate")
                     .arg("-l")
                     .arg("5")
                     .arg(&query_str)
-                    .output().await
+                    .output()
+                    .await
                 {
-                    let stdout = String::from_utf8_lossy(&output.stdout);
-                    let mut count = 0;
-                    for line in stdout.lines() {
-                        if line.trim().is_empty() { continue; }
-                        if count >= 5 { break; }
-                        let row = Button::builder().css_classes(["spotlight-item"]).build();
-                        let hbox = GtkBox::builder().orientation(Orientation::Horizontal).spacing(16).build();
-                        let img = Image::builder().icon_name("text-x-generic").pixel_size(40).build();
-                        hbox.append(&img);
-                        let vbox = GtkBox::builder().orientation(Orientation::Vertical).valign(Align::Center).build();
-                        let path = std::path::Path::new(line);
-                        let name = path.file_name().unwrap_or_default().to_string_lossy();
-                        let name_lbl = Label::builder().label(name.to_string()).halign(Align::Start).css_classes(["spotlight-item-title"]).build();
-                        vbox.append(&name_lbl);
-                        let desc_lbl = Label::builder().label(line).halign(Align::Start).css_classes(["spotlight-item-desc"]).ellipsize(gtk4::pango::EllipsizeMode::Middle).build();
-                        vbox.append(&desc_lbl);
-                        hbox.append(&vbox);
-                        row.set_child(Some(&hbox));
-                        let file_path = line.to_string();
-                        row.connect_clicked(glib::clone!(@weak pop_clone => move |_| {
-                            let _ = std::process::Command::new("xdg-open").arg(&file_path).spawn();
-                            pop_clone.close();
-                        }));
-                        list_box_clone.append(&row);
-                        count += 1;
-                    }
-                    if count == 0 {
-                        let no_res = Label::builder().label("Nessun file trovato.").css_classes(["cc-label-sub"]).margin_top(20).build();
-                        list_box_clone.append(&no_res);
-                    }
+                    String::from_utf8_lossy(&output.stdout).to_string()
+                } else {
+                    String::new()
                 }
-            });
+            }
+        };
+
+        let mut count = 0;
+        for line in stdout.lines() {
+            let path_str = line.trim();
+            if path_str.is_empty() { continue; }
+            if count >= 5 { break; }
+
+            let row = Button::builder().css_classes(["spotlight-item"]).build();
+            let hbox = GtkBox::builder().orientation(Orientation::Horizontal).spacing(16).build();
+            let img = Image::builder().icon_name("text-x-generic").pixel_size(40).build();
+            hbox.append(&img);
+
+            let vbox = GtkBox::builder().orientation(Orientation::Vertical).valign(Align::Center).build();
+            let path = std::path::Path::new(path_str);
+            let name = path.file_name().unwrap_or_default().to_string_lossy();
+            let name_lbl = Label::builder().label(format!("File: {}", name)).halign(Align::Start).css_classes(["spotlight-item-title"]).build();
+            vbox.append(&name_lbl);
+            let desc_lbl = Label::builder().label(path_str).halign(Align::Start).css_classes(["spotlight-item-desc"]).ellipsize(gtk4::pango::EllipsizeMode::Middle).build();
+            vbox.append(&desc_lbl);
+            hbox.append(&vbox);
+            row.set_child(Some(&hbox));
+
+            let file_path = path_str.to_string();
+            row.connect_clicked(glib::clone!(@weak pop_clone => move |_| {
+                let _ = std::process::Command::new("xdg-open").arg(&file_path).spawn();
+                pop_clone.close();
+            }));
+            list_box_clone.append(&row);
+            count += 1;
         }
-        return true;
-    }
-    false
+    });
 }
 
 fn try_parse_ai_suggestion(list_box: &GtkBox, filter_text: &str, filter_lower: &str, pop: &ApplicationWindow) {
@@ -320,7 +454,7 @@ fn populate_indexed_items(list_box: &GtkBox, filter_lower: &str, category_filter
         }
     });
 
-    if count == 0 {
+    if count == 0 && list_box.first_child().is_none() {
         let no_res = Label::builder().label("Nessun risultato trovato.").css_classes(["cc-label-sub"]).margin_top(20).build();
         list_box.append(&no_res);
     }
@@ -331,21 +465,55 @@ pub fn populate_launcher_list(list_box: &GtkBox, filter_text: &str, category_fil
         list_box.remove(&child);
     }
     let filter_lower = filter_text.to_lowercase();
+    let filter_trimmed = filter_text.trim();
 
-    if is_spotlight {
-        if try_parse_calculator(list_box, &filter_lower, pop) {
-            return;
+    if is_spotlight && !filter_trimmed.is_empty() {
+        // 1. Inline parsing: Math & Conversions
+        if let Some((title, desc, copy_val)) = try_parse_inline_action(filter_trimmed, &filter_lower) {
+            let row = Button::builder().css_classes(["spotlight-item"]).build();
+            let hbox = GtkBox::builder().orientation(Orientation::Horizontal).spacing(16).build();
+            let img = Image::builder().icon_name("accessories-calculator").pixel_size(40).build();
+            hbox.append(&img);
+            let vbox = GtkBox::builder().orientation(Orientation::Vertical).valign(Align::Center).build();
+            let name_lbl = Label::builder().label(&title).halign(Align::Start).css_classes(["spotlight-item-title"]).build();
+            vbox.append(&name_lbl);
+            let desc_lbl = Label::builder().label(&desc).halign(Align::Start).css_classes(["spotlight-item-desc"]).build();
+            vbox.append(&desc_lbl);
+            hbox.append(&vbox);
+            row.set_child(Some(&hbox));
+            row.connect_clicked(glib::clone!(@weak pop => move |_| {
+                let clipboard = pop.clipboard();
+                clipboard.set_text(&copy_val);
+                pop.close();
+            }));
+            list_box.append(&row);
         }
+
+        // 2. System Actions ("Dark", "Kill", etc.)
+        let is_system_action = try_parse_system_actions(list_box, &filter_lower, pop);
+
+        // 3. Command & Web Search prefixes
         if try_parse_terminal_command(list_box, filter_text, &filter_lower, pop) {
             return;
         }
         if try_parse_web_search(list_box, filter_text, &filter_lower, pop) {
             return;
         }
-        if try_parse_file_search(list_box, filter_text, &filter_lower, pop) {
+
+        // 4. Direct File Search when starting with '/'
+        if filter_lower.starts_with('/') {
+            let query = filter_text.trim_start_matches('/').trim();
+            run_fuzzy_file_search(list_box, query, pop);
             return;
         }
+
+        // 5. AI suggestion
         try_parse_ai_suggestion(list_box, filter_text, &filter_lower, pop);
+
+        // 6. Non-system fuzzy file search alongside indexed items
+        if !is_system_action && filter_trimmed.len() >= 2 {
+            run_fuzzy_file_search(list_box, filter_trimmed, pop);
+        }
     }
 
     populate_indexed_items(list_box, &filter_lower, category_filter, pop);
@@ -375,7 +543,7 @@ pub fn show_spotlight_modal(app: &Application) {
         .build();
 
     let entry = Entry::builder()
-        .placeholder_text("Cerca applicazioni, impostazioni (=, >, /)...")
+        .placeholder_text("Cerca app, azioni (Dark, Kill), calcoli (2+2, 100 usd to eur), file...")
         .css_classes(["spotlight-input"])
         .hexpand(true)
         .margin_top(16)

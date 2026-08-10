@@ -37,7 +37,7 @@ members = [
     "system/ermete-store",
     "system/ermete-style",
     "system/ermete-telemetry"
-]
+, "system/ermete-oobe"]
 
 exclude = [
     "tests/fuzz"

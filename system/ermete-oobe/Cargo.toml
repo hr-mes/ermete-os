@@ -1,0 +1,12 @@
+[package]
+name = "ermete-oobe"
+version = "0.1.0"
+edition = "2021"
+description = "Ermete OS Out-Of-Box Experience Wizard"
+authors = ["Ermete Architect <architect@ermete.os>"]
+
+[dependencies]
+gtk4 = { workspace = true }
+relm4 = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+ermete-style = { path = "../ermete-style" }
