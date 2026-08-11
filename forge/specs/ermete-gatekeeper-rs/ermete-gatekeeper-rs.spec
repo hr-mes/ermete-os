@@ -12,8 +12,6 @@ Source0:        %{name}-%{version}.tar.gz
 BuildRequires:  rust >= 1.83.0
 BuildRequires:  cargo
 BuildRequires:  systemd-rpm-macros
-BuildRequires:  gtk4-devel
-BuildRequires:  gdk-pixbuf2-devel
 
 %description
 Ermete OS Zero-Trust binary execution gatekeeper using fanotify.
