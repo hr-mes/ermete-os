@@ -1,31 +1,33 @@
-# 🌋 Ermete OS - Fase 3: The Enterprise Horizon
+# 🌋 Ermete OS - Phase 3: The Enterprise Horizon
 
-Le vulnerabilità strutturali e topologiche della prima iterazione sono state eliminate (100% completato). Il God Node è caduto, il codice è asincrono e modulare, e la CodeGraph è dotata di intelligenza ibrida LSP/Vettoriale.
+Structural and topological refactoring completed. Monolithic bottlenecks are eliminated, components execute asynchronously, and CodeGraph operates with hybrid LSP/Vector capabilities.
 
-Iniziamo ora l'offensiva architetturale per eguagliare e superare lo standard Big-Tech.
+The architectural roadmap transitions to Phase 3:
 
-## 🌊 Ondata Alpha: Intelligenza, Sicurezza e Determinismo
-Queste prime tre direttive non dipendono l'una dall'altra e verranno affrontate in parallelo dallo Sciame.
+## 🌊 Wave Alpha: Intelligence, Security & Determinism
 
-*   **Task 1: OS-Level Local AI Daemon (Anti-Cloud)**
-    *   **Agente Incaricato:** `ermete-core`
-    *   **Obiettivo:** Creare un nuovo crate `ermete-ai-daemon` in Rust (sfruttando `candle` o binding C++) progettato per connettersi al `SystemEventBus`. Fornirà intelligenza locale alla Shell senza inviare un singolo byte ai server esterni.
-*   **Task 2: eBPF Kernel Tracing (Ring-0 Analytics)**
-    *   **Agente Incaricato:** `ermete-kernel-developer`
-    *   **Obiettivo:** Creare il substrato in Rust (usando il framework `Aya`) per iniettare moduli eBPF nel Kernel Linux. L'obiettivo è sostituire `sysmon` con una telemetria di rete e processi a latenza zero.
-*   **Task 3: Determinismo Estremo (Nix-Paradigm)**
-    *   **Agente Incaricato:** `ermete-forge`
-    *   **Obiettivo:** Evolvere `Ermete Forge` convertendo le attuali build RPM basate su DNF in un approccio crittografico dichiarativo puro, bloccando l'hash di ogni singola dipendenza libc o compiler toolchain per garantire la riproducibilità matematica dell'OS.
+- **Task 1: OS-Level Local AI Daemon (Anti-Cloud)**
+  - **Responsible Domain:** `ermete-core`
+  - **Objective:** Crate `ermete-ai-daemon` in Rust (utilizing `candle` / C++ bindings) interfacing directly with `SystemEventBus`. Delivers local AI capabilities to the shell with zero external network telemetry.
 
-## 🌊 Ondata Beta: Infrastruttura Globale
-Da lanciare una volta stabilizzata l'Ondata Alpha.
+- **Task 2: eBPF Kernel Tracing (Ring-0 Analytics)**
+  - **Responsible Domain:** `ermete-kernel-developer`
+  - **Objective:** Rust eBPF subsystem (via `Aya` framework) injecting eBPF probes into the Linux kernel. Replaces legacy `sysmon` with zero-latency network and process telemetry.
 
-*   **Task 4: Confidential Computing (Intel TDX / AMD SEV-SNP)**
-    *   **Agente Incaricato:** `ermete-kernel-developer`
-    *   **Obiettivo:** Sigillare il boot di Ermete OS all'interno di un'Hardware Enclave crittografata (CVM).
-*   **Task 5: Seamless Continuity (WireGuard P2P)**
-    *   **Agente Incaricato:** `ermete-core`
-    *   **Obiettivo:** Creare un demone background Zero-Trust per la sincronizzazione universale di clipboard e workspace tra macchine Ermete OS.
-*   **Task 6: Live Patching (Zero-Downtime)**
-    *   **Agente Incaricato:** `ermete-forge`
-    *   **Obiettivo:** Pipeline di iniezione Kernel per patch di sicurezza a caldo senza reboot.
+- **Task 3: Deterministic Build Pipeline (Nix-Paradigm)**
+  - **Responsible Domain:** `ermete-forge`
+  - **Objective:** Evolve `Ermete Forge` from DNF rolling builds into a pure declarative cryptographic model, locking dependency hashes (libc, toolchain compilers) for reproducible system builds.
+
+## 🌊 Wave Beta: Global Infrastructure
+
+- **Task 4: Confidential Computing (Intel TDX / AMD SEV-SNP)**
+  - **Responsible Domain:** `ermete-kernel-developer`
+  - **Objective:** Enclose boot runtime within encrypted hardware enclaves (CVM).
+
+- **Task 5: Seamless Continuity (WireGuard P2P)**
+  - **Responsible Domain:** `ermete-core`
+  - **Objective:** Zero-Trust background daemon delivering universal clipboard and workspace continuity across Ermete OS nodes.
+
+- **Task 6: Live Patching (Zero-Downtime)**
+  - **Responsible Domain:** `ermete-forge`
+  - **Objective:** Ring-0 kernel injection pipeline applying security hot-patches without system reboots.

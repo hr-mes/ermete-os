@@ -1,45 +1,42 @@
 # 🌐 Ermete OS - State of the Swarm Recap
 
-Questo documento rappresenta la fotografia esatta dello stato di Ermete OS, delle vittorie architetturali odierne e delle potenzialità sbloccate dai nostri plugin.
+This document captures the precise state of Ermete OS, detailing recent architectural achievements and capabilities unlocked across the development toolchain.
 
 ## 1. 🧬 Git & Repository Status (Clean Slate)
-Il repository `/var/home/ermete/GEMINI/ermete-os` è attualmente nella sua forma più incontaminata.
-Tramite l'applicazione del **Ponytail Auditor**, abbiamo individuato ed epurato la spazzatura accumulata:
-*   Rimossi 9 file JSON/log temporanei di debug e vecchi script di patching CSS dalla root.
-*   Aggiunti i file intermedi `.graphify*.json` al `.gitignore`.
-*   Estirpati demoni mock orfani e directory vuote (`ermete-nix`, `ermete-mesh-sync`).
-*   **Azione Pendente:** Bisogna eseguire un commit delle rimozioni in corso (vedi `git status`) usando il plugin **Superpowers** (skill `finishing-a-development-branch`).
+The repository `/var/home/ermete/GEMINI/ermete-os` is maintained in a pristine state.
+Applying the **Ponytail Auditor** identified and purged unnecessary artifacts:
+* Removed temporary debug JSON logs and obsolete CSS patch scripts from the repository root.
+* Added intermediate `.graphify*.json` files to `.gitignore`.
+* Purged orphaned mock daemons and empty directories (`ermete-nix`, `ermete-mesh-sync`).
 
-## 2. 🏗️ Architettura & Blast Radius (Il Gold Standard)
-I nostri macro-obiettivi (disaccoppiamento e astrazione) sono formalmente in atto e protetti dai guardiani di sistema.
+## 2. 🏗️ Architecture & Blast Radius (The Gold Standard)
+Decoupling and abstraction directives are formally established and monitored:
 
-*   **`SystemController` Smantellato:** Abbiamo diviso l'I/O in micro-proxy asincroni (Network, Audio, Bluetooth, ecc.) che comunicano via `SystemEventBus`.
-*   **eBPF Push Hooks:** Abbattuto il polling DBus in favore di trigger reattivi `zbus` ed eBPF.
-*   **Omni-Spotlight AI:** Il motore di ricerca locale è ora collegato all'intelligenza asincrona dell'`ermete-ai-daemon`.
-*   **Sicurezza Ermetica:** Riparato il builder Forge disastroso e gettate le basi per i controlli di attestazione TPM.
+*   **`SystemController` Dismantled:** I/O operations are partitioned across isolated asynchronous micro-proxies (Network, Audio, Bluetooth, etc.) communicating via the `SystemEventBus`.
+*   **eBPF Push Hooks:** Synchronous D-Bus polling replaced in favor of reactive `zbus` and eBPF event triggers.
+*   **Omni-Spotlight AI:** The local search engine interfaces directly with asynchronous intelligence supplied by `ermete-ai-daemon`.
+*   **Hermetic Build Pipeline:** Refactored the Forge build toolchain and established foundational TPM hardware attestation checks.
 
-## 3. 🧩 L'Arsenale dei Plugin Attivi
+## 3. 🧩 Active Plugin Arsenal Matrix
 
-Tutti i plugin sono ora in ascolto e configurati. Ecco la matrice delle abilità del nostro ecosistema di sviluppo:
+All development plugins are active and integrated across the workflow:
 
-### A. 🏛️ `ermete-architect` (NUOVO)
-*   **Skill (`ermete-scaffold`)**: Garantisce la "Zero Shortcuts philosophy". Vietato usare API sincrone per le chiamate I/O o UI bloccanti; impone l'uso del `SystemEventBus` e del Glassmorphism GTK4/Relm4.
-*   **Agent (`ermete-auditor`)**: Il nuovo cane da guardia per individuare immediatamente l'eventuale proliferazione di nuovi "God Node" (moduli con >15 dipendenze).
+### A. 🏛️ `ermete-architect`
+*   **Skill (`ermete-scaffold`)**: Enforces zero-shortcut development directives. Prohibits blocking synchronous I/O or UI calls; enforces `SystemEventBus` and GTK4/Relm4 Glassmorphism standards.
+*   **Agent (`ermete-auditor`)**: Monitors codebase mutations to prevent God Node proliferation (flagging modules exceeding 15 coupling dependencies).
 
-### B. ✂️ `ponytail` (Aggiornato)
-*   **Eccezioni Cablate**: Abbiamo addestrato le skill `ponytail-audit` e `ponytail-review` a capire che in Ermete OS, l'EventBus, `cage`, `virt-manager` e `ermete-ai-daemon` sono **core features** vitali e non astrazioni YAGNI o over-engineering. Non ci saranno più falsi positivi.
+### B. ✂️ `ponytail`
+*   **Configured Invariants**: `ponytail-audit` and `ponytail-review` recognize that EventBus, `cage`, `virt-manager`, and `ermete-ai-daemon` represent core architectural features rather than YAGNI abstractions.
 
-### C. 🕸️ `graphify` + `codegraph` (La Nuova Simbiosi)
-*   **Global Rule Applicata (`/learn`)**: Nessun agente si azzarderà più a leggere un file senza combinare la precisione riga per riga di **CodeGraph** con l'esplorazione contestuale a cluster delle community di **Graphify**.
+### C. 🕸️ `graphify` + `codegraph`
+*   **Unified Analysis Protocol**: Code analysis combines line-level accuracy via **CodeGraph** with clustered community exploration via **Graphify**.
 
-### D. 🦸 `superpowers` (Metodologia)
-*   Possiamo orchestrare la chiusura dei lavori odierni tramite la skill `finishing-a-development-branch`, oppure sfruttare `dispatching-parallel-agents` per sviluppare 4 nuovi applicativi contemporaneamente.
+### D. 🦸 `superpowers`
+*   Orchestrates execution workflow completion via `finishing-a-development-branch` or parallel multi-agent development via `dispatching-parallel-agents`.
 
 ---
 
-## 🚀 Prossimi Passi Strategici (Action Plan)
-Come possiamo sfruttare questa macchina perfetta adesso?
-
-1.  **Commit della Pulizia**: Sfruttare `superpowers` per fare il merge delle epurazioni attuali su `main`.
-2.  **Scaffolding di un Nuovo Componente**: Testare il nuovo plugin `ermete-architect` ordinando la generazione di un'app (es. `ermete-auth` refactor) o del vero gestore P2P `ermete-mesh-sync`.
-3.  **Refactoring di `ermete-store-rs` o `ermete-gatekeeper-rs`**: Riprendere i lavori asincroni UI sfruttando la combinazione CodeGraph+Graphify per iniettare l'EventBus nei widget esistenti.
+## 🚀 Strategic Action Plan
+1. **Commit Repository Cleanup**: Execute git commits to consolidate working tree purges onto `main`.
+2. **Component Scaffolding**: Test the `ermete-architect` plugin by scaffolding target components (e.g., `ermete-auth` refactor or `ermete-mesh-sync` P2P engine).
+3. **Refactor Execution**: Continue UI async refactoring across `ermete-store-rs` and `ermete-gatekeeper-rs` using CodeGraph and Graphify to inject EventBus channels into target widgets.

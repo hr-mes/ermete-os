@@ -1,42 +1,38 @@
 # 🔬 ERMETE OS: UX/UI CRITICAL AUDIT (ZERO LIMITATIONS)
 
-Questa è un'analisi spietata e oggettiva dei nostri pacchetti grafici Rust. Il cliente non accetta compromessi. Se vogliamo eguagliare e disintegrare i paradigmi di macOS e Windows 11, dobbiamo riconoscere dove la nostra UX attuale è limitata e distruggere quei limiti.
+Objective audit of the Rust desktop UI packages. To match and surpass user experience standards from macOS and Windows 11, existing interaction bottlenecks must be systematically addressed.
 
 ---
 
-## 1. `ermete-shell-rs` (Il Cuore dell'Interazione)
-* **Critica Oggettiva:** L'attuale shell è divisa in file funzionali (`topbar.rs`, `osd.rs`, `spotlight.rs`), ma è fondamentalmente passiva. Aspetta che l'utente clicchi qualcosa. Lo Spotlight cerca solo stringhe di testo. Le notifiche sono una semplice lista sovrapposta.
-* **La Rimozione dei Limiti (Visione Suprema):**
-  * **Omni-Spotlight (AI-Driven):** `spotlight.rs` non deve essere una barra di ricerca, ma un *oracolo*. Qualsiasi input (testo, audio, drag&drop di un'immagine) viene processato dal demone LLM locale. "Mostrami le foto del mare", "Metti il PC in modalità focus".
-  * **Dynamic OSD & Task Pill:** `osd.rs` e `topbar.rs` si fondono. I processi in background non aprono finestre, ma vivono in capsule fluide (Morphic Pills) nella Topbar che l'utente può espandere con uno swipe.
-  * **Notifiche Intelligenti:** Non più spam. `notifications.rs` usa un classificatore vettoriale per raggruppare le notifiche per contesto ("Lavoro", "Personale", "Distrazioni") intercettando l'importanza.
+## 1. `ermete-shell-rs` (Interaction Layer)
+* **Assessment:** The shell is organized into modular files (`topbar.rs`, `osd.rs`, `spotlight.rs`), but operates passively, awaiting manual user clicks. Spotlight is restricted to string matching, while notifications present a flat stacked list.
+* **Target Architecture:**
+  * **AI-Driven Omni-Spotlight:** `spotlight.rs` operates as an intelligent oracle. Text, voice, or file drop inputs route to the local NPU daemon (e.g., "Show sea photos", "Enable focus mode").
+  * **Dynamic OSD & Task Pill:** Merges `osd.rs` and `topbar.rs`. Background tasks present fluid Morphic Pills in the topbar, expandable via gestures.
+  * **Contextual Notifications:** `notifications.rs` employs vector classifiers to group notifications by context ("Work", "Personal", "Distractions"), prioritizing urgency dynamically.
 
-## 2. `ermete-settings-rs` (Il Centro di Controllo)
-* **Critica Oggettiva:** La maggior parte dei pannelli di controllo Linux (GNOME Control Center, KDE System Settings) è un labirinto di toggle e tab in stile Windows XP, con una UX frammentata e una ricerca approssimativa.
-* **La Rimozione dei Limiti (Visione Suprema):**
-  * **Design Flat-Hierarchy:** Non esistono più sottomenu infiniti. Usiamo una griglia a "Canvas" scivolabile.
-  * **Natural Language Routing:** Invece di cercare il menu "Bluetooth", l'utente digita o dice *"Le mie cuffie non si connettono"*. L'AI apre istantaneamente il pannello Bluetooth evidenziando il dispositivo in errore e proponendo un fix (Fixing in One-Click).
-  * **Hardware-Aware UI:** Se l'hardware non supporta una feature, il toggle non viene disabilitato (grigio frustrante), viene *nascosto*. L'interfaccia deve essere immacolata.
+## 2. `ermete-settings-rs` (Control Center)
+* **Assessment:** Traditional Linux control centers (GNOME Control Center, KDE System Settings) navigate multi-level nested menus with rigid search features.
+* **Target Architecture:**
+  * **Flat Canvas Hierarchy:** Replaces nested submenus with a scrollable canvas grid.
+  * **Natural Language Routing:** Users query intent (e.g., *"Headphones won't connect"*). The interface opens the target Bluetooth panel, highlighting misconfigured devices with 1-click resolution.
+  * **Hardware-Aware Adaptive UI:** Unsupported hardware toggles are hidden dynamically rather than rendered in disabled states, presenting clean interfaces.
 
-## 3. `ermete-store-rs` (La Distribuzione del Software)
-* **Critica Oggettiva:** App Store e GNOME Software sono vetrine lente, basate su pacchetti isolati (Flatpak/Snap), con descrizioni tecniche scritte dai dev e recensioni inaffidabili.
-* **La Rimozione dei Limiti (Visione Suprema):**
-  * **AI App Curator:** Lo store non ha "Categorie" rigide. Genera una home page personalizzata basata sul workflow dell'utente.
-  * **Zero-Install Experience:** Poiché sfruttiamo Nix/OSTree, le app non si "installano" con una barra di progresso di 3 minuti. L'utente clicca "Usa", l'Orchestratore monta il container istantaneamente e l'app si avvia in mezzo secondo. Il pacchetto viene scaricato asincronamente in background (Lazy Loading dell'eseguibile).
-  * **Sandboxing Trasparente:** L'utente vede esattamente a quali sensori l'app ha accesso con toggle fisici visuali.
+## 3. `ermete-store-rs` (Application Distribution)
+* **Assessment:** Software stores (GNOME Software, Mac App Store) present slow showcases focused on static package lists (Flatpak/Snap) with manual installation waits.
+* **Target Architecture:**
+  * **AI Application Curation:** Dynamic home page generation based on user workflow patterns.
+  * **Zero-Install Runtime Experience:** Utilizing OSTree/bootc OCI containers, applications mount ephemerally within <500ms while package layers download asynchronously in background.
+  * **Transparent Hardware Sandboxing:** Visual physical toggles display exact sensor and system permission access for each application container.
 
-## 4. `ermete-dock` (La Navigazione Inferiore/Laterale)
-* **Critica Oggettiva:** Una barra con icone. macOS l'ha perfezionata con l'ingrandimento, ma è ancora un lanciatore di eseguibili degli anni '90.
-* **La Rimozione dei Limiti (Visione Suprema):**
-  * **Spatial Dock (Wayland Native):** La dock non lancia solo app, lancia *Contesti*. Cliccando l'icona del browser non apri il browser, apri lo spazio di lavoro "Ricerca Web" in Niri.
-  * **Drag & Drop Universale:** Qualsiasi file trascinato sulla dock invoca un'aura attorno all'app bersaglio. Se trascini un testo sull'icona di Mail, genera istantaneamente la bozza.
+## 4. `ermete-dock` (Navigation Layer)
+* **Assessment:** Icon launchers act as static executable shortcuts.
+* **Target Architecture:**
+  * **Spatial Dock (Wayland Native):** Launches workspace *Contexts* rather than bare executables. Clicking a browser icon opens a dedicated "Web Research" workspace context in Niri.
+  * **Universal Drag & Drop:** Dragging files over dock items emits visual aura feedback. Hovering text over the Mail icon creates draft messages instantly.
 
-## 5. `ermete-gatekeeper-rs` & `ermete-auth` (Sicurezza Visiva)
-* **Critica Oggettiva:** I prompt di sudo (Polkit) sono fastidiosi popup modali che bloccano lo schermo e incutono timore o noia.
-* **La Rimozione dei Limiti (Visione Suprema):**
-  * **Seamless Biometrics:** L'autenticazione scompare. Se l'utente ha un'Enclave fidata (YubiKey di prossimità o Windows Hello/FaceID), il prompt non appare nemmeno. Il bordo della finestra si illumina di verde per indicare "Privilegi Elevati Concessi".
-  * **Explainable Security:** Se un'app richiede privilegi, il Gatekeeper non chiede "Inserisci password per XYZ". Mostra un diagramma di flusso visivo: *"L'app XYZ sta cercando di modificare il bootloader. Questo è pericoloso. [Consenti] [Blocca]"*.
-
----
-### Verdetto
-Per annientare i limiti, dobbiamo smettere di pensare alle UI come "Schermate con Bottoni" e iniziare a pensarle come **Agenti Invisibili**. Ogni pacchetto deve prevedere l'intento dell'utente un secondo prima che lui esegua l'azione.
+## 5. `ermete-gatekeeper-rs` & `ermete-auth` (Visual Security)
+* **Assessment:** Sudo / Polkit authentication prompts interrupt workflow with blocking password modals.
+* **Target Architecture:**
+  * **Seamless Biometrics:** Trusted hardware enclaves (FIDO2 / YubiKey / IR Camera) bypass modal prompts. Window borders emit green glow indicators upon privilege elevation.
+  * **Explainable Security Visualizations:** Privilege requests display visual flow diagrams: *"App XYZ is attempting bootloader modification. [Allow] [Block]"*.

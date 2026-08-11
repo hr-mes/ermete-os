@@ -1,160 +1,158 @@
-# 🔬 ERMETE OS: GAP ANALYSIS UI/UX DEFINITIVA & DEEP-AUDIT ESTREMO
-> **Analista UI/UX di Deep-Audit Estremo**  
-> *Confronto Sistematico con macOS Sequoia, Windows 11 (24H2), ChromeOS, Zorin OS 17 e Deepin V23*
+# 🔬 ERMETE OS: DEFINITIVE UI/UX GAP ANALYSIS & DEEP-AUDIT REPORT
+> **Lead Deep-Audit UI/UX Auditor**  
+> *Systematic Benchmarking vs. macOS Sequoia, Windows 11 (24H2), ChromeOS, Zorin OS 17, and Deepin V23*
 
 ---
 
-## 📋 1. INTRODUZIONE & METODOLOGIA DEL DEEP-AUDIT
+## 📋 1. INTRODUCTION & AUDIT METHODOLOGY
 
-L'architettura desktop di **Ermete OS** ha già stabilito una solida base tecnica fondata su **GTK4/Relm4**, **Niri (Scrollable Tiling Compositor)**, **Wayland Layer Shell**, **eBPF-driven telemetry**, e **Post-Quantum Cryptography Mesh**.
+The desktop architecture of **Ermete OS** establishes a solid technical foundation powered by **GTK4/Relm4**, **Niri (Scrollable Tiling Compositor)**, **Wayland Layer Shell**, **eBPF-driven telemetry**, and a **Post-Quantum Cryptography Mesh**.
 
-Tuttavia, un'analisi approfondita rispetto ai benchmark di riferimento del mercato desktop consumer ed enterprise (**macOS Sequoia**, **Windows 11 24H2**, **ChromeOS**, **Zorin OS 17**, **Deepin V23**) evidenzia che la UI/UX di Ermete OS presenta ancora dei **vuoti funzionali ed esperrenziali critici**.
+However, benchmarking against competitive desktop operating systems (**macOS Sequoia**, **Windows 11 24H2**, **ChromeOS**, **Zorin OS 17**, **Deepin V23**) identifies critical functional and experiential UX gaps.
 
-I 5 pilastri fondamentali già analizzati (`ermete-shell-rs`, `ermete-settings-rs`, `ermete-store-rs`, `ermete-dock`, e `ermete-gatekeeper-rs`) lasciano scoperte intere macro-aree di interazione utente che determinano la percezione di un sistema operativo moderno e raffinato.
+The 5 core pillars (`ermete-shell-rs`, `ermete-settings-rs`, `ermete-store-rs`, `ermete-dock`, and `ermete-gatekeeper-rs`) leave unaddressed user interaction macro-areas that dictate enterprise operating system refinement.
 
-Il presente report costituisce l'**ELENCO COMPLETO E DEFINITIVO** di tutte le feature mancanti in Ermete OS, categorizzate in 9 Macro-Aree e mappate direttamente nell'architettura software del sistema.
+This report compiles the **DEFINITIVE SYSTEM GAP LIST**, categorized across 9 Macro-Areas and mapped into target system architecture.
 
 ---
 
-## 🎯 2. MACRO-AREA 1: OOBE (Out-Of-Box Experience) & GREETER FRAMEWORK
+## 🎯 2. MACRO-AREA 1: OOBE (OUT-OF-BOX EXPERIENCE) & GREETER FRAMEWORK
 
-Actualmente, `system/ermete-greeter` si limita ad un'interfaccia di autenticazione PAM con verifica dell'attestazione TPM 2.0. Manca completamente l'intera esperienza di prima accensione e personalizzazione guidata.
+`system/ermete-greeter` currently executes PAM authentication paired with TPM 2.0 attestation verification, lacking first-boot setup wizards.
 
-| Feature Mancante | Stato Attuale | Benchmark Riferimento | Descrizione dell'Implementazione Richiesta per Ermete OS |
+| Missing Capability | Current State | Competitive Benchmark | Target Implementation Specification for Ermete OS |
 | :--- | :--- | :--- | :--- |
-| **First-Boot OOBE Setup Wizard** | ❌ Assente | macOS Setup Assistant / Windows 11 OOBE | Un demone wizard dedicato (`ermete-oobe`) con interfaccia GTK4 a tutto schermo. Gestisce il primo avvio: selezione lingua e locale, accoppiamento Wi-Fi, selezione layout tastiera, mappa fuso orario reattiva, creazione account primario / importazione chiavi SSH, scelta del livello di privacy/telemetria e auto-detection dello scaling del display. |
-| **Animazioni di Benvenuto & Sound Branding** | ❌ Assente | macOS "Hello" Canvas / ChromeOS Boot Splash | Flusso animato vettoriale ad alta frequenza (120 FPS) con Lottie/GSK GSK render in OpenGL/Vulkan al termine dell'OOBE o al primo login, accompagnato da un landscape sonoro spaziale dedicato generato tramite PipeWire. |
-| **Lockscreen Dynamic Widgets & Glanceable Info** | ❌ Assente | iOS 17 / Windows 11 Lockscreen Widgets | Integrazione nel greeter/lockscreen di una griglia di widget informativi a colpo d'occhio: previsioni meteo locali, prossimi eventi a calendario, stato della batteria dei dispositivi Bluetooth accoppiati, widget controlli media e metriche di salute del sistema. |
-| **Multi-User Fast Switching & Guest Enclave** | ❌ Parziale | macOS Fast User Switching / ChromeOS Guest Mode | Pulsante visivo sul Greeter per lo switch istantaneo tra sessioni utente senza bloccare o riavviare le app attive, e pulsante "Guest Enclave" che avvia una sessione temporanea in una MicroVM sandboxata effimera con rootfs in RAM e distruzione completa all'uscita. |
-| **Boot-Time Accessibility Toggle (Voice & Visual)** | ❌ Assente | macOS VoiceOver OOBE / Win11 Narrator Shortcut | Menu di accessibilità integrato nell'OOBE e nel Greeter accessibile tramite scorciatoia universale (`Super+Alt+S`) per attivare sintesi vocale guidata, modalità ad alto contrasto e ingrandimento prima dell'autenticazione. |
+| **First-Boot OOBE Setup Wizard** | ❌ Absent | macOS Setup Assistant / Windows 11 OOBE | Full-screen GTK4 setup wizard (`ermete-oobe`) managing initial configuration: locale selection, Wi-Fi onboarding, keyboard mapping, interactive timezone selection, user creation / SSH key provisioning, telemetry opt-in, and auto-display scaling detection. |
+| **Welcome Animations & Sound Branding** | ❌ Absent | macOS "Hello" Canvas / ChromeOS Boot Splash | High-framerate (120+ FPS) vector branding animation (Lottie / GSK Vulkan renderer) playing upon OOBE completion or initial login, paired with spatial audio soundscapes via PipeWire. |
+| **Lockscreen Dynamic Widgets & Glanceable Info** | ❌ Absent | iOS 17 / Windows 11 Lockscreen Widgets | At-a-glance info grid integrated into greeter/lockscreen: local weather forecasts, calendar events, paired Bluetooth device battery levels, media controls, and system telemetry metrics. |
+| **Multi-User Fast Switching & Guest Enclave** | ❌ Partial | macOS Fast User Switching / ChromeOS Guest Mode | Greeter interface widget enabling instant user switching without halting background tasks, and a "Guest Enclave" button spawning ephemeral micro-VM sessions with RAM-backed rootfs destroyed upon logout. |
+| **Boot-Time Accessibility Toggle (Voice & Visual)** | ❌ Absent | macOS VoiceOver OOBE / Win11 Narrator Shortcut | Universal accessibility menu accessible via `Super+Alt+S` shortcut during OOBE/Greeter, triggering guided speech synthesis, high-contrast modes, and screen magnification prior to login. |
 
 ---
 
 ## 🔍 3. MACRO-AREA 2: GLOBAL SEARCH (SPOTLIGHT / RAYCAST / POWERTOYS RUN)
 
-L'attuale `spotlight.rs` in `ermete-shell-rs` gestisce solo il matching di stringhe di testo semplici per le applicazioni e query testuali generiche inviate al demone AI.
+`spotlight.rs` in `ermete-shell-rs` is currently limited to basic string matching for applications and generic text queries forwarded to the AI daemon.
 
-| Feature Mancante | Stato Attuale | Benchmark Riferimento | Descrizione dell'Implementazione Richiesta per Ermete OS |
+| Missing Capability | Current State | Competitive Benchmark | Target Implementation Specification for Ermete OS |
 | :--- | :--- | :--- | :--- |
-| **Inline Math Engine, Unit & Currency Converter** | ❌ Assente | Raycast / Spotlight / PowerToys Run | Valutazione istantanea in tempo reale di espressioni matematiche complesse (`evalexpr`), conversioni di unità di misura (metriche, imperiali, byte, temperature) e tassi di cambio valute live tramite integrazione D-Bus/API con rendering visuale dei risultati copiabili con 1-click. |
-| **Fuzzy File Indexing & Deep Content Search** | ❌ Parziale | macOS Spotlight / Everything | Engine di ricerca fuzzy per file e cartelle basato su `fd` e indicizzazione asincrona eBPF/Tracker, con supporto per il deep search del contenuto interno di documenti PDF, Markdown, sorgenti di codice ed estratto del testo in anteprima. |
-| **Dizionario, Sinonimi & Quick Lookup Cards** | ❌ Assente | macOS Dictionary / Raycast Dictionary | Card istantanee all'interno di Spotlight per la definizione grammaticale di parole, ricerca di sinonimi/contrari e traduzione multilingua rapida senza dover aprire il browser. |
-| **Palette delle Azioni & Plugin Raycast-Style** | ❌ Assente | Raycast Extensions / Alfred Workflows | Sistema di comandi rapidi eseguibili direttamente dal lanciatore: es. "Kill process [PID/Nome]", "Toggle Dark Mode", "Flush DNS", "Create Quick Note", "Base64 Encode/Decode", "Format JSON" e ricerca nella cronologia degli appunti. |
-| **Integrazione AI Multimodale & Contextual Drag-Drop** | ❌ Parziale | macOS Apple Intelligence / Windows Copilot | Possibilità di trascinare file multimediali o immagini direttamente nella barra di Spotlight per eseguire OCR istantaneo o analisi di visione via `ermete-ai-daemon`, oltre a pipe rapido del testo selezionato su qualsiasi finestra ("Riassumi", "Spiega codice"). |
+| **Inline Math Engine, Unit & Currency Converter** | ❌ Absent | Raycast / Spotlight / PowerToys Run | Real-time mathematical expression evaluation (`evalexpr`), physical unit conversions, and live currency rates via D-Bus with 1-click clipboard copying. |
+| **Fuzzy File Indexing & Deep Content Search** | ❌ Partial | macOS Spotlight / Everything | Asynchronous eBPF/Tracker fuzzy file indexer based on `fd`, supporting deep content search inside PDFs, Markdown files, source code, and text previews. |
+| **Dictionary, Synonyms & Quick Lookup Cards** | ❌ Absent | macOS Dictionary / Raycast Dictionary | Instant Spotlight lookup cards displaying grammatical definitions, synonyms, and rapid multilingual translations. |
+| **Action Palette & Raycast-Style Workflows** | ❌ Absent | Raycast Extensions / Alfred Workflows | System action palette executed directly from the launcher: "Kill process [PID]", "Toggle Dark Mode", "Flush DNS", "Base64 Encode/Decode", "Format JSON", and clipboard history management. |
+| **Multimodal AI Integration & Contextual Drag-Drop** | ❌ Partial | macOS Apple Intelligence / Windows Copilot | Drag-and-drop file image ingestion into Spotlight for instant OCR / vision analysis via `ermete-ai-daemon`, plus contextual text summarization pipelines ("Summarize", "Explain Code"). |
 
 ---
 
-## 📱 4. MACRO-AREA 3: ECOSISTEMA & SINCRONIZZAZIONE CROSS-DEVICE (CONTINUITY / PHONE LINK / KDE CONNECT)
+## 📱 4. MACRO-AREA 3: CROSS-DEVICE ECOSYSTEM & CONTINUITY (PHONE LINK / KDE CONNECT)
 
-Mentre `ermete-mesh-sync` gestisce la sincronizzazione tra nodi Ermete OS tramite crittografia post-quantistica, manca completamente il ponte di integrazione con i dispositivi mobili dell'utente (Android / iOS).
+While `ermete-mesh-sync` manages P2P node synchronization via post-quantum cryptography, mobile device integration (Android / iOS) requires dedicated integration.
 
-| Feature Mancante | Stato Attuale | Benchmark Riferimento | Descrizione dell'Implementazione Richiesta per Ermete OS |
+| Missing Capability | Current State | Competitive Benchmark | Target Implementation Specification for Ermete OS |
 | :--- | :--- | :--- | :--- |
-| **Universal Clipboard Cross-Device** | ❌ Assente | Apple Universal Clipboard / KDE Connect | Appunti condivisi e bidirezionali tra PC e smartphone (Android/iOS) con crittografia end-to-end su rete locale, supporto per testo formattato, immagini ed elenchi di file trascinati. |
-| **Handoff & Continuity Camera / Mic** | ❌ Assente | macOS Continuity / Samsung Multi Control | Rilevamento automatico di schede web aperte o documenti in modifica su smartphone per riprenderli sul desktop con 1-click nella Topbar; riuso della fotocamera/microfono dello smartphone come webcam e microfono Wayland ad alta definizione senza cavi. |
-| **Desktop Telephony & SMS Relay** | ❌ Assente | Windows Phone Link / macOS iMessage & Calls | Interfaccia nativa nella barra delle notifiche per leggere, rispondere e inviare SMS da desktop, oltre alla ricezione di notifiche di chiamate in arrivo con possibilità di risposta/rifiuto tramite il sistema audio di PipeWire (profili Bluetooth HFP/PBAP/MAP). |
-| **AirDrop / Quick Share Drop Zone Spaziale** | ❌ Assente | macOS AirDrop / Android Quick Share | Vassoio di condivisione di prossimità spaziale integrato nella shell: trascinando un file nell'area di condivisione vengono mostrati i dispositivi nelle vicinanze per il trasferimento file ad alta velocità zero-conf. |
-| **Proximity Auto-Unlock via Wearables** | ❌ Assente | macOS Auto Unlock via Apple Watch | Sblocco automatico e sicuro di Ermete OS quando l'utente si avvicina al PC indossando uno smartwatch o smartphone associato, tramite misurazione RSSI Bluetooth LE e scambio di sfide crittografiche asymmetric key. |
+| **Universal Cross-Device Clipboard** | ❌ Absent | Apple Universal Clipboard / KDE Connect | End-to-end encrypted bi-directional clipboard sync between PC and mobile devices (Android/iOS) supporting rich text, images, and file arrays. |
+| **Handoff & Continuity Camera / Mic** | ❌ Absent | macOS Continuity / Samsung Multi Control | Auto-detection of open web tabs or active documents on mobile devices to resume on desktop; wireless HD webcam and microphone streaming into PipeWire. |
+| **Desktop Telephony & SMS Relay** | ❌ Absent | Windows Phone Link / macOS iMessage & Calls | Native desktop notification interface for reading and replying to SMS messages, plus incoming call notifications with PipeWire audio routing (Bluetooth HFP/PBAP/MAP). |
+| **Spatial AirDrop / Quick Share Drop Zone** | ❌ Absent | macOS AirDrop / Android Quick Share | Proximity drop zone integrated into shell: dragging files over the drop zone discovers nearby devices for zero-conf high-speed file transfers. |
+| **Proximity Auto-Unlock via Wearables** | ❌ Absent | macOS Auto Unlock via Apple Watch | Automatic secure unlock when approaching the PC wearing a paired smartwatch or smartphone, verified via Bluetooth LE RSSI distance checks and asymmetric key challenges. |
 
 ---
 
-## 🎨 5. MACRO-AREA 4: MICRO-INTERAZIONI, ERGONOMIA VISUALE & UTILITY
+## 🎨 5. MACRO-AREA 4: MICRO-INTERACTIONS, VISUAL ERGONOMICS & UTILITIES
 
-Sebbene Ermete OS utilizzi un tema CSS Glassmorphism ben strutturato in `ermete-style`, mancano fondamentali utility di produttività e micro-interazioni di sistema.
+While Ermete OS implements a Glassmorphic CSS design system in `ermete-style`, productivity utilities and interaction feedback require expansion.
 
-| Feature Mancante | Stato Attuale | Benchmark Riferimento | Descrizione dell'Implementazione Richiesta per Ermete OS |
+| Missing Capability | Current State | Competitive Benchmark | Target Implementation Specification for Ermete OS |
 | :--- | :--- | :--- | :--- |
-| **Quick Look (Spacebar File Preview System)** | ❌ Assente | macOS Quick Look / PowerToys Peek | Premendo la barra spaziatrice su qualsiasi file selezionale nel file manager o nel desktop, si apre una finestra pop-up fluttuante accelerata da GPU senza avviare l'applicazione dedicata. Supporta anteprima di immagini, video, audio con forma d'onda, documenti PDF, rendering 3D, file Markdown e sintassi codice formattata. |
-| **Global Menu Bar (macOS App Menu Bar)** | ❌ Assente | macOS Global Menu / Unity | Integrazione dei menu delle applicazioni attive (`File`, `Modifica`, `Visualizza`, `Strumenti`, `Aiuto`) direttamente all'interno della Topbar di Ermete OS tramite specifiche `dbusmenu` / XDG Global Menu, standardizzando la navigazione e risparmiando spazio verticale nelle finestre. |
-| **Dynamic Time-of-Day Wallpapers (Solar Engine)** | ❌ Assente | macOS Dynamic Wallpapers / Zorin Dynamic Themes | Modulo di gestione sfondi dinamici basato sulla posizione solare effettiva (o fuso orario): le immagini di sfondo (formati HEIC/AVIF multi-layer) e il tema visivo (Light/Dark mode) sfumano in modo continuo dall'alba al tramonto fino alla notte. |
-| **Snap Layouts & Grid Drag Hints** | ❌ Parziale | Windows 11 Snap Layouts / PowerToys FancyZones | Passando il mouse sopra il pulsante di ingrandimento di una finestra o trascinando la barra del titolo verso la parte superiore dello schermo, appare una griglia grafica con preset di posizionamento (2x2, 1/3-2/3, 3 colonne) per organizzare istantaneamente il layout delle finestre sul compositor Niri. |
-| **Utility Visuali Integrate (ColorPicker, Ruler, Pin)** | ❌ Assente | PowerToys ColorPicker / macOS Digital Color Meter | Strumenti visivi ad accesso rapido dalla Topbar: Eyedropper globale per prelevare codici colore su schermo (HEX, RGB, HSL), righello virtuale per misurare le dimensioni in pixel degli elementi UI e toggle per fissare qualsiasi finestra in modalità "Always on Top". |
+| **Quick Look (Spacebar File Preview)** | ❌ Absent | macOS Quick Look / PowerToys Peek | Pressing Spacebar over any file in the file manager or desktop opens a floating GPU-accelerated preview window without launching dedicated applications (supporting images, video, audio waveforms, PDFs, 3D models, and code). |
+| **Global Menu Bar (macOS App Menu Bar)** | ❌ Absent | macOS Global Menu / Unity | Active application menus (`File`, `Edit`, `View`, `Tools`, `Help`) rendered directly in the Ermete OS Topbar via `dbusmenu` / XDG Global Menu protocols, saving vertical window space. |
+| **Dynamic Time-of-Day Wallpapers (Solar Engine)** | ❌ Absent | macOS Dynamic Wallpapers / Zorin Dynamic Themes | Solar position dynamic wallpaper engine: background images (multi-layer HEIC/AVIF) and system color schemes (Light/Dark) crossfade seamlessly from dawn to dusk. |
+| **Snap Layouts & Grid Drag Hints** | ❌ Partial | Windows 11 Snap Layouts / PowerToys FancyZones | Hovering over window maximize controls or dragging titlebars triggers visual layout grids (2x2, 1/3-2/3, 3-column) for instant window snapping on Niri. |
+| **Integrated Visual Utilities (ColorPicker, Ruler, Pin)** | ❌ Absent | PowerToys ColorPicker / macOS Digital Color Meter | Topbar utility tools: global screen color eyedropper (HEX, RGB, HSL), virtual pixel measurement ruler, and "Always on Top" window pinning toggles. |
 
 ---
 
-## 🔐 6. MACRO-AREA 5: BIOMETRIA E SICUREZZA VISIVA (WINDOWS HELLO / TOUCH ID / PAM)
+## 🔐 6. MACRO-AREA 5: BIOMETRICS & VISUAL SECURITY (WINDOWS HELLO / TOUCH ID / PAM)
 
-Il demone `ermete-gatekeeper-rs` ed i prompt di autenticazione utilizzano moduli standard che richiedono l'inserimento manuale della password, penalizzando la fluidità visiva.
+`ermete-gatekeeper-rs` and authorization prompts rely on standard authentication dialogs requiring manual password entry.
 
-| Feature Mancante | Stato Attuale | Benchmark Riferimento | Descrizione dell'Implementazione Richiesta per Ermete OS |
+| Missing Capability | Current State | Competitive Benchmark | Target Implementation Specification for Ermete OS |
 | :--- | :--- | :--- | :--- |
-| **Unified Biometric PAM UI Enclave** | ❌ Assente | Windows Hello / macOS Touch ID UI | Integrazione visiva fluida e nativa in GTK4 per la scansione delle impronte digitali (`fprintd`) e il riconoscimento facciale tramite telecamere IR (`Howdy` / PAM-WebAuthn), affiancata da animazioni tattili sullo schermo durante la fase di scansione. |
-| **Visual Ring-Lighting & Feedback Tattile** | ❌ Assente | macOS Touch ID Topbar Glow | Quando viene richiesta un'autenticazione biometrica, i bordi della Topbar o il contorno del prompt modale emettono un'aura luminosa dinamica (glow verde per sblocco riuscito, pulsazione rossa per mancato riconoscimento) con transizione immediata e senza blocco UI verso l'inserimento di PIN/Password. |
-| **Hardware Passkey / FIDO2 / WebAuthn Dialog** | ❌ Assente | Windows Hello FIDO2 / macOS Security Key UI | Interfaccia grafica nativa per la gestione delle richieste di inserimento o tocco di chiavi fisiche di sicurezza (es. YubiKey NFC/USB) e conferma biometrica delle Passkey WebAuthn. |
-| **In-Line Gatekeeper Elevation Biometrics** | ❌ Assente | macOS Polkit Touch ID Prompt | Nei dialoghi di autorizzazione di `ermete-gatekeeper-rs` (elevazione privilegi sudo / installazione pacchetti), la richiesta biometrica viene eseguita direttamente all'interno della modale con un solo tocco dell'impronta o uno sguardo alla fotocamera IR, senza dover selezionare campi di testo. |
+| **Unified Biometric PAM UI Enclave** | ❌ Absent | Windows Hello / macOS Touch ID UI | GTK4 biometric scanning interface for fingerprint (`fprintd`) and IR facial recognition (`Howdy` / PAM-WebAuthn) with visual scanning feedback. |
+| **Visual Ring-Lighting & Tactile Feedback** | ❌ Absent | macOS Touch ID Topbar Glow | Topbar borders emit dynamic lighting feedback during biometric requests (green glow for successful authentication, red pulse for rejection). |
+| **Hardware Passkey / FIDO2 / WebAuthn Dialog** | ❌ Absent | Windows Hello FIDO2 / macOS Security Key UI | Graphic interface managing physical USB/NFC security keys (YubiKey) and WebAuthn Passkey confirmations. |
+| **In-Line Gatekeeper Elevation Biometrics** | ❌ Absent | macOS Polkit Touch ID Prompt | `ermete-gatekeeper-rs` authorization prompts accept biometric confirmation directly within the modal frame. |
 
 ---
 
-## ♿ 7. MACRO-AREA 6: ACCESSIBILITÀ DI SISTEMA (A11Y)
+## ♿ 7. MACRO-AREA 6: SYSTEM ACCESSIBILITY (A11Y)
 
-Attualmente Ermete OS eredita esclusivamente l'infrastruttura accessibilità di base di GTK4 senza estenderla con servizi nativi avanzati a livello di sistema operativo.
+Ermete OS inherits basic GTK4 accessibility bindings, requiring dedicated OS-level services.
 
-| Feature Mancante | Stato Attuale | Benchmark Riferimento | Descrizione dell'Implementazione Richiesta per Ermete OS |
+| Missing Capability | Current State | Competitive Benchmark | Target Implementation Specification for Ermete OS |
 | :--- | :--- | :--- | :--- |
-| **Native Real-Time Live Captions** | ❌ Assente | Windows 11 Live Captions / macOS Live Captions | Generatore nativo di sottotitoli in tempo reale a livello di sistema operativo: intercetta qualsiasi flusso audio in uscita tramite PipeWire (video web, chiamate, player multimediali) e renderizza sottotitoli fluttuanti e personalizzabili elaborati localmente su GPU/NPU via Whisper/Vosk. |
-| **Screen Reader Integrato per Tiling Compositor** | ❌ Parziale | macOS VoiceOver / Windows Narrator | Lettore di schermo integrato scritto nativamente in Rust e ottimizzato per la navigazione da tastiera all'interno del layout a scorrimento di Niri, annunciando workspace focalizzati, posizioni di finestre, elementi della Topbar ed alberi di superfici Wayland. |
-| **Shader Wayland per Ingrandimento & Filtri Cromatici** | ❌ Assente | macOS Accessibility Zoom & Color Filters | Modulo shader integrato direttamente nel compositor Niri per l'ingrandimento della schermata a seguire il cursore (Zoom ad alta definizione), filtri di correzione del daltonismo (Protanopia, Deuteranopia, Tritanopia), inversione cromatica ad alto contrasto e sovrascrittura globale dei font con varianti ad alta leggibilità (OpenDyslexic). |
-| **Voice Control & Dictation Engine** | ❌ Assente | macOS Voice Control / Windows Voice Access | Engine per il controllo completo del desktop tramite comandi vocali ("Apri Browser", "Focalizza Workspace 2", "Clicca Salva") e sistema di dettatura testo hands-free integrato nativamente in tutti i campi di testo del sistema. |
+| **Native Real-Time Live Captions** | ❌ Absent | Windows 11 Live Captions / macOS Live Captions | OS-level live caption generator: intercepts PipeWire audio streams (web videos, calls, media players) and renders floating customizable subtitles generated on GPU/NPU via Whisper/Vosk. |
+| **Tiling Compositor Screen Reader** | ❌ Partial | macOS VoiceOver / Windows Narrator | Native Rust screen reader optimized for Niri scrollable tiling navigation, announcing focused workspaces, window positions, Topbar elements, and Wayland surfaces. |
+| **Wayland Shader Magnifier & Color Filters** | ❌ Absent | macOS Accessibility Zoom & Color Filters | Niri compositor shaders delivering cursor-following screen magnification, color blindness correction (Protanopia, Deuteranopia, Tritanopia), high-contrast inversion, and OpenDyslexic font overrides. |
+| **Voice Control & Dictation Engine** | ❌ Absent | macOS Voice Control / Windows Voice Access | Voice command desktop navigation ("Open Browser", "Focus Workspace 2") and hands-free speech-to-text dictation across all text fields. |
 
 ---
 
-## 📻 8. MACRO-AREA 7 (ESPANSIONE): CONTROL CENTER AUDIO AVANZATO & SPATIAL SOUND
+## 📻 8. MACRO-AREA 7: ADVANCED CONTROL CENTER AUDIO & SPATIAL SOUND
 
-Attualmente il controllo audio nel Control Center si limita alla regolazione del volume master.
-
-| Feature Mancante | Benchmark Riferimento | Descrizione dell'Implementazione Richiesta |
+| Missing Capability | Competitive Benchmark | Target Implementation Specification |
 | :--- | :--- | :--- |
-| **Per-App Volume Mixer & Device Routing** | macOS SoundSource / Windows Volume Mixer | Menu popup rapido nella Topbar per regolare separatamente il volume di ciascuna applicazione attiva e reindirizzare l'output audio di app specifiche verso dispositivi differenti (es. Spotify su speaker Bluetooth, Discord su cuffie). |
-| **Spatial Audio & HRTF Virtualization** | macOS Spatial Audio / Windows Sonic | Modulo PipeWire per la virtualizzazione dell'audio spaziale multicanale (Dolby Atmos / 7.1 HRTF) per qualsiasi paio di cuffie stereo. |
-| **AI Noise Suppression Visualizer** | NVIDIA Broadcast / macOS Mic Modes | Soppressione del rumore di fondo sul microfono basata su IA (RNNoise) con indicatore visivo del livello di cancellazione del rumore e selettore dei profili ("Voce nitida", "Isolamento ambiente", "Musica"). |
+| **Per-App Volume Mixer & Device Routing** | macOS SoundSource / Windows Volume Mixer | Topbar popup menu controlling per-application volume levels and routing audio outputs to distinct devices (e.g., Spotify to Bluetooth speaker, Discord to headset). |
+| **Spatial Audio & HRTF Virtualization** | macOS Spatial Audio / Windows Sonic | PipeWire module providing multi-channel spatial audio virtualization (Dolby Atmos / 7.1 HRTF) for stereo headphones. |
+| **AI Noise Suppression Visualizer** | NVIDIA Broadcast / macOS Mic Modes | AI-based microphone background noise suppression (RNNoise) featuring noise cancellation meters and profile selectors ("Voice Clarity", "Ambient Isolation", "Music"). |
 
 ---
 
-## ⏳ 9. MACRO-AREA 8 (ESPANSIONE): FOCUS ENGINE, TEMPO DI UTILIZZO & DIGITAL WELLBEING
+## ⏳ 9. MACRO-AREA 8: FOCUS ENGINE & DIGITAL WELLBEING
 
-| Feature Mancante | Benchmark Riferimento | Descrizione dell'Implementazione Richiesta |
+| Missing Capability | Competitive Benchmark | Target Implementation Specification |
 | :--- | :--- | :--- |
-| **Advanced Focus Profiles & Workspace Association** | macOS Focus Modes / Windows Focus Sessions | Possibilità di attivare profili di concentrazione ("Lavoro", "Studio", "Relax", "Gaming") associati automaticamente a specifici Workspace di Niri. Ogni profilo silenzia notifiche non urgenti, nasconde applicazioni distraenti e attiva timer Pomodoro integrati nella Topbar. |
-| **Screen Time & App Usage Analytics Dashboard** | macOS Screen Time / Android Digital Wellbeing | Pannello visivo nelle Impostazioni che traccia il tempo trascorso su ciascuna applicazione e categoria, fornendo report grafici settimanali, avvisi di utilizzo prolungato e blocchi programmabili delle app. |
+| **Advanced Focus Profiles & Workspace Association** | macOS Focus Modes / Windows Focus Sessions | Focus modes ("Work", "Study", "Relax", "Gaming") bound to Niri workspaces, silencing non-urgent notifications and displaying Pomodoro timers in the Topbar. |
+| **Screen Time & App Usage Analytics Dashboard** | macOS Screen Time / Android Digital Wellbeing | Control Center dashboard tracking application usage metrics, emitting weekly reports and configurable usage limits. |
 
 ---
 
-## 🖼️ 10. MACRO-AREA 9 (ESPANSIONE): WORKSPACE ERGONOMICS & DESKTOP CANVAS
+## 🖼️ 10. MACRO-AREA 9: WORKSPACE ERGONOMICS & DESKTOP CANVAS
 
-| Feature Mancante | Benchmark Riferimento | Descrizione dell'Implementazione Richiesta |
+| Missing Capability | Competitive Benchmark | Target Implementation Specification |
 | :--- | :--- | :--- |
-| **Interactive Hot Corners (Angoli Attivi)** | macOS Hot Corners / Deepin Hot Corners | Configurazione degli angoli dello schermo che scatenano azioni immediate al passaggio del mouse: es. Angolo in alto a sinistra -> Panoramica finestre (Exposé), In alto a destra -> Centro di controllo, In basso a sinistra -> Mostra Desktop, In basso a destra -> Blocco Schermo. |
-| **Desktop Widget Canvas Interattivo** | macOS Sonoma Desktop Widgets / Windows 11 Widgets | Griglia libera sul desktop per il posizionamento di widget interattivi e ridimensionabili (Note adesive, Monitoraggio risorse CPU/RAM/GPU, Scorciatoie rapide, Widget meteo e orologio). |
-| **Workspace-Bound Accent Themes & Wallpapers** | macOS Spaces / KDE Plasma Activities | Possibilità di assegnare uno sfondo e un accent color differente a ciascun workspace di Niri, migliorando l'orientamento visivo spaziale dell'utente durante la navigazione tra gli spazi di lavoro. |
+| **Interactive Hot Corners** | macOS Hot Corners / Deepin Hot Corners | Configurable screen corners triggering system actions on cursor hover (Top-Left -> Window Exposé, Top-Right -> Control Center, Bottom-Left -> Desktop, Bottom-Right -> Lock Screen). |
+| **Interactive Desktop Widget Canvas** | macOS Sonoma Desktop Widgets / Windows 11 Widgets | Desktop grid hosting interactive, resizable widgets (Sticky Notes, System Metrics, Weather, Clock). |
+| **Workspace-Bound Accent Themes & Wallpapers** | macOS Spaces / KDE Plasma Activities | Per-workspace accent colors and wallpapers in Niri, enhancing spatial navigation awareness. |
 
 ---
 
-## 📊 11. MATRICE COMPARATIVA DEFINITIVA DI PARITÀ UI/UX
+## 📊 11. DEFINITIVE UI/UX PARITY COMPARISON MATRIX
 
-| Macro-Area / Feature | macOS Sequoia | Windows 11 (24H2) | ChromeOS | Zorin OS 17 | Deepin V23 | **Ermete OS (Stato Attuale)** | **Ermete OS (Target Post-Audit)** |
+| Feature Area | macOS Sequoia | Windows 11 (24H2) | ChromeOS | Zorin OS 17 | Deepin V23 | **Ermete OS (Current)** | **Ermete OS (Target Post-Audit)** |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **OOBE Setup Wizard** | 🟢 Eccellente | 🟢 Completo | 🟢 Ottimo | 🟡 Base | 🟢 Completo | 🔴 **Assente** | 🟢 **Piena Parità** |
-| **Lockscreen Dynamic Widgets** | 🟢 Presente | 🟢 Presente | 🔴 Assente | 🔴 Assente | 🟡 Parziale | 🔴 **Assente** | 🟢 **Piena Parità** |
-| **Global Search Math/Converter** | 🟢 Spotlight | 🟢 PowerToys | 🟡 Base | 🔴 Assente | 🟡 Base | 🔴 **Assente** | 🟢 **Piena Parità** |
-| **Global Search Raycast Actions** | 🟢 Spotlight | 🟢 PowerToys | 🔴 Assente | 🔴 Assente | 🔴 Assente | 🔴 **Assente** | 🟢 **Superiorità AI** |
-| **Universal Clipboard** | 🟢 Continuity | 🟢 Phone Link | 🟡 Phone Hub | 🟢 GSConnect | 🔴 Assente | 🔴 **Assente** | 🟢 **Post-Quantum Encrypted** |
-| **Handoff & Continuity Cam** | 🟢 Continuity | 🟢 Phone Link | 🔴 Assente | 🔴 Assente | 🔴 Assente | 🔴 **Assente** | 🟢 **Wayland Native** |
-| **Quick Look (Spacebar)** | 🟢 Native | 🟢 PowerToys | 🔴 Assente | 🟡 Extension | 🟢 Native | 🔴 **Assente** | 🟢 **GPU Accelerated** |
-| **Global Menu Bar** | 🟢 Native | 🔴 Assente | 🔴 Assente | 🔴 Assente | 🔴 Assente | 🔴 **Assente** | 🟢 **XDG / DBus Menu** |
-| **Biometric PAM Glow & UI** | 🟢 TouchID Glow | 🟢 Win Hello | 🟢 Lock UI | 🟡 PAM Base | 🟢 DDE Auth | 🔴 **Assente** | 🟢 **Ermete Ring-Glow** |
-| **Native Real-Time Live Captions**| 🟢 Native | 🟢 Native | 🟢 Native | 🔴 Assente | 🔴 Assente | 🔴 **Assente** | 🟢 **Local Whisper/NPU** |
-| **Wayland Shader A11y Filters** | 🟢 Superior | 🟡 Win Zoom | 🟡 Base | 🔴 Assente | 🔴 Assente | 🔴 **Assente** | 🟢 **Compositor Shaders** |
-| **Per-App Volume Control** | 🟢 SoundSource | 🟢 Volume Mixer | 🔴 Assente | 🟡 GNOME Sound | 🟢 DDE Sound | 🔴 **Assente** | 🟢 **PipeWire Topbar** |
+| **OOBE Setup Wizard** | 🟢 Excellent | 🟢 Complete | 🟢 Great | 🟡 Basic | 🟢 Complete | 🔴 **Absent** | 🟢 **Full Parity** |
+| **Lockscreen Dynamic Widgets** | 🟢 Present | 🟢 Present | 🔴 Absent | 🔴 Absent | 🟡 Partial | 🔴 **Absent** | 🟢 **Full Parity** |
+| **Global Search Math/Converter**| 🟢 Spotlight | 🟢 PowerToys | 🟡 Basic | 🔴 Absent | 🟡 Basic | 🔴 **Absent** | 🟢 **Full Parity** |
+| **Global Search Raycast Actions**| 🟢 Spotlight | 🟢 PowerToys | 🔴 Absent | 🔴 Absent | 🔴 Absent | 🔴 **Absent** | 🟢 **AI Superiority** |
+| **Universal Clipboard** | 🟢 Continuity | 🟢 Phone Link | 🟡 Phone Hub | 🟢 GSConnect | 🔴 Absent | 🔴 **Absent** | 🟢 **Post-Quantum Encrypted** |
+| **Handoff & Continuity Cam** | 🟢 Continuity | 🟢 Phone Link | 🔴 Absent | 🔴 Absent | 🔴 Absent | 🔴 **Absent** | 🟢 **Wayland Native** |
+| **Quick Look (Spacebar)** | 🟢 Native | 🟢 PowerToys | 🔴 Absent | 🟡 Extension | 🟢 Native | 🔴 **Absent** | 🟢 **GPU Accelerated** |
+| **Global Menu Bar** | 🟢 Native | 🔴 Absent | 🔴 Absent | 🔴 Absent | 🔴 Absent | 🔴 **Absent** | 🟢 **XDG / DBus Menu** |
+| **Biometric PAM Glow & UI** | 🟢 TouchID Glow | 🟢 Win Hello | 🟢 Lock UI | 🟡 PAM Basic | 🟢 DDE Auth | 🔴 **Absent** | 🟢 **Ermete Ring-Glow** |
+| **Native Real-Time Live Captions**| 🟢 Native | 🟢 Native | 🟢 Native | 🔴 Absent | 🔴 Absent | 🔴 **Absent** | 🟢 **Local Whisper/NPU** |
+| **Wayland Shader A11y Filters** | 🟢 Superior | 🟡 Win Zoom | 🟡 Basic | 🔴 Absent | 🔴 Absent | 🔴 **Absent** | 🟢 **Compositor Shaders** |
+| **Per-App Volume Control** | 🟢 SoundSource | 🟢 Volume Mixer | 🔴 Absent | 🟡 GNOME Sound | 🟢 DDE Sound | 🔴 **Absent** | 🟢 **PipeWire Topbar** |
 
 ---
 
-## 🛠️ 12. PIANO ARCHITETTURALE RACCOMANDATO PER ERMETE OS
+## 🛠️ 12. RECOMMENDED SYSTEM ARCHITECTURE PLAN FOR ERMETE OS
 
-Per colmare in modo sistematico i vuoti evidenziati dal Deep-Audit, si raccomanda l'introduzione dei seguenti **5 nuovi moduli crate Rust** all'interno del workspace di Ermete OS:
+To address identified gaps, the workspace integrates **5 target Rust crates**:
 
 ```mermaid
 graph TD
-    subgraph Nuove Crate UI/UX per Ermete OS
+    subgraph UI/UX Rust Crates
         OOBE[system/ermete-oobe] -->|Setup Wizard & Boot Splash| Shell[forge/specs/ermete-shell-rs]
         QL[forge/specs/ermete-quicklook] -->|GPU Preview Engine| Shell
         CONT[forge/specs/ermete-continuity] -->|BLE / P2P Cross-Device Bus| Mesh[system/ermete-cluster-mesh]
@@ -163,11 +161,8 @@ graph TD
     end
 ```
 
-1. **`system/ermete-oobe`**: Gestore del wizard di primo avvio GTK4, benvenuto sonoro/visivo e configurazione iniziale del sistema.
-2. **`forge/specs/ermete-quicklook`**: Motore GPU-accelerato per l'anteprima istantanea dei file via pressione della barra spaziatrice.
-3. **`forge/specs/ermete-continuity`**: Demone cross-device per Universal Clipboard, Handoff, SMS/Chiamate relay e fotocamera remota.
-4. **`system/ermete-biometrics-ui`**: Controller grafico per impronte digitali, riconoscimento facciale IR, Passkey e feedback visivo ad anello.
-5. **`system/ermete-a11y-engine`**: Engine per sottotitoli in tempo reale (Live Captions su GPU/NPU), screen reader nativo e shader di accessibilità per Niri.
-
----
-*Report compilato dall'Analista UI/UX di Deep-Audit Estremo per l'Ecosistema Ermete OS.*
+1. **`system/ermete-oobe`**: Setup wizard, sound branding, and initial configuration.
+2. **`forge/specs/ermete-quicklook`**: GPU-accelerated instant file preview engine triggered via spacebar.
+3. **`forge/specs/ermete-continuity`**: Cross-device continuity daemon (Universal Clipboard, Handoff, SMS/Call relay, wireless camera).
+4. **`system/ermete-biometrics-ui`**: Biometric UI controller for fingerprint, IR facial recognition, Passkeys, and ring-lighting indicators.
+5. **`system/a11y-engine`**: Local live captions engine (GPU/NPU Whisper), screen reader, and Niri accessibility shaders.
