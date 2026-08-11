@@ -1,6 +1,7 @@
 pub mod builder;
 pub mod hardware;
 pub mod ostree_hook;
+pub mod hw_scanner;
 
 use ostree_hook::OstreeHookManager;
 use std::error::Error;

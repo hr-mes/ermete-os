@@ -1678,8 +1678,10 @@ name = "ermete-kernel-forge"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "hex",
  "serde",
  "serde_json",
+ "sha2",
  "tokio",
  "tracing",
  "tracing-subscriber",
