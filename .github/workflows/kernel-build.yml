@@ -5,6 +5,12 @@ on:
     types:
       - completed
   workflow_dispatch:
+    inputs:
+      hardware_hash:
+        description: 'Hardware hash tag'
+        required: false
+        type: string
+        default: ''
 
 defaults:
   run:
@@ -118,16 +124,23 @@ jobs:
         compression-level: 1
         
     - name: Publish Kernel Micro-Container OCI
+      env:
+        HARDWARE_HASH: ${{ github.event.inputs.hardware_hash }}
       run: |
-        podman exec chimera-builder-${{ matrix.target }} bash -c "
+        podman exec -e HARDWARE_HASH="${HARDWARE_HASH}" chimera-builder-${{ matrix.target }} bash -c "
           export STORAGE_DRIVER=vfs
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
           ctr=\$(buildah from scratch)
           buildah copy \$ctr /forge/RPMS_OUT/*.rpm /
-          IMAGE_LOWER=\$(echo 'ghcr.io/hr-mes/ermete-os-kernel:latest' | tr '[:upper:]' '[:lower:]')
-          buildah commit --omit-timestamp \$ctr \$IMAGE_LOWER
-          buildah push --digestfile /forge/kernel_digest.txt \$IMAGE_LOWER docker://\$IMAGE_LOWER
+          IMAGE_BASE='ghcr.io/hr-mes/ermete-os-kernel'
+          IMAGE_LATEST=\$(echo \"\${IMAGE_BASE}:latest\" | tr '[:upper:]' '[:lower:]')
+          HW_TAG=\"\${HARDWARE_HASH:-generic}\"
+          IMAGE_HW=\$(echo \"\${IMAGE_BASE}:\${HW_TAG}\" | tr '[:upper:]' '[:lower:]')
+          buildah commit --omit-timestamp \$ctr \$IMAGE_LATEST
+          buildah tag \$IMAGE_LATEST \$IMAGE_HW
+          buildah push --digestfile /forge/kernel_digest.txt \$IMAGE_LATEST docker://\$IMAGE_LATEST
+          buildah push \$IMAGE_HW docker://\$IMAGE_HW
         "
         echo "KERNEL_DIGEST=$(cat kernel_digest.txt | tr -d '\n')" >> $GITHUB_ENV
 
