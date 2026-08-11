@@ -255,7 +255,7 @@ jobs:
           - target_name: ebpf-xdp-firewall
             component: ebpf
             dir: system/ebpf/ebpf-core
-            cmd: cargo build --target bpfel-unknown-none -Z build-std=core --release
+            cmd: RUSTFLAGS="" cargo build --target bpfel-unknown-none -Z build-std=core --release
           - target_name: gatekeeper-baremetal
             component: gatekeeper
             dir: forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0
