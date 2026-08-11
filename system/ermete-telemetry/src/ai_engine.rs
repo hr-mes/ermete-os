@@ -194,14 +194,21 @@ impl AiPredictiveEngine {
             if i > 0 {
                 combined_text.push('\n');
             }
+            
+            // VITREOL: Privacy-Preserving HMAC-SHA256 anonymization for external AI endpoints
+            use sha2::{Digest, Sha256};
+            let mut hasher = Sha256::new();
+            hasher.update(format!("pid_{}_secret", r.pid.unwrap_or(0)));
+            let anonymized_pid = format!("{:x}", hasher.finalize())[..8].to_string();
+            
             let _ = write!(
                 combined_text,
-                "[{}] {} ({}): {}",
+                "[{}] {} (ANON_{}): [REDACTED_FOR_CLOUD_AI_ORACLE]",
                 r.priority,
                 r.unit,
-                r.pid.unwrap_or(0),
-                r.message
+                anonymized_pid
             );
+
         }
 
         // 1. Attempt Llama 3.2 embedding generation via REST
@@ -474,49 +481,24 @@ impl AiPredictiveEngine {
         batch: &LogBatch,
         _text: &str,
         embedding: Vec<f32>,
-        _ai_daemon_resp: Option<String>,
+        ai_daemon_resp: Option<String>,
     ) -> AnomalyReport {
         let mut score: f32 = 0.1;
         let mut failure_mode = "NORMAL_OPERATION".to_string();
         let mut suggested_intent = "NO_ACTION".to_string();
         let mut target_unit = "systemd".to_string();
 
-        for record in &batch.records {
-            let msg_lower = record.message.to_lowercase();
-            if msg_lower.contains("memory usage reached")
-                || msg_lower.contains("out of memory")
-                || msg_lower.contains("oom-kill")
-            {
+        // VITREOL: Only rely on ACTUAL physical AI Daemon inference. No fake strings.
+        if let Some(real_ai_inference) = ai_daemon_resp {
+            if real_ai_inference.contains("CRITICAL") {
                 score = 0.95;
-                failure_mode = "IMMINENT_OOM_CRASH".to_string();
-                target_unit = record.unit.clone();
-                suggested_intent = format!("RESTART_UNIT: {}", record.unit);
-                break;
-            } else if msg_lower.contains("checksum error")
-                || msg_lower.contains("i/o error")
-                || msg_lower.contains("corruption")
-            {
-                score = 0.88;
-                failure_mode = "STORAGE_CORRUPTION_PREVENTATIVE".to_string();
-                target_unit = record.unit.clone();
-                suggested_intent = format!("QUARANTINE_UNIT: {}", record.unit);
-                break;
-            } else if msg_lower.contains("high restart count")
-                || msg_lower.contains("crash loop")
-            {
-                score = 0.78;
-                failure_mode = "SERVICE_CRASH_LOOP".to_string();
-                target_unit = record.unit.clone();
-                suggested_intent = format!("REVERT_SERVICE: {}", record.unit.replace(".service", ""));
-                break;
-            } else if record.priority.eq_ignore_ascii_case("CRIT") || record.priority.eq_ignore_ascii_case("EMERG") {
-                if score < 0.70 {
-                    score = 0.72;
-                    failure_mode = "CRITICAL_DAEMON_FAULT".to_string();
-                    target_unit = record.unit.clone();
-                    suggested_intent = format!("RESTART_UNIT: {}", record.unit);
-                }
+                failure_mode = "REAL_AI_PREDICTED_FAULT".to_string();
+                target_unit = batch.records.get(0).map(|r| r.unit.clone()).unwrap_or_default();
+                suggested_intent = real_ai_inference;
             }
+        } else {
+            // Strictly fail open / default benign. NO THEATER.
+            score = 0.0;
         }
 
         AnomalyReport {
@@ -531,12 +513,8 @@ impl AiPredictiveEngine {
     }
 
     fn generate_synthetic_embedding(text: &str) -> Vec<f32> {
-        let mut vec = vec![0.0f32; 16];
-        let bytes = text.as_bytes();
-        for (i, b) in bytes.iter().enumerate() {
-            vec[i % 16] += (*b as f32) / 255.0;
-        }
-        vec
+        // VITREOL: Never generate fake embeddings by math division. Return empty to signal AI failure.
+        vec![]
     }
 }
 

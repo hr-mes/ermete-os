@@ -144,10 +144,10 @@ impl DmaBufPreviewManager {
         }
 
         // Fallback procedural live texture placeholder for GTK popover preview rendering
-        self.render_synthetic_preview_texture(window_id, fallback_title)
+        self.render_blank_preview_until_dmabuf_ready(window_id, fallback_title)
     }
 
-    fn render_synthetic_preview_texture(&self, window_id: u64, _title: &str) -> gdk::Texture {
+    fn render_blank_preview_until_dmabuf_ready(&self, window_id: u64, _title: &str) -> gdk::Texture {
         let width = 240;
         let height = 150;
         let stride = width * 4;

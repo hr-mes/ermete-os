@@ -196,7 +196,7 @@ pub fn build_page() -> GtkBox {
     let dev1 = create_device_row(
         "phone-symbolic",
         "Ermete Phone",
-        "Smartphone Ermete OS • Sincronizzato • Batteria 88%",
+        "[No Real Bluetooth/Wifi-Direct devices detected]",
         "Connesso",
         true,
     );
@@ -208,7 +208,7 @@ pub fn build_page() -> GtkBox {
     let dev2 = create_device_row(
         "tablet-symbolic",
         "Ermete Tab Pro",
-        "Tablet Ermete OS • Sincronizzato • Batteria 94%",
+        "",
         "Connesso",
         true,
     );
