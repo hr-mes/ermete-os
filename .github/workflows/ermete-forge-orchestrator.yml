@@ -11,8 +11,6 @@ on:
   schedule:
     - cron: '0 4 * * *'
 
-env:
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
   REGISTRY: ghcr.io
   FEDORA_VERSION: 43
   RUSTC_WRAPPER: sccache
@@ -42,13 +40,13 @@ jobs:
       dirty_count: ${{ steps.brain.outputs.dirty_count }}
       has_changes: ${{ steps.brain.outputs.has_changes }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@v4
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: Align Repositories
         run: cp builder/rpmfusion-custom.repo /etc/yum.repos.d/ 2>/dev/null || true
       - name: Persist DAG State Cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@v4
         with:
           path: .cache
           key: dag-cache-${{ github.run_id }}
@@ -84,7 +82,7 @@ jobs:
       packages: write
       id-token: write
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@v4
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: Check Idempotency (Content Hash)
@@ -140,7 +138,7 @@ jobs:
       packages: write
       id-token: write
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@v4
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: Check Idempotency (GHCR Cache)
@@ -160,14 +158,14 @@ jobs:
 
       - name: Extreme Rust Cache (LLVM & Dependencies)
         if: steps.check.outputs.skip != 'true'
-        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        uses: Swatinem/rust-cache@v2
         with:
           shared-key: "sccache-level0-${{ matrix.package }}"
           cache-on-failure: "true"
 
       - name: Cache sccache
         if: steps.check.outputs.skip != 'true'
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@v4
         with:
           path: .sccache
           key: sccache-${{ matrix.package }}-${{ runner.os }}-${{ hashFiles(format('forge/specs/ermete-{0}/**', matrix.package)) }}
@@ -330,7 +328,7 @@ jobs:
       packages: write
       id-token: write
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@v4
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: Check Idempotency (GHCR Cache)
@@ -350,14 +348,14 @@ jobs:
 
       - name: Extreme Rust Cache (LLVM & Dependencies)
         if: steps.check.outputs.skip != 'true'
-        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        uses: Swatinem/rust-cache@v2
         with:
           shared-key: "sccache-level1-${{ matrix.package }}"
           cache-on-failure: "true"
 
       - name: Cache sccache
         if: steps.check.outputs.skip != 'true'
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@v4
         with:
           path: .sccache
           key: sccache-${{ matrix.package }}-${{ runner.os }}-${{ hashFiles(format('forge/specs/ermete-{0}/**', matrix.package)) }}
@@ -520,7 +518,7 @@ jobs:
       packages: write
       id-token: write
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@v4
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: Check Idempotency (GHCR Cache)
@@ -538,14 +536,14 @@ jobs:
 
       - name: Extreme Rust Cache (LLVM & Dependencies)
         if: steps.check.outputs.skip != 'true'
-        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        uses: Swatinem/rust-cache@v2
         with:
           shared-key: "sccache-level2-${{ matrix.package }}"
           cache-on-failure: "true"
 
       - name: Cache sccache
         if: steps.check.outputs.skip != 'true'
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@v4
         with:
           path: .sccache
           key: sccache-${{ matrix.package }}-${{ runner.os }}-${{ hashFiles(format('forge/specs/ermete-{0}/**', matrix.package)) }}
@@ -704,7 +702,7 @@ jobs:
       matrix:
         flatpak: ${{ fromJson(needs.orchestrator-brain.outputs.dag_flatpaks) }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@v4
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: Build & Validate Flatpak Package
@@ -734,7 +732,7 @@ jobs:
       packages: write
       id-token: write
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@v4
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: Authenticate Podman to GHCR
@@ -767,7 +765,7 @@ jobs:
 
       - name: Cache RPMs
         id: cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@v4
         with:
           path: nvidia_cache/
           key: rpm-nvidia-bedrock6-${{ steps.kernel.outputs.kernel_ver }}-${{ steps.kernel.outputs.nvidia_ver }}
@@ -871,7 +869,7 @@ jobs:
       packages: write
       id-token: write
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@v4
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: Create Repo and Push OCI
@@ -1030,7 +1028,7 @@ jobs:
           echo "IMAGE_NAME=ermete-os-system" >> ${GITHUB_ENV}
           echo "DEFAULT_TAG=latest" >> ${GITHUB_ENV}
       - name: 📥 Checkout Repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@v4
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: 🧹 Maximize build space
@@ -1070,11 +1068,11 @@ jobs:
       pull-requests: write
     steps:
       - name: 📥 Check out repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@v4
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: 🟢 Set up Node.js (v22)
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@v4
         with:
           node-version: "22"
       - name: 🚀 Build Astro.js Portal
@@ -1103,7 +1101,7 @@ jobs:
       image: ghcr.io/hr-mes/ermete-os-builder:latest
     steps:
       - name: 📥 Check out repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@v4
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: 📸 GTK4 UI & Wayland Headless Compositor Visual Regression Tests
