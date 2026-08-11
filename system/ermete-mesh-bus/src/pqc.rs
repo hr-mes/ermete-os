@@ -1,9 +1,25 @@
 use anyhow::Result;
 pub use ermete_bus_api::pqc::{
-    HandshakeInitPayload, HandshakeResponsePayload, HandshakeSession, PqcKeys,
+    HandshakeInitPayload, HandshakeResponsePayload, HandshakeSession, PqcKeys, SecretSessionKey,
 };
 pub use ermete_bus_api::NodeIdentityPayload as NodeIdentity;
 use pqc_kyber::{KYBER_CIPHERTEXTBYTES, KYBER_SSBYTES};
+use ring::aead;
+
+pub fn decrypt_aes_gcm(session_key: &SecretSessionKey, payload: &[u8]) -> Result<Vec<u8>> {
+    if payload.len() < 12 {
+        return Err(anyhow::anyhow!("Payload too short for AES-GCM nonce"));
+    }
+    let unbound_key = aead::UnboundKey::new(&aead::AES_256_GCM, session_key.as_bytes())
+        .map_err(|_| anyhow::anyhow!("Invalid AEAD key"))?;
+    let key = aead::LessSafeKey::new(unbound_key);
+    let nonce = aead::Nonce::try_assume_unique_for_key(&payload[..12])
+        .map_err(|_| anyhow::anyhow!("Invalid nonce"))?;
+    let mut in_out = payload[12..].to_vec();
+    let decrypted = key.open_in_place(nonce, aead::Aad::empty(), &mut in_out)
+        .map_err(|_| anyhow::anyhow!("AEAD decryption failed"))?;
+    Ok(decrypted.to_vec())
+}
 
 /// Level 13 Post-Quantum Cryptographic Engine for Zero-Trust Mesh
 /// Delegating core cryptographic key logic to unified `ermete_bus_api::pqc::PqcKeys`

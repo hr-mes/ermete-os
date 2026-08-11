@@ -24,6 +24,8 @@ ring = "0.17"
 hex = { workspace = true }
 ermete-bus-api = { path = "../ermete-bus-api" }
 libc = { workspace = true }
+zeroize = { workspace = true, features = ["zeroize_derive"] }
+subtle = { workspace = true }
 
 
 

@@ -22,4 +22,6 @@ base64 = "0.21"
 rand_core = "0.6"
 rand = { workspace = true }
 ring = "0.17"
+zeroize = { workspace = true, features = ["zeroize_derive"] }
+subtle = { workspace = true }
 

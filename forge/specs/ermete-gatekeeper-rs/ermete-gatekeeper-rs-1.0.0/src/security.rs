@@ -18,18 +18,14 @@ pub enum SecurityError {
     InsecureKeyPath,
 }
 
+use subtle::ConstantTimeEq;
+
 /// Constant-time memory comparison to prevent timing side-channel leaks.
 pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
     if a.len() != b.len() {
         return false;
     }
-    let mut result = 0u8;
-    let mut i = 0;
-    while i < a.len() {
-        result |= a[i] ^ b[i];
-        i += 1;
-    }
-    result == 0
+    bool::from(a.ct_eq(b))
 }
 
 /// Validates authorization token for high-privilege operations in Gatekeeper.
@@ -47,8 +43,8 @@ pub fn verify_auth_token(
         return Err(SecurityError::InvalidTokenLength);
     }
 
-    // Check magic bytes
-    if token[0..4] != MAGIC {
+    // Check magic bytes in constant time
+    if !bool::from(token[0..4].ct_eq(&MAGIC)) {
         return Err(SecurityError::InvalidMagic);
     }
 

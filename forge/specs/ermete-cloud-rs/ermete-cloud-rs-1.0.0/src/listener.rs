@@ -7,6 +7,7 @@ use tokio::time::Instant;
 use tracing::{error, info, warn};
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64;
+use subtle::ConstantTimeEq;
 
 use crate::bft::{BftConsensusEngine, BftProposal, BftVote};
 use crate::zk::{ZkProof, ZkProofEngine};
@@ -92,7 +93,8 @@ pub fn start_tcp_listener(
                                     }
                                 }
                             } else if let Some(req_token) = current_token {
-                                if auth_header.trim() == format!("AUTH:{}", req_token) {
+                                let expected = format!("AUTH:{}", req_token);
+                                if bool::from(auth_header.trim().as_bytes().ct_eq(expected.as_bytes())) {
                                     authenticated = true;
                                 }
                             }

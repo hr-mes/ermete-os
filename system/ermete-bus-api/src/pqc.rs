@@ -10,7 +10,25 @@ use std::sync::Arc;
 use tracing::{debug, info};
 use x25519_dalek::{EphemeralSecret, PublicKey as X25519PublicKey};
 
+use zeroize::{Zeroize, ZeroizeOnDrop};
+
 use crate::NodeIdentityPayload;
+
+/// FIPS 140-3 Zero-Trust Secret Session Key Container in RAM.
+#[derive(Clone, Zeroize, ZeroizeOnDrop)]
+pub struct SecretSessionKey {
+    pub key: [u8; 32],
+}
+
+impl SecretSessionKey {
+    pub fn new(key: [u8; 32]) -> Self {
+        Self { key }
+    }
+
+    pub fn as_bytes(&self) -> &[u8; 32] {
+        &self.key
+    }
+}
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct HandshakeInitPayload {
@@ -55,11 +73,14 @@ impl HandshakeSession {
             ));
         }
 
-        let kyber_ss = pqc_keys.decapsulate_pqc_secret(&resp.kyber_ciphertext)?;
+        let mut kyber_ss = pqc_keys.decapsulate_pqc_secret(&resp.kyber_ciphertext)?;
         let peer_x25519_pk = X25519PublicKey::from(resp.ephemeral_x25519_pk);
-        let x25519_ss = self.ephemeral_secret.diffie_hellman(&peer_x25519_pk).to_bytes();
+        let mut x25519_ss = self.ephemeral_secret.diffie_hellman(&peer_x25519_pk).to_bytes();
 
         let session_key = PqcKeys::derive_session_key(&kyber_ss, &x25519_ss, &resp.timestamp.to_le_bytes())?;
+        kyber_ss.zeroize();
+        x25519_ss.zeroize();
+
         Ok(session_key)
     }
 }
@@ -230,8 +251,9 @@ impl PqcKeys {
         ikm[..KYBER_SSBYTES].copy_from_slice(kyber_ss);
         ikm[KYBER_SSBYTES..64].copy_from_slice(x25519_ss);
 
-        let salt = hkdf::Salt::new(hkdf::HKDF_SHA256, salt);
-        let prk = salt.extract(&ikm);
+        let salt_obj = hkdf::Salt::new(hkdf::HKDF_SHA256, salt);
+        let prk = salt_obj.extract(&ikm);
+        ikm.zeroize();
         let okm = prk
             .expand(&[b"ermete-mesh-bus-pqc-v1-session"], hkdf::HKDF_SHA256)
             .map_err(|e| anyhow!("HKDF expansion failed: {:?}", e))?;
@@ -289,14 +311,16 @@ impl PqcKeys {
             ));
         }
 
-        let (ct, kyber_ss) = Self::encapsulate_pqc_secret(&init.kyber_pk)?;
+        let (ct, mut kyber_ss) = Self::encapsulate_pqc_secret(&init.kyber_pk)?;
 
         let eph_resp = EphemeralSecret::random_from_rng(OsRng);
         let eph_resp_pk = X25519PublicKey::from(&eph_resp);
         let peer_x25519_pk = X25519PublicKey::from(init.ephemeral_x25519_pk);
-        let x25519_ss = eph_resp.diffie_hellman(&peer_x25519_pk).to_bytes();
+        let mut x25519_ss = eph_resp.diffie_hellman(&peer_x25519_pk).to_bytes();
 
         let session_key = Self::derive_session_key(&kyber_ss, &x25519_ss, &init.timestamp.to_le_bytes())?;
+        kyber_ss.zeroize();
+        x25519_ss.zeroize();
 
         let mut resp_msg = Vec::new();
         resp_msg.extend_from_slice(self.inner.node_id.as_bytes());

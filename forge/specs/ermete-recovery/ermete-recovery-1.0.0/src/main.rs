@@ -4,6 +4,24 @@ use relm4::{ComponentParts, ComponentSender, RelmApp, RelmWidgetExt, SimpleCompo
 use std::sync::OnceLock;
 use tracing::{info, warn};
 use zbus::MessageStream;
+use zeroize::{Zeroize, ZeroizeOnDrop};
+use subtle::ConstantTimeEq;
+
+/// Secure memory container for emergency recovery passphrase / tokens in RAM (FIPS 140-3).
+#[derive(Clone, Zeroize, ZeroizeOnDrop)]
+pub struct SecretRecoveryPassphrase {
+    pub passphrase: Vec<u8>,
+}
+
+impl SecretRecoveryPassphrase {
+    pub fn new(passphrase: Vec<u8>) -> Self {
+        Self { passphrase }
+    }
+
+    pub fn verify(&self, expected: &[u8]) -> bool {
+        self.passphrase.as_slice().ct_eq(expected).into()
+    }
+}
 
 static TOKIO_RT: OnceLock<tokio::runtime::Runtime> = OnceLock::new();
 

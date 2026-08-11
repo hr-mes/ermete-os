@@ -32,9 +32,12 @@ pub struct Peer {
     pub zero_trust_verified: bool,
 }
 
+use ermete_bus_api::pqc::SecretSessionKey;
+
 #[derive(Clone)]
 pub struct PeerManager {
     peers: Arc<RwLock<HashMap<String, Peer>>>,
+    session_keys: Arc<RwLock<HashMap<String, SecretSessionKey>>>,
     ip_counter: Arc<RwLock<u8>>,
 }
 
@@ -42,6 +45,7 @@ impl PeerManager {
     pub fn new() -> Self {
         Self {
             peers: Arc::new(RwLock::new(HashMap::new())),
+            session_keys: Arc::new(RwLock::new(HashMap::new())),
             ip_counter: Arc::new(RwLock::new(2)), // Starts at 10.99.0.2
         }
     }
@@ -84,10 +88,26 @@ impl PeerManager {
         Ok(peer)
     }
 
+    pub async fn store_session_key(&self, node_id: &str, session_key: [u8; 32]) -> Result<()> {
+        let mut keys = self.session_keys.write().await;
+        keys.insert(node_id.to_string(), SecretSessionKey::new(session_key));
+        info!("Stored ZeroizeOnDrop PQC session key in RAM for peer '{}'", node_id);
+        Ok(())
+    }
+
+    pub async fn get_active_session_key(&self, node_id: &str) -> Result<SecretSessionKey> {
+        let keys = self.session_keys.read().await;
+        keys.get(node_id)
+            .cloned()
+            .ok_or_else(|| anyhow!("No active PQC session key for peer '{}'", node_id))
+    }
+
     pub async fn remove_peer(&self, node_id: &str) -> Result<()> {
         let mut peers = self.peers.write().await;
+        let mut keys = self.session_keys.write().await;
+        keys.remove(node_id);
         if peers.remove(node_id).is_some() {
-            info!("Removed peer '{}' from mesh bus", node_id);
+            info!("Removed peer '{}' from mesh bus (session key zeroized)", node_id);
             Ok(())
         } else {
             Err(anyhow!("Peer '{}' not found", node_id))

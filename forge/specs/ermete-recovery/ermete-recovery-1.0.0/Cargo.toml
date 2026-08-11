@@ -19,7 +19,9 @@ zbus = { workspace = true, features = ["tokio"] }
 libc = { workspace = true }
 futures-util = { workspace = true }
 tracing = { workspace = true }
-tracing-subscriber = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
 anyhow = { workspace = true }
 ermete-style = { path = "../../../../system/ermete-style" }
+zeroize = { workspace = true, features = ["zeroize_derive"] }
+subtle = { workspace = true }
 

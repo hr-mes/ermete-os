@@ -81,6 +81,9 @@ impl KeyReleaseManager {
         let mut key_buffer = [0u8; 32];
         key_buffer.copy_from_slice(&output.stdout[..32]);
         let secret_key = SecretDecryptionKey::new(key_buffer);
+        key_buffer.zeroize();
+        let mut raw_stdout = output.stdout;
+        raw_stdout.zeroize();
 
 
         // Ensure parent directory /run/ermete exists

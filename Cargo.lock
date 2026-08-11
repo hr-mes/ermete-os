@@ -1430,6 +1430,7 @@ version = "1.0.0"
 dependencies = [
  "candle-core",
  "candle-nn",
+ "libc",
  "openvino",
  "serde",
  "serde_json",
@@ -1487,9 +1488,11 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "subtle",
  "tracing",
  "x25519-dalek",
  "zbus",
+ "zeroize",
 ]
 
 [[package]]
@@ -1505,10 +1508,12 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "subtle",
  "tokio",
  "tracing",
  "tracing-subscriber",
  "zbus",
+ "zeroize",
 ]
 
 [[package]]
@@ -1566,6 +1571,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "subtle",
  "tokio",
  "tracing",
  "zbus",
@@ -1643,11 +1649,13 @@ dependencies = [
  "libc",
  "pqc_dilithium",
  "serde",
+ "subtle",
  "tokio",
  "tracing",
  "uuid",
  "xattr",
  "zbus",
+ "zeroize",
 ]
 
 [[package]]
@@ -1783,11 +1791,13 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "subtle",
  "tokio",
  "tracing",
  "tracing-subscriber",
  "x25519-dalek",
  "zbus",
+ "zeroize",
 ]
 
 [[package]]
@@ -1855,10 +1865,12 @@ dependencies = [
  "gtk4",
  "libc",
  "relm4",
+ "subtle",
  "tokio",
  "tracing",
  "tracing-subscriber",
  "zbus",
+ "zeroize",
 ]
 
 [[package]]
@@ -1978,6 +1990,7 @@ dependencies = [
  "anyhow",
  "aya",
  "chrono",
+ "libc",
  "reqwest 0.13.4",
  "serde",
  "serde_json",
