@@ -1,11 +1,81 @@
 use anyhow::Result;
 use log::{error, info};
+use std::collections::HashMap;
 use std::sync::Arc;
+use serde::{Deserialize, Serialize};
 use zbus::{connection, interface, object_server::SignalEmitter};
+use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::attestation::{AttestationEngine, EnclaveLifecycleState};
 use crate::enclave::EnclaveManager;
 use crate::kvm::HardwareEnclaveType;
+
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct PolkitSubject {
+    pub kind: String,
+    pub details: HashMap<String, OwnedValue>,
+}
+
+impl PolkitSubject {
+    pub fn system_bus_name(name: impl Into<String>) -> Self {
+        let mut details = HashMap::new();
+        let val: Value = Value::from(name.into());
+        if let Ok(owned) = val.try_into() {
+            details.insert("name".to_string(), owned);
+        }
+        Self {
+            kind: "system-bus-name".to_string(),
+            details,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct PolkitAuthorizationResult {
+    pub is_authorized: bool,
+    pub is_challenge: bool,
+    pub details: HashMap<String, String>,
+}
+
+#[zbus::proxy(
+    interface = "org.freedesktop.PolicyKit1.Authority",
+    default_service = "org.freedesktop.PolicyKit1",
+    default_path = "/org/freedesktop/PolicyKit1/Authority"
+)]
+pub trait PolicyKitAuthority {
+    fn check_authorization(
+        &self,
+        subject: &PolkitSubject,
+        action_id: &str,
+        details: &HashMap<&str, &str>,
+        flags: u32,
+        cancellation_id: &str,
+    ) -> zbus::Result<PolkitAuthorizationResult>;
+}
+
+pub async fn check_polkit_auth_zbus(
+    conn: &zbus::Connection,
+    sender: &str,
+    action_id: &str,
+    allow_user_interaction: bool,
+) -> Result<bool, zbus::Error> {
+    if let Ok(creds) = conn.peer_credentials().await {
+        if creds.uid() == Some(0) {
+            return Ok(true);
+        }
+    }
+
+    let proxy = PolicyKitAuthorityProxy::new(conn).await?;
+    let subject = PolkitSubject::system_bus_name(sender);
+    let details = HashMap::<&str, &str>::new();
+    let flags = if allow_user_interaction { 1u32 } else { 0u32 };
+
+    let result = proxy
+        .check_authorization(&subject, action_id, &details, flags, "")
+        .await?;
+
+    Ok(result.is_authorized)
+}
 
 /// D-Bus interface `org.ermete.Hypervisor1` for zero-trust micro-enclave orchestration
 pub struct HypervisorDbus {
@@ -19,11 +89,21 @@ impl HypervisorDbus {
     async fn launch_enclave(
         &self,
         #[zbus(signal_emitter)] signal_ctxt: SignalEmitter<'_>,
+        #[zbus(header)] hdr: zbus::message::Header<'_>,
+        #[zbus(connection)] conn: &zbus::Connection,
         app_name: String,
         exec_path: String,
         args: Vec<String>,
         enclave_type: String,
-    ) -> String {
+    ) -> zbus::fdo::Result<String> {
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
+        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "org.ermete.hypervisor.manage", true)
+            .await
+            .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit check failed: {}", e)))?;
+        if !is_auth {
+            return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed for launch_enclave".into()));
+        }
+
         let requested_type = match enclave_type.to_lowercase().as_str() {
             "sev-snp" | "sevsnp" => Some(HardwareEnclaveType::SevSnp),
             "tdx" | "intel-tdx" => Some(HardwareEnclaveType::IntelTdx),
@@ -40,10 +120,10 @@ impl HypervisorDbus {
         ) {
             Ok(enclave_id) => {
                 let _ = Self::enclave_created(&signal_ctxt, &enclave_id, &app_name).await;
-                enclave_id
+                Ok(enclave_id)
             }
             Err(e) => {
-                format!("Error launching enclave: {}", e)
+                Err(zbus::fdo::Error::Failed(format!("Error launching enclave: {}", e)))
             }
         }
     }
@@ -52,16 +132,26 @@ impl HypervisorDbus {
     async fn enclose_untrusted_agent(
         &self,
         #[zbus(signal_emitter)] signal_ctxt: SignalEmitter<'_>,
+        #[zbus(header)] hdr: zbus::message::Header<'_>,
+        #[zbus(connection)] conn: &zbus::Connection,
         pid: u32,
         app_type: String,
-    ) -> String {
+    ) -> zbus::fdo::Result<String> {
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
+        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "org.ermete.hypervisor.manage", true)
+            .await
+            .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit check failed: {}", e)))?;
+        if !is_auth {
+            return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed for enclose_untrusted_agent".into()));
+        }
+
         match self.enclave_manager.enclose_untrusted_agent(pid, &app_type) {
             Ok(enclave_id) => {
                 let _ = Self::untrusted_agent_trapped(&signal_ctxt, pid, &enclave_id).await;
-                enclave_id
+                Ok(enclave_id)
             }
             Err(e) => {
-                format!("Error trapping untrusted PID {}: {}", pid, e)
+                Err(zbus::fdo::Error::Failed(format!("Error trapping untrusted PID {}: {}", pid, e)))
             }
         }
     }
@@ -70,16 +160,26 @@ impl HypervisorDbus {
     async fn terminate_enclave(
         &self,
         #[zbus(signal_emitter)] signal_ctxt: SignalEmitter<'_>,
+        #[zbus(header)] hdr: zbus::message::Header<'_>,
+        #[zbus(connection)] conn: &zbus::Connection,
         enclave_id: String,
-    ) -> bool {
+    ) -> zbus::fdo::Result<bool> {
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
+        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "org.ermete.hypervisor.manage", true)
+            .await
+            .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit check failed: {}", e)))?;
+        if !is_auth {
+            return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed for terminate_enclave".into()));
+        }
+
         match self.enclave_manager.terminate_enclave(&enclave_id) {
             Ok(success) => {
                 if success {
                     let _ = Self::enclave_terminated(&signal_ctxt, &enclave_id).await;
                 }
-                success
+                Ok(success)
             }
-            Err(_) => false,
+            Err(_) => Ok(false),
         }
     }
 
@@ -120,21 +220,45 @@ impl HypervisorDbus {
     /// Opens a secure virtio-fs tunnel for Micro-VM file access
     async fn open_virtiofs_tunnel(
         &self,
+        #[zbus(header)] hdr: zbus::message::Header<'_>,
+        #[zbus(connection)] conn: &zbus::Connection,
         enclave_id: String,
         host_path: String,
         read_only: bool,
-    ) -> String {
+    ) -> zbus::fdo::Result<String> {
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
+        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "org.ermete.hypervisor.manage", true)
+            .await
+            .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit check failed: {}", e)))?;
+        if !is_auth {
+            return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed for open_virtiofs_tunnel".into()));
+        }
+
         match self.enclave_manager.open_virtiofs_tunnel(&enclave_id, &host_path, read_only) {
-            Ok(json_resp) => json_resp,
-            Err(e) => format!(r#"{{"error": "Failed to open virtio-fs tunnel: {}"}}"#, e),
+            Ok(json_resp) => Ok(json_resp),
+            Err(e) => Err(zbus::fdo::Error::Failed(format!("Failed to open virtio-fs tunnel: {}", e))),
         }
     }
 
     /// Bridges a PipeWire Screen Sharing stream to a Micro-VM Enclave
-    async fn bridge_screencast_tunnel(&self, enclave_id: String, pipewire_node: u32) -> String {
+    async fn bridge_screencast_tunnel(
+        &self,
+        #[zbus(header)] hdr: zbus::message::Header<'_>,
+        #[zbus(connection)] conn: &zbus::Connection,
+        enclave_id: String,
+        pipewire_node: u32,
+    ) -> zbus::fdo::Result<String> {
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
+        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "org.ermete.hypervisor.manage", true)
+            .await
+            .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit check failed: {}", e)))?;
+        if !is_auth {
+            return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed for bridge_screencast_tunnel".into()));
+        }
+
         match self.enclave_manager.bridge_screencast_tunnel(&enclave_id, pipewire_node) {
-            Ok(json_resp) => json_resp,
-            Err(e) => format!(r#"{{"error": "Failed to bridge ScreenCast stream: {}"}}"#, e),
+            Ok(json_resp) => Ok(json_resp),
+            Err(e) => Err(zbus::fdo::Error::Failed(format!("Failed to bridge ScreenCast stream: {}", e))),
         }
     }
 

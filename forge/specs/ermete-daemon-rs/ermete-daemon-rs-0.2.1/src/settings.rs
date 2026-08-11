@@ -317,7 +317,7 @@ impl SettingsService {
                     }
                     SettingsCommand::SetColorScheme(sender, val, reply) => {
                         if !crate::bedrock::check_polkit_auth(sender.as_deref(), "os.ermete.settings.change").await {
-                            let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
+                            let _ = reply.send(Err(fdo::Error::AccessDenied("Polkit authorization failed".into())));
                             continue;
                         }
                         appearance_state.theme.color_scheme = val.clone();
@@ -342,7 +342,7 @@ impl SettingsService {
                     }
                     SettingsCommand::SetAccentColor(sender, val, reply) => {
                         if !crate::bedrock::check_polkit_auth(sender.as_deref(), "os.ermete.settings.change").await {
-                            let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
+                            let _ = reply.send(Err(fdo::Error::AccessDenied("Polkit authorization failed".into())));
                             continue;
                         }
                         appearance_state.theme.accent_color = val.clone();
@@ -364,7 +364,7 @@ impl SettingsService {
                     }
                     SettingsCommand::SetWallpaper(sender, val, reply) => {
                         if !crate::bedrock::check_polkit_auth(sender.as_deref(), "os.ermete.settings.change").await {
-                            let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
+                            let _ = reply.send(Err(fdo::Error::AccessDenied("Polkit authorization failed".into())));
                             continue;
                         }
                         appearance_state.wallpaper.wallpaper = val.clone();
@@ -389,7 +389,7 @@ impl SettingsService {
                     }
                     SettingsCommand::SetTrueToneEnabled(sender, val, reply) => {
                         if !crate::bedrock::check_polkit_auth(sender.as_deref(), "os.ermete.settings.change").await {
-                            let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
+                            let _ = reply.send(Err(fdo::Error::AccessDenied("Polkit authorization failed".into())));
                             continue;
                         }
                         appearance_state.display.true_tone_enabled = val;
@@ -407,7 +407,7 @@ impl SettingsService {
                     }
                     SettingsCommand::SetTrueToneTemperature(sender, val, reply) => {
                         if !crate::bedrock::check_polkit_auth(sender.as_deref(), "os.ermete.settings.change").await {
-                            let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
+                            let _ = reply.send(Err(fdo::Error::AccessDenied("Polkit authorization failed".into())));
                             continue;
                         }
                         appearance_state.display.true_tone_temperature = val;
@@ -425,7 +425,7 @@ impl SettingsService {
                     }
                     SettingsCommand::SetVoiceoverEnabled(sender, val, reply) => {
                         if !crate::bedrock::check_polkit_auth(sender.as_deref(), "os.ermete.settings.change").await {
-                            let _ = reply.send(Err(fdo::Error::Failed("Polkit authorization failed".into())));
+                            let _ = reply.send(Err(fdo::Error::AccessDenied("Polkit authorization failed".into())));
                             continue;
                         }
                         voiceover_state.enabled = val;
@@ -463,7 +463,7 @@ impl SettingsService {
     ) -> fdo::Result<()> {
         let sender_str = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
         if !crate::bedrock::check_polkit_auth(sender_str, "os.ermete.settings.change").await {
-            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
+            return Err(fdo::Error::AccessDenied("Polkit authorization failed".into()));
         }
         let sender = sender_str.map(|s| s.to_string());
         let (reply, rx) = oneshot::channel();
@@ -486,7 +486,7 @@ impl SettingsService {
     ) -> fdo::Result<()> {
         let sender_str = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
         if !crate::bedrock::check_polkit_auth(sender_str, "os.ermete.settings.change").await {
-            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
+            return Err(fdo::Error::AccessDenied("Polkit authorization failed".into()));
         }
         let sender = sender_str.map(|s| s.to_string());
         let (reply, rx) = oneshot::channel();
@@ -509,7 +509,7 @@ impl SettingsService {
     ) -> fdo::Result<()> {
         let sender_str = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
         if !crate::bedrock::check_polkit_auth(sender_str, "os.ermete.settings.change").await {
-            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
+            return Err(fdo::Error::AccessDenied("Polkit authorization failed".into()));
         }
         let sender = sender_str.map(|s| s.to_string());
         let (reply, rx) = oneshot::channel();
@@ -532,7 +532,7 @@ impl SettingsService {
     ) -> fdo::Result<()> {
         let sender_str = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
         if !crate::bedrock::check_polkit_auth(sender_str, "os.ermete.settings.change").await {
-            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
+            return Err(fdo::Error::AccessDenied("Polkit authorization failed".into()));
         }
         let sender = sender_str.map(|s| s.to_string());
         let (reply, rx) = oneshot::channel();
@@ -555,7 +555,7 @@ impl SettingsService {
     ) -> fdo::Result<()> {
         let sender_str = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
         if !crate::bedrock::check_polkit_auth(sender_str, "os.ermete.settings.change").await {
-            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
+            return Err(fdo::Error::AccessDenied("Polkit authorization failed".into()));
         }
         let sender = sender_str.map(|s| s.to_string());
         let (reply, rx) = oneshot::channel();
@@ -578,7 +578,7 @@ impl SettingsService {
     ) -> fdo::Result<()> {
         let sender_str = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
         if !crate::bedrock::check_polkit_auth(sender_str, "os.ermete.settings.change").await {
-            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
+            return Err(fdo::Error::AccessDenied("Polkit authorization failed".into()));
         }
         let sender = sender_str.map(|s| s.to_string());
         let (reply, rx) = oneshot::channel();

@@ -4,7 +4,7 @@ set -euo pipefail
 TARGET_IMAGE="${1:-localhost/ermete-os-system}"
 TAG="${2:-latest}"
 TYPE="${3:-qcow2}"
-BIB_IMAGE="${BIB_IMAGE:-quay.io/centos-bootc/bootc-image-builder:latest}"
+BIB_IMAGE="${BIB_IMAGE:-quay.io/centos-bootc/bootc-image-builder:latest@sha256:2b52843ea2bfda73b0a08d97e76b734393b1d3a804681b9fabb26723bd3a2f0b}"
 
 config="disk_config/disk.toml"
 if [[ "${TYPE}" == "iso" ]]; then

@@ -111,6 +111,8 @@ lto = true
 codegen-units = 1
 panic = "abort"
 strip = true
+rpath = false
+overflow-checks = true
 
 [profile.release.package.ermete-ai-daemon]
 opt-level = 3

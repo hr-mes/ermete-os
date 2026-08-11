@@ -54,6 +54,12 @@ pub async fn check_polkit_auth_zbus(
     action_id: &str,
     allow_user_interaction: bool,
 ) -> Result<bool, zbus::Error> {
+    if let Ok(creds) = conn.peer_credentials().await {
+        if creds.uid() == Some(0) {
+            return Ok(true);
+        }
+    }
+
     let proxy = PolicyKitAuthorityProxy::new(conn).await?;
     let subject = PolkitSubject::system_bus_name(sender);
     let details = HashMap::<&str, &str>::new();
@@ -78,13 +84,13 @@ impl MdmIface {
     ) -> std::result::Result<String, zbus::fdo::Error> {
         info!("Received D-Bus request to trigger LOCAL WIPE.");
 
-        let sender = hdr.sender().ok_or(zbus::fdo::Error::Failed("No sender".into()))?;
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
         let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "os.ermete.mdm.wipe", true)
             .await
-            .map_err(|e| zbus::fdo::Error::Failed(format!("Polkit authorization check failed: {}", e)))?;
+            .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit authorization check failed: {}", e)))?;
             
         if !is_auth {
-            return Err(zbus::fdo::Error::Failed("Polkit authorization failed".into()));
+            return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed".into()));
         }
         
         let engine = WipeEngine::new();

@@ -61,6 +61,12 @@ pub async fn check_polkit_auth_zbus(
     action_id: &str,
     allow_user_interaction: bool,
 ) -> Result<bool, zbus::Error> {
+    if let Ok(creds) = conn.peer_credentials().await {
+        if creds.uid() == Some(0) {
+            return Ok(true);
+        }
+    }
+
     let proxy = PolicyKitAuthorityProxy::new(conn).await?;
     let subject = PolkitSubject::system_bus_name(sender);
     let details = HashMap::<&str, &str>::new();
@@ -216,13 +222,13 @@ impl BackupServer {
         #[zbus(header)] hdr: Header<'_>,
         #[zbus(connection)] conn: &zbus::Connection,
     ) -> zbus::fdo::Result<SnapshotInfo> {
-        let sender = hdr.sender().ok_or(zbus::fdo::Error::Failed("No sender".into()))?;
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
         let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "org.ermete.backup.create", true)
             .await
-            .map_err(|e| zbus::fdo::Error::Failed(format!("Polkit check failed: {}", e)))?;
+            .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit check failed: {}", e)))?;
 
         if !is_auth {
-            return Err(zbus::fdo::Error::Failed("Polkit authorization failed for create_snapshot".into()));
+            return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed for create_snapshot".into()));
         }
 
         let now = Local::now();
@@ -269,13 +275,13 @@ impl BackupServer {
         #[zbus(header)] hdr: Header<'_>,
         #[zbus(connection)] conn: &zbus::Connection,
     ) -> zbus::fdo::Result<Vec<SnapshotInfo>> {
-        let sender = hdr.sender().ok_or(zbus::fdo::Error::Failed("No sender".into()))?;
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
         let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "org.ermete.backup.list", false)
             .await
-            .map_err(|e| zbus::fdo::Error::Failed(format!("Polkit check failed: {}", e)))?;
+            .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit check failed: {}", e)))?;
 
         if !is_auth {
-            return Err(zbus::fdo::Error::Failed("Polkit authorization failed for list_snapshots".into()));
+            return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed for list_snapshots".into()));
         }
 
         let mut list = Vec::new();
@@ -301,13 +307,13 @@ impl BackupServer {
         #[zbus(header)] hdr: Header<'_>,
         #[zbus(connection)] conn: &zbus::Connection,
     ) -> zbus::fdo::Result<bool> {
-        let sender = hdr.sender().ok_or(zbus::fdo::Error::Failed("No sender".into()))?;
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
         let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "org.ermete.backup.delete", true)
             .await
-            .map_err(|e| zbus::fdo::Error::Failed(format!("Polkit check failed: {}", e)))?;
+            .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit check failed: {}", e)))?;
 
         if !is_auth {
-            return Err(zbus::fdo::Error::Failed("Polkit authorization failed for delete_snapshot".into()));
+            return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed for delete_snapshot".into()));
         }
 
         if id.contains('/') || id.contains('.') || id.contains('\\') {
@@ -333,13 +339,13 @@ impl BackupServer {
         #[zbus(header)] hdr: Header<'_>,
         #[zbus(connection)] conn: &zbus::Connection,
     ) -> zbus::fdo::Result<bool> {
-        let sender = hdr.sender().ok_or(zbus::fdo::Error::Failed("No sender".into()))?;
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
         let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "org.ermete.backup.restore", true)
             .await
-            .map_err(|e| zbus::fdo::Error::Failed(format!("Polkit check failed: {}", e)))?;
+            .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit check failed: {}", e)))?;
 
         if !is_auth {
-            return Err(zbus::fdo::Error::Failed("Polkit authorization failed for restore_snapshot".into()));
+            return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed for restore_snapshot".into()));
         }
 
         if id.contains('/') || id.contains('.') || id.contains('\\') {

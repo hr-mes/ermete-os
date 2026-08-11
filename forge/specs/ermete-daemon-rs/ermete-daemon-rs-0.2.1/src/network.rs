@@ -176,7 +176,7 @@ impl Network {
     ) -> fdo::Result<String> {
         let sender = hdr.sender().map(|s| s.as_str());
         if !crate::bedrock::check_polkit_auth(sender, "os.ermete.network.configure").await {
-            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
+            return Err(fdo::Error::AccessDenied("Polkit authorization failed".into()));
         }
 
         tracing::info!(%ssid, %eap_method, identity = "[REDACTED]", "Enterprise Wi-Fi connection requested");
@@ -199,7 +199,7 @@ impl Network {
     ) -> fdo::Result<String> {
         let sender = hdr.sender().map(|s| s.as_str());
         if !crate::bedrock::check_polkit_auth(sender, "os.ermete.network.configure").await {
-            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
+            return Err(fdo::Error::AccessDenied("Polkit authorization failed".into()));
         }
 
         if config_path.contains("..") || (!config_path.starts_with("/etc/") && !config_path.starts_with("/var/home/")) {

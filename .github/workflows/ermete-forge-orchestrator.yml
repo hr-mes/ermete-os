@@ -268,9 +268,13 @@ jobs:
       - name: Install Syft & Cosign
         if: steps.check.outputs.skip != 'true'
         run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sudo sh -s -- -b /usr/local/bin
-          curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-          sudo mv cosign-linux-amd64 /usr/local/bin/cosign
+          curl -sSfL -o /tmp/syft-install.sh https://raw.githubusercontent.com/anchore/syft/main/install.sh
+          echo "ea054f8b6754db17d34129482ecda1ab733cadab57c1c9202bbe98eb5fe18d24  /tmp/syft-install.sh" | sha256sum -c
+          sudo sh /tmp/syft-install.sh -b /usr/local/bin
+          rm -f /tmp/syft-install.sh
+          curl -fsSL -o /tmp/cosign-linux-amd64 https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64
+          echo "4629c757b7618056f8ddd7e2625ae9fdd94c0372a65049520bc7d9df9efc7f71  /tmp/cosign-linux-amd64" | sha256sum -c
+          sudo mv /tmp/cosign-linux-amd64 /usr/local/bin/cosign
           sudo chmod +x /usr/local/bin/cosign
 
       - name: Generate SBOM (Syft)
@@ -453,9 +457,13 @@ jobs:
       - name: Install Syft & Cosign
         if: steps.check.outputs.skip != 'true'
         run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sudo sh -s -- -b /usr/local/bin
-          curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-          sudo mv cosign-linux-amd64 /usr/local/bin/cosign
+          curl -sSfL -o /tmp/syft-install.sh https://raw.githubusercontent.com/anchore/syft/main/install.sh
+          echo "ea054f8b6754db17d34129482ecda1ab733cadab57c1c9202bbe98eb5fe18d24  /tmp/syft-install.sh" | sha256sum -c
+          sudo sh /tmp/syft-install.sh -b /usr/local/bin
+          rm -f /tmp/syft-install.sh
+          curl -fsSL -o /tmp/cosign-linux-amd64 https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64
+          echo "4629c757b7618056f8ddd7e2625ae9fdd94c0372a65049520bc7d9df9efc7f71  /tmp/cosign-linux-amd64" | sha256sum -c
+          sudo mv /tmp/cosign-linux-amd64 /usr/local/bin/cosign
           sudo chmod +x /usr/local/bin/cosign
 
       - name: Generate SBOM (Syft)
@@ -636,9 +644,13 @@ jobs:
       - name: Install Syft & Cosign
         if: steps.check.outputs.skip != 'true'
         run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sudo sh -s -- -b /usr/local/bin
-          curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-          sudo mv cosign-linux-amd64 /usr/local/bin/cosign
+          curl -sSfL -o /tmp/syft-install.sh https://raw.githubusercontent.com/anchore/syft/main/install.sh
+          echo "ea054f8b6754db17d34129482ecda1ab733cadab57c1c9202bbe98eb5fe18d24  /tmp/syft-install.sh" | sha256sum -c
+          sudo sh /tmp/syft-install.sh -b /usr/local/bin
+          rm -f /tmp/syft-install.sh
+          curl -fsSL -o /tmp/cosign-linux-amd64 https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64
+          echo "4629c757b7618056f8ddd7e2625ae9fdd94c0372a65049520bc7d9df9efc7f71  /tmp/cosign-linux-amd64" | sha256sum -c
+          sudo mv /tmp/cosign-linux-amd64 /usr/local/bin/cosign
           sudo chmod +x /usr/local/bin/cosign
 
       - name: Generate SBOM (Syft)
@@ -725,7 +737,9 @@ jobs:
             ghcr.io/hr-mes/ermete-os-builder@sha256:d3b45a666e852d47f9f257d0799f015ebfbdfb892a0e44280b15bdfbdfd77a0e \
             bash <<'EOF'
               set -euo pipefail
-              curl -Lo /etc/yum.repos.d/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo
+              curl -sLo /tmp/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo
+              echo "9126880310a20437de6ba1a83d299ee9a2119f8a1ef1e40de601676054320fc5  /tmp/fedora-nvidia.repo" | sha256sum -c
+              cp /tmp/fedora-nvidia.repo /etc/yum.repos.d/fedora-nvidia.repo
               export BUILDAH_ISOLATION=chroot
               buildah from ghcr.io/hr-mes/ermete-os-kernel:latest > ctr_id
               ctr=$(cat ctr_id)
@@ -759,7 +773,9 @@ jobs:
             -e MOK_PUBLIC_DER="${{ secrets.MOK_PUBLIC_DER }}" \
             ghcr.io/hr-mes/ermete-os-builder@sha256:d3b45a666e852d47f9f257d0799f015ebfbdfb892a0e44280b15bdfbdfd77a0e \
             bash <<'EOF'
-              curl -Lo /etc/yum.repos.d/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo
+              curl -sLo /tmp/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo
+              echo "9126880310a20437de6ba1a83d299ee9a2119f8a1ef1e40de601676054320fc5  /tmp/fedora-nvidia.repo" | sha256sum -c
+              cp /tmp/fedora-nvidia.repo /etc/yum.repos.d/fedora-nvidia.repo
               export BUILDAH_ISOLATION=chroot
               ctr=$(buildah from ghcr.io/hr-mes/ermete-os-kernel:latest)
               mnt=$(buildah mount $ctr)
@@ -972,7 +988,7 @@ jobs:
       - name: 🧹 Cleanup Workspace Permissions
         if: always()
         run: |
-          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -v "${{ github.workspace }}:/workspace:rw" -w /workspace docker.io/library/ubuntu:latest rm -rf /workspace/var-tmp || true
+          podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -v "${{ github.workspace }}:/workspace:rw" -w /workspace docker.io/library/ubuntu:latest@sha256:678c6550cc43645e08669028bc177f50be4e7c5b8cca677067b1914d4afc7a03 rm -rf /workspace/var-tmp || true
           sudo chown -R 1000:1000 ${{ github.workspace }} || true
 
   dag-system-image:
@@ -1011,7 +1027,7 @@ jobs:
       - name: 💿 Build ISO (osbuild)
         uses: osbuild/bootc-image-builder-action@019bb59c5100ecec4e78c9e94e18a840110f7a0b # v0.0.2
         with:
-          builder-image: quay.io/centos-bootc/bootc-image-builder:latest
+          builder-image: quay.io/centos-bootc/bootc-image-builder:latest@sha256:2b52843ea2bfda73b0a08d97e76b734393b1d3a804681b9fabb26723bd3a2f0b
           config-file: ./system/disk_config/iso.toml
           image: ghcr.io/hr-mes/ermete-os-system:latest
           types: anaconda-iso

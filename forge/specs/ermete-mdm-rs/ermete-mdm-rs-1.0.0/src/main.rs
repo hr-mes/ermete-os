@@ -64,8 +64,20 @@ impl MdmDBusInterface {
         &self,
         payload_json: &str,
         #[zbus(signal_emitter)] ctxt: SignalEmitter<'_>,
-    ) -> String {
+        #[zbus(header)] hdr: zbus::message::Header<'_>,
+        #[zbus(connection)] conn: &zbus::Connection,
+    ) -> zbus::fdo::Result<String> {
         info!("Received policy payload: {}", payload_json);
+
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
+        let is_auth = dbus::check_polkit_auth_zbus(conn, sender.as_str(), "os.ermete.mdm.apply_policy", true)
+            .await
+            .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit check failed: {}", e)))?;
+
+        if !is_auth {
+            return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed for apply_policy".into()));
+        }
+
         let payload: Result<MdmPayload, serde_json::Error> = serde_json::from_str(payload_json);
         match payload {
             Ok(p) => {
@@ -81,15 +93,15 @@ impl MdmDBusInterface {
                 if success {
                     info!("Action {} applied successfully", p.action);
                     let _ = Self::policy_applied(&ctxt, &p.action).await;
-                    format!("Policy {} applied successfully.", p.action)
+                    Ok(format!("Policy {} applied successfully.", p.action))
                 } else {
                     error!("Action {} failed", p.action);
-                    format!("Policy {} execution failed.", p.action)
+                    Err(zbus::fdo::Error::Failed(format!("Policy {} execution failed.", p.action)))
                 }
             }
             Err(e) => {
                 error!("Invalid payload: {}", e);
-                format!("Invalid payload JSON: {}", e)
+                Err(zbus::fdo::Error::InvalidArgs(format!("Invalid payload JSON: {}", e)))
             }
         }
     }

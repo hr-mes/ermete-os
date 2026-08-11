@@ -5,10 +5,80 @@ pub mod hw_scanner;
 pub mod fal_client;
 
 use ostree_hook::OstreeHookManager;
+use std::collections::HashMap;
 use std::error::Error;
+use serde::{Deserialize, Serialize};
 use tokio::signal;
 use tracing::info;
 use zbus::interface;
+use zbus::zvariant::{OwnedValue, Type, Value};
+
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct PolkitSubject {
+    pub kind: String,
+    pub details: HashMap<String, OwnedValue>,
+}
+
+impl PolkitSubject {
+    pub fn system_bus_name(name: impl Into<String>) -> Self {
+        let mut details = HashMap::new();
+        let val: Value = Value::from(name.into());
+        if let Ok(owned) = val.try_into() {
+            details.insert("name".to_string(), owned);
+        }
+        Self {
+            kind: "system-bus-name".to_string(),
+            details,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct PolkitAuthorizationResult {
+    pub is_authorized: bool,
+    pub is_challenge: bool,
+    pub details: HashMap<String, String>,
+}
+
+#[zbus::proxy(
+    interface = "org.freedesktop.PolicyKit1.Authority",
+    default_service = "org.freedesktop.PolicyKit1",
+    default_path = "/org/freedesktop/PolicyKit1/Authority"
+)]
+pub trait PolicyKitAuthority {
+    fn check_authorization(
+        &self,
+        subject: &PolkitSubject,
+        action_id: &str,
+        details: &HashMap<&str, &str>,
+        flags: u32,
+        cancellation_id: &str,
+    ) -> zbus::Result<PolkitAuthorizationResult>;
+}
+
+pub async fn check_polkit_auth_zbus(
+    conn: &zbus::Connection,
+    sender: &str,
+    action_id: &str,
+    allow_user_interaction: bool,
+) -> Result<bool, zbus::Error> {
+    if let Ok(creds) = conn.peer_credentials().await {
+        if creds.uid() == Some(0) {
+            return Ok(true);
+        }
+    }
+
+    let proxy = PolicyKitAuthorityProxy::new(conn).await?;
+    let subject = PolkitSubject::system_bus_name(sender);
+    let details = HashMap::<&str, &str>::new();
+    let flags = if allow_user_interaction { 1u32 } else { 0u32 };
+
+    let result = proxy
+        .check_authorization(&subject, action_id, &details, flags, "")
+        .await?;
+
+    Ok(result.is_authorized)
+}
 
 pub struct KernelForgeDaemon {
     pub hook_manager: OstreeHookManager,
@@ -34,8 +104,21 @@ impl KernelForgeDaemon {
     /// Extracts local kernel sources, detects CPU/hardware flags (-march=native),
     /// executes Gentoo-style LTO/AutoFDO kernel build with driver pruning,
     /// and forges a super-optimized Unified Kernel Image (UKI).
-    async fn forge_hardware_tailored_kernel(&self) -> zbus::fdo::Result<String> {
+    async fn forge_hardware_tailored_kernel(
+        &self,
+        #[zbus(header)] hdr: zbus::message::Header<'_>,
+        #[zbus(connection)] conn: &zbus::Connection,
+    ) -> zbus::fdo::Result<String> {
         info!("Received D-Bus call: ForgeHardwareTailoredKernel");
+
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
+        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "org.ermete.kernelforge.manage", true)
+            .await
+            .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit check failed: {}", e)))?;
+
+        if !is_auth {
+            return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed for KernelForge".into()));
+        }
 
         // 1. Generate hardware profile hash
         let hash = hw_scanner::generate_hardware_hash()
@@ -95,8 +178,20 @@ impl KernelForgeDaemon {
 
     /// D-Bus Method: RegisterOstreeHook
     /// Registers Ermete Kernel Forge as an OSTree/bootc transaction hook.
-    async fn register_ostree_hook(&self) -> zbus::fdo::Result<String> {
+    async fn register_ostree_hook(
+        &self,
+        #[zbus(header)] hdr: zbus::message::Header<'_>,
+        #[zbus(connection)] conn: &zbus::Connection,
+    ) -> zbus::fdo::Result<String> {
         info!("Received D-Bus call: RegisterOstreeHook");
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
+        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "org.ermete.kernelforge.manage", true)
+            .await
+            .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit check failed: {}", e)))?;
+        if !is_auth {
+            return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed".into()));
+        }
+
         match self.hook_manager.register_transaction_hooks().await {
             Ok(msg) => Ok(msg),
             Err(e) => Err(zbus::fdo::Error::Failed(format!("Hook Registration Failed: {}", e))),
@@ -107,8 +202,21 @@ impl KernelForgeDaemon {
     /// Intercepts OSTree/bootc kernel updates in Hybrid Rolling-Forge mode.
     /// Triggers local hardware re-compilation (-march=native), injects new UKI into deployment,
     /// and permits reboot only after successful staging. Performs automatic rollback on failure.
-    async fn intercept_ostree_update(&self, upstream_kernel_version: String) -> zbus::fdo::Result<String> {
+    async fn intercept_ostree_update(
+        &self,
+        upstream_kernel_version: String,
+        #[zbus(header)] hdr: zbus::message::Header<'_>,
+        #[zbus(connection)] conn: &zbus::Connection,
+    ) -> zbus::fdo::Result<String> {
         info!("Received D-Bus call: InterceptOstreeUpdate for version {}", upstream_kernel_version);
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
+        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "org.ermete.kernelforge.manage", true)
+            .await
+            .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit check failed: {}", e)))?;
+        if !is_auth {
+            return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed".into()));
+        }
+
         let kver = if upstream_kernel_version.is_empty() {
             None
         } else {
@@ -130,8 +238,21 @@ impl KernelForgeDaemon {
 
     /// D-Bus Method: TriggerOstreeRollback
     /// Triggers an immediate rollback of the OSTree/bootc deployment.
-    async fn trigger_ostree_rollback(&self, reason: String) -> zbus::fdo::Result<String> {
+    async fn trigger_ostree_rollback(
+        &self,
+        reason: String,
+        #[zbus(header)] hdr: zbus::message::Header<'_>,
+        #[zbus(connection)] conn: &zbus::Connection,
+    ) -> zbus::fdo::Result<String> {
         info!("Received D-Bus call: TriggerOstreeRollback. Reason: {}", reason);
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
+        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "org.ermete.kernelforge.manage", true)
+            .await
+            .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit check failed: {}", e)))?;
+        if !is_auth {
+            return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed".into()));
+        }
+
         match self.hook_manager.rollback_transaction(reason).await {
             Ok(res) => Ok(res.message),
             Err(e) => Err(zbus::fdo::Error::Failed(format!("Rollback Failed: {}", e))),

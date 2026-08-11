@@ -4,6 +4,8 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Install RPMFusion release packages to provision the GPG keys
 RUN curl -fsSL -o /tmp/rpmfusion-free.rpm https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-43.noarch.rpm \
     && curl -fsSL -o /tmp/rpmfusion-nonfree.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-43.noarch.rpm \
+    && echo "d7757257bdce32888020c4ff5a3e3d43cf7c32105ffd2c36aff9a2fcaadef657  /tmp/rpmfusion-free.rpm" | sha256sum -c \
+    && echo "b82863a47e776640c61aade7daf58f2011220fdc24117955dafa220174af3dc6  /tmp/rpmfusion-nonfree.rpm" | sha256sum -c \
     && dnf install -y /tmp/rpmfusion-free.rpm /tmp/rpmfusion-nonfree.rpm \
     && rm -f /tmp/rpmfusion-*.rpm
 
@@ -73,12 +75,19 @@ RUN dnf install -y \
 
 
 # Install Syft, Cosign, bpf-linker, and Kani Verifier (which requires rustup)
-RUN curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin \
-    && curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64" \
-    && mv cosign-linux-amd64 /usr/local/bin/cosign \
+RUN curl -sSfL -o /tmp/syft-install.sh https://raw.githubusercontent.com/anchore/syft/main/install.sh \
+    && echo "ea054f8b6754db17d34129482ecda1ab733cadab57c1c9202bbe98eb5fe18d24  /tmp/syft-install.sh" | sha256sum -c \
+    && sh /tmp/syft-install.sh -b /usr/local/bin \
+    && rm -f /tmp/syft-install.sh \
+    && curl -fsSL -o /tmp/cosign-linux-amd64 https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64 \
+    && echo "4629c757b7618056f8ddd7e2625ae9fdd94c0372a65049520bc7d9df9efc7f71  /tmp/cosign-linux-amd64" | sha256sum -c \
+    && mv /tmp/cosign-linux-amd64 /usr/local/bin/cosign \
     && chmod +x /usr/local/bin/cosign \
     && cargo install bpf-linker \
-    && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
+    && curl --proto '=https' --tlsv1.2 -fsSL -o /tmp/rustup-init.sh https://sh.rustup.rs \
+    && echo "6c30b75a75b28a96fd913a037c8581b580080b6ee9b8169a3c0feb1af7fe8caf  /tmp/rustup-init.sh" | sha256sum -c \
+    && sh /tmp/rustup-init.sh -y \
+    && rm -f /tmp/rustup-init.sh \
     && export PATH="$HOME/.cargo/bin:$PATH" \
     && cargo install --locked kani-verifier \
     && cargo kani setup

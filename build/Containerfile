@@ -10,7 +10,7 @@
 # ------------------------------------------------------------------------------
 # STAGE 1: Rust Builder Stage
 # ------------------------------------------------------------------------------
-FROM docker.io/library/rust:1.85-slim-bookworm AS builder
+FROM docker.io/library/rust:1.85-slim-bookworm@sha256:9f841bbe9e7d8e37ceb96ed907265a3a0df7f44e3737d0b100e7907a679acb36 AS builder
 
 # Set build environment variables
 ENV CARGO_TERM_COLOR=always \
@@ -45,7 +45,7 @@ RUN mkdir -p /out/bin && \
 # ------------------------------------------------------------------------------
 # STAGE 2: Minimal Runtime Target Image
 # ------------------------------------------------------------------------------
-FROM registry.fedoraproject.org/fedora-minimal:latest AS runtime
+FROM registry.fedoraproject.org/fedora-minimal:latest@sha256:3e69f7246838e5c0a98764201b77975d28daacb1987d22f62832cb56b387955e AS runtime
 
 LABEL org.opencontainers.image.title="Ermete OS Init Oracle Container" \
       org.opencontainers.image.description="Multistage container image for Ermete OS microservices" \

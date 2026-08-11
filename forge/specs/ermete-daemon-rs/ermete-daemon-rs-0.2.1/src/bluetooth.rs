@@ -54,7 +54,7 @@ impl Bluetooth {
     ) -> fdo::Result<()> {
         let sender = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
         if !crate::bedrock::check_polkit_auth(sender, "os.ermete.bluetooth.setpower").await {
-            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
+            return Err(fdo::Error::AccessDenied("Polkit authorization failed".into()));
         }
 
         let proxy = fdo::PropertiesProxy::builder(&self.sys_conn)

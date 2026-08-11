@@ -145,7 +145,7 @@ impl Bedrock {
         let sender = hdr.sender().map(|s| s.as_str());
 
         if !check_polkit_auth(sender, "os.ermete.livepatcher.apply").await {
-            return Err(fdo::Error::Failed("Polkit authorization failed for live patching".into()));
+            return Err(fdo::Error::AccessDenied("Polkit authorization failed for live patching".into()));
         }
 
         crate::live_patch::LivePatchManager::global()
@@ -172,7 +172,7 @@ impl Bedrock {
     ) -> fdo::Result<()> {
         let sender = hdr.as_ref().and_then(|h| h.sender()).map(|s| s.as_str());
         if !check_polkit_auth(sender, "os.ermete.bedrock.setvolume").await {
-            return Err(fdo::Error::Failed("Polkit authorization failed".into()));
+            return Err(fdo::Error::AccessDenied("Polkit authorization failed".into()));
         }
         self.volume.store(val.to_bits(), Ordering::Relaxed);
         

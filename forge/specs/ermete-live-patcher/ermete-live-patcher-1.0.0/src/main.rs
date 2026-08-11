@@ -55,6 +55,12 @@ pub async fn check_polkit_auth_zbus(
     action_id: &str,
     allow_user_interaction: bool,
 ) -> Result<bool, zbus::Error> {
+    if let Ok(creds) = conn.peer_credentials().await {
+        if creds.uid() == Some(0) {
+            return Ok(true);
+        }
+    }
+
     let proxy = PolicyKitAuthorityProxy::new(conn).await?;
     let subject = PolkitSubject::system_bus_name(sender);
     let details = HashMap::<&str, &str>::new();
@@ -81,20 +87,20 @@ impl LivePatcher {
 
         let sender = header
             .sender()
-            .ok_or_else(|| zbus::fdo::Error::Failed("Missing sender on DBus call".into()))?;
+            .ok_or_else(|| zbus::fdo::Error::AccessDenied("Missing sender on DBus call".into()))?;
 
         info!("Verifying Polkit authorization for DBus caller: {}", sender);
 
         let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "os.ermete.livepatcher.apply", true)
             .await
-            .map_err(|e| zbus::fdo::Error::Failed(format!("Failed to query PolicyKit authority: {}", e)))?;
+            .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Failed to query PolicyKit authority: {}", e)))?;
 
         if is_auth {
             info!("Polkit authorization granted for sender {}", sender);
         } else {
             let err_msg = "Polkit authorization denied: insufficient privileges".to_string();
             error!("{}", err_msg);
-            return Err(zbus::fdo::Error::Failed(err_msg));
+            return Err(zbus::fdo::Error::AccessDenied(err_msg));
         }
 
         info!("Verifying module signature for patch: {}", patch_path);

@@ -57,6 +57,12 @@ pub async fn check_polkit_auth_zbus(
     action_id: &str,
     allow_user_interaction: bool,
 ) -> Result<bool, zbus::Error> {
+    if let Ok(creds) = conn.peer_credentials().await {
+        if creds.uid() == Some(0) {
+            return Ok(true);
+        }
+    }
+
     let proxy = PolicyKitAuthorityProxy::new(conn).await?;
     let subject = PolkitSubject::system_bus_name(sender);
     let details = HashMap::<&str, &str>::new();
@@ -102,13 +108,13 @@ impl GatekeeperManager {
         #[zbus(header)] hdr: Header<'_>,
         #[zbus(connection)] conn: &zbus::Connection,
     ) -> zbus::fdo::Result<()> {
-        let sender = hdr.sender().ok_or(zbus::fdo::Error::Failed("No sender".into()))?;
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
         let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "os.ermete.gatekeeper.approve", false)
             .await
-            .map_err(|e| zbus::fdo::Error::Failed(format!("Polkit zbus check failed: {}", e)))?;
+            .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit zbus check failed: {}", e)))?;
 
         if !is_auth {
-            return Err(zbus::fdo::Error::Failed("Polkit authorization failed".into()));
+            return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed".into()));
         }
 
         // Clean up pending snapshot registration on approval
@@ -156,13 +162,13 @@ impl GatekeeperManager {
         #[zbus(header)] hdr: Header<'_>,
         #[zbus(connection)] conn: &zbus::Connection,
     ) -> zbus::fdo::Result<()> {
-        let sender = hdr.sender().ok_or(zbus::fdo::Error::Failed("No sender".into()))?;
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
         let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "os.ermete.gatekeeper.deny", false)
             .await
-            .map_err(|e| zbus::fdo::Error::Failed(format!("Polkit zbus check failed: {}", e)))?;
+            .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit zbus check failed: {}", e)))?;
 
         if !is_auth {
-            return Err(zbus::fdo::Error::Failed("Polkit authorization failed for deny_execution".into()));
+            return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed for deny_execution".into()));
         }
 
         let _ = restore_bcachefs_snapshot_impl(&fd_id, &self.pending_snapshots).await;
@@ -184,13 +190,13 @@ impl GatekeeperManager {
         #[zbus(header)] hdr: Header<'_>,
         #[zbus(connection)] conn: &zbus::Connection,
     ) -> zbus::fdo::Result<bool> {
-        let sender = hdr.sender().ok_or(zbus::fdo::Error::Failed("No sender".into()))?;
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
         let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "os.ermete.gatekeeper.rollback", false)
             .await
-            .map_err(|e| zbus::fdo::Error::Failed(format!("Polkit zbus check failed: {}", e)))?;
+            .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit zbus check failed: {}", e)))?;
 
         if !is_auth {
-            return Err(zbus::fdo::Error::Failed("Polkit authorization failed for rollback_snapshot".into()));
+            return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed for rollback_snapshot".into()));
         }
 
         restore_bcachefs_snapshot_impl(&fd_id, &self.pending_snapshots).await
