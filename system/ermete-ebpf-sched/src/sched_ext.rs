@@ -220,9 +220,17 @@ impl SchedExtController {
             let mut attached = false;
             if is_sysfs_sched_ext {
                 info!("⚡ Kernel `sched_ext` sysfs interface available.");
-                if let Some(_prog) = ebpf.program_mut("scx_enqueue") {
-                    info!("✅ Loaded `scx_enqueue` sched_ext eBPF program.");
-                    attached = true;
+                if let Some(prog) = ebpf.program_mut("scx_enqueue") {
+                    if let Ok(mut struct_ops) = aya::programs::StructOps::try_from(prog) {
+                        if let Err(e) = struct_ops.attach() {
+                            warn!("⚠️ Failed to physically attach `scx_enqueue` to Kernel: {}", e);
+                        } else {
+                            info!("✅ Attached `scx_enqueue` sched_ext eBPF program to kernel.");
+                            attached = true;
+                        }
+                    } else {
+                        warn!("⚠️ `scx_enqueue` is not a valid StructOps program.");
+                    }
                 }
             } else {
                 warn!("ℹ️ sysfs path `/sys/kernel/sched_ext` absent. Kernel standard CFS/EEVDF fallback activated.");
