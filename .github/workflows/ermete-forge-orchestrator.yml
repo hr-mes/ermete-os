@@ -80,12 +80,11 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-      - name: ⚙️ Set Default Rust Toolchain
-        run: rustup default stable
-
           sparse-checkout: |
             forge
             .github
+      - name: ⚙️ Set Default Rust Toolchain
+        run: rustup default stable
       - name: Check Idempotency (Content Hash)
         id: check_idempotency
         env:
@@ -693,12 +692,11 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-      - name: ⚙️ Set Default Rust Toolchain
-        run: rustup default stable
-
           sparse-checkout: |
             forge
             .github
+      - name: ⚙️ Set Default Rust Toolchain
+        run: rustup default stable
       - name: Build & Validate Flatpak Package
         run: |
           echo "📦 [DAG Flatpak Orchestrator] Validating & Pre-fetching Flatpak metadata for: ${{ matrix.flatpak }}"
@@ -719,12 +717,11 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-      - name: ⚙️ Set Default Rust Toolchain
-        run: rustup default stable
-
           sparse-checkout: |
             forge
             .github
+      - name: ⚙️ Set Default Rust Toolchain
+        run: rustup default stable
       - name: Authenticate Podman to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: Resolve Kernel Version and Install Chimera Headers
@@ -852,12 +849,11 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-      - name: ⚙️ Set Default Rust Toolchain
-        run: rustup default stable
-
           sparse-checkout: |
             forge
             .github
+      - name: ⚙️ Set Default Rust Toolchain
+        run: rustup default stable
       - name: Create Repo and Push OCI
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
