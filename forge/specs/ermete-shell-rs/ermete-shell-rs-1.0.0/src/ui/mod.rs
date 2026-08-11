@@ -16,11 +16,13 @@ pub mod store;
 pub mod viewmodel;
 pub mod snap_overlay;
 pub mod quicklook;
+pub mod forge_widget;
 
 pub use crate::wayland::popup as popup_manager;
 pub use prompts::biometrics as biometrics_prompt;
 pub use prompts::gatekeeper as gatekeeper_prompt;
 pub use prompts::privacy as privacy_prompt;
 pub use quicklook::*;
+pub use forge_widget::*;
 
 
