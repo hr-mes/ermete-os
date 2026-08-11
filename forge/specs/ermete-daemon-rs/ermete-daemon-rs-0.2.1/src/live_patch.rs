@@ -30,11 +30,17 @@ pub unsafe extern "C" fn live_patch_zbus_entrypoint(method: *const c_char, input
     }
 }
 
+extern "C" {
+    fn free(ptr: *mut std::os::raw::c_void);
+}
+
 /// Helper function to free C strings returned by loaded patch libraries
 #[no_mangle]
 pub unsafe extern "C" fn ermete_free_c_string(ptr: *mut c_char) {
     if !ptr.is_null() {
-        let _ = CString::from_raw(ptr);
+        // Prevent AddressSanitizer/LeakSanitizer crashes from cross-allocator boundaries
+        // by explicitly using the C ABI allocator for dynamic library boundaries.
+        unsafe { free(ptr as *mut std::os::raw::c_void); }
     }
 }
 

@@ -79,27 +79,17 @@ impl<'a> FanotifyBufferParser<'a> {
 
 /// Fast bare-metal serialization for IPC headers without allocation.
 pub fn encode_ipc_header(cmd: u16, payload_len: u32, fd_id: u64, out_buf: &mut [u8]) -> Result<usize, SecurityError> {
-    let header_size = size_of::<IpcHeader>();
+    let header_size = 20; // 4 + 2 + 2 + 4 + 8
     if out_buf.len() < header_size {
         return Err(SecurityError::BufferTooSmall);
     }
 
-    let header = IpcHeader {
-        magic: IPC_MAGIC,
-        version: 1,
-        command: cmd,
-        payload_len,
-        token_fd_id: fd_id,
-    };
-
-    // SAFETY: The syscall parameters are carefully constructed and the buffer length is verified to be safe.
-    unsafe {
-        core::ptr::copy_nonoverlapping(
-            &header as *const IpcHeader as *const u8,
-            out_buf.as_mut_ptr(),
-            header_size,
-        );
-    }
+    // Safe serialization without unsafe pointer arithmetic or raw copying
+    out_buf[0..4].copy_from_slice(&IPC_MAGIC);
+    out_buf[4..6].copy_from_slice(&1u16.to_ne_bytes());
+    out_buf[6..8].copy_from_slice(&cmd.to_ne_bytes());
+    out_buf[8..12].copy_from_slice(&payload_len.to_ne_bytes());
+    out_buf[12..20].copy_from_slice(&fd_id.to_ne_bytes());
 
     Ok(header_size)
 }

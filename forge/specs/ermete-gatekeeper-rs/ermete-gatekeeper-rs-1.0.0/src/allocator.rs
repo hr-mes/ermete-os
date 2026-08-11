@@ -71,7 +71,12 @@ unsafe impl GlobalAlloc for BareMetalScudoAllocator {
         let start = self.arena.arena.as_ptr() as usize;
         let mut current = self.arena.offset.load(Ordering::Relaxed);
         loop {
-            let ptr_val = (start + current + align - 1) & !(align - 1);
+            // Prevent arithmetic overflow during Kani formal verification
+            let align_mask = align - 1;
+            let Some(ptr_val) = start.checked_add(current)
+                .and_then(|val| val.checked_add(align_mask))
+                .map(|val| val & !align_mask) else { break; };
+            
             let offset_needed = ptr_val - start;
             if offset_needed.saturating_add(size) > ARENA_SIZE {
                 break;
