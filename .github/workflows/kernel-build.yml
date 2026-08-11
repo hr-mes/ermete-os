@@ -60,7 +60,7 @@ jobs:
           --security-opt seccomp=unconfined \
           -v ${{ github.workspace }}:/forge \
           -w /forge \
-          ghcr.io/hr-mes/ermete-os-builder:latest sleep infinity
+          ghcr.io/hr-mes/ermete-os-builder@sha256:d3b45a666e852d47f9f257d0799f015ebfbdfb892a0e44280b15bdfbdfd77a0e sleep infinity
           
 
         
@@ -69,7 +69,7 @@ jobs:
         
     - name: "📊 Collect AutoFDO & BOLT Profiles"
       run: |
-        podman exec chimera-builder-${{ matrix.target }} bash -c "
+        podman exec chimera-builder-${{ matrix.target }} bash -c "set -euo pipefail; \
           echo '=== Collecting AutoFDO Profiles ==='
           mkdir -p /forge/profiles
           if [ -n \"\${HARDWARE_HASH}\" ]; then
@@ -84,7 +84,7 @@ jobs:
       env:
         MARCH_TARGET: ${{ github.event.inputs.march_target || 'x86-64-v3' }}
       run: |
-        podman exec -e MARCH_TARGET="${MARCH_TARGET}" chimera-builder-${{ matrix.target }} bash -c "
+        podman exec -e MARCH_TARGET="${MARCH_TARGET}" chimera-builder-${{ matrix.target }} bash -c "set -euo pipefail; \
           export CCACHE_DIR=/forge/.ccache_local
           export CCACHE_COMPRESS=1
           export CCACHE_MAXSIZE=3G
@@ -107,7 +107,7 @@ jobs:
         
     - name: "🔥 Phase 3: RPMBuild (Clang LTO + AutoFDO + BOLT)"
       run: |
-        podman exec chimera-builder-${{ matrix.target }} bash -c "
+        podman exec chimera-builder-${{ matrix.target }} bash -c "set -euo pipefail; \
           export CCACHE_DIR=/forge/.ccache_local
           export PATH=/usr/lib64/ccache:/usr/lib/ccache:\$PATH
           cd ~/rpmbuild/SPECS
@@ -139,7 +139,7 @@ jobs:
       env:
         HARDWARE_HASH: ${{ github.event.inputs.hardware_hash }}
       run: |
-        podman exec -e HARDWARE_HASH="${HARDWARE_HASH}" chimera-builder-${{ matrix.target }} bash -c "
+        podman exec -e HARDWARE_HASH="${HARDWARE_HASH}" chimera-builder-${{ matrix.target }} bash -c "set -euo pipefail; \
           export STORAGE_DRIVER=vfs
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
@@ -158,7 +158,7 @@ jobs:
 
     - name: Generate Kernel SBOM (Syft)
       run: |
-        podman exec chimera-builder-${{ matrix.target }} bash -c "
+        podman exec chimera-builder-${{ matrix.target }} bash -c "set -euo pipefail; \
           syft ghcr.io/hr-mes/ermete-os-kernel@${{ env.KERNEL_DIGEST }} -o spdx-json > /forge/kernel-sbom.spdx.json
         "
 
@@ -167,7 +167,7 @@ jobs:
         COSIGN_EXPERIMENTAL: 1
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        podman exec -e COSIGN_EXPERIMENTAL=1 -e GITHUB_TOKEN=${GITHUB_TOKEN} chimera-builder-${{ matrix.target }} bash -c "
+        podman exec -e COSIGN_EXPERIMENTAL=1 -e GITHUB_TOKEN=${GITHUB_TOKEN} chimera-builder-${{ matrix.target }} bash -c "set -euo pipefail; \
           cosign login ghcr.io -u ${{ github.actor }} -p \${GITHUB_TOKEN}
           IMAGE_REF='ghcr.io/hr-mes/ermete-os-kernel@${{ env.KERNEL_DIGEST }}'
           cosign sign -y \${IMAGE_REF}
@@ -176,7 +176,7 @@ jobs:
 
     - name: Verify Kernel Image Signature & Attestation
       run: |
-        podman exec -e COSIGN_EXPERIMENTAL=1 chimera-builder-${{ matrix.target }} bash -c "
+        podman exec -e COSIGN_EXPERIMENTAL=1 chimera-builder-${{ matrix.target }} bash -c "set -euo pipefail; \
           IMAGE_REF='ghcr.io/hr-mes/ermete-os-kernel@${{ env.KERNEL_DIGEST }}'
           cosign verify --certificate-identity-regexp '^https://github.com/${{ github.repository_owner }}/' --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \${IMAGE_REF}
           cosign verify-attestation --type spdxjson --certificate-identity-regexp '^https://github.com/${{ github.repository_owner }}/' --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \${IMAGE_REF}

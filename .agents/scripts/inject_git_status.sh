@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 cd /var/home/ermete/GEMINI/ermete-os || exit 0
 STATUS=$(git status --short)
 

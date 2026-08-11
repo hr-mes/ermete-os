@@ -31,3 +31,9 @@ Whenever you are asked to add a new package, daemon, or micro-service to Ermete 
 
 ### Golden Rule of Packaging
 Never bypass the package manager. "curl | bash" and inline binaries are strictly forbidden. Everything must be an RPM built by the Forge and declaratively baked into the image.
+
+## Technical Constraints
+1. **Zero-Trust & No Mocks**: Never output mock data, placeholder code, or bypass security rules.
+2. **Actor-Model Enforcement**: Never bundle UI code inside ring-0 or daemon backend crates.
+3. **Panic-Free**: Never use `unwrap()` or `expect()` in production code. Always propagate errors.
+4. **Idempotency**: All bash scripts must use `set -euo pipefail`.
