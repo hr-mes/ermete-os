@@ -1,11 +1,10 @@
-use candle_core::{Device, Tensor};
-use candle_nn::{Linear, Module};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap as StdHashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use tokio::sync::{mpsc, RwLock};
 use tracing::{info, warn};
+use zbus::proxy;
 
 /// Target eBPF scheduling structure written directly into Ring-0 `AI_SCHED_MAP`
 #[repr(C)]
@@ -282,111 +281,79 @@ impl TaskDiscoveryNode {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct WorkloadClassificationRequest {
+    pub pid: u32,
+    pub comm: String,
+    pub norm_cpu: f32,
+    pub norm_io: f32,
+    pub norm_mem: f32,
+    pub norm_threads: f32,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct WorkloadClassificationResponse {
+    pub category: String,
+    pub logits: Vec<f32>,
+}
+
+#[proxy(
+    interface = "os.ermete.AiDaemon",
+    default_service = "os.ermete.AiDaemon",
+    default_path = "/os/ermete/AiDaemon"
+)]
+trait AiDaemonInterface {
+    async fn process_query(&self, json_query: &str) -> zbus::Result<String>;
+    async fn classify_workload(&self, json_query: &str) -> zbus::Result<String>;
+}
+
 /// DAG Stage 2: Neural Workload Classification Node
 pub struct NeuralClassificationNode;
 
 impl NeuralClassificationNode {
-    /// Classifies task workload category using Candle neural tensor model on process statistics (CPU time, I/O, memory, threads)
-    pub fn classify(task: &DiscoveredTask) -> WorkloadCategory {
-        let device = Device::Cpu;
-
-        // 1. Normalize process statistics into a continuous feature vector
+    /// Classifies task workload category by dispatching process statistics to `ermete-ai-daemon` via DBus IPC.
+    /// Returns an Error if the IPC call or inference fails (NO hardcoded mock fallbacks like InteractiveUi).
+    pub async fn classify(task: &DiscoveredTask) -> Result<WorkloadCategory, String> {
         let norm_cpu = (task.cpu_time_ms as f32 / 20_000.0).clamp(0.0, 1.0);
         let total_io = task.io_read_bytes.saturating_add(task.io_write_bytes);
         let norm_io = (total_io as f32 / 300_000_000.0).clamp(0.0, 1.0);
         let norm_mem = (task.mem_mb as f32 / 8192.0).clamp(0.0, 1.0);
         let norm_threads = (task.num_threads as f32 / 32.0).clamp(0.0, 1.0);
 
-        let features = vec![norm_cpu, norm_io, norm_mem, norm_threads];
-
-        // 2. Build Candle Tensor [1, 4] from process statistics vector
-        let input_tensor = match Tensor::from_slice(&features, (1, 4), &device) {
-            Ok(t) => t,
-            Err(_) => return WorkloadCategory::IdleBackground,
+        let req = WorkloadClassificationRequest {
+            pid: task.pid,
+            comm: task.comm.clone(),
+            norm_cpu,
+            norm_io,
+            norm_mem,
+            norm_threads,
         };
 
-        // 3. Neural Network Forward Pass: Multi-Layer Perceptron (MLP) with ReLU activation
-        // Layer 1 (4 features -> 8 hidden neurons)
-        let w1_data: [f32; 32] = [
-            -0.8, -0.8,  0.2,  0.6, // Hidden 0: UI characteristics
-             0.9,  0.8,  1.0,  0.9, // Hidden 1: NPU heavy characteristics
-             0.8,  0.9,  0.3,  0.4, // Hidden 2: Batch compute characteristics
-            -0.9, -0.9, -0.8, -0.8, // Hidden 3: Idle background characteristics
-            -0.5, -0.5,  0.5,  0.8, // Hidden 4: UI/Interactive candidate
-             1.0,  0.6,  0.9,  0.7, // Hidden 5: Heavy Realtime NPU candidate
-             0.7,  0.8,  0.4,  0.5, // Hidden 6: High I/O batch build candidate
-            -0.7, -0.7, -0.6, -0.7, // Hidden 7: Low resource background candidate
-        ];
-        let b1_data: [f32; 8] = [0.5, 0.0, 0.0, 0.8, 0.3, 0.0, 0.0, 0.6];
+        let json_query = serde_json::to_string(&req)
+            .map_err(|e| format!("Serialization error: {}", e))?;
 
-        let w1 = match Tensor::from_slice(&w1_data, (8, 4), &device) {
-            Ok(t) => t,
-            Err(_) => return WorkloadCategory::IdleBackground,
-        };
-        let b1 = match Tensor::from_slice(&b1_data, (8,), &device) {
-            Ok(t) => t,
-            Err(_) => return WorkloadCategory::IdleBackground,
-        };
+        let connection = zbus::Connection::session().await
+            .map_err(|e| format!("DBus session connection error: {}", e))?;
 
-        let l1 = Linear::new(w1, Some(b1));
-        let hidden = match l1.forward(&input_tensor) {
-            Ok(t) => match t.relu() {
-                Ok(r) => r,
-                Err(_) => return WorkloadCategory::IdleBackground,
-            },
-            Err(_) => return WorkloadCategory::IdleBackground,
-        };
+        let proxy = AiDaemonInterfaceProxy::new(&connection).await
+            .map_err(|e| format!("Failed to create DBus proxy for os.ermete.AiDaemon: {}", e))?;
 
-        // Layer 2: 8 hidden -> 4 output logits
-        let w2_data: [f32; 32] = [
-            // Out 0: InteractiveUi
-             1.2, -0.8, -0.5, -1.0,  1.0, -0.8, -0.5, -0.8,
-            // Out 1: RealtimeNpu
-            -0.8,  1.5, -0.4, -1.2, -0.6,  1.4, -0.4, -1.0,
-            // Out 2: BatchCompute
-            -0.5, -0.4,  1.4, -1.0, -0.4, -0.3,  1.3, -0.8,
-            // Out 3: IdleBackground
-            -0.8, -1.2, -1.0,  1.5, -0.6, -1.0, -0.8,  1.4,
-        ];
-        let b2_data: [f32; 4] = [0.1, -0.1, -0.1, 0.2];
+        let response_str = proxy.classify_workload(&json_query).await
+            .map_err(|e| format!("IPC inference request to ermete-ai-daemon failed: {}", e))?;
 
-        let w2 = match Tensor::from_slice(&w2_data, (4, 8), &device) {
-            Ok(t) => t,
-            Err(_) => return WorkloadCategory::IdleBackground,
-        };
-        let b2 = match Tensor::from_slice(&b2_data, (4,), &device) {
-            Ok(t) => t,
-            Err(_) => return WorkloadCategory::IdleBackground,
-        };
+        let resp: WorkloadClassificationResponse = serde_json::from_str(&response_str)
+            .map_err(|e| format!("Failed to parse response from ermete-ai-daemon: {}", e))?;
 
-        let l2 = Linear::new(w2, Some(b2));
-        let logits = match l2.forward(&hidden) {
-            Ok(t) => t,
-            Err(_) => return WorkloadCategory::IdleBackground,
-        };
-
-        let logits_vec = match logits.squeeze(0).and_then(|t| t.to_vec1::<f32>()) {
-            Ok(v) => v,
-            Err(_) => return WorkloadCategory::IdleBackground,
-        };
-
-        let mut max_idx = 3;
-        let mut max_val = f32::NEG_INFINITY;
-        for (i, &val) in logits_vec.iter().enumerate() {
-            if val > max_val {
-                max_val = val;
-                max_idx = i;
-            }
-        }
-
-        match max_idx {
-            0 => WorkloadCategory::InteractiveUi,
-            1 => WorkloadCategory::RealtimeNpu,
-            2 => WorkloadCategory::BatchCompute,
-            _ => WorkloadCategory::IdleBackground,
+        match resp.category.as_str() {
+            "InteractiveUi" => Ok(WorkloadCategory::InteractiveUi),
+            "RealtimeNpu" => Ok(WorkloadCategory::RealtimeNpu),
+            "BatchCompute" => Ok(WorkloadCategory::BatchCompute),
+            "IdleBackground" => Ok(WorkloadCategory::IdleBackground),
+            other => Err(format!("Unknown workload category returned: {}", other)),
         }
     }
 }
+
 
 /// DAG Stage 3: Topology & Core Affinity Optimization Node
 pub struct AffinityOptimizationNode;
@@ -561,11 +528,20 @@ impl AiPredictorDAG {
         let tasks = TaskDiscoveryNode::discover_tasks().await;
         let mut targets = Vec::new();
 
-        // 2 & 3. Classification and Core Affinity Optimization
+        // 2 & 3. Classification via IPC to ermete-ai-daemon and Core Affinity Optimization
         for task in &tasks {
-            let category = NeuralClassificationNode::classify(task);
-            if let Some(target) = AffinityOptimizationNode::optimize_affinity(task, &category) {
-                targets.push((task.comm.clone(), target));
+            match NeuralClassificationNode::classify(task).await {
+                Ok(category) => {
+                    if let Some(target) = AffinityOptimizationNode::optimize_affinity(task, &category) {
+                        targets.push((task.comm.clone(), target));
+                    }
+                }
+                Err(e) => {
+                    warn!(
+                        "⚠️ [AI Predictor IPC] Inference failed for PID {} ('{}'): {}. Skipping affinity scheduling.",
+                        task.pid, task.comm, e
+                    );
+                }
             }
         }
 
@@ -626,9 +602,11 @@ mod tests {
             io_write_bytes: 131_072,
             num_threads: 8,
         };
-        let cat = NeuralClassificationNode::classify(&ui_task);
-        assert_eq!(cat, WorkloadCategory::InteractiveUi);
+        // Verify that IPC classification returns an Error when daemon is not active (no mock fallback returned)
+        let res = NeuralClassificationNode::classify(&ui_task).await;
+        assert!(res.is_err(), "Classification must fail cleanly with Err when DBus daemon is unreachable");
 
+        let cat = WorkloadCategory::InteractiveUi;
         let target = AffinityOptimizationNode::optimize_affinity(&ui_task, &cat).expect("Target should be generated");
         assert_eq!(target.core_type, 0); // P-Core
         assert!(target.target_core <= 3); // CPU 0..=3 P-Cores
@@ -643,9 +621,7 @@ mod tests {
             io_write_bytes: 262_144,
             num_threads: 2,
         };
-        let bg_cat = NeuralClassificationNode::classify(&bg_task);
-        assert_eq!(bg_cat, WorkloadCategory::IdleBackground);
-
+        let bg_cat = WorkloadCategory::IdleBackground;
         let bg_target = AffinityOptimizationNode::optimize_affinity(&bg_task, &bg_cat).expect("Target should be generated");
         assert_eq!(bg_target.core_type, 1); // E-Core
         assert!(bg_target.target_core >= 4); // CPU 4..=7 E-Cores
@@ -663,10 +639,11 @@ mod tests {
             io_write_bytes: 1024,
             num_threads: 1,
         };
-        let cat = NeuralClassificationNode::classify(&pid1_task);
+        let cat = WorkloadCategory::IdleBackground;
         let target = AffinityOptimizationNode::optimize_affinity(&pid1_task, &cat);
         assert!(target.is_none(), "PID 1 must be protected by AI Confinement Guard");
     }
+
 
     #[tokio::test]
     async fn test_unified_tensor_bus_and_stream_processing() {

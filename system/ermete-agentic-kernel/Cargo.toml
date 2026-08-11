@@ -16,6 +16,6 @@ anyhow = { workspace = true }
 bytes = { workspace = true }
 libc = { workspace = true }
 ermete-bus-api = { path = "../ermete-bus-api" }
-candle-core = "0.4.1"
-candle-nn = "0.4.1"
+candle-core = "0.8"
+candle-nn = "0.8"
 
