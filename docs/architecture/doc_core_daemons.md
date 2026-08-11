@@ -5,25 +5,25 @@
 The core daemons of Ermete OS orchestrate system state, power XDG Desktop Portals integration, maintain ACID user settings persistence, and enforce zero-trust kernel execution security.
 
 The architecture is anchored by two fundamental daemons:
-1. **`ermete-daemon-rs` (Bedrock, Settings Engine & Desktop Portals)**: Executes in the user **D-Bus Session Bus** context (with a secondary connection to the System Bus for system services). Manages ACID settings state, acts as proxy for NetworkManager and BlueZ, handles speech synthesis, and serves XDG Desktop Portals (Settings, ScreenCast, RemoteDesktop).
+1. **`ermete-daemon-rs` (Settings Engine & Desktop Portals)**: Executes in the user **D-Bus Session Bus** context (with a secondary connection to the System Bus for system services). Manages ACID settings state, acts as proxy for NetworkManager and BlueZ, handles speech synthesis, and serves XDG Desktop Portals (Settings, ScreenCast, RemoteDesktop).
 2. **`ermete-gatekeeper-rs` (Zero-Trust Execution Gatekeeper)**: Runs as a privileged **Root Systemd Service** registered on the **D-Bus System Bus**. Intercepts binary execution attempts in real time via the Linux kernel `fanotify` subsystem, enforcing Bubblewrap (`bwrap`) sandbox enclaves for unverified or quarantined binaries.
 
 Both daemons are engineered in **Pure Rust**, leveraging the `mimalloc` high-performance memory allocator and `zbus 5.x` async D-Bus IPC.
 
 ---
 
-## 2. In-Depth Analysis: `ermete-daemon-rs` (Bedrock & Desktop Services)
+## 2. In-Depth Analysis: `ermete-daemon-rs` (Core & Desktop Services)
 
 ### 2.1 Module Architecture & Actor/Channel Model
 
 `ermete-daemon-rs` orchestrates system state via an asynchronous Tokio model powered by `tokio::sync` channels (`watch`, `mpsc`, `oneshot`).
 
 ```text
-                              ┌──────────────────────────────────────────────┐
-                              │            ermete-daemon-rs                  │
-                              │           (D-Bus Session Bus)                │
-                              └──────────────────────┬───────────────────────┘
-                                                     │
+                               ┌──────────────────────────────────────────────┐
+                               │            ermete-daemon-rs                  │
+                               │           (D-Bus Session Bus)                │
+                               └──────────────────────┬───────────────────────┘
+                                                      │
          ┌───────────────────┬───────────────────────┼───────────────────────┬───────────────────┐
          │                   │                       │                       │                   │
 ┌────────▼────────┐ ┌────────▼────────┐    ┌─────────▼─────────┐   ┌─────────▼─────────┐ ┌────────▼────────┐
@@ -66,7 +66,7 @@ Both daemons are engineered in **Pure Rust**, leveraging the `mimalloc` high-per
 6. **`voiceover.rs` (`os.ermete.VoiceOver`)**:
    - Monitors state from `watch::Receiver<VoiceOverDomainState>` and forwards text payloads to `os.ermete.VoiceOverWorker`.
 
-7. **`qos.rs` (App Nap QoS Observer)**:
+7. **`qos.rs` (App QoS Observer)**:
    - Evaluates background process PIDs and applies high nice values (`nice 19`) via `libc::setpriority(PRIO_PROCESS, pid, 19)` to preserve CPU cycles for foreground interactive tasks.
 
 ---
@@ -175,7 +175,7 @@ Source code auditing highlighted the following security considerations:
 2. **TOCTOU & Monotonic ID Hardening**:
    - `fd_id` identifiers must be paired with the D-Bus unique sender and utilize random UUID v4 values to prevent brute-force hijacking of `approve_execution` calls.
 3. **Input Sanitization**:
-   - Shellouts for desktop theme enforcement (`dconf`, `matugen`, `wlsunset`, `swww`) must sanitize string parameters passed via D-Bus payload structures.
+   - Subprocess invocations for desktop theme enforcement (`dconf`, `matugen`, `wlsunset`, `swww`) must sanitize string parameters passed via D-Bus payload structures.
 4. **Panic Elimination**:
    - All `unwrap()` calls during D-Bus variant deserialization must be converted to explicit `match` blocks or `?` error propagation emitting `zbus::fdo::Error::Failed`.
 

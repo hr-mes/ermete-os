@@ -1,11 +1,11 @@
-# 🌐 Network Architecture & Synchronization Specification: `ermete-mesh-sync` & `ermete-cloud-rs`
+# Network Architecture & Synchronization Specification: `ermete-mesh-sync` & `ermete-cloud-rs`
 
 ## 1. General Network Architecture
 
-Ermete OS manages peer-to-peer (P2P) mesh connectivity, encrypted wire transport, and system-wide continuity synchronization (Universal Clipboard, Cloud Mount) through two dedicated Rust daemons:
+Ermete OS manages peer-to-peer (P2P) mesh connectivity, encrypted wire transport, and system-wide synchronization (Universal Clipboard, Cloud Mount) through two dedicated Rust daemons:
 
 1. **`ermete-mesh-sync`**: User-space mesh network daemon responsible for establishing and orchestrating encrypted WireGuard tunnels utilizing X25519 key exchange.
-2. **`ermete-cloud-rs`**: Continuity daemon managing local P2P discovery (mDNS/UDP broadcast), encrypted universal clipboard streaming (TCP/Noise, Wayland `wl-clipboard` integration), and remote storage orchestration via FUSE (`rclone`).
+2. **`ermete-cloud-rs`**: Synchronization daemon managing local P2P discovery (mDNS/UDP broadcast), encrypted universal clipboard streaming (TCP/Noise, Wayland `wl-clipboard` integration), and remote storage orchestration via FUSE (`rclone`).
 
 ```mermaid
 graph TD
@@ -23,7 +23,7 @@ graph TD
         WG_Engine --- UDP_WG
     end
 
-    subgraph CloudEngine ["ermete-cloud-rs (Continuity & Sync)"]
+    subgraph CloudEngine ["ermete-cloud-rs (Sync Daemon)"]
         Mimalloc["Global Allocator: mimalloc 0.1"]
         SyncEngine["SyncEngine Context"]
         UDP_Disc_Listen["UDP 9090 Receiver (ERMETE_HELLO)"]

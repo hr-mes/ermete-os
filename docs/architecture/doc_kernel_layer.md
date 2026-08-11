@@ -1,7 +1,7 @@
-# Kernel Layer Architecture & Bedrock Foundation Specification
+# Kernel Layer Architecture & Core Base Specification
 
 > [!IMPORTANT]
-> The lowest layer of Ermete OS (Tier 0 / Bedrock Foundation) unifies an immutable OCI/bootc (OSTree Container) philosophy, a custom-built kernel (**Ermete Chimera Kernel**), zero-downtime Ring-0 hot-patching via D-Bus/Polkit, cryptographic boot measurement via TPM 2.0, and hardware anti-downgrade counter protection.
+> The lowest layer of Ermete OS (Tier 0 / Base Foundation) unifies an immutable OCI/bootc (OSTree Container) philosophy, a custom-built kernel (**Ermete Chimera Kernel**), zero-downtime Ring-0 hot-patching via D-Bus/Polkit, cryptographic boot measurement via TPM 2.0, and hardware anti-downgrade counter protection.
 
 ---
 
@@ -23,7 +23,7 @@ flowchart TD
         TPM_CHECK -- "BUILD_ID < TPM Counter" --> SHUTDOWN["Forced Poweroff (systemctl poweroff -ff)"]
         TPM_CHECK -- "BUILD_ID >= TPM Counter" --> GREETD_CHECK{"greetd Start Check"}
         GREETD_CHECK -- "Crash (BurstLimit=3)" --> RECOVERY["ermete-recovery.target (cage + GTK4 UI Kiosk)"]
-        GREETD_CHECK -- "Normal Boot" --> SYSTEM_SERVICES["Bedrock Core Services (systemd-homed, tetragon, etc.)"]
+        GREETD_CHECK -- "Normal Boot" --> SYSTEM_SERVICES["Core Services (systemd-homed, tetragon, etc.)"]
     end
 
     subgraph Runtime_Phase ["3. Kernel Runtime & Live Patching"]
@@ -42,17 +42,17 @@ The Ermete OS kernel is compiled through a dynamic pipeline managed by `forge/sp
 
 ### 2.1 Toolchain & LLVM Standards
 - **Upstream Base**: Fedora Kernel Linux 6.14.x.
-- **NVIDIA Shield (Dynamic Ceiling)**: Automated calculation of maximum kernel release supported by installed NVIDIA drivers (`akmod-nvidia`), preventing ABI/KMOD incompatibilities.
+- **NVIDIA Driver Version Ceiling**: Automated calculation of maximum kernel release supported by installed NVIDIA drivers (`akmod-nvidia`), preventing ABI/KMOD incompatibilities.
 - **Toolchain**: Native LLVM/Clang 18+ (`LLVM=1 LLVM_IAS=1`, `%toolchain clang`, `%_ld ld.lld`).
 - **LTO Optimization & Profiling**:
   - ThinLTO enabled (`CONFIG_LTO_CLANG_THIN=y`).
-  - Aggressive performance tuning (`CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3=y`, `-O3 -march=x86-64-v3`).
+  - Performance tuning (`CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3=y`, `-O3 -march=x86-64-v3`).
   - AutoFDO (Sample PGO) driven by ChromeOS Kernel AFDO profiles (`-fprofile-sample-use`).
 
 ### 2.2 Patches & Scheduler
 - **CachyOS BORE Scheduler**: Burst-Oriented Response Enhancer (`CONFIG_SCHED_BORE=y`) minimizing latency for interactive UI workloads.
 - **Networking**: BBRv3 TCP Congestion Control (`CONFIG_DEFAULT_BBR=y`, `CONFIG_TCP_CONG_BBR=y`).
-- **Memory Management**: Multi-Gen LRU (`CONFIG_LRU_GEN=y`, `CONFIG_LRU_GEN_ENABLED=y`), ZSTD Memory Compression (`CONFIG_ZRAM_DEF_COMP_ZSTD=y`, `CONFIG_ZSWAP_COMPRESSOR_DEFAULT_ZSTD=y`), and Ultra Kernel Samepage Merging (`CONFIG_UKSM=y`).
+- **Memory Management**: Multi-Gen LRU (`CONFIG_LRU_GEN=y`, `CONFIG_LRU_GEN_ENABLED=y`), ZSTD Memory Compression (`CONFIG_ZRAM_DEF_COMP_ZSTD=y`, `CONFIG_ZSWAP_COMPRESSOR_DEFAULT_ZSTD=y`), and Kernel Samepage Merging (`CONFIG_UKSM=y`).
 - **Wine/Proton Acceleration**: Native NTSYNC integration (`CONFIG_NTSYNC=y`).
 - **Rust Kernel Integration**: Native Rust support (`CONFIG_RUST=y`).
 
@@ -71,8 +71,8 @@ CONFIG_CFI_CLANG=y                 # Control Flow Integrity
 CONFIG_SHADOW_CALL_STACK=y         # Shadow Call Stack
 ```
 
-### 2.4 Legacy Ablation
-Aggressive removal of obsolete drivers to shrink attack surface and eliminate compilation overhead under ThinLTO:
+### 2.4 Legacy Driver Ablation
+Removal of unused legacy drivers to shrink attack surface and reduce compilation overhead under ThinLTO:
 - Removal of floppy, parport, legacy PATA, ISDN, `nouveau`.
 - Stripping of non-essential datacenter NIC drivers (`MELLANOX`, `CHELSIO`, `QLOGIC`, `NETRONOME`, `CAVIUM`).
 
@@ -174,8 +174,8 @@ Partitioning layouts and bare-metal installation manifests are defined in `syste
 
 ## 5. Init System, Initramfs & Bootc Modules (Dracut & Systemd)
 
-### 5.1 Dracut Slim Initramfs (`99-ermete-slim-boot.conf` & Containerfile)
-Generates a reproducible, highly compressed ZSTD initramfs:
+### 5.1 Dracut Minimal Initramfs (`99-ermete-slim-boot.conf` & Containerfile)
+Generates a reproducible, compressed ZSTD initramfs:
 - **Compression**: `zstd -T0 -19 --long=27` (or `-15` inside Containerfile).
 - **Module Omission**: Omits non-critical modules (`pcsc`, `floppy`, `nfs`, `cifs`, `iscsi`, `network`, `bluetooth`, `plymouth`, `nouveau`, `simpledrm`).
 - **Critical Inclusions**: Includes `ostree`, `fido2`, `tpm2-tss`, `systemd-pcrphase`, and early NVIDIA KMS drivers (`nvidia`, `nvidia_modeset`, `nvidia_uvm`, `nvidia_drm`).
@@ -190,7 +190,7 @@ Organizes kernel arguments into modular TOML files in `ermete-base-config`:
 6. `06-mte-lam.toml`: `arm64.mte=on`, `lam=on`
 
 ### 5.3 Systemd Preset Optimization (`99-Ermete-Base.preset`)
-To eliminate boot bottlenecks:
+To optimize boot performance:
 - **Disabled**: `NetworkManager-wait-online.service`, `systemd-networkd-wait-online.service`, `plymouth-quit-wait.service`, `systemd-udev-settle.service`, `systemd-remount-fs.service`.
 - **Enabled**: `nvidia-powerd.service`, `nvidia-persistenced.service`, `systemd-homed.service`, `tetragon.service`, `keylime_agent.service`, `ermete-tpm-rollback-check.service`, `ermete-tpm-rollback-update.service`.
 
@@ -218,10 +218,10 @@ To eliminate boot bottlenecks:
 If `greetd` fails boot execution 3 consecutive times (`StartLimitBurst=3`):
 1. Systemd isolates system to `ermete-recovery.target`.
 2. Launches `cage` Wayland compositor running GTK4 application `ermete-recovery-ui`.
-3. Admin can execute a 1-click automated rollback to a known-good OSTree/bootc deployment.
+3. Admin can execute an automated rollback to a known-good OSTree/bootc deployment.
 
-### 6.4 Level 12 Unikernel Runtime Engine (`x86_64-unknown-hermit`)
-The **Level 12 Unikernel Runtime Engine** enables compiling Rust microservices as bare-metal Ring-0 unikernels based on **RustyHermit** (`x86_64-unknown-hermit`):
+### 6.4 Unikernel Runtime Engine (`x86_64-unknown-hermit`)
+The **Unikernel Runtime Engine** enables compiling Rust microservices as bare-metal Ring-0 unikernels based on **RustyHermit** (`x86_64-unknown-hermit`):
 1. **Zero POSIX Overhead**: Bypasses traditional POSIX userland and syscall stacks, running network daemons directly on hypervisor layer (`uhyve`).
 2. **Hermetic Build Pipeline**: Invoked via `system/scripts/build_unikernel.sh` and targets `just unikernel` / `just system/build-unikernel` using `-Z build-std=std,panic_abort`.
 3. **Immutability & Zero-Trust Isolation**: Sub-2MB footprint binaries suited for cloud microservices and zero-latency P2P mesh networking.
@@ -236,7 +236,7 @@ The **Level 12 Unikernel Runtime Engine** enables compiling Rust microservices a
 | **`ermete-live-patcher`** | `forge/specs/ermete-live-patcher/` | Rust (`zbus`, `tokio`) | D-Bus and Polkit daemon for zero-downtime Ring-0 patch application via `kpatch`. |
 | **`ermete-livepatch`** | `forge/specs/ermete-livepatch/` | Bash | Boot injection script for persistent `.ko` modules in `/usr/lib/modules/livepatch/`. |
 | **Disk Config & KS** | `system/disk_config/`, `system/ermete-install.ks` | TOML / Kickstart | LUKS2+TPM2 partitioning, `systemd-homed`, `bootc switch` OCI immutability setup. |
-| **Base Config & Kargs** | `forge/specs/ermete-base-config/` | TOML / Systemd Presets | Bootc kernel arguments (NVIDIA, IMA/EVM, Confidential Compute), Dracut Slim configuration. |
+| **Base Config & Kargs** | `forge/specs/ermete-base-config/` | TOML / Systemd Presets | Bootc kernel arguments (NVIDIA, IMA/EVM, Confidential Compute), Dracut Minimal configuration. |
 | **Secure Boot & TPM** | `forge/specs/ermete-secure-boot/` | Bash / TPM2 Tools / `ukify` | UKI generation, Secure Boot signing, PCR 11 measurement, TPM hardware counter anti-rollback. |
 | **Recovery Kiosk** | `forge/specs/ermete-recovery/` | Rust (GTK4 + `cage`) | Pre-boot GUI emergency recovery environment with 1-click OSTree/bootc rollback. |
-| **Unikernel Runtime Engine** | `system/unikernel/`, `system/scripts/build_unikernel.sh` | Rust (RustyHermit target) | Bare-metal Ring-0 zero-latencyunikernel runtime & compilation toolchain. |
+| **Unikernel Runtime Engine** | `system/unikernel/`, `system/scripts/build_unikernel.sh` | Rust (RustyHermit target) | Bare-metal Ring-0 low-latency unikernel runtime & compilation toolchain. |

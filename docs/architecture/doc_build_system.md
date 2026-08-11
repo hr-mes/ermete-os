@@ -1,4 +1,4 @@
-# 🌋 Ermete OS Build Infrastructure Specification
+# Ermete OS Build Infrastructure Specification
 
 ## 1. General Build System Architecture
 
@@ -9,53 +9,53 @@ Ermete OS is an **immutable, cloud-native, and eBPF-hardened** operating system 
 
 The entire build target tree is declaratively managed through a unified runner powered by **Justfile** (root `Justfile`, `forge/Justfile`, and `system/Justfile`).
 
-### 1.1 Autarkic CI/CD Ecosystem & Multi-Stage Build Strategy
+### 1.1 Self-Contained CI/CD Toolchain & Multi-Stage Build Strategy
 
 Ermete OS relies on zero third-party pre-compiled binaries for its assembly line. In **Tier 0** of the Forge, the system self-compiles its own CI/CD toolchain:
 - **`kani-verifier`**: Bounded model checking engine for Rust compiled natively (`kani-driver`, `cargo-kani`), enabling formal mathematical verification of security invariants.
-- **`just`**: Task runner and build orchestrator compiled with CachyOS optimizations (`-O3 -march=x86-64-v3`, `mold`).
-- **`uki-tools`**: Autarkic Secure Boot toolchain combining `sbsigntools` (`sbsign`, `sbverify`, `sbattach`) and `systemd-ukify` (`ukify`).
+- **`just`**: Task runner and build orchestrator compiled with optimizations (`-O3 -march=x86-64-v3`, `mold`).
+- **`uki-tools`**: Secure Boot toolchain combining `sbsigntools` (`sbsign`, `sbverify`, `sbattach`) and `systemd-ukify` (`ukify`).
 
 #### Multi-Stage Architecture (Heavy Builder Produces Lean OS)
-- **Stage 1 (`ermete-os-builder`)**: Heavyweight builder container equipped with GCC, LLVM, Rustc, Mold, and the autarkic toolchain (`kani-verifier`, `just`, `uki-tools`). Compiles RPMs in isolated OCI micro-containers.
+- **Stage 1 (`ermete-os-builder`)**: Heavyweight builder container equipped with GCC, LLVM, Rustc, Mold, and the self-contained toolchain (`kani-verifier`, `just`, `uki-tools`). Compiles RPMs in isolated OCI micro-containers.
 - **Stage 2 (`ermete-os-system`)**: Final immutable BootC runtime container. Installs compiled RPMs via bind-mounts, generates the initramfs with Dracut, and completely purges the builder toolchain (-1.1 GB disk footprint reduction).
 
 ```mermaid
 flowchart TD
-    subgraph Spec ["📦 Forge Specs & Configs"]
+    subgraph Spec ["Forge Specs & Configs"]
         S[forge/specs/*]
         M[config/rpmmacros]
         P[config/packages.json]
     end
 
-    subgraph Orchestration ["🧠 Forge Orchestrator CI/CD"]
+    subgraph Orchestration ["Forge Orchestrator CI/CD"]
         DM[scripts/dynamic-matrix.sh]
         IC[scripts/check_idempotency.sh]
         KB[kernel-build.yml]
         FO[ermete-forge-orchestrator.yml]
     end
 
-    subgraph BuildEngine ["⚙️ Hermetic / Rolling Build Engine"]
+    subgraph BuildEngine ["Hermetic / Rolling Build Engine"]
         BL[scripts/build_rolling_local.sh]
         NH[scripts/nix_hermetic_build.sh]
         BWRAP[bwrap Sandbox]
     end
 
-    subgraph OCIRegistry ["📦 GHCR OCI Micro-Containers"]
+    subgraph OCIRegistry ["GHCR OCI Micro-Containers"]
         T0[Tier 0: Hardware & Kernel]
         T1[Tier 1: Core Services & DBus]
         T2[Tier 2: Design System & Assets]
         T3[Tier 3: Rust Shell & Apps]
     end
 
-    subgraph SystemBuilder ["💿 Ermete System OS Builder"]
+    subgraph SystemBuilder ["Ermete System OS Builder"]
         FR[scripts/fetch_repo_rpms.sh]
         CF[system/Containerfile]
         SYS[ghcr.io/hr-mes/ermete-os-system:latest]
         BIB[bootc-image-builder]
     end
 
-    subgraph Outputs ["💾 Final Artifacts"]
+    subgraph Outputs ["Final Artifacts"]
         QCOW2[VM Image: QCOW2]
         ISO[Installer: Anaconda ISO]
         S3[AWS S3 / GH Artifacts]
@@ -88,7 +88,7 @@ flowchart TD
 The `forge/scripts/` directory houses the core automation logic for build execution, idempotency calculations, dependency retrieval, and sandbox isolation.
 
 ### 2.1 `build_rolling_local.sh`
-* **Purpose**: Local guided compilation of single RPM packages within a rolling environment based on DNF and Bedrock macros.
+* **Purpose**: Local guided compilation of single RPM packages within a rolling environment based on DNF and macros.
 * **Operational Flow**:
   1. Accepts target package name as parameter (e.g., `just forge/build-rolling niri`).
   2. Verifies and installs host prerequisite tools (`rpm-build`, `dnf-plugins-core`, `rpmdevtools`).
@@ -97,7 +97,7 @@ The `forge/scripts/` directory houses the core automation logic for build execut
   5. Downloads source package (`dnf download --source <package>`).
   6. Computes and installs build dependencies automatically via `sudo dnf builddep -y *.src.rpm`.
   7. Injects `%global debug_package %{nil}` into the extracted spec to strip debug sub-packages and optimize final payload size.
-  8. Launches extreme compilation via `rpmbuild -bb --nocheck`. If `/work` is mounted, copies generated RPMs to `/work/output/<package>/`.
+  8. Launches compilation via `rpmbuild -bb --nocheck`. If `/work` is mounted, copies generated RPMs to `/work/output/<package>/`.
 
 ### 2.2 `check_idempotency.sh`
 * **Purpose**: Deterministic calculation of **Cache Hit / Cache Miss** to prevent redundant re-compilations on GHCR.
@@ -158,7 +158,7 @@ The `forge/specs/` directory hosts over 40 custom and adapted RPM package defini
   - `specs/ermete-kernel/prepare-chimera.sh`: Downloads official Fedora SRPM, applies **CachyOS BORE (Burst-Oriented Response Enhancer)** scheduler patches, extracts custom Kconfig, and validates NVIDIA module ABI compatibility.
   - `specs/ermete-kernel/build-local.sh`: Local containerized Chimera Kernel builder.
 
-### 3.2 Bedrock Compilation Macros (`forge/config/rpmmacros`)
+### 3.2 Compilation Macros (`forge/config/rpmmacros`)
 Compilation flags merge strategies from **Clear Linux, CachyOS, and Gentoo LTO**:
 
 | Parameter / Macro | Configuration / Flags | Purpose & Impact |
@@ -167,7 +167,7 @@ Compilation flags merge strategies from **Clear Linux, CachyOS, and Gentoo LTO**
 | **Diet Audit** | `%_excludedocs 1` | Total stripping of man pages, info pages, and documentation files. |
 | **C/C++ Flags** | `-O3 -march=x86-64-v3 -pipe -fno-semantic-interposition -falign-functions=32 -mprefer-vector-width=256` | Maximum AVX2/BMI vectorization, zero I/O latency, and accelerated dynamic symbol lookup. |
 | **Linker** | `-fuse-ld=mold -Wl,-O2 -Wl,--as-needed -Wl,--icf=all` | Adoption of hyper-parallel **MOLD** linker with ICF (Identical Code Folding) and dead code elimination. |
-| **Rust / Cargo** | `%rustflags -C target-cpu=x86-64-v3 -C opt-level=3 -C codegen-units=16 -C strip=symbols` | Extreme Rust binary optimization with ThinLTO (`CARGO_PROFILE_RELEASE_LTO="thin"`) and `sccache` compiler caching wrapper. |
+| **Rust / Cargo** | `%rustflags -C target-cpu=x86-64-v3 -C opt-level=3 -C codegen-units=16 -C strip=symbols` | Rust binary optimization with ThinLTO (`CARGO_PROFILE_RELEASE_LTO="thin"`) and `sccache` compiler caching wrapper. |
 
 ---
 
@@ -202,28 +202,28 @@ The CI/CD pipeline is orchestrated across 4 main GitHub Actions workflows:
 ```mermaid
 sequenceDiagram
     autonumber
-    participant KB as 🧬 kernel-build.yml
-    participant FO as 🌋 ermete-forge-orchestrator.yml
-    participant SB as 💿 system-build.yml
-    participant SD as 💾 system-build-disk.yml
+    participant KB as kernel-build.yml
+    participant FO as ermete-forge-orchestrator.yml
+    participant SB as system-build.yml
+    participant SD as system-build-disk.yml
 
     KB->>FO: Trigger upon Chimera Kernel completion (or Push)
-    Note over FO: 🧠 Orchestrator Brain runs dynamic-matrix.sh
+    Note over FO: Orchestrator Engine runs dynamic-matrix.sh
     FO->>FO: Build Base Builder Container (on cache miss)
     par Custom & Upstream Matrix Build
         FO->>FO: Build Custom Packages (Rust / C) + sccache + Cosign + Syft SBOM
-        FO->>FO: Build Upstream Rolling Packages + Ponytail Ultra + Cosign
+        FO->>FO: Build Upstream Rolling Packages + Cosign
         FO->>FO: Build NVIDIA KMOD (Clang/LLVM + akmods)
     end
-    FO->>FO: 📦 Job build-repo: Fetch RPMs, createrepo_c, Push Tier OCI & Deploy DNF GitHub Pages
+    FO->>FO: Job build-repo: Fetch RPMs, createrepo_c, Push Tier OCI & Deploy DNF GitHub Pages
     FO->>SB: Trigger upon Forge Orchestrator completion
-    Note over SB: 🏗️ Build container bootc (system/Containerfile)
-    SB->>SB: 🛡️ Security Audit Trivy (CRITICAL/HIGH)
-    SB->>SB: ✍️ SLSA Attestation, Syft SBOM & Cosign Sign
+    Note over SB: Build container bootc (system/Containerfile)
+    SB->>SB: Security Audit Trivy (CRITICAL/HIGH)
+    SB->>SB: SLSA Attestation, Syft SBOM & Cosign Sign
     SB->>SD: Manual trigger / dispatch for disk builds
-    Note over SD: 🏗️ bootc-image-builder (BIB)
+    Note over SD: bootc-image-builder (BIB)
     SD->>SD: Generate QCOW2 & Anaconda ISO
-    SD->>SD: 📦 Upload Artifacts / AWS S3 via Rclone
+    SD->>SD: Upload Artifacts / AWS S3 via Rclone
 ```
 
 ### 5.1 Workflow Breakdown
