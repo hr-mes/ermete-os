@@ -11,6 +11,11 @@ on:
         required: false
         type: string
         default: ''
+      march_target:
+        description: 'Micro-architettura CPU (es. x86-64-v3, znver3)'
+        required: false
+        type: string
+        default: 'x86-64-v3'
 
 defaults:
   run:
@@ -67,12 +72,19 @@ jobs:
         podman exec chimera-builder-${{ matrix.target }} bash -c "
           echo '=== Collecting AutoFDO Profiles ==='
           mkdir -p /forge/profiles
-          echo 'Profile collection placeholder.'
+          if [ -n \"\${HARDWARE_HASH}\" ]; then
+            echo 'Fetching hardware-specific profiles from decentralized cache...'
+            curl -sSfL \"https://telemetry.ermete-os.org/profiles/\${HARDWARE_HASH}/kernel_bolt.fdata\" -o /forge/profiles/kernel_bolt.fdata || echo 'No hardware-specific profile found. Operating without PGO/BOLT.'
+          else
+            echo 'Generic build requested. Skipping AutoFDO/BOLT profiling.'
+          fi
         "
 
     - name: "⚙️ Phase 2: LLVM/ThinLTO & AutoFDO/BOLT Macro Injection"
+      env:
+        MARCH_TARGET: ${{ github.event.inputs.march_target || 'x86-64-v3' }}
       run: |
-        podman exec chimera-builder-${{ matrix.target }} bash -c "
+        podman exec -e MARCH_TARGET="${MARCH_TARGET}" chimera-builder-${{ matrix.target }} bash -c "
           export CCACHE_DIR=/forge/.ccache_local
           export CCACHE_COMPRESS=1
           export CCACHE_MAXSIZE=3G
@@ -88,8 +100,8 @@ jobs:
         %_host_cxx clang++
         %_ld ld.lld
         %_ldflags -Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro -fuse-ld=lld
-        %optflags %{__global_compiler_flags} -march=x86-64-v3 -pipe -Wno-error -flto=thin
-        %kcflags -march=x86-64-v3 -pipe -Wno-error -flto=thin
+        %optflags %{__global_compiler_flags} -march=\${MARCH_TARGET} -pipe -Wno-error -flto=thin
+        %kcflags -march=\${MARCH_TARGET} -pipe -Wno-error -flto=thin
         MACRO
         "
         
