@@ -440,14 +440,7 @@ impl SimpleComponent for ForgeWidgetModel {
     }
 }
 
-/// Helper function to detect local hardware hash (or generate realistic mock if sys info unavailable)
-pub fn detect_hardware_hash() -> String {
-    use sha2::{Digest, Sha256};
-    
-    // Read machine-id or boot_id to generate realistic hardware-bound hash
-    let raw_id = std::fs::read_to_string("/etc/machine-id")
-        .or_else(|_| std::fs::read_to_string("/proc/sys/kernel/random/boot_id"))
-        .unwrap_or_else(|_| "ermete-default-hw-node-01".to_string());
+/return Err(anyhow::anyhow!("Hardware hash non disponibile o non tracciabile. Accesso bloccato.")););
 
     let mut hasher = Sha256::new();
     hasher.update(raw_id.as_bytes());

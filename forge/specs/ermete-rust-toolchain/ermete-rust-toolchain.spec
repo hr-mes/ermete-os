@@ -13,7 +13,8 @@ Provides the pre-compiled embedded Rust Nightly toolchain, Kani Formal Verificat
 
 %install
 mkdir -p %{buildroot}/opt/ermete-rust
-echo "Mock Rust Toolchain Installation" > %{buildroot}/opt/ermete-rust/rustc-mock
+curl --proto \'=https\' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly
+cp -r $HOME/.cargo/bin/* %{buildroot}/opt/ermete-rust/
 
 %files
 /opt/ermete-rust/rustc-mock

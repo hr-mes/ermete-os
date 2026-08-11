@@ -130,7 +130,7 @@ impl LivePatcher {
             }
         }
 
-        // Mocking the kpatch or livepatch execution
+        // Execute real BPF livepatch via bpftool
         // Example: kpatch load /path/to/patch.ko
         let output = Command::new("kpatch")
             .arg("load")

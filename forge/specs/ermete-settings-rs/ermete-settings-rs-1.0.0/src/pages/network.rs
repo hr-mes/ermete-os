@@ -398,9 +398,7 @@ pub fn build_page() -> Box {
                     let _ = crate::crdt_store::update_setting_crdt("global_mesh_provider", "cloudflare_warp").await;
                 }
                 Err(e) => {
-                    // Fallback to a mock success if warp-cli is not installed natively on the build system
-                    status.set_text(&format!("✅ Provisioning WARP simulato (Ermete OS Zero-Trust Mesh attiva per team: {})", team_val));
-                    let _ = crate::crdt_store::update_setting_crdt("global_mesh_provider", "cloudflare_warp_mock").await;
+                    return Err(anyhow::anyhow!("warp-cli command failed or not installed. Zero-Trust provisioning aborted."));).await;
                 }
             }
         });

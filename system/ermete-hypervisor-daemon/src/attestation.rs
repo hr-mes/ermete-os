@@ -104,13 +104,6 @@ impl AttestationEngine {
             let bytes = fs::read(&self.config.remote_pubkey_path)
                 .with_context(|| format!("Failed to read remote PQC public key from {:?}", self.config.remote_pubkey_path))?;
             (bytes, None)
-        } else if !self.config.strict_zero_trust {
-            if let Some(parent) = self.config.remote_pubkey_path.parent() {
-                let _ = fs::create_dir_all(parent);
-            }
-            let kp = DilithiumKeypair::generate();
-            let _ = fs::write(&self.config.remote_pubkey_path, &kp.public);
-            (kp.public.to_vec(), Some(kp))
         } else {
             return Err(anyhow!(
                 "Strict zero-trust active: Remote PQC public key missing at {:?}",
@@ -204,17 +197,6 @@ impl AttestationEngine {
                 keylime_verifying_state: KeylimeStatus::Trusted,
                 agent_id: String::from("ermete-keylime-agent-hypervisor-v1"),
             }
-        } else if !self.config.strict_zero_trust {
-            warn!("TPM 2.0 device missing. Keylime fallback allowed in non-strict mode.");
-            pcr0 = String::from("simulated_pcr0_dev_baseline");
-            KeylimeAttestationReport {
-                tpm_present: false,
-                pcr0,
-                pcr7,
-                pcr10,
-                keylime_verifying_state: KeylimeStatus::Bypassed,
-                agent_id: String::from("ermete-keylime-simulated-agent"),
-            }
         } else {
             error!("Keylime TPM 2.0 hardware missing and strict zero-trust is active.");
             KeylimeAttestationReport {
@@ -271,14 +253,10 @@ impl AttestationEngine {
                 }
             }
             HardwareEnclaveType::SoftwareEnclave => {
-                if self.config.strict_zero_trust {
-                    error!("Software enclave not permitted under strict zero-trust policy.");
-                    false
-                } else {
-                    info!("Software enclave permitted under development zero-trust policy.");
-                    true
-                }
+                error!("Software enclave forbidden under global strict zero-trust policy.");
+                false
             }
+        }
         };
 
         let keylime_valid = !matches!(
@@ -293,7 +271,10 @@ impl AttestationEngine {
             if let Some(parent) = self.config.key_output_path.parent() {
                 let _ = fs::create_dir_all(parent);
             }
-            let _ = fs::write(&self.config.key_output_path, b"ERMETE_ZERO_TRUST_ENCLAVE_SECRET_KEY_RELEASE");
+            let mut key = [0u8; 32];
+            let rng = SystemRandom::new();
+            rng.fill(&mut key).unwrap();
+            let _ = fs::write(&self.config.key_output_path, &key);
 
             *self.state.lock().unwrap_or_else(|e| e.into_inner()) = EnclaveLifecycleState::SecretReleased;
 
