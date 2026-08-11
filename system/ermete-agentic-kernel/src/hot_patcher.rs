@@ -550,14 +550,15 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_freplace_trampoline_injection() {
+    async fn test_freplace_trampoline_injection() -> Result<(), String> {
         let patcher = SharedHotPatcher::new();
         let res = patcher
             .inject_freplace("patch-freplace-01", &[], "faulty_func_patch", "faulty_func", Some("kernel_subsystem"))
             .await;
         assert!(res.is_ok());
 
-        let rolled_back_count = patcher.rollback_all().await.unwrap();
+        let rolled_back_count = patcher.rollback_all().await.map_err(|e| e.to_string())?;
         assert_eq!(rolled_back_count, 1);
+        Ok(())
     }
 }

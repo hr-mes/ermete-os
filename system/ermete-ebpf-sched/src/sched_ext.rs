@@ -312,7 +312,7 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_ai_sched_map_fallback_ops() {
+    async fn test_ai_sched_map_fallback_ops() -> Result<(), String> {
         let map = AiSchedMap::new(None);
         assert!(!map.is_bpf_active().await);
 
@@ -328,9 +328,9 @@ mod tests {
             flags: 1,
         };
 
-        map.update_policy(2048, val).await.unwrap();
+        map.update_policy(2048, val).await?;
 
-        let queried = map.get_policy(2048).await.expect("Policy should exist");
+        let queried = map.get_policy(2048).await.ok_or("Policy should exist")?;
         assert_eq!(queried.cpu_weight, 800);
         assert_eq!(queried.slice_us, 1000);
 
@@ -338,8 +338,9 @@ mod tests {
         assert_eq!(policies.len(), 1);
         assert_eq!(policies[0].0, 2048);
 
-        map.remove_policy(2048).await.unwrap();
+        map.remove_policy(2048).await?;
         assert!(map.get_policy(2048).await.is_none());
+        Ok(())
     }
 
     #[tokio::test]

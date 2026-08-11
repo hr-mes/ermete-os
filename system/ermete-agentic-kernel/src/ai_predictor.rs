@@ -591,7 +591,7 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_neural_classification_and_core_affinity() {
+    async fn test_neural_classification_and_core_affinity() -> Result<(), String> {
         let ui_task = DiscoveredTask {
             pid: 1042,
             comm: "niri".to_string(),
@@ -607,7 +607,7 @@ mod tests {
         assert!(res.is_err(), "Classification must fail cleanly with Err when DBus daemon is unreachable");
 
         let cat = WorkloadCategory::InteractiveUi;
-        let target = AffinityOptimizationNode::optimize_affinity(&ui_task, &cat).expect("Target should be generated");
+        let target = AffinityOptimizationNode::optimize_affinity(&ui_task, &cat).ok_or("Target should be generated")?;
         assert_eq!(target.core_type, 0); // P-Core
         assert!(target.target_core <= 3); // CPU 0..=3 P-Cores
 
@@ -622,9 +622,10 @@ mod tests {
             num_threads: 2,
         };
         let bg_cat = WorkloadCategory::IdleBackground;
-        let bg_target = AffinityOptimizationNode::optimize_affinity(&bg_task, &bg_cat).expect("Target should be generated");
+        let bg_target = AffinityOptimizationNode::optimize_affinity(&bg_task, &bg_cat).ok_or("Target should be generated")?;
         assert_eq!(bg_target.core_type, 1); // E-Core
         assert!(bg_target.target_core >= 4); // CPU 4..=7 E-Cores
+        Ok(())
     }
 
     #[tokio::test]
