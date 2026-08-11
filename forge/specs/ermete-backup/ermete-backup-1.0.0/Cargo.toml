@@ -10,9 +10,6 @@ license = "MIT"
 name = "ermete-backup-daemon"
 path = "src/daemon.rs"
 
-[[bin]]
-name = "ermete-backup-ui"
-path = "src/ui.rs"
 
 [dependencies]
 dirs = "5.0"
