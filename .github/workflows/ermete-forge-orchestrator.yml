@@ -43,12 +43,11 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-      - name: ⚙️ Set Default Rust Toolchain
-        run: rustup default stable
-
           sparse-checkout: |
             forge
             .github
+      - name: ⚙️ Set Default Rust Toolchain
+        run: rustup default stable
       - name: Align Repositories
         run: cp builder/rpmfusion-custom.repo /etc/yum.repos.d/ 2>/dev/null || true
       - name: Persist DAG State Cache
