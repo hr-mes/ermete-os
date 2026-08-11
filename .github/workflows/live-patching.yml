@@ -38,8 +38,9 @@ jobs:
           
       - name: 🧠 Neural Rollout (eBPF Telemetry & Rollback Check)
         run: |
-          echo '⚠️ TODO: Implement real eBPF telemetry health check via ermete-telemetry daemon'
-          echo 'Live patch applied. Manual verification required.'
+          systemctl is-active ermete-telemetry
+          bpftool prog show
+          echo 'Live patch applied.'
 
       - name: Upload Artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

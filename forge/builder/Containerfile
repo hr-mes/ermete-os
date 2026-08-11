@@ -1,5 +1,4 @@
-# TODO: Pin to SHA256 digest when available
-FROM registry.fedoraproject.org/fedora:43
+FROM registry.fedoraproject.org/fedora:43@sha256:ee2a496ffd34c4cab2fe8a2216686a11f604a58890050c59b31df992b05207f0
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install RPMFusion release packages to provision the GPG keys

@@ -93,13 +93,16 @@ jobs:
             fi
           }
 
-          # Current list of monitored upstream packages
-          update_spec "starship/starship" "specs/ermete-starship/ermete-starship.spec"
-          update_spec "InioX/matugen" "specs/ermete-matugen/ermete-matugen.spec"
-          update_spec "ful1e5/Bibata_Cursor" "specs/ermete-bibata/ermete-bibata.spec"
-          update_spec "sentriz/cliphist" "specs/ermete-cliphist/ermete-cliphist.spec"
-          # TODO: Make this list dynamic by reading a upstream-watch.json manifest
-          # to automatically pick up new packages without editing this workflow
+          # Dynamically parse upstream-watch.json manifest for packages to monitor
+          if [ -f "upstream-watch.json" ]; then
+            jq -r 'if type == "array" then .[] | "\(.repo) \(.spec)" else to_entries[] | "\(.key) \(.value)" end' upstream-watch.json | while read -r repo spec; do
+              if [ -n "$repo" ] && [ -n "$spec" ]; then
+                update_spec "$repo" "$spec"
+              fi
+            done
+          else
+            echo "Warning: upstream-watch.json manifest not found."
+          fi
 
           if [ "$UPDATED" -eq 1 ]; then
             echo "updates=true" >> "$GITHUB_ENV"

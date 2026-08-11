@@ -1,0 +1,18 @@
+[
+  {
+    "repo": "starship/starship",
+    "spec": "specs/ermete-starship/ermete-starship.spec"
+  },
+  {
+    "repo": "InioX/matugen",
+    "spec": "specs/ermete-matugen/ermete-matugen.spec"
+  },
+  {
+    "repo": "ful1e5/Bibata_Cursor",
+    "spec": "specs/ermete-bibata/ermete-bibata.spec"
+  },
+  {
+    "repo": "sentriz/cliphist",
+    "spec": "specs/ermete-cliphist/ermete-cliphist.spec"
+  }
+]
