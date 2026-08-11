@@ -192,3 +192,6 @@ jobs:
       run: |
         podman unshare rm -rf .ccache_local RPMS_OUT profiles || rm -rf .ccache_local RPMS_OUT profiles || true
         podman container prune -f || true
+
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true

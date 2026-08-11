@@ -114,3 +114,6 @@ jobs:
             tests/fuzz/corpus/
           if-no-files-found: ignore
           compression-level: 1
+
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true

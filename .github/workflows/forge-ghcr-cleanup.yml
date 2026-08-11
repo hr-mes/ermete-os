@@ -142,3 +142,6 @@ jobs:
           echo "Redundant Merkle Layers Deleted: $DELETED_DUPLICATES"
           echo "Deduplication & Cleanup Complete!"
 
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+

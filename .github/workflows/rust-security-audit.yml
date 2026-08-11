@@ -303,3 +303,6 @@ jobs:
           else
             chown -R 1001:1001 . || chown -R 1000:1000 . || true
           fi
+
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true

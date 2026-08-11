@@ -12,6 +12,7 @@ on:
     - cron: '0 4 * * *'
 
 env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
   REGISTRY: ghcr.io
   FEDORA_VERSION: 43
   RUSTC_WRAPPER: sccache
