@@ -131,10 +131,9 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
+          sparse-checkout:
       - name: ⚙️ Set Default Rust Toolchain
-        run: rustup default stable
-
-          sparse-checkout: |
+        run: rustup default stable |
             forge/config
             forge/scripts
             forge/specs/ermete-${{ matrix.package }}
@@ -320,10 +319,9 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
+          sparse-checkout:
       - name: ⚙️ Set Default Rust Toolchain
-        run: rustup default stable
-
-          sparse-checkout: |
+        run: rustup default stable |
             forge/config
             forge/scripts
             forge/specs/ermete-${{ matrix.package }}
@@ -509,10 +507,9 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
+          sparse-checkout:
       - name: ⚙️ Set Default Rust Toolchain
-        run: rustup default stable
-
-          sparse-checkout: |
+        run: rustup default stable |
             forge/config
             forge/scripts
             forge/specs/ermete-${{ matrix.package }}
