@@ -1,21 +1,21 @@
-# 🌐 Specifica di Architettura di Rete e Sincronizzazione: `ermete-mesh-sync` & `ermete-cloud-rs`
+# 🌐 Network Architecture & Synchronization Specification: `ermete-mesh-sync` & `ermete-cloud-rs`
 
-## 1. Architettura Generale di Rete (Network Architecture)
+## 1. General Network Architecture
 
-Ermete OS gestisce la connettività peer-to-peer (P2P), la crittografia di rete e la sincronizzazione di continuità (Universal Clipboard, Cloud Mount) tramite due daemon dedicati scritti in Rust:
+Ermete OS manages peer-to-peer (P2P) mesh connectivity, encrypted wire transport, and system-wide continuity synchronization (Universal Clipboard, Cloud Mount) through two dedicated Rust daemons:
 
-1. **`ermete-mesh-sync`**: Daemon responsabile dell'istituzione e della gestione dei tunnel di rete mesh crittografati in user-space basati su WireGuard e X25519.
-2. **`ermete-cloud-rs`**: Daemon di continuità per la sincronizzazione locale P2P (Discovery mDNS/UDP, Clipboard TCP/Noise, integrazione Wayland/`wl-clipboard` e orchestrazione FUSE tramite `rclone`).
+1. **`ermete-mesh-sync`**: User-space mesh network daemon responsible for establishing and orchestrating encrypted WireGuard tunnels utilizing X25519 key exchange.
+2. **`ermete-cloud-rs`**: Continuity daemon managing local P2P discovery (mDNS/UDP broadcast), encrypted universal clipboard streaming (TCP/Noise, Wayland `wl-clipboard` integration), and remote storage orchestration via FUSE (`rclone`).
 
 ```mermaid
 graph TD
-    subgraph D-Bus Session & System Bus
+    subgraph DBus ["D-Bus Session & System Bus"]
         DBusMesh["org.ermete.MeshSync (/org/ermete/MeshSync)"]
         DBusCloudSync["os.ermete.CloudSync (/os/ermete/CloudSync)"]
         DBusCloud["os.ermete.Cloud (/os/ermete/Cloud)"]
     end
 
-    subgraph "ermete-mesh-sync (User-Space Mesh WG)"
+    subgraph MeshEngine ["ermete-mesh-sync (User-Space Mesh WG)"]
         WG_Engine["WireGuard Engine (boringtun 0.6)"]
         X25519_Keys["X25519 Keypair (x25519-dalek 2.0)"]
         UDP_WG["Listener UDP:51820 (Mesh WG Traffic)"]
@@ -23,7 +23,7 @@ graph TD
         WG_Engine --- UDP_WG
     end
 
-    subgraph "ermete-cloud-rs (Continuity & Sync)"
+    subgraph CloudEngine ["ermete-cloud-rs (Continuity & Sync)"]
         Mimalloc["Global Allocator: mimalloc 0.1"]
         SyncEngine["SyncEngine Context"]
         UDP_Disc_Listen["UDP 9090 Receiver (ERMETE_HELLO)"]
@@ -44,44 +44,44 @@ graph TD
 
 ---
 
-## 2. Analisi Dettagliata: `ermete-mesh-sync`
+## 2. In-Depth Component Analysis: `ermete-mesh-sync`
 
-### 2.1 Componenti e Dipendenze
-- **Path Crate:** `forge/specs/ermete-mesh-sync/ermete-mesh-sync-1.0.0/`
-- **Linguaggio/Framework:** Rust 2021, Tokio 1.37 (async full).
-- **Allocazione e Criptografia:**
+### 2.1 Dependencies & Module Specification
+- **Crate Path:** `forge/specs/ermete-mesh-sync/ermete-mesh-sync-1.0.0/`
+- **Language/Framework:** Rust 2021, Tokio 1.37 (full async runtime).
+- **Allocation & Cryptography:**
   - `x25519-dalek = "=2.0.0-rc.3"`
-  - `boringtun = "0.6"` (Implementazione WireGuard in user-space sviluppata da Cloudflare)
+  - `boringtun = "0.6"` (Cloudflare user-space WireGuard implementation)
   - `rand_core = "0.6"` (`OsRng`)
   - `zbus = "4.0"`
 
-### 2.2 Algoritmi di Crittografia e Gestione Chiavi
-- **Key Exchange (KEX):** Scambio di chiavi ellittiche **X25519** (Curve25519 Diffie-Hellman).
-  - Generazione della chiave privata effimera tramite il PRNG hardware sicuro del sistema operativo (`EphemeralSecret::random_from_rng(OsRng)`).
-  - Derivazione della chiave pubblica corrispondente (`PublicKey::from(&secret)`).
-  - Encoding della chiave pubblica in formato **Base64** per la condivisione e negoziazione con nodi peer / endpoint Cloudflare WARP.
+### 2.2 Cryptographic Algorithms & Key Management
+- **Key Exchange (KEX):** Elliptic-curve **X25519** key exchange (Curve25519 Diffie-Hellman).
+  - Generation of ephemeral private keys via hardware-backed CSPRNG (`EphemeralSecret::random_from_rng(OsRng)`).
+  - Derivation of corresponding public keys (`PublicKey::from(&secret)`).
+  - Encoding of public keys in **Base64** format for peer negotiation and Cloudflare WARP endpoint handshakes.
 - **Symmetric Encryption & Tunneling (WireGuard Standard):**
-  - Cifrario simmetrico: **ChaCha20-Poly1305** AEAD (gestito da `boringtun`).
-  - Hashing e MAC: **BLAKE2s**.
+  - Symmetric cipher: **ChaCha20-Poly1305** AEAD (handled by `boringtun`).
+  - Hashing and MAC: **BLAKE2s**.
 
-### 2.3 Specifiche di Rete UDP e Tunneling
-- **Socket UDP:** Asincrono non bloccante via `tokio::net::UdpSocket` in ascolto su `0.0.0.0:51820`.
-- **Routable Interface:** Strutturato per interfacciarsi con dispositivi TUN Linux (`wg-ermete`) avvolti da `boringtun::device::DeviceHandle` per il routing utente dei pacchetti IP meshati.
-- **Interfaccia D-Bus:**
-  - Bus Name: `org.ermete.MeshSync` su `/org/ermete/MeshSync`
-  - Metodi:
-    - `status() -> &str`: Restituisce lo stato operativo (`"Mesh Sync is running (Async WireGuard)"`).
-    - `get_public_key() -> String`: Esporta la chiave pubblica X25519 del nodo.
+### 2.3 UDP Socket & Tunneling Details
+- **UDP Socket:** Asynchronous non-blocking listener via `tokio::net::UdpSocket` bound to `0.0.0.0:51820`.
+- **Routable Interface:** Interfaces with Linux TUN virtual devices (`wg-ermete`) wrapped by `boringtun::device::DeviceHandle` for user-space IP routing.
+- **D-Bus Interface:**
+  - Bus Name: `org.ermete.MeshSync` at `/org/ermete/MeshSync`
+  - Methods:
+    - `status() -> &str`: Queries daemon state (`"Mesh Sync is running (Async WireGuard)"`).
+    - `get_public_key() -> String`: Exports node's public X25519 key.
 
 ---
 
-## 3. Analisi Dettagliata: `ermete-cloud-rs`
+## 3. In-Depth Component Analysis: `ermete-cloud-rs`
 
-### 3.1 Componenti, Allocatore e Sandboxing Systemd
-- **Path Crate:** `forge/specs/ermete-cloud-rs/ermete-cloud-rs-1.0.0/`
-- **Linguaggio/Framework:** Rust 2021, Tokio 1.36 (async full), `zbus` 4.4.0.
-- **Allocatore Globale:** `mimalloc` 0.1 per minimizzare la frammentazione della memoria e velocizzare le allocazioni di rete.
-- **Hardening del Servizio (`ermete-cloud-rs.service`):**
+### 3.1 Components, Allocator & Systemd Sandboxing
+- **Crate Path:** `forge/specs/ermete-cloud-rs/ermete-cloud-rs-1.0.0/`
+- **Language/Framework:** Rust 2021, Tokio 1.36 (async full), `zbus` 4.4.0.
+- **Global Allocator:** `mimalloc` 0.1 to eliminate heap fragmentation and accelerate network packet allocations.
+- **Service Sandboxing (`ermete-cloud-rs.service`):**
   ```ini
   DynamicUser=yes
   ProtectSystem=strict
@@ -94,44 +94,44 @@ graph TD
   RestartSec=5s
   ```
 
-### 3.2 Interfacce D-Bus esposte (`zbus`)
+### 3.2 Exposed D-Bus Interfaces (`zbus`)
 1. **`os.ermete.CloudSync`** (`/os/ermete/CloudSync`):
-   - `authenticate_oauth(provider: String, token: String) -> Result<String>`: Gestione token OAuth.
-   - `mount_fuse(remote: String, mountpoint: String) -> Result<String>`: Avvia in background un processo `rclone mount <remote> <mountpoint> --vfs-cache-mode full`.
+   - `authenticate_oauth(provider: String, token: String) -> Result<String>`: OAuth token validation handler.
+   - `mount_fuse(remote: String, mountpoint: String) -> Result<String>`: Spawns background process `rclone mount <remote> <mountpoint> --vfs-cache-mode full`.
 2. **`os.ermete.Cloud`** (`/os/ermete/Cloud`):
-   - `push_clipboard(content: String) -> Result<String>`: Inoltra il contenuto degli appunti ai peer fidati scoperti in rete.
+   - `push_clipboard(content: String) -> Result<String>`: Broadcasts active clipboard content to verified network peers.
 
 ---
 
-## 4. Specifiche dei Protocolli di Rete (`ermete-cloud-rs`)
+## 4. Network Protocol Specifications (`ermete-cloud-rs`)
 
 ### 4.1 Peer Discovery Protocol (UDP Broadcast)
-- **Porta di ascolto:** UDP `9090` (`0.0.0.0:9090`).
-- **Broadcast Emitter:** Invia ogni 5 secondi un pacchetto di broadcast all'indirizzo IPv4 `255.255.255.255:9090`.
-- **Payload di Discovery:** `ERMETE_HELLO` (stringa UTF-8).
-- **Gestione dello Stato dei Peer e TTL Eviction:**
-  - I nodi attivi sono salvati in una struttura dati `Arc<Mutex<HashMap<String, Instant>>>`.
-  - **Eviction Strategy:** Per prevenire leak di memoria durante sessioni prolungate con lease DHCP dinamici, prima di ogni invio della clipboard viene eseguita la pulizia dei peer inattivi:
+- **Listening Port:** UDP `9090` (`0.0.0.0:9090`).
+- **Broadcast Emitter:** Transmits broadcast packet every 5 seconds to IPv4 address `255.255.255.255:9090`.
+- **Discovery Payload:** `ERMETE_HELLO` (UTF-8 magic string).
+- **Peer Registry & TTL Eviction:**
+  - Active nodes are stored in `Arc<Mutex<HashMap<String, Instant>>>`.
+  - **Eviction Strategy:** To prevent memory leaks during long-running sessions under dynamic DHCP leases, stale peer cleanup is executed prior to clipboard transmission:
     ```rust
     p.retain(|_, time| time.elapsed() < Duration::from_secs(60));
     ```
-    I peer non visti negli ultimi 60 secondi vengono rimossi automaticamente dalla mappa.
+    Peers undetected for >60 seconds are purged automatically from the registry.
 
 ### 4.2 Universal Clipboard Synchronization Protocol (TCP/Noise Protocol)
-- **Porta di ascolto TCP:** TCP `9091` (`0.0.0.0:9091`).
-- **Dimensione Massima Payload:** `1 MB` (`take(1024 * 1024)`).
-- **Flusso di Verifica e Sicurezza a 4 Livelli:**
-  1. **Verifica IP (Untrusted IP Rejection):** L'indirizzo IP del client connesso su TCP 9091 viene verificato contro la mappa `known_peers`. Se l'IP non è stato precedentemente convalidato tramite UDP Discovery (`ERMETE_HELLO`), la connessione viene immediatamente rifiutata.
-  2. **Security Tunnel / Auth Check:** Se la sessione sicura TLS/Noise non è stabilita e la chiave `auth_token` è assente (`None`), l'inbound clipboard viene scartato con un avviso di sicurezza (`TLS/Noise tunnel not established`).
-  3. **Header di Autenticazione:**
-     Il payload trasmesso via TCP deve rispettare il formato:
+- **TCP Listening Port:** TCP `9091` (`0.0.0.0:9091`).
+- **Maximum Payload Cap:** `1 MB` (`take(1024 * 1024)`).
+- **4-Stage Zero-Trust Verification Pipeline:**
+  1. **IP Verification (Untrusted IP Rejection):** Connected client IP on TCP 9091 is checked against `known_peers`. If the IP was not pre-validated via UDP Discovery (`ERMETE_HELLO`), the connection is instantly dropped.
+  2. **Security Tunnel / Auth Check:** If the TLS/Noise session is unestablished and `auth_token` is missing (`None`), inbound payload is rejected (`TLS/Noise tunnel not established`).
+  3. **Authentication Framing:**
+     Transmitted payload must conform strictly to:
      ```text
      AUTH:<auth_token>\n<payload_content>
      ```
-     La prima riga viene parsata e confrontata con l'`auth_token` configurato nel nodo ricevente.
-  4. **Sanitizzazione Input e Iniezione Wayland:**
-     - Payload vuoti o contenenti caratteri nulli (`\0`) vengono scartati.
-     - Se l'autenticazione ha esito positivo, il payload viene inoltrato via pipe `stdin` al comando Wayland `wl-copy`:
+     The header line is parsed and matched against the receiver's configured `auth_token`.
+  4. **Sanitization & Wayland Injection:**
+     - Empty payloads or payloads containing null bytes (`\0`) are discarded.
+     - Upon successful authentication, payload is piped directly to Wayland `wl-copy` stdin:
        ```rust
        tokio::process::Command::new("wl-copy")
            .stdin(std::process::Stdio::piped())
@@ -140,9 +140,9 @@ graph TD
 
 ---
 
-## 5. Matrice Riassuntiva della Sicurezza e Porte Rete
+## 5. Security & Network Port Matrix
 
-| Crate | Protocollo | Porta / Transport | Algoritmi & Cifratura | Meccanismo di Autenticazione | Target Output |
+| Crate | Protocol | Port / Transport | Cipher & Algorithms | Authentication Mechanism | Target Output |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **`ermete-mesh-sync`** | WireGuard Mesh | UDP `51820` | X25519 (x25519-dalek), ChaCha20-Poly1305, BLAKE2s | Ephemeral X25519 Key Pair Exchange | TUN device `wg-ermete` / Cloudflare WARP |
 | **`ermete-cloud-rs`** | Peer Discovery | UDP `9090` (Broadcast) | Plaintext UTF-8 Magic String | IP Discovered (`ERMETE_HELLO`) | Memory Registry (`HashMap<IP, Instant>`) |

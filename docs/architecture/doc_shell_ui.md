@@ -1,24 +1,24 @@
-# Documentazione Tecnica Stack Desktop UI - Ermete OS (`doc_shell_ui.md`)
+# Technical Specification: Desktop UI Stack — Ermete OS (`doc_shell_ui.md`)
 
-## 1. Panoramica dell'Architettura Desktop Stack
+## 1. Desktop Stack Architectural Overview
 
-L'infrastruttura UI di **Ermete OS** è costruita su uno stack moderno in Rust che integra **GTK4 / Relm4**, **Wayland Layer Shell**, **Tokio Async I/O**, ed il compositor **Niri** (scrollable tiling compositor).
+The UI infrastructure of **Ermete OS** is built upon a high-performance Rust stack integrating **GTK4 / Relm4**, **Wayland Layer Shell**, **Tokio Async I/O**, and the **Niri** scrollable tiling compositor.
 
 ```mermaid
 graph TD
-    subgraph Compositor & System Layer
+    subgraph SystemLayer ["Compositor & System Layer"]
         Niri[Niri Compositor] <-->|Unix Socket / NIRI_SOCKET| IPC[ermete-niri-ipc]
         DBus[DBus System/Session Bus] <-->|zbus| Proxies[System Proxies / IPC]
     end
 
-    subgraph Design System
+    subgraph DesignSystem ["Design System"]
         Style[ermete-style] -->|Glassmorphic CSS / Load Theme| Shell
         Style -->|Glassmorphic CSS / Load Theme| Dock
         Style -->|Glassmorphic CSS / Load Theme| Settings
         Style -->|Glassmorphic CSS / Load Theme| Store
     end
 
-    subgraph Applications & Overlays (GTK4 / Relm4)
+    subgraph AppLayer ["Applications & Overlays (GTK4 / Relm4)"]
         Shell[ermete-shell-rs] <-->|glib::Sender / EventStream| IPC
         Shell <-->|zbus| DBus
         
@@ -32,107 +32,107 @@ graph TD
     end
 ```
 
-### Parametri e Tecnologie di Esecuzione Runtime
-- **Allocatore di Memoria:** `mimalloc` (`mimalloc::MiMalloc`), configurato a livello globale in tutti i binari (`#[global_allocator]`), elimina le pause di frammentazione ed ottimizza l'allocazione per l'interfaccia grafica a 120+ FPS.
-- **Renderer Grafico GSK:** Forzato a `ngl` (New OpenGL / Vulkan) tramite `std::env::set_var("GSK_RENDERER", "ngl")`.
-- **Backend GDK:** Backend puro Wayland (`std::env::set_var("GDK_BACKEND", "wayland")`).
-- **Scaling:** Scaling frazionario X11 disabilitato (`GDK_SCALE=1`) per prevenire sfocature nel rendering dei font.
-- **Isolamento e Sicurezza:** Applicazione di sandbox rigorose tramite **Landlock** all'avvio (`crate::sys::sandbox::apply_landlock_sandbox()`).
+### Execution Parameters & Runtime Technologies
+- **Memory Allocator:** `mimalloc` (`mimalloc::MiMalloc`), configured globally across all binaries (`#[global_allocator]`), eliminating fragmentation pauses and guaranteeing fluid 144Hz+ rendering performance.
+- **GSK Graphics Renderer:** Forced to `ngl` (New OpenGL / Vulkan) via `std::env::set_var("GSK_RENDERER", "ngl")`.
+- **GDK Backend:** Pure Wayland backend (`std::env::set_var("GDK_BACKEND", "wayland")`).
+- **Scaling:** Fractional scaling under X11 disabled (`GDK_SCALE=1`) to prevent font rasterization blur.
+- **Sandboxing & Security:** Strict sandboxing via **Landlock** applied at startup (`crate::sys::sandbox::apply_landlock_sandbox()`).
 
 ---
 
-## 2. Analisi Dettagliata dei Componenti dello Stack UI
+## 2. In-Depth Component Breakdown of UI Stack
 
 ### 2.1 `ermete-shell-rs`
-- **Ruolo:** Shell di sistema principale ed erogatore delle finestre modali/overlay (`os.ermete.Shell`).
-- **Moduli UI inclusi:**
-  - `topbar`: Barra superiore di stato e navigazione workspace.
-  - `control_center`: Centro di controllo rapido (Wi-Fi, Bluetooth, Audio, Luminosità, Profili energetici).
-  - `spotlight` & `launcher`: Ricerca globale in stile macOS Spotlight ed Application Launcher.
-  - `notifications`: Daemon notifiche desktop reattivo.
-  - `greeter` / `lockscreen`: Interfaccia di autenticazione e blocco schermo.
-  - `osd`: On-Screen Display per volume e luminosità.
+- **Role:** Core system shell and provider of modal overlays (`os.ermete.Shell`).
+- **Included UI Modules:**
+  - `topbar`: Upper status bar and workspace navigation.
+  - `control_center`: Quick control center (Wi-Fi, Bluetooth, Audio, Brightness, Energy profiles).
+  - `spotlight` & `launcher`: macOS Spotlight-style global search & Application Launcher.
+  - `notifications`: Reactive desktop notification daemon.
+  - `greeter` / `lockscreen`: Authentication interface and lockscreen.
+  - `osd`: On-Screen Display overlay for volume and brightness feedback.
   - `powermenu`, `calendar`, `clipboard`, `desktop_widgets`, `store`, `privacy_prompt`, `gatekeeper_prompt`.
 
-#### Architettura Relm4 & Actor Model nella Topbar
-La Topbar adotta il pattern Actor Model fornito dal framework **Relm4**:
-- **`TopbarModel`:** Implementa `SimpleComponent`. Gestisce lo stato globale della barra (orologio, livello batteria, icona rete, titolo finestra focalizzata).
-- **`WorkspaceItem`:** Implementa `FactoryComponent` ed è gestito all'interno di una `FactoryVecDeque<WorkspaceItem>`. Ciascun workspace viene renderizzato come un widget pulsante reattivo (`WorkspaceMsg::Focus`).
-- **Messaggi `TopbarInput`:**
-  - `TickSecond`: Aggiornamento dell'orologio e dello stato UPower/NetworkManager.
-  - `TickFast`: Aggiornamento continuo del titolo della finestra focalizzata.
-  - `UpdateWorkspaces(Vec<NiriWorkspace>)`: Sincronizzazione dinamica della lista dei workspace inviata da Niri.
+#### Relm4 Architecture & Actor Model in Topbar
+The Topbar incorporates the Actor Model provided by **Relm4**:
+- **`TopbarModel`:** Implements `SimpleComponent`. Manages global bar state (clock, battery level, network status, active window title).
+- **`WorkspaceItem`:** Implements `FactoryComponent` contained within a `FactoryVecDeque<WorkspaceItem>`. Each workspace renders as a reactive button widget (`WorkspaceMsg::Focus`).
+- **`TopbarInput` Messages:**
+  - `TickSecond`: Clock updates and UPower/NetworkManager poll ticks.
+  - `TickFast`: Continuous focused window title polling.
+  - `UpdateWorkspaces(Vec<NiriWorkspace>)`: Dynamic workspace list sync emitted by Niri.
   - `ToggleControlCenter`, `ToggleSpotlight`, `ToggleCalendar`, etc.
 
-#### Integrazione Wayland Layer Shell
-Tutte le finestre modali ed i popup utilizzano `gtk4-layer-shell`:
-- Ancoraggio (`set_anchor(Edge::Top, true)`), gestione del layer (`Layer::Top` / `Layer::Overlay`).
-- **Autoclose Overlay Pattern (`setup_popup_autoclose` in `wayland/popup.rs`):** Viene creata una finestra trasparente a schermo intero (`bg-overlay-window`) su `Layer::Top` con gestore di click `GestureClick`. Qualsiasi click esterno chiude la finestra pop-up attiva senza bloccare l'interazione del compositor.
+#### Wayland Layer Shell Integration
+All modal overlays and popups leverage `gtk4-layer-shell`:
+- Anchoring (`set_anchor(Edge::Top, true)`), layer management (`Layer::Top` / `Layer::Overlay`).
+- **Autoclose Overlay Pattern (`setup_popup_autoclose` in `wayland/popup.rs`):** Spawns a full-screen transparent window (`bg-overlay-window`) on `Layer::Top` listening for `GestureClick`. Any click outside the active modal automatically dismisses the popup without interrupting compositor events.
 
 ---
 
 ### 2.2 `ermete-dock`
-- **Ruolo:** Dock di sistema multi-monitor intelligente e dinamica (`os.ermete.Dock`).
-- **Costruzione GTK4 + Layer Shell:**
-  - Per ciascun monitor presente nel sistema (`gdk::Display::monitors()`), viene creata un'istanza `DockMonitorInstance`.
-  - **Finestra Dock Principale:** `ApplicationWindow` ancorata in basso (`Edge::Bottom`, `margin=12`) su `Layer::Top` con classe CSS `.dock-container`.
-  - **Finestra Trigger Invisibile (`dock-trigger`):** Una seconda finestra d'altezza 6px ancorata su `Layer::Overlay` con la zona esclusiva disabilitata (`set_exclusive_zone(-1)`). Rileva il movimento del mouse verso il bordo inferiore dello schermo (`EventControllerMotion::connect_enter`) per rivelare la Dock quando è in stato auto-hide.
+- **Role:** Dynamic multi-monitor desktop dock (`os.ermete.Dock`).
+- **GTK4 + Layer Shell Construction:**
+  - For each active display output (`gdk::Display::monitors()`), a dedicated `DockMonitorInstance` is spawned.
+  - **Main Dock Window:** `ApplicationWindow` anchored to bottom (`Edge::Bottom`, `margin=12`) on `Layer::Top` with CSS class `.dock-container`.
+  - **Invisible Trigger Window (`dock-trigger`):** Secondary 6px window anchored on `Layer::Overlay` with exclusive zone disabled (`set_exclusive_zone(-1)`). Tracks cursor proximity (`EventControllerMotion::connect_enter`) to reveal the Dock when auto-hidden.
 
 #### Dynamic Reconciliation Engine (`reconcile_dock_items`)
-Sincronizza in tempo reale le icone della dock unendo due sorgenti dati:
-1. **Applicazioni Fissate:** Caricate da `dock_config.rs` (file JSON `~/.config/ermete-dock/dock.json`).
-2. **Finestre Niri Attive:** Recuperate da `niri_client::fetch_niri_data::<Vec<NiriWindowInfo>>("Windows", "Windows")`.
+Reconciles dock icons in real time by merging two data streams:
+1. **Pinned Applications:** Parsed from `dock_config.rs` (`~/.config/ermete-dock/dock.json`).
+2. **Active Niri Windows:** Queried from `niri_client::fetch_niri_data::<Vec<NiriWindowInfo>>("Windows", "Windows")`.
 
-#### Algoritmo di Auto-Hide Multi-Monitor (`should_autohide_for_monitor`)
-Calcola se la Dock deve nascondersi su uno specifico monitor:
-- Trova il workspace attivo per il connettore del monitor (es. `DP-1`, `HDMI-A-1`).
-- Analizza le coordinate `y` ed `h` (altezza) della geometria delle finestre aperte in quel workspace.
-- Se la parte inferiore della finestra supera la soglia (`screen_height - 85.0`), attiva la classe CSS `.dock-hidden`.
+#### Multi-Monitor Auto-Hide Algorithm (`should_autohide_for_monitor`)
+Calculates whether the Dock should collapse on a given monitor connector:
+- Identifies active workspace for target connector (`DP-1`, `HDMI-A-1`).
+- Analyzes vertical bounding geometry (`y` coordinate and height `h`) of windows in that workspace.
+- If window bottom edge crosses threshold (`screen_height - 85.0`), toggles CSS class `.dock-hidden`.
 
-#### Funzionalità di Interattività UI
-- **Right-Click Context Menu:** Implementato tramite `gtk4::Popover` con azioni per fissare/rimuovere app, aprire nuove istanze o chiudere tutte le finestre.
-- **Scroll Wheel Navigation:** `EventControllerScroll` sulle icone della dock per scorrere tra le finestre aperte dell'app focalizzando la finestra corrispondente su Niri.
-- **Drag-and-Drop Feedback:** `DropControllerMotion` applica la classe CSS `.aura-active` durante il trascinamento di file o elementi sopra le icone.
+#### Interactive Features
+- **Right-Click Context Menu:** Implemented via `gtk4::Popover` providing actions to pin/unpin apps, launch new instances, or close window instances.
+- **Scroll Wheel Navigation:** `EventControllerScroll` over dock items cycles through open windows of an application by focusing target window IDs on Niri.
+- **Drag-and-Drop Feedback:** `DropControllerMotion` applies CSS class `.aura-active` during drag hover events over dock icons.
 
 ---
 
 ### 2.3 `ermete-settings-rs`
-- **Ruolo:** Applicazione centrale di configurazione di sistema (`os.ermete.Settings`).
-- **Architettura Relm4:** Componente `AppModel` (`SimpleComponent`) gestito da `RelmApp`.
+- **Role:** System Control Center & Settings Application (`os.ermete.Settings`).
+- **Relm4 Architecture:** Core `AppModel` (`SimpleComponent`) driven by `RelmApp`.
 
-#### Architettura Lazy Loading delle Pagine
-Per garantire un avvio istantaneo e ridurre l'uso della RAM, `ermete-settings-rs` impiega un caricamento differito delle pagine:
-1. All'avvio vengono creati solo i contenitori vuoti `gtk4::Box` all'interno dello `Stack` centrale (`gtk4::Stack`).
-2. Viene renderizzata immediatamente **solo** la pagina iniziale richiesta (default `"wifi"` o specificata via CLI `--page=...`).
-3. Il segnale `connect_visible_child_name_notify` intercetta il cambio scheda nello stack: se il contenitore della pagina selezionata è vuoto (`container.first_child().is_none()`), viene eseguita la funzione di build specifica (`build_fn()`) caricando i widget GTK4 in modo pigro.
+#### Lazy Page Loading Architecture
+To ensure zero cold-start delay and minimize RAM consumption, `ermete-settings-rs` employs deferred container loading:
+1. At startup, empty placeholder `gtk4::Box` containers are registered inside the main `gtk4::Stack`.
+2. Only the initial target view (default `"wifi"` or specified via CLI `--page=...`) is immediately instantiated.
+3. The `connect_visible_child_name_notify` signal intercepts tab switches: if the selected stack container is empty (`container.first_child().is_none()`), it invokes the page constructor (`build_fn()`), lazily populating GTK4 widgets.
 
 #### Omnibox AI Natural Language Routing
-Un'interfaccia di ricerca naturale (`AppMsg::RouteAi`) analizza l'intento dell'utente tramite keyword matching e routing intelligente:
-- Query come *"Il mio audio non va"* -> Selezione automatica scheda `"audio"`.
-- Query come *"Voglio cambiare tema"* -> Selezione automatica scheda `"appearance"`.
+A natural language search interface (`AppMsg::RouteAi`) analyzes user intent through keyword matching and intelligent routing:
+- Query *"My audio is broken"* -> Auto-routes to tab `"audio"`.
+- Query *"I want to change the wallpaper"* -> Auto-routes to tab `"appearance"`.
 
-#### Schede di Impostazione Disponibili (17 Pagine)
-Wi-Fi, Bluetooth, Rete Cablata, Audio, Notifiche, Focus/Do-Not-Disturb, Generali, Aspetto/Temi, Desktop & Dock, Schermi (Niri output config), Ecosistema, Aggiornamenti, Batteria, Tastiera, Mouse & Trackpad, Account, Privacy & Sicurezza.
+#### Available Configuration Pages (17 Pages)
+Wi-Fi, Bluetooth, Wired Network, Audio, Notifications, Focus / Do-Not-Disturb, General, Appearance & Themes, Desktop & Dock, Displays (Niri output config), Ecosystem, Updates, Battery, Keyboard, Mouse & Trackpad, Accounts, Privacy & Security.
 
 ---
 
 ### 2.4 `ermete-store-rs`
-- **Ruolo:** Store software ed hub di gestione pacchetti (`os.ermete.Store`).
-- **Architettura Dual-Thread Tokio/Relm4:**
-  - **Backend DBus Tokio (Background Thread):** Thread dedicato che esegue `backend::dbus::start_dbus_server()` su un runtime Tokio asincrono per gestire operazioni di sistema senza bloccare l'interfaccia.
-  - **Frontend UI Relm4 (Main Thread):** Finestra principale (`AppModel`) basata su Relm4 GTK4 con layout sidebar stile Windows 11 / macOS (`store-sidebar`) e contenuto centrale a stack (`ShowcaseModel`).
-- **Backend di Gestione Pacchetti Supported:**
-  - **Flatpak:** Gestione installazione e aggiornamento da Flathub / remote configurati.
-  - **OCI Containers:** Supporto per pacchetti applicativi containerizzati.
-  - **EOPKG:** Gestione pacchetti di sistema nativi.
+- **Role:** Software Store & Package Manager Application (`os.ermete.Store`).
+- **Dual-Thread Tokio/Relm4 Architecture:**
+  - **Backend Tokio DBus Server (Background Thread):** Dedicated thread executing `backend::dbus::start_dbus_server()` on async Tokio runtime to execute system operations without blocking UI frame rendering.
+  - **Frontend Relm4 UI (Main Thread):** Main window (`AppModel`) powered by Relm4 GTK4 featuring a sidebar layout (`store-sidebar`) and stack navigation (`ShowcaseModel`).
+- **Supported Package Engine Backends:**
+  - **Flatpak:** Installation and management from Flathub or private OCI endpoints.
+  - **OCI Containers:** Containerized application bundle management.
+  - **EOPKG:** Native system package operations.
 
 ---
 
 ### 2.5 `ermete-style`
-- **Ruolo:** Crate centralizzata contenente il **Design System** globale ed il tema CSS Glassmorphism per tutte le app del sistema operativo.
-- **Inizializzazione Theme (`load_glass_theme()`):** Carica `style.css` (incluso a tempo di compilazione tramite `include_str!("style.css")`) ed aggiunge il provider a `gdk::Display::default()` con priorità `STYLE_PROVIDER_PRIORITY_APPLICATION`.
+- **Role:** Central crate supplying global **Design System** assets and Glassmorphic CSS themes across all OS applications.
+- **Theme Initialization (`load_glass_theme()`):** Loads `style.css` (embedded at compile time via `include_str!("style.css")`) and registers provider to `gdk::Display::default()` with `STYLE_PROVIDER_PRIORITY_APPLICATION`.
 
-#### CSS Tokens e Proprietà Estetiche
+#### CSS Tokens & Glassmorphism Properties
 ```css
 @define-color glass_bg rgba(30, 30, 32, 0.65);
 @define-color glass_border rgba(255, 255, 255, 0.1);
@@ -149,7 +149,7 @@ window, popover {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-/* Pulsanti Tattili con Feedback Reattivo */
+/* Tactile Buttons with Reactive Motion Feedback */
 button {
     background-color: transparent;
     color: white;
@@ -173,28 +173,28 @@ button:active {
 
 ---
 
-### 2.6 Compositor `niri` & Crate `ermete-niri-ipc`
+### 2.6 Compositor `niri` & `ermete-niri-ipc` Crate
 
-#### Configurazione Compositor (`niri/config.kdl`)
-- **Gestione Layout:** Scrollable tiling layout con preset di ampiezza colonne (33.3%, 50%, 66.6%, 100%).
-- **Focus Ring & Shadow:** Anello di focus sfumato (`active-gradient from="#89b4fa" to="#cba6f7"`) e ombre morbide (`softness 32`, `color "#00000070"`).
-- **Regole Layer Shell (`layer-rule`):** Applicazione automatica di bordi arrotondati (`geometry-corner-radius 10`) ed ombreggiature a tutti i componenti della shell (`bar`, `dock`, `control-center`, `launcher`, `spotlight`, `powermenu`, `clipboard`, `wifi`, `notifications`, `osd`).
-- **Keybindings Matrix:** Mappatura completa per il lancio di `ermete-shell-rs` con vari flag CLI (`--dock`, `--launcher`, `--control-center`, `--media-player`, `--sys-monitor`, `--calendar`, `--powermenu`, `--clipboard`).
+#### Compositor Configuration (`niri/config.kdl`)
+- **Layout Engine:** Scrollable tiling layout with column width presets (33.3%, 50%, 66.6%, 100%).
+- **Focus Ring & Shadow:** Soft gradient focus ring (`active-gradient from="#89b4fa" to="#cba6f7"`) and drop shadows (`softness 32`, `color "#00000070"`).
+- **Layer Shell Rules (`layer-rule`):** Automatic corner rounding (`geometry-corner-radius 10`) and shadows applied across shell overlays (`bar`, `dock`, `control-center`, `launcher`, `spotlight`, `powermenu`, `clipboard`, `wifi`, `notifications`, `osd`).
+- **Keybindings Matrix:** Full shortcut mapping for invoking `ermete-shell-rs` flags (`--dock`, `--launcher`, `--control-center`, `--media-player`, `--sys-monitor`, `--calendar`, `--powermenu`, `--clipboard`).
 
-#### Crate `ermete-niri-ipc` (`async_client.rs`)
-Fornisce un client asincrono Tokio non bloccante per comunicare via Unix Socket (`NIRI_SOCKET`):
-- **Safety e Timeout:** Tutte le chiamate I/O di rete Unix Socket sono racchiuse in blocchi `tokio::time::timeout(Duration::from_millis(1000), ...)`, prevenendo qualsiasi blocco nel thread principale GTK4.
-- **Funzioni IPC Principali:**
+#### `ermete-niri-ipc` Crate (`async_client.rs`)
+Non-blocking Tokio async client communicating over Unix Sockets (`NIRI_SOCKET`):
+- **Safety & Timeouts:** Socket I/O calls are wrapped in `tokio::time::timeout(Duration::from_millis(1000), ...)`, preventing UI thread hangs.
+- **Core IPC Methods:**
   - `get_outputs()`, `set_output_scale()`, `set_output_vrr()`, `set_output_hdr()`, `set_output_mode()`.
   - `focus_window()`, `close_window()`, `focus_workspace_down()`, `focus_workspace_up()`, `focus_workspace_by_id()`.
-- **Mutazione Configurazione KDL (`update_niri_kdl_setting`):** Modifica in modo non bloccante via `tokio::fs` le chiavi all'interno di `~/.config/niri/config.kdl`.
-- **Streaming Eventi Reattivi (`watch_niri_event_stream`):** Si connette al socket `"EventStream"` di Niri in un task Tokio in background. Ogni volta che si verifica un evento (es. cambio finestra o workspace), esegue la callback fornita notificando i canali `glib::Sender`.
+- **KDL Config Mutation (`update_niri_kdl_setting`):** Non-blocking modification of `~/.config/niri/config.kdl` key-value pairs via `tokio::fs`.
+- **Reactive Event Streaming (`watch_niri_event_stream`):** Connects to Niri's `"EventStream"` socket in a background Tokio task. On compositor events (e.g. workspace change), emits signals to `glib::Sender` channels.
 
 ---
 
-## 3. Mappatura del Flusso Eventi (CodeGraph & Actor Model)
+## 3. Event Flow Topology (CodeGraph & Actor Model)
 
-Il seguente schema illustra la propagazione reattiva di un evento generato dal compositor Niri fino al rendering finale su schermo:
+The diagram below details the reactive propagation of compositor events from Niri through to GTK4 display rendering:
 
 ```mermaid
 sequenceDiagram
@@ -207,12 +207,12 @@ sequenceDiagram
     participant Factory as Relm4 FactoryVecDeque<WorkspaceItem>
     participant GSK as GSK NGL Renderer (Vulkan/GL)
 
-    Niri->>EventTask: Notifica EventStream ("WorkspaceChanged")
+    Niri->>EventTask: EventStream Notification ("WorkspaceChanged")
     EventTask->>EventTask: fetch_niri_data::<Vec<NiriWorkspace>>("Workspaces")
     EventTask->>Channel: send(workspaces)
-    Channel->>GTKLoop: Dispatch evento su thread GUI principale
+    Channel->>GTKLoop: Dispatch event to main GUI thread
     GTKLoop->>Component: TopbarInput::UpdateWorkspaces(workspaces)
-    Component->>Factory: Mutazione reattiva lista componenti
-    Component->>GSK: Invalidazione e ridisegno (View Macro Re-render)
-    GSK->>Niri: Presentazione frame Wayland (Layer Shell Top)
+    Component->>Factory: Reactive mutation of component list
+    Component->>GSK: Invalidation & Redraw (View Macro Re-render)
+    GSK->>Niri: Present Wayland Frame (Layer Shell Top)
 ```

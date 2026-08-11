@@ -1,13 +1,24 @@
-# 🌋 Documentazione dell'Infrastruttura di Build di Ermete OS
+# 🌋 Ermete OS Build Infrastructure Specification
 
-## 1. Architettura Generale del Sistema di Build
+## 1. General Build System Architecture
 
-Ermete OS è un sistema operativo **immutabile, cloud-native ed eBPF-hardened** basato sull'architettura **Fedora Bootc (OCI Image-Based OS)**. L'infrastruttura di build è suddivisa in due macro-componenti interconnessi:
+Ermete OS is an **immutable, cloud-native, and eBPF-hardened** operating system built upon the **Fedora Bootc (OCI Image-Based OS)** paradigm. The build infrastructure is divided into two interconnected macro-components:
 
-1. **Ermete Forge (`forge/`)**: Il motore di compilazione pacchetti RPM, del Kernel Chimera e dei moduli driver NVIDIA. Forge adotta una strategia di **micro-container OCI per pacchetto**, organizzati in una gerarchia a 4 Tier ed esportati sia verso container registry (GHCR) sia come repository DNF aggregati pubblicati via GitHub Pages.
-2. **Ermete System (`system/`)**: Il costruttore dell'immagine di sistema immutabile (`ermete-os-system`). Riceve i pacchetti RPM dai repository Tier di Forge tramite *multi-stage container mounts*, installa e configura i servizi di sistema, rigenera l'initramfs via Dracut ed emette immagini OCI bootc, file QCOW2 per virtualizzazione e immagini ISO installabili via Anaconda.
+1. **Ermete Forge (`forge/`)**: The compilation engine for RPM packages, the Chimera Kernel, and NVIDIA kernel driver modules. Forge employs an **OCI micro-container per package** strategy, structured in a 4-Tier hierarchy and exported both to container registries (GHCR) and as aggregated DNF repositories deployed via GitHub Pages.
+2. **Ermete System (`system/`)**: The builder for the immutable system OS image (`ermete-os-system`). It ingests RPM packages from Forge Tier repositories via multi-stage container bind-mounts, installs system services, regenerates the initramfs via Dracut, and outputs bootc OCI images, QCOW2 virtual machine images, and installable Anaconda ISOs.
 
-L'intero albero dei target di build è gestito in maniera dichiarativa tramite un runner unificato basato su **Justfile** (`Justfile` radice, `forge/Justfile` e `system/Justfile`).
+The entire build target tree is declaratively managed through a unified runner powered by **Justfile** (root `Justfile`, `forge/Justfile`, and `system/Justfile`).
+
+### 1.1 Autarkic CI/CD Ecosystem & Multi-Stage Build Strategy
+
+Ermete OS relies on zero third-party pre-compiled binaries for its assembly line. In **Tier 0** of the Forge, the system self-compiles its own CI/CD toolchain:
+- **`kani-verifier`**: Bounded model checking engine for Rust compiled natively (`kani-driver`, `cargo-kani`), enabling formal mathematical verification of security invariants.
+- **`just`**: Task runner and build orchestrator compiled with CachyOS optimizations (`-O3 -march=x86-64-v3`, `mold`).
+- **`uki-tools`**: Autarkic Secure Boot toolchain combining `sbsigntools` (`sbsign`, `sbverify`, `sbattach`) and `systemd-ukify` (`ukify`).
+
+#### Multi-Stage Architecture (Heavy Builder Produces Lean OS)
+- **Stage 1 (`ermete-os-builder`)**: Heavyweight builder container equipped with GCC, LLVM, Rustc, Mold, and the autarkic toolchain (`kani-verifier`, `just`, `uki-tools`). Compiles RPMs in isolated OCI micro-containers.
+- **Stage 2 (`ermete-os-system`)**: Final immutable BootC runtime container. Installs compiled RPMs via bind-mounts, generates the initramfs with Dracut, and completely purges the builder toolchain (-1.1 GB disk footprint reduction).
 
 ```mermaid
 flowchart TD
@@ -72,121 +83,121 @@ flowchart TD
 
 ---
 
-## 2. Analisi Minuziosa dei Bash Script in `forge/scripts/`
+## 2. In-Depth Analysis of Bash Scripts in `forge/scripts/`
 
-La directory `forge/scripts/` racchiude la logica fondamentale di automazione, calcolo dell'idempotenza, recupero delle dipendenze e isolamento sandbox.
+The `forge/scripts/` directory houses the core automation logic for build execution, idempotency calculations, dependency retrieval, and sandbox isolation.
 
 ### 2.1 `build_rolling_local.sh`
-* **Scopo**: Compilazione locale guidata di pacchetti RPM singoli in un ambiente rolling basato su DNF e macro Bedrock.
-* **Flusso Operativo**:
-  1. Richiede come parametro il nome del pacchetto (es. `just forge/build-rolling niri`).
-  2. Verifica ed installa i tool prerequisiti dell'host (`rpm-build`, `dnf-plugins-core`, `rpmdevtools`).
-  3. Inizializza un albero `rpmbuild` temporaneo ed inietta le macro globali `forge/config/rpmmacros` nel file `~/.rpmmacros` dell'utente.
-  4. Abilita i repository **RPMFusion Free & NonFree** per Fedora 43.
-  5. Scarica il pacchetto sorgente (`dnf download --source <package>`).
-  6. Esegue il calcolo e l'installazione automatica delle dipendenze di build via `sudo dnf builddep -y *.src.rpm`.
-  7. Inietta la macro `%global debug_package %{nil}` nello spec estratto per disabilitare i sub-pacchetti di debug e ottimizzare la dimensione finale.
-  8. Avvia la compilazione estrema con `rpmbuild -bb --nocheck`. Se la directory `/work` è montata nell'ambiente, copia gli RPM generati in `/work/output/<package>/`.
+* **Purpose**: Local guided compilation of single RPM packages within a rolling environment based on DNF and Bedrock macros.
+* **Operational Flow**:
+  1. Accepts target package name as parameter (e.g., `just forge/build-rolling niri`).
+  2. Verifies and installs host prerequisite tools (`rpm-build`, `dnf-plugins-core`, `rpmdevtools`).
+  3. Initializes a temporary `rpmbuild` tree and injects global `forge/config/rpmmacros` into the user's `~/.rpmmacros`.
+  4. Enables **RPMFusion Free & NonFree** repositories for Fedora 43.
+  5. Downloads source package (`dnf download --source <package>`).
+  6. Computes and installs build dependencies automatically via `sudo dnf builddep -y *.src.rpm`.
+  7. Injects `%global debug_package %{nil}` into the extracted spec to strip debug sub-packages and optimize final payload size.
+  8. Launches extreme compilation via `rpmbuild -bb --nocheck`. If `/work` is mounted, copies generated RPMs to `/work/output/<package>/`.
 
 ### 2.2 `check_idempotency.sh`
-* **Scopo**: Determinazione deterministica del **Cache Hit / Cache Miss** per evitare ricompilazioni ridondanti su GHCR.
-* **Flusso Operativo**:
-  1. Riceve gli argomenti `--package`, `--registry`, `--owner`, `--image-name`, `--base-digest`.
-  2. **Per pacchetti Custom (`specs/ermete-<package>`) o per il `builder`**:
-     - Calcola un hash SHA-256 combinando tutti i file presenti nella cartella dello spec (ordinati per percorso relativo e contenuto), il file `config/rpmmacros`, `builder/Containerfile`, `builder/rpmfusion-custom.repo`, `config/packages.json` e il seed di versione `CACHE_EPOCH=v7`.
-  3. **Per pacchetti Upstream**:
-     - Interroga DNF (`repoquery`) per rilevare la versione e release esatta disponibile nei repo ufficiali.
-     - Ispeziona il digest dell'immagine base (`ermete-base-nvidia:latest`) tramite `skopeo`.
-     - Genera il `CONTENT_HASH` fondendo nome pacchetto, versione upstream e digest dell'immagine base.
-  4. Ispeziona il registry GHCR via `skopeo inspect --no-tags docker://ghcr.io/<owner>/<image_name>:<CONTENT_HASH>`.
-  5. Emette le variabili `CACHE_HIT=true|false` e `CONTENT_HASH` in output.
+* **Purpose**: Deterministic calculation of **Cache Hit / Cache Miss** to prevent redundant re-compilations on GHCR.
+* **Operational Flow**:
+  1. Accepts arguments `--package`, `--registry`, `--owner`, `--image-name`, `--base-digest`.
+  2. **For Custom Packages (`specs/ermete-<package>`) or `builder`**:
+     - Computes SHA-256 hash combining all files in the spec folder (sorted by relative path and content), `config/rpmmacros`, `builder/Containerfile`, `builder/rpmfusion-custom.repo`, `config/packages.json`, and version seed `CACHE_EPOCH=v7`.
+  3. **For Upstream Packages**:
+     - Queries DNF (`repoquery`) for exact version and release available in official repositories.
+     - Inspects base image digest (`ermete-base-nvidia:latest`) via `skopeo`.
+     - Generates `CONTENT_HASH` fusing package name, upstream version, and base image digest.
+  4. Inspects GHCR registry via `skopeo inspect --no-tags docker://ghcr.io/<owner>/<image_name>:<CONTENT_HASH>`.
+  5. Outputs variables `CACHE_HIT=true|false` and `CONTENT_HASH`.
 
 ### 2.3 `dynamic-matrix.sh`
-* **Scopo**: Generazione dinamica della matrice di build in formato JSON per i job paralleli di GitHub Actions.
-* **Flusso Operativo**:
-  1. Legge le liste dei pacchetti da `config/packages.json` (`custom_packages`, `upstream_core`, `upstream_desktop`, `upstream_media`, `upstream_cli`).
-  2. Recupera in anticipo il `BASE_DIGEST` dell'immagine base NVIDIA via `skopeo` (risparmiando decine di chiamate di rete singole).
-  3. Istanzia un contenitore worker (`ermete-os-builder`) via `podman` ed esegue in parallelo su tutte le definizioni di pacchetto gli script `check_idempotency.sh` usando `xargs -n 2 -P 5`.
-  4. Filtra i pacchetti che registrano `CACHE_HIT=false` (MISS) e costruisce i vettori JSON per i vari gruppi (`custom_packages`, `upstream_packages`, ecc.).
-  5. Scrive i risultati in `$GITHUB_OUTPUT` per alimentare la matrice delle GitHub Actions.
+* **Purpose**: Dynamic JSON build matrix generation for GitHub Actions parallel matrix jobs.
+* **Operational Flow**:
+  1. Parses package arrays from `config/packages.json` (`custom_packages`, `upstream_core`, `upstream_desktop`, `upstream_media`, `upstream_cli`).
+  2. Pre-fetches `BASE_DIGEST` for NVIDIA base image via `skopeo` (saving dozens of individual network calls).
+  3. Spawns worker container (`ermete-os-builder`) via `podman` and runs `check_idempotency.sh` in parallel across all package definitions using `xargs -n 2 -P 5`.
+  4. Filters packages registering `CACHE_HIT=false` (MISS) and constructs JSON vectors for target groups (`custom_packages`, `upstream_packages`, etc.).
+  5. Emits results into `$GITHUB_OUTPUT` to feed GitHub Actions matrices.
 
 ### 2.4 `fetch_repo_rpms.sh`
-* **Scopo**: Caching incrementale, estrazione da container OCI, deduplicazione e aggregazione multi-tier dei pacchetti RPM.
-* **Flusso Operativo**:
-  1. Carica le definizioni dei Tier da `config/packages.json`:
-     - **Tier 0**: Kernel Chimera, driver NVIDIA, hardware base, base-config, tetragon, core upstream.
+* **Purpose**: Incremental caching, OCI container extraction, deduplication, and multi-tier RPM aggregation.
+* **Operational Flow**:
+  1. Loads Tier definitions from `config/packages.json`:
+     - **Tier 0**: Chimera Kernel, NVIDIA drivers, base hardware, base-config, tetragon, core upstream.
      - **Tier 1**: Core User Services, Keylime, Scudo, DBus, desktop upstream.
-     - **Tier 2**: Design system, Matugen, Bibata, asset grafici.
-     - **Tier 3**: Rust Shell (Niri, Starship, Bat) e applicazioni utente.
-  2. Recupera i repository aggregati della precedente run (`ermete-os-forge-tierX-repo:latest`) ed estrae i file `manifest.json` contenenti gli hash noti.
-  3. Scarica ed estrae in parallelo (tramite `buildah from` e `buildah mount`) tutti i micro-container dei singoli pacchetti memorizzati su GHCR nelle relative directory `repo-cache/repo-tierX/`.
-  4. **Deduplicazione Intelligente**:
-     - Elimina versioni obsolete di pacchetti RPM con lo stesso prefisso, preservando sempre la versione più recente.
-     - Rimuove eventuali kernel standard/precedenti se è presente il pacchetto `ermete-kernel`.
-  5. Sincronizza tutti gli RPM deduplicati nella directory aggregate `repo-cache/repo/` e genera i nuovi manifest JSON per ogni Tier.
+     - **Tier 2**: Design system, Matugen, Bibata, graphical assets.
+     - **Tier 3**: Rust Shell (Niri, Starship, Bat) and user applications.
+  2. Pulls aggregated repos from previous runs (`ermete-os-forge-tierX-repo:latest`) and extracts `manifest.json` files containing known hashes.
+  3. Downloads and extracts in parallel (via `buildah from` and `buildah mount`) all single-package micro-containers from GHCR into `repo-cache/repo-tierX/`.
+  4. **Smart Deduplication**:
+     - Deletes outdated RPM versions sharing identical prefixes, preserving only the latest release.
+     - Strips standard/legacy kernels when `ermete-kernel` is present.
+  5. Synchronizes deduplicated RPMs into aggregated directory `repo-cache/repo/` and generates new JSON manifests for each Tier.
 
 ### 2.5 `nix_hermetic_build.sh`
-* **Scopo**: Esecuzione di build deterministiche ed ermetiche prive di accesso di rete (Nix-Paradigm).
-* **Flusso Operativo**:
-  1. Accetta un file di lockfile (default: `ermete-build.lock`).
-  2. Valida l'integrità crittografica di tutte le dipendenze scaricate confrontando i checksum con `sha256sum --check "$LOCKFILE"`.
-  3. Avvia la sandbox di isolamento **Bubblewrap (`bwrap`)** con flag `--unshare-all` che sradica ogni interfaccia di rete e namespace utente.
-  4. Monta in modalità Read-Only il sistema di base host (`/usr`, `/tmp`, `/var`, `/proc`, `/dev`) e in Read-Write solo la directory del workspace in `/workspace`.
-  5. Esegue lo script di build locale dentro l'ambiente totalmente hermetico.
+* **Purpose**: Deterministic, hermetic build execution without network access (Nix Paradigm).
+* **Operational Flow**:
+  1. Accepts lockfile argument (default: `ermete-build.lock`).
+  2. Validates cryptographic integrity of downloaded dependencies with `sha256sum --check "$LOCKFILE"`.
+  3. Launches **Bubblewrap (`bwrap`)** sandbox with `--unshare-all` flag, revoking all network interfaces and user namespaces.
+  4. Mounts host base filesystem as Read-Only (`/usr`, `/tmp`, `/var`, `/proc`, `/dev`) and workspace directory as Read-Write (`/workspace`).
+  5. Executes local build script inside total hermetic environment.
 
 ---
 
-## 3. Struttura delle Spec (`forge/specs/`) e Macro di Compilazione
+## 3. Spec File Structure (`forge/specs/`) and Compilation Macros
 
-### 3.1 Organizzazione delle Spec
-La directory `forge/specs/` ospita oltre 40 definizioni di pacchetti RPM custom ed adattati. Ogni sottodirectory `specs/ermete-<package>/` contiene:
-* **File `.spec`**: Definizione RPM standard con direttive `%prep`, `%build`, `%install`, `%files`.
-* **Directory `SOURCES/`**: Patch locali, file di configurazione systemd, policy SELinux e asset specifici.
-* **File `sources.hash`**: Checksum SHA-256 dei tarball o file sorgente esterni usati per la verifica pre-build.
-* **Script di Build Dedicati** (ove richiesto):
-  - `specs/ermete-kernel/prepare-chimera.sh`: Download dell'SRPM Fedora ufficiale, applicazione delle patch **CachyOS BORE (Burst-Oriented Response Enhancer)**, estrazione configurazione Kconfig custom e validazione compatibilità moduli NVIDIA.
-  - `specs/ermete-kernel/build-local.sh`: Script per la compilazione containerizzata locale del kernel Chimera.
+### 3.1 Spec Organization
+The `forge/specs/` directory hosts over 40 custom and adapted RPM package definitions. Each sub-directory `specs/ermete-<package>/` contains:
+* **`.spec` file**: Standard RPM definition with `%prep`, `%build`, `%install`, and `%files` directives.
+* **`SOURCES/` directory**: Local patches, systemd unit files, SELinux policy modules, and specific assets.
+* **`sources.hash` file**: SHA-256 checksums of external tarballs used for pre-build verification.
+* **Dedicated Build Scripts** (where required):
+  - `specs/ermete-kernel/prepare-chimera.sh`: Downloads official Fedora SRPM, applies **CachyOS BORE (Burst-Oriented Response Enhancer)** scheduler patches, extracts custom Kconfig, and validates NVIDIA module ABI compatibility.
+  - `specs/ermete-kernel/build-local.sh`: Local containerized Chimera Kernel builder.
 
-### 3.2 Macro di Compilazione Bedrock (`forge/config/rpmmacros`)
-Le ottimizzazioni di compilazione uniscono le strategie di **Clear Linux, CachyOS e Gentoo LTO**:
+### 3.2 Bedrock Compilation Macros (`forge/config/rpmmacros`)
+Compilation flags merge strategies from **Clear Linux, CachyOS, and Gentoo LTO**:
 
-| Parametro / Macro | Configurazione / Flag | Scopo & Impatto |
+| Parameter / Macro | Configuration / Flags | Purpose & Impact |
 | :--- | :--- | :--- |
-| **Payload Compression** | `%_binary_payload w19T0.zstdio` | Compressione ZSTD livello 19 multi-thread per i pacchetti RPM. |
-| **Diet Audit** | `%_excludedocs 1` | Disabilitazione totale di man pages, info pages e documentazione. |
-| **C/C++ Flags** | `-O3 -march=x86-64-v3 -pipe -fno-semantic-interposition -falign-functions=32 -mprefer-vector-width=256` | Massima ottimizzazione vettoriale AVX2/BMI, azzeramento latenza I/O e velocizzazione chiamate dinamiche. |
-| **Linker** | `-fuse-ld=mold -Wl,-O2 -Wl,--as-needed -Wl,--icf=all` | Adozione del linker iper-parallelo **MOLD** con ICF (Identical Code Folding) e rimozione codice inutilizzato. |
-| **Rust / Cargo** | `%rustflags -C target-cpu=x86-64-v3 -C opt-level=3 -C codegen-units=16 -C strip=symbols` | Ottimizzazione estrema binaries Rust con ThinLTO (`CARGO_PROFILE_RELEASE_LTO="thin"`) e wrapper `sccache`. |
+| **Payload Compression** | `%_binary_payload w19T0.zstdio` | Level 19 multi-threaded ZSTD payload compression for RPM packages. |
+| **Diet Audit** | `%_excludedocs 1` | Total stripping of man pages, info pages, and documentation files. |
+| **C/C++ Flags** | `-O3 -march=x86-64-v3 -pipe -fno-semantic-interposition -falign-functions=32 -mprefer-vector-width=256` | Maximum AVX2/BMI vectorization, zero I/O latency, and accelerated dynamic symbol lookup. |
+| **Linker** | `-fuse-ld=mold -Wl,-O2 -Wl,--as-needed -Wl,--icf=all` | Adoption of hyper-parallel **MOLD** linker with ICF (Identical Code Folding) and dead code elimination. |
+| **Rust / Cargo** | `%rustflags -C target-cpu=x86-64-v3 -C opt-level=3 -C codegen-units=16 -C strip=symbols` | Extreme Rust binary optimization with ThinLTO (`CARGO_PROFILE_RELEASE_LTO="thin"`) and `sccache` compiler caching wrapper. |
 
 ---
 
-## 4. Assemblaggio del Sistema Operativo Bootc (`system/`)
+## 4. Bootc Operating System Assembly (`system/`)
 
 ### 4.1 `system/Containerfile`
-L'immagine immutabile dell'OS viene compilata tramite un Containerfile multi-stage estremamente strutturato:
-1. **Base**: Parte da `ghcr.io/hr-mes/ermete-base-nvidia:latest`.
-2. **Purge Kernel**: Rimuove i pacchetti kernel standard di Fedora per evitare conflitti.
-3. **Installazione Multi-Tier (`RUN --mount=type=bind`)**:
-   - **Tier 0**: Inietta la base config ed installa il **Kernel Chimera** e i driver **NVIDIA** dai repo bind-mounted di Tier 0. Blocco permanente degli aggiornamenti kernel via DNF.
-   - **Tier 1**: Installa lo **Scudo Hardened Allocator (compiler-rt)**, **Keylime Agent/Tenant** e i pacchetti di sistema Tier 1.
-   - **Tier 2**: Installa il design system e gli asset grafici.
-   - **Tier 3**: Installa l'ambiente desktop Rust (Niri, Starship, ecc.).
-4. **Configurazione Systemd & Presets**: Abilita i servizi trasversali (`tetragon.service`, `systemd-homed.service`, `keylime_agent.service`, `ermete-tpm-rollback-check.service`).
+The immutable OS image is compiled through a multi-stage Containerfile:
+1. **Base**: Inherits from `ghcr.io/hr-mes/ermete-base-nvidia:latest`.
+2. **Kernel Purge**: Strips standard Fedora kernel packages to prevent ABI conflicts.
+3. **Multi-Tier Installation (`RUN --mount=type=bind`)**:
+   - **Tier 0**: Injects base config and installs **Chimera Kernel** and **NVIDIA** drivers from bind-mounted Tier 0 repos. Enforces kernel lock via DNF.
+   - **Tier 1**: Installs **Scudo Hardened Allocator (compiler-rt)**, **Keylime Agent/Tenant**, and Tier 1 system packages.
+   - **Tier 2**: Installs design system and graphical assets.
+   - **Tier 3**: Installs Rust desktop environment (Niri, Starship, etc.).
+4. **Systemd Configuration & Presets**: Enables system-wide services (`tetragon.service`, `systemd-homed.service`, `keylime_agent.service`, `ermete-tpm-rollback-check.service`).
 5. **Initramfs Generation (Dracut)**:
-   - Identifica la versione esatta del Kernel Chimera installato.
-   - Rigenera l'initramfs riproducibile compresso in `zstd -T0 -15`.
-   - Inietta i moduli essenziali: `ostree`, `fido2`, `tpm2-tss`, `systemd-pcrphase`.
-6. **Hardening & Linting**: Rimuove i tool di build residui (`gcc`, `make`, `llvm-static`), resetta `/etc/machine-id` ed esegue la validazione formale via `bootc container lint`.
+   - Identifies exact release version of installed Chimera Kernel.
+   - Regenerates reproducible initramfs compressed with `zstd -T0 -15`.
+   - Injects essential early modules: `ostree`, `fido2`, `tpm2-tss`, `systemd-pcrphase`.
+6. **Hardening & Linting**: Purges build tools (`gcc`, `make`, `llvm-static`), resets `/etc/machine-id`, and runs formal validation via `bootc container lint`.
 
-### 4.2 Configurazione Dischi (`system/disk_config/`)
-* **`disk.toml`**: Utilizzato da `bootc-image-builder` per la generazione di dischi VM (QCOW2). Imposta rootfs Btrfs con dimensione minima 20 GiB e utente predefinito `hermes`.
-* **`iso.toml`**: Utilizzato per la generazione dell'ISO Anaconda installabile. Inietta lo script Kickstart `%post` per eseguire `bootc switch --mutate-in-place --transport registry ghcr.io/hr-mes/ermete-os:latest` al termine dell'installazione.
+### 4.2 Disk Configurations (`system/disk_config/`)
+* **`disk.toml`**: Consumed by `bootc-image-builder` for VM disk (QCOW2) creation. Sets Bcachefs rootfs minimum size to 20 GiB with default user `hermes`.
+* **`iso.toml`**: Consumed for Anaconda installable ISO creation. Injects Kickstart `%post` script executing `bootc switch --mutate-in-place --transport registry ghcr.io/hr-mes/ermete-os:latest` post-installation.
 
 ---
 
-## 5. Automazione CI/CD (GitHub Actions Workflow Pipeline)
+## 5. CI/CD Automation (GitHub Actions Pipeline)
 
-Il processo di CI/CD è orchestrato tramite 4 workflow GitHub Actions principali:
+The CI/CD pipeline is orchestrated across 4 main GitHub Actions workflows:
 
 ```mermaid
 sequenceDiagram
@@ -196,116 +207,115 @@ sequenceDiagram
     participant SB as 💿 system-build.yml
     participant SD as 💾 system-build-disk.yml
 
-    KB->>FO: Trigger al completamento del Kernel Chimera (o Push)
-    Note over FO: 🧠 Orchestrator Brain esegue dynamic-matrix.sh
-    FO->>FO: Build Base Builder Container (se miss)
+    KB->>FO: Trigger upon Chimera Kernel completion (or Push)
+    Note over FO: 🧠 Orchestrator Brain runs dynamic-matrix.sh
+    FO->>FO: Build Base Builder Container (on cache miss)
     par Custom & Upstream Matrix Build
         FO->>FO: Build Custom Packages (Rust / C) + sccache + Cosign + Syft SBOM
         FO->>FO: Build Upstream Rolling Packages + Ponytail Ultra + Cosign
         FO->>FO: Build NVIDIA KMOD (Clang/LLVM + akmods)
     end
     FO->>FO: 📦 Job build-repo: Fetch RPMs, createrepo_c, Push Tier OCI & Deploy DNF GitHub Pages
-    FO->>SB: Trigger al completamento di Forge Orchestrator
+    FO->>SB: Trigger upon Forge Orchestrator completion
     Note over SB: 🏗️ Build container bootc (system/Containerfile)
     SB->>SB: 🛡️ Security Audit Trivy (CRITICAL/HIGH)
     SB->>SB: ✍️ SLSA Attestation, Syft SBOM & Cosign Sign
-    SB->>SD: Trigger manuale / dispatch per dischi
+    SB->>SD: Manual trigger / dispatch for disk builds
     Note over SD: 🏗️ bootc-image-builder (BIB)
-    SD->>SD: Generazione QCOW2 & Anaconda ISO
+    SD->>SD: Generate QCOW2 & Anaconda ISO
     SD->>SD: 📦 Upload Artifacts / AWS S3 via Rclone
 ```
 
-### 5.1 Dettaglio Workflows
+### 5.1 Workflow Breakdown
 1. **`kernel-build.yml`**:
-   - Esegue la preparazione e compilazione del Kernel Chimera con LLVM/Clang e ThinLTO.
-   - Confeziona gli RPM generati nell'immagine OCI `ghcr.io/hr-mes/ermete-os-kernel:latest`.
-   - Genera SBOM SPDX con Syft e firma il container con Cosign.
+   - Executes preparation and compilation of Chimera Kernel using LLVM/Clang and ThinLTO.
+   - Packages generated RPMs into OCI image `ghcr.io/hr-mes/ermete-os-kernel:latest`.
+   - Generates SPDX SBOM with Syft and signs container image with Cosign.
 2. **`ermete-forge-orchestrator.yml`**:
-   - **Job `orchestrator-brain`**: Calcola i vettori di build con `dynamic-matrix.sh`.
-   - **Job `custom-packages` & `upstream-packages`**: Eseguono build in parallelo dentro contenitori `ermete-os-builder`, pubblicando ciascun pacchetto come micro-container OCI `ermete-os-forge-<pkg>`.
-   - **Job `build-nvidia`**: Compila i moduli kernel `kmod-nvidia` utilizzando Clang/LLVM in sintonia con il kernel Chimera.
-   - **Job `build-repo`**: Raccoglie tutti gli RPM con `fetch_repo_rpms.sh`, esegue `createrepo_c`, firma con chiave GPG, aggiorna i micro-container dei Tier e pubblica i repository DNF ufficiali sul ramo `gh-pages` (GitHub Pages).
+   - **`orchestrator-brain` Job**: Calculates build matrix via `dynamic-matrix.sh`.
+   - **`custom-packages` & `upstream-packages` Jobs**: Run parallel builds inside `ermete-os-builder` containers, publishing each package as an OCI micro-container `ermete-os-forge-<pkg>`.
+   - **`build-nvidia` Job**: Compiles `kmod-nvidia` kernel modules using Clang/LLVM aligned with Chimera Kernel ABI.
+   - **`build-repo` Job**: Aggregates all RPMs using `fetch_repo_rpms.sh`, runs `createrepo_c`, signs with GPG key, updates Tier micro-containers, and deploys official DNF repos to `gh-pages` branch.
 3. **`system-build.yml`**:
-   - Compila l'immagine container OS `ermete-os-system` tramite `system/Containerfile`.
-   - Effettua la scansione delle vulnerabilità con **Trivy** (`CRITICAL,HIGH`).
-   - Genera l'attestazione SLSA Level 4, lo SBOM SPDX via **Syft** e firma l'immagine OCI con **Cosign**.
+   - Compiles containerized OS image `ermete-os-system` via `system/Containerfile`.
+   - Runs vulnerability scanning via **Trivy** (`CRITICAL,HIGH`).
+   - Generates SLSA Level 4 provenance attestations, SPDX SBOM via **Syft**, and signs OCI image with **Cosign**.
 4. **`system-build-disk.yml`**:
-   - Invoca `bootc-image-builder` (BIB) per trasformare l'immagine container OCI in:
-     * **QCOW2** (convertito in VHDK se necessario).
-     * **Anaconda ISO** per installazione bare-metal.
-   - Pubblica le immagini generate negli artifact di GitHub Actions o su bucket **AWS S3** tramite `rclone`.
+   - Invokes `bootc-image-builder` (BIB) to transform container OCI image into:
+     * **QCOW2** (converted to VHDX if needed).
+     * **Anaconda ISO** for bare-metal deployments.
+   - Uploads generated artifacts to GitHub Actions or **AWS S3** buckets via `rclone`.
 
 ---
 
-## 6. Guida Operativa Step-by-Step: Pacchettizzazione e Testing dell'OS
+## 6. Step-by-Step Operations Guide: Packaging & Testing
 
-### Passo 1: Aggiunta o Modifica di un Pacchetto RPM
-1. Definire la spec in `forge/specs/ermete-<nome>/ermete-<nome>.spec`.
-2. Aggiungere eventuali patch o sorgenti locali nella cartella `SOURCES/`.
-3. Registrare il pacchetto nel Tier appropriato all'interno di `forge/config/packages.json` (es. in `custom_packages` e `custom_tier3`).
+### Step 1: Add or Modify an RPM Package
+1. Define spec in `forge/specs/ermete-<name>/ermete-<name>.spec`.
+2. Place local patches or configuration files in `SOURCES/` directory.
+3. Register package in target Tier within `forge/config/packages.json` (e.g., `custom_packages` and `custom_tier3`).
 
-### Passo 2: Test e Build Locale del Pacchetto
-* **Compilazione Rolling Locale**:
+### Step 2: Test & Local Build
+* **Local Rolling Build**:
   ```bash
-  just forge/build-rolling <nome-pacchetto>
+  just forge/build-rolling <package-name>
   ```
-* **Test di Idempotenza**:
+* **Idempotency Check**:
   ```bash
-  just forge/check-idempotency <nome-pacchetto>
+  just forge/check-idempotency <package-name>
   ```
-* **Compilazione Hermetica Sandbox (Paradigma Nix)**:
+* **Hermetic Sandbox Build (Nix Paradigm)**:
   ```bash
   just forge/hermetic-build
   ```
 
-### Passo 3: Compilazione Locale del Kernel Chimera
+### Step 3: Local Chimera Kernel Compilation
 ```bash
 just forge/kernel-prepare full
 just forge/kernel-build-local
 ```
 
-### Passo 4: Build dell'Immagine Container del Sistema Operativo
+### Step 4: System Operating System Container Build
 ```bash
 just system-build
 ```
-*Questo comando crea l'immagine container locale `localhost/ermete-os-system:latest`.*
+*Creates local container image `localhost/ermete-os-system:latest`.*
 
-### Passo 5: Generazione delle Immagini Disco e ISO
-* **Immagine per Macchina Virtuale QCOW2**:
+### Step 5: Generate Disk & ISO Images
+* **Virtual Machine Image (QCOW2)**:
   ```bash
   just disk-qcow2
   ```
-* **ISO Installabile Anaconda**:
+* **Anaconda Installable ISO**:
   ```bash
   just disk-iso
   ```
 
-### Passo 6: Audit, Linter e Test di Sicurezza
+### Step 6: Audit, Lint & Security Validation
 ```bash
-# Esecuzione linter Bash e Justfile
+# Run Bash and Justfile linters
 just lint
 
-# Audit di sicurezza codice Rust
+# Rust code security audit
 just audit
 
-# Fuzzing suite sui componenti Rust
+# Fuzzing suite across Rust components
 just fuzz component=all time=60
 
-# Validazione moduli driver NVIDIA
+# NVIDIA driver module validation
 just test-nvidia
 
-# Scansione vulnerabilità immagine OS container
+# Container OS image vulnerability scan
 just system/security-scan
 ```
 
-### Passo 7: Esecuzione VM e Test del Mutate-in-Place (`bootc switch`)
-1. Avviare la VM con QEMU/KVM usando la QCOW2 generata:
+### Step 7: VM Execution & Mutate-in-Place Testing (`bootc switch`)
+1. Boot VM using QEMU/KVM with generated QCOW2 disk:
    ```bash
    qemu-system-x86_64 -enable-kvm -m 4096 -smp 4 -drive file=system/output/qcow2/disk.qcow2,format=qcow2
    ```
-2. Per aggiornare un sistema Ermete OS esistente alla nuova build:
+2. Update an existing running Ermete OS node to the newly built system image:
    ```bash
    sudo bootc switch ghcr.io/hr-mes/ermete-os-system:latest
    sudo reboot
    ```
-```

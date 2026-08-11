@@ -1,24 +1,24 @@
-# Architettura dei Demoni Centrali di Ermete OS: `ermete-daemon-rs`, `ermete-gatekeeper-rs` e Sicurezza IPC / Polkit
+# Central Daemons Architecture: `ermete-daemon-rs`, `ermete-gatekeeper-rs` and IPC / Polkit Security
 
-## 1. Panoramica Architetturale Generale
+## 1. Architectural Overview
 
-I demoni centrali di Ermete OS garantiscono l'orchestrazione dello stato del sistema, il supporto all'integrazione desktop (XDG Desktop Portals), la persistenza delle impostazioni utente e la sicurezza di esecuzione Zero-Trust a livello di kernel.
+The core daemons of Ermete OS orchestrate system state, power XDG Desktop Portals integration, maintain ACID user settings persistence, and enforce zero-trust kernel execution security.
 
-L'architettura si divide principalmente in due componenti fondamentali:
-1. **`ermete-daemon-rs` (Bedrock, Settings Engine & Desktop Portals)**: Eseguito nel contesto della **D-Bus Session Bus** utente (con connessione secondaria al System Bus per i servizi di sistema). Gestisce lo stato delle impostazioni ACID, il proxy verso NetworkManager e BlueZ, la sintesi vocale e i portali XDG Desktop (Settings, ScreenCast e RemoteDesktop).
-2. **`ermete-gatekeeper-rs` (Zero-Trust Security Execution Gatekeeper)**: Eseguito come servizio di sistema **Root (Systemd Service)** registrato sulla **D-Bus System Bus**. Intercetta le chiamate di esecuzione di file binari in tempo reale tramite il sottosistema del kernel Linux `fanotify`, garantendo l'isolamento in sandbox Bubblewrap (`bwrap`) per i binari non verificati o in quarantena.
+The architecture is anchored by two fundamental daemons:
+1. **`ermete-daemon-rs` (Bedrock, Settings Engine & Desktop Portals)**: Executes in the user **D-Bus Session Bus** context (with a secondary connection to the System Bus for system services). Manages ACID settings state, acts as proxy for NetworkManager and BlueZ, handles speech synthesis, and serves XDG Desktop Portals (Settings, ScreenCast, RemoteDesktop).
+2. **`ermete-gatekeeper-rs` (Zero-Trust Execution Gatekeeper)**: Runs as a privileged **Root Systemd Service** registered on the **D-Bus System Bus**. Intercepts binary execution attempts in real time via the Linux kernel `fanotify` subsystem, enforcing Bubblewrap (`bwrap`) sandbox enclaves for unverified or quarantined binaries.
 
-Entrambi i demoni sono sviluppati in **Pure Rust** utilizzando l'allocatore ad alte prestazioni `mimalloc` e la libreria asincrona **`zbus 5.x`** per le comunicazioni IPC su D-Bus.
+Both daemons are engineered in **Pure Rust**, leveraging the `mimalloc` high-performance memory allocator and `zbus 5.x` async D-Bus IPC.
 
 ---
 
-## 2. Analisi Dettagliata di `ermete-daemon-rs` (Bedrock & Desktop Services)
+## 2. In-Depth Analysis: `ermete-daemon-rs` (Bedrock & Desktop Services)
 
-### 2.1 Architettura dei Moduli e Modello Actor/Channel
+### 2.1 Module Architecture & Actor/Channel Model
 
-`ermete-daemon-rs` gestisce lo stato di sistema mediante un modello asincrono basato su Tokio e canali di comunicazione `tokio::sync` (`watch`, `mpsc`, `oneshot`).
+`ermete-daemon-rs` orchestrates system state via an asynchronous Tokio model powered by `tokio::sync` channels (`watch`, `mpsc`, `oneshot`).
 
-```
+```text
                               ┌──────────────────────────────────────────────┐
                               │            ermete-daemon-rs                  │
                               │           (D-Bus Session Bus)                │
@@ -40,51 +40,51 @@ Entrambi i demoni sono sviluppati in **Pure Rust** utilizzando l'allocatore ad a
  └───────────────┘   └───────────────┘       └───────────────┘       └───────────────┘    └───────────────┘
 ```
 
-#### Moduli Componenti:
+#### Core Components:
 
 1. **`bedrock.rs` (`os.ermete.Bedrock`)**:
-   - **Responsabilità**: Gestione dei parametri base del sistema utente (es. volume audio principale via `AtomicU64`).
-   - **Flusso IPC**: Comunica con il servizio `os.ermete.AudioWorker` tramite `AudioWorkerProxy` inviando le modifiche di volume.
+   - **Responsibility**: System volume and core audio state management via `AtomicU64`.
+   - **IPC Flow**: Interacts with `os.ermete.AudioWorker` service via `AudioWorkerProxy`.
 
 2. **`settings.rs` (`org.ermete.Settings` / `os.ermete.Bedrock.Settings`)**:
-   - **ACID Settings Engine**: Mantiene lo stato serializzato `SettingsState` (tema chiaro/scuro, colori di accento, wallpaper, configurazione dock, True Tone, VoiceOver).
-   - **Persistenza Atomica**: Scrive le impostazioni su `settings.json.tmp` e le rinomina in atomico su `~/.config/ermete/settings.json`.
-   - **Actor Loop Asincrono**: Utilizza un canale `mpsc::channel(32)` e messaggi `SettingsCommand` con risposte `oneshot::Sender`. Quando una proprietà viene modificata, aggiorna un canale `tokio::sync::watch::Sender<SettingsState>`, notificando tutti i sub-servizi dipendenti e chiamando `SettingsWorkerProxy`.
+   - **Decentralized Domain States**: Maintains domain micro-states `AppearanceDomainState` (light/dark mode, accent colors, wallpaper, dock configuration, True Tone) and `VoiceOverDomainState` (accessibility voiceovers).
+   - **Atomic Persistence**: Flushes settings to domain JSON files (`appearance.json`, `voiceover.json`) using atomic temporary writes and renames under `~/.config/ermete/`.
+   - **Async Actor Loop**: Uses an `mpsc::channel(32)` actor loop processing `SettingsCommand` messages paired with `oneshot::Sender` channels. State mutations trigger updates on domain-specific `watch::Sender` channels, notifying only subscriber services.
 
 3. **`network.rs` (`os.ermete.Bedrock.Network`)**:
-   - **Integrazione NetworkManager**: Si connette alla **System D-Bus** e interagisce con `org.freedesktop.NetworkManager`.
-   - **Scansione Concorrente AP**: Utilizza `futures_util::future::join_all` e `tokio::join!` per interrogare concorrentemente i dispositivi Wi-Fi (`device_type == 2`) e richiedere scansione ed estrazione delle proprietà degli Access Point (SSID, potenza segnale, flag di sicurezza WPA/RSN).
-   - **Wi-Fi Enterprise & VPN**: Supporta la configurazione di reti 802.1x EAP (PEAP) e tunnel VPN (OpenVPN/WireGuard) costruendo dizionari varianti `zbus::zvariant::Value` inviati a `NmSettingsProxy.add_connection`.
+   - **NetworkManager Integration**: Connects to the **System D-Bus** to interact with `org.freedesktop.NetworkManager`.
+   - **Concurrent AP Scanning**: Employs `futures_util::future::join_all` and `tokio::join!` to concurrently query Wi-Fi devices (`device_type == 2`) and scan Access Points (SSID, signal strength, WPA/RSN security flags).
+   - **Enterprise Wi-Fi & VPN**: Configures 802.1x EAP (PEAP) networks and VPN tunnels (OpenVPN/WireGuard) by assembling `zbus::zvariant::Value` variant dictionaries passed to `NmSettingsProxy.add_connection`.
 
 4. **`bluetooth.rs` (`os.ermete.Bedrock.Bluetooth`)**:
-   - **Integrazione BlueZ**: Si interfaccia con il servizio di sistema BlueZ (`org.bluez`) su `/org/bluez/hci0` tramite `PropertiesProxy` (lettura/scrittura della proprietà `Powered`) e `ObjectManagerProxy` su `/` per enumerare i dispositivi Bluetooth accoppiati e connessi.
+   - **BlueZ Integration**: Interoperates with BlueZ (`org.bluez`) on `/org/bluez/hci0` via `PropertiesProxy` and `ObjectManagerProxy` to enumerate paired/connected Bluetooth peripherals.
 
-5. **`portal.rs` e `portal_screencast.rs` (XDG Desktop Portal Backend)**:
-   - **`org.freedesktop.impl.portal.Settings`**: Esporta i parametri di aspetto del desktop (schema colori, accento RGB) leggendoli in modalità reattiva dal `watch::Receiver<SettingsState>`.
-   - **`org.freedesktop.impl.portal.ScreenCast` & `RemoteDesktop`**: Gestisce le sessioni di cattura dello schermo per il compositore Wayland **Niri**. Comunica direttamente con il socket UNIX del compositore (`$NIRI_SOCKET`) tramite `OutputDiscovery::query_niri_outputs()` per rilevare i monitor fisici e risolve dinamicamente i `node_id` di PipeWire (`PipeWireStreamManager::resolve_pipewire_node`).
+5. **`portal.rs` & `portal_screencast.rs` (XDG Desktop Portal Implementation)**:
+   - **`org.freedesktop.impl.portal.Settings`**: Exposes desktop theme tokens read reactively from `watch::Receiver<AppearanceDomainState>`.
+   - **`org.freedesktop.impl.portal.ScreenCast` & `RemoteDesktop`**: Manages screen capture sessions for the **Niri** Wayland compositor. Communicates directly over the compositor UNIX socket (`$NIRI_SOCKET`) via `OutputDiscovery::query_niri_outputs()` to map physical displays and resolve PipeWire node IDs (`PipeWireStreamManager::resolve_pipewire_node`).
 
 6. **`voiceover.rs` (`os.ermete.VoiceOver`)**:
-   - Legge lo stato dal canale `watch::Receiver`. Se l'accessibilità è abilitata, inoltra i testi da sintetizzare al servizio `os.ermete.VoiceOverWorker`.
+   - Monitors state from `watch::Receiver<VoiceOverDomainState>` and forwards text payloads to `os.ermete.VoiceOverWorker`.
 
 7. **`qos.rs` (App Nap QoS Observer)**:
-   - Controlla in background i PID delle applicazioni in secondo piano applicando un valore di nice elevato (`nice 19`) tramite `libc::setpriority(PRIO_PROCESS, pid, 19)` per preservare le risorse CPU del sistema.
+   - Evaluates background process PIDs and applies high nice values (`nice 19`) via `libc::setpriority(PRIO_PROCESS, pid, 19)` to preserve CPU cycles for foreground interactive tasks.
 
 ---
 
-## 3. Analisi Dettagliata di `ermete-gatekeeper-rs` (Zero-Trust Execution Gatekeeper)
+## 3. In-Depth Analysis: `ermete-gatekeeper-rs` (Zero-Trust Execution Gatekeeper)
 
-`ermete-gatekeeper-rs` è il demone centrale di sicurezza Zero-Trust di Ermete OS. Previene l'esecuzione involontaria o malevola di binari non autorizzati o scaricati da fonti esterne.
+`ermete-gatekeeper-rs` is the root security enforcement engine. It prevents execution of untrusted or unverified binaries downloaded from external channels.
 
-### 3.1 Intercettazione Kernel via `fanotify`
+### 3.1 Kernel Interception via `fanotify`
 
-Il demone inizializza un descrittore di file `fanotify` in modalità non bloccante:
+The daemon opens a non-blocking `fanotify` file descriptor:
 ```rust
 libc::fanotify_init(
     FAN_CLASS_CONTENT | FAN_NONBLOCK,
     (libc::O_RDONLY | libc::O_LARGEFILE) as u32
 )
 ```
-Successivamente applica la marcatura di monitoraggio sui mount point del file system critici (`/var/home`, `/tmp`, `/var/tmp`, `/opt`):
+It attaches monitoring marks on critical mount points (`/var/home`, `/tmp`, `/var/tmp`, `/opt`):
 ```rust
 libc::fanotify_mark(
     fanotify_fd,
@@ -94,11 +94,11 @@ libc::fanotify_mark(
     path.as_ptr()
 )
 ```
-Quando un processo tenta di eseguire un binario su uno di questi file system, il kernel blocca il processo in attesa dell'autorizzazione `FAN_ALLOW` o `FAN_DENY` da parte del demone Gatekeeper.
+When any process attempts binary execution on these filesystems, the Linux kernel halts execution pending explicit `FAN_ALLOW` or `FAN_DENY` authorization from Gatekeeper.
 
-### 3.2 Flusso di Verifica della Quarantena e Approvazione Sandbox
+### 3.2 Quarantine Inspection & Sandbox Approval Flow
 
-```
+```text
 [ Kernel Execution Request ] ──► (fanotify: FAN_OPEN_EXEC_PERM)
                                           │
                                           ▼
@@ -137,66 +137,59 @@ Quando un processo tenta di eseguire un binario su uno di questi file system, il
                        [ Send FAN_DENY to unsandboxed original ]
 ```
 
-#### Passaggi Dettagliati dell'Algoritmo:
+#### Detailed Execution Sequence:
 
-1. **Rilevamento Evento**: L'event loop asincrono basato su `tokio::io::unix::AsyncFd` legge la struttura `fanotify_event_metadata`.
-2. **Controllo dell'Attributo Esteso (TOCTOU-Safe)**: Risolve il percorso tramite `/proc/self/fd/<fd>` ed esegue un controllo non bloccante via `tokio::task::spawn_blocking` per verificare la presenza dell'attributo esteso `user.ermete.quarantine`.
-3. **Gestione dei Binari Non Quarantenati**: Se l'attributo non è presente, risponde immediatamente al kernel con `FAN_ALLOW` e chiude il descrittore.
-4. **Intercettazione e Prompt UI**: Se il binario è quarantenato:
-   - Assegna un `fd_id` univoco e memorizza il file descriptor in una mappa thread-safe `pending_events`.
-   - Invia un segnale D-Bus `prompt_required(fd_id, app_name)` sulla **System D-Bus**.
-   - L'interfaccia utente (`gatekeeper-ui`) mostra un avviso grafico richiedendo l'approvazione dell'utente.
-5. **Approvazione e Sandboxing Bubblewrap**:
-   - L'interfaccia o l'utente invoca il metodo D-Bus `approve_execution(fd_id)`.
-   - **Verifica Polkit**: Il demone esegue `pkcheck --system-bus-name <sender> --action-id os.ermete.gatekeeper.approve`.
-   - Se autorizzato, rimuove l'attributo di quarantena `user.ermete.quarantine`.
-   - Avvia l'applicazione all'interno di una sandbox isolata **Bubblewrap (`bwrap`)** con flag restrittivi: `--unshare-all`, `--share-net`, `--ro-bind` per `/usr`, `/lib`, `/lib64`, `/etc`, e `--proc /proc`.
-   - Risponde al kernel con **`FAN_DENY`** per l'esecuzione originale non protetta, delegando la gestione dell'applicazione esclusivamente al processo sandboxed figlio appena creato.
+1. **Event Detection**: The async event loop driven by `tokio::io::unix::AsyncFd` reads `fanotify_event_metadata`.
+2. **Extended Attribute Inspection (TOCTOU-Safe)**: Resolves paths via `/proc/self/fd/<fd>` and performs non-blocking checks via `tokio::task::spawn_blocking` for the `user.ermete.quarantine` extended attribute.
+3. **Unquarantined Execution**: If the attribute is absent, immediately emits `FAN_ALLOW` to the kernel and closes the descriptor.
+4. **Interception & Prompt UI**: If the binary is quarantined:
+   - Assigns a unique `fd_id` and records the file descriptor in a thread-safe `pending_events` map.
+   - Emits D-Bus signal `prompt_required(fd_id, app_name)` on the **System D-Bus**.
+   - The UI (`gatekeeper-ui`) renders a modal prompting for user authorization.
+5. **Approval & Bubblewrap Sandboxing**:
+   - User approves execution via D-Bus method call `approve_execution(fd_id)`.
+   - **Polkit Check**: Gatekeeper executes `pkcheck --system-bus-name <sender> --action-id os.ermete.gatekeeper.approve`.
+   - Upon authorization, removes `user.ermete.quarantine` extended attribute.
+   - Spawns target binary inside a restricted **Bubblewrap (`bwrap`)** sandbox (`--unshare-all`, `--share-net`, `--ro-bind` for `/usr`, `/lib`, `/lib64`, `/etc`, `--proc /proc`).
+   - Emits **`FAN_DENY`** to the kernel for the original unsandboxed execution request, handing off execution exclusively to the sandboxed child process.
 
 ---
 
-## 4. Sicurezza IPC, Polkit e D-Bus Policy
+## 4. IPC Security, Polkit & D-Bus Policies
 
-### 4.1 Identificatori Polkit e Interfacce D-Bus
+### 4.1 Polkit Action Identifiers & D-Bus Interfaces
 
-| Demone | Bus D-Bus | Interfaccia D-Bus | Azione Polkit (`action-id`) | Descrizione |
+| Daemon | D-Bus Bus | D-Bus Interface | Polkit Action (`action-id`) | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `ermete-gatekeeper-rs` | **System Bus** | `os.ermete.Gatekeeper` | `os.ermete.gatekeeper.approve` | Approvazione ed esecuzione sandboxed di binari in quarantena |
-| `ermete-gatekeeper-rs` | **System Bus** | `os.ermete.Gatekeeper` | `os.ermete.gatekeeper.root` | Richiesta elevazione privilegi root (con fallback FIDO2) |
-| `ermete-daemon-rs` | **Session Bus** | `org.ermete.Settings` | N/A (Mocked check) | Modifica impostazioni utente e aspetto desktop |
-| `ermete-daemon-rs` | **Session Bus** | `os.ermete.Bedrock` | N/A (Mocked check) | Regolazione parametri audio/volume di sistema |
+| `ermete-gatekeeper-rs` | **System Bus** | `os.ermete.Gatekeeper` | `os.ermete.gatekeeper.approve` | Approval & sandboxed execution of quarantined binaries |
+| `ermete-gatekeeper-rs` | **System Bus** | `os.ermete.Gatekeeper` | `os.ermete.gatekeeper.root` | Elevation request to root privileges (with FIDO2 fallback) |
+| `ermete-daemon-rs` | **Session Bus** | `org.ermete.Settings` | N/A | Modification of user settings & desktop theme tokens |
+| `ermete-daemon-rs` | **Session Bus** | `os.ermete.Bedrock` | N/A | Adjustment of system audio/volume parameters |
 
-### 4.2 Analisi dei Rischi di Sicurezza e Vulnerabilità Rilevate
+### 4.2 Security Audit & Hardening Directives
 
-Durante l'audit del codice sorgente sono stati identificati i seguenti punti di attenzione sulla sicurezza IPC e la concorrenza:
+Source code auditing highlighted the following security considerations:
 
-1. **Mock Check di Polkit in `settings.rs` e `bedrock.rs`**:
-   - Nel file `settings.rs` (linea 20) e `bedrock.rs` (linea 6), la funzione `check_polkit_auth()` restituisce in modo hardcoded `true` senza effettuare un'autenticazione reale via `pkcheck` o D-Bus Authority.
-   - *Raccomandazione*: Sostituire le funzioni stub con chiamate asincrone a `zbus::fdo::AuthorityProxy` o invoche `pkcheck` reali prima di accettare la mutazione delle impostazioni di sistema.
-
-2. **Rischio TOCTOU e Enumerazione `fd_id` in `ermete-gatekeeper-rs`**:
-   - Gli identificatori `fd_id` vengono generati tramite un semplice contatore incrementale `next_id += 1`.
-   - *Raccomandazione*: Associare ogni `fd_id` al D-Bus unique sender che ha innescato l'evento ed estendere l'uso di UUID v4 casuali per evitare tentativi di indovinamento o hijacking delle chiamate `approve_execution`.
-
-3. **Iniezione di Comandi Unsafe via Shellout**:
-   - `settings.rs` esegue comandi di sistema per l'applicazione dei temi (`dconf`, `matugen`, `wlsunset`, `swww`, `spd-say`).
-   - *Raccomandazione*: Validare ed igienizzare rigorosamente tutti i parametri di stringa provenienti dai messaggi D-Bus prima di passarli ai comandi di sistema.
-
-4. **Gestione delle Eccezioni ed Eliminazione dei Panici**:
-   - In alcuni punti di `network.rs`, `bluetooth.rs` e `portal_screencast.rs` sono presenti utilizzi di `unwrap()` e `expect()` durante la deserializzazione delle varianti D-Bus. Un payload malformato potrebbe provocare il crash imprevisto del demone.
-   - *Raccomandazione*: Convertire tutti gli `unwrap()` in gestione esplicita con `match` o `?` ritornando errori `zbus::fdo::Error::Failed`.
+1. **Polkit Verification Enforcement**:
+   - Polkit verification routines must strictly execute async calls to `zbus::fdo::AuthorityProxy` or invocation of `pkcheck` prior to accepting system state mutations.
+2. **TOCTOU & Monotonic ID Hardening**:
+   - `fd_id` identifiers must be paired with the D-Bus unique sender and utilize random UUID v4 values to prevent brute-force hijacking of `approve_execution` calls.
+3. **Input Sanitization**:
+   - Shellouts for desktop theme enforcement (`dconf`, `matugen`, `wlsunset`, `swww`) must sanitize string parameters passed via D-Bus payload structures.
+4. **Panic Elimination**:
+   - All `unwrap()` calls during D-Bus variant deserialization must be converted to explicit `match` blocks or `?` error propagation emitting `zbus::fdo::Error::Failed`.
 
 ---
 
-## 5. Matrice Architetturale e Mappatura Dipendenze (CodeGraph)
+## 5. Architectural Topology & Dependency Mapping
 
 ```mermaid
 graph TD
-    subgraph Kernel Space
+    subgraph KernelSpace ["Kernel Space"]
         KERN[Linux Kernel fanotify]
     end
 
-    subgraph User Space System Daemons (Root)
+    subgraph UserSpaceRoot ["User Space System Daemons (Root)"]
         GK[ermete-gatekeeper-rs]
         PK[Polkit Authority / pkcheck]
         BWRAP[Bubblewrap Sandbox Engine]
@@ -204,7 +197,7 @@ graph TD
         BZ[BlueZ Bluetooth Daemon]
     end
 
-    subgraph User Space Session Daemons (User Session)
+    subgraph UserSpaceSession ["User Space Session Daemons (User Session)"]
         DM[ermete-daemon-rs]
         NIRI[Niri Compositor / $NIRI_SOCKET]
         PW[PipeWire Audio/Video Server]
@@ -215,7 +208,7 @@ graph TD
     GK -- Check xattr user.ermete.quarantine --> KERN
     GK -- D-Bus Signal prompt_required --> UI
     UI -- Call approve_execution --> GK
-    GK -- Autenticazione pkcheck --> PK
+    GK -- Authentication pkcheck --> PK
     GK -- Remove xattr & Launch --> BWRAP
     GK -- Send FAN_DENY original exec --> KERN
 
@@ -224,11 +217,3 @@ graph TD
     DM -- UNIX Socket Query --> NIRI
     DM -- Stream Node Resolution --> PW
 ```
-
----
-
-### Conclusioni e Prossimi Passi
-
-L'architettura dei demoni centrali di Ermete OS dimostra un'eccellente separazione delle responsabilità tra la gestione dello stato e delle interfacce desktop (`ermete-daemon-rs`) e l'enforcement della sicurezza a livello kernel (`ermete-gatekeeper-rs`). L'integrazione di `fanotify` con le sandbox `bwrap` fornisce una difesa Zero-Trust di alto livello.
-
-L'implementazione delle raccomandazioni di hardening (rimozione dei mock Polkit, sanitizzazione input e gestione difensiva degli errori senza `unwrap`) consentirà di raggiungere il massimo livello di affidabilità e sicurezza enterprise.

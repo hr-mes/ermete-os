@@ -1,13 +1,13 @@
-# Architettura dello Strato Kernel e Fondamenta di Ermete OS
+# Kernel Layer Architecture & Bedrock Foundation Specification
 
 > [!IMPORTANT]
-> Lo strato più basso di Ermete OS (Tier 0 / Bedrock Foundation) combina una filosofia di immutabilità OCI/bootc (OSTree Container), un kernel fortemente personalizzato (**Ermete Chimera Kernel**), patching a caldo Ring-0 via D-Bus/Polkit, misurazione crittografica del boot tramite TPM 2.0 e protezione anti-downgrade hardware.
+> The lowest layer of Ermete OS (Tier 0 / Bedrock Foundation) unifies an immutable OCI/bootc (OSTree Container) philosophy, a custom-built kernel (**Ermete Chimera Kernel**), zero-downtime Ring-0 hot-patching via D-Bus/Polkit, cryptographic boot measurement via TPM 2.0, and hardware anti-downgrade counter protection.
 
 ---
 
-## 1. Mappa Architetturale dello Strato Kernel & Boot Sequence
+## 1. Kernel Layer & Boot Sequence Topology Map
 
-Il diagramma sottostante illustra il flusso completo dal caricamento UEFI/UKI fino all'esecuzione dei daemon di live patching ed eBPF nel sistema operativo.
+The diagram below details the end-to-end execution flow from UEFI/UKI initialization to live patching and eBPF runtime loading.
 
 ```mermaid
 flowchart TD
@@ -36,51 +36,51 @@ flowchart TD
 
 ---
 
-## 2. Chimera Kernel Engine: Architettura, Toolchain e Kconfig
+## 2. Chimera Kernel Engine: Architecture, Toolchain & Kconfig
 
-Il kernel di Ermete OS viene compilato tramite una pipeline dinamica gestita dallo script `forge/specs/ermete-kernel/prepare-chimera.sh` e dal file spec `ermete-kernel.spec`.
+The Ermete OS kernel is compiled through a dynamic pipeline managed by `forge/specs/ermete-kernel/prepare-chimera.sh` and `ermete-kernel.spec`.
 
-### 2.1 Standard di Compilazione & Toolchain LLVM
+### 2.1 Toolchain & LLVM Standards
 - **Upstream Base**: Fedora Kernel Linux 6.14.x.
-- **NVIDIA Shield (Dynamic Ceiling)**: Calcolo automatico della versione massima del kernel supportata dai driver NVIDIA installati (`akmod-nvidia`), evitando incompatibilità ABI/KMOD.
-- **Toolchain**: LLVM/Clang 18+ nativo (`LLVM=1 LLVM_IAS=1`, `%toolchain clang`, `%_ld ld.lld`).
-- **Ottimizzazione LTO & Profiling**:
-  - ThinLTO abilitato (`CONFIG_LTO_CLANG_THIN=y`).
-  - Ottimizzazione aggressive delle prestazioni (`CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3=y`, `-O3 -march=x86-64-v3`).
-  - AutoFDO (Sample PGO) basato sui profili ChromeOS Kernel AFDO (`-fprofile-sample-use`).
+- **NVIDIA Shield (Dynamic Ceiling)**: Automated calculation of maximum kernel release supported by installed NVIDIA drivers (`akmod-nvidia`), preventing ABI/KMOD incompatibilities.
+- **Toolchain**: Native LLVM/Clang 18+ (`LLVM=1 LLVM_IAS=1`, `%toolchain clang`, `%_ld ld.lld`).
+- **LTO Optimization & Profiling**:
+  - ThinLTO enabled (`CONFIG_LTO_CLANG_THIN=y`).
+  - Aggressive performance tuning (`CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3=y`, `-O3 -march=x86-64-v3`).
+  - AutoFDO (Sample PGO) driven by ChromeOS Kernel AFDO profiles (`-fprofile-sample-use`).
 
 ### 2.2 Patches & Scheduler
-- **CachyOS BORE Scheduler**: Burst-Oriented Response Enhancer (`CONFIG_SCHED_BORE=y`) per minimizzare la latenza nei carichi interattivi e UI.
+- **CachyOS BORE Scheduler**: Burst-Oriented Response Enhancer (`CONFIG_SCHED_BORE=y`) minimizing latency for interactive UI workloads.
 - **Networking**: BBRv3 TCP Congestion Control (`CONFIG_DEFAULT_BBR=y`, `CONFIG_TCP_CONG_BBR=y`).
-- **Memory Management**: Multi-Gen LRU (`CONFIG_LRU_GEN=y`, `CONFIG_LRU_GEN_ENABLED=y`), ZSTD Memory Compression (`CONFIG_ZRAM_DEF_COMP_ZSTD=y`, `CONFIG_ZSWAP_COMPRESSOR_DEFAULT_ZSTD=y`), e Ultra Kernel Samepage Merging (`CONFIG_UKSM=y`).
-- **Wine/Proton Acceleration**: Integratione NTSYNC nativa (`CONFIG_NTSYNC=y`).
-- **Rust in Kernel**: Abilitazione supporto Rust nativo nel kernel (`CONFIG_RUST=y`).
+- **Memory Management**: Multi-Gen LRU (`CONFIG_LRU_GEN=y`, `CONFIG_LRU_GEN_ENABLED=y`), ZSTD Memory Compression (`CONFIG_ZRAM_DEF_COMP_ZSTD=y`, `CONFIG_ZSWAP_COMPRESSOR_DEFAULT_ZSTD=y`), and Ultra Kernel Samepage Merging (`CONFIG_UKSM=y`).
+- **Wine/Proton Acceleration**: Native NTSYNC integration (`CONFIG_NTSYNC=y`).
+- **Rust Kernel Integration**: Native Rust support (`CONFIG_RUST=y`).
 
 ### 2.3 Hardening KSPP (Kernel Self-Protection Project)
-Il kernel applica una politica Zero-Trust rigorosa:
+Strict zero-trust security configuration:
 ```ini
 CONFIG_FORTIFY_SOURCE=y
 CONFIG_RANDOMIZE_BASE=y            # KASLR
 CONFIG_RANDOMIZE_MEMORY=y          # Memory KASLR
 CONFIG_PAGE_TABLE_ISOLATION=y      # PTI (Meltdown protection)
-CONFIG_BPF_UNPRIV_DEFAULT_OFF=y    # Disabilita eBPF non privilegiato
-CONFIG_SECURITY_DMESG_RESTRICT=y   # Blocca dmesg agli utenti standard
-CONFIG_LEGACY_VSYSCALL_NONE=y     # Eliminazione vsyscall legacy
-CONFIG_LOCK_DOWN_KERNEL_FORCE_INTEGRITY=y # Lockdown in modalità Integrity
+CONFIG_BPF_UNPRIV_DEFAULT_OFF=y    # Disable unprivileged eBPF
+CONFIG_SECURITY_DMESG_RESTRICT=y   # Restrict dmesg access
+CONFIG_LEGACY_VSYSCALL_NONE=y     # Strip legacy vsyscall
+CONFIG_LOCK_DOWN_KERNEL_FORCE_INTEGRITY=y # Integrity lockdown mode
 CONFIG_CFI_CLANG=y                 # Control Flow Integrity
 CONFIG_SHADOW_CALL_STACK=y         # Shadow Call Stack
 ```
 
 ### 2.4 Legacy Ablation
-Rimozione drastica di driver e sottosistemi obsoleti per ridurre la superficie d'attacco ed eliminare l'overhead in compilazione ThinLTO:
-- Disabilitazione floppy, parport, PATA legacy, ISDN, `nouveau`.
-- Disabilitazione driver NIC Datacenter non necessari (`MELLANOX`, `CHELSIO`, `QLOGIC`, `NETRONOME`, `CAVIUM`).
+Aggressive removal of obsolete drivers to shrink attack surface and eliminate compilation overhead under ThinLTO:
+- Removal of floppy, parport, legacy PATA, ISDN, `nouveau`.
+- Stripping of non-essential datacenter NIC drivers (`MELLANOX`, `CHELSIO`, `QLOGIC`, `NETRONOME`, `CAVIUM`).
 
 ---
 
 ## 3. Kernel Live-Patcher Engine (`ermete-live-patcher` & `ermete-livepatch`)
 
-Ermete OS integra un'architettura di patching a caldo del kernel in Ring-0 a **zero downtime**, evitando reboot per patch di sicurezza critiche.
+Ermete OS implements zero-downtime Ring-0 hot-patching, eliminating reboots for critical security updates.
 
 ```mermaid
 sequenceDiagram
@@ -92,24 +92,24 @@ sequenceDiagram
     participant Kpatch as Kernel kpatch / ftrace
 
     Admin->>DBus: Call os.ermete.LivePatcher1.apply_kernel_patch(patch_path)
-    DBus->>Daemon: Interfaccia D-Bus /os/ermete/LivePatcher
+    DBus->>Daemon: D-Bus Interface /os/ermete/LivePatcher
     Daemon->>Polkit: Exec pkcheck --action-id os.ermete.livepatcher.apply
     Polkit-->>Daemon: Authorization Granted (auth_admin_keep)
     Daemon->>Kpatch: Exec kpatch load <patch_path.ko>
-    Kpatch->>Kpatch: Routing ftrace su funzioni target in Ring-0
-    Kpatch-->>Daemon: Patch caricata con successo
+    Kpatch->>Kpatch: Dynamic ftrace routing to target Ring-0 functions
+    Kpatch-->>Daemon: Patch applied successfully
     Daemon-->>Admin: Result String
 ```
 
-### 3.1 `ermete-live-patcher` (Daemon Rust D-Bus)
-- **Codice**: `forge/specs/ermete-live-patcher/ermete-live-patcher-1.0.0/src/main.rs`.
-- **Tecnologia**: Rust, `tokio`, `zbus`.
-- **Servizio D-Bus**: Registrato sul System Bus sotto il name `os.ermete.LivePatcher` e l'oggetto `/os/ermete/LivePatcher`.
-- **Controllo Accessi Polkit**: Verifica il chiamante D-Bus interrogando Polkit tramite l'azione `os.ermete.livepatcher.apply`.
-- **Esecuzione**: Esegue `kpatch load <path.ko>` dopo l'approvazione delle credenziali.
+### 3.1 `ermete-live-patcher` (Rust D-Bus Daemon)
+- **Source**: `forge/specs/ermete-live-patcher/ermete-live-patcher-1.0.0/src/main.rs`.
+- **Technology**: Rust, `tokio`, `zbus`.
+- **D-Bus Service**: Registered on System Bus under name `os.ermete.LivePatcher` at path `/os/ermete/LivePatcher`.
+- **Polkit Access Control**: Verifies D-Bus caller authorization via Polkit action `os.ermete.livepatcher.apply`.
+- **Execution**: Invokes `kpatch load <path.ko>` upon credential validation.
 
 ### 3.2 Polkit Policy Configuration
-Fornita in `os.ermete.livepatcher.policy`:
+Provided in `os.ermete.livepatcher.policy`:
 ```xml
 <action id="os.ermete.livepatcher.apply">
   <description>Apply Kernel Live Patch</description>
@@ -123,18 +123,18 @@ Fornita in `os.ermete.livepatcher.policy`:
 ```
 
 ### 3.3 Boot Injection Manager (`ermete-livepatch`)
-- **Codice**: `forge/specs/ermete-livepatch/ermete-livepatch-injector.sh`.
-- **Funzione**: Script eseguito all'avvio che scansiona la directory `/usr/lib/modules/livepatch/` e inietta i moduli `.ko` preesistenti tramite `insmod`, garantendo l'applicazione immediata delle patch persistenti.
+- **Source**: `forge/specs/ermete-livepatch/ermete-livepatch-injector.sh`.
+- **Function**: Boot script scanning `/usr/lib/modules/livepatch/` and injecting `.ko` modules via `insmod`, enforcing immediate persistent patch application.
 
 ---
 
-## 4. Configuration parameters, Kickstart & Immutabilità del File System
+## 4. Disk Parameters, Kickstart & Filesystem Immutability
 
-Il layout di partizionamento e l'infrastruttura di installazione bare-metal sono definiti in `system/disk_config/` e `system/ermete-install.ks`.
+Partitioning layouts and bare-metal installation manifests are defined in `system/disk_config/` and `system/ermete-install.ks`.
 
-### 4.1 Dichiarazioni TOML di Partizionamento (`system/disk_config/`)
-- `disk.toml`: Definizione del punto di montaggio radice `/` con dimensione minima di 20 GiB e creazione dell'utente di sistema `hermes` (gruppo `wheel`).
-- `iso.toml`: Configurazione dei moduli Anaconda (Storage, Runtime, Network, Security, Services, Users, Timezone) e istruzione Kickstart `%post` per il binding immutabile OCI:
+### 4.1 TOML Partition Declarations (`system/disk_config/`)
+- `disk.toml`: Root `/` mount point definition with 20 GiB minimum allocation and system user `hermes` (group `wheel`).
+- `iso.toml`: Anaconda module parameters (Storage, Runtime, Network, Security, Services, Users, Timezone) and Kickstart `%post` directive for OCI binding:
   ```toml
   [customizations.installer.kickstart]
   contents = """
@@ -144,22 +144,22 @@ Il layout di partizionamento e l'infrastruttura di installazione bare-metal sono
   """
   ```
 
-### 4.2 Kickstart Bare-Metal (`system/ermete-install.ks`)
-- **Parametri Kernel da Bootloader**:
+### 4.2 Bare-Metal Kickstart (`system/ermete-install.ks`)
+- **Kernel Boot Parameters**:
   ```bash
   bootloader --append="quiet splash fastboot iommu=pt intel_iommu=on amd_iommu=on efi=disable_early_pci_dma zswap.enabled=1 zswap.compressor=zstd rootflags=noatime slab_nomerge pti=on randomize_kstack_offset=on vsyscall=none debugfs=off oops=panic module.sig_enforce=1 lockdown=integrity init_on_free=1"
   ```
-- **Image Provisioning OSTree**:
+- **OSTree Image Provisioning**:
   ```bash
   ostreecontainer --url=ghcr.io/hr-mes/ermete-os-system:latest --transport=registry
   ```
-- **Inizializzazione Monotonic Counter TPM 2.0**:
-  Dichiara e incrementa il contatore TPM2 hardware all'indice NV `0x01800001`:
+- **TPM 2.0 Monotonic Counter Initialization**:
+  Initializes hardware TPM2 NV index counter `0x01800001`:
   ```bash
   tpm2_nvdefine 0x01800001 -C o -s 8 -a "ownerread|ownerwrite|authread|authwrite|nt=counter"
   tpm2_nvincrement 0x01800001 -C o
   ```
-- **User Home Cifrata `systemd-homed` (LUKS2 + TPM2 + FIDO2)**:
+- **Encrypted User Home (`systemd-homed` with LUKS2 + TPM2 + FIDO2)**:
   ```bash
   homectl create hermes \
       --storage=luks \
@@ -172,16 +172,16 @@ Il layout di partizionamento e l'infrastruttura di installazione bare-metal sono
 
 ---
 
-## 5. Init System, Initramfs & Moduli Bootc (Dracut & Systemd)
+## 5. Init System, Initramfs & Bootc Modules (Dracut & Systemd)
 
-### 5.1 Generazione Initramfs Dracut Slim (`99-ermete-slim-boot.conf` & Containerfile)
-Il sistema genera l'initramfs in modalità riproducibile e ad altissima compressione ZSTD:
-- **Compressione**: `zstd -T0 -19 --long=27` (o `-15` nel Containerfile).
-- **Omissione Moduli Inutili**: `pcsc`, `floppy`, `nfs`, `cifs`, `iscsi`, `network`, `bluetooth`, `plymouth`, `nouveau`, `simpledrm`.
-- **Inclusione Moduli Critici**: `ostree`, `fido2`, `tpm2-tss`, `systemd-pcrphase`, e driver NVIDIA KMS precoce (`nvidia`, `nvidia_modeset`, `nvidia_uvm`, `nvidia_drm`).
+### 5.1 Dracut Slim Initramfs (`99-ermete-slim-boot.conf` & Containerfile)
+Generates a reproducible, highly compressed ZSTD initramfs:
+- **Compression**: `zstd -T0 -19 --long=27` (or `-15` inside Containerfile).
+- **Module Omission**: Omits non-critical modules (`pcsc`, `floppy`, `nfs`, `cifs`, `iscsi`, `network`, `bluetooth`, `plymouth`, `nouveau`, `simpledrm`).
+- **Critical Inclusions**: Includes `ostree`, `fido2`, `tpm2-tss`, `systemd-pcrphase`, and early NVIDIA KMS drivers (`nvidia`, `nvidia_modeset`, `nvidia_uvm`, `nvidia_drm`).
 
-### 5.2 Parametri Kernel Dichiarativi Bootc (`usr/lib/bootc/kargs.d/`)
-Ermete OS organizza i parametri del kernel in file TOML modulari inseriti nel pacchetto `ermete-base-config`:
+### 5.2 Bootc Declarative Kernel Arguments (`usr/lib/bootc/kargs.d/`)
+Organizes kernel arguments into modular TOML files in `ermete-base-config`:
 1. `01-nvidia.toml`: `nvidia-drm.modeset=1`, `nvidia-drm.fbdev=1`, `nvidia.NVreg_PreserveVideoMemoryAllocations=1`
 2. `02-hardening.toml`: `slab_nomerge`, `pti=on`, `randomize_kstack_offset=on`, `vsyscall=none`, `debugfs=off`, `oops=panic`, `module.sig_enforce=1`, `lockdown=integrity`, `init_on_free=1`
 3. `03-ima-evm.toml`: `ima_appraise=enforce`, `ima_policy=tcb`, `ima_policy=appraise_tcb`, `ima_hash=sha256`, `evm=enforce`, `evm_hash=sha256`
@@ -189,54 +189,54 @@ Ermete OS organizza i parametri del kernel in file TOML modulari inseriti nel pa
 5. `05-dma-protection.toml`: `intel_iommu=on`, `amd_iommu=on`, `efi=disable_early_pci_dma`
 6. `06-mte-lam.toml`: `arm64.mte=on`, `lam=on`
 
-### 5.3 Ottimizzazione Systemd Presets (`99-Ermete-Base.preset`)
-Per garantire tempi di avvio prossimi allo zero, vengono disabilitati i collo di bottiglia sincroni del boot:
-- **Disabilitati**: `NetworkManager-wait-online.service`, `systemd-networkd-wait-online.service`, `plymouth-quit-wait.service`, `systemd-udev-settle.service`, `systemd-remount-fs.service`.
-- **Abilitati**: `nvidia-powerd.service`, `nvidia-persistenced.service`, `systemd-homed.service`, `tetragon.service`, `keylime_agent.service`, `ermete-tpm-rollback-check.service`, `ermete-tpm-rollback-update.service`.
+### 5.3 Systemd Preset Optimization (`99-Ermete-Base.preset`)
+To eliminate boot bottlenecks:
+- **Disabled**: `NetworkManager-wait-online.service`, `systemd-networkd-wait-online.service`, `plymouth-quit-wait.service`, `systemd-udev-settle.service`, `systemd-remount-fs.service`.
+- **Enabled**: `nvidia-powerd.service`, `nvidia-persistenced.service`, `systemd-homed.service`, `tetragon.service`, `keylime_agent.service`, `ermete-tpm-rollback-check.service`, `ermete-tpm-rollback-update.service`.
 
 ---
 
 ## 6. Measured Secure Boot, TPM Anti-Rollback & Recovery Kiosk
 
 ### 6.1 Unified Kernel Image (UKI) & Measured Boot (`ermete-secure-boot`)
-Il pacchetto `ermete-secure-boot` fornisce l'automazione crittografica per la firma e misurazione del kernel:
-1. **Generazione UKI**: `systemd-ukify build` unifica `vmlinuz`, `initramfs.img`, `cmdline` e `os-release` in un singolo binario EFI (`/boot/efi/EFI/Linux/ermete-chimera.efi`).
-2. **Predizione PCR 11**: `systemd-measure sign` pre-calcola lo stato dei registri PCR 11 nel TPM e genera `/etc/systemd/pcrlock.json`.
-3. **UEFI Secure Boot Signing**: `sbsign` firma il binario UKI con la chiave del sistema (`ermete-secure-boot.key`).
+`ermete-secure-boot` handles cryptographic signing and kernel measurement:
+1. **UKI Assembly**: `systemd-ukify build` unifies `vmlinuz`, `initramfs.img`, `cmdline`, and `os-release` into EFI binary `/boot/efi/EFI/Linux/ermete-chimera.efi`.
+2. **PCR 11 Prediction**: `systemd-measure sign` pre-calculates TPM PCR 11 register state, emitting `/etc/systemd/pcrlock.json`.
+3. **UEFI Secure Boot Signing**: `sbsign` signs UKI payload with platform key (`ermete-secure-boot.key`).
 
-### 6.2 Protezione Hardware Anti-Rollback TPM 2.0 (`ermete-tpm-rollback-check`)
-Lo script `/usr/libexec/ermete/ermete-tpm-rollback-check.sh` viene eseguito nella fase `systemd-pcrphase-sysinit.service.d`:
-- Legge l'indice NV `0x01800001` dal TPM2 (`tpm2_nvread`).
-- Confronta `BUILD_ID` di `/etc/os-release` con il contatore hardware.
-- **Risposta Minaccia**: Se `BUILD_ID < TPM Counter` (downgrade d'immagine/attacco di rollback), il sistema esegue uno spegnimento immediato per evitare exploit:
+### 6.2 Hardware TPM 2.0 Anti-Rollback Protection (`ermete-tpm-rollback-check`)
+`/usr/libexec/ermete/ermete-tpm-rollback-check.sh` executes during `systemd-pcrphase-sysinit.service.d`:
+- Reads TPM2 NV index counter `0x01800001` via `tpm2_nvread`.
+- Compares `/etc/os-release` `BUILD_ID` against hardware counter.
+- **Threat Mitigation**: If `BUILD_ID < TPM Counter` (downgrade / rollback attack), triggers forced shutdown:
   ```bash
   systemctl poweroff -ff
   ```
-- Durante gli aggiornamenti validi, `ermete-tpm-rollback-update.sh` incrementa atomicamente il contatore hardware via `tpm2_nvincrement`.
+- Valid updates trigger `ermete-tpm-rollback-update.sh`, incrementing the hardware NV index via `tpm2_nvincrement`.
 
 ### 6.3 Pre-Boot GUI Recovery Kiosk (`ermete-recovery`)
-Se l'ambiente grafico principale (`greetd`) fallisce l'avvio per 3 volte consecutive (`StartLimitBurst=3`):
-1. Systemd isola il sistema su `ermete-recovery.target`.
-2. Viene avviato il compositor Wayland `cage` che esegue l'applicazione Rust GTK4 `ermete-recovery-ui`.
-3. L'utente o l'amministratore può eseguire il rollback automatico ad una deployment OSTree/bootc stabile precedente con 1 solo click.
+If `greetd` fails boot execution 3 consecutive times (`StartLimitBurst=3`):
+1. Systemd isolates system to `ermete-recovery.target`.
+2. Launches `cage` Wayland compositor running GTK4 application `ermete-recovery-ui`.
+3. Admin can execute a 1-click automated rollback to a known-good OSTree/bootc deployment.
 
 ### 6.4 Level 12 Unikernel Runtime Engine (`x86_64-unknown-hermit`)
-Il **Level 12 Unikernel Runtime Engine** consente di compilare i microservizi Rust di Ermete OS come Unikernel bare-metal Ring-0 basati sull'astrazione **RustyHermit** (`x86_64-unknown-hermit`):
-1. **Zero POSIX Overhead**: Bypassa completamente lo stack di chiamate di sistema Linux e lo userland POSIX tradizionale, portando i demoni di rete a girare direttamente sul livello bare-metal / ipervisore (`uhyve`).
-2. **Hermetic Build Pipeline**: Script di build dedicato (`system/scripts/build_unikernel.sh`) e target `just unikernel` / `just system/build-unikernel` che gestisce la toolchain `-Z build-std=std,panic_abort`.
-3. **Immutabilità & Isolation Zero-Trust**: Binari Unikernel autonomi con footprint ultraridotto (< 2 MB) ideali per micro-servizi cloud, networking e p2p zero-latency.
+The **Level 12 Unikernel Runtime Engine** enables compiling Rust microservices as bare-metal Ring-0 unikernels based on **RustyHermit** (`x86_64-unknown-hermit`):
+1. **Zero POSIX Overhead**: Bypasses traditional POSIX userland and syscall stacks, running network daemons directly on hypervisor layer (`uhyve`).
+2. **Hermetic Build Pipeline**: Invoked via `system/scripts/build_unikernel.sh` and targets `just unikernel` / `just system/build-unikernel` using `-Z build-std=std,panic_abort`.
+3. **Immutability & Zero-Trust Isolation**: Sub-2MB footprint binaries suited for cloud microservices and zero-latency P2P mesh networking.
 
 ---
 
-## 7. Tabella Riassuntiva dei Componenti dello Strato Kernel
+## 7. Kernel Layer Component Summary
 
-| Componente | Repository / Path Spec | Linguaggio / Tech | Ruolo Architetturale |
+| Component | Path / Spec | Stack | Architectural Role |
 | :--- | :--- | :--- | :--- |
-| **Ermete Chimera Kernel** | `forge/specs/ermete-kernel/` | C / Rust / Clang LLVM | Kernel personalizzato x86-64-v3, ThinLTO, AutoFDO, BORE scheduler, BBRv3, Zero-Trust hardening. |
-| **`ermete-live-patcher`** | `forge/specs/ermete-live-patcher/` | Rust (`zbus`, `tokio`) | Daemon D-Bus e Polkit per l'applicazione a caldo di live patch Ring-0 tramite `kpatch`. |
-| **`ermete-livepatch`** | `forge/specs/ermete-livepatch/` | Bash | Script di boot per l'iniezione automatica dei moduli livepatch preesistenti in `/usr/lib/modules/livepatch/`. |
-| **Disk Config & KS** | `system/disk_config/`, `system/ermete-install.ks` | TOML / Kickstart | Setup partizionamento LUKS2+TPM2, `systemd-homed`, immutabilità OCI `bootc switch`. |
-| **Base Config & Kargs** | `forge/specs/ermete-base-config/` | TOML / Systemd Presets | Argomenti Kernel Bootc (NVIDIA, IMA/EVM, Confidential Compute, Hardening), Dracut Slim conf. |
-| **Secure Boot & TPM** | `forge/specs/ermete-secure-boot/` | Bash / TPM2 Tools / `ukify` | Generazione UKI, firma Secure Boot, misurazione PCR 11, check anti-rollback hardware via NV Counter. |
-| **Recovery Kiosk** | `forge/specs/ermete-recovery/` | Rust (GTK4 + `cage`) | Ambiente GUI di ripristino ed emergenza con rollback 1-click per OSTree / bootc. |
-| **Unikernel Runtime Engine** | `system/unikernel/`, `system/scripts/build_unikernel.sh` | Rust (RustyHermit target) | Runtime & build toolchain per la compilazione di demoni Ring-0 bare-metal Zero-Latency. |
+| **Ermete Chimera Kernel** | `forge/specs/ermete-kernel/` | C / Rust / Clang LLVM | Custom x86-64-v3 kernel, ThinLTO, AutoFDO, BORE scheduler, BBRv3, Zero-Trust hardening. |
+| **`ermete-live-patcher`** | `forge/specs/ermete-live-patcher/` | Rust (`zbus`, `tokio`) | D-Bus and Polkit daemon for zero-downtime Ring-0 patch application via `kpatch`. |
+| **`ermete-livepatch`** | `forge/specs/ermete-livepatch/` | Bash | Boot injection script for persistent `.ko` modules in `/usr/lib/modules/livepatch/`. |
+| **Disk Config & KS** | `system/disk_config/`, `system/ermete-install.ks` | TOML / Kickstart | LUKS2+TPM2 partitioning, `systemd-homed`, `bootc switch` OCI immutability setup. |
+| **Base Config & Kargs** | `forge/specs/ermete-base-config/` | TOML / Systemd Presets | Bootc kernel arguments (NVIDIA, IMA/EVM, Confidential Compute), Dracut Slim configuration. |
+| **Secure Boot & TPM** | `forge/specs/ermete-secure-boot/` | Bash / TPM2 Tools / `ukify` | UKI generation, Secure Boot signing, PCR 11 measurement, TPM hardware counter anti-rollback. |
+| **Recovery Kiosk** | `forge/specs/ermete-recovery/` | Rust (GTK4 + `cage`) | Pre-boot GUI emergency recovery environment with 1-click OSTree/bootc rollback. |
+| **Unikernel Runtime Engine** | `system/unikernel/`, `system/scripts/build_unikernel.sh` | Rust (RustyHermit target) | Bare-metal Ring-0 zero-latencyunikernel runtime & compilation toolchain. |

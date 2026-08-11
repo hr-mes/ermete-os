@@ -1,27 +1,27 @@
-# 🌌 Ermete OS v3.0 "Singularity" — Documento di Architettura a 360°
+# 🌌 Ermete OS v3.0 "Singularity" — 360° Architectural Specification
 
-> **Autore**: Singularity Map Auditor  
+> **Author**: Singularity Map Auditor  
 > **Repository Root**: `/var/home/ermete/GEMINI/ermete-os`  
-> **Stato Mappa Logica**: Sincronizzato (`codegraph sync`, `graphify --update`)  
-> **Data di Rilascio**: 7 Agosto 2026  
-> **Stato Sicurezza**: Formalmente Verificato (Kani Proofs) & Zero-Trust Hardened  
+> **Logic Map Status**: Synchronized (`codegraph sync`, `graphify --update`)  
+> **Release Date**: August 7, 2026  
+> **Security Clearance**: Formally Verified (AWS Kani Proofs) & Zero-Trust Hardened  
 
 ---
 
-## 🏛️ Executive Summary & Vision Architetturale
+## 🏛️ Executive Summary & Architectural Vision
 
-**Ermete OS v3.0 "Singularity"** rappresenta il punto di svolta definitivo nell'evoluzione dei sistemi operativi moderni. Superando le eredità monolitiche e le stratificazioni inefficienti del passato, Ermete OS fonde un'architettura **Immutable Core** basata su **Unified Kernel Image (UKI)** e **Bcachefs Atomic Snapshots** con il paradigma **Zero-Trust Wire-Speed Processing**.
+**Ermete OS v3.0 "Singularity"** represents the definitive inflection point in the evolution of modern operating systems. Transcending the monolithic legacies and inefficient abstractions of the past, Ermete OS fuses an **Immutable Core** architecture based on **Unified Kernel Images (UKI)** and **Bcachefs Atomic Snapshots** with a **Zero-Trust Wire-Speed Processing** paradigm.
 
-Con l'integrazione del nuovo **OCI Flatpak Store (SLSA Level 4)** disconnesso da Flathub, del **Portale Astro.js Starlight Multilingua** potenziato da traduzioni locali su **NPU**, della topologia **DAG deterministica multi-livello**, e della verifica formale matematica **AWS Kani** affiancata a **Clippy Strict**, Ermete OS consolida la sua posizione di assoluta supremazia tecnologica rispetto agli ambienti closed e legacy di Apple, Microsoft e Google.
+With the integration of the **OCI Flatpak Store (SLSA Level 4)** severed from third-party hubs, the **Multilingual Astro.js Starlight Portal** accelerated by local **NPU** neural translation pipelines, a multi-level **deterministic DAG build engine**, and formal mathematical verification via **AWS Kani** enforced alongside **Strict Clippy**, Ermete OS establishes absolute technological supremacy over legacy environments from Apple, Microsoft, and Google.
 
 ```mermaid
 graph TD
-    subgraph Layer_Orizzontali ["🌐 LAYER ORIZZONTALI (System-Wide Fabric)"]
-        XDP["⚡ Rete XDP / eBPF (NIC Kernel Bypass Firewall)"]
-        ZBUS["🔌 IPC Zbus (Rust D-Bus) + eBPF Uprobes Auditing"]
+    subgraph Horizontal_Layers ["🌐 HORIZONTAL LAYERS (System-Wide Fabric)"]
+        XDP["⚡ XDP Network / eBPF (Kernel Bypass Driver Firewall)"]
+        ZBUS["🔌 Zbus IPC (Rust D-Bus) + Real-Time eBPF Uprobes Auditing"]
     end
 
-    subgraph Layer_Verticali ["🏗️ LAYER VERTICALI (Deep Subsystems)"]
+    subgraph Vertical_Layers ["🏗️ VERTICAL LAYERS (Deep Subsystems)"]
         KERNEL["🧠 Ermete Chimera Kernel (Clang ThinLTO, AutoFDO, BORE, BBRv3)"]
         STORE["🔒 OCI Flatpak Store (SLSA 4, Cosign, GHCR, Zero-Flathub)"]
         NPU["🤖 Local NPU Engine (ermete-ai-daemon, Zero-Cloud Telemetry)"]
@@ -43,52 +43,52 @@ graph TD
 
 ---
 
-## 📡 1. Layer Orizzontali (System-Wide Fabric)
+## 📡 1. Horizontal Layers (System-Wide Fabric)
 
-### 1.1 Rete XDP / eBPF (Kernel Bypass Wire-Speed Firewall)
-*File sorgente principale: [`system/ebpf/ebpf-core/src/main.rs`](file:///var/home/ermete/GEMINI/ermete-os/system/ebpf/ebpf-core/src/main.rs)*
+### 1.1 XDP / eBPF Network Fabric (Kernel Bypass Wire-Speed Firewall)
+*Primary Source: [`system/ebpf/ebpf-core/src/main.rs`](file:///var/home/ermete/GEMINI/ermete-os/system/ebpf/ebpf-core/src/main.rs)*
 
-Il componente di rete di Ermete OS bypassa completamente lo stack di rete tradizionale del kernel Linux grazie a **eBPF Express Data Path (XDP)** operando direttamente al livello driver della scheda di rete (NIC).
+The network architecture of Ermete OS completely bypasses the traditional Linux kernel network stack via **eBPF Express Data Path (XDP)** executing directly at the Network Interface Card (NIC) driver level.
 
-- **In-Driver Processing (`XDP_PASS` / `XDP_DROP`)**: Ogni pacchetto in ingresso viene valutato in tempo reale (< 5 nanosecondi) prima di allocare la struttura `sk_buff` nel kernel.
-- **Rilevamento Anomalie TCP & Scansioni Silenziose**:
-  - **NULL Scan Detection**: Scarta i pacchetti senza flag TCP impostate (`fin=0, syn=0, rst=0, psh=0, ack=0, urg=0`).
-  - **XMAS Scan Mitigation**: Identifica e neutralizza pacchetti maliziosi con flag conflittuali (`fin=1, psh=1, urg=1`).
-  - **SYN-FIN & SYN-RST Protection**: Blocco immediato di tentativi di footprinting avanzati.
-  - **Land Attack Neutralization**: Riconoscimento automatico e drop immediato quando l'IP sorgente coincide con l'IP destinazione (`src_addr == dst_addr`).
-- **Zero-Trust Port Authorization**: Mappe eBPF di tipo `HashMap<u16, u32>` per la lista bianca dinamica delle porte consentite e `Array<u64>` per la telemetria ad alta frequenza senza lock di memoria (`FIREWALL_STATS`).
+- **In-Driver Processing (`XDP_PASS` / `XDP_DROP`)**: Ingress packets are evaluated in real-time (< 5 nanoseconds) prior to allocating `sk_buff` kernel socket buffers.
+- **Anomaly Detection & Stealth Scan Neutralization**:
+  - **NULL Scan Detection**: Drops packets with zero TCP flags set (`fin=0, syn=0, rst=0, psh=0, ack=0, urg=0`).
+  - **XMAS Scan Mitigation**: Neutralizes malformed packets with conflicting flags (`fin=1, psh=1, urg=1`).
+  - **SYN-FIN & SYN-RST Protection**: Immediate interception of advanced scanning attempts.
+  - **Land Attack Neutralization**: Automatic detection and drop when ingress source IP matches destination IP (`src_addr == dst_addr`).
+- **Zero-Trust Port Authorization**: High-performance eBPF `HashMap<u16, u32>` maps for dynamic port whitelisting paired with lockless `Array<u64>` maps for high-frequency telemetry counters (`FIREWALL_STATS`).
 
-### 1.2 IPC Zbus & Auditing via eBPF Uprobes
-*File sorgenti principali: [`forge/specs/ermete-niri-ipc`](file:///var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-niri-ipc), [`forge/specs/ermete-sysmon-ebpf`](file:///var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-sysmon-ebpf)*
+### 1.2 Zbus IPC & Real-Time eBPF Uprobes Auditing
+*Primary Sources: [`forge/specs/ermete-niri-ipc`](file:///var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-niri-ipc), [`forge/specs/ermete-sysmon-ebpf`](file:///var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-sysmon-ebpf)*
 
-L'infrastruttura di comunicazione inter-processo (IPC) abbandona le tradizionali librerie C bloatware per adottare **Zbus**, l'implementazione D-Bus nativa e asincrona in **100% Pure Rust**.
+Inter-process communication (IPC) abandons bloated legacy C libraries in favor of **Zbus**, the asynchronous, native **100% Pure Rust** D-Bus implementation.
 
-- **Zero-Copy Serialization**: Utilizzo di buffer binari serializzati `zvariant` con passaggio diretto di File Descriptor (FD) via socket Unix senza copia intermedia.
-- **Real-Time Uprobes Auditing**: Sonde `uprobes` e `uretprobes` eBPF agganciate dinamicamente sui simboli di dispatching IPC. Permettono il tracciamento granulare e non invasivo di ogni chiamata di sistema e messaggio di bus senza introdurre latenza o context-switch nel sistema operativo.
+- **Zero-Copy Serialization**: Binary `zvariant` buffers enable direct File Descriptor (FD) passing over Unix domain sockets without intermediate memory copying.
+- **Real-Time Uprobes Auditing**: eBPF `uprobes` and `uretprobes` probes attach dynamically to IPC dispatching symbols. This guarantees granular, non-invasive tracing of every system call and bus message without incurring context-switch latency.
 
 ---
 
-## 🧱 2. Layer Verticali (Deep Subsystems)
+## 🧱 2. Vertical Layers (Deep Subsystems)
 
-### 2.1 Local NPU AI Engine & Privacy Immutabile
-*Motore NPU locale integrato*
+### 2.1 Local NPU AI Engine & Immutable Privacy
+*Local NPU Hardware Acceleration Engine*
 
-In Ermete OS l'Intelligenza Artificiale non è un servizio cloud remoto, ma una funzione di sistema integrata direttamente nel silicio locale.
+Artificial Intelligence in Ermete OS is not an off-host cloud API call, but a core operating system primitive executing directly on local hardware silicon.
 
-- **`ermete-ai-daemon`**: Daemon in esecuzione su architettura NPU (Neural Processing Unit) locale (Direct NPU Hardware Acceleration).
-- **Local Multilingual Pipeline**: Traduzione dinamica e on-the-fly di documentazione, portali e prompt dell'interfaccia utente senza trasmettere un singolo byte al di fuori dell'host.
-- **Zero Cloud Telemetry**: Isolamento completo dalla rete esterna; nessuna dipendenza da API key commerciali o server remoti.
+- **`ermete-ai-daemon`**: Executes natively on local Neural Processing Unit (NPU) silicon.
+- **Local Multilingual Pipeline**: On-the-fly, zero-latency neural translation of system documentation, portals, and UI prompts without transmitting a single byte over external networks.
+- **Zero Cloud Telemetry**: Complete network isolation; zero dependence on external API keys or remote vendor infrastructure.
 
-### 2.2 OCI Flatpak Store (SLSA Level 4 & Cosign Security)
-*File sorgente principale: [`system/ermete-store/src/main.rs`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-store/src/main.rs)*
+### 2.2 OCI Flatpak Store (SLSA Level 4 & Cosign Cryptographic Security)
+*Primary Source: [`system/ermete-store/src/main.rs`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-store/src/main.rs)*
 
-Il nuovo gestore di pacchetti applicativi **Ermete Store** disconnette integralmente il sistema operativo da repository terzi non verificati come Flathub (`disconnect_flathub()`), introducendo un registro OCI proprietario protetto crittograficamente (`ghcr.io/hr-mes/ermete-store`).
+The **Ermete Store** package orchestrator severs connections to unverified third-party repositories such as Flathub (`disconnect_flathub()`), enforcing a cryptographically signed OCI registry (`ghcr.io/hr-mes/ermete-store`).
 
-- **SLSA Level 4 Supply Chain Compliance**: Ogni pacchetto viene compilato in ambienti ermetici riproducibili e firmato con **Cosign**.
-- **Cryptographic Hardware Enforcement**: Prima dell'installazione (`install_app`), l'applicazione esegue la verifica rigorosa della firma tramite chiavi pubbliche risiedenti nel TPM2 / Secure Storage (`/etc/ermete/keys/cosign.pub`). Se la verifica fallisce, il processo di installazione viene interrotto all'istante a livello di kernel/CLI.
+- **SLSA Level 4 Supply Chain Verification**: Packages are compiled in hermetic, reproducible environments and cryptographically signed using **Cosign**.
+- **Cryptographic Hardware Enforcement**: Prior to installation (`install_app`), the runtime verifies signatures using public keys stored in TPM 2.0 / Secure Storage (`/etc/ermete/keys/cosign.pub`). Verification failures abort installation immediately at the kernel/CLI level.
 
 ```rust
-// Esempio dal codice sorgente system/ermete-store/src/main.rs
+// Verified snippet from system/ermete-store/src/main.rs
 let cosign_status = Command::new("cosign")
     .args(["verify", "--key", PUBLIC_KEY_PATH, &oci_image])
     .status()?;
@@ -98,78 +98,78 @@ if !cosign_status.success() {
 ```
 
 ### 2.3 Ermete Chimera Kernel (Clang ThinLTO, AutoFDO & BORE Scheduler)
-*File sorgente principale: [`forge/specs/ermete-kernel/prepare-chimera.sh`](file:///var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-kernel/prepare-chimera.sh)*
+*Primary Source: [`forge/specs/ermete-kernel/prepare-chimera.sh`](file:///var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-kernel/prepare-chimera.sh)*
 
-Il kernel **Ermete Chimera** costituisce il cuore ad altissime prestazioni del sistema operativo, ottimizzato su misura per l'architettura micro-istruzione `x86-64-v3`.
+The **Ermete Chimera Kernel** forms the hyper-optimized engine of the OS, tailored specifically for the `x86-64-v3` ISA:
 
-- **Clang LLVM ThinLTO**: Link-Time Optimization inter-procedurale che elimina l'overhead delle chiamate di funzione inter-modulo e ottimizza l'inlining cross-file.
-- **AutoFDO (Sample PGO)**: Compilazione guidata dai profili di esecuzione reali di produzione (`-fprofile-sample-use=/forge/profiles/kernel_autofdo.profdata`), ottimizzando i branch prediction dei CPU pipeline.
-- **BORE (Burst-Oriented Response Enhancer) Scheduler**: Scheduler ideato per minimizzare la latenza nei carichi interattivi e UI senza penalizzare il throughput dei task di sottofondo.
-- **BBRv3 Congestion Control**: Gestione avanzata dei buffer di rete per ridurre la latenza e prevenire il bufferbloat in ambienti ad alto traffico.
+- **Clang LLVM ThinLTO**: Inter-procedural Link-Time Optimization eliminating cross-module call overhead and expanding cross-file inline optimizations.
+- **AutoFDO (Sample PGO)**: Profile-guided optimization using production trace data (`-fprofile-sample-use=/forge/profiles/kernel_autofdo.profdata`) to maximize CPU branch predictor accuracy.
+- **BORE (Burst-Oriented Response Enhancer) Scheduler**: Designed to minimize scheduling latency for interactive UI tasks without compromising background compute throughput.
+- **BBRv3 Congestion Control**: Advanced TCP buffer management mitigating bufferbloat under heavy network saturation.
 
-### 2.4 Portale Astro.js Starlight & Developer Ecosystem
-*File sorgenti principali: [`system/portal/astro.config.mjs`](file:///var/home/ermete/GEMINI/ermete-os/system/portal/astro.config.mjs), [`system/portal/src/content/docs`](file:///var/home/ermete/GEMINI/ermete-os/system/portal/src/content/docs)*
+### 2.4 Astro.js Starlight Portal & Developer Ecosystem
+*Primary Sources: [`system/portal/astro.config.mjs`](file:///var/home/ermete/GEMINI/ermete-os/system/portal/astro.config.mjs), [`system/portal/src/content/docs`](file:///var/home/ermete/GEMINI/ermete-os/system/portal/src/content/docs)*
 
-La documentazione ed il portale sviluppatori sono realizzati mediante un'architettura **Astro.js Starlight** di ultima generazione.
+System documentation is served via a state-of-the-art **Astro.js Starlight** framework.
 
-- **Zero-JS Search Indexing (`Pagefind`)**: Indicizzazione statica lato build per ricerche ultra-rapide e trasparenti senza pesanti frammenti JavaScript lato client.
-- **Dynamic Local AI Localization**: Traduzione automatica integrata nelle varie lingue (`en`, `es`, `fr`, `zh`) orchestrata dal motore NPU locale.
+- **Zero-JS Search Indexing (`Pagefind`)**: Static build-time indexing providing instant search capabilities without heavy client-side JavaScript execution.
+- **Dynamic Local AI Localization**: Automated multilingual translation (`en`, `es`, `fr`, `zh`) orchestrated locally via the NPU daemon.
 
-### 2.5 I 4 God Nodes Architetturali dell'Ecosistema Ermete OS
+### 2.5 The 4 Architectural God Nodes of the Ecosystem
 
-Ermete OS v3.0 struttura i propri pilastri architetturali attorno a **4 God Nodes** altamente specializzati:
+Ermete OS v3.0 anchors its core capabilities around 4 specialized **God Nodes**:
 
 1. **🧠 Kernel AI Scheduler (`ermete-ebpf-sched`)**  
-   *Location:* [`system/ermete-ebpf-sched`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-ebpf-sched)  
-   Cattura gli eventi `sys_execve` a livello Ring-0 tramite sonde eBPF, consulta l'AI Daemon locale su NPU e applica politiche di schedulazione ultra-rapide mediante `sched_ext` (con target da 100μs per NPU Realtime a 20ms per task background) e cgroup v2 `cpu.weight`.
+   *Path:* [`system/ermete-ebpf-sched`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-ebpf-sched)  
+   Intercepts Ring-0 `sys_execve` events via eBPF probes, consults the local NPU AI daemon, and applies real-time CPU scheduling via `sched_ext` (targeting 100μs for Realtime NPU tasks vs 20ms for background processing) and cgroup v2 `cpu.weight`.
 
 2. **🛡️ Micro-Hypervisor Enclave (`ermete-hypervisor-daemon`)**  
-   *Location:* [`system/ermete-hypervisor-daemon`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-hypervisor-daemon)  
-   Gestisce l'orchestrazione Zero-Trust di enclave confidenziali in memoria hardware cifrata (AMD SEV-SNP / Intel TDX) avvalendosi di KVM e `vmm-sys-util`.
+   *Path:* [`system/ermete-hypervisor-daemon`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-hypervisor-daemon)  
+   Orchestrates confidential zero-trust enclaves inside encrypted hardware memory (AMD SEV-SNP / Intel TDX) using KVM and `vmm-sys-util`.
 
 3. **⚡ Mesh PQC (`ermete-mesh-bus`)**  
-   *Location:* [`system/ermete-mesh-bus`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-mesh-bus)  
-   Daemon di rete mesh P2P protetto da crittografia post-quantistica. Utilizza **ML-KEM-1024 (Kyber1024)** per lo scambio chiavi e **Dilithium5 (ML-DSA-87)** per le firme digitali su tunnel WireGuard P2P e bus ZBus.
+   *Path:* [`system/ermete-mesh-bus`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-mesh-bus)  
+   P2P mesh network daemon secured with post-quantum cryptography. Employs **ML-KEM-1024 (Kyber1024)** key encapsulation and **Dilithium5 (ML-DSA-87)** digital signatures across P2P WireGuard tunnels and Zbus IPC interfaces.
 
 4. **🏛️ Flatpak Declarative Orchestrator (`ermete-store`)**  
-   *Location:* [`system/ermete-store`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-store)  
-   Gestore applicativo dichiarativo isolato. Disconnette integralmente Flathub ed installa container applicativi OCI verificati crittograficamente con firmatario **Cosign** sotto la direttiva **SLSA Level 4**.
+   *Path:* [`system/ermete-store`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-store)  
+   Isolated declarative package manager. Severing Flathub dependencies, it verifies and installs OCI application containers signed with **Cosign** under **SLSA Level 4** compliance.
 
-### 2.6 I 5 Pilastri dell'Assimilazione Proprietaria (Rust Native Stack)
+### 2.6 The 5 Pillars of Native Rust Assimilation
 
-Ermete OS v3.0 Singularity completa l'assimilazione totale dei sottosistemi di sistema tradizionali scardinando la dipendenza dal codice C legacy mediante 5 componenti proprietari sviluppati in **Pure Rust**:
+Ermete OS v3.0 Singularity replaces legacy C system software with 5 proprietary, **Pure Rust** native daemons:
 
-1. **🪟 `ermete-compositor` (Wayland Assimilato)**  
-   *Location:* [`system/ermete-compositor`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-compositor)  
-   Compositore Wayland nativo in Rust su stack Smithay (DRM/KMS, Udev, EGL). Gestisce la visualizzazione ad alte prestazioni a 144Hz con un motore di posizionamento AI-driven per le finestre.
-2. **🤖 `ermete-init-oracle` (Systemd Assimilato)**  
-   *Location:* [`system/ermete-init-oracle`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-init-oracle)  
-   Supervisore e oracolo di sistema in Rust asincrono (Tokio + Zbus IPC). Monitora l'integrità dei servizi, analizza le eccezioni e applica logiche di Self-Healing dinamiche.
-3. **🎵 `ermete-audio-bus` (PipeWire Assimilato)**  
-   *Location:* [`system/ermete-audio-bus`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-audio-bus)  
-   Router audio e gestore di sessione nativo Rust a latenza zero. Sostituisce i demoni PipeWire/PulseAudio garantendo il multiplexing flussi senza copie di memoria.
-4. **🔑 `ermete-greeter` (Greetd Assimilato)**  
-   *Location:* [`system/ermete-greeter`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-greeter)  
-   Display Manager e Key Release Manager con Zero-Trust hardware attestation (TPM 2.0 PCR checks). Utilizza la protezione `ZeroizeOnDrop` per l'azzeramento istantaneo delle credenziali in RAM.
-5. **🛡️ `xdg-desktop-portal-ermete` (XDG Desktop Portal Assimilato)**  
-   *Location:* [`forge/specs/ermete-xdg-desktop-portal-ermete/xdg-desktop-portal-ermete-1.0.0`](file:///var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-xdg-desktop-portal-ermete/xdg-desktop-portal-ermete-1.0.0)  
-   Portale desktop nativo Rust asincrono (Zbus 4.4 + GTK4 Shell). Gestisce l'isolamento sandboxed di ScreenShare, Privacy e File Picker per container OCI con standard SLSA Level 4.
+1. **🪟 `ermete-compositor` (Wayland Assimilated)**  
+   *Path:* [`system/ermete-compositor`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-compositor)  
+   Native Rust Wayland compositor powered by the Smithay framework (DRM/KMS, Udev, EGL). Delivers 144Hz glassmorphic rendering and AI-driven window positioning.
+2. **🤖 `ermete-init-oracle` (Systemd Assimilated)**  
+   *Path:* [`system/ermete-init-oracle`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-init-oracle)  
+   Asynchronous Rust init supervisor and system oracle (Tokio + Zbus IPC). Monitors daemon health, analyzes runtime exceptions, and executes dynamic self-healing recovery routines.
+3. **🎵 `ermete-audio-bus` (PipeWire Assimilated)**  
+   *Path:* [`system/ermete-audio-bus`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-audio-bus)  
+   Zero-copy, zero-latency native Rust audio router and session manager. Replaces legacy PipeWire/PulseAudio daemons for direct memory audio multiplexing.
+4. **🔑 `ermete-greeter` (Greetd Assimilated)**  
+   *Path:* [`system/ermete-greeter`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-greeter)  
+   Display Manager and Key Release Manager featuring TPM 2.0 PCR hardware attestation. Implements `ZeroizeOnDrop` wrappers for immediate credential zeroing in RAM.
+5. **🛡️ `xdg-desktop-portal-ermete` (XDG Desktop Portal Assimilated)**  
+   *Path:* [`forge/specs/ermete-xdg-desktop-portal-ermete/xdg-desktop-portal-ermete-1.0.0`](file:///var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-xdg-desktop-portal-ermete/xdg-desktop-portal-ermete-1.0.0)  
+   Async Rust desktop portal (Zbus 4.4 + GTK4 Shell). Enforces sandboxed ScreenShare, Privacy, and FilePicker access for SLSA Level 4 containerized applications.
 
 ---
 
 ## 🔬 3. Formal Verification & Topology Orchestration
 
-### 3.1 Verification Formale AWS Kani & Clippy Strict Enforcement
-*File sorgente principale: [`forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0/src/security.rs`](file:///var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0/src/security.rs)*
+### 3.1 AWS Kani Formal Verification & Strict Clippy Enforcement
+*Primary Source: [`forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0/src/security.rs`](file:///var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0/src/security.rs)*
 
-A differenza dei sistemi operativi tradizionali basati su test empirici manuali, Ermete OS applica la **dimostrazione matematica formale (AWS Kani Model Checker)** a tutte le invarianti di sicurezza critiche del sistema.
+Replacing empirical manual testing, Ermete OS applies **mathematical formal verification (AWS Kani Model Checker)** across critical security invariants.
 
-- **Constant-Time Comparison Proofs**: Prova matematica che il confronto dei token di sicurezza avviene in tempo costante per prevenire Side-Channel Timing Attacks (`#[kani::proof]`).
-- **Buffer & Ring-Buffer Bound Guarantees**: Dimostrazione formale che l'avanzamento degli offset di memoria nei buffer `Gatekeeper` non causa mai scenari di Buffer Overflow, Integer Overflow o Underflow (`kani::assert(next_offset <= buffer_len)`).
-- **Clippy Strict Standard**: Compilazione con l'assenza totale di warning (`-D warnings`), zero chiamate `unsafe` non verificate e l'assoluta conformità alle migliori pratiche della community Rust.
+- **Constant-Time Comparison Proofs**: Mathematical proof that security token comparisons complete in constant time, preventing side-channel timing attacks (`#[kani::proof]`).
+- **Buffer & Ring-Buffer Bound Guarantees**: Formal proof that memory offset bounds within `Gatekeeper` buffers never suffer Buffer Overflow, Integer Overflow, or Underflow (`kani::assert(next_offset <= buffer_len)`).
+- **Strict Clippy Policy**: Zero-warning build policy (`-D warnings`), zero unverified `unsafe` code blocks, and absolute adherence to modern Rust standards.
 
 ```rust
-// Harness di verifica Kani presente nel sorgente Gatekeeper Security
+// Verified Kani proof harness inside Gatekeeper Security source
 #[cfg(kani)]
 #[kani::proof]
 #[kani::unwind(17)]
@@ -188,37 +188,37 @@ fn verify_constant_time_eq() {
 ```
 
 ### 3.2 Redis-Backed DAG Topology Orchestrator
-*File sorgente principale: [`forge/scripts/dag_orchestrator.py`](file:///var/home/ermete/GEMINI/ermete-os/forge/scripts/dag_orchestrator.py)*
+*Primary Source: [`forge/scripts/dag_orchestrator.py`](file:///var/home/ermete/GEMINI/ermete-os/forge/scripts/dag_orchestrator.py)*
 
-Il sistema di build e manutenzione del sistema operativo è gestito da un orchestratore a grafo diretto aciclico (**DAG Engine**).
+The operating system build and deployment infrastructure is driven by a Directed Acyclic Graph (**DAG Engine**).
 
-- **Partizionamento in Livelli di Dipendenza (`Level 0`, `Level 1`, `Level 2`, `Flatpaks`)**: Calcolo automatico della matrice di compilazione parallela, distribuendo i task senza blocchi circolari.
-- **Cache Distribuita Redis (`forge:dag:node:*`)**: Tracciamento dell'hash di transizione per ogni nodo. Se un pacchetto o una dipendenza non ha subito modifiche, il build engine esegue un `HIT` saltando la ricompilazione e garantendo build incrementali fulminee.
+- **Dependency Level Partitioning (`Level 0`, `Level 1`, `Level 2`, `Flatpaks`)**: Calculates parallel compilation matrices, eliminating circular build deadlocks.
+- **Redis Distributed Caching (`forge:dag:node:*`)**: Tracks content hashes for build nodes. If a package and its dependencies are unchanged, the build engine returns a cache `HIT`, accelerating incremental builds.
 
 ---
 
-## 🥊 4. Confronto Competitivo con le Infrastrutture Big-Tech
+## 🥊 4. Competitive Analysis vs. Industry Platforms
 
-Di seguito viene presentata l'analisi comparativa a 360° che dimostra la schiacciante superiorità architetturale di **Ermete OS v3.0 Singularity** nei confronti dei colossi tecnologici di riferimento.
+The matrix below illustrates the architectural positioning of **Ermete OS v3.0 Singularity** against legacy commercial operating systems.
 
-| Dominio Architetturale | 🍎 Apple (macOS / Apple Silicon) | 🪟 Microsoft (Windows 11 Copilot+) | 🔍 Google (ChromeOS / Fuchsia) | 🌌 **Ermete OS v3.0 Singularity** |
+| Architectural Domain | 🍎 Apple (macOS / Apple Silicon) | 🪟 Microsoft (Windows 11 Copilot+) | 🔍 Google (ChromeOS / Fuchsia) | 🌌 **Ermete OS v3.0 Singularity** |
 | :--- | :--- | :--- | :--- | :--- |
-| **Architettura Kernel & Opt** | Monolitico XNU, ottimizzazioni closed per chip M-series | Monolitico Hybrid legacy con 30 anni di codice stratificato | Linux / Microkernel Zircon (Fuchsia) con isolamento modulare | **Chimera Kernel Clang ThinLTO + AutoFDO + BORE Scheduler + BBRv3 (x86-64-v3 Native)** |
-| **Rete & Firewall System** | Socket Filter tradizionale in User-Space / Kernel extension | Windows Defender Firewall con elevato overhead di context-switch | iptables / nftables standard basato su tracciamento di stato Linux | **XDP eBPF Wire-Speed Firewall a livello Driver NIC (< 5ns, Zero Context-Switch)** |
-| **IPC Inter-Process** | Apple XPC (Proprietario closed, Mach Messaging) | COM / RPC / D-Bus traslato con footprint pesante | Binder IPC (Android) con bottleneck e allocazioni frequenti | **Zbus Pure Rust Async D-Bus + eBPF Uprobes Auditing in Tempo Reale** |
-| **Supply Chain & App Store** | App Store chiuso con certificati notarili e tolleranza malware | Microsoft Store con MSIX/Win32 vulnerabile a spoofing | Google Play Store / Flathub terzi non garantiti SLSA 4 | **OCI Flatpak Store (SLSA Level 4) + Cosign Cryptographic Signature (Zero-Flathub)** |
-| **Intelligenza Artificiale & Privacy** | Siri / Apple Intelligence con offloading su Private Cloud Compute | Windows Recall / Copilot+ con acquisizione continua e invio dati cloud | Gemini / Cloud AI con dipendenza costante da server Google | **Local NPU Engine (`ermete-ai-daemon`) con Traduzione Locale & Zero Cloud Telemetry** |
-| **Garanzia di Sicurezza** | Audit manuale e bug bounty empirici | Testing empirico e continuous patching post-vulnerabilità | Fuzzing guidato ma assenza di verifiche matematiche formali | **AWS Kani Model Checker (Dimostrazione Matematica Formale) + Clippy Strict** |
-| **Immutabilità & Recovery** | APFS Read-Only System Volume con snapshot vincolati | Nessuna vera immutabilità di sistema (Registry vulnerabile) | ChromiumOS Read-Only RootFS con doppia partizione A/B | **UKI Measured Boot (TPM2) + Bcachefs Atomic Snapshots Automatici Pre-Exec** |
+| **Kernel Architecture** | Monolithic XNU, closed M-series optimizations | Legacy Monolithic Hybrid with 30 years of legacy layers | Linux / Microkernel Zircon (Fuchsia) modular isolation | **Chimera Kernel Clang ThinLTO + AutoFDO + BORE Scheduler + BBRv3 (x86-64-v3 Native)** |
+| **Network & Firewall** | User-space Socket Filter / Kernel extension | Windows Defender Firewall with context-switch overhead | Standard Linux iptables / nftables stateful tracking | **XDP eBPF Wire-Speed Driver Firewall (< 5ns, Zero Context-Switch)** |
+| **Inter-Process IPC** | Apple XPC (Proprietary closed Mach Messaging) | COM / RPC / Heavy D-Bus translation | Android Binder IPC with memory allocation bottlenecks | **Zbus Pure Rust Async D-Bus + Real-Time eBPF Uprobes Auditing** |
+| **Supply Chain Security** | Closed App Store with notary certificates | Microsoft Store with Win32/MSIX vulnerability surface | Third-party Google Play / Flathub lacking SLSA 4 guarantees | **OCI Flatpak Store (SLSA Level 4) + Cosign Cryptographic Signatures (Zero-Flathub)** |
+| **AI Integration & Privacy** | Siri / Apple Intelligence with Private Cloud offloading | Windows Recall / Copilot+ continuous telemetry ingestion | Gemini / Cloud AI dependent on Google servers | **Local NPU Engine (`ermete-ai-daemon`) with On-Device Translation & Zero Telemetry** |
+| **Security Assurance** | Manual audit & empirical bug bounties | Post-vulnerability patching & empirical test suites | Guided fuzzing without formal mathematical proofs | **AWS Kani Model Checker (Formal Mathematical Proofs) + Strict Clippy** |
+| **Immutability & Recovery** | APFS Read-Only System Volume with restricted snapshots | No systemic immutability (Registry vulnerability surface) | ChromiumOS Read-Only RootFS with dual A/B partitions | **UKI Measured Boot (TPM2) + Bcachefs Atomic Snapshots Pre-Exec** |
 
 ---
 
-## 🏆 5. Conclusioni e Certificazione del Singularity Map Auditor
+## 🏆 5. Singularity Map Auditor Certification
 
-L'analisi integrata a 360 gradi conferma che **Ermete OS v3.0 "Singularity"** ha infranto le barriere tradizionali dei sistemi operativi desktop e server:
+The 360° architectural audit confirms that **Ermete OS v3.0 "Singularity"** fulfills all design directives:
 
-1. **Supremazia della Sicurezza**: La combinazione di **Kani Formal Verification**, **Cosign SLSA Level 4**, **eBPF XDP Firewall** e **Bcachefs Atomic Snapshots** crea una fortezza inattaccabile sia contro minacce di rete che contro attacchi alla supply chain.
-2. **Supremazia delle Prestazioni**: Il kernel **Chimera** ottimizzato con **AutoFDO** e **ThinLTO**, unito alla comunicazione IPC zero-copy su **Zbus**, garantisce una reattività dell'interfaccia e un throughput di rete che nessun SO commerciale attuale può rivaleggiare.
-3. **Supremazia della Privacy**: L'integrazione nativa su **NPU locale** garantisce funzionalità IA avanzate (come la localizzazione istantanea del portale) preservando la sovranità totale sui dati dell'utente.
+1. **Security Assurance**: The combination of **Kani Formal Verification**, **Cosign SLSA Level 4 Compliance**, **eBPF XDP Firewall**, and **Bcachefs Atomic Snapshots** creates an uncompromised defensive perimeter against both network threats and supply-chain attacks.
+2. **Performance Optimization**: The **Chimera** kernel compiled with **AutoFDO** and **ThinLTO**, coupled with zero-copy IPC over **Zbus**, provides ultra-low latency execution and responsive frame delivery.
+3. **Data Sovereignty**: Native execution on local **NPU hardware** guarantees advanced AI capabilities (including real-time portal translation) while preserving complete user privacy.
 
-**Stato dell'Audit**: `APPROVATO E CERTIFICATO DA SINGULARITY MAP AUDITOR` 🚀
+**Audit Status**: `APPROVED AND CERTIFIED BY SINGULARITY MAP AUDITOR` 🚀
