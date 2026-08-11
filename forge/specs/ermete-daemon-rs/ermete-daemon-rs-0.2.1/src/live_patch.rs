@@ -17,10 +17,18 @@ pub type ZBusPatchFn = unsafe extern "C" fn(method: *const c_char, input: *const
 /// Allows zero-downtime hot swapping without locks or stopping Tokio execution.
 static ACTIVE_PATCH_FN: AtomicPtr<()> = AtomicPtr::new(std::ptr::null_mut());
 
+/// TSan protection: Synchronization lock to prevent hot-swaps during active execution.
+static PATCH_LOCK: std::sync::RwLock<()> = std::sync::RwLock::new(());
+
 /// Exported C-ABI entrypoint symbol.
 /// This symbol remains stable in memory and serves as the exact target for eBPF Uprobes (via `aya`).
 #[no_mangle]
 pub unsafe extern "C" fn live_patch_zbus_entrypoint(method: *const c_char, input: *const c_char) -> *mut c_char {
+    if method.is_null() || input.is_null() {
+        return std::ptr::null_mut();
+    }
+    
+    let _guard = PATCH_LOCK.read().unwrap(); // Prevent data races during execution
     let fn_ptr = ACTIVE_PATCH_FN.load(Ordering::SeqCst);
     if fn_ptr.is_null() {
         std::ptr::null_mut()
@@ -302,13 +310,15 @@ impl LivePatchManager {
             *symbol
         };
 
-        // Atomic swap of the function pointer in RAM
+        // Atomic swap of the function pointer in RAM protected by write lock
         let raw_fn_ptr = patch_symbol as *mut ();
+        let _write_guard = PATCH_LOCK.write().unwrap();
         let old_ptr = ACTIVE_PATCH_FN.swap(raw_fn_ptr, Ordering::SeqCst);
 
         // Store the library Arc to prevent dlclose while functions might be executing
         {
             let mut libs = self.loaded_libs.write().map_err(|_| "Lock poisoned")?;
+            libs.clear(); // Fix LSan leak: drop old unused dynamic libraries
             libs.push(lib_arc);
             let mut history = self.patch_history.write().map_err(|_| "Lock poisoned")?;
             history.push(so_path.to_string());

@@ -120,6 +120,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 // SAFETY: Dereference pointer to fanotify_event_metadata struct after bounds check.
                 let metadata: &fanotify_event_metadata = unsafe { &*ptr };
                 
+                if (metadata.event_len as usize) < FAN_EVENT_METADATA_LEN {
+                    break;
+                }
+                if offset + (metadata.event_len as usize) > n as usize {
+                    break;
+                }
+
                 if metadata.vers != libc::FANOTIFY_METADATA_VERSION {
                     eprintln!("Mismatch fanotify version");
                     offset += metadata.event_len as usize;

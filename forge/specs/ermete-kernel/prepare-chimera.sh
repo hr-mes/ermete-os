@@ -357,7 +357,7 @@ CONFIG_ZRAM_DEF_COMP_ZSTD=y
 CONFIG_ZSWAP_COMPRESSOR_DEFAULT_ZSTD=y
 # CONFIG_ZSWAP_COMPRESSOR_DEFAULT_LZO is not set
 CONFIG_CFI_CLANG=y
-CONFIG_SHADOW_CALL_STACK=y
+# CONFIG_SHADOW_CALL_STACK is not set (Requires ARM64/RISC-V)
 
 # 6. Latenza I/O NVMe Estrema (Bypass Interrupt)
 CONFIG_BLK_DEV_IO_TRACE=n
@@ -472,8 +472,8 @@ find . -type f -name "Makefile" -path "*/arch/x86/tools/Makefile" -exec sed -i '
 
 popd > /dev/null
 if [ ! -f "SOURCES/chromeos.afdo" ]; then
-    echo ">>> Rimozione dei flag AutoFDO dal file spec in quanto il profilo non è presente..."
-    sed -i 's|-fprofile-sample-use=$RPMBUILD_DIR/SOURCES/chromeos.afdo||g' SPECS/kernel.spec
+    echo ">>> Rimozione dei flag AutoFDO dal ~/.rpmmacros in quanto il profilo non è presente..."
+    sed -i 's|-fprofile-sample-use=$RPMBUILD_DIR/SOURCES/chromeos.afdo||g' ~/.rpmmacros
 fi
 
 echo "========================================================="
