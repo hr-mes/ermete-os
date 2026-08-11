@@ -43,9 +43,6 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          sparse-checkout: |
-            forge
-            .github
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: Align Repositories
@@ -89,9 +86,6 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          sparse-checkout: |
-            forge
-            .github
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: Check Idempotency (Content Hash)
@@ -149,12 +143,6 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          sparse-checkout: |
-            forge/config
-            forge/scripts
-            forge/specs/ermete-${{ matrix.package }}
-            forge/specs
-            .github
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: Check Idempotency (GHCR Cache)
@@ -346,12 +334,6 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          sparse-checkout: |
-            forge/config
-            forge/scripts
-            forge/specs/ermete-${{ matrix.package }}
-            forge/specs
-            .github
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: Check Idempotency (GHCR Cache)
@@ -543,12 +525,6 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          sparse-checkout: |
-            forge/config
-            forge/scripts
-            forge/specs/ermete-${{ matrix.package }}
-            forge/specs
-            .github
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: Check Idempotency (GHCR Cache)
@@ -734,9 +710,6 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          sparse-checkout: |
-            forge
-            .github
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: Build & Validate Flatpak Package
@@ -768,9 +741,6 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          sparse-checkout: |
-            forge
-            .github
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: Authenticate Podman to GHCR
@@ -909,9 +879,6 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          sparse-checkout: |
-            forge
-            .github
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: Create Repo and Push OCI
@@ -1072,9 +1039,6 @@ jobs:
       - name: 📥 Checkout Repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          sparse-checkout: |
-            system
-            .github
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: 🧹 Maximize build space
@@ -1116,10 +1080,6 @@ jobs:
       - name: 📥 Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          sparse-checkout: |
-            openwiki
-            docs
-            .github
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: 🟢 Set up Node.js (v22)
@@ -1154,8 +1114,6 @@ jobs:
       - name: 📥 Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          sparse-checkout: |
-            .github
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: 📸 GTK4 UI & Wayland Headless Compositor Visual Regression Tests
