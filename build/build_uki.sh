@@ -33,7 +33,7 @@ CMDLINE="${CMDLINE:-quiet splash rw rootflags=noatime iommu=pt intel_iommu=on am
 EFI_STUB="${EFI_STUB:-}"
 
 # Secure Boot Parameters
-SIGN_IMAGE="${SIGN_IMAGE:-false}"
+SIGN_IMAGE="${SIGN_IMAGE:-true}"
 SB_KEY="${SB_KEY:-/etc/pki/secureboot/private/uki-signing.key}"
 SB_CERT="${SB_CERT:-/etc/pki/uki/uki-signing.crt}"
 
@@ -208,6 +208,7 @@ build_with_ukify() {
             --secureboot-private-key="${SB_KEY}"
             --secureboot-certificate="${SB_CERT}"
         )
+        ALREADY_SIGNED=true
     fi
 
     echo "    Exec: ${UKIFY_CMD[*]}"
@@ -290,7 +291,7 @@ fi
 #        build/ErmeteOS.efi
 # mv -f build/ErmeteOS.efi.signed build/ErmeteOS.efi
 
-if [[ "${SIGN_IMAGE}" == "true" ]]; then
+if [[ "${SIGN_IMAGE}" == "true" ]] && [[ "${ALREADY_SIGNED:-false}" != "true" ]]; then
     echo "------------------------------------------------------------------------------"
     echo "[*] Secure Boot PE Binary Signing Enabled"
     echo "------------------------------------------------------------------------------"

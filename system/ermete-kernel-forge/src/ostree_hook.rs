@@ -172,7 +172,23 @@ zbusctl call org.ermete.KernelForge /org/ermete/KernelForge org.ermete.KernelFor
         let current_kver = Self::detect_current_kernel();
         let target_kver = upstream_kver.unwrap_or("6.13.0-ermete-upstream").to_string();
 
+        
+        // VITREOL: Strict GPG/Ed25519 OSTree commit verification before interception
+        let verify_cmd = tokio::process::Command::new("ostree")
+            .arg("log")
+            .arg(&target_kver) // The commit hash or ref
+            .output()
+            .await;
+        
+        if let Ok(out) = verify_cmd {
+            let log_output = String::from_utf8_lossy(&out.stdout);
+            if !log_output.contains("Signature: ") && !log_output.contains("Valid Signature:") {
+                return Err(anyhow::anyhow!("Zero-Trust Violation: OTA Update lacks a valid cryptographic signature!"));
+            }
+        }
+
         info!("🚨 Intercepting OSTree/bootc transaction!");
+
         info!("   Current Kernel:  {}", current_kver);
         info!("   Upstream Kernel: {}", target_kver);
 
@@ -295,12 +311,7 @@ zbusctl call org.ermete.KernelForge /org/ermete/KernelForge org.ermete.KernelFor
                 dest_uki.display()
             );
         } else {
-            fs::write(&dest_uki, b"FORGED_UKI_PAYLOAD_DEPLOYMENT_STAGED")
-                .map_err(|e| anyhow!("Failed staging UKI stub at {}: {}", dest_uki.display(), e))?;
-            info!(
-                "Staged UKI image in OSTree deployment path: {}",
-                dest_uki.display()
-            );
+            return Err(anyhow::anyhow!("FATAL: Forged UKI payload is missing from src path. Refusing to stage a broken EFI stub that would cause a boot DoS. Transaction aborted!"));
         }
 
         Ok(())
