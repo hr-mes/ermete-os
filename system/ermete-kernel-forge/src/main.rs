@@ -36,9 +36,60 @@ impl KernelForgeDaemon {
     /// and forges a super-optimized Unified Kernel Image (UKI).
     async fn forge_hardware_tailored_kernel(&self) -> zbus::fdo::Result<String> {
         info!("Received D-Bus call: ForgeHardwareTailoredKernel");
-        match builder::run_kernel_forge().await {
-            Ok(res) => Ok(res.message),
-            Err(e) => Err(zbus::fdo::Error::Failed(format!("Kernel Forge Failed: {}", e))),
+
+        // 1. Generate hardware profile hash
+        let hash = hw_scanner::generate_hardware_hash()
+            .map_err(|e| zbus::fdo::Error::Failed(format!("Hardware scanning failed: {}", e)))?;
+        info!("Calculated Hardware Hash: {}", hash);
+
+        // 2. Initialize FAL Client with GitHub Token if available
+        let token = std::env::var("GITHUB_TOKEN")
+            .ok()
+            .or_else(|| std::fs::read_to_string("/home/ermete/.github_token").ok().map(|s| s.trim().to_string()));
+        let fal_client = fal_client::FalClient::new(token);
+
+        // 3. Query Global Cache (GHCR)
+        let cache_hit = fal_client.check_global_cache(&hash)
+            .await
+            .map_err(|e| zbus::fdo::Error::Failed(format!("Global Cache check failed: {}", e)))?;
+
+        // 4. On Cache Hit -> Pull & Deploy precompiled UKI without compiling
+        if cache_hit {
+            info!("Global Cache Hit for hash {}. Pulling and deploying pre-compiled Kernel...", hash);
+            fal_client.pull_and_deploy(&hash)
+                .await
+                .map_err(|e| zbus::fdo::Error::Failed(format!("Pull and deploy failed: {}", e)))?;
+
+            return Ok(format!(
+                "✅ GLOBAL CACHE HIT: Pre-compiled UKI for hardware hash {} pulled and deployed successfully (0s compile time).",
+                hash
+            ));
+        }
+
+        // 5. On Cache Miss -> Switch between Remote Cloud Forge or Local Build
+        let use_remote_forge = std::env::var("ERMETE_USE_REMOTE_FORGE")
+            .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+            .unwrap_or(false);
+
+        if use_remote_forge {
+            info!("Global Cache Miss for hash {}. Innesco compilazione remota (Remote Cloud Forge)...", hash);
+            fal_client.trigger_remote_build(&hash)
+                .await
+                .map_err(|e| zbus::fdo::Error::Failed(format!("Remote build trigger failed: {}", e)))?;
+
+            Ok(format!(
+                "❌ GLOBAL CACHE MISS: Remote Cloud Forge workflow triggered on GitHub Actions for Hardware Hash {}.",
+                hash
+            ))
+        } else {
+            info!("Global Cache Miss for hash {}. Innesco compilazione locale (Gentoo-Style Local Forge)...", hash);
+            match builder::run_kernel_forge().await {
+                Ok(res) => Ok(format!(
+                    "❌ GLOBAL CACHE MISS: Local Kernel compilation completed for Hardware Hash {}.\n{}",
+                    hash, res.message
+                )),
+                Err(e) => Err(zbus::fdo::Error::Failed(format!("Local Kernel Forge Failed: {}", e))),
+            }
         }
     }
 

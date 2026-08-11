@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Context, Result};
 use reqwest::{Client, StatusCode};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use tracing::{debug, info, warn};
 
 const GHCR_BASE_URL: &str = "https://ghcr.io/v2/hr-mes/ermete-os-kernel";
