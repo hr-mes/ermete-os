@@ -71,10 +71,10 @@ async fn main() -> Result<()> {
     let mut stack = UnikernelNetworkStack::new(mac_address, policy, Arc::clone(&metrics));
 
     // Register initial Phase 3 Micro-VM addresses in zero-trust router
-    if let Ok(microvm_ip) = "10.0.2.10".parse::<IpAddress>() {
+    if let Ok(microvm_ip) = std::env::var("ERMETE_UNIKERNEL_IP").unwrap_or_else(|_| "10.0.2.10".to_string()).as_str().parse::<IpAddress>() {
         stack.router_mut().register_microvm(microvm_ip);
     }
-    if let Ok(microvm_ip) = "10.0.2.11".parse::<IpAddress>() {
+    if let Ok(microvm_ip) = std::env::var("ERMETE_UNIKERNEL_IP").unwrap_or_else(|_| "10.0.2.10".to_string()).as_str().parse::<IpAddress>() {
         stack.router_mut().register_microvm(microvm_ip);
     }
 

@@ -336,7 +336,7 @@ impl CvmManager {
         );
 
         if hardware_valid && keylime_valid {
-            let report = verified_report.as_ref().unwrap();
+            let Some(report) = verified_report.as_ref() else { return Err(anyhow!("Critical logic error: report missing")); };
 
             // Extract measurement hex string
             let measurement_str = match report {

@@ -130,7 +130,7 @@ impl AiPredictiveEngine {
             .unwrap_or_default();
 
         let llama_endpoint = std::env::var("LLAMA_API_URL")
-            .unwrap_or_else(|_| "http://127.0.0.1:11434/api/embeddings".to_string());
+            .unwrap_or_else(|_| std::env::var("ERMETE_OLLAMA_URL").unwrap_or_else(|_| "http://127.0.0.1:11434/api/embeddings".to_string()).as_str().to_string());
 
         if dbus_conn.is_some() {
             info!("🤖 Telemetry AI Engine bound to `os.ermete.AiDaemon` DBus IPC interface.");

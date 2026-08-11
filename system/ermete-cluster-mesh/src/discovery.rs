@@ -63,7 +63,7 @@ impl ZeroConfDiscovery {
                 let beacon = SwarmBeacon {
                     node_id: self_tx.local_node_id.clone(),
                     hostname: self_tx.hostname.clone(),
-                    endpoint_ip: "127.0.0.1".to_string(), // dynamically set or broadcast
+                    endpoint_ip: std::env::var("ERMETE_DISCOVERY_IP").unwrap_or_else(|_| "0.0.0.0".to_string()).as_str().to_string(), // dynamically set or broadcast
                     discovery_port: self_tx.discovery_port,
                     ipc_port: self_tx.ipc_port,
                     dilithium_pk_b64: self_tx.dilithium_pk_b64.clone(),

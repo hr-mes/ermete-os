@@ -99,7 +99,7 @@ impl AiDaemonClient {
                 vec![]
             },
             block_ips: if anomaly && telemetry.tcp_scans_detected > 0 {
-                vec!["192.168.1.100".to_string()]
+                vec![std::env::var("ERMETE_AI_GATEWAY").unwrap_or_else(|_| "127.0.0.1".to_string()).as_str().to_string()]
             } else {
                 vec![]
             },
@@ -231,7 +231,7 @@ impl AiDaemonClient {
             sysctls.push(("vm.dirty_ratio".to_string(), "15".to_string()));
 
             if telemetry.tcp_scans_detected > 0 {
-                ips.push("192.168.1.100".to_string());
+                ips.push(std::env::var("ERMETE_AI_GATEWAY").unwrap_or_else(|_| "127.0.0.1".to_string()).as_str().to_string());
             }
 
             zero_trust = true;
