@@ -181,7 +181,7 @@ impl BpfTrampolineInjector {
 
     /// Apply a hot patch according to its specification
     pub fn apply_patch(&mut self, spec: PatchSpec) -> Result<()> {
-        let patch_id = spec.id.clone();
+        let patch_id = &spec.id;
 
         if self.patches.contains_key(&patch_id) {
             return Err(anyhow!("Patch ID '{}' is already registered/applied", patch_id));
@@ -227,7 +227,7 @@ impl BpfTrampolineInjector {
                         );
 
                         self.patches.insert(
-                            patch_id.clone(),
+                            spec.id.clone(),
                             ActivePatchRecord {
                                 spec,
                                 status: PatchStatus::Applied,
@@ -263,7 +263,7 @@ impl BpfTrampolineInjector {
                         );
 
                         self.patches.insert(
-                            patch_id.clone(),
+                            spec.id.clone(),
                             ActivePatchRecord {
                                 spec,
                                 status: PatchStatus::Applied,
@@ -310,7 +310,7 @@ impl BpfTrampolineInjector {
                         );
 
                         self.patches.insert(
-                            patch_id.clone(),
+                            spec.id.clone(),
                             ActivePatchRecord {
                                 spec,
                                 status: PatchStatus::Applied,

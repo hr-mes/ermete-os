@@ -101,8 +101,6 @@ pub struct InputRouter {
     focused_surface_id: Option<u64>,
     active_grabs: HashMap<u64, GlobalInputGrab>,
     next_grab_id: u64,
-    /// Mock override for testing Gatekeeper input auth.
-    auth_override: Option<bool>,
 }
 
 impl Default for InputRouter {
@@ -117,13 +115,10 @@ impl InputRouter {
             focused_surface_id: None,
             active_grabs: HashMap::new(),
             next_grab_id: 1,
-            auth_override: None,
         }
     }
 
-    pub fn set_auth_override(&mut self, approved: Option<bool>) {
-        self.auth_override = approved;
-    }
+
 
     pub fn set_focused_surface(&mut self, surface_id: Option<u64>) {
         info!("Input router focused surface updated to: {:?}", surface_id);
@@ -149,11 +144,7 @@ impl InputRouter {
             grab_id, app_id, pid
         );
 
-        let is_approved = if let Some(override_val) = self.auth_override {
-            override_val
-        } else {
-            GatekeeperInputAuth::authenticate_input_grab(app_id, pid).await
-        };
+        let is_approved = GatekeeperInputAuth::authenticate_input_grab(app_id, pid).await;
 
         if !is_approved {
             warn!(

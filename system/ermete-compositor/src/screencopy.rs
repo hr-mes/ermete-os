@@ -104,8 +104,6 @@ impl GatekeeperScreencopyAuth {
 pub struct ScreencopyManager {
     frames: HashMap<u64, ScreencopyFrame>,
     next_frame_id: u64,
-    /// Mock override for testing Gatekeeper responses.
-    auth_override: Option<bool>,
 }
 
 impl Default for ScreencopyManager {
@@ -119,14 +117,10 @@ impl ScreencopyManager {
         Self {
             frames: HashMap::new(),
             next_frame_id: 1,
-            auth_override: None,
         }
     }
 
-    /// Sets a mock authentication override (used in unit tests).
-    pub fn set_auth_override(&mut self, approved: Option<bool>) {
-        self.auth_override = approved;
-    }
+
 
     /// Initiates a screen capture request for an output.
     /// Mandates Gatekeeper authentication before granting frame copy permission.
@@ -147,11 +141,7 @@ impl ScreencopyManager {
         );
 
         // Perform explicit authentication step via Gatekeeper DBus popup
-        let is_approved = if let Some(override_val) = self.auth_override {
-            override_val
-        } else {
-            GatekeeperScreencopyAuth::authenticate_screen_capture(app_id, pid).await
-        };
+        let is_approved = GatekeeperScreencopyAuth::authenticate_screen_capture(app_id, pid).await;
 
         if !is_approved {
             warn!(
