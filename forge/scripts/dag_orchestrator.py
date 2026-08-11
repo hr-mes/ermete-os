@@ -134,6 +134,8 @@ def build_dag(manifest):
 
     # Parse spec files for direct dependencies
     for pkg in all_custom:
+        if pkg not in all_nodes:
+            continue
         spec_dir = os.path.join(SPECS_DIR, f"ermete-{pkg}")
         if not os.path.exists(spec_dir):
             spec_dir = os.path.join(SPECS_DIR, pkg)
