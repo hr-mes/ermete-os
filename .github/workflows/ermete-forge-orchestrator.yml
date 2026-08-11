@@ -71,9 +71,9 @@ jobs:
         if: always()
         run: |
           if command -v sudo >/dev/null 2>&1; then
-            sudo chown -R 1001:1001 ${{ github.workspace }} || sudo chown -R 1000:1000 ${{ github.workspace }} || true
+            sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
-            chown -R 1001:1001 ${{ github.workspace }} || chown -R 1000:1000 ${{ github.workspace }} || true
+            chown -R 1001:1001 . || chown -R 1000:1000 . || true
           fi
   build-builder:
     name: 🏗️ Build Base Builder
@@ -128,9 +128,9 @@ jobs:
         if: always()
         run: |
           if command -v sudo >/dev/null 2>&1; then
-            sudo chown -R 1001:1001 ${{ github.workspace }} || sudo chown -R 1000:1000 ${{ github.workspace }} || true
+            sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
-            chown -R 1001:1001 ${{ github.workspace }} || chown -R 1000:1000 ${{ github.workspace }} || true
+            chown -R 1001:1001 . || chown -R 1000:1000 . || true
           fi
   dag-build-level-0:
     needs: [build-builder, orchestrator-brain]
@@ -325,9 +325,9 @@ jobs:
         if: always()
         run: |
           if command -v sudo >/dev/null 2>&1; then
-            sudo chown -R 1001:1001 ${{ github.workspace }} || sudo chown -R 1000:1000 ${{ github.workspace }} || true
+            sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
-            chown -R 1001:1001 ${{ github.workspace }} || chown -R 1000:1000 ${{ github.workspace }} || true
+            chown -R 1001:1001 . || chown -R 1000:1000 . || true
           fi
   dag-build-level-1:
     needs: [build-builder, orchestrator-brain, dag-build-level-0]
@@ -522,9 +522,9 @@ jobs:
         if: always()
         run: |
           if command -v sudo >/dev/null 2>&1; then
-            sudo chown -R 1001:1001 ${{ github.workspace }} || sudo chown -R 1000:1000 ${{ github.workspace }} || true
+            sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
-            chown -R 1001:1001 ${{ github.workspace }} || chown -R 1000:1000 ${{ github.workspace }} || true
+            chown -R 1001:1001 . || chown -R 1000:1000 . || true
           fi
   dag-build-level-2:
     needs: [build-builder, orchestrator-brain, dag-build-level-1]
@@ -717,9 +717,9 @@ jobs:
         if: always()
         run: |
           if command -v sudo >/dev/null 2>&1; then
-            sudo chown -R 1001:1001 ${{ github.workspace }} || sudo chown -R 1000:1000 ${{ github.workspace }} || true
+            sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
-            chown -R 1001:1001 ${{ github.workspace }} || chown -R 1000:1000 ${{ github.workspace }} || true
+            chown -R 1001:1001 . || chown -R 1000:1000 . || true
           fi
   dag-build-flatpaks:
     needs: [build-builder, orchestrator-brain, dag-build-level-2]
@@ -750,9 +750,9 @@ jobs:
         if: always()
         run: |
           if command -v sudo >/dev/null 2>&1; then
-            sudo chown -R 1001:1001 ${{ github.workspace }} || sudo chown -R 1000:1000 ${{ github.workspace }} || true
+            sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
-            chown -R 1001:1001 ${{ github.workspace }} || chown -R 1000:1000 ${{ github.workspace }} || true
+            chown -R 1001:1001 . || chown -R 1000:1000 . || true
           fi
   build-nvidia:
     needs: [build-builder]
@@ -893,9 +893,9 @@ jobs:
         if: always()
         run: |
           if command -v sudo >/dev/null 2>&1; then
-            sudo chown -R 1001:1001 ${{ github.workspace }} || sudo chown -R 1000:1000 ${{ github.workspace }} || true
+            sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
-            chown -R 1001:1001 ${{ github.workspace }} || chown -R 1000:1000 ${{ github.workspace }} || true
+            chown -R 1001:1001 . || chown -R 1000:1000 . || true
           fi
   build-repo:
     name: 📦 Aggregate Repositories & Deploy DNF/Flatpak Channel
@@ -1051,9 +1051,9 @@ jobs:
         if: always()
         run: |
           if command -v sudo >/dev/null 2>&1; then
-            sudo chown -R 1001:1001 ${{ github.workspace }} || sudo chown -R 1000:1000 ${{ github.workspace }} || true
+            sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
-            chown -R 1001:1001 ${{ github.workspace }} || chown -R 1000:1000 ${{ github.workspace }} || true
+            chown -R 1001:1001 . || chown -R 1000:1000 . || true
           fi
   dag-system-image:
     name: 💿 System Image & Disk Build
@@ -1101,9 +1101,9 @@ jobs:
         if: always()
         run: |
           if command -v sudo >/dev/null 2>&1; then
-            sudo chown -R 1001:1001 ${{ github.workspace }} || sudo chown -R 1000:1000 ${{ github.workspace }} || true
+            sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
-            chown -R 1001:1001 ${{ github.workspace }} || chown -R 1000:1000 ${{ github.workspace }} || true
+            chown -R 1001:1001 . || chown -R 1000:1000 . || true
           fi
   dag-openwiki-portal:
     name: 🌌 OpenWiki Spatial Portal Build
@@ -1140,9 +1140,9 @@ jobs:
         if: always()
         run: |
           if command -v sudo >/dev/null 2>&1; then
-            sudo chown -R 1001:1001 ${{ github.workspace }} || sudo chown -R 1000:1000 ${{ github.workspace }} || true
+            sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
-            chown -R 1001:1001 ${{ github.workspace }} || chown -R 1000:1000 ${{ github.workspace }} || true
+            chown -R 1001:1001 . || chown -R 1000:1000 . || true
           fi
   visual-regression-ui-performance:
     name: 👁️ Visual Regression & UI Performance
@@ -1201,7 +1201,7 @@ jobs:
         if: always()
         run: |
           if command -v sudo >/dev/null 2>&1; then
-            sudo chown -R 1001:1001 ${{ github.workspace }} || sudo chown -R 1000:1000 ${{ github.workspace }} || true
+            sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
-            chown -R 1001:1001 ${{ github.workspace }} || chown -R 1000:1000 ${{ github.workspace }} || true
+            chown -R 1001:1001 . || chown -R 1000:1000 . || true
           fi

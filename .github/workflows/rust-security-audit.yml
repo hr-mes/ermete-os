@@ -58,9 +58,9 @@ jobs:
         if: always()
         run: |
           if command -v sudo >/dev/null 2>&1; then
-            sudo chown -R 1001:1001 ${{ github.workspace }} || sudo chown -R 1000:1000 ${{ github.workspace }} || true
+            sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
-            chown -R 1001:1001 ${{ github.workspace }} || chown -R 1000:1000 ${{ github.workspace }} || true
+            chown -R 1001:1001 . || chown -R 1000:1000 . || true
           fi
   kani-verification:
     name: 🔬 Kani Formal Verification (${{ matrix.module }} - Shard ${{ matrix.shard }})
@@ -183,9 +183,9 @@ jobs:
         if: always()
         run: |
           if command -v sudo >/dev/null 2>&1; then
-            sudo chown -R 1001:1001 ${{ github.workspace }} || sudo chown -R 1000:1000 ${{ github.workspace }} || true
+            sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
-            chown -R 1001:1001 ${{ github.workspace }} || chown -R 1000:1000 ${{ github.workspace }} || true
+            chown -R 1001:1001 . || chown -R 1000:1000 . || true
           fi
   kani-targeted-verify:
     name: 📐 Kani Formal Mathematical Verification
@@ -225,9 +225,9 @@ jobs:
         if: always()
         run: |
           if command -v sudo >/dev/null 2>&1; then
-            sudo chown -R 1001:1001 ${{ github.workspace }} || sudo chown -R 1000:1000 ${{ github.workspace }} || true
+            sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
-            chown -R 1001:1001 ${{ github.workspace }} || chown -R 1000:1000 ${{ github.workspace }} || true
+            chown -R 1001:1001 . || chown -R 1000:1000 . || true
           fi
   bare-metal-audit:
     name: ⚡ eBPF & Bare-Metal Build Audit (${{ matrix.target_name }})
@@ -299,7 +299,7 @@ jobs:
         if: always()
         run: |
           if command -v sudo >/dev/null 2>&1; then
-            sudo chown -R 1001:1001 ${{ github.workspace }} || sudo chown -R 1000:1000 ${{ github.workspace }} || true
+            sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
-            chown -R 1001:1001 ${{ github.workspace }} || chown -R 1000:1000 ${{ github.workspace }} || true
+            chown -R 1001:1001 . || chown -R 1000:1000 . || true
           fi
