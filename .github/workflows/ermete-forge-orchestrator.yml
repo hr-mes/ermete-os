@@ -999,13 +999,12 @@ jobs:
           echo "DEFAULT_TAG=latest" >> ${GITHUB_ENV}
       - name: 📥 Checkout Repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-      - name: ⚙️ Set Default Rust Toolchain
-        run: rustup default stable
-
         with:
           sparse-checkout: |
             system
             .github
+      - name: ⚙️ Set Default Rust Toolchain
+        run: rustup default stable
       - name: 🧹 Maximize build space
         uses: ublue-os/remove-unwanted-software@cc0becac701cf642c8f0a6613bbdaf5dc36b259e # v9
       - name: 🔑 Login to GHCR
@@ -1035,14 +1034,13 @@ jobs:
     steps:
       - name: 📥 Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-      - name: ⚙️ Set Default Rust Toolchain
-        run: rustup default stable
-
         with:
           sparse-checkout: |
             openwiki
             docs
             .github
+      - name: ⚙️ Set Default Rust Toolchain
+        run: rustup default stable
       - name: 🟢 Set up Node.js (v22)
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
@@ -1065,12 +1063,11 @@ jobs:
     steps:
       - name: 📥 Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-      - name: ⚙️ Set Default Rust Toolchain
-        run: rustup default stable
-
         with:
           sparse-checkout: |
             .github
+      - name: ⚙️ Set Default Rust Toolchain
+        run: rustup default stable
       - name: 📸 GTK4 UI & Wayland Headless Compositor Visual Regression Tests
         env:
           WLR_BACKENDS: headless
