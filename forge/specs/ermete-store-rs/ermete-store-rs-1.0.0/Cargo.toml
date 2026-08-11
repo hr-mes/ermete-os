@@ -11,8 +11,6 @@ tokio = { workspace = true, features = ["full"] }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
-gtk4 = { workspace = true }
-relm4 = { workspace = true }
 zbus = { workspace = true, features = ["tokio"] }
 pqc_dilithium = { workspace = true }
 hex = { workspace = true }

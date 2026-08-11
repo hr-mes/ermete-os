@@ -16,7 +16,6 @@ path = "src/ui.rs"
 
 [dependencies]
 dirs = "5.0"
-gtk4 = { workspace = true }
 glib = { workspace = true }
 zbus = { workspace = true, features = ["tokio"] }
 tokio = { workspace = true, features = ["full"] }
