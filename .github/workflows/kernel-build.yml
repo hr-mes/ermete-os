@@ -190,5 +190,5 @@ jobs:
     - name: 🧹 Deep Workspace Cleanup (Prevent 0MB Error)
       if: always()
       run: |
-        sudo rm -rf .ccache_local RPMS_OUT profiles || true
+        podman unshare rm -rf .ccache_local RPMS_OUT profiles || rm -rf .ccache_local RPMS_OUT profiles || true
         podman container prune -f || true

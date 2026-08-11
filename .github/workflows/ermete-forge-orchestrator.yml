@@ -981,7 +981,7 @@ jobs:
         if: always()
         run: |
           podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -v "${{ github.workspace }}:/workspace:rw" -w /workspace docker.io/library/ubuntu:latest rm -rf /workspace/var-tmp || true
-          sudo chown -R 1000:1000 ${{ github.workspace }} || true
+          sudo chown -R $(id -u):$(id -g) ${{ github.workspace }} || podman unshare chown -R $(id -u):$(id -g) ${{ github.workspace }} || true
 
   dag-system-image:
     name: 💿 System Image & Disk Build
