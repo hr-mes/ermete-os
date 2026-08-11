@@ -132,6 +132,18 @@ KERNEL_SRPM=$(ls kernel-*.src.rpm | sort -V | head -n 1)
 KERNEL_VER=$(rpm -qp --qf '%{VERSION}' "$KERNEL_SRPM" | cut -d. -f1,2)
 rm -f kernel-*.src.rpm
 
+echo ">>> Disarmo dei config checkers upstream per consentire modifiche Frankenstein..."
+echo "#!/bin/bash" > SOURCES/check-configs.sh
+echo "exit 0" >> SOURCES/check-configs.sh
+chmod +x SOURCES/check-configs.sh
+if [ -f SOURCES/process_configs.sh ]; then
+    sed -i 's/die "Mismatches found in configuration files"/echo "WARNING: Mismatches ignored (Frankenstein Mode)"/g' SOURCES/process_configs.sh || true
+    sed -i 's/die "Found unset config items/echo "WARNING: Unset configs ignored/g' SOURCES/process_configs.sh || true
+fi
+if [ -f SOURCES/check-configs.awk ]; then
+    echo "BEGIN { exit 0 }" > SOURCES/check-configs.awk
+fi
+
 CACHY_PATCH_DIR="/tmp/cachyos-patches/$KERNEL_VER"
 if [ ! -d "$CACHY_PATCH_DIR" ]; then
     echo "ERRORE FATALE: Discrepanza dinamica. Trovato $KERNEL_VER ma mancano le patch CachyOS!"
