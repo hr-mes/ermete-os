@@ -1030,7 +1030,6 @@ jobs:
           echo "DEFAULT_TAG=latest" >> ${GITHUB_ENV}
       - name: 📥 Checkout Repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-        with:
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: 🧹 Maximize build space
@@ -1071,7 +1070,6 @@ jobs:
     steps:
       - name: 📥 Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-        with:
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: 🟢 Set up Node.js (v22)
@@ -1105,7 +1103,6 @@ jobs:
     steps:
       - name: 📥 Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-        with:
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: 📸 GTK4 UI & Wayland Headless Compositor Visual Regression Tests
