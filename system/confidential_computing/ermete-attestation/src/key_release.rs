@@ -54,18 +54,34 @@ impl KeyReleaseManager {
             }
         };
 
-        let salt = ring::hkdf::Salt::new(ring::hkdf::HKDF_SHA256, b"ermete-zero-trust-luks-salt-v1");
-        let prk = salt.extract(ikm);
-        let info_slice = [info_label];
-        let okm = prk
-            .expand(&info_slice, ring::hkdf::HKDF_SHA256)
-            .map_err(|_| anyhow::anyhow!("HKDF expansion failed for LUKS key release"))?;
+        
+        // VITREOL: Never derive secrets from public measurements. 
+        // We strictly invoke hardware-backed unsealing passing the measurement policy.
+        let enclave_tool = match report {
+            VerifiedHardwareReport::SevSnp { .. } => "sev-guest-unseal",
+            VerifiedHardwareReport::Tdx { .. } => "tdx-guest-unseal",
+            _ => "tpm2_unseal",
+        };
+
+        info!("Invoking strict hardware unseal via {}", enclave_tool);
+        let output = std::process::Command::new(enclave_tool)
+            .arg("--pcr-policy")
+            .arg(hex::encode(ikm))
+            .output()
+            .map_err(|e| anyhow::anyhow!("Hardware unseal binary missing or failed: {}", e))?;
+
+        if !output.status.success() {
+            return Err(anyhow::anyhow!("Hardware unsealing cryptographically rejected by enclave!"));
+        }
+
+        if output.stdout.len() < 32 {
+            return Err(anyhow::anyhow!("Hardware returned malformed key length"));
+        }
 
         let mut key_buffer = [0u8; 32];
-        okm.fill(&mut key_buffer)
-            .map_err(|_| anyhow::anyhow!("Failed to fill HKDF output key buffer"))?;
-
+        key_buffer.copy_from_slice(&output.stdout[..32]);
         let secret_key = SecretDecryptionKey::new(key_buffer);
+
 
         // Ensure parent directory /run/ermete exists
         if let Some(parent) = self.output_path.parent() {
