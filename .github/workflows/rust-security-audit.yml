@@ -53,6 +53,15 @@ jobs:
         run: |
           cargo deny check
 
+
+      - name: 🧹 Fix Workspace Permissions (GH Actions Cleanup)
+        if: always()
+        run: |
+          if command -v sudo >/dev/null 2>&1; then
+            sudo chown -R 1001:1001 ${{ github.workspace }} || sudo chown -R 1000:1000 ${{ github.workspace }} || true
+          else
+            chown -R 1001:1001 ${{ github.workspace }} || chown -R 1000:1000 ${{ github.workspace }} || true
+          fi
   kani-verification:
     name: 🔬 Kani Formal Verification (${{ matrix.module }} - Shard ${{ matrix.shard }})
     runs-on: ubuntu-24.04
@@ -169,6 +178,15 @@ jobs:
           if-no-files-found: ignore
           compression-level: 1
 
+
+      - name: 🧹 Fix Workspace Permissions (GH Actions Cleanup)
+        if: always()
+        run: |
+          if command -v sudo >/dev/null 2>&1; then
+            sudo chown -R 1001:1001 ${{ github.workspace }} || sudo chown -R 1000:1000 ${{ github.workspace }} || true
+          else
+            chown -R 1001:1001 ${{ github.workspace }} || chown -R 1000:1000 ${{ github.workspace }} || true
+          fi
   kani-targeted-verify:
     name: 📐 Kani Formal Mathematical Verification
     if: github.event_name == 'push' || github.event_name == 'pull_request'
@@ -202,6 +220,15 @@ jobs:
         run: |
           RUSTFLAGS='--cfg curve25519_dalek_backend="serial"' cargo kani -p ermete-hypervisor-daemon
 
+
+      - name: 🧹 Fix Workspace Permissions (GH Actions Cleanup)
+        if: always()
+        run: |
+          if command -v sudo >/dev/null 2>&1; then
+            sudo chown -R 1001:1001 ${{ github.workspace }} || sudo chown -R 1000:1000 ${{ github.workspace }} || true
+          else
+            chown -R 1001:1001 ${{ github.workspace }} || chown -R 1000:1000 ${{ github.workspace }} || true
+          fi
   bare-metal-audit:
     name: ⚡ eBPF & Bare-Metal Build Audit (${{ matrix.target_name }})
     runs-on: ubuntu-24.04
@@ -267,3 +294,12 @@ jobs:
           compression-level: 1
 
 
+
+      - name: 🧹 Fix Workspace Permissions (GH Actions Cleanup)
+        if: always()
+        run: |
+          if command -v sudo >/dev/null 2>&1; then
+            sudo chown -R 1001:1001 ${{ github.workspace }} || sudo chown -R 1000:1000 ${{ github.workspace }} || true
+          else
+            chown -R 1001:1001 ${{ github.workspace }} || chown -R 1000:1000 ${{ github.workspace }} || true
+          fi
