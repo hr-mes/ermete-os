@@ -1640,7 +1640,6 @@ name = "ermete-gatekeeper-rs"
 version = "1.0.0"
 dependencies = [
  "anyhow",
- "gtk4",
  "libc",
  "pqc_dilithium",
  "serde",
