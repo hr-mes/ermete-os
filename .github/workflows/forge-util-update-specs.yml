@@ -22,9 +22,9 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: ⚙️ Set Default Rust Toolchain
+        run: rustup default stable
 
-        - name: ⚙️ Set Default Rust Toolchain
-          run: rustup default stable
         with:
           token: ${{ secrets.PAT_TOKEN || github.token }}
 

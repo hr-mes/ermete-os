@@ -42,9 +42,9 @@ jobs:
       has_changes: ${{ steps.brain.outputs.has_changes }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
+
         with:
           sparse-checkout: |
             forge
@@ -80,9 +80,9 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
+
         with:
           sparse-checkout: |
             forge
@@ -132,9 +132,9 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
+
         with:
           sparse-checkout: |
             forge/config
@@ -317,9 +317,9 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
+
         with:
           sparse-checkout: |
             forge/config
@@ -502,9 +502,9 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
+
         with:
           sparse-checkout: |
             forge/config
@@ -681,9 +681,9 @@ jobs:
         flatpak: ${{ fromJson(needs.orchestrator-brain.outputs.dag_flatpaks) }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
+
         with:
           sparse-checkout: |
             forge
@@ -707,9 +707,9 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
+
         with:
           sparse-checkout: |
             forge
@@ -836,9 +836,9 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
+
         with:
           sparse-checkout: |
             forge
@@ -991,9 +991,9 @@ jobs:
           echo "DEFAULT_TAG=latest" >> ${GITHUB_ENV}
       - name: 📥 Checkout Repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: ⚙️ Set Default Rust Toolchain
+        run: rustup default stable
 
-        - name: ⚙️ Set Default Rust Toolchain
-          run: rustup default stable
         with:
           sparse-checkout: |
             system
@@ -1026,9 +1026,9 @@ jobs:
     steps:
       - name: 📥 Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: ⚙️ Set Default Rust Toolchain
+        run: rustup default stable
 
-        - name: ⚙️ Set Default Rust Toolchain
-          run: rustup default stable
         with:
           sparse-checkout: |
             openwiki
@@ -1056,9 +1056,9 @@ jobs:
     steps:
       - name: 📥 Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: ⚙️ Set Default Rust Toolchain
+        run: rustup default stable
 
-        - name: ⚙️ Set Default Rust Toolchain
-          run: rustup default stable
         with:
           sparse-checkout: |
             .github
