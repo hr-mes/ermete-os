@@ -276,6 +276,7 @@ jobs:
           rustup toolchain install nightly
           rustup default nightly
           rustup component add rust-src
+          cargo install bpf-linker --locked
 
 
       - name: ⚡ Restore sccache Cache

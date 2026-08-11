@@ -1,3 +1,4 @@
+#![allow(clippy::undocumented_unsafe_blocks, clippy::multiple_unsafe_ops_per_block)]
 #![allow(unsafe_code)]
 //! Zero-Copy Lock-Free Shared Memory Ring Buffer (SPSC IPC Bridge)
 //!
