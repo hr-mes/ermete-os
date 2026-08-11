@@ -42,7 +42,6 @@ jobs:
       has_changes: ${{ steps.brain.outputs.has_changes }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-        with:
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: Align Repositories
@@ -85,7 +84,6 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-        with:
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: Check Idempotency (Content Hash)
@@ -142,7 +140,6 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-        with:
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: Check Idempotency (GHCR Cache)
@@ -333,7 +330,6 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-        with:
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: Check Idempotency (GHCR Cache)
@@ -524,7 +520,6 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-        with:
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: Check Idempotency (GHCR Cache)
@@ -709,7 +704,6 @@ jobs:
         flatpak: ${{ fromJson(needs.orchestrator-brain.outputs.dag_flatpaks) }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-        with:
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: Build & Validate Flatpak Package
@@ -740,7 +734,6 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-        with:
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: Authenticate Podman to GHCR
@@ -878,7 +871,6 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-        with:
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: Create Repo and Push OCI
