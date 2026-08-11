@@ -1,3 +1,5 @@
+use std::io::Write;
+use std::os::unix::fs::OpenOptionsExt;
 use std::path::PathBuf;
 use std::process::Command;
 use tracing::{info, warn};
@@ -64,7 +66,13 @@ pub async fn apply_dynamic_theme(wallpaper_path: &str, color_scheme: &str) -> Re
             if !template_path.exists() {
                 let default_tpl = std::fs::read_to_string("/usr/share/ermete/matugen_theme.template")
                     .unwrap_or_else(|_| DEFAULT_TEMPLATE.to_string());
-                std::fs::write(&template_path, default_tpl)
+                std::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .mode(0o600)
+                .open(&template_path)
+                .and_then(|mut f| std::io::Write::write_all(&mut f, default_tpl.as_bytes()))
                     .with_context(|| format!("Failed to write template file {:?}", template_path))?;
             }
 
@@ -75,14 +83,22 @@ pub async fn apply_dynamic_theme(wallpaper_path: &str, color_scheme: &str) -> Re
                 theme_css.display()
             );
 
-            std::fs::write(&tmp_cfg, &cfg_content)
+            std::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .mode(0o600)
+                .open(&tmp_cfg)
+                .and_then(|mut f| std::io::Write::write_all(&mut f, cfg_content.as_bytes()))
                 .with_context(|| format!("Failed to write temp config file {:?}", tmp_cfg))?;
 
             let tmp_cfg_str = tmp_cfg.to_str().ok_or_else(|| anyhow::anyhow!("Invalid temp config path"))?;
             let mat_res = Command::new("matugen")
                 .args(["image", &wallpaper, "--source-color-index", "0", "--mode", mode, "-c", tmp_cfg_str])
                 .status();
-            let _ = std::fs::remove_file(&tmp_cfg);
+            if let Err(e) = std::fs::remove_file(&tmp_cfg) {
+            tracing::error!("Failed to remove tmp_cfg {:?}: {:?}", tmp_cfg, e);
+        }
 
             if mat_res.map(|s| s.success()).unwrap_or(false) {
                 info!("Dynamic theme generated cleanly via matugen direct CLI.");
@@ -126,7 +142,13 @@ pub async fn apply_dynamic_theme(wallpaper_path: &str, color_scheme: &str) -> Re
 @define-color window_bg #1e1e2e;
 @define-color window_fg #cdd6f4;
 "#;
-            std::fs::write(&theme_css, fallback_css)
+            std::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .mode(0o600)
+            .open(&theme_css)
+            .and_then(|mut f| std::io::Write::write_all(&mut f, fallback_css.as_bytes()))
                 .with_context(|| format!("Failed to write fallback theme CSS: {:?}", theme_css))?;
             warn!("Matugen not available. Wrote fallback theme to theme.css.");
         }
@@ -143,9 +165,20 @@ mod tests {
     #[tokio::test]
     async fn test_apply_dynamic_theme_pipeline() {
         let tmp_dir = std::env::temp_dir().join("ermete_test_theme_pipeline");
-        let _ = std::fs::create_dir_all(&tmp_dir);
+        if let Err(e) = std::fs::create_dir_all(&tmp_dir) {
+            tracing::error!("Failed to create tmp_dir {:?}: {:?}", tmp_dir, e);
+        }
         let wallpaper = tmp_dir.join("test_bg.png");
-        let _ = std::fs::write(&wallpaper, "fake_png_data");
+        if let Err(e) = std::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .mode(0o600)
+            .open(&wallpaper)
+            .and_then(|mut f| std::io::Write::write_all(&mut f, b"fake_png_data"))
+        {
+            tracing::error!("Failed to write wallpaper {:?}: {:?}", wallpaper, e);
+        }
 
         let wallpaper_str = wallpaper.to_str().expect("wallpaper path UTF-8");
         apply_dynamic_theme(wallpaper_str, "prefer-dark").await.unwrap();

@@ -3,6 +3,7 @@
 //! Provides non-blocking Tokio-based IPC communication over Unix Sockets
 //! and async filesystem mutations for Niri compositor settings.
 
+use std::os::unix::fs::OpenOptionsExt;
 use serde::de::DeserializeOwned;
 use serde_json::Value;
 use std::env;
@@ -209,7 +210,19 @@ pub async fn update_niri_kdl_setting(setting_key: &str, val: &str) {
         if !found {
             new_lines.push(format!("{} {}", setting_key, val));
         }
-        let _ = fs::write(&path, new_lines.join("\n")).await;
+        let content_str = new_lines.join("\n");
+            if let Err(e) = async {
+                let mut file = tokio::fs::OpenOptions::new()
+                    .write(true)
+                    .create(true)
+                    .truncate(true)
+                    .mode(0o600)
+                    .open(&path)
+                    .await?;
+                tokio::io::AsyncWriteExt::write_all(&mut file, content_str.as_bytes()).await
+            }.await {
+                tracing::error!("Failed to update config at {:?}: {:?}", path, e);
+            }
     }
 }
 

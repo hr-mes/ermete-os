@@ -1,3 +1,4 @@
+use std::os::unix::fs::OpenOptionsExt;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use tokio::sync::watch;
@@ -89,7 +90,9 @@ impl AppearanceStateStore {
 
     pub fn load() -> AppearanceDomainState {
         let dir = config_dir();
-        let _ = std::fs::create_dir_all(&dir);
+        if let Err(e) = std::fs::create_dir_all(&dir) {
+            tracing::error!("Failed to create directory {:?}: {:?}", dir, e);
+        }
         let mut path = dir;
         path.push("appearance.json");
         if let Ok(content) = std::fs::read_to_string(&path) {
@@ -107,7 +110,15 @@ impl AppearanceStateStore {
         path.push("appearance.json");
         let content = serde_json::to_string_pretty(state)?;
         let temp_path = path.with_extension("json.tmp");
-        std::fs::write(&temp_path, &content)?;
+        {
+            let mut file = std::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .mode(0o600)
+                .open(&temp_path)?;
+            std::io::Write::write_all(&mut file, content.as_bytes())?;
+        }
         std::fs::rename(&temp_path, &path)?;
         Ok(())
     }
@@ -116,7 +127,16 @@ impl AppearanceStateStore {
         let path = Self::ensure_config_file().await?;
         let content = serde_json::to_string_pretty(state)?;
         let temp_path = path.with_extension("json.tmp");
-        tokio::fs::write(&temp_path, &content).await?;
+        {
+            let mut file = tokio::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .mode(0o600)
+                .open(&temp_path)
+                .await?;
+            tokio::io::AsyncWriteExt::write_all(&mut file, content.as_bytes()).await?;
+        }
         tokio::fs::rename(&temp_path, &path).await?;
         Ok(())
     }
@@ -163,7 +183,9 @@ impl VoiceOverStateStore {
 
     pub fn load() -> VoiceOverDomainState {
         let dir = config_dir();
-        let _ = std::fs::create_dir_all(&dir);
+        if let Err(e) = std::fs::create_dir_all(&dir) {
+            tracing::error!("Failed to create directory {:?}: {:?}", dir, e);
+        }
         let mut path = dir;
         path.push("voiceover.json");
         if let Ok(content) = std::fs::read_to_string(&path) {
@@ -181,7 +203,15 @@ impl VoiceOverStateStore {
         path.push("voiceover.json");
         let content = serde_json::to_string_pretty(state)?;
         let temp_path = path.with_extension("json.tmp");
-        std::fs::write(&temp_path, &content)?;
+        {
+            let mut file = std::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .mode(0o600)
+                .open(&temp_path)?;
+            std::io::Write::write_all(&mut file, content.as_bytes())?;
+        }
         std::fs::rename(&temp_path, &path)?;
         Ok(())
     }
@@ -190,7 +220,16 @@ impl VoiceOverStateStore {
         let path = Self::ensure_config_file().await?;
         let content = serde_json::to_string_pretty(state)?;
         let temp_path = path.with_extension("json.tmp");
-        tokio::fs::write(&temp_path, &content).await?;
+        {
+            let mut file = tokio::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .mode(0o600)
+                .open(&temp_path)
+                .await?;
+            tokio::io::AsyncWriteExt::write_all(&mut file, content.as_bytes()).await?;
+        }
         tokio::fs::rename(&temp_path, &path).await?;
         Ok(())
     }
@@ -239,9 +278,21 @@ impl SettingsService {
         tokio::spawn(async move {
             let mut appearance_state = appearance_tx.borrow().clone();
             let mut voiceover_state = voiceover_tx.borrow().clone();
-            let conn = zbus::Connection::session().await.ok();
+            let conn = match zbus::Connection::session().await {
+                Ok(c) => Some(c),
+                Err(e) => {
+                    tracing::error!("Failed to connect to zbus session bus: {:?}", e);
+                    None
+                }
+            };
             let worker = if let Some(ref c) = conn {
-                SettingsWorkerProxy::new(c).await.ok()
+                match SettingsWorkerProxy::new(c).await {
+                    Ok(w) => Some(w),
+                    Err(e) => {
+                        tracing::error!("Failed to create SettingsWorkerProxy: {:?}", e);
+                        None
+                    }
+                }
             } else {
                 None
             };

@@ -1,3 +1,5 @@
+use std::io::Write;
+use std::os::unix::fs::OpenOptionsExt;
 use crate::dock_engine::DockMode;
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -56,7 +58,13 @@ pub fn save_dock_config(config: &DockConfig) -> Result<(), String> {
     }
     let json_str = serde_json::to_string_pretty(config)
         .map_err(|e| format!("Impossibile serializzare configurazione Dock: {}", e))?;
-    fs::write(&path, json_str)
+    std::fs::OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .mode(0o600)
+        .open(&path)
+        .and_then(|mut f| std::io::Write::write_all(&mut f, json_str.as_bytes()))
         .map_err(|e| format!("Impossibile scrivere file {}: {}", path.display(), e))?;
     Ok(())
 }
@@ -135,8 +143,12 @@ mod tests {
     fn test_api_add_remove_and_is_pinned() {
         let _lock = TEST_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
         let tmp_dir = std::env::temp_dir().join("ermete_test_dock_config_api");
-        let _ = fs::remove_dir_all(&tmp_dir);
-        let _ = fs::create_dir_all(&tmp_dir);
+        if let Err(e) = fs::remove_dir_all(&tmp_dir) {
+                tracing::error!("Failed to remove tmp_dir {:?}: {:?}", tmp_dir, e);
+            }
+        if let Err(e) = fs::create_dir_all(&tmp_dir) {
+                tracing::error!("Failed to create tmp_dir {:?}: {:?}", tmp_dir, e);
+            }
         std::env::set_var("HOME", &tmp_dir);
 
         // Initial load should create default config
@@ -161,6 +173,8 @@ mod tests {
         assert!(!is_pinned("custom.app.desktop"));
 
         // Cleanup
-        let _ = fs::remove_dir_all(&tmp_dir);
+        if let Err(e) = fs::remove_dir_all(&tmp_dir) {
+                tracing::error!("Failed to remove tmp_dir {:?}: {:?}", tmp_dir, e);
+            }
     }
 }

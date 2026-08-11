@@ -1,3 +1,5 @@
+use std::io::Write;
+use std::os::unix::fs::OpenOptionsExt;
 use zbus::{interface, proxy, Connection, fdo};
 use zbus::zvariant::OwnedObjectPath;
 use std::collections::{HashMap, HashSet};
@@ -368,7 +370,16 @@ mod tests {
     fn test_build_vpn_tunnel_dict_from_file() {
         let tmp_path = "/tmp/test_ermete_vpn.conf";
         let content = "remote = vpn.ermete.os\nport = 1194\n";
-        let _ = std::fs::write(tmp_path, content);
+        if let Err(e) = std::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .mode(0o600)
+            .open(tmp_path)
+            .and_then(|mut f| std::io::Write::write_all(&mut f, content.as_bytes()))
+        {
+            tracing::error!("Failed to write temporary network file {:?}: {:?}", tmp_path, e);
+        }
         let dict = Network::build_vpn_tunnel_dict("Ermete-VPN", "openvpn", tmp_path, content);
 
         let conn = dict.get("connection").expect("missing 'connection' setting");
@@ -389,7 +400,9 @@ mod tests {
         } else {
             panic!("expected Dict for vpn.data");
         }
-        let _ = std::fs::remove_file(tmp_path);
+        if let Err(e) = std::fs::remove_file(tmp_path) {
+            tracing::error!("Failed to remove temporary network file {:?}: {:?}", tmp_path, e);
+        }
     }
 }
 

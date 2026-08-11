@@ -1,3 +1,4 @@
+use std::io::Write;
 use libc::{setpriority, PRIO_PROCESS};
 use std::collections::{HashMap, HashSet};
 use std::fs;
@@ -47,7 +48,7 @@ impl CgroupFreezer {
         if let Some(cgroup_dir) = Self::get_cgroup_path_for_pid(pid) {
             let freeze_file = cgroup_dir.join("cgroup.freeze");
             if freeze_file.exists() {
-                match fs::write(&freeze_file, "1\n") {
+                match std::fs::OpenOptions::new().write(true).open(&freeze_file).and_then(|mut f| std::io::Write::write_all(&mut f, b"1\n")) {
                     Ok(_) => {
                         tracing::info!(pid, cgroup = %freeze_file.display(), "cgroups v2: Process successfully frozen (cgroup.freeze = 1)");
                         return Ok(true);
@@ -69,7 +70,7 @@ impl CgroupFreezer {
         if let Some(cgroup_dir) = Self::get_cgroup_path_for_pid(pid) {
             let freeze_file = cgroup_dir.join("cgroup.freeze");
             if freeze_file.exists() {
-                match fs::write(&freeze_file, "0\n") {
+                match std::fs::OpenOptions::new().write(true).open(&freeze_file).and_then(|mut f| std::io::Write::write_all(&mut f, b"0\n")) {
                     Ok(_) => {
                         tracing::info!(pid, cgroup = %freeze_file.display(), "cgroups v2: Process successfully thawed (cgroup.freeze = 0)");
                         return Ok(true);

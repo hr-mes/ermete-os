@@ -105,22 +105,30 @@ pub fn setup_cvm_kernel_confinement(limits: &CvmConfinementLimits) -> Result<()>
 
     let mem_max = cgroup_dir.join("memory.max");
     if mem_max.exists() {
-        let _ = fs::write(&mem_max, limits.memory_max_bytes.to_string());
+        if let Err(e) = fs::write(&mem_max, limits.memory_max_bytes.to_string()) {
+                tracing::error!("Failed to set cgroup mem_max {:?}: {:?}", mem_max, e);
+            }
     }
 
     let swap_max = cgroup_dir.join("memory.swap.max");
     if swap_max.exists() {
-        let _ = fs::write(&swap_max, "0");
+        if let Err(e) = fs::write(&swap_max, "0") {
+                tracing::error!("Failed to set cgroup swap_max {:?}: {:?}", swap_max, e);
+            }
     }
 
     let net_marker = cgroup_dir.join("ermete_net_isolated");
     if cgroup_dir.exists() {
-        let _ = fs::write(&net_marker, "isolated\n1");
+        if let Err(e) = fs::write(&net_marker, "isolated\n1") {
+                tracing::error!("Failed to set net_marker {:?}: {:?}", net_marker, e);
+            }
     }
 
     let cpuset_cpus = cgroup_dir.join("cpuset.cpus");
     if cpuset_cpus.exists() {
-        let _ = fs::write(&cpuset_cpus, &limits.cpu_cores);
+        if let Err(e) = fs::write(&cpuset_cpus, &limits.cpu_cores) {
+                tracing::error!("Failed to set cpuset_cpus {:?}: {:?}", cpuset_cpus, e);
+            }
     }
 
     info!("CvmManager: Kernel cgroup v2 confinement initialized (RAM: {} bytes, Cores: '{}', NetIsolated: {})",

@@ -1,3 +1,5 @@
+use std::io::Write;
+use std::os::unix::fs::OpenOptionsExt;
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -58,7 +60,16 @@ fn main() {
         }
     } else {
         // Fallback: Write empty byte array so include_bytes! macro does not panic during cargo check/build
-        let _ = fs::write(&out_path, []);
+        if let Err(e) = std::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .mode(0o600)
+            .open(&out_path)
+            .and_then(|mut f| std::io::Write::write_all(&mut f, &[]))
+        {
+            println!("cargo:warning=Failed to write placeholder eBPF file to {:?}: {}", out_path, e);
+        }
         println!("cargo:warning=eBPF scheduler build failed or produced no output; placeholder created in OUT_DIR.");
     }
 }

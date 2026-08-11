@@ -1,6 +1,8 @@
 #![allow(unsafe_code)]
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 
+use std::io::Write;
+use std::os::unix::fs::OpenOptionsExt;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use std::path::{Path, PathBuf};
@@ -138,14 +140,22 @@ impl EbpfJitCompiler {
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
-            let _ = std::fs::set_permissions(&self.output_dir, std::fs::Permissions::from_mode(0o700));
+            if let Err(e) = std::fs::set_permissions(&self.output_dir, std::fs::Permissions::from_mode(0o700)) {
+            tracing::error!("Failed to set permissions on output_dir {:?}: {:?}", self.output_dir, e);
+        }
         }
 
         let src_path = self.output_dir.join(format!("{}.rs", patch_id));
         let out_path = self.output_dir.join(format!("{}.o", patch_id));
 
         // 2. Write Rust source file securely
-        std::fs::write(&src_path, rust_source)
+        std::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .mode(0o600)
+            .open(&src_path)
+            .and_then(|mut f| std::io::Write::write_all(&mut f, rust_source.as_bytes()))
             .map_err(|e| format!("Failed to write source file {:?}: {}", src_path, e))?;
 
         info!("JIT eBPF Architect: Compiling hot-patch '{}' with rustc --target {}", patch_id, self.target_triple);

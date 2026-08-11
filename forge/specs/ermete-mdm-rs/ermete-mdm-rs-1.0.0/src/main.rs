@@ -1,3 +1,4 @@
+use std::os::unix::fs::OpenOptionsExt;
 use mimalloc::MiMalloc;
 
 #[global_allocator]
@@ -19,11 +20,16 @@ impl MdmDBusInterface {
     async fn disable_usb(&self) -> bool {
         info!("Disabling USB storage...");
         // Applying the policy directly to disk via non-blocking I/O
-        let res = tokio::fs::write(
-            "/etc/modprobe.d/disable-usb-storage.conf",
-            "install usb-storage /bin/true\n",
-        )
-        .await;
+        let res = async {
+            let mut file = tokio::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .mode(0o600)
+                .open("/etc/modprobe.d/disable-usb-storage.conf")
+                .await?;
+            tokio::io::AsyncWriteExt::write_all(&mut file, b"install usb-storage /bin/true\n").await
+        }.await;
         if let Err(e) = res {
             error!("Failed to write modprobe config: {}", e);
             return false;

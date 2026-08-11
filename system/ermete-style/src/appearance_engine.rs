@@ -1,3 +1,5 @@
+use std::io::Write;
+use std::os::unix::fs::OpenOptionsExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -392,10 +394,21 @@ impl AppearanceEngine {
     fn save_active_layout(&self, preset: &LayoutPreset) {
         let path = Self::get_active_layout_path();
         if let Some(parent) = path.parent() {
-            let _ = std::fs::create_dir_all(parent);
+            if let Err(e) = std::fs::create_dir_all(parent) {
+                tracing::error!("Failed to create parent dir {:?}: {:?}", parent, e);
+            }
         }
         if let Ok(content) = serialize_preset_toml(preset) {
-            let _ = std::fs::write(&path, content);
+            if let Err(e) = std::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .mode(0o600)
+                .open(&path)
+                .and_then(|mut f| std::io::Write::write_all(&mut f, content.as_bytes()))
+            {
+                tracing::error!("Failed to write path {:?}: {:?}", path, e);
+            }
         }
     }
 

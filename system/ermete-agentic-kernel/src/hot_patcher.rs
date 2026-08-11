@@ -183,7 +183,7 @@ impl BpfTrampolineInjector {
     pub fn apply_patch(&mut self, spec: PatchSpec) -> Result<()> {
         let patch_id = &spec.id;
 
-        if self.patches.contains_key(&patch_id) {
+        if self.patches.contains_key(patch_id) {
             return Err(anyhow!("Patch ID '{}' is already registered/applied", patch_id));
         }
 

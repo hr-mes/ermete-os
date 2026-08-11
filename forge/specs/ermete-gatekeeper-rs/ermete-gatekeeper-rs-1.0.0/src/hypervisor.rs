@@ -1,3 +1,5 @@
+use std::io::Write;
+use std::os::unix::fs::OpenOptionsExt;
 use std::fs::File;
 use std::os::unix::io::AsRawFd;
 use std::path::Path;
@@ -46,12 +48,30 @@ timerfd_settime: 1
 clone: 1
 clone3: 1
 "#;
-        if let Err(e) = std::fs::write(policy_path, policy_content) {
+        if let Err(e) = std::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .mode(0o600)
+            .open(policy_path)
+            .and_then(|mut f| std::io::Write::write_all(&mut f, policy_content.as_bytes()))
+        {
             eprintln!("[Level 11 Micro-VM Hypervisor] Warning: Failed writing seccomp policy to {}: {}", SECCOMP_POLICY_FILE, e);
             let fallback_dir = Path::new("/tmp/crosvm");
-            let _ = std::fs::create_dir_all(fallback_dir);
+            if let Err(err) = std::fs::create_dir_all(fallback_dir) {
+                tracing::error!("Failed to create fallback_dir {:?}: {:?}", fallback_dir, err);
+            }
             let fallback_path = fallback_dir.join("strict.policy");
-            let _ = std::fs::write(&fallback_path, policy_content);
+            if let Err(err) = std::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .mode(0o600)
+                .open(&fallback_path)
+                .and_then(|mut f| std::io::Write::write_all(&mut f, policy_content.as_bytes()))
+            {
+                tracing::error!("Failed to write fallback policy at {:?}: {:?}", fallback_path, err);
+            }
             return fallback_path.to_string_lossy().to_string();
         }
     }

@@ -14,7 +14,13 @@ impl OracleBridge {
         // Attempt system bus first, then session bus
         let dbus_conn = match Connection::system().await {
             Ok(c) => Some(c),
-            Err(_) => Connection::session().await.ok(),
+            Err(err) => match Connection::session().await {
+                Ok(c) => Some(c),
+                Err(e) => {
+                    warn!("Failed system ({:?}) and session ({:?}) DBus connections.", err, e);
+                    None
+                }
+            },
         };
 
         if dbus_conn.is_some() {

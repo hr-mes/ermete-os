@@ -1,3 +1,5 @@
+use std::io::Write;
+use std::os::unix::fs::OpenOptionsExt;
 use gtk4::prelude::*;
 use gtk4::{Application, ApplicationWindow, Fixed, Box, Label, Orientation, Align, GestureDrag};
 use gtk4_layer_shell::{Edge, Layer, LayerShell};
@@ -42,10 +44,21 @@ fn load_config() -> DesktopConfig {
     } else {
         let default = default_config();
         if let Some(parent) = path.parent() {
-            let _ = fs::create_dir_all(parent);
+            if let Err(e) = fs::create_dir_all(parent) {
+                tracing::error!("Failed to create parent directory {:?}: {:?}", parent, e);
+            }
         }
         if let Ok(content) = serde_json::to_string_pretty(&default) {
-            let _ = fs::write(&path, content);
+            if let Err(e) = std::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .mode(0o600)
+                .open(&path)
+                .and_then(|mut f| std::io::Write::write_all(&mut f, content.as_bytes()))
+            {
+                tracing::error!("Failed to write desktop widget content at {:?}: {:?}", path, e);
+            }
         }
         default
     }
@@ -95,7 +108,16 @@ fn update_widget_position(target_id: &str, new_x: f64, new_y: f64) {
         let path = get_config_path();
         if let Ok(content) = serde_json::to_string_pretty(&config) {
             LAST_INTERNAL_UPDATE.with(|cell| cell.set(Some(std::time::Instant::now())));
-            let _ = fs::write(&path, content);
+            if let Err(e) = std::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .mode(0o600)
+                .open(&path)
+                .and_then(|mut f| std::io::Write::write_all(&mut f, content.as_bytes()))
+            {
+                tracing::error!("Failed to write desktop widget content at {:?}: {:?}", path, e);
+            }
         }
     }
 }

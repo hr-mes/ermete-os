@@ -34,7 +34,9 @@ impl IpcServer {
 
     pub async fn run(&self) -> Result<()> {
         if self.socket_path.exists() {
-            let _ = std::fs::remove_file(&self.socket_path);
+            if let Err(e) = std::fs::remove_file(&self.socket_path) {
+            tracing::warn!("No previous socket to remove at {:?}: {:?}", self.socket_path, e);
+        }
         }
 
         if let Some(parent) = self.socket_path.parent() {
@@ -49,7 +51,9 @@ impl IpcServer {
         if let Ok(metadata) = std::fs::metadata(&self.socket_path) {
             let mut perms = metadata.permissions();
             perms.set_mode(0o600);
-            let _ = std::fs::set_permissions(&self.socket_path, perms);
+            if let Err(e) = std::fs::set_permissions(&self.socket_path, perms) {
+            tracing::error!("Failed to set permissions on socket {:?}: {:?}", self.socket_path, e);
+        }
         }
 
         info!(

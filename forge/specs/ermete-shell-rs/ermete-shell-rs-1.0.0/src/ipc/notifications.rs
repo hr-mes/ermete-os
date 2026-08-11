@@ -1,3 +1,5 @@
+use std::io::Write;
+use std::os::unix::fs::OpenOptionsExt;
 use zbus::interface;
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
@@ -21,7 +23,9 @@ fn default_timestamp() -> String {
 pub fn get_notifications_file_path() -> std::path::PathBuf {
     let mut path = dirs_next_or_home();
     path.push(".local/share/ermete");
-    let _ = std::fs::create_dir_all(&path);
+    if let Err(e) = std::fs::create_dir_all(&path) {
+                tracing::error!("Failed to create notifications directory {:?}: {:?}", path, e);
+            }
     path.push("notifications.json");
     path
 }
@@ -34,7 +38,17 @@ pub fn save_notification_history() {
     NOTIFICATIONS.with(|n| {
         let list = n.borrow();
         if let Ok(json) = serde_json::to_string_pretty(&*list) {
-            let _ = std::fs::write(get_notifications_file_path(), json);
+            let notif_path = get_notifications_file_path();
+            if let Err(e) = std::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .mode(0o600)
+                .open(&notif_path)
+                .and_then(|mut f| std::io::Write::write_all(&mut f, json.as_bytes()))
+            {
+                tracing::error!("Failed to write notifications file at {:?}: {:?}", notif_path, e);
+            }
         }
     });
 }

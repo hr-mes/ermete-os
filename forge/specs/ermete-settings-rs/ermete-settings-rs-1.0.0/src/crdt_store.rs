@@ -3,6 +3,7 @@
 //! Connects GTK4 UI switch/button callbacks to `ermete-store` (backed by Linux io_uring)
 //! and dispatches signed CRDT state updates across the PQC Mesh Sync cluster.
 
+use std::os::unix::fs::OpenOptionsExt;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -119,7 +120,16 @@ pub async fn update_setting_crdt(key: &str, value: &str) -> Result<()> {
             .context("Failed to create store DB directory")?;
     }
 
-    tokio::fs::write(&path, &envelope_bytes)
+    async {
+            let mut file = tokio::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .mode(0o600)
+                .open(&path)
+                .await?;
+            tokio::io::AsyncWriteExt::write_all(&mut file, &envelope_bytes).await
+        }
         .await
         .context("Failed to write CRDT envelope to local store DB")?;
 

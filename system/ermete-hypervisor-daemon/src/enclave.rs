@@ -83,7 +83,9 @@ impl EnclaveController {
                     .unwrap_or(Path::new("/sys/fs/cgroup"))
                     .join("cgroup.subtree_control");
                 if subtree_control.exists() {
-                    let _ = fs::write(&subtree_control, "+memory +cpu +cpuset +pids");
+                    if let Err(e) = fs::write(&subtree_control, "+memory +cpu +cpuset +pids") {
+                tracing::error!("Failed cgroup write {:?}: {:?}", subtree_control, e);
+            }
                 }
             }
         }
@@ -122,11 +124,15 @@ impl EnclaveController {
 
         if swap_max_path.exists() {
             // Disable swap so confidential/enclave RAM pages are never swapped to host disk
-            let _ = fs::write(&swap_max_path, "0");
+            if let Err(e) = fs::write(&swap_max_path, "0") {
+                tracing::error!("Failed cgroup write {:?}: {:?}", swap_max_path, e);
+            }
         }
 
         if pids_max_path.exists() {
-            let _ = fs::write(&pids_max_path, self.limits.max_pids.to_string());
+            if let Err(e) = fs::write(&pids_max_path, self.limits.max_pids.to_string()) {
+                tracing::error!("Failed cgroup write {:?}: {:?}", pids_max_path, e);
+            }
         }
 
         Ok(())
@@ -171,7 +177,9 @@ impl EnclaveController {
                 let cpuset_mems = cgroup_dir_buf.join("cpuset.mems");
 
                 if cpuset_mems.exists() {
-                    let _ = fs::write(&cpuset_mems, "0");
+                    if let Err(e) = fs::write(&cpuset_mems, "0") {
+                tracing::error!("Failed cgroup write {:?}: {:?}", cpuset_mems, e);
+            }
                 }
 
                 if cpuset_cpus.exists() {
@@ -195,10 +203,14 @@ impl EnclaveController {
             let cpuset_mems = cgroup_dir_buf.join("cpuset.mems");
 
             if cpuset_mems.exists() {
-                let _ = fs::write(&cpuset_mems, "0");
+                if let Err(e) = fs::write(&cpuset_mems, "0") {
+                tracing::error!("Failed cgroup write {:?}: {:?}", cpuset_mems, e);
+            }
             }
             if cpuset_cpus.exists() {
-                let _ = fs::write(&cpuset_cpus, &cpu_cores);
+                if let Err(e) = fs::write(&cpuset_cpus, &cpu_cores) {
+                tracing::error!("Failed cgroup write {:?}: {:?}", cpuset_cpus, e);
+            }
             }
         }
 

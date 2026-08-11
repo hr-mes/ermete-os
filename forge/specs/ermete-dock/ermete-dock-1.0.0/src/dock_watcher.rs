@@ -87,7 +87,9 @@ pub fn spawn_dock_watchers(
         };
         let path = get_dock_config_path();
         if let Some(parent) = path.parent() {
-            let _ = std::fs::create_dir_all(parent);
+            if let Err(e) = std::fs::create_dir_all(parent) {
+                tracing::error!("Failed to create directory {:?}: {:?}", parent, e);
+            }
             let _ = watcher.watch(parent, RecursiveMode::NonRecursive);
         }
 

@@ -26,7 +26,13 @@ static SESSION_CONN: tokio::sync::OnceCell<Option<zbus::Connection>> = tokio::sy
 
 async fn get_session_conn() -> Option<zbus::Connection> {
     let conn_opt = SESSION_CONN.get_or_init(|| async {
-        zbus::Connection::session().await.ok()
+        match zbus::Connection::session().await {
+            Ok(c) => Some(c),
+            Err(e) => {
+                tracing::error!("Failed to connect to zbus session bus: {:?}", e);
+                None
+            }
+        }
     }).await;
     conn_opt.clone()
 }

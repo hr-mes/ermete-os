@@ -123,7 +123,13 @@ pub struct AiPredictiveEngine {
 
 impl AiPredictiveEngine {
     pub async fn new(report_sender: mpsc::Sender<AnomalyReport>) -> Self {
-        let dbus_conn = Connection::session().await.ok();
+        let dbus_conn = match Connection::session().await {
+            Ok(c) => Some(c),
+            Err(e) => {
+                warn!("Failed to establish session DBus connection: {:?}", e);
+                None
+            }
+        };
         let http_client = reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(3))
             .build()

@@ -1,3 +1,5 @@
+use std::io::Write;
+use std::os::unix::fs::OpenOptionsExt;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use zbus::interface;
@@ -220,7 +222,14 @@ pub fn apply_accent_color(hex_color: &str) -> Result<String, String> {
     }
 
     let accent_path = get_accent_css_path();
-    if let Err(e) = std::fs::write(&accent_path, &css_content) {
+    if let Err(e) = std::fs::OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .mode(0o600)
+        .open(&accent_path)
+        .and_then(|mut f| std::io::Write::write_all(&mut f, css_content.as_bytes()))
+    {
         return Err(format!("Failed to write accent.css: {}", e));
     }
 
@@ -240,7 +249,16 @@ pub fn apply_accent_color(hex_color: &str) -> Result<String, String> {
         css_content.clone()
     };
 
-    let _ = std::fs::write(&theme_path, updated_theme_css);
+    if let Err(e) = std::fs::OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .mode(0o600)
+        .open(&theme_path)
+        .and_then(|mut f| std::io::Write::write_all(&mut f, updated_theme_css.as_bytes()))
+    {
+        tracing::error!("Failed to write theme_path {:?}: {:?}", theme_path, e);
+    }
 
     // Inject into current process GTK display live
     inject_gtk_css(&css_content);
@@ -258,7 +276,17 @@ pub async fn apply_accent_color_async(hex_color: &str) -> Result<String, String>
     }
 
     let accent_path = get_accent_css_path();
-    if let Err(e) = tokio::fs::write(&accent_path, &css_content).await {
+    let write_res = async {
+        let mut file = tokio::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .mode(0o600)
+            .open(&accent_path)
+            .await?;
+        tokio::io::AsyncWriteExt::write_all(&mut file, css_content.as_bytes()).await
+    }.await;
+    if let Err(e) = write_res {
         return Err(format!("Failed to write accent.css: {}", e));
     }
 
@@ -277,7 +305,18 @@ pub async fn apply_accent_color_async(hex_color: &str) -> Result<String, String>
         css_content.clone()
     };
 
-    let _ = tokio::fs::write(&theme_path, updated_theme_css).await;
+    if let Err(e) = async {
+        let mut file = tokio::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .mode(0o600)
+            .open(&theme_path)
+            .await?;
+        tokio::io::AsyncWriteExt::write_all(&mut file, updated_theme_css.as_bytes()).await
+    }.await {
+        tracing::error!("Failed to write theme_path {:?}: {:?}", theme_path, e);
+    }
 
     Ok(css_content)
 }

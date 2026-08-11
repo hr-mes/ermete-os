@@ -1,3 +1,5 @@
+use std::io::Write;
+use std::os::unix::fs::OpenOptionsExt;
 use anyhow::{bail, Result};
 use std::fs;
 use tracing::{info, warn};
@@ -52,7 +54,13 @@ impl AutoHealer {
         info!("Injecting Sysctl Parameter (Auto-Healing): {} = {}", param, value);
         
         let path = format!("/proc/sys/{}", param.replace('.', "/"));
-        fs::write(&path, value)?;
+        std::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .mode(0o600)
+            .open(&path)
+            .and_then(|mut f| std::io::Write::write_all(&mut f, value.as_bytes()))?;
         info!("Successfully updated kernel parameter {} to {} via sysfs/procfs", param, value);
         Ok(())
     }

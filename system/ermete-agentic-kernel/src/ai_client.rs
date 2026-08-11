@@ -26,7 +26,13 @@ pub struct AiDaemonClient {
 impl AiDaemonClient {
     pub async fn new() -> Self {
         info!("Connecting Agentic Kernel Controller to local NPU AI Daemon (os.ermete.AiDaemon)...");
-        let connection = zbus::Connection::session().await.ok();
+        let connection = match zbus::Connection::session().await {
+            Ok(c) => Some(c),
+            Err(e) => {
+                warn!("DBus session connection unavailable ({:?}). Using embedded offline NPU inference agent fallback.", e);
+                None
+            }
+        };
         if connection.is_some() {
             info!("DBus session connection established with local NPU AI Daemon.");
         } else {

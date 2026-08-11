@@ -298,9 +298,13 @@ pub fn build_page() -> GtkBox {
                     for entry in entries.flatten() {
                         let path = entry.path();
                         if path.is_dir() {
-                            let _ = std::fs::remove_dir_all(&path);
+                            if let Err(e) = std::fs::remove_dir_all(&path) {
+                    tracing::error!("Failed to remove directory {:?}: {:?}", path, e);
+                }
                         } else {
-                            let _ = std::fs::remove_file(&path);
+                            if let Err(e) = std::fs::remove_file(&path) {
+                    tracing::error!("Failed to remove file {:?}: {:?}", path, e);
+                }
                         }
                     }
                 }

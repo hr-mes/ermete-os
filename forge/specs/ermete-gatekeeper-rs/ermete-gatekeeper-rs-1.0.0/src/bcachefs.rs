@@ -23,7 +23,9 @@ const BCH_IOCTL_SUBVOLUME_DESTROY: u64 = 0x40186211;
 #[allow(unsafe_code)]
 pub fn native_bcachefs_snapshot(src: &Path, dst: &Path) -> std::io::Result<()> {
     if let Some(parent) = dst.parent() {
-        let _ = fs::create_dir_all(parent);
+        if let Err(e) = fs::create_dir_all(parent) {
+                tracing::error!("Failed to create parent directory {:?}: {:?}", parent, e);
+            }
     }
 
     let src_file = fs::File::open(src)?;
@@ -95,7 +97,9 @@ pub fn native_bcachefs_delete(path: &Path) -> std::io::Result<()> {
     if res == 0 {
         Ok(())
     } else {
-        let _ = fs::remove_dir_all(path);
+        if let Err(e) = fs::remove_dir_all(path) {
+                tracing::error!("Failed to remove directory {:?}: {:?}", path, e);
+            }
         Ok(())
     }
 }
@@ -103,7 +107,9 @@ pub fn native_bcachefs_delete(path: &Path) -> std::io::Result<()> {
 /// Takes an atomic Bcachefs subvolume snapshot of `/var/home/ermete` prior to prompt or kill.
 pub async fn take_bcachefs_snapshot(fd_id: &str) -> Option<PathBuf> {
     let snapshot_dir = PathBuf::from("/var/home/.snapshots");
-    let _ = tokio::fs::create_dir_all(&snapshot_dir).await;
+    if let Err(e) = tokio::fs::create_dir_all(&snapshot_dir).await {
+                tracing::error!("Failed to create snapshot_dir {:?}: {:?}", snapshot_dir, e);
+            }
     let timestamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap_or_default()

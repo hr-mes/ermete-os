@@ -1,3 +1,5 @@
+use std::io::Write;
+use std::os::unix::fs::OpenOptionsExt;
 use chrono::Local;
 use serde::{Deserialize, Serialize};
 use std::ffi::CString;
@@ -88,7 +90,9 @@ const BCH_IOCTL_SUBVOLUME_DESTROY: u64 = 0x40186211;
 #[allow(unsafe_code)]
 pub fn native_bcachefs_snapshot(src: &Path, dst: &Path) -> std::io::Result<()> {
     if let Some(parent) = dst.parent() {
-        let _ = fs::create_dir_all(parent);
+        if let Err(e) = fs::create_dir_all(parent) {
+                tracing::error!("Failed to create parent directory {:?}: {:?}", parent, e);
+            }
     }
 
     let src_file = fs::File::open(src)?;
@@ -160,7 +164,9 @@ pub fn native_bcachefs_delete(path: &Path) -> std::io::Result<()> {
     if res == 0 {
         Ok(())
     } else {
-        let _ = fs::remove_dir_all(path);
+        if let Err(e) = fs::remove_dir_all(path) {
+                tracing::error!("Failed to remove directory {:?}: {:?}", path, e);
+            }
         Ok(())
     }
 }
@@ -189,7 +195,9 @@ impl BackupServer {
         let home = std::env::var("HOME").unwrap_or_else(|_| dirs::home_dir().unwrap_or(std::path::PathBuf::from("/home")).to_string_lossy().into_owned().to_string());
         let mut path = PathBuf::from(&home);
         path.push(".snapshots");
-        let _ = fs::create_dir_all(&path);
+        if let Err(e) = fs::create_dir_all(&path) {
+                tracing::error!("Failed to create directory {:?}: {:?}", path, e);
+            }
         Self { snapshot_dir: path }
     }
 
@@ -240,7 +248,17 @@ impl BackupServer {
         };
 
         if let Ok(json) = serde_json::to_string_pretty(&info) {
-            let _ = fs::write(self.get_manifest_path(&id), json);
+            let manifest_path = self.get_manifest_path(&id);
+            if let Err(e) = std::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .mode(0o600)
+                .open(&manifest_path)
+                .and_then(|mut f| std::io::Write::write_all(&mut f, json.as_bytes()))
+            {
+                tracing::error!("Failed to securely write manifest at {:?}: {:?}", manifest_path, e);
+            }
         }
 
         Ok(info)
@@ -299,8 +317,13 @@ impl BackupServer {
         target_dir.push(id);
 
         println!("[BackupDaemon] Deleting Bcachefs subvolume snapshot {:?}", target_dir);
-        let _ = native_bcachefs_delete(&target_dir);
-        let _ = fs::remove_file(self.get_manifest_path(id));
+        if let Err(e) = native_bcachefs_delete(&target_dir) {
+                tracing::error!("Failed bcachefs delete {:?}: {:?}", target_dir, e);
+            }
+        let manifest_path = self.get_manifest_path(id);
+            if let Err(e) = fs::remove_file(&manifest_path) {
+                tracing::error!("Failed to remove manifest {:?}: {:?}", manifest_path, e);
+            }
         Ok(true)
     }
 
@@ -334,7 +357,9 @@ impl BackupServer {
 
         let home = std::env::var("HOME").unwrap_or_else(|_| dirs::home_dir().unwrap_or(std::path::PathBuf::from("/home")).to_string_lossy().into_owned().to_string());
 
-        let _ = native_bcachefs_delete(Path::new(&home));
+        if let Err(e) = native_bcachefs_delete(Path::new(&home)) {
+                tracing::error!("Failed bcachefs delete {:?}: {:?}", home, e);
+            }
         let res = native_bcachefs_snapshot(&target_dir, Path::new(&home));
 
         if res.is_err() {

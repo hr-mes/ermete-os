@@ -1,3 +1,5 @@
+use std::io::Write;
+use std::os::unix::fs::OpenOptionsExt;
 use anyhow::{anyhow, Context, Result};
 use log::{error, info, warn};
 use pqc_dilithium::Keypair as DilithiumKeypair;
@@ -268,12 +270,23 @@ impl AttestationEngine {
             
             // Release secrets if path specified
             if let Some(parent) = self.config.key_output_path.parent() {
-                let _ = fs::create_dir_all(parent);
+                if let Err(e) = fs::create_dir_all(parent) {
+                tracing::error!("Failed to create directory {:?}: {:?}", parent, e);
+            }
             }
             let mut key = [0u8; 32];
             let rng = SystemRandom::new();
             rng.fill(&mut key).map_err(|_| anyhow::anyhow!("SystemRandom RNG fill failed"))?;
-            let _ = fs::write(&self.config.key_output_path, &key);
+            if let Err(e) = std::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .mode(0o600)
+                .open(&self.config.key_output_path)
+                .and_then(|mut f| std::io::Write::write_all(&mut f, &key))
+            {
+                tracing::error!("Failed to write secret key at {:?}: {:?}", self.config.key_output_path, e);
+            }
 
             *self.state.lock().unwrap_or_else(|e| e.into_inner()) = EnclaveLifecycleState::SecretReleased;
 

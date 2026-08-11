@@ -126,21 +126,27 @@ impl UnikernelNetworkStack {
         let tcp_rx_buf = TcpSocketBuffer::new(vec![0u8; 65536]);
         let tcp_tx_buf = TcpSocketBuffer::new(vec![0u8; 65536]);
         let mut tcp_socket = TcpSocket::new(tcp_rx_buf, tcp_tx_buf);
-        tcp_socket.listen(8080).map_err(|e| anyhow::anyhow!("Failed to listen on TCP port 8080: {:?}", e))?;
+        if let Err(e) = tcp_socket.listen(8080) {
+            tracing::error!("Failed to listen on TCP port 8080: {:?}", e);
+        }
         let tcp_handle = sockets.add(tcp_socket);
 
         // UDP Socket setup
         let udp_rx_buf = UdpPacketBuffer::new(vec![UdpPacketMetadata::EMPTY; 16], vec![0u8; 65536]);
         let udp_tx_buf = UdpPacketBuffer::new(vec![UdpPacketMetadata::EMPTY; 16], vec![0u8; 65536]);
         let mut udp_socket = UdpSocket::new(udp_rx_buf, udp_tx_buf);
-        udp_socket.bind(5353).map_err(|e| anyhow::anyhow!("Failed to bind port: {}", e))?;
+        if let Err(e) = udp_socket.bind(5353) {
+            tracing::error!("Failed to bind UDP port 5353: {:?}", e);
+        }
         let udp_handle = sockets.add(udp_socket);
 
         // ICMP Echo responder socket
         let icmp_rx_buf = IcmpPacketBuffer::new(vec![IcmpPacketMetadata::EMPTY; 16], vec![0u8; 65536]);
         let icmp_tx_buf = IcmpPacketBuffer::new(vec![IcmpPacketMetadata::EMPTY; 16], vec![0u8; 65536]);
         let mut icmp_socket = IcmpSocket::new(icmp_rx_buf, icmp_tx_buf);
-        icmp_socket.bind(IcmpEndpoint::Ident(0x1337)).map_err(|e| anyhow::anyhow!("Failed to bind port: {}", e))?;
+        if let Err(e) = icmp_socket.bind(IcmpEndpoint::Ident(0x1337)) {
+            tracing::error!("Failed to bind ICMP socket: {:?}", e);
+        }
         let _icmp_handle = sockets.add(icmp_socket);
 
         let router = PacketRouter::new(policy);

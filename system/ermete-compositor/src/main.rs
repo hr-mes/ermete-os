@@ -140,7 +140,9 @@ async fn main() -> Result<()> {
 
     // Cleanup socket if created
     if socket_path.exists() {
-        let _ = std::fs::remove_file(&socket_path);
+        if let Err(e) = std::fs::remove_file(&socket_path) {
+            tracing::warn!("No previous socket to remove at {:?}: {:?}", socket_path, e);
+        }
     }
 
     info!("Ermete Compositor gracefully stopped.");

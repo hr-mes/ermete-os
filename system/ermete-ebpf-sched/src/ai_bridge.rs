@@ -21,7 +21,13 @@ impl AiDaemonBridge {
     pub async fn new() -> Self {
         info!("🤖 Connecting eBPF Kernel Scheduler to NPU AI Daemon (os.ermete.AiDaemon)...");
         
-        let conn = Connection::session().await.ok();
+        let conn = match Connection::session().await {
+            Ok(c) => Some(c),
+            Err(e) => {
+                warn!("DBus session unavailable ({:?}). eBPF Scheduler will use local NPU zero-latency heuristic AI inferencing engine.", e);
+                None
+            }
+        };
         if conn.is_some() {
             info!("✅ DBus connection to `ermete-ai-daemon` established.");
         } else {

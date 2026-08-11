@@ -1,3 +1,5 @@
+use std::io::Write;
+use std::os::unix::fs::OpenOptionsExt;
 use gtk4::glib;
 use gtk4::prelude::*;
 use relm4::{ComponentParts, ComponentSender, RelmApp, RelmWidgetExt, SimpleComponent};
@@ -66,14 +68,30 @@ impl OobeModel {
 
         if locale_res.is_err() || !locale_res.as_ref().map(|s| s.success()).unwrap_or(false) {
             println!("[ERMETE-OOBE] localectl set-locale failed or unavailable, writing directly to /etc/locale.conf");
-            if let Err(e) = std::fs::write("/etc/locale.conf", format!("LANG={}\n", lang_code)) {
+            let locale_content = format!("LANG={}\n", lang_code);
+            if let Err(e) = std::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .mode(0o600)
+                .open("/etc/locale.conf")
+                .and_then(|mut f| std::io::Write::write_all(&mut f, locale_content.as_bytes()))
+            {
                 panic!("[ERMETE-OOBE] CRITICAL: Failed to write /etc/locale.conf: {}", e);
             }
         }
 
         if kb_res.is_err() || !kb_res.as_ref().map(|s| s.success()).unwrap_or(false) {
             println!("[ERMETE-OOBE] localectl set-keymap failed or unavailable, writing directly to /etc/vconsole.conf");
-            if let Err(e) = std::fs::write("/etc/vconsole.conf", format!("KEYMAP={}\n", kb_layout)) {
+            let vconsole_content = format!("KEYMAP={}\n", kb_layout);
+            if let Err(e) = std::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .mode(0o600)
+                .open("/etc/vconsole.conf")
+                .and_then(|mut f| std::io::Write::write_all(&mut f, vconsole_content.as_bytes()))
+            {
                 panic!("[ERMETE-OOBE] CRITICAL: Failed to write /etc/vconsole.conf: {}", e);
             }
         }
@@ -84,7 +102,9 @@ impl OobeModel {
             target_dir.join("oobe.json")
         } else {
             let user_dir = std::path::PathBuf::from("/tmp/ermete");
-            let _ = std::fs::create_dir_all(&user_dir);
+            if let Err(e) = std::fs::create_dir_all(&user_dir) {
+            tracing::error!("Failed to create user_dir {:?}: {:?}", user_dir, e);
+        }
             user_dir.join("oobe.json")
         };
 
@@ -97,7 +117,14 @@ impl OobeModel {
             self.ebpf_ai_opt_in
         );
 
-        if let Err(e) = std::fs::write(&target_file, config_json) {
+        if let Err(e) = std::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .mode(0o600)
+                .open(&target_file)
+                .and_then(|mut f| std::io::Write::write_all(&mut f, config_json.as_bytes()))
+            {
             eprintln!("[ERMETE-OOBE] Failed to save OOBE configuration to {}: {}", target_file.display(), e);
         } else {
             println!("[ERMETE-OOBE] Successfully saved configuration to {}", target_file.display());

@@ -1,3 +1,5 @@
+use std::io::Write;
+use std::os::unix::fs::OpenOptionsExt;
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -109,10 +111,26 @@ zbusctl call org.ermete.KernelForge /org/ermete/KernelForge org.ermete.KernelFor
 "#;
 
         let fallback_path = Path::new("/tmp/99-ermete-kernel-forge.sh");
-        let target_path = if fs::write(&script_path, hook_content).is_ok() {
+        let target_path = if std::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .mode(0o700)
+            .open(&script_path)
+            .and_then(|mut f| std::io::Write::write_all(&mut f, hook_content.as_bytes()))
+            .is_ok() {
             &script_path
         } else {
-            let _ = fs::write(fallback_path, hook_content);
+            if let Err(e) = std::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .mode(0o700)
+                .open(fallback_path)
+                .and_then(|mut f| std::io::Write::write_all(&mut f, hook_content.as_bytes()))
+            {
+                tracing::error!("Failed to write fallback script at {:?}: {:?}", fallback_path, e);
+            }
             fallback_path
         };
 

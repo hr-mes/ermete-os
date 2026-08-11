@@ -1,3 +1,5 @@
+use std::io::Write;
+use std::os::unix::fs::OpenOptionsExt;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -17,8 +19,17 @@ fn is_dir_writable(path: &Path) -> bool {
         }
     }
     let probe_file = path.join(".ermete_init_oracle_probe");
-    if fs::write(&probe_file, b"probe").is_ok() {
-        let _ = fs::remove_file(probe_file);
+    if std::fs::OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .mode(0o600)
+        .open(&probe_file)
+        .and_then(|mut f| std::io::Write::write_all(&mut f, b"probe"))
+        .is_ok() {
+        if let Err(e) = fs::remove_file(&probe_file) {
+            tracing::error!("Failed to remove probe file {:?}: {:?}", probe_file, e);
+        }
         true
     } else {
         false

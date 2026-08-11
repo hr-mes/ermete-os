@@ -1,3 +1,5 @@
+use std::io::Write;
+use std::os::unix::fs::OpenOptionsExt;
 use std::path::Path;
 use std::process::Command;
 
@@ -406,7 +408,13 @@ impl Material3Palette {
         if let Some(parent) = target_path.parent() {
             std::fs::create_dir_all(parent)?;
         }
-        std::fs::write(target_path, self.to_gtk4_css())
+        std::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .mode(0o600)
+            .open(target_path)
+            .and_then(|mut f| std::io::Write::write_all(&mut f, self.to_gtk4_css().as_bytes()))
     }
 }
 
@@ -430,8 +438,20 @@ mod tests {
     fn test_wallpaper_extraction_and_write() {
         let tmp = std::env::temp_dir().join("ermete_palette_test");
         let wallpaper = tmp.join("bg.png");
-        let _ = std::fs::create_dir_all(&tmp);
-        let _ = std::fs::write(&wallpaper, vec![120, 80, 200, 255].repeat(250));
+        if let Err(e) = std::fs::create_dir_all(&tmp) {
+                tracing::error!("Failed to create tmp dir {:?}: {:?}", tmp, e);
+            }
+        let wallpaper_data = vec![120, 80, 200, 255].repeat(250);
+            if let Err(e) = std::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .mode(0o600)
+                .open(&wallpaper)
+                .and_then(|mut f| std::io::Write::write_all(&mut f, &wallpaper_data))
+            {
+                tracing::error!("Failed to write wallpaper at {:?}: {:?}", wallpaper, e);
+            }
 
         let palette = Material3Palette::extract_from_wallpaper(Some(&wallpaper), true);
         let out_css = tmp.join("theme.css");
