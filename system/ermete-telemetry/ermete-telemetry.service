@@ -1,32 +1,32 @@
 [Unit]
-Description=Ermete OS Local AI & Machine Learning Inference Daemon
+Description=Ermete OS AI Predictive Telemetry & Log Aggregator Daemon
 Documentation=https://github.com/hr-mes/ermete-forge
 After=network-online.target dbus.service
 Requires=dbus.service
 
 [Service]
-MemoryDenyWriteExecute=true
-CPUWeight=100
-CPUQuota=200%
-MemoryHigh=3072M
-MemoryMax=4096M
-OOMScoreAdjust=100
-CapabilityBoundingSet=CAP_IPC_LOCK CAP_SYS_NICE
-AmbientCapabilities=CAP_IPC_LOCK CAP_SYS_NICE
 Type=dbus
-BusName=os.ermete.AiDaemon
-ExecStart=/usr/bin/ermete-ai-daemon
+BusName=org.ermete.Telemetry
+ExecStart=/usr/bin/ermete-telemetry
 Restart=always
 RestartSec=5s
 
+# Resource Control & Cgroups (OOM Management)
+MemoryDenyWriteExecute=true
+CPUWeight=100
+CPUQuota=150%
+MemoryHigh=384M
+MemoryMax=512M
+OOMScoreAdjust=50
+
+# Security & Privilege Sandboxing
 DynamicUser=yes
-
-
-# Extreme Sandboxing
 ProtectSystem=strict
 ProtectHome=yes
 PrivateTmp=true
 NoNewPrivileges=yes
+CapabilityBoundingSet=CAP_DAC_READ_SEARCH CAP_NET_ADMIN CAP_BPF
+AmbientCapabilities=CAP_DAC_READ_SEARCH CAP_NET_ADMIN CAP_BPF
 SystemCallFilter=@system-service
 ProtectKernelTunables=true
 ProtectKernelModules=true

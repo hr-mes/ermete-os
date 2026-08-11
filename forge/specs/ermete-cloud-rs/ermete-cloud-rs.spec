@@ -42,10 +42,14 @@ Requires=dbus.service
 [Service]
 MemoryDenyWriteExecute=true
 CPUWeight=50
+CPUQuota=100%
 MemoryHigh=384M
 MemoryMax=512M
 OOMScoreAdjust=100
+CapabilityBoundingSet=CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_ADMIN
 Type=dbus
+
 BusName=os.ermete.Cloud
 ExecStart=%{_bindir}/%{name}
 Restart=always

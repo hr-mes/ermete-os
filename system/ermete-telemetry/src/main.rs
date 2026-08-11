@@ -11,6 +11,7 @@ mod ai_engine;
 mod collector;
 mod dbus;
 mod oracle_bridge;
+mod security;
 
 use aggregator::BatchAggregator;
 use ai_engine::AiPredictiveEngine;
@@ -26,8 +27,12 @@ async fn main() -> Result<()> {
         .finish();
     let _ = tracing::subscriber::set_global_default(subscriber);
 
+    // Apply Capability Dropping Security Hardening
+    security::apply_telemetry_hardening();
+
     info!("==================================================");
     info!("Starting Ermete OS AI Predictive Telemetry Daemon");
+
     info!("Fronte 3: Log-Aggregator Predittivo AI & Self-Healing");
     info!("==================================================");
 

@@ -47,8 +47,10 @@ ProtectKernelLogs=true
 ProtectKernelModules=true
 ProtectKernelTunables=true
 CPUWeight=200
+CPUQuota=200%
 MemoryHigh=256M
 MemoryMax=512M
+
 OOMScoreAdjust=-300
 Type=simple
 ExecStart=%{_bindir}/ermete-hypervisor-daemon

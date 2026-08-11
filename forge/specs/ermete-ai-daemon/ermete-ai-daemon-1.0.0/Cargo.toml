@@ -14,5 +14,7 @@ candle-core = "0.8"
 candle-nn = "0.8"
 vulkano = "0.34"
 openvino = { version = "0.8", features = ["runtime-linking"] }
+libc = { workspace = true }
+
 
 

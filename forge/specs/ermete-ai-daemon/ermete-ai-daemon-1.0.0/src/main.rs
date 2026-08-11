@@ -1,6 +1,7 @@
 pub mod drm_lease;
 pub mod model_loader;
 pub mod npu;
+pub mod security;
 pub mod types;
 
 use model_loader::NeuralModelEngine;
@@ -13,6 +14,7 @@ use tracing::{error, info};
 use zbus::{interface, Connection};
 
 use npu::HardwareOffloader;
+
 
 pub struct AiDaemonProxy {
     offloader: Arc<HardwareOffloader>,
@@ -94,7 +96,9 @@ impl AiDaemonProxy {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt::init();
+    security::apply_ai_hardening();
     info!("Ermete AI Daemon starting (NPU & Candle Accelerated - 0% CPU Target)...");
+
 
     let offloader = Arc::new(HardwareOffloader::new());
 

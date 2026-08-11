@@ -38,8 +38,10 @@ After=network.target
 
 [Service]
 CPUWeight=150
+CPUQuota=150%
 MemoryHigh=192M
 MemoryMax=256M
+
 OOMScoreAdjust=-200
 Type=simple
 ExecStart=%{_bindir}/%{name}

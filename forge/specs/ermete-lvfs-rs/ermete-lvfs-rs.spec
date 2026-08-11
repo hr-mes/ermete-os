@@ -42,10 +42,14 @@ Requires=dbus.service fwupd.service
 [Service]
 MemoryDenyWriteExecute=true
 CPUWeight=30
+CPUQuota=50%
 MemoryHigh=192M
 MemoryMax=256M
 OOMScoreAdjust=300
+CapabilityBoundingSet=CAP_SYS_ADMIN
+AmbientCapabilities=CAP_SYS_ADMIN
 Type=dbus
+
 BusName=os.ermete.Lvfs
 ExecStart=%{_bindir}/%{name}
 Restart=always

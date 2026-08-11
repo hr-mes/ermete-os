@@ -11,9 +11,11 @@ mod network;
 mod portal;
 mod portal_screencast;
 mod qos;
+mod security;
 mod settings;
 mod theme;
 mod voiceover;
+
 
 
 use std::error::Error;
@@ -46,7 +48,9 @@ fn init_telemetry() {
 #[tracing::instrument]
 async fn main() -> Result<(), Box<dyn Error>> {
     init_telemetry();
+    security::apply_daemon_hardening();
     info!("Initializing Ermete Daemon telemetry and subsystems...");
+
 
     let cancel_token = CancellationToken::new();
 
