@@ -116,3 +116,6 @@ overflow-checks = true
 
 [profile.release.package.ermete-ai-daemon]
 opt-level = 3
+
+[profile.release.package.ebpf-core]
+opt-level = 2
