@@ -58,8 +58,11 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-      - name: ⚙️ Set Default Rust Toolchain
-        run: rustup default stable
+      - name: ⚙️ Set Default Rust Toolchain & Install cargo-fuzz
+        run: |
+          rustup default nightly
+          rustup component add rust-src
+          cargo install cargo-fuzz
 
 
       - name: ⚡ Restore sccache Cache
