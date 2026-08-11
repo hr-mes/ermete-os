@@ -150,7 +150,7 @@ pub fn build_page() -> Box {
     container.append(&ent_title);
 
     let ent_box = Box::new(Orientation::Vertical, 8);
-    ent_box.add_css_class("card");
+    ent_box.add_css_class("liquid-surface");
 
     let ent_ssid = Entry::builder().placeholder_text("es. Azienda-Corp").build();
     let ent_id = Entry::builder().placeholder_text("es. mario.rossi@azienda.it").build();
@@ -236,7 +236,7 @@ pub fn build_page() -> Box {
     container.append(&vpn_title);
 
     let vpn_box = Box::new(Orientation::Vertical, 8);
-    vpn_box.add_css_class("card");
+    vpn_box.add_css_class("liquid-surface");
 
     let vpn_name = Entry::builder().placeholder_text("es. Azienda-WG").build();
     let vpn_type = DropDown::from_strings(&["WireGuard (wg-quick)", "OpenVPN"]);
@@ -307,7 +307,7 @@ pub fn build_page() -> Box {
     container.append(&cf_title);
 
     let cf_box = Box::new(Orientation::Vertical, 8);
-    cf_box.add_css_class("card");
+    cf_box.add_css_class("liquid-surface");
 
     let cf_team_name = Entry::builder().placeholder_text("es. ermete-os.cloudflareaccess.com").build();
     let row_cf_team = ActionRow::builder("Team Zero Trust")

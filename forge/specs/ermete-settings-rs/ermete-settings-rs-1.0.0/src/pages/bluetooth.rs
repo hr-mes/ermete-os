@@ -47,7 +47,7 @@ pub fn build_page() -> Box {
     let settings_card = Box::builder()
         .orientation(Orientation::Vertical)
         .spacing(16)
-        .css_classes(["card"])
+        .css_classes(["liquid-surface"])
         .build();
 
     // Global Switch

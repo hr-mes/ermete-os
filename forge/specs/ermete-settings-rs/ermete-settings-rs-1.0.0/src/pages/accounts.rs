@@ -80,7 +80,7 @@ pub fn build_page() -> GtkBox {
     let settings_list = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(16)
-        .css_classes(["card"])
+        .css_classes(["liquid-surface"])
         .build();
 
     // Change Password Row

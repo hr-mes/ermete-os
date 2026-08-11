@@ -105,7 +105,7 @@ pub fn build_page() -> GtkBox {
     let status_card = GtkBox::builder()
         .orientation(Orientation::Horizontal)
         .spacing(16)
-        .css_classes(["card"])
+        .css_classes(["liquid-surface"])
         .build();
 
     let status_info = GtkBox::builder()
@@ -162,7 +162,7 @@ pub fn build_page() -> GtkBox {
     let captions_card = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(12)
-        .css_classes(["card"])
+        .css_classes(["liquid-surface"])
         .build();
 
     let captions_switch = Switch::builder()
@@ -278,7 +278,7 @@ pub fn build_page() -> GtkBox {
     let colorblind_card = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(12)
-        .css_classes(["card"])
+        .css_classes(["liquid-surface"])
         .build();
 
     let cb_switch = Switch::builder()
@@ -306,7 +306,7 @@ pub fn build_page() -> GtkBox {
     let da_preview = DrawingArea::builder()
         .content_width(400)
         .content_height(60)
-        .css_classes(["card"])
+        .css_classes(["liquid-surface"])
         .build();
 
     // Selection of Daltonism Type
@@ -419,7 +419,7 @@ pub fn build_page() -> GtkBox {
     let tts_card = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(12)
-        .css_classes(["card"])
+        .css_classes(["liquid-surface"])
         .build();
 
     let tts_switch = Switch::builder()
@@ -527,7 +527,7 @@ pub fn build_page() -> GtkBox {
     let presets_card = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(8)
-        .css_classes(["card"])
+        .css_classes(["liquid-surface"])
         .build();
 
     let hc_switch = Switch::builder().valign(Align::Center).active(false).build();

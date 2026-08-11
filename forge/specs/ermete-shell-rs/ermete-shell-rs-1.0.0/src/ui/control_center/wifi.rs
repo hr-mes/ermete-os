@@ -26,7 +26,7 @@ pub fn show_wifi_password_modal(app: &Application, ssid: &str) {
     let card = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(14)
-        .css_classes(["cc-card"])
+        .css_classes(["liquid-surface"])
         .build();
 
     // Header
@@ -149,7 +149,7 @@ pub fn show_wifi_details_modal(app: &Application, ssid: &str, active: bool) {
     let card = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(14)
-        .css_classes(["cc-card"])
+        .css_classes(["liquid-surface"])
         .build();
 
     // Header
@@ -439,7 +439,7 @@ pub fn show_wifi_popover(app: &Application) {
         .margin_bottom(16)
         .margin_start(16)
         .margin_end(16)
-        .css_classes(["cc-card"])
+        .css_classes(["liquid-surface"])
         .build();
 
     let header_card = GtkBox::builder()

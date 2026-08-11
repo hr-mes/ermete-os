@@ -76,15 +76,15 @@ use crate::hypervisor::spawn_microvm_isolated_app;
 
 pub struct GatekeeperManager {
     pub fanotify_fd: RawFd,
-    pub pending_events: Arc<std::sync::Mutex<HashMap<String, i32>>>, // fd_id -> event_fd
-    pub pending_snapshots: Arc<std::sync::Mutex<HashMap<String, PathBuf>>>, // fd_id -> snapshot_path
+    pub pending_events: Arc<tokio::sync::Mutex<HashMap<String, i32>>>, // fd_id -> event_fd
+    pub pending_snapshots: Arc<tokio::sync::Mutex<HashMap<String, PathBuf>>>, // fd_id -> snapshot_path
 }
 
 impl GatekeeperManager {
     pub fn new(
         fanotify_fd: RawFd,
-        pending_events: Arc<std::sync::Mutex<HashMap<String, i32>>>,
-        pending_snapshots: Arc<std::sync::Mutex<HashMap<String, PathBuf>>>,
+        pending_events: Arc<tokio::sync::Mutex<HashMap<String, i32>>>,
+        pending_snapshots: Arc<tokio::sync::Mutex<HashMap<String, PathBuf>>>,
     ) -> Self {
         Self {
             fanotify_fd,

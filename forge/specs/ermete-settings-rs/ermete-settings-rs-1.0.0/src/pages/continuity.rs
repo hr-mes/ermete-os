@@ -34,7 +34,7 @@ pub fn build_page() -> GtkBox {
     let settings_card = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(16)
-        .css_classes(["card"])
+        .css_classes(["liquid-surface"])
         .build();
 
     // 1. Universal Clipboard Switch
@@ -118,7 +118,7 @@ pub fn build_page() -> GtkBox {
     let devices_card = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(12)
-        .css_classes(["card"])
+        .css_classes(["liquid-surface"])
         .build();
 
     // Helper to build a device row with Image icon, title/subtitle and status/action button

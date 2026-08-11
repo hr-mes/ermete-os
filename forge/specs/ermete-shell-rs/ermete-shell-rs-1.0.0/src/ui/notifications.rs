@@ -39,7 +39,7 @@ pub fn show_toast_popup(app: &Application, notif: &NotificationData) {
     let vbox = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(6)
-        .css_classes(["cc-card", "premium-notification", "toast-slide-in"])
+        .css_classes(["liquid-surface", "premium-notification", "toast-slide-in"])
         .build();
     
     let title = Label::builder().label(&notif.summary).css_classes(["cc-title"]).halign(Align::Start).build();
@@ -206,7 +206,7 @@ pub fn show_notification_center(app: &Application) {
     let main_vbox = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(16)
-        .css_classes(["cc-card"])
+        .css_classes(["liquid-surface"])
         .margin_top(16)
         .margin_bottom(16)
         .margin_end(16)
@@ -273,7 +273,7 @@ pub fn show_notification_center(app: &Application) {
                 let group_card = GtkBox::builder()
                     .orientation(Orientation::Vertical)
                     .spacing(8)
-                    .css_classes(["cc-card"])
+                    .css_classes(["liquid-surface"])
                     .build();
 
                 let grp_header = GtkBox::builder()

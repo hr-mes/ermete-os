@@ -32,7 +32,7 @@ pub fn build_page() -> Box {
     let drawing_area = DrawingArea::builder()
         .content_width(400)
         .content_height(140)
-        .css_classes(["card", "display-layout-preview"])
+        .css_classes(["liquid-surface", "display-layout-preview"])
         .build();
 
     let outputs_store = Rc::new(RefCell::new(Vec::<String>::new()));

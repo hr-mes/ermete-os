@@ -63,7 +63,7 @@ pub fn build_page() -> Box {
     let dock_card = Box::builder()
         .orientation(Orientation::Vertical)
         .spacing(16)
-        .css_classes(["card"])
+        .css_classes(["liquid-surface"])
         .build();
 
     let dock_switch = Switch::builder()

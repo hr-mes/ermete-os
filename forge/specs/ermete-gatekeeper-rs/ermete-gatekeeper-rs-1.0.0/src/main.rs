@@ -67,8 +67,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    let pending_events = Arc::new(std::sync::Mutex::new(HashMap::new()));
-    let pending_snapshots = Arc::new(std::sync::Mutex::new(HashMap::new()));
+    let pending_events = Arc::new(tokio::sync::Mutex::new(HashMap::new()));
+    let pending_snapshots = Arc::new(tokio::sync::Mutex::new(HashMap::new()));
     let manager = GatekeeperManager::new(
         fanotify_fd,
         pending_events.clone(),

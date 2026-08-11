@@ -297,7 +297,7 @@ pub fn build_switcher_section() -> Box {
         let card = Box::builder()
             .orientation(Orientation::Vertical)
             .spacing(12)
-            .css_classes(["card", "cc-card"])
+            .css_classes(["liquid-surface", "liquid-surface"])
             .margin_start(4)
             .margin_end(4)
             .margin_top(4)

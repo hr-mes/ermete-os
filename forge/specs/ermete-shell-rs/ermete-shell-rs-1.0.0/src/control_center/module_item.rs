@@ -51,7 +51,7 @@ impl FactoryComponent for CcModuleItem {
     view! {
         gtk::Box {
             set_orientation: Orientation::Vertical,
-            add_css_class: "cc-card",
+            add_css_class: "liquid-surface",
             add_css_class: "cc-module-card",
             add_css_class: "glassmorphism",
             set_spacing: 8,

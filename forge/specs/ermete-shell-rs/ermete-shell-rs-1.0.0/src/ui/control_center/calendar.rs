@@ -27,7 +27,7 @@ pub fn show_calendar_popover(app: &Application) {
     let notifs_card = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(8)
-        .css_classes(["cc-card"])
+        .css_classes(["liquid-surface"])
         .build();
     
     let title_hbox = GtkBox::builder().orientation(Orientation::Horizontal).build();
@@ -75,7 +75,7 @@ pub fn show_calendar_popover(app: &Application) {
     let cal_card = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(10)
-        .css_classes(["cc-card"])
+        .css_classes(["liquid-surface"])
         .build();
 
     let cal = Calendar::builder().build();

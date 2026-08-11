@@ -88,7 +88,7 @@ pub fn show_control_center_popover(app: &Application) {
         .margin_bottom(16)
         .margin_start(16)
         .margin_end(16)
-        .css_classes(["cc-card"])
+        .css_classes(["liquid-surface"])
         .build();
 
     // 0. HEADER BAR (Title + System Settings button)
@@ -515,7 +515,7 @@ fn build_focus_mode_widget(
     let card = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(10)
-        .css_classes(["cc-card"])
+        .css_classes(["liquid-surface"])
         .build();
 
     let header_box = GtkBox::builder()

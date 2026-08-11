@@ -29,7 +29,7 @@ pub fn show_system_monitor_modal(app: &Application) {
         .margin_bottom(16)
         .margin_start(16)
         .margin_end(16)
-        .css_classes(["cc-card"])
+        .css_classes(["liquid-surface"])
         .build();
 
     let header = Label::builder()

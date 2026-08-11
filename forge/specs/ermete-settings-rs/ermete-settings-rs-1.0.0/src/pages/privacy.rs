@@ -76,7 +76,7 @@ pub fn build_page() -> GtkBox {
     let settings_box = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(8)
-        .css_classes(vec!["card"])
+        .css_classes(vec!["liquid-surface"])
         .build();
 
     // Toggle: Posizione
@@ -125,7 +125,7 @@ pub fn build_page() -> GtkBox {
     let flatpak_box = GtkBox::builder()
         .orientation(Orientation::Vertical)
         .spacing(8)
-        .css_classes(vec!["card"])
+        .css_classes(vec!["liquid-surface"])
         .build();
 
     let desc = Label::builder()

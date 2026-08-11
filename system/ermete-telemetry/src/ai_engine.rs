@@ -129,7 +129,7 @@ pub struct AiPredictiveEngine {
     llama_endpoint: String,
     report_sender: mpsc::Sender<AnomalyReport>,
     /// Thread-safe sliding window tracker for recurring fatal crash signatures
-    crash_tracker: Arc<std::sync::Mutex<HashMap<String, Vec<chrono::DateTime<chrono::Utc>>>>>,
+    crash_tracker: Arc<tokio::sync::Mutex<HashMap<String, Vec<chrono::DateTime<chrono::Utc>>>>>,
 }
 
 impl AiPredictiveEngine {
@@ -156,7 +156,7 @@ impl AiPredictiveEngine {
             http_client,
             llama_endpoint,
             report_sender,
-            crash_tracker: Arc::new(std::sync::Mutex::new(HashMap::new())),
+            crash_tracker: Arc::new(tokio::sync::Mutex::new(HashMap::new())),
         }
     }
 

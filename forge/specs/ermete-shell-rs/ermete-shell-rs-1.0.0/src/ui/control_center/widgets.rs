@@ -51,7 +51,7 @@ pub(crate) fn build_cc_row(badge_class: &str, icon_glyph: &str, title: &str, sub
 }
 
 pub(crate) fn build_cc_compact_tile(badge_class: &str, icon_glyph: &str, title: &str) -> Button {
-    let btn = Button::builder().css_classes(["cc-tile"]).hexpand(true).build();
+    let btn = Button::builder().css_classes(["liquid-surface"]).hexpand(true).build();
     let row_box = GtkBox::builder()
         .orientation(Orientation::Horizontal)
         .spacing(12)

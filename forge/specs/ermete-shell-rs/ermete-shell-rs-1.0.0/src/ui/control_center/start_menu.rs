@@ -28,7 +28,7 @@ fn _legacy_start_menu(app: &Application) {
     let main_hbox = GtkBox::builder()
         .orientation(Orientation::Horizontal)
         .spacing(0)
-        .css_classes(["cc-card"])
+        .css_classes(["liquid-surface"])
         .build();
 
     let sidebar = GtkBox::builder()
