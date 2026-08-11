@@ -315,6 +315,18 @@ pub fn build_page() -> Box {
         .suffix(&cf_team_name)
         .build();
 
+    let cf_account_id = Entry::builder().placeholder_text("Account ID").build();
+    let row_cf_acc = ActionRow::builder("Account ID (Zero-Log)")
+        .subtitle("Opzionale: ID account per forzare disabilitazione Log Gateway")
+        .suffix(&cf_account_id)
+        .build();
+
+    let cf_api_token = Entry::builder().placeholder_text("API Token").visibility(false).build();
+    let row_cf_api = ActionRow::builder("API Token (Zero-Log)")
+        .subtitle("Opzionale: Token API per eseguire policy privacy")
+        .suffix(&cf_api_token)
+        .build();
+
     let cf_btn = Button::with_label("Connetti con Cloudflare OIDC");
     cf_btn.add_css_class("suggested-action");
     cf_btn.set_halign(Align::Start);
@@ -325,6 +337,8 @@ pub fn build_page() -> Box {
         .build();
 
     cf_box.append(&row_cf_team);
+    cf_box.append(&row_cf_acc);
+    cf_box.append(&row_cf_api);
     cf_box.append(&row_cf_action);
     container.append(&cf_box);
 
@@ -336,12 +350,29 @@ pub fn build_page() -> Box {
     cf_btn.connect_clicked(move |_| {
         let team = cf_team_name.text().to_string();
         let team_val = if team.is_empty() { "ermete-os-default".to_string() } else { team };
+        let acc = cf_account_id.text().to_string();
+        let tok = cf_api_token.text().to_string();
         
-        cf_status_clone.set_text("⏳ Lancio automazione OAuth2 (warp-cli teams-enroll)...");
+        cf_status_clone.set_text("⏳ Applicazione paradigma Zero-Log e setup Mesh...");
         
         // Spawn warp-cli to handle the Zero Trust OIDC flow in the background
         let status = cf_status_clone.clone();
         relm4::spawn_local(async move {
+            // Esecuzione automatica policy Zero-Log se vengono forniti i parametri API
+            if !acc.is_empty() && !tok.is_empty() {
+                let payload = r#"{"settings_by_rule_type": {"dns": {"log_all": false}, "http": {"log_all": false}, "l4": {"log_all": false}}}"#;
+                let _ = tokio::process::Command::new("curl")
+                    .args(&[
+                        "-X", "PUT",
+                        &format!("https://api.cloudflare.com/client/v4/accounts/{}/gateway/logging", acc),
+                        "-H", &format!("Authorization: Bearer {}", tok),
+                        "-H", "Content-Type: application/json",
+                        "-d", payload,
+                    ])
+                    .output()
+                    .await;
+            }
+
             match tokio::process::Command::new("warp-cli")
                 .args(&["teams-enroll", "--team", &team_val])
                 .output()
