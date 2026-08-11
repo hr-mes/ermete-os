@@ -28,7 +28,7 @@ pub unsafe extern "C" fn live_patch_zbus_entrypoint(method: *const c_char, input
         return std::ptr::null_mut();
     }
     
-    let _guard = PATCH_LOCK.read().unwrap(); // Prevent data races during execution
+    let _guard = PATCH_LOCK.read().unwrap_or_else(|e| e.into_inner()); // Prevent data races during execution
     let fn_ptr = ACTIVE_PATCH_FN.load(Ordering::SeqCst);
     if fn_ptr.is_null() {
         std::ptr::null_mut()
@@ -312,7 +312,7 @@ impl LivePatchManager {
 
         // Atomic swap of the function pointer in RAM protected by write lock
         let raw_fn_ptr = patch_symbol as *mut ();
-        let _write_guard = PATCH_LOCK.write().unwrap();
+        let _write_guard = PATCH_LOCK.write().unwrap_or_else(|e| e.into_inner());
         let old_ptr = ACTIVE_PATCH_FN.swap(raw_fn_ptr, Ordering::SeqCst);
 
         // Store the library Arc to prevent dlclose while functions might be executing

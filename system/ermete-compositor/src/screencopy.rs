@@ -202,7 +202,7 @@ impl ScreencopyManager {
             "Screen capture frame #{} successfully committed and delivered to client '{}'",
             frame_id, frame.app_id
         );
-        Ok(self.frames.get(&frame_id).unwrap())
+        self.frames.get(&frame_id).ok_or_else(|| anyhow::anyhow!("Frame ID {} missing after commit", frame_id))
     }
 
     pub fn get_frame(&self, frame_id: u64) -> Option<&ScreencopyFrame> {

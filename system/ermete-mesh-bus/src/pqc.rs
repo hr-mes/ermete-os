@@ -59,7 +59,7 @@ impl PqcEngine {
         kyber_ss: &[u8; KYBER_SSBYTES],
         x25519_ss: &[u8; 32],
         salt: &[u8],
-    ) -> [u8; 32] {
+    ) -> Result<[u8; 32]> {
         PqcKeys::derive_session_key(kyber_ss, x25519_ss, salt)
     }
 

@@ -135,10 +135,10 @@ pub async fn take_bcachefs_snapshot(fd_id: &str) -> Option<PathBuf> {
 /// Restores `/var/home/ermete` instantly from the recorded snapshot upon confirmed infection / denial.
 pub async fn restore_bcachefs_snapshot_impl(
     fd_id: &str,
-    pending_snapshots: &Arc<std::sync::Mutex<HashMap<String, PathBuf>>>,
+    pending_snapshots: &Arc<tokio::sync::Mutex<HashMap<String, PathBuf>>>,
 ) -> zbus::fdo::Result<bool> {
     let snapshot_path = {
-        let mut snapshots = pending_snapshots.lock().unwrap_or_else(|e| e.into_inner());
+        let mut snapshots = pending_snapshots.lock().await;
         snapshots.remove(fd_id)
     };
 

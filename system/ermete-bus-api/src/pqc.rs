@@ -59,7 +59,7 @@ impl HandshakeSession {
         let peer_x25519_pk = X25519PublicKey::from(resp.ephemeral_x25519_pk);
         let x25519_ss = self.ephemeral_secret.diffie_hellman(&peer_x25519_pk).to_bytes();
 
-        let session_key = PqcKeys::derive_session_key(&kyber_ss, &x25519_ss, &resp.timestamp.to_le_bytes());
+        let session_key = PqcKeys::derive_session_key(&kyber_ss, &x25519_ss, &resp.timestamp.to_le_bytes())?;
         Ok(session_key)
     }
 }
@@ -225,7 +225,7 @@ impl PqcKeys {
         kyber_ss: &[u8; KYBER_SSBYTES],
         x25519_ss: &[u8; 32],
         salt: &[u8],
-    ) -> [u8; 32] {
+    ) -> Result<[u8; 32]> {
         let mut ikm = [0u8; 64];
         ikm[..KYBER_SSBYTES].copy_from_slice(kyber_ss);
         ikm[KYBER_SSBYTES..64].copy_from_slice(x25519_ss);
@@ -234,11 +234,11 @@ impl PqcKeys {
         let prk = salt.extract(&ikm);
         let okm = prk
             .expand(&[b"ermete-mesh-bus-pqc-v1-session"], hkdf::HKDF_SHA256)
-            .expect("HKDF expansion failed");
+            .map_err(|e| anyhow!("HKDF expansion failed: {:?}", e))?;
 
         let mut session_key = [0u8; 32];
-        okm.fill(&mut session_key).expect("Fill session key failed");
-        session_key
+        okm.fill(&mut session_key).map_err(|e| anyhow!("Fill session key failed: {:?}", e))?;
+        Ok(session_key)
     }
 
     pub fn build_handshake_init(&self, timestamp: u64) -> (HandshakeInitPayload, HandshakeSession) {
@@ -296,7 +296,7 @@ impl PqcKeys {
         let peer_x25519_pk = X25519PublicKey::from(init.ephemeral_x25519_pk);
         let x25519_ss = eph_resp.diffie_hellman(&peer_x25519_pk).to_bytes();
 
-        let session_key = Self::derive_session_key(&kyber_ss, &x25519_ss, &init.timestamp.to_le_bytes());
+        let session_key = Self::derive_session_key(&kyber_ss, &x25519_ss, &init.timestamp.to_le_bytes())?;
 
         let mut resp_msg = Vec::new();
         resp_msg.extend_from_slice(self.inner.node_id.as_bytes());

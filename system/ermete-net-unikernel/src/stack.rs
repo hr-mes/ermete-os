@@ -126,7 +126,7 @@ impl UnikernelNetworkStack {
         let tcp_rx_buf = TcpSocketBuffer::new(vec![0u8; 65536]);
         let tcp_tx_buf = TcpSocketBuffer::new(vec![0u8; 65536]);
         let mut tcp_socket = TcpSocket::new(tcp_rx_buf, tcp_tx_buf);
-        tcp_socket.listen(8080).expect("Failed to listen on TCP port 8080");
+        tcp_socket.listen(8080).map_err(|e| anyhow::anyhow!("Failed to listen on TCP port 8080: {:?}", e))?;
         let tcp_handle = sockets.add(tcp_socket);
 
         // UDP Socket setup

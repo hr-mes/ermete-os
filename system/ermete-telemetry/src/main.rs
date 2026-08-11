@@ -24,8 +24,7 @@ async fn main() -> Result<()> {
     let subscriber = FmtSubscriber::builder()
         .with_max_level(Level::INFO)
         .finish();
-    tracing::subscriber::set_global_default(subscriber)
-        .expect("Setting default tracing subscriber failed");
+    let _ = tracing::subscriber::set_global_default(subscriber);
 
     info!("==================================================");
     info!("Starting Ermete OS AI Predictive Telemetry Daemon");

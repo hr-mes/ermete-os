@@ -256,7 +256,6 @@ impl AttestationEngine {
                 error!("Software enclave forbidden under global strict zero-trust policy.");
                 false
             }
-        }
         };
 
         let keylime_valid = !matches!(
@@ -273,7 +272,7 @@ impl AttestationEngine {
             }
             let mut key = [0u8; 32];
             let rng = SystemRandom::new();
-            rng.fill(&mut key).unwrap();
+            rng.fill(&mut key).map_err(|_| anyhow::anyhow!("SystemRandom RNG fill failed"))?;
             let _ = fs::write(&self.config.key_output_path, &key);
 
             *self.state.lock().unwrap_or_else(|e| e.into_inner()) = EnclaveLifecycleState::SecretReleased;

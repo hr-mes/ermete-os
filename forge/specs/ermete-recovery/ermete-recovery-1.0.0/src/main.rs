@@ -12,7 +12,10 @@ fn get_runtime() -> &'static tokio::runtime::Runtime {
         tokio::runtime::Builder::new_multi_thread()
             .enable_all()
             .build()
-            .expect("Inizializzazione Tokio runtime fallita")
+            .unwrap_or_else(|e| {
+                eprintln!("Failed to initialize Tokio runtime: {}", e);
+                std::process::exit(1);
+            })
     })
 }
 

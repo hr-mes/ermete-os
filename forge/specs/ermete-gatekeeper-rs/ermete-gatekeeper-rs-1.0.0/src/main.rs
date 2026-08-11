@@ -154,11 +154,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
                         // Take atomic Bcachefs subvolume snapshot BEFORE prompt or kill
                         if let Some(snap_path) = take_bcachefs_snapshot(&fd_id).await {
-                            pending_snapshots.lock().unwrap_or_else(|e| e.into_inner()).insert(fd_id.clone(), snap_path);
+                            pending_snapshots.lock().await.insert(fd_id.clone(), snap_path);
                         }
                         
                         // Store the fd
-                        pending_events.lock().unwrap_or_else(|e| e.into_inner()).insert(fd_id.clone(), metadata.fd);
+                        pending_events.lock().await.insert(fd_id.clone(), metadata.fd);
                         
                         // Ask the UI to prompt the user
                         if let Err(e) = GatekeeperManager::prompt_required(&signal_ctxt, &fd_id, &target_path_str).await {

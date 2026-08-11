@@ -6,11 +6,11 @@ pub struct WgMeshManager {
 }
 
 impl WgMeshManager {
-    pub fn new() -> Self {
-        let pqc_keys = PqcKeys::new(None).expect("Failed to initialize PQC keys for WgMeshManager");
+    pub fn new() -> anyhow::Result<Self> {
+        let pqc_keys = PqcKeys::new(None)?;
         info!("Initialized WgMeshManager with Hybrid Classical (X25519) + PQC (Kyber-1024 ML-KEM / Dilithium5 ML-DSA) keys.");
 
-        Self { pqc_keys }
+        Ok(Self { pqc_keys })
     }
 
     pub fn kyber_public_key(&self) -> &[u8] {

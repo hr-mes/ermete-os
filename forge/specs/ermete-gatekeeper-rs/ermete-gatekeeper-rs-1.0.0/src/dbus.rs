@@ -112,10 +112,10 @@ impl GatekeeperManager {
         }
 
         // Clean up pending snapshot registration on approval
-        let _ = self.pending_snapshots.lock().unwrap_or_else(|e| e.into_inner()).remove(&fd_id);
+        let _ = self.pending_snapshots.lock().await.remove(&fd_id);
 
         let event_fd = {
-            let mut pending = self.pending_events.lock().unwrap_or_else(|e| e.into_inner());
+            let mut pending = self.pending_events.lock().await;
             pending.remove(&fd_id)
         };
 
@@ -167,7 +167,7 @@ impl GatekeeperManager {
 
         let _ = restore_bcachefs_snapshot_impl(&fd_id, &self.pending_snapshots).await;
         let event_fd = {
-            let mut pending = self.pending_events.lock().unwrap_or_else(|e| e.into_inner());
+            let mut pending = self.pending_events.lock().await;
             pending.remove(&fd_id)
         };
         if let Some(event_fd) = event_fd {

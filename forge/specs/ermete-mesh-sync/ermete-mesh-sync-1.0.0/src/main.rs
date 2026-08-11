@@ -31,7 +31,7 @@ impl MeshSyncBus {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!("Starting ermete-mesh-sync with Level 13 Post-Quantum Cryptography...");
 
-    let manager = Arc::new(WgMeshManager::new());
+    let manager = Arc::new(WgMeshManager::new()?);
     manager.initialize_tunnel().await?;
 
     let bus = MeshSyncBus {

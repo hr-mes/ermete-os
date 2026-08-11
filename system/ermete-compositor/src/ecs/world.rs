@@ -140,10 +140,11 @@ impl World {
             .storages
             .entry(type_id)
             .or_insert_with(|| Box::new(ComponentStorage::<T>::new()));
-        entry
-            .as_any_mut()
-            .downcast_mut::<ComponentStorage<T>>()
-            .expect("ComponentStorage downcast failure")
+        if let Some(storage) = entry.as_any_mut().downcast_mut::<ComponentStorage<T>>() {
+            storage
+        } else {
+            unreachable!("ComponentStorage entry matching type_id must be ComponentStorage<T>")
+        }
     }
 
     /// Gets the component storage for type T if it exists.
