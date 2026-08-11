@@ -1,6 +1,7 @@
 use zbus::proxy;
 use zbus::Connection;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc}
+use tokio::sync::Mutex;;
 use std::collections::HashMap;
 
 #[proxy(

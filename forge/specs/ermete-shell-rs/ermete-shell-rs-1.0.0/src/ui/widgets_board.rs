@@ -275,47 +275,16 @@ fn build_calendar_widget() -> GtkBox {
     header.append(&sub_date);
     card.append(&header);
 
-    // Calendar Days Grid
-    let grid = Grid::builder()
-        .row_spacing(4)
-        .column_spacing(4)
+    let err_msg = Label::builder()
+        .label("Dati non disponibili (IPC calendar offline)")
+        .css_classes(vec!["widgets-board-subtitle".to_string()])
         .halign(Align::Center)
-        .css_classes(vec!["calendar-grid".to_string()])
+        .margin_top(20)
+        .margin_bottom(20)
         .build();
+    
+    card.append(&err_msg);
 
-    let day_headers = ["S", "M", "T", "W", "T", "F", "S"];
-    for (col, day_name) in day_headers.iter().enumerate() {
-        let lbl = Label::builder()
-            .label(*day_name)
-            .css_classes(vec!["calendar-day-label".to_string()])
-            .halign(Align::Center)
-            .build();
-        grid.attach(&lbl, col as i32, 0, 1, 1);
-    }
-
-    // Days grid for current month mock (1..31 starting on Wednesday for Aug 2026)
-    let current_day = now.format("%e").to_string().trim().parse::<i32>().unwrap_or(9);
-    let start_offset = 6; // Aug 1, 2026 is Saturday (offset 6)
-    let total_days = 31;
-
-    for day in 1..=total_days {
-        let pos = start_offset + day - 1;
-        let row = 1 + (pos / 7);
-        let col = pos % 7;
-
-        let btn = Button::builder()
-            .label(&day.to_string())
-            .css_classes(vec!["calendar-day-btn".to_string()])
-            .build();
-
-        if day == current_day {
-            btn.add_css_class("today");
-        }
-
-        grid.attach(&btn, col, row, 1, 1);
-    }
-
-    card.append(&grid);
 
     // Calendar Events (No mock events: empty state if no IPC backend)
     let no_event_lbl = Label::builder()

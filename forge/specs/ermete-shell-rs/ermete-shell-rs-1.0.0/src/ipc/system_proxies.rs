@@ -1,6 +1,7 @@
 use std::any::Any;
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, OnceLock}
+use tokio::sync::Mutex;;
 
 pub use crate::ipc::types::*;
 
@@ -42,7 +43,8 @@ impl ProxyRegistry {
     pub fn register(&self, controller: Box<dyn ControllerBackend>) {
         let name = controller.name();
         let arc_controller: Arc<dyn ControllerBackend> = Arc::from(controller);
-        if let Ok(mut map) = self.controllers.lock() {
+        let mut map = self.controllers.blocking_lock();
+        {
             map.insert(name, arc_controller);
         }
     }
@@ -50,14 +52,16 @@ impl ProxyRegistry {
     #[allow(dead_code)]
     pub fn register_arc(&self, controller: Arc<dyn ControllerBackend>) {
         let name = controller.name();
-        if let Ok(mut map) = self.controllers.lock() {
+        let mut map = self.controllers.blocking_lock();
+        {
             map.insert(name, controller);
         }
     }
 
     #[allow(dead_code)]
     pub fn get(&self, name: &str) -> Option<Arc<dyn ControllerBackend>> {
-        if let Ok(map) = self.controllers.lock() {
+        let map = self.controllers.blocking_lock();
+        {
             map.get(name).cloned()
         } else {
             None
@@ -65,7 +69,8 @@ impl ProxyRegistry {
     }
 
     pub fn get_typed<T: 'static + Clone>(&self, name: &str) -> Option<T> {
-        if let Ok(map) = self.controllers.lock() {
+        let map = self.controllers.blocking_lock();
+        {
             if let Some(ctrl) = map.get(name) {
                 if let Some(concrete) = ctrl.as_any().downcast_ref::<T>() {
                     return Some(concrete.clone());

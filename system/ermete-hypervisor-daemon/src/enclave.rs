@@ -531,24 +531,24 @@ mod tests {
     use crate::attestation::AttestationConfig;
 
     #[test]
-    fn test_enclave_controller_cgroup_creation() {
-        let temp_dir = std::env::temp_dir().join("ermete_cgroup_test");
-        let controller = EnclaveController::new(&temp_dir, HardwareLimits::default());
+    fn test_enclave_controller_cgroup_creation() -> anyhow::Result<()> {
+        let temp_dir = tempfile::tempdir()?;
+        let controller = EnclaveController::new(temp_dir.path(), HardwareLimits::default());
         let slice = controller.create_cgroup_slice("enclave-test-01");
         assert!(slice.is_ok());
 
-        let slice_path = slice.unwrap();
+        let slice_path = slice?;
         assert!(slice_path.ends_with("enclave-test-01"));
 
         assert!(controller.apply_ram_limit(&slice_path).is_ok());
         assert!(controller.disconnect_native_network(&slice_path, None).is_ok());
         assert!(controller.async_cpu_pinning(&slice_path, None).is_ok());
         assert!(controller.destroy_cgroup(&slice_path).is_ok());
-        let _ = fs::remove_dir_all(&temp_dir);
+        Ok(())
     }
 
     #[test]
-    fn test_enclave_manager_launch_and_list() {
+    fn test_enclave_manager_launch_and_list() -> anyhow::Result<()> {
         let attestation_engine = Arc::new(AttestationEngine::new(AttestationConfig::default()));
         let manager = EnclaveManager::new(attestation_engine);
 
@@ -561,7 +561,7 @@ mod tests {
                 UntrustedAgentCategory::UntrustedTool,
             );
             assert!(enclave_id.is_err(), "Enclave launch must fail when /dev/kvm is missing");
-            return;
+            return Ok(());
         }
 
         let enclave_id = manager.launch_enclave(
@@ -573,14 +573,15 @@ mod tests {
         );
 
         assert!(enclave_id.is_ok());
-        let id = enclave_id.unwrap();
+        let id = enclave_id?;
         assert!(id.starts_with("enclave-"));
 
-        let list = manager.list_enclaves().unwrap();
+        let list = manager.list_enclaves()?;
         assert_eq!(list.len(), 1);
 
-        assert!(manager.terminate_enclave(&id).unwrap());
-        assert_eq!(manager.list_enclaves().unwrap().len(), 0);
+        assert!(manager.terminate_enclave(&id)?);
+        assert_eq!(manager.list_enclaves()?.len(), 0);
+        Ok(())
     }
 }
 

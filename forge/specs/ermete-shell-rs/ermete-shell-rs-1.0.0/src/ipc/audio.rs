@@ -1,4 +1,5 @@
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc}
+use tokio::sync::Mutex;;
 use tokio::sync::{mpsc, oneshot};
 use crate::ipc::types::{IpcBackend, AudioBus, AudioEvent,  BedrockAudioProxy};
 
@@ -148,7 +149,8 @@ impl AudioController {
     }
 
     pub async fn set_volume(&self, volume: f64) -> zbus::Result<()> {
-        if let Ok(mut c) = self.cached_volume.lock() {
+        let mut c = self.cached_volume.blocking_lock();
+        {
             *c = volume;
         }
         let (tx, rx) = oneshot::channel();
@@ -169,7 +171,7 @@ impl AudioController {
     }
 
     pub fn get_cached_volume(&self) -> f64 {
-        *self.cached_volume.lock().unwrap_or_else(|e| e.into_inner())
+        *self.cached_volume.blocking_lock())
     }
 }
 

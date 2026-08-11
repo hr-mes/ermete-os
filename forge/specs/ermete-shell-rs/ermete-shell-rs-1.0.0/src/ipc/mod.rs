@@ -69,7 +69,8 @@ pub fn init_system_controller() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::{Arc, Mutex};
+    use std::sync::{Arc}
+use tokio::sync::Mutex;;
     use crate::ipc::types::{ AudioBus, NetBus, HardwareBus, MprisBus};
 
     #[tokio::test]
@@ -141,7 +142,7 @@ mod tests {
     #[tokio::test]
     async fn test_review_findings_compliance() {
         let audio_bus = AudioBus::new(); let net_bus = NetBus::new(); let hw_bus = HardwareBus::new(); let mpris_bus = MprisBus::new();
-        state.lock().expect("Mutex poisoned in test").wifi_networks.push(crate::ipc::types::WifiNetworkInfo {
+        state.blocking_lock().wifi_networks.push(crate::ipc::types::WifiNetworkInfo {
             ssid: "Ermete-5G".to_string(),
             signal: 85,
             active: false,

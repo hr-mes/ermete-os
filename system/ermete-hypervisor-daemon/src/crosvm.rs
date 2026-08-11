@@ -248,14 +248,19 @@ mod tests {
     }
 
     #[test]
-    fn test_command_builder() {
+    fn test_command_builder() -> anyhow::Result<()> {
+        let temp_dir = tempfile::tempdir()?;
+        let sock_path = temp_dir.path().join("wayland-test.sock");
+        let untrusted_path = temp_dir.path().join("untrusted_app");
+        
         let mut config = CrosvmConfig::default();
-        config.wayland_sock = Some(PathBuf::from("/tmp/wayland-test.sock"));
+        config.wayland_sock = Some(sock_path);
         config.enable_gpu = true;
-        config.shared_dir = Some(SharedDirConfig::new_readonly("/tmp/untrusted_app", "app_mount"));
+        config.shared_dir = Some(SharedDirConfig::new_readonly(untrusted_path.to_string_lossy().as_ref(), "app_mount"));
 
         let instance = CrosvmInstance::new("test-vm-1", config);
         let cmd_res = instance.build_command();
         assert!(cmd_res.is_ok());
+        Ok(())
     }
 }

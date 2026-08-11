@@ -404,15 +404,8 @@ impl SimpleComponent for ForgeWidgetModel {
 
         let widgets = view_output!();
 
-        // Spawn mock state transition timer to simulate FAL activity
-        let sender_clone = sender.clone();
-        glib::spawn_future_local(async move {
-            tokio::time::sleep(std::time::Duration::from_secs(2)).await;
-            sender_clone.input(ForgeWidgetInput::SetState(FalState::DownloadingCloudKernel { progress: 45 }));
-            
-            tokio::time::sleep(std::time::Duration::from_secs(2)).await;
-            sender_clone.input(ForgeWidgetInput::SetState(FalState::LocalCompilationIdleMode { cpu_usage: 18 }));
-        });
+        // Removed mock state transition timer
+        sender.input(ForgeWidgetInput::SetState(FalState::Idle));
 
         ComponentParts { model, widgets }
     }

@@ -1,5 +1,6 @@
 use zbus::proxy;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc}
+use tokio::sync::Mutex;;
 use tokio::sync::{mpsc, oneshot};
 use crate::ipc::types::{IpcBackend, MprisBus, MprisEvent};
 pub use crate::ipc::types::MprisState;
@@ -180,7 +181,8 @@ impl MprisController {
 
 
     pub async fn player_command(&self, cmd: &str) -> zbus::Result<()> {
-        if let Ok(mut lock) = self.last_player_command.lock() {
+        let mut lock = self.last_player_command.blocking_lock();
+        {
             *lock = Some(cmd.to_string());
         }
         let (tx, rx) = oneshot::channel();
@@ -194,14 +196,15 @@ impl MprisController {
     }
 
     pub fn get_cached_mpris_state(&self) -> Option<MprisState> {
-        self.cached_mpris.lock().unwrap_or_else(|e| e.into_inner()).clone()
+        self.cached_mpris.blocking_lock()).clone()
     }
 
     pub async fn refresh_mpris(&self) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(MprisCommand::GetCachedMprisState(tx)).await.is_ok() {
             if let Ok(state) = rx.await {
-                if let Ok(mut lock) = self.cached_mpris.lock() {
+                let mut lock = self.cached_mpris.blocking_lock();
+        {
                     *lock = state;
                 }
             }

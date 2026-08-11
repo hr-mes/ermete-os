@@ -1,5 +1,6 @@
 use arc_swap::ArcSwap;
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, OnceLock}
+use tokio::sync::Mutex;;
 use tokio::sync::{mpsc, oneshot};
 use crate::ipc::types::{
     IpcBackend, NetBus, NetEvent, WifiNetworkInfo,
@@ -479,7 +480,8 @@ impl NetworkController {
         if self.sender.send(NetworkCommand::ConnectWifi(ssid.to_string(), password.to_string(), tx)).await.is_ok() {
             let res = rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())));
             if res.is_ok() {
-                if let Ok(mut l) = self.active_wifi_ssid.lock() {
+                let mut l = self.active_wifi_ssid.blocking_lock();
+        {
                     *l = Some(ssid.to_string());
                 }
             }
@@ -494,7 +496,8 @@ impl NetworkController {
         if self.sender.send(NetworkCommand::DisconnectWifi(ssid.to_string(), tx)).await.is_ok() {
             let res = rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())));
             if res.is_ok() {
-                if let Ok(mut l) = self.active_wifi_ssid.lock() {
+                let mut l = self.active_wifi_ssid.blocking_lock();
+        {
                     *l = None;
                 }
             }
@@ -541,7 +544,8 @@ impl NetworkController {
     }
 
     pub async fn get_network_status_async(&self) -> (String, String, String) {
-        if let Ok(l) = self.active_wifi_ssid.lock() {
+        let l = self.active_wifi_ssid.blocking_lock();
+        {
             if let Some(ssid) = l.as_ref() {
                 let status = ("".to_string(), "Rete Wi-Fi".to_string(), ssid.clone());
                 get_net_cache().store(Arc::new(status.clone()));
@@ -556,7 +560,8 @@ impl NetworkController {
     }
 
     pub fn get_cached_network_status(&self) -> (String, String, String) {
-        if let Ok(l) = self.active_wifi_ssid.lock() {
+        let l = self.active_wifi_ssid.blocking_lock();
+        {
             if let Some(ssid) = l.as_ref() {
                 return ("".to_string(), "Rete Wi-Fi".to_string(), ssid.clone());
             }

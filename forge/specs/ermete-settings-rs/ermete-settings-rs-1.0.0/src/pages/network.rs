@@ -3,7 +3,8 @@
 use anyhow::{anyhow, Result};
 use gtk4::prelude::*;
 use gtk4::{Align, Box, Button, DropDown, Entry, Label, ListBox, Orientation};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc}
+use tokio::sync::Mutex;;
 use crate::components::action_row::ActionRow;
 use ermete_bus_api::shm_ring::ZeroCopyRingBuffer;
 
@@ -43,7 +44,8 @@ impl UnikernelNetworkConsumer {
 
     /// Submits an asynchronous event on the ZeroCopyRingBuffer without waiting for synchronous RPC response
     pub fn submit_event(&self, frame_type: u16, payload: &[u8]) -> Result<()> {
-        if let Ok(guard) = self.tx_ring.lock() {
+        let guard = self.tx_ring.blocking_lock();
+        {
             if let Some(ref ring) = *guard {
                 ring.push_frame(frame_type, payload)?;
                 return Ok(());
@@ -54,7 +56,8 @@ impl UnikernelNetworkConsumer {
 
     /// Reads next return status event from return Ring Buffer
     pub fn poll_passive_status(&self) -> Result<Option<(u16, Vec<u8>)>> {
-        if let Ok(guard) = self.rx_ring.lock() {
+        let guard = self.rx_ring.blocking_lock();
+        {
             if let Some(ref ring) = *guard {
                 return ring.pop_frame();
             }

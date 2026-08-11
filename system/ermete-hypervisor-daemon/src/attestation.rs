@@ -352,11 +352,16 @@ use sha2::Digest;
 mod tests {
     use super::*;
 
+    use tempfile::NamedTempFile;
+
     #[test]
-    fn test_attestation_engine_flow() {
+    fn test_attestation_engine_flow() -> anyhow::Result<()> {
+        let temp_file = NamedTempFile::new()?;
+        let temp_path = temp_file.path().to_path_buf();
+        
         let mut config = AttestationConfig::default();
         config.strict_zero_trust = false;
-        config.key_output_path = PathBuf::from("/tmp/test_hypervisor_key.key");
+        config.key_output_path = temp_path;
 
         let engine = AttestationEngine::new(config);
         assert_eq!(engine.get_state(), EnclaveLifecycleState::Uninitialized);
@@ -364,12 +369,12 @@ mod tests {
         let res = engine.orchestrate_attestation("enc-12345", HardwareEnclaveType::SoftwareEnclave);
         assert!(res.is_ok());
 
-        let summary = res.unwrap();
+        let summary = res?;
         assert_eq!(summary.enclave_id, "enc-12345");
         assert!(summary.secrets_released);
         assert_eq!(engine.get_state(), EnclaveLifecycleState::SecretReleased);
 
-        let _ = fs::remove_file("/tmp/test_hypervisor_key.key");
+        Ok(())
     }
 }
 

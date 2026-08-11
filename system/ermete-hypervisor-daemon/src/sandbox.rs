@@ -109,14 +109,15 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_spawn_and_terminate_sandbox() {
+    fn test_spawn_and_terminate_sandbox() -> anyhow::Result<()> {
         let res = EnclaveProcessSandbox::spawn_in_sandbox("/bin/sleep", &["10".to_string()], UntrustedAgentCategory::UntrustedTool);
         assert!(res.is_ok());
 
-        let (pid, mut child) = res.unwrap();
+        let (pid, mut child) = res?;
         assert!(pid > 0);
 
         assert!(EnclaveProcessSandbox::terminate_pid(pid).is_ok());
         let _ = child.wait();
+        Ok(())
     }
 }
