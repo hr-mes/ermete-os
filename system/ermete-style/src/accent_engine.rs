@@ -185,101 +185,15 @@ impl AccentPalette {
 
     /// Generates dynamic GTK4, Libadwaita, Compositor, Shell, and Dock CSS
     pub fn generate_gtk_css(&self) -> String {
-        format!(
-            r#"/* Dynamic Global Accent Color Engine (Feren OS / XeroLinux style for Ermete OS) */
-@define-color accent_color {hex};
-@define-color accent_bg_color {hex};
-@define-color accent_fg_color {fg_hex};
-@define-color accent_hover {hover_hex};
-@define-color accent_active {active_hex};
-@define-color accent_bg_alpha {subtle_alpha};
-@define-color accent_border {glass_alpha};
-@define-color focus_border {focus_alpha};
-
-:root, window, .glass-panel, .dock-container, .flat-canvas-container {{
-    --accent-color: {hex};
-    --accent-hover: {hover_hex};
-    --accent-active: {active_hex};
-    --accent-fg: {fg_hex};
-    --accent-subtle: {subtle_alpha};
-    --accent-glass: {glass_alpha};
-    --accent-focus: {focus_alpha};
-}}
-
-/* GTK4 & Libadwaita Suggested Actions & Buttons */
-.accent, .accent-bg, button.suggested-action {{
-    background-color: {hex} !important;
-    color: {fg_hex} !important;
-    border-color: {hover_hex} !important;
-}}
-
-.accent:hover, .accent-bg:hover, button.suggested-action:hover {{
-    background-color: {hover_hex} !important;
-    color: {fg_hex} !important;
-}}
-
-.accent:active, .accent-bg:active, button.suggested-action:active {{
-    background-color: {active_hex} !important;
-    color: {fg_hex} !important;
-}}
-
-/* Selection & Entry Highlights */
-selection, entry selection, label:selected {{
-    background-color: {subtle_alpha} !important;
-    color: {hex} !important;
-}}
-
-entry:focus, button:focus, .focus-ring:focus {{
-    outline-color: {focus_alpha} !important;
-    border-color: {hex} !important;
-}}
-
-/* Switches, Checks, Radios, Sliders */
-switch:checked {{
-    background-color: {hex} !important;
-}}
-
-check:checked, radio:checked {{
-    background-color: {hex} !important;
-    color: {fg_hex} !important;
-}}
-
-scale highlight, slider:checked, progressbar progress {{
-    background-color: {hex} !important;
-}}
-
-/* Dock, Shell, Compositor Tinting */
-.dock-indicator-focused, .dock-instance-badge {{
-    background-color: {hex} !important;
-    color: {fg_hex} !important;
-}}
-
-.dock-item-btn:hover {{
-    background: {subtle_alpha} !important;
-}}
-
-.morphic-pill.active, .morphic-pill:hover {{
-    border-color: {hex} !important;
-    box-shadow: 0 0 12px {focus_alpha} !important;
-}}
-
-.window-active-border {{
-    border-color: {hex} !important;
-}}
-
-.card.accent-tint {{
-    border: 1px solid {glass_alpha} !important;
-    background: {subtle_alpha} !important;
-}}
-"#,
-            hex = self.hex,
-            fg_hex = self.fg.to_hex(),
-            hover_hex = self.hover.to_hex(),
-            active_hex = self.active.to_hex(),
-            subtle_alpha = self.subtle_alpha,
-            glass_alpha = self.glass_alpha,
-            focus_alpha = self.focus_alpha,
-        )
+        let template = include_str!("accent_template.css");
+        template
+            .replace("{hex}", &self.hex)
+            .replace("{fg_hex}", &self.fg.to_hex())
+            .replace("{hover_hex}", &self.hover.to_hex())
+            .replace("{active_hex}", &self.active.to_hex())
+            .replace("{subtle_alpha}", &self.subtle_alpha)
+            .replace("{glass_alpha}", &self.glass_alpha)
+            .replace("{focus_alpha}", &self.focus_alpha)
     }
 }
 

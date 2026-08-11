@@ -223,3 +223,77 @@ impl NodeTree {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn create_test_node(id: u32, node_type: NodeType) -> AudioNode {
+        AudioNode {
+            id,
+            name: format!("Node_{}", id),
+            description: "Test Node".to_string(),
+            media_class: "Audio/Sink".to_string(),
+            node_type,
+            volume: 1.0,
+            muted: false,
+            is_default: false,
+            priority: 50,
+            ports: vec![],
+            properties: HashMap::new(),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_add_and_update_node() {
+        let tree = NodeTree::new();
+        let node = create_test_node(1, NodeType::AudioSink);
+        tree.add_or_update_node(node.clone()).await;
+        
+        let state = tree.get_snapshot().await;
+        assert_eq!(state.sinks.len(), 1);
+        assert_eq!(state.sinks[0].id, 1);
+        assert_eq!(state.default_sink_id, Some(1));
+
+        // Update volume
+        let mut updated_node = node.clone();
+        updated_node.volume = 0.5;
+        tree.add_or_update_node(updated_node).await;
+        
+        let state = tree.get_snapshot().await;
+        assert_eq!(state.sinks.len(), 1);
+        assert_eq!(state.sinks[0].volume, 0.5);
+    }
+
+    #[tokio::test]
+    async fn test_set_volume_and_mute() {
+        let tree = NodeTree::new();
+        tree.add_or_update_node(create_test_node(1, NodeType::AudioSink)).await;
+        tree.add_or_update_node(create_test_node(2, NodeType::AudioSource)).await;
+
+        assert!(tree.set_volume(1, 1.5).await.is_ok());
+        assert!(tree.set_mute(2, true).await.is_ok());
+
+        let state = tree.get_snapshot().await;
+        assert_eq!(state.sinks[0].volume, 1.5);
+        assert!(state.sources[0].muted);
+        
+        // Out of bounds node
+        assert!(tree.set_volume(99, 1.0).await.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_default_routing() {
+        let tree = NodeTree::new();
+        tree.add_or_update_node(create_test_node(1, NodeType::AudioSink)).await;
+        tree.add_or_update_node(create_test_node(2, NodeType::AudioSink)).await;
+
+        assert!(tree.set_default_sink(2).await.is_ok());
+        
+        let state = tree.get_snapshot().await;
+        assert_eq!(state.default_sink_id, Some(2));
+        assert!(state.sinks.iter().find(|n| n.id == 2).unwrap().is_default);
+        assert!(!state.sinks.iter().find(|n| n.id == 1).unwrap().is_default);
+    }
+}
+

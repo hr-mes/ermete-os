@@ -62,17 +62,6 @@ pub struct BpfMitigationPatch {
     pub timestamp: String,
 }
 
-/// Trait defining native eBPF program ingestion interface via Aya framework
-pub trait BpfProgramIngestor: Send + Sync {
-    /// Ingests and loads native eBPF bytecode artifact for Ring-0 execution
-    fn ingest_mitigation_filter(
-        &self,
-        unit: &str,
-        offset: &str,
-        signal: &str,
-    ) -> anyhow::Result<(Vec<u8>, String)>;
-}
-
 /// Native eBPF Aya engine for live kernel probe ingestion
 pub struct AyaBpfIngestor;
 
@@ -88,8 +77,8 @@ impl Default for AyaBpfIngestor {
     }
 }
 
-impl BpfProgramIngestor for AyaBpfIngestor {
-    fn ingest_mitigation_filter(
+impl AyaBpfIngestor {
+    pub fn ingest_mitigation_filter(
         &self,
         unit: &str,
         offset: &str,
@@ -416,40 +405,19 @@ impl AiPredictiveEngine {
     }
 
     fn extract_memory_offset(msg: &str) -> String {
-        if let Some(pos) = msg.find("+0x") {
-            let sub = &msg[pos..];
-            let end = sub[3..]
-                .find(|c: char| !c.is_ascii_hexdigit())
-                .map(|i| i + 3)
-                .unwrap_or(sub.len());
-            return sub[..end].to_string();
-        }
-        if let Some(pos) = msg.find("0x") {
-            let sub = &msg[pos..];
-            let end = sub[2..]
-                .find(|c: char| !c.is_ascii_hexdigit())
-                .map(|i| i + 2)
-                .unwrap_or(sub.len());
-            let candidate = &sub[..end];
-            if candidate.len() >= 3 {
-                return candidate.to_string();
-            }
-        }
-        "0x00000000".to_string()
+        msg.split_whitespace()
+           .find(|w| w.starts_with("+0x") || w.starts_with("0x"))
+           .map(|w| w.trim_matches(|c: char| !c.is_ascii_hexdigit() && c != '+' && c != 'x').to_string())
+           .unwrap_or_else(|| "0x00000000".to_string())
     }
 
     fn extract_stacktrace(msg: &str) -> Vec<String> {
-        let mut frames = Vec::new();
-        for line in msg.lines() {
-            let trimmed = line.trim();
-            if trimmed.contains('#') || trimmed.contains("at ") || trimmed.contains("in ") || trimmed.contains("0x") {
-                frames.push(trimmed.to_string());
-            }
-        }
-        if frames.is_empty() {
-            frames.push(msg.trim().to_string());
-        }
-        frames
+        let frames: Vec<String> = msg.lines()
+            .map(|l| l.trim())
+            .filter(|l| l.contains('#') || l.contains("at ") || l.contains("in ") || l.contains("0x"))
+            .map(|l| l.to_string())
+            .collect();
+        if frames.is_empty() { vec![msg.trim().to_string()] } else { frames }
     }
 
     async fn generate_embedding(&self, text: &str) -> Vec<f32> {

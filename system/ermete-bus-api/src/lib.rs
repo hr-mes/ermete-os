@@ -71,26 +71,6 @@ pub struct MeshBusStatusPayload {
     pub zero_trust_enabled: bool,
 }
 
-/// Dynamic trait for interacting with the PQC Mesh Bus.
-#[async_trait]
-pub trait MeshBusClientTrait: Send + Sync {
-    async fn get_status(&self) -> anyhow::Result<MeshBusStatusPayload>;
-    async fn get_peers(&self) -> anyhow::Result<Vec<MeshPeerInfo>>;
-    async fn get_node_identity(&self) -> anyhow::Result<NodeIdentityPayload>;
-    async fn initiate_handshake(&self, node_id: &str, endpoint: &str) -> anyhow::Result<String>;
-}
-
-/// Dynamic trait for collecting Ring-0 telemetry.
-#[async_trait]
-pub trait KernelTelemetryProvider: Send + Sync {
-    async fn collect_telemetry(&mut self) -> KernelTelemetry;
-}
-
-/// Dynamic trait for applying autonomic policies and mitigations.
-#[async_trait]
-pub trait AutonomicPolicyEnforcer: Send + Sync {
-    async fn apply_mitigations(&self, decision: &AiDecisionPayload) -> anyhow::Result<()>;
-}
 
 /// Shared DBus interface proxy definition for org.ermete.MeshBus
 #[proxy(
