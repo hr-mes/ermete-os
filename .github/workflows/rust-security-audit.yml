@@ -38,6 +38,16 @@ jobs:
         with:
           shared-key: "rust-security-audit"
           cache-on-failure: "true"
+      - name: 📦 Install System Dependencies (GTK4/Cairo/Pango)
+        run: |
+          if command -v dnf5 >/dev/null; then
+            dnf5 install -y gtk4-devel pango-devel cairo-devel glib2-devel
+          elif command -v dnf >/dev/null; then
+            dnf install -y gtk4-devel pango-devel cairo-devel glib2-devel
+          elif command -v apt-get >/dev/null; then
+            apt-get update && apt-get install -y libgtk-4-dev libpango1.0-dev libcairo2-dev libglib2.0-dev
+          fi
+
       - name: Check Unsafe Code & Clippy Policies
         run: |
           cargo clippy --all-targets --all-features -- \
@@ -261,8 +271,11 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-      - name: ⚙️ Set Default Rust Toolchain
-        run: rustup default stable
+      - name: ⚙️ Set Default Rust Toolchain (Nightly for eBPF)
+        run: |
+          rustup toolchain install nightly
+          rustup default nightly
+          rustup component add rust-src
 
 
       - name: ⚡ Restore sccache Cache
