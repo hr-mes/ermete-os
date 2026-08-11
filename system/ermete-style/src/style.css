@@ -451,3 +451,85 @@ button.suggested-action:hover {
     border-color: @error;
     box-shadow: 0 4px 20px alpha(@error, 0.5);
 }
+
+/* =========================================
+   LIQUID UI - 144Hz Fluid Dynamics
+   ========================================= */
+
+/* Spring-based easing for liquid feel */
+@define-color liquid_spring cubic-bezier(0.175, 0.885, 0.32, 1.15);
+@define-color liquid_smooth cubic-bezier(0.2, 0.9, 0.1, 1);
+
+/* Liquid Surfacing */
+.liquid-surface {
+    background-color: alpha(@surface_container_highest, 0.45);
+    backdrop-filter: blur(40px) saturate(180%);
+    border: 1px solid alpha(@outline, 0.15);
+    border-radius: 28px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3), inset 0 1px 1px alpha(#ffffff, 0.1);
+    transition: all 0.4s cubic-bezier(0.2, 0.9, 0.1, 1);
+}
+
+.liquid-surface:hover {
+    background-color: alpha(@surface_container_highest, 0.55);
+    border-color: alpha(@outline, 0.3);
+    box-shadow: 0 32px 70px rgba(0, 0, 0, 0.4), inset 0 1px 1px alpha(#ffffff, 0.2);
+}
+
+/* Liquid Buttons */
+.liquid-btn {
+    background: linear-gradient(135deg, alpha(@surface_variant, 0.7), alpha(@surface_container, 0.7));
+    backdrop-filter: blur(12px);
+    border: 1px solid alpha(@outline_variant, 0.3);
+    border-radius: 20px;
+    color: @on_surface;
+    font-weight: 700;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.liquid-btn:hover {
+    transform: translateY(-3px) scale(1.03);
+    background: linear-gradient(135deg, alpha(@surface_variant, 0.9), alpha(@surface_container, 0.9));
+    border-color: alpha(@outline, 0.5);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25), inset 0 1px 1px alpha(#ffffff, 0.15);
+    color: @primary;
+}
+
+.liquid-btn:active {
+    transform: translateY(1px) scale(0.96);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    background: alpha(@surface_variant, 1.0);
+}
+
+/* Liquid Sliders */
+.liquid-slider trough {
+    background-color: alpha(@surface_variant, 0.4);
+    border-radius: 12px;
+    transition: all 0.25s cubic-bezier(0.2, 0.9, 0.1, 1);
+}
+
+.liquid-slider:hover trough {
+    background-color: alpha(@surface_variant, 0.7);
+}
+
+.liquid-slider highlight {
+    background: linear-gradient(90deg, @primary, @secondary);
+    border-radius: 12px;
+    box-shadow: 0 0 12px alpha(@primary, 0.4);
+}
+
+.liquid-slider slider {
+    background-color: @on_surface;
+    border-radius: 50%;
+    min-width: 24px;
+    min-height: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+}
+
+.liquid-slider slider:hover {
+    transform: scale(1.3);
+    background-color: @primary;
+    box-shadow: 0 6px 18px alpha(@primary, 0.5);
+}
