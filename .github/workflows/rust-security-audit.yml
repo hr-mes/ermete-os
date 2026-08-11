@@ -14,7 +14,7 @@ jobs:
     name: Enforce Safety & Cargo Vet Audit
     runs-on: ubuntu-24.04
     container:
-      image: ghcr.io/hr-mes/ermete-os-builder@sha256:d3b45a666e852d47f9f257d0799f015ebfbdfb892a0e44280b15bdfbdfd77a0e
+      image: ghcr.io/hr-mes/ermete-os-builder:latest
     env:
       RUSTC_WRAPPER: sccache
       SCCACHE_DIR: /tmp/sccache
@@ -57,7 +57,7 @@ jobs:
     name: 🔬 Kani Formal Verification (${{ matrix.module }} - Shard ${{ matrix.shard }})
     runs-on: ubuntu-24.04
     container:
-      image: ghcr.io/hr-mes/ermete-os-builder@sha256:d3b45a666e852d47f9f257d0799f015ebfbdfb892a0e44280b15bdfbdfd77a0e
+      image: ghcr.io/hr-mes/ermete-os-builder:latest
     env:
       RUSTC_WRAPPER: sccache
       SCCACHE_DIR: /tmp/sccache
@@ -174,7 +174,7 @@ jobs:
     if: github.event_name == 'push' || github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
     container:
-      image: ghcr.io/hr-mes/ermete-os-builder@sha256:d3b45a666e852d47f9f257d0799f015ebfbdfb892a0e44280b15bdfbdfd77a0e
+      image: ghcr.io/hr-mes/ermete-os-builder:latest
     env:
       RUSTC_WRAPPER: sccache
       SCCACHE_DIR: /tmp/sccache
@@ -206,7 +206,7 @@ jobs:
     name: ⚡ eBPF & Bare-Metal Build Audit (${{ matrix.target_name }})
     runs-on: ubuntu-24.04
     container:
-      image: ghcr.io/hr-mes/ermete-os-builder@sha256:d3b45a666e852d47f9f257d0799f015ebfbdfb892a0e44280b15bdfbdfd77a0e
+      image: ghcr.io/hr-mes/ermete-os-builder:latest
     env:
       RUSTC_WRAPPER: sccache
       SCCACHE_DIR: /tmp/sccache

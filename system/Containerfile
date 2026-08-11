@@ -1,4 +1,4 @@
-FROM ghcr.io/hr-mes/ermete-base-nvidia:latest@sha256:02bbe689f765b21b8bca8922de88a950f17745b3e2e9d36c296a4353db28a31b
+FROM ghcr.io/hr-mes/ermete-base-nvidia:latest
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG FEDORA_VERSION=43
 ENV FEDORA_VERSION=$FEDORA_VERSION
@@ -9,7 +9,7 @@ RUN dnf5 -y remove --no-autoremove kernel kernel-core kernel-modules kernel-modu
     rm -rf /usr/lib/modules/*
 
 # TIER 0: BEDROCK HARDWARE & KERNEL FOUNDATION
-RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier0-repo:latest@sha256:a4082054bc73f3e10ef2d95d6bb4d07ad30cc6f015598c48acd88d347a564d0a,source=/,target=/mnt/tier0-repo \
+RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier0-repo:latest,source=/,target=/mnt/tier0-repo \
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/cache/libdnf5 \
     BASE_CONFIG=$(find /mnt/tier0-repo -name "ermete-base-config*.rpm" | head -n 1) && \
     if [ -n "$BASE_CONFIG" ]; then \
@@ -35,7 +35,7 @@ RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier0-repo:latest@sha2
 # Tier 0: Install Cilium Tetragon eBPF Runtime Security is now delegated to ermete-tetragon RPM
 
 # TIER 1: CORE USERSERVICE, DBUS & POLICYKIT
-RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier1-repo:latest@sha256:8a8b565b64603de9539ff653d56c771ff3951e3007f1e31c2503fef1ad06514c,source=/,target=/mnt/tier1-repo \
+RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier1-repo:latest,source=/,target=/mnt/tier1-repo \
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/cache/libdnf5 \
     echo "Tier 1: Installing Scudo Hardened Allocator (compiler-rt), Keylime & UKI tools..." && \
     dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs compiler-rt keylime-tenant keylime-agent systemd-ukify systemd-boot-unsigned sbsigntools openssl tpm2-tools cryptsetup && \
@@ -48,7 +48,7 @@ RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier1-repo:latest@sha2
     fi
 
 # TIER 2: DESIGN SYSTEM & STATIC ASSETS
-RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier2-repo:latest@sha256:bca3f3df254bdb32dbcf33e74baadda4962516230b85d98be4744189a1760a54,source=/,target=/mnt/tier2-repo \
+RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier2-repo:latest,source=/,target=/mnt/tier2-repo \
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/cache/libdnf5 \
     if find /mnt/tier2-repo -name "*.rpm" 1> /dev/null 2>&1; then \
         echo "Tier 2: Installing Design System & Static Assets..." && \
@@ -59,7 +59,7 @@ RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier2-repo:latest@sha2
     fi
 
 # TIER 3: AGILE RUST SHELL & APPS
-RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier3-repo:latest@sha256:8062a5e7f3915d7ae015b9d42fc25cba45ce25668ecac41c7cdf7b3d176c65e2,source=/,target=/mnt/tier3-repo \
+RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier3-repo:latest,source=/,target=/mnt/tier3-repo \
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/cache/libdnf5 \
     if find /mnt/tier3-repo -name "*.rpm" 1> /dev/null 2>&1; then \
         echo "Tier 3: Installing Agile Rust Shell & Apps..." && \

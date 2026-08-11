@@ -20,7 +20,7 @@ def append_to_file(filepath, content_to_append):
 # Q3: 4. Floating Tag / Lack of Pinning
 workflows_dir = ".github/workflows"
 builder_pattern = r'ghcr\.io/hr-mes/ermete-os-builder:latest'
-builder_pinned = r'ghcr.io/hr-mes/ermete-os-builder@sha256:d3b45a666e852d47f9f257d0799f015ebfbdfb892a0e44280b15bdfbdfd77a0e'
+builder_pinned = r'ghcr.io/hr-mes/ermete-os-builder:latest'
 
 for root, _, files in os.walk(workflows_dir):
     for f in files:

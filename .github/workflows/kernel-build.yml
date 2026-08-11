@@ -60,7 +60,7 @@ jobs:
           --security-opt seccomp=unconfined \
           -v ${{ github.workspace }}:/forge \
           -w /forge \
-          ghcr.io/hr-mes/ermete-os-builder@sha256:d3b45a666e852d47f9f257d0799f015ebfbdfb892a0e44280b15bdfbdfd77a0e sleep infinity
+          ghcr.io/hr-mes/ermete-os-builder:latest sleep infinity
           
 
         

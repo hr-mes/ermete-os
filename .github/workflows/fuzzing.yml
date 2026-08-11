@@ -32,7 +32,7 @@ jobs:
   fuzz:
     name: 🎯 Fuzz Unified Suite (${{ matrix.sanitizer_name }})
     runs-on: ubuntu-24.04
-    container: ghcr.io/hr-mes/ermete-os-builder@sha256:d3b45a666e852d47f9f257d0799f015ebfbdfb892a0e44280b15bdfbdfd77a0e
+    container: ghcr.io/hr-mes/ermete-os-builder:latest
     env:
       RUSTC_WRAPPER: sccache
       SCCACHE_DIR: /tmp/sccache
