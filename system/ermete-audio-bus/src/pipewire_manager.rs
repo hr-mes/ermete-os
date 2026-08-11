@@ -5,7 +5,8 @@ use crate::routing::RoutingEngine;
 use std::ffi::{c_char, c_int, c_void, CString};
 use std::ptr;
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 use tracing::{error, info};
 
 /// Native C PipeWire FFI opaque struct definitions (`libpipewire-0.3`).
@@ -154,13 +155,9 @@ impl PipewireManager {
                 core,
             });
 
-            match self.handle.lock() {
-                Ok(mut lock) => {
-                    *lock = Some(handle);
-                }
-                Err(e) => {
-                    return Err(format!("Lock poisoning error while setting PipeWire handle: {}", e));
-                }
+            {
+                let mut lock = self.handle.lock().await;
+                *lock = Some(handle);
             }
 
             self.is_initialized.store(true, Ordering::SeqCst);
@@ -179,10 +176,7 @@ impl PipewireManager {
         }
 
         let handle = {
-            let lock = self
-                .handle
-                .lock()
-                .map_err(|e| format!("Lock poison error: {}", e))?;
+            let lock = self.handle.lock().await;
             lock.clone()
                 .ok_or_else(|| "PipeWire context handle is missing".to_string())?
         };
@@ -236,16 +230,10 @@ impl PipewireManager {
         }
 
         info!("Starting PipeWire native event monitoring loop");
-        let handle = match self.handle.lock() {
-            Ok(lock) => match lock.clone() {
-                Some(h) => h,
-                None => {
-                    error!("PipeWire handle is uninitialized inside event loop.");
-                    return;
-                }
-            },
-            Err(e) => {
-                error!("Lock poisoning error in PipeWire event loop: {}", e);
+        let handle = match self.handle.lock().await.clone() {
+            Some(h) => h,
+            None => {
+                error!("PipeWire handle is uninitialized inside event loop.");
                 return;
             }
         };

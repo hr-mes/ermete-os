@@ -77,10 +77,9 @@ impl ZeroConfDiscovery {
                 };
 
                 if let Ok(bytes) = serde_json::to_vec(&beacon) {
-                    let target_addr: SocketAddr = format!("255.255.255.255:{}", self_tx.discovery_port)
-                        .parse()
-                        .unwrap();
-                    let _ = socket_tx.send_to(&bytes, target_addr).await;
+                    if let Ok(target_addr) = format!("255.255.255.255:{}", self_tx.discovery_port).parse::<SocketAddr>() {
+                        let _ = socket_tx.send_to(&bytes, target_addr).await;
+                    }
                 }
             }
         });

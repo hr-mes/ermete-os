@@ -9,6 +9,9 @@ pub struct StoreService {}
 #[interface(name = "os.ermete.Store")]
 impl StoreService {
     async fn search(&self, query: String) -> String {
+        if query.starts_with('-') {
+            return "Error: Invalid query".to_string();
+        }
         info!("DBus: Search requested for: {}", query);
         let output = Command::new("flatpak")
             .arg("search")
@@ -49,6 +52,9 @@ impl StoreService {
 
 
     async fn install(&self, package: String) -> String {
+        if package.starts_with('-') {
+            return "Error: Invalid package".to_string();
+        }
         info!("DBus: Install requested for: {}", package);
         
         let mut child = match Command::new("flatpak")

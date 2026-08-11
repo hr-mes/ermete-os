@@ -13,6 +13,9 @@ use tokio::sync::mpsc::Sender;
 /// Returns `Err(String)` if spawning the process fails, capturing stdout fails, waiting for completion fails,
 /// or if flatpak returns a non-zero exit code.
 pub async fn install_app(app_id: &str, progress_tx: Sender<u32>) -> Result<(), String> {
+    if app_id.starts_with('-') {
+        return Err("Invalid app_id".to_string());
+    }
     let mut child = Command::new("flatpak")
         .arg("install")
         .arg("-y")
