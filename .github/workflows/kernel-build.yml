@@ -26,7 +26,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [x86_64, aarch64, riscv64]
+        # target: [x86_64, aarch64, riscv64] # ARM/RISC-V disabled to save local disk space
+        target: [x86_64]
     steps:
     - name: Checkout Source
       uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -160,3 +161,9 @@ jobs:
       if: always()
       run: |
         podman rm -f chimera-builder-${{ matrix.target }} || true
+
+    - name: 🧹 Deep Workspace Cleanup (Prevent 0MB Error)
+      if: always()
+      run: |
+        sudo rm -rf .ccache_local RPMS_OUT profiles || true
+        podman container prune -f || true
