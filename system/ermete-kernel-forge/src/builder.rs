@@ -3,6 +3,7 @@ use anyhow::{anyhow, Result};
 use std::fs;
 use std::path::Path;
 use tokio::process::Command;
+use tokio::time::{sleep, Duration};
 use tracing::info;
 
 pub struct KernelForgeResult {
@@ -13,8 +14,44 @@ pub struct KernelForgeResult {
     pub message: String,
 }
 
+async fn wait_for_idle_conditions() {
+    loop {
+        let is_on_ac = fs::read_dir("/sys/class/power_supply")
+            .map(|d| {
+                let mut found_ac = false;
+                let mut online = false;
+                for e in d.flatten() {
+                    let p = e.path();
+                    if let Ok(typ) = fs::read_to_string(p.join("type")) {
+                        if typ.trim() == "Mains" {
+                            found_ac = true;
+                            if let Ok(on) = fs::read_to_string(p.join("online")) {
+                                if on.trim() == "1" { online = true; }
+                            }
+                        }
+                    }
+                }
+                // Se c'è un alimentatore 'Mains' e non è online, non siamo in AC.
+                // Se non ci sono 'Mains' (es. desktop fisso), diamo per scontato l'AC.
+                if found_ac { online } else { true }
+            })
+            .unwrap_or(true);
+
+        if is_on_ac {
+            info!("Condizioni Idle soddisfatte (Alimentazione di rete AC attiva).");
+            break;
+        }
+
+        info!("Local Idle Forge sospesa: in attesa del collegamento all'alimentazione (AC)...");
+        sleep(Duration::from_secs(60)).await; // Controlla ogni minuto
+    }
+}
+
 pub async fn run_kernel_forge() -> Result<KernelForgeResult> {
     info!("⚡ Starting Gentoo-Style Hardware-Tailored Kernel Forge Process...");
+    
+    // Attende che l'utente attacchi la spina per non distruggere la batteria
+    wait_for_idle_conditions().await;
 
     let profile: HardwareProfile = detect_hardware_profile();
     info!("🖥️ Hardware Detected: CPU: {}, Arch: {}", profile.cpu_model, profile.arch);

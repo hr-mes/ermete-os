@@ -99,8 +99,38 @@ impl FalClient {
     pub async fn pull_and_deploy(&self, hardware_hash: &str) -> Result<()> {
         info!("📥 Avvio Download e Deploy del Kernel ottimizato (Hash: {})", hardware_hash);
         info!("Verifica firme Sigstore/Cosign... (Vitreol Phase)");
-        // Qui si aggancerebbe cosign e bootc/ostree
-        debug!("Esecuzione bootc switch / ostree rebase al container ghcr.io/hr-mes/ermete-os-kernel:{} ...", hardware_hash);
+
+        let container_ref = format!("{}:{}", GHCR_BASE_URL, hardware_hash);
+
+        // 1. Verifica crittografica (Sigstore/Cosign)
+        let cosign_status = tokio::process::Command::new("cosign")
+            .arg("verify")
+            .arg("--key")
+            .arg("/etc/ermete/pki/cosign.pub")
+            .arg(&container_ref)
+            .status()
+            .await
+            .context("Comando cosign non trovato o esecuzione fallita")?;
+
+        if !cosign_status.success() {
+            return Err(anyhow!("Verifica Sigstore FALLITA per il container {}. Aggiornamento annullato per motivi di sicurezza (ToFU).", container_ref));
+        }
+        info!("✅ Verifica crittografica superata.");
+
+        // 2. Deploy tramite bootc
+        info!("Esecuzione bootc switch al container {} ...", container_ref);
+        let bootc_status = tokio::process::Command::new("bootc")
+            .arg("switch")
+            .arg(&container_ref)
+            .status()
+            .await
+            .context("Comando bootc non trovato o esecuzione fallita")?;
+
+        if !bootc_status.success() {
+            return Err(anyhow!("Fallimento durante l'operazione di bootc switch."));
+        }
+
+        info!("✅ Bootc switch completato. Il nuovo Kernel sarà attivo al prossimo riavvio.");
         Ok(())
     }
 }
