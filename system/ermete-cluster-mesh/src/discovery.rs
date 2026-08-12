@@ -17,6 +17,7 @@ pub struct ZeroConfDiscovery {
 }
 
 impl ZeroConfDiscovery {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         discovery_port: u16,
         ipc_port: u16,

@@ -1,3 +1,4 @@
+use std::io::Write;
 //! Asynchronous Local DB & Mesh Sync CRDT Integration Module for Ermete Settings
 //!
 //! Connects GTK4 UI switch/button callbacks to `ermete-store` (backed by Linux io_uring)
