@@ -29,7 +29,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /tmp/sccache
-          key: sccache-security-audit-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          key: sccache-security-audit-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
             sccache-security-audit-${{ runner.os }}-
 
@@ -116,7 +116,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /tmp/sccache
-          key: sccache-kani-${{ matrix.module }}-${{ matrix.shard }}-${{ hashFiles('**/Cargo.lock') }}
+          key: sccache-kani-${{ matrix.module }}-${{ matrix.shard }}-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
             sccache-kani-${{ matrix.module }}-${{ matrix.shard }}-
 
@@ -174,7 +174,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /tmp/sccache
-          key: sccache-kani-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          key: sccache-kani-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
             sccache-kani-${{ runner.os }}-
 
@@ -239,7 +239,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /tmp/sccache
-          key: sccache-baremetal-${{ matrix.target_name }}-${{ hashFiles('**/Cargo.lock') }}
+          key: sccache-baremetal-${{ matrix.target_name }}-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
             sccache-baremetal-${{ matrix.target_name }}-
 

@@ -67,7 +67,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /tmp/sccache
-          key: sccache-fuzz-${{ matrix.sanitizer }}-${{ hashFiles('**/Cargo.lock') }}
+          key: sccache-fuzz-${{ matrix.sanitizer }}-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
             sccache-fuzz-${{ matrix.sanitizer }}-
 
