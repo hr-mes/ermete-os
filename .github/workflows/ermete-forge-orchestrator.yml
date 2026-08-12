@@ -982,7 +982,7 @@ jobs:
               set -euo pipefail
               cp /workspace/forge/assets/repos/fedora-nvidia.repo /etc/yum.repos.d/fedora-nvidia.repo
               export BUILDAH_ISOLATION=chroot
-              buildah from ghcr.io/hr-mes/ermete-os-kernel:latest > ctr_id
+              buildah from ghcr.io/hr-mes/ermete-os-kernel:${{ needs.build-builder.outputs.content_hash }} > ctr_id
               ctr=$(cat ctr_id)
               mnt=$(buildah mount $ctr)
               find $mnt/ -name "*.rpm" ! -name "*debug*" -exec rpm -Uvh --noscripts --oldpackage --replacepkgs --force --nodeps {} +
@@ -1017,7 +1017,7 @@ jobs:
             bash <<'EOF'
               cp /workspace/forge/assets/repos/fedora-nvidia.repo /etc/yum.repos.d/fedora-nvidia.repo
               export BUILDAH_ISOLATION=chroot
-              ctr=$(buildah from ghcr.io/hr-mes/ermete-os-kernel:latest)
+              ctr=$(buildah from ghcr.io/hr-mes/ermete-os-kernel:${{ needs.build-builder.outputs.content_hash }})
               mnt=$(buildah mount $ctr)
               find $mnt/ -name "*.rpm" ! -name "*debug*" -exec rpm -Uvh --noscripts --oldpackage --replacepkgs --force --nodeps {} +
               buildah umount $ctr
@@ -1282,14 +1282,15 @@ jobs:
         run: |
           set -euo pipefail
           podman run -i --rm --privileged -v ${{ github.workspace }}:/workspace -w /workspace ghcr.io/hr-mes/ermete-os-builder:${{ needs.build-builder.outputs.content_hash }} bash -c "set -euo pipefail; \
-          bwrap --unshare-net --dev-bind / / podman build --network=none --layers -t ghcr.io/hr-mes/ermete-os-system:latest -f ./system/Containerfile ./system && podman push ghcr.io/hr-mes/ermete-os-system:latest" || bwrap --unshare-net --dev-bind / / podman build --network=none --layers -t ghcr.io/hr-mes/ermete-os-system:latest -f ./system/Containerfile ./system
+          bwrap --unshare-net --dev-bind / / podman build --network=none --layers -t ghcr.io/hr-mes/ermete-os-system:latest -t ghcr.io/hr-mes/ermete-os-system:${{ github.run_id }} -f ./system/Containerfile ./system && podman push ghcr.io/hr-mes/ermete-os-system:${{ github.run_id }}" || bwrap --unshare-net --dev-bind / / podman build --network=none --layers -t ghcr.io/hr-mes/ermete-os-system:latest -t ghcr.io/hr-mes/ermete-os-system:${{ github.run_id }} -f ./system/Containerfile ./system
           podman push ghcr.io/hr-mes/ermete-os-system:latest || true
+          podman push ghcr.io/hr-mes/ermete-os-system:${{ github.run_id }} || true
       - name: 💿 Build ISO (osbuild)
         uses: osbuild/bootc-image-builder-action@019bb59c5100ecec4e78c9e94e18a840110f7a0b # v0.0.2
         with:
           builder-image: quay.io/centos-bootc/bootc-image-builder:latest
           config-file: ./system/disk_config/iso.toml
-          image: ghcr.io/hr-mes/ermete-os-system:latest
+          image: ghcr.io/hr-mes/ermete-os-system:${{ github.run_id }}
           types: anaconda-iso
           additional-args: --use-librepo=True --rootfs=bcachefs
 

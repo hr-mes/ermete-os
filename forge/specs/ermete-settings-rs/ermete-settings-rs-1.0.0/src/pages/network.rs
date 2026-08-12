@@ -1,6 +1,6 @@
 #![allow(deprecated)]
 #![allow(unsafe_code)]
-#![allow(clippy::needless_borrow, clippy::should_implement_trait, clippy::let_unit_value, clippy::new_without_default)]
+#![allow(clippy::needless_borrow, clippy::needless_borrows_for_generic_args, clippy::should_implement_trait, clippy::let_unit_value, clippy::new_without_default)]
 use anyhow::{anyhow, Result};
 use gtk4::prelude::*;
 use gtk4::{Align, Box, Button, DropDown, Entry, Label, ListBox, Orientation};

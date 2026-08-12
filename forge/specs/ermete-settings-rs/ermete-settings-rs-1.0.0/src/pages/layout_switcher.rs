@@ -313,7 +313,7 @@ pub fn build_switcher_section() -> Box {
             .build();
 
         let title_label = Label::builder()
-            .label(&format!("<b>{}</b>", layout.title()))
+            .label(format!("<b>{}</b>", layout.title()))
             .use_markup(true)
             .halign(Align::Start)
             .hexpand(true)
