@@ -1,5 +1,6 @@
 #![no_std]
 #![no_main]
+#![allow(clippy::multiple_unsafe_ops_per_block)]
 #![allow(unsafe_code)]
 
 use aya_ebpf::{
