@@ -5,7 +5,7 @@
 #![allow(clippy::multiple_unsafe_ops_per_block)]
 
 use aya::maps::HashMap as BpfHashMap;
-use aya::programs::StructOps;
+use aya::programs::Extension;
 use aya::Ebpf;
 use std::collections::HashMap as StdHashMap;
 use std::sync::Arc;
@@ -228,7 +228,7 @@ impl SchedExtController {
             if is_sysfs_sched_ext {
                 info!("⚡ Kernel `sched_ext` sysfs interface available.");
                 if let Some(prog) = ebpf.program_mut("scx_enqueue") {
-                    if let Ok(mut struct_ops) = StructOps::try_from(prog) {
+                    if let Ok(mut struct_ops) = Extension::try_from(prog) {
                         if let Err(e) = struct_ops.attach() {
                             warn!("⚠️ Failed to physically attach `scx_enqueue` to Kernel: {}", e);
                         } else {
