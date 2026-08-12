@@ -295,6 +295,7 @@ fn process_udp(ctx: &XdpContext, offset: usize) -> Result<u32, ()> {
     Ok(xdp_action::XDP_PASS)
 }
 
+#[cfg(not(test))]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     unsafe { core::hint::unreachable_unchecked() }
