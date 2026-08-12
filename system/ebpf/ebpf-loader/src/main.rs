@@ -55,6 +55,7 @@ async fn main() -> Result<(), anyhow::Error> {
         rlim_cur: libc::RLIM_INFINITY,
         rlim_max: libc::RLIM_INFINITY,
     };
+    // SAFETY: setrlimit is safe to call with RLIMIT_MEMLOCK to increase eBPF map memory limits
     let ret = unsafe { libc::setrlimit(libc::RLIMIT_MEMLOCK, &rlim) };
     if ret != 0 {
         warn!("Failed to increase MEMLOCK rlimit, ret code: {}", ret);
