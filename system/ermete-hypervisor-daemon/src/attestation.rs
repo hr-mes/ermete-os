@@ -1,3 +1,4 @@
+#![allow(clippy::field_reassign_with_default)]
 use std::os::unix::fs::OpenOptionsExt;
 use anyhow::{anyhow, Context, Result};
 use log::{error, info, warn};
