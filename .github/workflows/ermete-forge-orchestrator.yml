@@ -129,6 +129,9 @@ jobs:
     if: needs.orchestrator-brain.outputs.dag_level_0 != '[]' && needs.orchestrator-brain.outputs.dag_level_0 != ''
     name: ⚡ DAG Level 0 Parallel Build
     runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: forge
     strategy:
       fail-fast: false
       max-parallel: 20
@@ -149,7 +152,7 @@ jobs:
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           img_name="ermete-os-forge-${{ matrix.package }}"
-          if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then
+          if [ ! -d "specs/ermete-${{ matrix.package }}" ] && [ ! -d "specs/${{ matrix.package }}" ]; then
             img_name="ermete-os-forge-rolling-${{ matrix.package }}"
           fi
           podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name $img_name > idemp.out
@@ -180,8 +183,10 @@ jobs:
           mkdir -p ${{ github.workspace }}/.sccache
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           
-          if [ -d "specs/ermete-${{ matrix.package }}" ]; then
-            echo "📦 Compiling Custom Spec: ermete-${{ matrix.package }}"
+          SPEC_DIR=""
+          if [ -d "specs/ermete-${{ matrix.package }}" ]; then SPEC_DIR="specs/ermete-${{ matrix.package }}"; elif [ -d "specs/${{ matrix.package }}" ]; then SPEC_DIR="specs/${{ matrix.package }}"; fi
+          if [ -n "$SPEC_DIR" ]; then
+            echo "📦 Compiling Custom Spec: $SPEC_DIR"
             podman run -i --rm \
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
@@ -190,23 +195,25 @@ jobs:
               bash <<'EOF'
               cp config/rpmmacros ~/.rpmmacros
               rpmdev-setuptree
+              SPEC_DIR=""
+              if [ -d "specs/ermete-${{ matrix.package }}" ]; then SPEC_DIR="specs/ermete-${{ matrix.package }}"; elif [ -d "specs/${{ matrix.package }}" ]; then SPEC_DIR="specs/${{ matrix.package }}"; fi
             
-              if [ -d "specs/ermete-${{ matrix.package }}/SOURCES" ]; then 
-                cp -a specs/ermete-${{ matrix.package }}/SOURCES/* ~/rpmbuild/SOURCES/ || true
+              if [ -d "$SPEC_DIR/SOURCES" ]; then 
+                cp -a $SPEC_DIR/SOURCES/* ~/rpmbuild/SOURCES/ || true
               fi
 
-              for dir in specs/ermete-${{ matrix.package }}/*/ ; do
+              for dir in $SPEC_DIR/*/ ; do
                 if [ -d "$dir" ] && [ "$(basename "$dir")" != "SOURCES" ]; then
                   pkg_dir=$(basename "$dir")
-                  tar -czf ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz -C specs/ermete-${{ matrix.package }} ${pkg_dir}
+                  tar -czf ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz -C $SPEC_DIR ${pkg_dir}
                 fi
               done
             
-              dnf builddep -y specs/ermete-${{ matrix.package }}/*.spec
-              spectool -g -R specs/ermete-${{ matrix.package }}/*.spec || true
+              dnf builddep -y $SPEC_DIR/*.spec
+              spectool -g -R $SPEC_DIR/*.spec || true
             
               mkdir -p ~/rpmbuild/BUILD/
-              for spec_dir in /workspace/forge/specs/ermete-*/ ; do
+              for spec_dir in /workspace/forge/specs/ermete-*/ /workspace/forge/specs/*/ ; do
                 if [ -d "$spec_dir" ]; then
                   crate_name=$(basename "$spec_dir")
                   mkdir -p ~/rpmbuild/BUILD/"$crate_name"
@@ -214,13 +221,13 @@ jobs:
                 fi
               done
    
-              rpmbuild -bb specs/ermete-${{ matrix.package }}/*.spec || true
+              rpmbuild -bb $SPEC_DIR/*.spec || true
             
               if ls ~/rpmbuild/SRPMS/*.nosrc.rpm 1> /dev/null 2>&1; then
                   dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SRPMS/*.nosrc.rpm
               fi
             
-              rpmbuild -bb specs/ermete-${{ matrix.package }}/*.spec
+              rpmbuild -bb $SPEC_DIR/*.spec
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
           EOF
@@ -234,6 +241,8 @@ jobs:
               bash <<'EOF'
               cp config/rpmmacros ~/.rpmmacros
               rpmdev-setuptree
+              SPEC_DIR=""
+              if [ -d "specs/ermete-${{ matrix.package }}" ]; then SPEC_DIR="specs/ermete-${{ matrix.package }}"; elif [ -d "specs/${{ matrix.package }}" ]; then SPEC_DIR="specs/${{ matrix.package }}"; fi
               cd ~/rpmbuild/SRPMS
               dnf download --source ${{ matrix.package }} || dnf download --source --disablerepo="rpmfusion*" ${{ matrix.package }}
               rpm -ivh *.src.rpm
@@ -253,7 +262,7 @@ jobs:
           buildah copy $ctr RPMS/*.rpm /
           
           img_prefix="ermete-os-forge"
-          if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then
+          if [ ! -d "specs/ermete-${{ matrix.package }}" ] && [ ! -d "specs/${{ matrix.package }}" ]; then
             img_prefix="ermete-os-forge-rolling"
           fi
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/${img_prefix}-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
@@ -281,7 +290,7 @@ jobs:
         if: steps.check.outputs.skip != 'true'
         run: |
           img_prefix="ermete-os-forge"
-          if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then
+          if [ ! -d "specs/ermete-${{ matrix.package }}" ] && [ ! -d "specs/${{ matrix.package }}" ]; then
             img_prefix="ermete-os-forge-rolling"
           fi
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/${img_prefix}-${{ matrix.package }}:latest" | tr "[:upper:]" "[:lower:]")
@@ -294,7 +303,7 @@ jobs:
         run: |
           cosign login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
           img_prefix="ermete-os-forge"
-          if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then
+          if [ ! -d "specs/ermete-${{ matrix.package }}" ] && [ ! -d "specs/${{ matrix.package }}" ]; then
             img_prefix="ermete-os-forge-rolling"
           fi
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/${img_prefix}-${{ matrix.package }}:latest" | tr '[:upper:]' '[:lower:]')
@@ -319,6 +328,9 @@ jobs:
     if: always() && needs.orchestrator-brain.outputs.dag_level_1 != '[]' && needs.orchestrator-brain.outputs.dag_level_1 != '' && !contains(needs.dag-build-level-0.result, 'failure')
     name: ⚡ DAG Level 1 Parallel Build
     runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: forge
     strategy:
       fail-fast: false
       max-parallel: 20
@@ -339,7 +351,7 @@ jobs:
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           img_name="ermete-os-forge-${{ matrix.package }}"
-          if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then
+          if [ ! -d "specs/ermete-${{ matrix.package }}" ] && [ ! -d "specs/${{ matrix.package }}" ]; then
             img_name="ermete-os-forge-rolling-${{ matrix.package }}"
           fi
           podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name $img_name > idemp.out
@@ -370,8 +382,10 @@ jobs:
           mkdir -p ${{ github.workspace }}/.sccache
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           
-          if [ -d "specs/ermete-${{ matrix.package }}" ]; then
-            echo "📦 Compiling Custom Spec: ermete-${{ matrix.package }}"
+          SPEC_DIR=""
+          if [ -d "specs/ermete-${{ matrix.package }}" ]; then SPEC_DIR="specs/ermete-${{ matrix.package }}"; elif [ -d "specs/${{ matrix.package }}" ]; then SPEC_DIR="specs/${{ matrix.package }}"; fi
+          if [ -n "$SPEC_DIR" ]; then
+            echo "📦 Compiling Custom Spec: $SPEC_DIR"
             podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
@@ -380,23 +394,25 @@ jobs:
               bash <<'EOF'
               cp config/rpmmacros ~/.rpmmacros
               rpmdev-setuptree
+              SPEC_DIR=""
+              if [ -d "specs/ermete-${{ matrix.package }}" ]; then SPEC_DIR="specs/ermete-${{ matrix.package }}"; elif [ -d "specs/${{ matrix.package }}" ]; then SPEC_DIR="specs/${{ matrix.package }}"; fi
             
-              if [ -d "specs/ermete-${{ matrix.package }}/SOURCES" ]; then 
-                cp -a specs/ermete-${{ matrix.package }}/SOURCES/* ~/rpmbuild/SOURCES/ || true
+              if [ -d "$SPEC_DIR/SOURCES" ]; then 
+                cp -a $SPEC_DIR/SOURCES/* ~/rpmbuild/SOURCES/ || true
               fi
             
-              for dir in specs/ermete-${{ matrix.package }}/*/ ; do
+              for dir in $SPEC_DIR/*/ ; do
                 if [ -d "$dir" ] && [ "$(basename "$dir")" != "SOURCES" ]; then
                   pkg_dir=$(basename "$dir")
-                  tar -czf ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz -C specs/ermete-${{ matrix.package }} ${pkg_dir}
+                  tar -czf ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz -C $SPEC_DIR ${pkg_dir}
                 fi
               done
             
-              dnf builddep -y specs/ermete-${{ matrix.package }}/*.spec
-              spectool -g -R specs/ermete-${{ matrix.package }}/*.spec || true
+              dnf builddep -y $SPEC_DIR/*.spec
+              spectool -g -R $SPEC_DIR/*.spec || true
             
               mkdir -p ~/rpmbuild/BUILD/
-              for spec_dir in /workspace/forge/specs/ermete-*/ ; do
+              for spec_dir in /workspace/forge/specs/ermete-*/ /workspace/forge/specs/*/ ; do
                 if [ -d "$spec_dir" ]; then
                   crate_name=$(basename "$spec_dir")
                   mkdir -p ~/rpmbuild/BUILD/"$crate_name"
@@ -404,13 +420,13 @@ jobs:
                 fi
               done
    
-              rpmbuild -bb specs/ermete-${{ matrix.package }}/*.spec || true
+              rpmbuild -bb $SPEC_DIR/*.spec || true
             
               if ls ~/rpmbuild/SRPMS/*.nosrc.rpm 1> /dev/null 2>&1; then
                   dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SRPMS/*.nosrc.rpm
               fi
             
-              rpmbuild -bb specs/ermete-${{ matrix.package }}/*.spec
+              rpmbuild -bb $SPEC_DIR/*.spec
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
           EOF
@@ -424,6 +440,8 @@ jobs:
               bash <<'EOF'
               cp config/rpmmacros ~/.rpmmacros
               rpmdev-setuptree
+              SPEC_DIR=""
+              if [ -d "specs/ermete-${{ matrix.package }}" ]; then SPEC_DIR="specs/ermete-${{ matrix.package }}"; elif [ -d "specs/${{ matrix.package }}" ]; then SPEC_DIR="specs/${{ matrix.package }}"; fi
               cd ~/rpmbuild/SRPMS
               dnf download --source ${{ matrix.package }} || dnf download --source --disablerepo="rpmfusion*" ${{ matrix.package }}
               rpm -ivh *.src.rpm
@@ -443,7 +461,7 @@ jobs:
           buildah copy $ctr RPMS/*.rpm /
           
           img_prefix="ermete-os-forge"
-          if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then
+          if [ ! -d "specs/ermete-${{ matrix.package }}" ] && [ ! -d "specs/${{ matrix.package }}" ]; then
             img_prefix="ermete-os-forge-rolling"
           fi
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/${img_prefix}-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
@@ -471,7 +489,7 @@ jobs:
         if: steps.check.outputs.skip != 'true'
         run: |
           img_prefix="ermete-os-forge"
-          if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then
+          if [ ! -d "specs/ermete-${{ matrix.package }}" ] && [ ! -d "specs/${{ matrix.package }}" ]; then
             img_prefix="ermete-os-forge-rolling"
           fi
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/${img_prefix}-${{ matrix.package }}:latest" | tr "[:upper:]" "[:lower:]")
@@ -484,7 +502,7 @@ jobs:
         run: |
           cosign login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
           img_prefix="ermete-os-forge"
-          if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then
+          if [ ! -d "specs/ermete-${{ matrix.package }}" ] && [ ! -d "specs/${{ matrix.package }}" ]; then
             img_prefix="ermete-os-forge-rolling"
           fi
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/${img_prefix}-${{ matrix.package }}:latest" | tr '[:upper:]' '[:lower:]')
@@ -509,6 +527,9 @@ jobs:
     if: always() && needs.orchestrator-brain.outputs.dag_level_2 != '[]' && needs.orchestrator-brain.outputs.dag_level_2 != '' && !contains(needs.dag-build-level-1.result, 'failure')
     name: ⚡ DAG Level 2 Parallel Build
     runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: forge
     strategy:
       fail-fast: false
       max-parallel: 20
@@ -529,7 +550,7 @@ jobs:
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           img_name="ermete-os-forge-${{ matrix.package }}"
-          if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then img_name="ermete-os-forge-rolling-${{ matrix.package }}"; fi
+          if [ ! -d "specs/ermete-${{ matrix.package }}" ] && [ ! -d "specs/${{ matrix.package }}" ]; then img_name="ermete-os-forge-rolling-${{ matrix.package }}"; fi
           podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name $img_name > idemp.out
           source ./idemp.out
           echo "hash=$CONTENT_HASH" >> $GITHUB_OUTPUT
@@ -558,8 +579,10 @@ jobs:
           mkdir -p ${{ github.workspace }}/.sccache
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           
-          if [ -d "specs/ermete-${{ matrix.package }}" ]; then
-            echo "📦 Compiling Custom Spec: ermete-${{ matrix.package }}"
+          SPEC_DIR=""
+          if [ -d "specs/ermete-${{ matrix.package }}" ]; then SPEC_DIR="specs/ermete-${{ matrix.package }}"; elif [ -d "specs/${{ matrix.package }}" ]; then SPEC_DIR="specs/${{ matrix.package }}"; fi
+          if [ -n "$SPEC_DIR" ]; then
+            echo "📦 Compiling Custom Spec: $SPEC_DIR"
             podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
@@ -568,23 +591,25 @@ jobs:
               bash <<'EOF'
               cp config/rpmmacros ~/.rpmmacros
               rpmdev-setuptree
+              SPEC_DIR=""
+              if [ -d "specs/ermete-${{ matrix.package }}" ]; then SPEC_DIR="specs/ermete-${{ matrix.package }}"; elif [ -d "specs/${{ matrix.package }}" ]; then SPEC_DIR="specs/${{ matrix.package }}"; fi
             
-              if [ -d "specs/ermete-${{ matrix.package }}/SOURCES" ]; then 
-                cp -a specs/ermete-${{ matrix.package }}/SOURCES/* ~/rpmbuild/SOURCES/ || true
+              if [ -d "$SPEC_DIR/SOURCES" ]; then 
+                cp -a $SPEC_DIR/SOURCES/* ~/rpmbuild/SOURCES/ || true
               fi
             
-              for dir in specs/ermete-${{ matrix.package }}/*/ ; do
+              for dir in $SPEC_DIR/*/ ; do
                 if [ -d "$dir" ] && [ "$(basename "$dir")" != "SOURCES" ]; then
                   pkg_dir=$(basename "$dir")
-                  tar -czf ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz -C specs/ermete-${{ matrix.package }} ${pkg_dir}
+                  tar -czf ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz -C $SPEC_DIR ${pkg_dir}
                 fi
               done
             
-              dnf builddep -y specs/ermete-${{ matrix.package }}/*.spec
-              spectool -g -R specs/ermete-${{ matrix.package }}/*.spec || true
+              dnf builddep -y $SPEC_DIR/*.spec
+              spectool -g -R $SPEC_DIR/*.spec || true
             
               mkdir -p ~/rpmbuild/BUILD/
-              for spec_dir in /workspace/forge/specs/ermete-*/ ; do
+              for spec_dir in /workspace/forge/specs/ermete-*/ /workspace/forge/specs/*/ ; do
                 if [ -d "$spec_dir" ]; then
                   crate_name=$(basename "$spec_dir")
                   mkdir -p ~/rpmbuild/BUILD/"$crate_name"
@@ -592,13 +617,13 @@ jobs:
                 fi
               done
    
-              rpmbuild -bb specs/ermete-${{ matrix.package }}/*.spec || true
+              rpmbuild -bb $SPEC_DIR/*.spec || true
             
               if ls ~/rpmbuild/SRPMS/*.nosrc.rpm 1> /dev/null 2>&1; then
                   dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SRPMS/*.nosrc.rpm
               fi
             
-              rpmbuild -bb specs/ermete-${{ matrix.package }}/*.spec
+              rpmbuild -bb $SPEC_DIR/*.spec
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
           EOF
@@ -612,6 +637,8 @@ jobs:
               bash <<'EOF'
               cp config/rpmmacros ~/.rpmmacros
               rpmdev-setuptree
+              SPEC_DIR=""
+              if [ -d "specs/ermete-${{ matrix.package }}" ]; then SPEC_DIR="specs/ermete-${{ matrix.package }}"; elif [ -d "specs/${{ matrix.package }}" ]; then SPEC_DIR="specs/${{ matrix.package }}"; fi
               cd ~/rpmbuild/SRPMS
               dnf download --source ${{ matrix.package }} || dnf download --source --disablerepo="rpmfusion*" ${{ matrix.package }}
               rpm -ivh *.src.rpm
@@ -631,7 +658,7 @@ jobs:
           buildah copy $ctr RPMS/*.rpm /
           
           img_prefix="ermete-os-forge"
-          if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then
+          if [ ! -d "specs/ermete-${{ matrix.package }}" ] && [ ! -d "specs/${{ matrix.package }}" ]; then
             img_prefix="ermete-os-forge-rolling"
           fi
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/${img_prefix}-${{ matrix.package }}" | tr '[:upper:]' '[:lower:]')
@@ -659,7 +686,7 @@ jobs:
         if: steps.check.outputs.skip != 'true'
         run: |
           img_prefix="ermete-os-forge"
-          if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then
+          if [ ! -d "specs/ermete-${{ matrix.package }}" ] && [ ! -d "specs/${{ matrix.package }}" ]; then
             img_prefix="ermete-os-forge-rolling"
           fi
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/${img_prefix}-${{ matrix.package }}:latest" | tr "[:upper:]" "[:lower:]")
@@ -672,7 +699,7 @@ jobs:
         run: |
           cosign login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
           img_prefix="ermete-os-forge"
-          if [ ! -d "specs/ermete-${{ matrix.package }}" ]; then
+          if [ ! -d "specs/ermete-${{ matrix.package }}" ] && [ ! -d "specs/${{ matrix.package }}" ]; then
             img_prefix="ermete-os-forge-rolling"
           fi
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/${img_prefix}-${{ matrix.package }}:latest" | tr '[:upper:]' '[:lower:]')
@@ -697,6 +724,9 @@ jobs:
     if: always() && needs.orchestrator-brain.outputs.dag_flatpaks != '[]' && needs.orchestrator-brain.outputs.dag_flatpaks != '' && !contains(needs.dag-build-level-2.result, 'failure')
     name: 📦 DAG Flatpaks Parallel Build
     runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: forge
     strategy:
       fail-fast: false
       max-parallel: 20
