@@ -45,6 +45,7 @@ static CONFIG_FLAGS: Array<u32> = Array::with_max_entries(4, 0);
 #[inline(always)]
 fn increment_stat(index: u32) {
     if let Some(ptr) = FIREWALL_STATS.get_ptr_mut(index) {
+        // SAFETY: Pointer is valid because get_ptr_mut returns a checked pointer.
         unsafe {
             *ptr += 1;
         }
@@ -66,7 +67,7 @@ fn ptr_at<T>(ctx: &XdpContext, offset: usize) -> Result<*const T, ()> {
     let end = ctx.data_end();
     let len = mem::size_of::<T>();
 
-    if start.checked_add(offset).and_then(|p| p.checked_add(len)).map_or(true, |ptr_end| ptr_end > end) {
+    if start.checked_add(offset).and_then(|p| p.checked_add(len)).is_none_or(|ptr_end| ptr_end > end) {
         return Err(());
     }
 
@@ -298,5 +299,6 @@ fn process_udp(ctx: &XdpContext, offset: usize) -> Result<u32, ()> {
 #[cfg(not(test))]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
+    // SAFETY: Panic in eBPF must halt execution.
     unsafe { core::hint::unreachable_unchecked() }
 }
