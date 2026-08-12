@@ -266,6 +266,7 @@ impl UnifiedTensorBus {
         header.validate(self.capacity_bytes as u64)?;
 
         // Serialize header + data payload into discrete frame
+        // SAFETY: Transmuting struct to bytes is safe for C-repr POD structs
         let header_bytes = unsafe {
             std::slice::from_raw_parts(
                 header as *const TensorHeader as *const u8,
@@ -296,6 +297,7 @@ impl UnifiedTensorBus {
     pub fn push_tensor_dma_offset(&self, header: &TensorHeader) -> Result<u64> {
         header.validate(self.capacity_bytes as u64)?;
 
+        // SAFETY: Transmuting struct to bytes is safe for C-repr POD structs
         let header_bytes = unsafe {
             std::slice::from_raw_parts(
                 header as *const TensorHeader as *const u8,
@@ -325,6 +327,7 @@ impl UnifiedTensorBus {
                     return Err(anyhow!("Corrupted tensor frame: payload smaller than header"));
                 }
 
+                // SAFETY: Unaligned read of bytes into C-repr struct
                 let header: TensorHeader = unsafe {
                     std::ptr::read_unaligned(payload.as_ptr() as *const TensorHeader)
                 };

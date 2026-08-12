@@ -30,6 +30,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         rlim_cur: libc::RLIM_INFINITY,
         rlim_max: libc::RLIM_INFINITY,
     };
+    // SAFETY: FFI call to Linux libc for setting resource limits
     unsafe {
         libc::setrlimit(libc::RLIMIT_MEMLOCK, &rlim);
     }
