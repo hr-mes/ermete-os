@@ -1,4 +1,5 @@
 #![allow(unsafe_code)]
+#![allow(dead_code)]
 #![allow(clippy::undocumented_unsafe_blocks)]
 
 use anyhow::{anyhow, Result};
