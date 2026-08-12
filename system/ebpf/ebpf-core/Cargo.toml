@@ -7,3 +7,4 @@ edition = "2021"
 aya-ebpf = "0.1.0"
 aya-log-ebpf = { version = "0.1.0", default-features = false }
 network-types = "0.0.5"
+num_enum = { version = "0.7.6", default-features = false }

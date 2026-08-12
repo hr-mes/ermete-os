@@ -1262,6 +1262,7 @@ dependencies = [
  "aya-ebpf",
  "aya-log-ebpf",
  "network-types",
+ "num_enum",
 ]
 
 [[package]]
