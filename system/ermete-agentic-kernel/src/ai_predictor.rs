@@ -370,22 +370,22 @@ impl AffinityOptimizationNode {
         let (target_core, core_type, priority_weight, latency_slice_us) = match category {
             WorkloadCategory::InteractiveUi => {
                 // UI & Wayland processes: Locked to Performance Cores (P-Cores: CPU 0..=3)
-                let core = (task.pid % 4) as u32; // Cores 0, 1, 2, 3
+                let core = task.pid % 4; // Cores 0, 1, 2, 3
                 (core, 0, 800, 500) // 0 = P-Core, weight=800, 500us latency target
             }
             WorkloadCategory::RealtimeNpu => {
                 // Realtime AI/NPU inference: Locked to dedicated NPU-accelerated Cores (CPU 0..=1)
-                let core = (task.pid % 2) as u32; // Cores 0, 1
+                let core = task.pid % 2; // Cores 0, 1
                 (core, 2, 10000, 100) // 2 = NPU-Core, weight=10000, 100us sub-ms slice
             }
             WorkloadCategory::BatchCompute => {
                 // Heavy compiler / container builds: Assigned to Efficiency Cores (E-Cores: CPU 4..=7)
-                let core = 4 + (task.pid % 4) as u32; // Cores 4, 5, 6, 7
+                let core = 4 + (task.pid % 4); // Cores 4, 5, 6, 7
                 (core, 1, 400, 5000) // 1 = E-Core, weight=400, 5ms slice
             }
             WorkloadCategory::IdleBackground => {
                 // Low-priority system background tasks: Assigned to Efficiency Cores (E-Cores: CPU 6..=7)
-                let core = 6 + (task.pid % 2) as u32; // Cores 6, 7
+                let core = 6 + (task.pid % 2); // Cores 6, 7
                 (core, 1, 100, 20000) // 1 = E-Core, weight=100, 20ms slice
             }
         };
