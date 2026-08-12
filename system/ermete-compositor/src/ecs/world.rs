@@ -377,8 +377,11 @@ impl World {
         };
 
         if let (Some(s1_ptr), Some(s2_ptr), Some(s3_ptr)) = (s1_ptr, s2_ptr, s3_ptr) {
+            // SAFETY: Type IDs are distinct, so we have mutable aliasing guarantees. Pointers are checked.
             let s1 = unsafe { &mut *s1_ptr };
+            // SAFETY: Type IDs are distinct, so we have mutable aliasing guarantees. Pointers are checked.
             let s2 = unsafe { &mut *s2_ptr };
+            // SAFETY: Type IDs are distinct, so we have mutable aliasing guarantees. Pointers are checked.
             let s3 = unsafe { &*s3_ptr };
 
             let len = s1.data.len().min(s2.data.len()).min(s3.data.len());

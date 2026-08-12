@@ -146,6 +146,7 @@ impl SnapEngine {
     }
 
     /// Snaps a window into a designated snap zone and registers its state.
+    #[allow(clippy::too_many_arguments)]
     pub fn snap_window(
         &mut self,
         window_id: u64,
