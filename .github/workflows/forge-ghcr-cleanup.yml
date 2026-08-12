@@ -13,7 +13,7 @@ jobs:
   cleanup-janitor:
     runs-on: ubuntu-24.04
     container:
-      image: ghcr.io/hr-mes/ermete-os-builder:latest
+      image: ghcr.io/hr-mes/ermete-os-builder:${{ vars.BUILDER_STABLE_TAG || 'latest' }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4

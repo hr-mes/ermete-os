@@ -59,6 +59,7 @@ jobs:
           extra_nix_config: "experimental-features = nix-command flakes"
       - name: ⚙️ Set Default Rust Toolchain & Install cargo-fuzz
         run: |
+          set -euo pipefail
           rustup default nightly
           rustup component add rust-src
           nix profile install nixpkgs#cargo-fuzz nixpkgs#sccache
@@ -80,6 +81,7 @@ jobs:
           workspaces: "tests/fuzz -> target"
       - name: 🔍 Run Cargo Fuzz (${{ matrix.sanitizer_name }})
         run: |
+          set -euo pipefail
           FUZZ_TIME="${{ github.event.inputs.fuzz_seconds }}"
           if [ -z "$FUZZ_TIME" ]; then
             FUZZ_TIME="60"

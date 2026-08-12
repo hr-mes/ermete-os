@@ -11,7 +11,7 @@ jobs:
   build-livepatch:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/hr-mes/ermete-os-builder:latest
+      image: ghcr.io/hr-mes/ermete-os-builder:${{ vars.BUILDER_STABLE_TAG || 'latest' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -21,6 +21,7 @@ jobs:
 
       - name: Build Live Patch
         run: |
+          set -euo pipefail
           echo "Building kpatch..."
           mkdir -p build/livepatch
           for patch in kernel/patches/*.patch; do
@@ -31,6 +32,7 @@ jobs:
 
       - name: Package Live Patch
         run: |
+          set -euo pipefail
           echo "Packaging live patch into RPM..."
           if [ -f "forge/specs/ermete-livepatch/ermete-livepatch.spec" ]; then
             rpmbuild -ba forge/specs/ermete-livepatch/ermete-livepatch.spec

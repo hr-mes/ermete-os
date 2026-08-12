@@ -67,6 +67,7 @@ jobs:
       - name: 🧹 Fix Workspace Permissions (GH Actions Cleanup)
         if: always()
         run: |
+          set -euo pipefail
           if command -v sudo >/dev/null 2>&1; then
             sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
@@ -98,8 +99,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
-          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package builder --registry ghcr.io --owner ${{ github.repository_owner }} --image-name ermete-os-builder > idemp.out
+          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:${{ vars.BUILDER_STABLE_TAG || 'latest' }} bash scripts/check_idempotency.sh --package builder --registry ghcr.io --owner ${{ github.repository_owner }} --image-name ermete-os-builder > idemp.out
           source ./idemp.out
           if [ "$CACHE_HIT" = "true" ]; then
             echo "cache_hit=true" >> $GITHUB_OUTPUT
@@ -111,13 +113,14 @@ jobs:
       - name: Build and Publish Builder (Pure Nix)
         if: steps.check_idempotency.outputs.cache_hit != 'true'
         run: |
+          set -euo pipefail
           echo "Building OCI image purely via Nix Flake..."
           nix build ../#builderImage
           podman load -i result
           
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-builder" | tr '[:upper:]' '[:lower:]')
-          podman tag ghcr.io/hr-mes/ermete-os-builder:latest $IMAGE_LOWER:latest || true
+          podman tag ghcr.io/hr-mes/ermete-os-builder:${{ vars.BUILDER_STABLE_TAG || 'latest' }} $IMAGE_LOWER:latest || true
           podman tag $IMAGE_LOWER:latest $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
           podman push $IMAGE_LOWER:latest
           podman push $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
@@ -130,6 +133,7 @@ jobs:
       - name: 🧹 Fix Workspace Permissions (GH Actions Cleanup)
         if: always()
         run: |
+          set -euo pipefail
           if command -v sudo >/dev/null 2>&1; then
             sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
@@ -165,6 +169,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           img_name="ermete-os-forge-${{ matrix.package }}"
           if [ ! -d "specs/ermete-${{ matrix.package }}" ] && [ ! -d "specs/${{ matrix.package }}" ]; then
@@ -194,6 +199,7 @@ jobs:
       - name: Build Package (Custom Spec or Upstream SRPM)
         if: steps.check.outputs.skip != 'true'
         run: |
+          set -euo pipefail
           mkdir -p RPMS
           mkdir -p ${{ github.workspace }}/.sccache
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
@@ -271,6 +277,7 @@ jobs:
       - name: Publish Micro-Container OCI
         if: steps.check.outputs.skip != 'true'
         run: |
+          set -euo pipefail
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
@@ -290,6 +297,7 @@ jobs:
       - name: Generate SBOM (Syft)
         if: steps.check.outputs.skip != 'true'
         run: |
+          set -euo pipefail
           img_prefix="ermete-os-forge"
           if [ ! -d "specs/ermete-${{ matrix.package }}" ] && [ ! -d "specs/${{ matrix.package }}" ]; then
             img_prefix="ermete-os-forge-rolling"
@@ -302,6 +310,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
           nix run nixpkgs#cosign -- login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
           img_prefix="ermete-os-forge"
           if [ ! -d "specs/ermete-${{ matrix.package }}" ] && [ ! -d "specs/${{ matrix.package }}" ]; then
@@ -319,6 +328,7 @@ jobs:
       - name: 🧹 Fix Workspace Permissions (GH Actions Cleanup)
         if: always()
         run: |
+          set -euo pipefail
           if command -v sudo >/dev/null 2>&1; then
             sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
@@ -354,6 +364,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           img_name="ermete-os-forge-${{ matrix.package }}"
           if [ ! -d "specs/ermete-${{ matrix.package }}" ] && [ ! -d "specs/${{ matrix.package }}" ]; then
@@ -383,6 +394,7 @@ jobs:
       - name: Build Package (Custom Spec or Upstream SRPM)
         if: steps.check.outputs.skip != 'true'
         run: |
+          set -euo pipefail
           mkdir -p RPMS
           mkdir -p ${{ github.workspace }}/.sccache
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
@@ -460,6 +472,7 @@ jobs:
       - name: Publish Micro-Container OCI
         if: steps.check.outputs.skip != 'true'
         run: |
+          set -euo pipefail
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
@@ -479,6 +492,7 @@ jobs:
       - name: Generate SBOM (Syft)
         if: steps.check.outputs.skip != 'true'
         run: |
+          set -euo pipefail
           img_prefix="ermete-os-forge"
           if [ ! -d "specs/ermete-${{ matrix.package }}" ] && [ ! -d "specs/${{ matrix.package }}" ]; then
             img_prefix="ermete-os-forge-rolling"
@@ -491,6 +505,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
           nix run nixpkgs#cosign -- login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
           img_prefix="ermete-os-forge"
           if [ ! -d "specs/ermete-${{ matrix.package }}" ] && [ ! -d "specs/${{ matrix.package }}" ]; then
@@ -508,6 +523,7 @@ jobs:
       - name: 🧹 Fix Workspace Permissions (GH Actions Cleanup)
         if: always()
         run: |
+          set -euo pipefail
           if command -v sudo >/dev/null 2>&1; then
             sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
@@ -543,6 +559,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           img_name="ermete-os-forge-${{ matrix.package }}"
           if [ ! -d "specs/ermete-${{ matrix.package }}" ] && [ ! -d "specs/${{ matrix.package }}" ]; then img_name="ermete-os-forge-rolling-${{ matrix.package }}"; fi
@@ -570,6 +587,7 @@ jobs:
       - name: Build Package (Custom Spec or Upstream SRPM)
         if: steps.check.outputs.skip != 'true'
         run: |
+          set -euo pipefail
           mkdir -p RPMS
           mkdir -p ${{ github.workspace }}/.sccache
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
@@ -647,6 +665,7 @@ jobs:
       - name: Publish Micro-Container OCI
         if: steps.check.outputs.skip != 'true'
         run: |
+          set -euo pipefail
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
@@ -666,6 +685,7 @@ jobs:
       - name: Generate SBOM (Syft)
         if: steps.check.outputs.skip != 'true'
         run: |
+          set -euo pipefail
           img_prefix="ermete-os-forge"
           if [ ! -d "specs/ermete-${{ matrix.package }}" ] && [ ! -d "specs/${{ matrix.package }}" ]; then
             img_prefix="ermete-os-forge-rolling"
@@ -678,6 +698,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
           nix run nixpkgs#cosign -- login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
           img_prefix="ermete-os-forge"
           if [ ! -d "specs/ermete-${{ matrix.package }}" ] && [ ! -d "specs/${{ matrix.package }}" ]; then
@@ -695,6 +716,7 @@ jobs:
       - name: 🧹 Fix Workspace Permissions (GH Actions Cleanup)
         if: always()
         run: |
+          set -euo pipefail
           if command -v sudo >/dev/null 2>&1; then
             sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
@@ -723,6 +745,7 @@ jobs:
           extra_nix_config: \"experimental-features = nix-command flakes\"
       - name: Build & Validate Flatpak Package
         run: |
+          set -euo pipefail
           echo "📦 [DAG Flatpak Orchestrator] Validating & Pre-fetching Flatpak metadata for: ${{ matrix.flatpak }}"
           curl -sI "https://dl.flathub.org/repo/appstream/x86_64/issues/${{ matrix.flatpak }}.json" || true
           echo "✅ Declarative Flatpak layer validation completed for ${{ matrix.flatpak }}"
@@ -731,6 +754,7 @@ jobs:
       - name: 🧹 Fix Workspace Permissions (GH Actions Cleanup)
         if: always()
         run: |
+          set -euo pipefail
           if command -v sudo >/dev/null 2>&1; then
             sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
@@ -760,6 +784,7 @@ jobs:
       - name: Resolve Kernel Version and Install Chimera Headers
         id: kernel
         run: |
+          set -euo pipefail
           podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
@@ -791,6 +816,7 @@ jobs:
       - name: Install Dependencies and Build
         if: steps.cache.outputs['cache-hit'] != 'true'
         run: |
+          set -euo pipefail
           mkdir -p ${{ github.workspace }}/nvidia_cache
           podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
@@ -852,6 +878,7 @@ jobs:
 
       - name: Publish Micro-Container OCI
         run: |
+          set -euo pipefail
           export BUILDAH_ISOLATION=chroot
           buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
@@ -870,6 +897,7 @@ jobs:
       - name: 🧹 Fix Workspace Permissions (GH Actions Cleanup)
         if: always()
         run: |
+          set -euo pipefail
           if command -v sudo >/dev/null 2>&1; then
             sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
@@ -894,6 +922,7 @@ jobs:
           extra_nix_config: \"experimental-features = nix-command flakes\"
       - name: Create Repo and Push OCI
         run: |
+          set -euo pipefail
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
@@ -1021,6 +1050,7 @@ jobs:
       - name: 🧹 Cleanup Workspace Permissions
         if: always()
         run: |
+          set -euo pipefail
           podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined -v "${{ github.workspace }}:/workspace:rw" -w /workspace docker.io/library/ubuntu:latest rm -rf /workspace/var-tmp || true
           sudo chown -R $(id -u):$(id -g) ${{ github.workspace }} || podman unshare chown -R $(id -u):$(id -g) ${{ github.workspace }} || true
 
@@ -1028,6 +1058,7 @@ jobs:
       - name: 🧹 Fix Workspace Permissions (GH Actions Cleanup)
         if: always()
         run: |
+          set -euo pipefail
           if command -v sudo >/dev/null 2>&1; then
             sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
@@ -1044,6 +1075,7 @@ jobs:
     steps:
       - name: ⚙️ Prepare environment
         run: |
+          set -euo pipefail
           echo "IMAGE_REGISTRY=ghcr.io/hr-mes" >> ${GITHUB_ENV}
           echo "IMAGE_NAME=ermete-os-system" >> ${GITHUB_ENV}
           echo "DEFAULT_TAG=latest" >> ${GITHUB_ENV}
@@ -1055,9 +1087,11 @@ jobs:
         uses: ublue-os/remove-unwanted-software@cc0becac701cf642c8f0a6613bbdaf5dc36b259e # v9
       - name: 🔑 Login to GHCR
         run: |
+          set -euo pipefail
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: 🐳 Build OS Image
         run: |
+          set -euo pipefail
           podman run -i --rm --privileged -v ${{ github.workspace }}:/workspace -w /workspace ghcr.io/hr-mes/ermete-os-builder:${{ needs.build-builder.outputs.content_hash }} bash -c "set -euo pipefail; \
           bwrap --unshare-net --dev-bind / / podman build --network=none --layers -t ghcr.io/hr-mes/ermete-os-system:latest -f ./system/Containerfile ./system && podman push ghcr.io/hr-mes/ermete-os-system:latest" || bwrap --unshare-net --dev-bind / / podman build --network=none --layers -t ghcr.io/hr-mes/ermete-os-system:latest -f ./system/Containerfile ./system
           podman push ghcr.io/hr-mes/ermete-os-system:latest || true
@@ -1074,6 +1108,7 @@ jobs:
       - name: 🧹 Fix Workspace Permissions (GH Actions Cleanup)
         if: always()
         run: |
+          set -euo pipefail
           if command -v sudo >/dev/null 2>&1; then
             sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
@@ -1097,6 +1132,7 @@ jobs:
           node-version: "22"
       - name: 🚀 Build Astro.js Portal
         run: |
+          set -euo pipefail
           npm install --global openwiki astro @astrojs/starlight
           if [ -d "openwiki" ]; then
             cd openwiki
@@ -1108,6 +1144,7 @@ jobs:
       - name: 🧹 Fix Workspace Permissions (GH Actions Cleanup)
         if: always()
         run: |
+          set -euo pipefail
           if command -v sudo >/dev/null 2>&1; then
             sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
@@ -1132,12 +1169,14 @@ jobs:
           GDK_BACKEND: wayland,x11
           GSK_RENDERER: cairo
         run: |
+          set -euo pipefail
           echo "🚀 Executing GTK4 UI & Wayland Headless Compositor Regression Audit..."
           xvfb-run -a cargo test --manifest-path system/ermete-compositor/Cargo.toml -- --nocapture || true
           xvfb-run -a cargo test --manifest-path system/ermete-greeter/Cargo.toml -- --nocapture || true
           echo "✅ GTK4 UI and Wayland Headless Compositor checks passed successfully."
       - name: 🎨 Generate Spectacular Job Summary
         run: |
+          set -euo pipefail
           cat << 'EOF' >> $GITHUB_STEP_SUMMARY
           # 👁️ Nodo Supremo Visivo - Zero-Desync Architecture 🚀
           
@@ -1166,6 +1205,7 @@ jobs:
       - name: 🧹 Fix Workspace Permissions (GH Actions Cleanup)
         if: always()
         run: |
+          set -euo pipefail
           if command -v sudo >/dev/null 2>&1; then
             sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
           else
