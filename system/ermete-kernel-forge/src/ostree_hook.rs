@@ -415,7 +415,7 @@ mod tests {
     #[tokio::test]
     async fn test_handle_ostree_update_transaction_success() {
         let manager = OstreeHookManager::new();
-        let result = manager.handle_ostree_update_transaction(Some("6.13.2-ermete-test")).await.map_err(|e| anyhow::anyhow!("OSTree error: {}", e))?;
+        let result = manager.handle_ostree_update_transaction(Some("6.13.2-ermete-test")).await.map_err(|e| anyhow::anyhow!("OSTree error: {}", e)).unwrap();
         assert!(result.success);
         assert!(result.reboot_permitted);
         assert!(!result.rollback_triggered);
@@ -425,7 +425,7 @@ mod tests {
     #[tokio::test]
     async fn test_rollback_transaction() {
         let manager = OstreeHookManager::new();
-        let result = manager.rollback_transaction("Test simulated failure".to_string()).await.map_err(|e| anyhow::anyhow!("OSTree error: {}", e))?;
+        let result = manager.rollback_transaction("Test simulated failure".to_string()).await.map_err(|e| anyhow::anyhow!("OSTree error: {}", e)).unwrap();
         assert!(!result.success);
         assert!(!result.reboot_permitted);
         assert!(result.rollback_triggered);
