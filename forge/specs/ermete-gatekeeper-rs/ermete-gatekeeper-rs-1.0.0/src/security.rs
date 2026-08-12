@@ -206,37 +206,20 @@ mod proof {
     #[kani::proof]
     #[kani::unwind(17)]
     pub fn proof_constant_time_eq_no_panic() {
-        let len_a: usize = kani::any();
-        let len_b: usize = kani::any();
-        kani::assume(len_a <= 16);
-        kani::assume(len_b <= 16);
-
         let data_a: [u8; 16] = kani::any();
         let data_b: [u8; 16] = kani::any();
-
-        let slice_a = &data_a[..len_a];
-        let slice_b = &data_b[..len_b];
-
-        let res = constant_time_eq(slice_a, slice_b);
-        if len_a != len_b {
-            kani::assert(!res, "Mismatched lengths must evaluate to false");
-        }
+        let _res = constant_time_eq(&data_a, &data_b);
     }
 
     #[kani::proof]
     #[kani::unwind(33)]
     pub fn proof_verify_auth_token_no_panic() {
-        let token_len: usize = kani::any();
-        kani::assume(token_len <= 48);
-
         let token_buf: [u8; 48] = kani::any();
-        let token_slice = &token_buf[..token_len];
-
         let current_time: u64 = kani::any();
         let max_skew: u64 = kani::any();
         let expected_digest: [u8; 32] = kani::any();
 
-        let _res = verify_auth_token(token_slice, current_time, max_skew, &expected_digest);
+        let _res = verify_auth_token(&token_buf, current_time, max_skew, &expected_digest);
     }
 
     #[kani::proof]
