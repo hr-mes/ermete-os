@@ -69,8 +69,6 @@ pub fn init_system_controller() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::{Arc}
-use tokio::sync::Mutex;;
     use crate::ipc::types::{ AudioBus, NetBus, HardwareBus, MprisBus};
 
     #[tokio::test]
@@ -163,9 +161,9 @@ use tokio::sync::Mutex;;
         let list = network.list_wifi_networks().await.unwrap();
         assert!(!list[0].active);
 
-        assert!(mpris.get_cached_mpris_state().is_none());
-        mpris.player_command("play-pause").await.unwrap();
-        let mpris_state = mpris.get_cached_mpris_state().expect("cached_mpris should be populated");
+        assert!(mpris::get_cached_mpris_state().is_none());
+        mpris::player_command("play-pause").await.unwrap();
+        let mpris_state = mpris::get_cached_mpris_state().expect("cached_mpris should be populated");
         assert_eq!(mpris_state.status, "Playing");
     }
 }
