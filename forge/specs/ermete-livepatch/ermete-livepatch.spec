@@ -7,7 +7,7 @@ License:        GPLv2
 URL:            https://github.com/ermete-os/ermete-livepatch
 Source0:        %{name}-%{version}.tar.gz
 
-BuildRequires:  kpatch-build
+
 Requires:       kpatch
 Requires:       kmod
 
