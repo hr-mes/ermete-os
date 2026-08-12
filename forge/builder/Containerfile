@@ -63,6 +63,7 @@ RUN dnf install -y \
     perl \
     zstd \
     llvm \
+    llvm-devel \
     lld \
     ccache \
     hostname \
