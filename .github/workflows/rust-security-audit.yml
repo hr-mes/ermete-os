@@ -174,7 +174,7 @@ jobs:
         run: |
           cd ${{ matrix.dir }}
           if [ -n "${{ matrix.harness }}" ]; then
-            cargo kani --harness "*${{ matrix.harness }}*" 2>/dev/null || cargo kani
+            cargo kani --harness "${{ matrix.harness }}"
           else
             cargo kani
           fi
@@ -240,7 +240,7 @@ jobs:
             chown -R 1001:1001 . || chown -R 1000:1000 . || true
           fi
   bare-metal-audit:
-    name: ⚡ eBPF & Bare-Metal Build Audit (${{ matrix.target_name }})
+    name: ⚡ eBPF & Bare-Metal Build Verification (${{ matrix.target_name }})
     runs-on: ubuntu-24.04
     container:
       image: ghcr.io/hr-mes/ermete-os-builder:latest

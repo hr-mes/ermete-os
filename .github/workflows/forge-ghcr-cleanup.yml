@@ -31,9 +31,9 @@ jobs:
           echo "=== 🤖 Autonomous Janitor: OCI Merkle Tree & Layer Deduplicator ==="
           
           # Login to GHCR with skopeo
-          if [ -n "${GH_TOKEN:-}" ]; then
-            echo "$GH_TOKEN" | skopeo login "$REGISTRY" -u "$ACTOR" --password-stdin 2>/dev/null || true
-          fi
+            if [ -n "${GH_TOKEN:-}" ]; then
+              echo "$GH_TOKEN" | skopeo login "$REGISTRY" -u "$ACTOR" --password-stdin
+            fi
 
           echo "Fetching container packages for $ORG..."
           PACKAGES_JSON=$(gh api --paginate "/users/$ORG/packages?package_type=container" 2>/dev/null | jq -s 'add' || gh api --paginate "/orgs/$ORG/packages?package_type=container" 2>/dev/null | jq -s 'add' || echo "[]")
@@ -110,13 +110,7 @@ jobs:
                   FIRST_TAG=$(echo "$version" | jq -r '.metadata.container.tags[0]')
                   IMAGE_REF="docker://$REGISTRY/$ORG/$PACKAGE:$FIRST_TAG"
                   
-                  # Use skopeo and jq to inspect Merkle tree layers
-                  RAW_MANIFEST=$(skopeo inspect --raw "$IMAGE_REF" 2>/dev/null || echo "")
-                  if [ -n "$RAW_MANIFEST" ]; then
-                    CONFIG_DIGEST=$(echo "$RAW_MANIFEST" | jq -r '.config.digest // .manifests[0].digest // "unknown"')
-                    LAYER_COUNT=$(echo "$RAW_MANIFEST" | jq -r '(.layers // .manifests // []) | length')
-                    echo "    OCI Merkle Root Config: $CONFIG_DIGEST (Layers: $LAYER_COUNT)"
-                  fi
+                  # Removed fake Merkle evaluation log
                 else
                   # Duplicate Merkle Layer Tree / Exceeds retention limit
                   echo "  [Deduplicate Merkle] Deleting redundant tagged version $VERSION_ID (Tags: $TAGS)..."

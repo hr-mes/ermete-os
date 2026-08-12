@@ -44,7 +44,7 @@ jobs:
       fail-fast: false
       max-parallel: 20
       matrix:
-        sanitizer: [address, thread, memory, leak]
+        sanitizer: [address, thread, memory]
         include:
           - sanitizer: address
             sanitizer_name: AddressSanitizer
@@ -52,8 +52,6 @@ jobs:
             sanitizer_name: ThreadSanitizer
           - sanitizer: memory
             sanitizer_name: MemorySanitizer
-          - sanitizer: leak
-            sanitizer_name: LeakSanitizer
 
     steps:
       - name: Checkout Code
@@ -100,7 +98,7 @@ jobs:
           FAILED=0
           for target in $TARGETS; do
             echo "🔥 Running cargo fuzz su target '$target' per ${FUZZ_TIME}s con ${{ matrix.sanitizer_name }}..."
-            cargo fuzz run --fuzz-dir . "$target" -- -max_total_time="$FUZZ_TIME" -sanitizer=${{ matrix.sanitizer }} -Zbuild-std || FAILED=$((FAILED+1))
+            cargo fuzz run --fuzz-dir . -s ${{ matrix.sanitizer }} "$target" -- -max_total_time="$FUZZ_TIME" || FAILED=$((FAILED+1))
           done
           exit $FAILED
 

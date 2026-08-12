@@ -72,15 +72,6 @@ jobs:
 
             echo "  Current Spec Version: $current_ver | Upstream Latest: $latest_tag"
 
-            # OCI Layer Merkle verification with skopeo & jq
-            local image_ref="docker://${REGISTRY}/${OWNER}/ermete-os-forge-${package_name}:latest"
-            if command -v skopeo >/dev/null 2>&1; then
-              local layer_digest
-              layer_digest=$(skopeo inspect --no-tags "$image_ref" 2>/dev/null | jq -r '.Digest // empty' || echo "")
-              if [ -n "$layer_digest" ]; then
-                echo "  GHCR OCI Merkle Digest for ${package_name}: $layer_digest"
-              fi
-            fi
 
             if [ "$latest_tag" != "$current_ver" ]; then
               echo "  --> Bumping $spec_file from $current_ver to $latest_tag"
@@ -94,11 +85,11 @@ jobs:
 
           # Dynamically parse upstream-watch.json manifest for packages to monitor
           if [ -f "upstream-watch.json" ]; then
-            jq -r 'if type == "array" then .[] | "\(.repo) \(.spec)" else to_entries[] | "\(.key) \(.value)" end' upstream-watch.json | while read -r repo spec; do
+            while read -r repo spec; do
               if [ -n "$repo" ] && [ -n "$spec" ]; then
                 update_spec "$repo" "$spec"
               fi
-            done
+            done < <(jq -r 'if type == "array" then .[] | "\(.repo) \(.spec)" else to_entries[] | "\(.key) \(.value)" end' upstream-watch.json)
           else
             echo "Warning: upstream-watch.json manifest not found."
           fi
