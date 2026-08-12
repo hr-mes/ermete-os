@@ -32,7 +32,6 @@ jobs:
   fuzz:
     name: 🎯 Fuzz Unified Suite (${{ matrix.sanitizer_name }})
     runs-on: ubuntu-24.04
-    container: ghcr.io/hr-mes/ermete-os-builder:latest
     env:
       RUSTC_WRAPPER: sccache
       SCCACHE_DIR: /tmp/sccache
@@ -54,11 +53,15 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+      - name: ❄️ Install Nix (Bedrock Cache)
+        uses: cachix/install-nix-action@v27
+        with:
+          extra_nix_config: "experimental-features = nix-command flakes"
       - name: ⚙️ Set Default Rust Toolchain & Install cargo-fuzz
         run: |
           rustup default nightly
           rustup component add rust-src
-          cargo install cargo-fuzz
+          nix profile install nixpkgs#cargo-fuzz nixpkgs#sccache
 
 
       - name: ⚡ Restore sccache Cache
