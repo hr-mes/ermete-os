@@ -1,6 +1,6 @@
 use zbus::proxy;
 use zbus::Connection;
-use serde::{Deserialize, Serialize};
+
 use std::collections::HashMap;
 
 #[proxy(

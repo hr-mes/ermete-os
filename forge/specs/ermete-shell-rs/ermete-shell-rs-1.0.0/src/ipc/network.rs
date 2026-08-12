@@ -1,5 +1,5 @@
 use arc_swap::ArcSwap;
-use std::sync::{Arc, OnceLock};
+use std::sync::{Arc, OnceLock, Mutex};
 use tokio::sync::{mpsc, oneshot};
 use crate::ipc::types::{
     IpcBackend, NetBus, NetEvent, WifiNetworkInfo,
