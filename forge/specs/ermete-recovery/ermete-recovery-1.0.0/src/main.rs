@@ -484,7 +484,7 @@ fn native_bcachefs_snapshot(src: &std::path::Path, dst: &std::path::Path) -> std
     let mut arg = bch_ioctl_subvolume {
         flags: 0,
         dirfd: dst_parent_file.as_raw_fd(),
-        mode: 0755,
+        mode: 0o755,
         padding: 0,
         dst_ptr: c_dst_name.as_ptr() as u64,
         src_ptr: src_file.as_raw_fd() as u64,

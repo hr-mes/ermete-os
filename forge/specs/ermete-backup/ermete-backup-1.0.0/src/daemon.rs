@@ -114,12 +114,13 @@ pub fn native_bcachefs_snapshot(src: &Path, dst: &Path) -> std::io::Result<()> {
     let mut arg = bch_ioctl_subvolume {
         flags: 0,
         dirfd: dst_parent_file.as_raw_fd(),
-        mode: 0755,
+        mode: 0o755,
         padding: 0,
         dst_ptr: c_dst_name.as_ptr() as u64,
         src_ptr: src_file.as_raw_fd() as u64,
     };
 
+    // SAFETY: FFI call to libc::ioctl to create bcachefs subvolume. Arguments are bounded by valid CString and file descriptor.
     let res = unsafe {
         libc::ioctl(src_file.as_raw_fd(), BCH_IOCTL_SUBVOLUME_CREATE as _, &mut arg)
     };
@@ -162,6 +163,7 @@ pub fn native_bcachefs_delete(path: &Path) -> std::io::Result<()> {
         src_ptr: 0,
     };
 
+    // SAFETY: FFI call to libc::ioctl to destroy bcachefs subvolume. Arguments are bounded by valid CString and file descriptor.
     let res = unsafe {
         libc::ioctl(parent_file.as_raw_fd(), BCH_IOCTL_SUBVOLUME_DESTROY as _, &mut arg)
     };
