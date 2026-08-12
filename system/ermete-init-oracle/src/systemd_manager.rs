@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use std::os::unix::fs::OpenOptionsExt;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
@@ -12,10 +13,8 @@ const PRIMARY_SYSTEMD_DIR: &str = "/etc/systemd/system";
 const FALLBACK_SYSTEMD_DIR: &str = "/tmp/systemd/system";
 
 fn is_dir_writable(path: &Path) -> bool {
-    if !path.exists() {
-        if fs::create_dir_all(path).is_err() {
-            return false;
-        }
+    if !path.exists() && fs::create_dir_all(path).is_err() {
+        return false;
     }
     let probe_file = path.join(".ermete_init_oracle_probe");
     if std::fs::OpenOptions::new()
