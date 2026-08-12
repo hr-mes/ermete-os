@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::ecs::components::{Position, TargetPosition, Velocity};
 use crate::ecs::world::{SharedEcsWorld, World};
 use anyhow::Result;

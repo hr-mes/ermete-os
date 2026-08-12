@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 //! Wayland Render Link System (Phase 4)
 //! 
 //! Connects the ECS state to the Smithay/EGL rendering engine.
