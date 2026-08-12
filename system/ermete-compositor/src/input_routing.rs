@@ -5,6 +5,7 @@ use tracing::{info, warn};
 
 /// Keyboard input event payload.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(dead_code)]
 pub struct KeyEvent {
     pub key_code: u32,
     pub state: u32, // 1 = Press, 0 = Release
@@ -21,6 +22,7 @@ pub struct GlobalInputGrab {
 }
 
 #[derive(thiserror::Error, Debug, PartialEq, Eq)]
+#[allow(dead_code)]
 pub enum InputRoutingError {
     #[error("Global input grab request denied by Gatekeeper for app '{app_id}' (PID {pid})")]
     Unauthorized { app_id: String, pid: u32 },
@@ -109,6 +111,7 @@ impl Default for InputRouter {
     }
 }
 
+#[allow(dead_code)]
 impl InputRouter {
     pub fn new() -> Self {
         Self {
