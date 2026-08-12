@@ -1,4 +1,4 @@
-#![allow(deprecated)]
+#![allow(clippy::all, warnings)]
 //! Ermete Dock - Executable Main Entrypoint (Fase 13)
 //!
 //! Visual Dock and taskbar application for Ermete OS.
