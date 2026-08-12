@@ -217,8 +217,9 @@ pub struct UnifiedTensorBus {
     capacity_bytes: usize,
 }
 
-// Safety: Lock-free atomic synchronization ensures multi-threaded and inter-process safety
+// SAFETY: Lock-free atomic synchronization ensures multi-threaded safety
 unsafe impl Send for UnifiedTensorBus {}
+// SAFETY: Lock-free atomic synchronization ensures inter-process safety
 unsafe impl Sync for UnifiedTensorBus {}
 
 impl UnifiedTensorBus {

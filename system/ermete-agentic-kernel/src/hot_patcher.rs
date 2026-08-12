@@ -458,7 +458,21 @@ impl SharedHotPatcher {
             inner: Arc::new(Mutex::new(BpfTrampolineInjector::new())),
         }
     }
+}
 
+impl Default for BpfTrampolineInjector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Default for SharedHotPatcher {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl SharedHotPatcher {
     pub async fn inject_kprobe(
         &self,
         patch_id: &str,
