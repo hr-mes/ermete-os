@@ -171,7 +171,7 @@ impl AudioController {
     }
 
     pub fn get_cached_volume(&self) -> f64 {
-        *self.cached_volume.blocking_lock())
+        *self.cached_volume.blocking_lock()
     }
 }
 

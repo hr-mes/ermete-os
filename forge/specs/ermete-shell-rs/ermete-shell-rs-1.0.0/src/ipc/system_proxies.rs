@@ -1,7 +1,7 @@
 use std::any::Any;
 use std::collections::HashMap;
-use std::sync::{Arc, OnceLock}
-use tokio::sync::Mutex;;
+use std::sync::{Arc, OnceLock};
+use tokio::sync::Mutex;
 
 pub use crate::ipc::types::*;
 
@@ -61,11 +61,7 @@ impl ProxyRegistry {
     #[allow(dead_code)]
     pub fn get(&self, name: &str) -> Option<Arc<dyn ControllerBackend>> {
         let map = self.controllers.blocking_lock();
-        {
-            map.get(name).cloned()
-        } else {
-            None
-        }
+        map.get(name).cloned()
     }
 
     pub fn get_typed<T: 'static + Clone>(&self, name: &str) -> Option<T> {
