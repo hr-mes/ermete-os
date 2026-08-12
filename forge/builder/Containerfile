@@ -2,8 +2,8 @@ FROM registry.fedoraproject.org/fedora:43
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install RPMFusion release packages to provision the GPG keys
-RUN curl -fsSL -o /tmp/rpmfusion-free.rpm https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-43.noarch.rpm \
-    && curl -fsSL -o /tmp/rpmfusion-nonfree.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-43.noarch.rpm \
+RUN curl -fsSL --retry 5 --retry-delay 5 -o /tmp/rpmfusion-free.rpm https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-43.noarch.rpm \
+    && curl -fsSL --retry 5 --retry-delay 5 -o /tmp/rpmfusion-nonfree.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-43.noarch.rpm \
     && echo "d7757257bdce32888020c4ff5a3e3d43cf7c32105ffd2c36aff9a2fcaadef657  /tmp/rpmfusion-free.rpm" | sha256sum -c \
     && echo "b82863a47e776640c61aade7daf58f2011220fdc24117955dafa220174af3dc6  /tmp/rpmfusion-nonfree.rpm" | sha256sum -c \
     && dnf install -y /tmp/rpmfusion-free.rpm /tmp/rpmfusion-nonfree.rpm \
