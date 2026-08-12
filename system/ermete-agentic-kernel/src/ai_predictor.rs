@@ -18,7 +18,7 @@ pub struct AiSchedTarget {
     pub latency_slice_us: u64,  // microsecond scheduling target (e.g. 100us - 20000us)
 }
 
-// Safe implementation of Pod for zero-copy Aya eBPF map serialization
+// SAFETY: Struct is repr(C) and contains only plain data types with no padding padding issues
 unsafe impl aya::Pod for AiSchedTarget {}
 
 /// Zero-Copy DMA AI Tensor Frame extracted from NPU/GPU unified memory bus
@@ -35,7 +35,7 @@ pub struct UnifiedTensorFrame {
     pub sequence_id: u64,          // Monotonic hardware DMA sequence counter
 }
 
-// Safe implementation of Pod for zero-copy DMA tensor memory operations
+// SAFETY: Struct is repr(C) and contains only plain data types with no padding padding issues
 unsafe impl aya::Pod for UnifiedTensorFrame {}
 
 /// Lock-free, zero-copy Unified Tensor Bus for NPU/DMA AI tensor streaming

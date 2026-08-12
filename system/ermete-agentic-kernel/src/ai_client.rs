@@ -128,11 +128,11 @@ impl AiDaemonClient {
             let is_anomalous = val
                 .get("anomaly_detected")
                 .and_then(|v| v.as_bool())
-                .unwrap_or_else(|| {
+                .unwrap_or(
                     telemetry.network_dropped_packets > 10
                         || telemetry.tcp_scans_detected > 0
                         || telemetry.memory_pressure_mb > 1500
-                });
+                );
 
             let risk_score = val
                 .get("risk_score")
