@@ -440,8 +440,11 @@ impl SimpleComponent for ForgeWidgetModel {
     }
 }
 
-/return Err(anyhow::anyhow!("Hardware hash non disponibile o non tracciabile. Accesso bloccato.")););
-
+fn detect_hardware_hash() -> String {
+    let raw_id = std::fs::read_to_string("/etc/machine-id").unwrap_or_else(|_| String::new());
+    if raw_id.is_empty() {
+        return "Hardware hash non disponibile o non tracciabile.".to_string();
+    }
     let mut hasher = Sha256::new();
     hasher.update(raw_id.as_bytes());
     let result = hasher.finalize();
