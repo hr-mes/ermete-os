@@ -97,6 +97,7 @@ pub struct World {
     storages: HashMap<TypeId, Box<dyn AnyStorage>>,
 }
 
+#[allow(dead_code)]
 impl World {
     pub fn new() -> Self {
         Self {
