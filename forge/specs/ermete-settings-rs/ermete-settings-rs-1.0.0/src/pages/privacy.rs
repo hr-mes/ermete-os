@@ -299,11 +299,11 @@ pub fn build_page() -> GtkBox {
                         let path = entry.path();
                         if path.is_dir() {
                             if let Err(e) = std::fs::remove_dir_all(&path) {
-                    tracing::error!("Failed to remove directory {:?}: {:?}", path, e);
+                    eprintln!("Failed to remove directory {:?}: {:?}", path, e);
                 }
                         } else {
                             if let Err(e) = std::fs::remove_file(&path) {
-                    tracing::error!("Failed to remove file {:?}: {:?}", path, e);
+                    eprintln!("Failed to remove file {:?}: {:?}", path, e);
                 }
                         }
                     }

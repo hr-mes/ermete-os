@@ -3,7 +3,7 @@
 //! Connects GTK4 UI switch/button callbacks to `ermete-store` (backed by Linux io_uring)
 //! and dispatches signed CRDT state updates across the PQC Mesh Sync cluster.
 
-use std::os::unix::fs::OpenOptionsExt;
+// use std::os::unix::fs::OpenOptionsExt;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;

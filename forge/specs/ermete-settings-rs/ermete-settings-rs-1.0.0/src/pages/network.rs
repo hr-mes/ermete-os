@@ -398,7 +398,7 @@ pub fn build_page() -> Box {
                     let _ = crate::crdt_store::update_setting_crdt("global_mesh_provider", "cloudflare_warp").await;
                 }
                 Err(e) => {
-                    log::error!("warp-cli command failed or not installed. Zero-Trust provisioning aborted.");
+                    eprintln!("warp-cli command failed or not installed. Zero-Trust provisioning aborted.");
                 }
             }
         });
