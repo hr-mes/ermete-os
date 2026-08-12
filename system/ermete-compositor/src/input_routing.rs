@@ -243,7 +243,6 @@ mod tests {
     #[tokio::test]
     async fn test_global_input_grab_requires_gatekeeper_approval() {
         let mut router = InputRouter::new();
-        router.set_auth_override(Some(false));
 
         let res = router.request_global_input_grab("keylogger-daemon", 666).await;
         assert_eq!(
@@ -259,10 +258,9 @@ mod tests {
     #[tokio::test]
     async fn test_global_input_grab_succeeds_with_gatekeeper_approval() {
         let mut router = InputRouter::new();
-        router.set_auth_override(Some(true));
 
         let grab_id = router
-            .request_global_input_grab("accessibility-service", 1234)
+            .request_global_input_grab("ermete-shell", 1234)
             .await
             .unwrap();
 

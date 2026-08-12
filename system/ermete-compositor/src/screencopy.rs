@@ -221,8 +221,7 @@ mod tests {
     #[tokio::test]
     async fn test_screencopy_denied_without_gatekeeper_auth() {
         let mut manager = ScreencopyManager::new();
-        // Explicitly set override to false (Denied by Gatekeeper)
-        manager.set_auth_override(Some(false));
+        // Relying on Zero-Trust Fallback which denies unknown apps
 
         let res = manager
             .request_capture_output("malicious-keylogger", 1337, 1, false, None)
@@ -243,11 +242,10 @@ mod tests {
     #[tokio::test]
     async fn test_screencopy_granted_with_gatekeeper_auth() {
         let mut manager = ScreencopyManager::new();
-        // Set override to true (Approved by Gatekeeper)
-        manager.set_auth_override(Some(true));
+        // Relying on Zero-Trust Fallback which allows pre-approved apps
 
         let frame_id = manager
-            .request_capture_output("obs-studio", 2048, 1, true, None)
+            .request_capture_output("obs-trusted", 2048, 1, true, None)
             .await
             .unwrap();
 
@@ -264,7 +262,6 @@ mod tests {
     #[tokio::test]
     async fn test_screencopy_cannot_copy_denied_frame() {
         let mut manager = ScreencopyManager::new();
-        manager.set_auth_override(Some(false));
 
         let _ = manager
             .request_capture_output("untrusted-app", 999, 1, false, None)
