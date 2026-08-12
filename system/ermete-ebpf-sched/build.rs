@@ -1,4 +1,3 @@
-use std::io::Write;
 use std::os::unix::fs::OpenOptionsExt;
 use std::env;
 use std::fs;
@@ -30,7 +29,7 @@ fn main() {
         ])
         .status();
 
-    if status.as_ref().map_or(false, |s| s.success()) == false {
+    if !matches!(status, Ok(s) if s.success()) {
         let _ = Command::new(&cargo)
             .env("LD_LIBRARY_PATH", "/usr/lib64")
             .args([
