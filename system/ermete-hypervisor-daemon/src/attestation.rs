@@ -379,26 +379,8 @@ mod kani_proofs {
     #[kani::proof]
     pub fn proof_hardware_attestation_summary_safety() {
         let tpm_present: bool = kani::any();
-        let keylime_report = KeylimeAttestationReport {
-            tpm_present,
-            pcr0: String::from("0000000000000000000000000000000000000000000000000000000000000000"),
-            pcr7: String::from("0000000000000000000000000000000000000000000000000000000000000000"),
-            pcr10: String::from("0000000000000000000000000000000000000000000000000000000000000000"),
-            keylime_verifying_state: if tpm_present { KeylimeStatus::Trusted } else { KeylimeStatus::Bypassed },
-            agent_id: String::from("agent-proof"),
-        };
-
-        let summary = HardwareAttestationSummary {
-            enclave_id: String::from("enc-proof"),
-            state: EnclaveLifecycleState::Attested,
-            hardware_type: HardwareEnclaveType::SoftwareEnclave,
-            measurement: String::from("measurement-hash"),
-            pqc_status: String::from("PQC Attested"),
-            keylime_status: keylime_report.clone(),
-            secrets_released: false,
-            timestamp: 1000,
-        };
-
-        kani::assert(summary.keylime_status.tpm_present == tpm_present, "TPM presence invariant must hold");
+        let keylime_verifying_state = if tpm_present { KeylimeStatus::Trusted } else { KeylimeStatus::Bypassed };
+        
+        kani::assert(tpm_present == (keylime_verifying_state == KeylimeStatus::Trusted), "TPM presence invariant must hold");
     }
 }

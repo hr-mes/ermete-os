@@ -67,8 +67,5 @@
   export RUSTFLAGS="%{rustflags}"\
   export CARGO_PROFILE_RELEASE_LTO="thin"\
   export CARGO_PROFILE_RELEASE_PANIC="abort"\
-  export CARGO_PROFILE_RELEASE_STRIP="symbols"\
-  export RUSTC_WRAPPER=sccache\
-  export SCCACHE_DIRECT=true\
-  export SCCACHE_CACHE_SIZE="10G"
+  export CARGO_PROFILE_RELEASE_STRIP="symbols"
 
