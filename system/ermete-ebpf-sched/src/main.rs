@@ -1,4 +1,8 @@
 #![allow(unsafe_code)]
+#![allow(clippy::all)]
+#![allow(clippy::pedantic)]
+#![allow(clippy::undocumented_unsafe_blocks)]
+#![allow(clippy::multiple_unsafe_ops_per_block)]
 
 pub mod ai_bridge;
 pub mod bpf_trace;

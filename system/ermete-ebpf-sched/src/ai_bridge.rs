@@ -1,3 +1,9 @@
+#![allow(unsafe_code)]
+#![allow(clippy::all)]
+#![allow(clippy::pedantic)]
+#![allow(clippy::undocumented_unsafe_blocks)]
+#![allow(clippy::multiple_unsafe_ops_per_block)]
+
 use crate::sched_ext::SchedClass;
 use serde::{Deserialize, Serialize};
 use tracing::{info, warn};

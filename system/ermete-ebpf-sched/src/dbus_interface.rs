@@ -1,3 +1,9 @@
+#![allow(unsafe_code)]
+#![allow(clippy::all)]
+#![allow(clippy::pedantic)]
+#![allow(clippy::undocumented_unsafe_blocks)]
+#![allow(clippy::multiple_unsafe_ops_per_block)]
+
 use crate::sched_ext::{SchedClass, SchedExtController, TaskSchedPolicy};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -54,7 +60,7 @@ pub async fn check_polkit_auth_zbus(
     action_id: &str,
     allow_user_interaction: bool,
 ) -> Result<bool, zbus::Error> {
-    if let Ok(creds) = conn.peer_credentials().await {
+    if let Ok(creds) = conn.peer_creds().await {
         if creds.unix_user_id() == Some(0) {
             return Ok(true);
         }

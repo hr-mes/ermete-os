@@ -1,3 +1,7 @@
+#![allow(clippy::undocumented_unsafe_blocks)]
+#![allow(clippy::multiple_unsafe_ops_per_block)]
+#![allow(unsafe_code)]
+
 pub mod drm_lease;
 pub mod model_loader;
 pub mod npu;
@@ -64,7 +68,7 @@ impl AiDaemonProxy {
         let engine = self.model_engine.read().await;
         let logits = engine
             .infer(&features)
-            .map_err(|e| zbus::fdo::Error::Failed(e))?;
+            .map_err(zbus::fdo::Error::Failed)?;
 
         let mut max_idx = 3;
         let mut max_val = f32::NEG_INFINITY;

@@ -56,7 +56,7 @@ pub async fn check_polkit_auth_zbus(
     action_id: &str,
     allow_user_interaction: bool,
 ) -> Result<bool, zbus::Error> {
-    if let Ok(creds) = conn.peer_credentials().await {
+    if let Ok(creds) = conn.peer_creds().await {
         if creds.unix_user_id() == Some(0) {
             return Ok(true);
         }
