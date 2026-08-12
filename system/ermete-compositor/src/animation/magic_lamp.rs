@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 //! Magic Lamp (Genie) window minimize and maximize animation solver.
 //!
 //! Reverse-engineers macOS/Deepin genie minimize/maximize transition effects.

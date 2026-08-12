@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 //! Animation Manager orchestrating multi-window mass-spring-damper physics,
 //! Magic Lamp (Genie) minimize/restore transitions, and Wobbly Windows drag physics.
 
