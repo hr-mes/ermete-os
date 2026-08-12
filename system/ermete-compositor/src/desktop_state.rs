@@ -77,6 +77,7 @@ impl PipLayerManager {
     }
 
     /// Calculates absolute output coordinates for a PiP surface based on corner dock, margins, and screen bounds.
+    #[allow(clippy::too_many_arguments)]
     pub fn calculate_pip_geometry(
         corner: PipCorner,
         margin_x: u32,

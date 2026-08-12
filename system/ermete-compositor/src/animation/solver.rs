@@ -87,6 +87,7 @@ impl Matrix4 {
     }
 
     /// Computes quad bilinear mapping transformation matrix for mapping unit quad [0,1]^2 to quadrilateral (p0, p1, p2, p3).
+    #[allow(clippy::too_many_arguments)]
     pub fn quad_transform(
         x0: f32, y0: f32,
         x1: f32, y1: f32,
