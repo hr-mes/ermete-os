@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 //! 1D and 2D/4D Spring abstractions for window geometry interpolation.
 
 use super::solver::{MassSpringDamperSolver, SpringConfig};
