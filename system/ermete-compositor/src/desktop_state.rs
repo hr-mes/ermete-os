@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::backend::DrmKmsBackend;
 use crate::ipc::protocol::WindowPlacement;
 use crate::tiling::{
