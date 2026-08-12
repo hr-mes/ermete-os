@@ -515,7 +515,7 @@ impl AiPredictiveEngine {
         }
     }
 
-    fn generate_synthetic_embedding(text: &str) -> Vec<f32> {
+    fn generate_synthetic_embedding(_text: &str) -> Vec<f32> {
         // VITREOL: Never generate fake embeddings by math division. Return empty to signal AI failure.
         vec![]
     }

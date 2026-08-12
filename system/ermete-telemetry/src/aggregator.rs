@@ -1,4 +1,4 @@
-use std::io::Write;
+
 use crate::collector::LogRecord;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
