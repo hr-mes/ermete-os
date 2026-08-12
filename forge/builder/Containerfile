@@ -84,7 +84,8 @@ RUN curl -sSfL -o /tmp/syft-install.sh https://raw.githubusercontent.com/anchore
     && echo "4629c757b7618056f8ddd7e2625ae9fdd94c0372a65049520bc7d9df9efc7f71  /tmp/cosign-linux-amd64" | sha256sum -c \
     && mv /tmp/cosign-linux-amd64 /usr/local/bin/cosign \
     && chmod +x /usr/local/bin/cosign \
-    && cargo install bpf-linker \
+    && curl -fsSL -o /usr/local/bin/bpf-linker https://github.com/aya-rs/bpf-linker/releases/download/v0.11.0/bpf-linker-x86_64-unknown-linux-musl \
+    && chmod +x /usr/local/bin/bpf-linker \
     && curl --proto '=https' --tlsv1.2 -fsSL -o /tmp/rustup-init.sh https://sh.rustup.rs \
     && echo "6c30b75a75b28a96fd913a037c8581b580080b6ee9b8169a3c0feb1af7fe8caf  /tmp/rustup-init.sh" | sha256sum -c \
     && sh /tmp/rustup-init.sh -y \
