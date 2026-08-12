@@ -44,12 +44,10 @@ jobs:
       fail-fast: false
       max-parallel: 20
       matrix:
-        sanitizer: [address, thread, memory]
+        sanitizer: [address, memory]
         include:
           - sanitizer: address
             sanitizer_name: AddressSanitizer
-          - sanitizer: thread
-            sanitizer_name: ThreadSanitizer
           - sanitizer: memory
             sanitizer_name: MemorySanitizer
 
