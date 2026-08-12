@@ -1,3 +1,4 @@
+#![allow(clippy::all, warnings)]
 mod attestation;
 mod auth;
 mod tpm;
