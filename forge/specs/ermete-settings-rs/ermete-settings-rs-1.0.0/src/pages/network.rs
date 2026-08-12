@@ -3,8 +3,8 @@
 use anyhow::{anyhow, Result};
 use gtk4::prelude::*;
 use gtk4::{Align, Box, Button, DropDown, Entry, Label, ListBox, Orientation};
-use std::sync::{Arc}
-use tokio::sync::Mutex;;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 use crate::components::action_row::ActionRow;
 use ermete_bus_api::shm_ring::ZeroCopyRingBuffer;
 
@@ -397,7 +397,7 @@ pub fn build_page() -> Box {
                     // Update global mesh CRDT state
                     let _ = crate::crdt_store::update_setting_crdt("global_mesh_provider", "cloudflare_warp").await;
                 }
-                Err(e) => {
+                Err(_e) => {
                     eprintln!("warp-cli command failed or not installed. Zero-Trust provisioning aborted.");
                 }
             }
