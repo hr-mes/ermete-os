@@ -196,7 +196,7 @@ impl MprisController {
     }
 
     pub fn get_cached_mpris_state(&self) -> Option<MprisState> {
-        self.cached_mpris.blocking_lock()).clone()
+        self.cached_mpris.blocking_lock().clone()
     }
 
     pub async fn refresh_mpris(&self) -> zbus::Result<()> {
