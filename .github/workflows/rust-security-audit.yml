@@ -18,6 +18,7 @@ jobs:
     env:
       RUSTC_WRAPPER: sccache
       SCCACHE_DIR: /tmp/sccache
+      CARGO_NET_RETRY: 10
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -80,6 +81,7 @@ jobs:
     env:
       RUSTC_WRAPPER: sccache
       SCCACHE_DIR: /tmp/sccache
+      CARGO_NET_RETRY: 10
     strategy:
       fail-fast: false
       max-parallel: 20
@@ -166,6 +168,7 @@ jobs:
     env:
       RUSTC_WRAPPER: sccache
       SCCACHE_DIR: /tmp/sccache
+      CARGO_NET_RETRY: 10
 
     steps:
       - name: Checkout Codebase
@@ -211,6 +214,7 @@ jobs:
     env:
       RUSTC_WRAPPER: sccache
       SCCACHE_DIR: /tmp/sccache
+      CARGO_NET_RETRY: 10
     strategy:
       fail-fast: false
       max-parallel: 20
