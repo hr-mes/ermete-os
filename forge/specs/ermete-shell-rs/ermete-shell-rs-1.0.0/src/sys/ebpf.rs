@@ -1,4 +1,4 @@
-use crate::ipc::types::{NetBus, NetEvent};
+use crate::ipc::types::NetBus;
 use std::os::fd::RawFd;
 
 /// Native eBPF-driven push notification subsystem for DBus event interception.

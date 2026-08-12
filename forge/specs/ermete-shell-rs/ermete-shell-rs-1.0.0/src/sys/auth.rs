@@ -1,6 +1,6 @@
 use std::io::Write;
 use greetd_ipc::{Request, Response};
-use std::io::{Read, Write};
+use std::io::Read;
 use std::os::unix::net::UnixStream;
 
 pub fn send_request(stream: &mut UnixStream, req: &Request) -> Result<Response, String> {

@@ -1,6 +1,4 @@
 use zbus::proxy;
-use std::sync::{Arc}
-use tokio::sync::Mutex;;
 use tokio::sync::{mpsc, oneshot};
 use crate::ipc::types::{IpcBackend,  HardwareBus};
 
