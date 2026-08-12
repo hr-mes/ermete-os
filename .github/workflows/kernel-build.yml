@@ -169,7 +169,7 @@ jobs:
         COSIGN_EXPERIMENTAL: 1
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        podman exec -e COSIGN_EXPERIMENTAL=1 -e GITHUB_TOKEN=${GITHUB_TOKEN} chimera-builder-${{ matrix.target }} bash -c "set -euo pipefail; \
+        podman exec -e COSIGN_EXPERIMENTAL=1 -e ACTIONS_ID_TOKEN_REQUEST_URL="${ACTIONS_ID_TOKEN_REQUEST_URL:-}" -e ACTIONS_ID_TOKEN_REQUEST_TOKEN="${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" -e GITHUB_TOKEN=${GITHUB_TOKEN} chimera-builder-${{ matrix.target }} bash -c "set -euo pipefail; \
           cosign login ghcr.io -u ${{ github.actor }} -p \${GITHUB_TOKEN}
           IMAGE_REF='ghcr.io/hr-mes/ermete-os-kernel@${{ env.KERNEL_DIGEST }}'
           cosign sign -y \${IMAGE_REF}
