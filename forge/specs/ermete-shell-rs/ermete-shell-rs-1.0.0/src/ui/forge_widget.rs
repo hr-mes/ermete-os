@@ -441,6 +441,7 @@ impl SimpleComponent for ForgeWidgetModel {
 }
 
 fn detect_hardware_hash() -> String {
+    use sha2::{Sha256, Digest};
     let raw_id = std::fs::read_to_string("/etc/machine-id").unwrap_or_else(|_| String::new());
     if raw_id.is_empty() {
         return "Hardware hash non disponibile o non tracciabile.".to_string();

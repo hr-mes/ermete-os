@@ -1,3 +1,4 @@
+#![allow(irrefutable_let_patterns)]
 use gtk4::cairo;
 use gtk4::prelude::*;
 use relm4::{gtk, ComponentParts, ComponentSender, SimpleComponent};
