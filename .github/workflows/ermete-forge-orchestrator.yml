@@ -11,6 +11,7 @@ on:
   schedule:
     - cron: '0 4 * * *'
 
+env:
   REGISTRY: ghcr.io
   FEDORA_VERSION: 43
   RUSTC_WRAPPER: sccache
