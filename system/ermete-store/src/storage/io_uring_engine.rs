@@ -167,7 +167,7 @@ pub enum IoRequest {
     },
 }
 
-// Safety: Send & Sync implementation for IoRequest since raw pointers are passed for user buffers
+// SAFETY: Send & Sync implementation for IoRequest since raw pointers are passed for user buffers
 unsafe impl Send for IoRequest {}
 unsafe impl Sync for IoRequest {}
 
@@ -191,7 +191,7 @@ pub struct SharedMemoryRing {
     raw_memory: NonNull<u8>,
 }
 
-// Safety: SharedMemoryRing uses atomic headers and raw pointers designed for lock-free multi-thread memory access.
+// SAFETY: SharedMemoryRing uses atomic headers and raw pointers designed for lock-free multi-thread memory access.
 unsafe impl Send for SharedMemoryRing {}
 unsafe impl Sync for SharedMemoryRing {}
 
@@ -219,6 +219,7 @@ impl SharedMemoryRing {
             }),
         };
 
+        // SAFETY: io_uring shared memory interaction
         let raw_ptr = unsafe { alloc_zeroed(layout) };
         let non_null_ptr = match NonNull::new(raw_ptr) {
             Some(p) => p,
@@ -227,6 +228,7 @@ impl SharedMemoryRing {
             }),
         };
 
+        // SAFETY: io_uring shared memory interaction
         unsafe {
             let mut curr = raw_ptr as usize;
 
@@ -270,6 +272,7 @@ impl SharedMemoryRing {
 
     /// Push an SQE to the Submission Queue in shared memory (Lock-Free atomic update).
     pub fn push_sqe(&self, sqe: SubmissionQueueEntry) -> Result<(), IoUringEngineError> {
+        // SAFETY: io_uring shared memory interaction
         unsafe {
             let sq_hdr = &*self.sq_ring_ptr;
             let head = sq_hdr.head.load(Ordering::Acquire);
@@ -291,6 +294,7 @@ impl SharedMemoryRing {
 
     /// Pop a CQE from the Completion Queue in shared memory (Lock-Free atomic update).
     pub fn pop_cqe(&self) -> Option<CompletionQueueEntry> {
+        // SAFETY: io_uring shared memory interaction
         unsafe {
             let cq_hdr = &*self.cq_ring_ptr;
             let head = cq_hdr.head.load(Ordering::Relaxed);
@@ -312,6 +316,7 @@ impl SharedMemoryRing {
 
     /// Number of pending submission entries
     pub fn sq_pending(&self) -> u32 {
+        // SAFETY: io_uring shared memory interaction
         unsafe {
             let sq_hdr = &*self.sq_ring_ptr;
             let head = sq_hdr.head.load(Ordering::Acquire);
@@ -322,6 +327,7 @@ impl SharedMemoryRing {
 
     /// Number of available completion entries
     pub fn cq_available(&self) -> u32 {
+        // SAFETY: io_uring shared memory interaction
         unsafe {
             let cq_hdr = &*self.cq_ring_ptr;
             let head = cq_hdr.head.load(Ordering::Relaxed);
@@ -333,6 +339,7 @@ impl SharedMemoryRing {
 
 impl Drop for SharedMemoryRing {
     fn drop(&mut self) {
+        // SAFETY: io_uring shared memory interaction
         unsafe {
             dealloc(self.raw_memory.as_ptr(), self.allocated_layout);
         }
@@ -457,6 +464,7 @@ impl IoUringEngine {
 
         self.metrics.syscall_flushes.fetch_add(1, Ordering::Relaxed);
 
+        // SAFETY: io_uring shared memory interaction
         unsafe {
             let sq_hdr = &*self.ring.sq_ring_ptr;
             let cq_hdr = &*self.ring.cq_ring_ptr;
