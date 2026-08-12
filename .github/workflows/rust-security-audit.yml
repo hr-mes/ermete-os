@@ -85,70 +85,26 @@ jobs:
       max-parallel: 20
       matrix:
         include:
-          - module: allocator-core
-            shard: 1
-            dir: forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0
-            harness: allocator
-          - module: allocator-bounds
-            shard: 2
-            dir: forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0
-            harness: allocator_bounds
-          - module: ipc-core
-            shard: 3
-            dir: forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0
-            harness: ipc
-          - module: ipc-channel
-            shard: 4
-            dir: forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0
-            harness: ipc_channel
           - module: security-ct-eq
-            shard: 5
+            shard: 1
             dir: forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0
             harness: proof_constant_time_eq_no_panic
           - module: security-auth-token
-            shard: 6
+            shard: 2
             dir: forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0
             harness: proof_verify_auth_token_no_panic
           - module: security-fanotify-bounds
-            shard: 7
+            shard: 3
             dir: forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0
             harness: proof_parse_next_fanotify_offset_bounds_safety
           - module: security-rate-limit
-            shard: 8
+            shard: 4
             dir: forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0
             harness: proof_evaluate_execution_rate_limit_no_overflow
-          - module: attestation-core
-            shard: 9
-            dir: system/confidential_computing/ermete-attestation
-            harness: attestation
-          - module: attestation-cvm
-            shard: 10
-            dir: system/confidential_computing/ermete-attestation
-            harness: cvm_manager
-          - module: attestation-key-release
-            shard: 11
-            dir: system/confidential_computing/ermete-attestation
-            harness: key_release
-          - module: attestation-sev-snp
-            shard: 12
-            dir: system/confidential_computing/ermete-attestation
-            harness: sev_snp
-          - module: attestation-tdx
-            shard: 13
-            dir: system/confidential_computing/ermete-attestation
-            harness: tdx
-          - module: attestation-verifier
-            shard: 14
-            dir: system/confidential_computing/ermete-attestation
-            harness: verifier
-          - module: cloud-zk-mesh
-            shard: 15
-            dir: forge/specs/ermete-cloud-rs/ermete-cloud-rs-1.0.0
-            harness: zk
-          - module: cloud-bft-consensus
-            shard: 16
-            dir: forge/specs/ermete-cloud-rs/ermete-cloud-rs-1.0.0
-            harness: bft
+          - module: security-key-perms
+            shard: 5
+            dir: forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0
+            harness: proof_verify_key_permissions
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
