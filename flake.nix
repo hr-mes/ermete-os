@@ -90,6 +90,24 @@
       ];
 
     in {
+      # Immagine OCI per il Builder (Sostituisce il Containerfile)
+      packages.${system}.builderImage = pkgs.dockerTools.buildLayeredImage {
+        name = "ghcr.io/hr-mes/ermete-os-builder";
+        tag = "latest";
+        contents = [ pkgs.bashInteractive pkgs.coreutils pkgs.findutils pkgs.gnused pkgs.gawk pkgs.ca-certificates pkgs.tzdata pkgs.shadow ] ++ security-tools ++ c-toolchain ++ rust-toolchain ++ build-tools ++ system-deps;
+        config = {
+          Cmd = [ "/bin/bash" ];
+          Env = [
+            "PATH=/bin:/usr/bin"
+            "CC=clang"
+            "CXX=clang++"
+            "LD=ld.lld"
+            "LLVM=1"
+            "LLVM_IAS=1"
+          ];
+        };
+      };
+
       # L'ambiente di sviluppo nativo (nix develop) e Builder Environment
       devShells.${system}.default = pkgs.mkShell {
         name = "ermete-os-bedrock-builder";
