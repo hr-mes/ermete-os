@@ -49,6 +49,7 @@ pub fn drop_capabilities(keep_caps: &[u32]) -> Result<(), String> {
         },
     ];
 
+    #[allow(unsafe_code)]
     unsafe {
         let ret = libc::syscall(
             libc::SYS_capset,

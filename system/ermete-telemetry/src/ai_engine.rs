@@ -303,10 +303,7 @@ impl AiPredictiveEngine {
         let now = chrono::Utc::now();
         let window_secs = 60;
 
-        let mut tracker = match self.crash_tracker.lock() {
-            Ok(guard) => guard,
-            Err(poisoned) => poisoned.into_inner(),
-        };
+        let mut tracker = self.crash_tracker.blocking_lock();
 
         let timestamps = tracker.entry(key.clone()).or_insert_with(Vec::new);
         timestamps.push(now);
