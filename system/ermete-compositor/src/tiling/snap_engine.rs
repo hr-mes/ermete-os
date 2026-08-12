@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::ipc::protocol::WindowPlacement;
 use crate::tiling::engine::ScreenGeometry;
 use serde::{Deserialize, Serialize};

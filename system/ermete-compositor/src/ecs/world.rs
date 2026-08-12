@@ -1,4 +1,4 @@
-#![allow(unsafe_code)]
+#![allow(unsafe_code, dead_code)]
 
 use crate::ecs::entity::{Entity, EntityAllocator};
 use anyhow::{anyhow, Result};
