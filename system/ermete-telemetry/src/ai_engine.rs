@@ -297,7 +297,7 @@ impl AiPredictiveEngine {
     }
 
     /// 2. If the same error signature repeats 3 times in < 60 seconds (1 minute),
-    /// package the error signature payload (stacktrace, offset, PID) into a HotPatchRequest.
+    ///    package the error signature payload (stacktrace, offset, PID) into a HotPatchRequest.
     pub fn process_fatal_crash_signature(&self, sig: ErrorSignature) -> Option<HotPatchRequest> {
         let key = format!("{}:{}:{}", sig.unit, sig.fatal_signal, sig.offset);
         let now = chrono::Utc::now();
@@ -305,7 +305,7 @@ impl AiPredictiveEngine {
 
         let mut tracker = self.crash_tracker.blocking_lock();
 
-        let timestamps = tracker.entry(key.clone()).or_insert_with(Vec::new);
+        let timestamps = tracker.entry(key.clone()).or_default();
         timestamps.push(now);
 
         // Retain only timestamps within the last 60 seconds window
@@ -496,7 +496,7 @@ impl AiPredictiveEngine {
             if real_ai_inference.contains("CRITICAL") {
                 score = 0.95;
                 failure_mode = "REAL_AI_PREDICTED_FAULT".to_string();
-                target_unit = batch.records.get(0).map(|r| r.unit.clone()).unwrap_or_default();
+                target_unit = batch.records.first().map(|r| r.unit.clone()).unwrap_or_default();
                 suggested_intent = real_ai_inference;
             }
         } else {
