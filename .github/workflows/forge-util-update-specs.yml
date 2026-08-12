@@ -17,8 +17,6 @@ defaults:
 jobs:
   update-specs:
     runs-on: ubuntu-24.04
-    container:
-      image: ghcr.io/hr-mes/ermete-os-builder:latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -52,13 +50,13 @@ jobs:
               return
             fi
 
-            # Fetch latest release tag via GitHub API
+            # Fetch latest release tag via GitHub CLI (gestisce rate-limit nativamente)
             local latest_tag
-            latest_tag=$(curl -sL -H "Authorization: token ${GH_TOKEN}" "https://api.github.com/repos/${repo}/releases/latest" | jq -r '.tag_name // empty' 2>/dev/null | sed 's/^v//' || echo "")
+            latest_tag=$(gh api "repos/${repo}/releases/latest" --jq '.tag_name // empty' 2>/dev/null | sed 's/^v//' || echo "")
 
             if [ -z "$latest_tag" ] || [ "$latest_tag" == "null" ]; then
               echo "  Could not fetch release from /releases/latest for $repo. Checking /tags..."
-              latest_tag=$(curl -sL -H "Authorization: token ${GH_TOKEN}" "https://api.github.com/repos/${repo}/tags" | jq -r '.[0].name // empty' 2>/dev/null | sed 's/^v//' || echo "")
+              latest_tag=$(gh api "repos/${repo}/tags" --jq '.[0].name // empty' 2>/dev/null | sed 's/^v//' || echo "")
             fi
 
             if [ -z "$latest_tag" ] || [ "$latest_tag" == "null" ]; then
