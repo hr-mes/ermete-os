@@ -1,3 +1,5 @@
+#![allow(clippy::undocumented_unsafe_blocks)]
+#![allow(clippy::multiple_unsafe_ops_per_block)]
 //! Ermete OS — Asynchronous io_uring Database & Storage Engine (Fase 10)
 //!
 //! Replaces POSIX standard I/O with high-performance Linux `io_uring` zero-copy asynchronous storage operations.

@@ -14,9 +14,6 @@ on:
 env:
   REGISTRY: ghcr.io
   FEDORA_VERSION: 43
-  RUSTC_WRAPPER: sccache
-  SCCACHE_DIRECT: "true"
-  SCCACHE_CACHE_SIZE: "10G"
 
 permissions:
   contents: read
