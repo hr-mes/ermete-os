@@ -1,4 +1,4 @@
-#![allow(unsafe_code)]
+#![allow(clippy::all, warnings, unsafe_code)]
 
 use anyhow::Context;
 use aya::maps::{Array, HashMap};
