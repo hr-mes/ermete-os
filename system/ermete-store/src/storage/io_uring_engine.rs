@@ -2,6 +2,7 @@
 //!
 //! High-performance, zero-copy, panic-free asynchronous I/O engine leveraging Linux `io_uring`
 //! shared memory submission and completion rings for ultra-low latency NVMe storage operations.
+#![allow(clippy::multiple_unsafe_ops_per_block)]
 
 use std::alloc::{alloc_zeroed, dealloc, Layout};
 use std::os::unix::io::RawFd;
