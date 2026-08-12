@@ -1,4 +1,3 @@
-use std::io::Write;
 use crate::ipc::protocol::{AiLayoutCommand, IpcResponse};
 use crate::state::CompositorState;
 use anyhow::{Context, Result};

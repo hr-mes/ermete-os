@@ -1,4 +1,3 @@
-use std::io::Write;
 use crate::types::SwarmIpcMessage;
 use anyhow::{anyhow, Result};
 use std::sync::Arc;
