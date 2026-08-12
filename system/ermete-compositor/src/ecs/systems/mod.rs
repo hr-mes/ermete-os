@@ -1,7 +1,7 @@
 pub mod physics;
 pub mod render;
 
-pub use physics::{spring_physics_system, spring_physics_system_batch};
+
 
 use crate::ecs::components::{
     Geometry, PhysicsSpring, Position, RenderLayer, Velocity, WaylandSurface,

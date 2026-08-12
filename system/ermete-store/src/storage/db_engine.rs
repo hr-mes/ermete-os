@@ -20,8 +20,9 @@ pub struct AlignedBuffer {
     capacity: usize,
 }
 
-// Safety: AlignedBuffer owns its heap-allocated memory and can be safely sent across threads.
+// SAFETY: AlignedBuffer owns its heap-allocated memory and is safe to send.
 unsafe impl Send for AlignedBuffer {}
+// SAFETY: The internal pointer is only accessed through safe mutable and immutable slice borrows, ensuring thread safety.
 unsafe impl Sync for AlignedBuffer {}
 
 impl AlignedBuffer {
@@ -36,6 +37,7 @@ impl AlignedBuffer {
         let layout = Layout::from_size_align(capacity, align)
             .map_err(|e| anyhow::anyhow!("Invalid memory layout alignment: {}", e))?;
 
+        // SAFETY: The layout is guaranteed to have non-zero size and valid alignment.
         let ptr = unsafe { alloc_zeroed(layout) };
         if ptr.is_null() {
             bail!("Out of memory allocating aligned buffer of {} bytes", capacity);
@@ -67,6 +69,7 @@ impl AlignedBuffer {
 
 impl Drop for AlignedBuffer {
     fn drop(&mut self) {
+        // SAFETY: The pointer was allocated using alloc_zeroed with the exact same layout.
         unsafe {
             dealloc(self.ptr, self.layout);
         }
