@@ -41,6 +41,7 @@ impl SnapZone {
 
 /// Flags modifying snap behavior.
 pub struct SnapFlag;
+#[allow(dead_code)]
 impl SnapFlag {
     pub const ANIMATE: u32 = 1;
     pub const AUTO_REFLOW: u32 = 2;
@@ -77,6 +78,7 @@ impl Default for SnapEngine {
     }
 }
 
+#[allow(dead_code)]
 impl SnapEngine {
     pub fn new() -> Self {
         Self {

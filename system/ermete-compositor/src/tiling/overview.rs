@@ -47,6 +47,7 @@ impl Default for SpatialOverview {
     }
 }
 
+#[allow(dead_code)]
 impl SpatialOverview {
     pub fn new() -> Self {
         Self {
