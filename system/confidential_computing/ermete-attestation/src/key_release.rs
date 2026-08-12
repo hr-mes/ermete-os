@@ -36,7 +36,7 @@ impl KeyReleaseManager {
         info!("HARDWARE ATTESTATION SUCCESSFUL! Proceeding with Key Release.");
         info!("============================================================");
 
-        let (ikm, info_label): (&[u8], &[u8]) = match report {
+        let (ikm, _info_label): (&[u8], &[u8]) = match report {
             VerifiedHardwareReport::SevSnp { measurement, .. } => {
                 info!("Hardware Tier: AMD SEV-SNP CVM");
                 info!("Attestor Measurement: {}", hex::encode(measurement));
