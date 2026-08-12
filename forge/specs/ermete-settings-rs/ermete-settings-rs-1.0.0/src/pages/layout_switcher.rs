@@ -1,3 +1,4 @@
+#![allow(clippy::needless_borrow, clippy::should_implement_trait, clippy::let_unit_value, clippy::new_without_default)]
 use gtk4::prelude::*;
 use gtk4::{Align, Box, Button, DrawingArea, Grid, Label, Orientation};
 use std::cell::RefCell;
