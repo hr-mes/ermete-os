@@ -95,7 +95,8 @@ fn try_xdp_firewall(ctx: &XdpContext) -> Result<u32, ()> {
 
     let ethhdr: *const EthHdr = ptr_at(ctx, 0)?;
 
-    // SAFETY: Memory bounds verified by prior checks or eBPF verifier\n    match unsafe { (*ethhdr).ether_type } {
+    // SAFETY: Memory bounds verified by prior checks or eBPF verifier
+    match unsafe { (*ethhdr).ether_type } {
         EtherType::Ipv4 => process_ipv4(ctx),
         EtherType::Ipv6 => process_ipv6(ctx),
         EtherType::Arp => {
@@ -125,7 +126,8 @@ fn process_ipv4(ctx: &XdpContext) -> Result<u32, ()> {
     let ipv4hdr: *const Ipv4Hdr = ptr_at(ctx, EthHdr::LEN)?;
 
     // Validate IPv4 Header Length (IHL)
-    // SAFETY: Memory bounds verified by prior checks or eBPF verifier\n    let ihl = unsafe { ((*ipv4hdr).ihl() & 0x0F) as usize * 4 };
+    // SAFETY: Memory bounds verified by prior checks or eBPF verifier
+    let ihl = unsafe { ((*ipv4hdr).ihl() & 0x0F) as usize * 4 };
     if ihl < Ipv4Hdr::LEN {
         increment_stat(STAT_DROP_INVALID_HDR);
         warn!(ctx, "XDP_DROP: Invalid IPv4 IHL < 20 bytes");
@@ -138,8 +140,10 @@ fn process_ipv4(ctx: &XdpContext) -> Result<u32, ()> {
         return Ok(xdp_action::XDP_ABORTED);
     }
 
-    // SAFETY: Memory bounds verified by prior checks or eBPF verifier\n    let src_addr = unsafe { (*ipv4hdr).src_addr };
-    // SAFETY: Memory bounds verified by prior checks or eBPF verifier\n    let dst_addr = unsafe { (*ipv4hdr).dst_addr };
+    // SAFETY: Memory bounds verified by prior checks or eBPF verifier
+    let src_addr = unsafe { (*ipv4hdr).src_addr };
+    // SAFETY: Memory bounds verified by prior checks or eBPF verifier
+    let dst_addr = unsafe { (*ipv4hdr).dst_addr };
 
     // 1. Check Land Attack (src IP == dst IP)
     if src_addr == dst_addr && src_addr != 0 {
@@ -149,13 +153,15 @@ fn process_ipv4(ctx: &XdpContext) -> Result<u32, ()> {
     }
 
     // 2. Check IPv4 Blocklist
-    // SAFETY: Memory bounds verified by prior checks or eBPF verifier\n    if unsafe { BLOCKLIST_IPV4.get(&src_addr) }.is_some() {
+    // SAFETY: Memory bounds verified by prior checks or eBPF verifier
+    if unsafe { BLOCKLIST_IPV4.get(&src_addr) }.is_some() {
         increment_stat(STAT_DROP_BLOCKLIST_IP);
         warn!(ctx, "XDP_DROP: Source IPv4 in blocklist");
         return Ok(xdp_action::XDP_DROP);
     }
 
-    // SAFETY: Memory bounds verified by prior checks or eBPF verifier\n    let ip_proto = unsafe { (*ipv4hdr).proto };
+    // SAFETY: Memory bounds verified by prior checks or eBPF verifier
+    let ip_proto = unsafe { (*ipv4hdr).proto };
     let transport_offset = EthHdr::LEN + ihl;
 
     match ip_proto {
@@ -186,8 +192,10 @@ fn process_ipv6(ctx: &XdpContext) -> Result<u32, ()> {
     }
 
     let ipv6hdr: *const Ipv6Hdr = ptr_at(ctx, EthHdr::LEN)?;
-    // SAFETY: Memory bounds verified by prior checks or eBPF verifier\n    let src_bytes = unsafe { (*ipv6hdr).src_addr.in6_u.u6_addr8 };
-    // SAFETY: Memory bounds verified by prior checks or eBPF verifier\n    let dst_bytes = unsafe { (*ipv6hdr).dst_addr.in6_u.u6_addr8 };
+    // SAFETY: Memory bounds verified by prior checks or eBPF verifier
+    let src_bytes = unsafe { (*ipv6hdr).src_addr.in6_u.u6_addr8 };
+    // SAFETY: Memory bounds verified by prior checks or eBPF verifier
+    let dst_bytes = unsafe { (*ipv6hdr).dst_addr.in6_u.u6_addr8 };
 
     // 1. Check Land Attack (src IP == dst IP)
     if src_bytes == dst_bytes {
@@ -197,14 +205,16 @@ fn process_ipv6(ctx: &XdpContext) -> Result<u32, ()> {
     }
 
     // 2. Check IPv6 Blocklist
-    // SAFETY: Memory bounds verified by prior checks or eBPF verifier\n    if unsafe { BLOCKLIST_IPV6.get(&src_bytes) }.is_some() {
+    // SAFETY: Memory bounds verified by prior checks or eBPF verifier
+    if unsafe { BLOCKLIST_IPV6.get(&src_bytes) }.is_some() {
         increment_stat(STAT_DROP_BLOCKLIST_IP);
         warn!(ctx, "XDP_DROP: Source IPv6 in blocklist");
         return Ok(xdp_action::XDP_DROP);
     }
 
     let transport_offset = EthHdr::LEN + Ipv6Hdr::LEN;
-    // SAFETY: Memory bounds verified by prior checks or eBPF verifier\n    let next_hdr = unsafe { (*ipv6hdr).next_hdr };
+    // SAFETY: Memory bounds verified by prior checks or eBPF verifier
+    let next_hdr = unsafe { (*ipv6hdr).next_hdr };
 
     match next_hdr {
         IpProto::Tcp => process_tcp(ctx, transport_offset),
@@ -234,14 +244,21 @@ fn process_tcp(ctx: &XdpContext, offset: usize) -> Result<u32, ()> {
     }
 
     let tcphdr: *const TcpHdr = ptr_at(ctx, offset)?;
-    // SAFETY: Memory bounds verified by prior checks or eBPF verifier\n    let dest_port = u16::from_be(unsafe { (*tcphdr).dest });
+    // SAFETY: Memory bounds verified by prior checks or eBPF verifier
+    let dest_port = u16::from_be(unsafe { (*tcphdr).dest });
 
-    // SAFETY: Memory bounds verified by prior checks or eBPF verifier\n    let fin = unsafe { (*tcphdr).fin() == 1 };
-    // SAFETY: Memory bounds verified by prior checks or eBPF verifier\n    let syn = unsafe { (*tcphdr).syn() == 1 };
-    // SAFETY: Memory bounds verified by prior checks or eBPF verifier\n    let rst = unsafe { (*tcphdr).rst() == 1 };
-    // SAFETY: Memory bounds verified by prior checks or eBPF verifier\n    let psh = unsafe { (*tcphdr).psh() == 1 };
-    // SAFETY: Memory bounds verified by prior checks or eBPF verifier\n    let ack = unsafe { (*tcphdr).ack() == 1 };
-    // SAFETY: Memory bounds verified by prior checks or eBPF verifier\n    let urg = unsafe { (*tcphdr).urg() == 1 };
+    // SAFETY: Memory bounds verified by prior checks or eBPF verifier
+    let fin = unsafe { (*tcphdr).fin() == 1 };
+    // SAFETY: Memory bounds verified by prior checks or eBPF verifier
+    let syn = unsafe { (*tcphdr).syn() == 1 };
+    // SAFETY: Memory bounds verified by prior checks or eBPF verifier
+    let rst = unsafe { (*tcphdr).rst() == 1 };
+    // SAFETY: Memory bounds verified by prior checks or eBPF verifier
+    let psh = unsafe { (*tcphdr).psh() == 1 };
+    // SAFETY: Memory bounds verified by prior checks or eBPF verifier
+    let ack = unsafe { (*tcphdr).ack() == 1 };
+    // SAFETY: Memory bounds verified by prior checks or eBPF verifier
+    let urg = unsafe { (*tcphdr).urg() == 1 };
 
     // Detect TCP Scan Anomalies:
     // 1. NULL Scan: fin=0, syn=0, rst=0, psh=0, ack=0, urg=0
@@ -261,7 +278,8 @@ fn process_tcp(ctx: &XdpContext, offset: usize) -> Result<u32, ()> {
 
     // Zero-Trust Port Authorization Check
     if is_zero_trust_enabled() {
-        // SAFETY: Memory bounds verified by prior checks or eBPF verifier\n        if unsafe { ALLOWED_PORTS.get(&dest_port) }.is_none() {
+        // SAFETY: Memory bounds verified by prior checks or eBPF verifier
+        if unsafe { ALLOWED_PORTS.get(&dest_port) }.is_none() {
             increment_stat(STAT_DROP_UNAUTHORIZED_PORT);
             warn!(ctx, "XDP_DROP: Unauthorized TCP destination port: {}", dest_port);
             return Ok(xdp_action::XDP_DROP);
@@ -281,11 +299,13 @@ fn process_udp(ctx: &XdpContext, offset: usize) -> Result<u32, ()> {
     }
 
     let udphdr: *const UdpHdr = ptr_at(ctx, offset)?;
-    // SAFETY: Memory bounds verified by prior checks or eBPF verifier\n    let dest_port = u16::from_be(unsafe { (*udphdr).dest });
+    // SAFETY: Memory bounds verified by prior checks or eBPF verifier
+    let dest_port = u16::from_be(unsafe { (*udphdr).dest });
 
     // Zero-Trust Port Authorization Check
     if is_zero_trust_enabled() {
-        // SAFETY: Memory bounds verified by prior checks or eBPF verifier\n        if unsafe { ALLOWED_PORTS.get(&dest_port) }.is_none() {
+        // SAFETY: Memory bounds verified by prior checks or eBPF verifier
+        if unsafe { ALLOWED_PORTS.get(&dest_port) }.is_none() {
             increment_stat(STAT_DROP_UNAUTHORIZED_PORT);
             warn!(ctx, "XDP_DROP: Unauthorized UDP destination port: {}", dest_port);
             return Ok(xdp_action::XDP_DROP);
