@@ -3,7 +3,6 @@
 //! Provides non-blocking Tokio-based IPC communication over Unix Sockets
 //! and async filesystem mutations for Niri compositor settings.
 
-use std::os::unix::fs::OpenOptionsExt;
 use serde::de::DeserializeOwned;
 use serde_json::Value;
 use std::env;
