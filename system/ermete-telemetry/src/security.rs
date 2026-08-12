@@ -65,6 +65,7 @@ pub fn drop_capabilities(keep_caps: &[u32]) -> Result<(), String> {
     }
 
     // SAFETY: Hardening the process by setting PR_SET_NO_NEW_PRIVS to prevent future privilege escalation
+    #[allow(unsafe_code)]
     let ret_pnp = unsafe { libc::prctl(libc::PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) };
     if ret_pnp != 0 {
         let err = std::io::Error::last_os_error();

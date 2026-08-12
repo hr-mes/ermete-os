@@ -121,6 +121,7 @@ impl PipLayerManager {
     }
 
     /// Registers or updates a Picture-in-Picture surface.
+    #[allow(clippy::too_many_arguments)]
     pub fn register_pip_surface(
         &mut self,
         surface_id: u64,
