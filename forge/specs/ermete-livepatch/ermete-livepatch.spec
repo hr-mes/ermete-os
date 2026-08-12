@@ -5,7 +5,6 @@ Summary:        Ermete OS Kernel Live Patch
 
 License:        GPLv2
 URL:            https://github.com/ermete-os/ermete-livepatch
-Source0:        %{name}-%{version}.tar.gz
 
 
 Requires:       kpatch
@@ -15,15 +14,18 @@ Requires:       kmod
 Live patches for Ermete OS kernel (Zero-Downtime ring-0 patching).
 
 %prep
-%setup -q
+# Nothing to unpack
 
 %build
+# kpatch-build was already executed in a previous step
 # kpatch-build ...
 
 %install
 rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/usr/lib/modules/livepatch/
-# cp build/livepatch/*.ko $RPM_BUILD_ROOT/usr/lib/modules/livepatch/
+if [ -n "$GITHUB_WORKSPACE" ] && [ -d "$GITHUB_WORKSPACE/build/livepatch" ]; then
+    cp $GITHUB_WORKSPACE/build/livepatch/*.ko $RPM_BUILD_ROOT/usr/lib/modules/livepatch/ 2>/dev/null || true
+fi
 
 %files
 /usr/lib/modules/livepatch/
