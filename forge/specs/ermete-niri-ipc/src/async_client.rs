@@ -1,4 +1,3 @@
-use std::io::Write;
 //! Asynchronous Niri IPC & Configuration Client for GTK4/Relm4
 //! 
 //! Provides non-blocking Tokio-based IPC communication over Unix Sockets
