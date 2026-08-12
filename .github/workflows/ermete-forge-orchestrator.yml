@@ -74,6 +74,8 @@ jobs:
           fi
   build-builder:
     name: 🏗️ Build Base Builder
+    outputs:
+      content_hash: ${{ steps.check_idempotency.outputs.content_hash }}
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
     defaults:
@@ -168,7 +170,7 @@ jobs:
           if [ ! -d "specs/ermete-${{ matrix.package }}" ] && [ ! -d "specs/${{ matrix.package }}" ]; then
             img_name="ermete-os-forge-rolling-${{ matrix.package }}"
           fi
-          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name $img_name > idemp.out
+          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:${{ needs.build-builder.outputs.content_hash }} bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name $img_name > idemp.out
           source ./idemp.out
           echo "hash=$CONTENT_HASH" >> $GITHUB_OUTPUT
           if [ "$CACHE_HIT" = "true" ]; then echo "skip=true" >> $GITHUB_OUTPUT; else echo "skip=false" >> $GITHUB_OUTPUT; fi
@@ -204,7 +206,7 @@ jobs:
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
               -w /workspace/forge \
-              ghcr.io/hr-mes/ermete-os-builder:latest \
+              ghcr.io/hr-mes/ermete-os-builder:${{ needs.build-builder.outputs.content_hash }} \
               bash <<'EOF'
               cp config/rpmmacros ~/.rpmmacros
               rpmdev-setuptree
@@ -250,7 +252,7 @@ jobs:
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
               -w /workspace/forge \
-              ghcr.io/hr-mes/ermete-os-builder:latest \
+              ghcr.io/hr-mes/ermete-os-builder:${{ needs.build-builder.outputs.content_hash }} \
               bash <<'EOF'
               cp config/rpmmacros ~/.rpmmacros
               rpmdev-setuptree
@@ -357,7 +359,7 @@ jobs:
           if [ ! -d "specs/ermete-${{ matrix.package }}" ] && [ ! -d "specs/${{ matrix.package }}" ]; then
             img_name="ermete-os-forge-rolling-${{ matrix.package }}"
           fi
-          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name $img_name > idemp.out
+          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:${{ needs.build-builder.outputs.content_hash }} bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name $img_name > idemp.out
           source ./idemp.out
           echo "hash=$CONTENT_HASH" >> $GITHUB_OUTPUT
           if [ "$CACHE_HIT" = "true" ]; then echo "skip=true" >> $GITHUB_OUTPUT; else echo "skip=false" >> $GITHUB_OUTPUT; fi
@@ -393,7 +395,7 @@ jobs:
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
               -w /workspace/forge \
-              ghcr.io/hr-mes/ermete-os-builder:latest \
+              ghcr.io/hr-mes/ermete-os-builder:${{ needs.build-builder.outputs.content_hash }} \
               bash <<'EOF'
               cp config/rpmmacros ~/.rpmmacros
               rpmdev-setuptree
@@ -439,7 +441,7 @@ jobs:
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
               -w /workspace/forge \
-              ghcr.io/hr-mes/ermete-os-builder:latest \
+              ghcr.io/hr-mes/ermete-os-builder:${{ needs.build-builder.outputs.content_hash }} \
               bash <<'EOF'
               cp config/rpmmacros ~/.rpmmacros
               rpmdev-setuptree
@@ -544,7 +546,7 @@ jobs:
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           img_name="ermete-os-forge-${{ matrix.package }}"
           if [ ! -d "specs/ermete-${{ matrix.package }}" ] && [ ! -d "specs/${{ matrix.package }}" ]; then img_name="ermete-os-forge-rolling-${{ matrix.package }}"; fi
-          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:latest bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name $img_name > idemp.out
+          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged -e GITHUB_TOKEN="${GITHUB_TOKEN}" -v ${{ github.workspace }}:/workspace -w /workspace/forge ghcr.io/hr-mes/ermete-os-builder:${{ needs.build-builder.outputs.content_hash }} bash scripts/check_idempotency.sh --package ${{ matrix.package }} --registry ${{ env.REGISTRY }} --owner ${{ github.repository_owner }} --image-name $img_name > idemp.out
           source ./idemp.out
           echo "hash=$CONTENT_HASH" >> $GITHUB_OUTPUT
           if [ "$CACHE_HIT" = "true" ]; then echo "skip=true" >> $GITHUB_OUTPUT; else echo "skip=false" >> $GITHUB_OUTPUT; fi
@@ -580,7 +582,7 @@ jobs:
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
               -w /workspace/forge \
-              ghcr.io/hr-mes/ermete-os-builder:latest \
+              ghcr.io/hr-mes/ermete-os-builder:${{ needs.build-builder.outputs.content_hash }} \
               bash <<'EOF'
               cp config/rpmmacros ~/.rpmmacros
               rpmdev-setuptree
@@ -626,7 +628,7 @@ jobs:
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
               -w /workspace/forge \
-              ghcr.io/hr-mes/ermete-os-builder:latest \
+              ghcr.io/hr-mes/ermete-os-builder:${{ needs.build-builder.outputs.content_hash }} \
               bash <<'EOF'
               cp config/rpmmacros ~/.rpmmacros
               rpmdev-setuptree
@@ -761,7 +763,7 @@ jobs:
           podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
-            ghcr.io/hr-mes/ermete-os-builder:latest \
+            ghcr.io/hr-mes/ermete-os-builder:${{ needs.build-builder.outputs.content_hash }} \
             bash <<'EOF'
               set -euo pipefail
               cp /workspace/forge/assets/repos/fedora-nvidia.repo /etc/yum.repos.d/fedora-nvidia.repo
@@ -796,7 +798,7 @@ jobs:
             -w /workspace \
             -e MOK_PRIVATE_KEY="${{ secrets.MOK_PRIVATE_KEY }}" \
             -e MOK_PUBLIC_DER="${{ secrets.MOK_PUBLIC_DER }}" \
-            ghcr.io/hr-mes/ermete-os-builder:latest \
+            ghcr.io/hr-mes/ermete-os-builder:${{ needs.build-builder.outputs.content_hash }} \
             bash <<'EOF'
               cp /workspace/forge/assets/repos/fedora-nvidia.repo /etc/yum.repos.d/fedora-nvidia.repo
               export BUILDAH_ISOLATION=chroot
@@ -876,7 +878,7 @@ jobs:
   build-repo:
     name: 📦 Aggregate Repositories & Deploy DNF/Flatpak Channel
     if: ${{ always() && needs.orchestrator-brain.outputs.has_changes == 'true' && !contains(needs.dag-build-level-0.result, 'failure') && !contains(needs.dag-build-level-1.result, 'failure') && !contains(needs.dag-build-level-2.result, 'failure') && !contains(needs.dag-build-flatpaks.result, 'failure') }}
-    needs: [orchestrator-brain, dag-build-level-0, dag-build-level-1, dag-build-level-2, dag-build-flatpaks, build-nvidia]
+    needs: [build-builder, orchestrator-brain, dag-build-level-0, dag-build-level-1, dag-build-level-2, dag-build-flatpaks, build-nvidia]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -896,7 +898,7 @@ jobs:
           podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace/forge \
-            ghcr.io/hr-mes/ermete-os-builder:latest \
+            ghcr.io/hr-mes/ermete-os-builder:${{ needs.build-builder.outputs.content_hash }} \
             bash <<'EOF'
             set -e
             export BUILDAH_ISOLATION=chroot
@@ -1033,7 +1035,7 @@ jobs:
           fi
   dag-system-image:
     name: 💿 System Image & Disk Build
-    needs: [build-repo]
+    needs: [build-builder, build-repo]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -1056,7 +1058,7 @@ jobs:
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: 🐳 Build OS Image
         run: |
-          podman run -i --rm --privileged -v ${{ github.workspace }}:/workspace -w /workspace ghcr.io/hr-mes/ermete-os-builder:latest bash -c "set -euo pipefail; \
+          podman run -i --rm --privileged -v ${{ github.workspace }}:/workspace -w /workspace ghcr.io/hr-mes/ermete-os-builder:${{ needs.build-builder.outputs.content_hash }} bash -c "set -euo pipefail; \
           bwrap --unshare-net --dev-bind / / podman build --network=none --layers -t ghcr.io/hr-mes/ermete-os-system:latest -f ./system/Containerfile ./system && podman push ghcr.io/hr-mes/ermete-os-system:latest" || bwrap --unshare-net --dev-bind / / podman build --network=none --layers -t ghcr.io/hr-mes/ermete-os-system:latest -f ./system/Containerfile ./system
           podman push ghcr.io/hr-mes/ermete-os-system:latest || true
       - name: 💿 Build ISO (osbuild)
@@ -1113,10 +1115,10 @@ jobs:
           fi
   visual-regression-ui-performance:
     name: 👁️ Visual Regression & UI Performance
-    needs: [dag-system-image, dag-openwiki-portal]
+    needs: [build-builder, dag-system-image, dag-openwiki-portal]
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/hr-mes/ermete-os-builder:latest
+      image: ghcr.io/hr-mes/ermete-os-builder:${{ needs.build-builder.outputs.content_hash }}
     steps:
       - name: 📥 Check out repository
         uses: actions/checkout@v4
