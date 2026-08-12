@@ -18,6 +18,12 @@ const ALLOWED_SYSCTLS: &[&str] = &[
     "net.ipv4.tcp_wmem",
 ];
 
+impl Default for AutoHealer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AutoHealer {
     pub fn new() -> Self {
         Self

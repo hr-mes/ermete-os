@@ -407,6 +407,12 @@ pub struct AiPredictorDAG {
     tensor_bus: Option<Arc<UnifiedTensorBus>>,
 }
 
+impl Default for AiPredictorDAG {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AiPredictorDAG {
     pub fn new() -> Self {
         Self {
