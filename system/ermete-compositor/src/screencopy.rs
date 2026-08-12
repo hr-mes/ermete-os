@@ -112,6 +112,7 @@ impl Default for ScreencopyManager {
     }
 }
 
+#[allow(dead_code)]
 impl ScreencopyManager {
     pub fn new() -> Self {
         Self {

@@ -36,6 +36,7 @@ impl Default for TilingEngine {
     }
 }
 
+#[allow(dead_code)]
 impl TilingEngine {
     pub fn new() -> Self {
         Self {
