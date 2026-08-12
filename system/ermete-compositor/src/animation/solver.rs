@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 //! Mass-Spring-Damper ODE Solver (Damped Harmonic Oscillator).
 //!
 //! Solves the second-order differential equation:
