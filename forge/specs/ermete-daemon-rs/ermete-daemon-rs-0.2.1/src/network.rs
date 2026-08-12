@@ -1,4 +1,3 @@
-use std::io::Write;
 use std::os::unix::fs::OpenOptionsExt;
 use zbus::{interface, proxy, Connection, fdo};
 use zbus::zvariant::OwnedObjectPath;

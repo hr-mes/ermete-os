@@ -1,7 +1,6 @@
 use anyhow::{Context, Result};
 use log::{error, info, warn};
 use std::fs::{self, OpenOptions};
-use std::io::Write;
 use std::os::unix::fs::OpenOptionsExt;
 use std::path::Path;
 use zeroize::{Zeroize, ZeroizeOnDrop};

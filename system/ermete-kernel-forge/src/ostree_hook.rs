@@ -1,4 +1,3 @@
-use std::io::Write;
 use std::os::unix::fs::OpenOptionsExt;
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};

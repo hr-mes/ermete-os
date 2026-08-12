@@ -1,4 +1,3 @@
-use std::io::Write;
 use std::os::unix::fs::OpenOptionsExt;
 use std::path::Path;
 use std::process::Command;

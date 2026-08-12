@@ -1,3 +1,4 @@
+#![allow(deprecated)]
 //! Ermete Dock - Executable Main Entrypoint (Fase 13)
 //!
 //! Visual Dock and taskbar application for Ermete OS.

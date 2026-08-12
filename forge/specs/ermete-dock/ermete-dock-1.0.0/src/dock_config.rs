@@ -1,4 +1,3 @@
-use std::io::Write;
 use std::os::unix::fs::OpenOptionsExt;
 use crate::dock_engine::DockMode;
 use serde::{Deserialize, Serialize};

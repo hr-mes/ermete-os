@@ -43,7 +43,6 @@ pub struct DockItem {
 }
 
 #[allow(dead_code)]
-#[allow(dead_code)]
 fn matches_desktop_or_app_id(desktop_id: &str, app_id: &str) -> bool {
 
     let clean_desktop = desktop_id.trim_end_matches(".desktop").to_lowercase();

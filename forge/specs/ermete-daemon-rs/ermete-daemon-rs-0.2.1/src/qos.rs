@@ -1,4 +1,3 @@
-use std::io::Write;
 use libc::{setpriority, PRIO_PROCESS};
 use std::collections::{HashMap, HashSet};
 use std::fs;

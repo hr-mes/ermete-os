@@ -1,3 +1,4 @@
+#![allow(deprecated)]
 pub mod dock_config;
 pub mod dock_data;
 pub mod dock_engine;

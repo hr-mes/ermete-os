@@ -17,3 +17,4 @@ ermete-niri-ipc = { path = "../../ermete-niri-ipc" }
 anyhow = { workspace = true }
 log = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
+tracing = { workspace = true }

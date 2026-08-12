@@ -1,4 +1,3 @@
-use std::io::Write;
 use std::os::unix::fs::OpenOptionsExt;
 use gtk4::prelude::*;
 use gtk4::{Application, ApplicationWindow, Fixed, Box, Label, Orientation, Align, GestureDrag};
