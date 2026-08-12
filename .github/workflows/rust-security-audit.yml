@@ -126,6 +126,10 @@ jobs:
           shared-key: "kani-${{ matrix.module }}-${{ matrix.shard }}"
           cache-on-failure: "true"
 
+      - name: ⚙️ Resilient Kani Setup (Bypass GitHub 503)
+        run: |
+          for i in 1 2 3 4 5; do cargo kani setup && break || sleep 5; done
+
       - name: Run Mathematical Proofs (${{ matrix.module }})
         run: |
           cd ${{ matrix.dir }}
@@ -177,6 +181,10 @@ jobs:
           key: sccache-kani-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
             sccache-kani-${{ runner.os }}-
+
+      - name: ⚙️ Resilient Kani Setup (Bypass GitHub 503)
+        run: |
+          for i in 1 2 3 4 5; do cargo kani setup && break || sleep 5; done
 
       - name: 🔐 Formal Verification - PQC Mesh Bus (system/ermete-mesh-bus)
         run: |
