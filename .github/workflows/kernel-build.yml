@@ -137,7 +137,7 @@ jobs:
         
     - name: Publish Kernel Micro-Container OCI
       env:
-        HARDWARE_HASH: ${{ github.event.inputs.hardware_hash }}
+        HARDWARE_HASH: ${{ github.event.inputs.hardware_hash || 'generic' }}
       run: |
         podman exec -e HARDWARE_HASH="${HARDWARE_HASH}" chimera-builder-${{ matrix.target }} bash -c "set -euo pipefail; \
           export STORAGE_DRIVER=vfs
