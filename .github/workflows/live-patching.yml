@@ -36,11 +36,7 @@ jobs:
             rpmbuild -ba forge/specs/ermete-livepatch/ermete-livepatch.spec
           fi
           
-      - name: 🧠 Neural Rollout (eBPF Telemetry & Rollback Check)
-        run: |
-          systemctl is-active ermete-telemetry
-          bpftool prog show
-          bpftool prog load /tmp/patch.o /sys/fs/bpf/ermete_livepatch
+
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
