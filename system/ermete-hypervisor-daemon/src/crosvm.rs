@@ -1,3 +1,4 @@
+#![allow(clippy::field_reassign_with_default)]
 use anyhow::{anyhow, Context, Result};
 use log::{error, info, warn};
 use serde::{Deserialize, Serialize};
