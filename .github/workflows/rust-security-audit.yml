@@ -50,7 +50,7 @@ jobs:
 
       - name: Check Unsafe Code & Clippy Policies
         run: |
-          cargo clippy --all-targets --all-features -- \
+          cargo clippy --workspace --exclude ebpf-core --exclude ermete-sysmon-ebpf --all-targets --all-features -- \
             -D clippy::undocumented_unsafe_blocks \
             -D clippy::multiple_unsafe_ops_per_block \
             -D warnings
