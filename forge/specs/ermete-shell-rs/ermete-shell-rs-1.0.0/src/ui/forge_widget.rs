@@ -1,3 +1,4 @@
+#![allow(unused_imports)]
 use gtk4::glib;
 use gtk4::prelude::*;
 use gtk4::{
