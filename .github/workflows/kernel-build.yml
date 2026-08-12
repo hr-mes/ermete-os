@@ -68,13 +68,15 @@ jobs:
       run: podman exec chimera-builder-${{ matrix.target }} bash forge/specs/ermete-kernel/prepare-chimera.sh
         
     - name: "📊 Collect AutoFDO & BOLT Profiles"
+      env:
+        HARDWARE_HASH: ${{ github.event.inputs.hardware_hash || '' }}
       run: |
-        podman exec chimera-builder-${{ matrix.target }} bash -c "set -euo pipefail; \
+        podman exec -e HARDWARE_HASH="${HARDWARE_HASH}" chimera-builder-${{ matrix.target }} bash -c "set -euo pipefail; \
           echo '=== Collecting AutoFDO Profiles ==='
           mkdir -p /forge/profiles
-          if [ -n \"\${HARDWARE_HASH}\" ]; then
+          if [ -n \"\${HARDWARE_HASH:-}\" ]; then
             echo 'Fetching hardware-specific profiles from decentralized cache...'
-            curl -sSfL \"https://telemetry.ermete-os.org/profiles/\${HARDWARE_HASH}/kernel_bolt.fdata\" -o /forge/profiles/kernel_bolt.fdata || echo 'No hardware-specific profile found. Operating without PGO/BOLT.'
+            curl -sSfL \"https://telemetry.ermete-os.org/profiles/\${HARDWARE_HASH:-}/kernel_bolt.fdata\" -o /forge/profiles/kernel_bolt.fdata || echo 'No hardware-specific profile found. Operating without PGO/BOLT.'
           else
             echo 'Generic build requested. Skipping AutoFDO/BOLT profiling.'
           fi
