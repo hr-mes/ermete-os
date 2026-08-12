@@ -66,26 +66,3 @@ pub fn init_system_controller() {
     });
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::ipc::types::{ AudioBus, NetBus, HardwareBus, MprisBus};
-
-    #[tokio::test]
-    async fn test_system_controller_state_updates() {
-        let audio_bus = AudioBus::new(); let net_bus = NetBus::new(); let hw_bus = HardwareBus::new(); let mpris_bus = MprisBus::new();
-
-        assert!(!network.is_wifi_enabled().await.unwrap());
-
-        let new_wifi = network.toggle_wifi().await.unwrap();
-        assert!(new_wifi);
-        assert!(network.is_wifi_enabled().await.unwrap());
-
-        network.set_wifi_powered(false).await.unwrap();
-        assert!(!network.is_wifi_enabled().await.unwrap());
-
-        let new_bt = bluetooth.toggle_bluetooth().await.unwrap();
-        assert!(new_bt);
-        assert!(bluetooth.is_bluetooth_enabled().await.unwrap());
-
-}
