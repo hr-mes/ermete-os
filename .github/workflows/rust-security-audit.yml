@@ -244,7 +244,8 @@ jobs:
           rustup toolchain install nightly
           rustup default nightly
           rustup component add rust-src
-          for i in 1 2 3 4 5; do curl -sLo bpf-linker https://github.com/aya-rs/bpf-linker/releases/download/v0.11.0/bpf-linker-x86_64-unknown-linux-gnu && break || sleep 5; done
+          for i in 1 2 3 4 5; do curl -sLo bpf-linker.tar.zst https://github.com/aya-rs/bpf-linker/releases/download/v0.11.0/bpf-linker-x86_64-unknown-linux-musl.tar.zst && break || sleep 5; done
+          tar -I zstd -xf bpf-linker.tar.zst
           chmod +x bpf-linker
           sudo mv bpf-linker /usr/local/bin/
 
