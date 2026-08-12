@@ -1,59 +1,37 @@
 Name:           kani-verifier
-Version:        0.55.0
+Version:        0.67.0
 Release:        1%{?dist}
-Summary:        Kani Rust Formal Verification Engine compiled from upstream source
+Summary:        Kani Rust Formal Verification Engine
 
 License:        Apache-2.0 OR MIT
 URL:            https://github.com/model-checking/kani
+Source0:        https://github.com/model-checking/kani/releases/download/kani-%{version}/kani-%{version}-x86_64-unknown-linux-gnu.tar.gz
 
-BuildRequires:  rustc, cargo, cbmc, gcc, gcc-c++, cmake, python3
-Requires:       cbmc, rustc, cargo
+Requires:       rustc, cargo
 
 %description
 Kani Rust Verifier is a bit-precise model checker for Rust code.
-It uses bounded model checking to formally verify safety properties, assertions, and memory safety in Rust packages within Ermete OS CI/CD.
+Packaged as an offline bundle to prevent 503 errors from GitHub during CI/CD.
 
 %prep
-mkdir -p src
-cat <<EOF > Cargo.toml
-[package]
-name = "kani-verifier-stub"
-version = "0.55.0"
-edition = "2021"
+%setup -q -n kani-%{version}
 
-[[bin]]
-name = "kani-driver"
-path = "src/main.rs"
-
-[[bin]]
-name = "cargo-kani"
-path = "src/main.rs"
-EOF
-echo 'fn main() { println!("Kani stub"); }' > src/main.rs
 %build
-# Build Kani driver and cargo-kani plugin from upstream source
-cargo build --release --bin kani-driver --bin cargo-kani
+# Pre-compiled bundle containing kani-compiler, cargo-kani, etc.
 
 %install
+mkdir -p %{buildroot}/opt/kani
+cp -r * %{buildroot}/opt/kani/
+
 mkdir -p %{buildroot}/usr/bin
-mkdir -p %{buildroot}/usr/libexec/kani
-if [ -f target/release/kani-driver ]; then
-    install -m 0755 target/release/kani-driver %{buildroot}/usr/bin/kani-driver
-else
-    echo -e '#!/bin/bash\necho "Kani Verifier Driver"' > %{buildroot}/usr/bin/kani-driver
-fi
-if [ -f target/release/cargo-kani ]; then
-    install -m 0755 target/release/cargo-kani %{buildroot}/usr/bin/cargo-kani
-else
-    echo -e '#!/bin/bash\necho "Cargo Kani Plugin"' > %{buildroot}/usr/bin/cargo-kani
-fi
-chmod +x %{buildroot}/usr/bin/kani-driver
-chmod +x %{buildroot}/usr/bin/cargo-kani
+ln -s /opt/kani/bin/cargo-kani %{buildroot}/usr/bin/cargo-kani
+ln -s /opt/kani/bin/kani %{buildroot}/usr/bin/kani
 
 %files
-/usr/bin/kani-driver
+/opt/kani/
 /usr/bin/cargo-kani
+/usr/bin/kani
 
 %changelog
-* Sat Aug 08 2026 Kani Forge Architect <admin@ermete.os> - 0.55.0-1
-- Assimilate kani-verifier into the native forge from upstream source.
+* Wed Aug 12 2026 Kani Forge Architect <admin@ermete.os> - 0.67.0-1
+- Real Kani offline bundle to eradicate GitHub 503 failures.
