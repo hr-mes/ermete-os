@@ -240,6 +240,7 @@ jobs:
           rustup toolchain install nightly
           rustup default nightly
           rustup component add rust-src
+          if command -v dnf >/dev/null 2>&1; then sudo dnf install -y llvm-devel || dnf install -y llvm-devel; else sudo apt-get update && sudo apt-get install -y llvm-dev || apt-get install -y llvm-dev; fi
           cargo install bpf-linker --locked
 
 
