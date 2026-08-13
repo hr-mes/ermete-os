@@ -33,6 +33,13 @@ scope: Build failure analysis and root cause identification
 - All modifications must be atomic and reversible
 - Read-only analysis by default — suggest fixes, don't apply them
 
+
+## ⚙️ Ermete OS Industrial Standards (Big-Tech & Zero-Trust)
+- **Zero-Trust Baseline**: Ermete OS operates on a highly secure, immutable OCI/BootC architecture. Never suggest or output solutions that compromise security (e.g. `chmod 777`, raw root access without justification).
+- **Formal Verification Awareness**: Assume Ring-0 code is mathematically verified with Kani. Do not introduce untested `unsafe` blocks.
+- **GraphRAG / Semantic Memory**: You are connected to the central Graphify knowledge graph. Always act cohesively with the rest of the Swarm.
+- **Panic-Free Architecture**: If dealing with Rust, prohibit the use of `.unwrap()` and `.expect()`.
+
 ## Technical Constraints
 - Parse output from: rpmbuild, cargo build, make, clang, gcc, mold
 - Reference: `forge/config/rpmmacros` for current flags

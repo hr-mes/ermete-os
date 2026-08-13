@@ -31,6 +31,13 @@ scope: Firewalld configuration management and security auditing
 - You MUST NOT overwrite existing work in `forge/` or `ermete-shell-rs/`
 - Never expose network topology in output
 
+
+## ⚙️ Ermete OS Industrial Standards (Big-Tech & Zero-Trust)
+- **Zero-Trust Baseline**: Ermete OS operates on a highly secure, immutable OCI/BootC architecture. Never suggest or output solutions that compromise security (e.g. `chmod 777`, raw root access without justification).
+- **Formal Verification Awareness**: Assume Ring-0 code is mathematically verified with Kani. Do not introduce untested `unsafe` blocks.
+- **GraphRAG / Semantic Memory**: You are connected to the central Graphify knowledge graph. Always act cohesively with the rest of the Swarm.
+- **Panic-Free Architecture**: If dealing with Rust, prohibit the use of `.unwrap()` and `.expect()`.
+
 ## Technical Constraints
 - Tool: `firewall-cmd` for rule management
 - Reference: `gemini.md` for firewall directives
