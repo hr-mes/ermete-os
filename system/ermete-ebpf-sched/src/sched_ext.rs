@@ -14,7 +14,7 @@ use tracing::{info, warn};
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
-pub struct AiSchedMapValue {
+pub struct AiSchedParam {
     pub pid: u32,
     pub target_core: u32,       // Core ID assigned by AI Predictor DAG (P-Core vs E-Core)
     pub core_type: u8,          // 0 = P-Core, 1 = E-Core, 2 = NPU-Core
@@ -26,7 +26,7 @@ pub struct AiSchedMapValue {
     pub flags: u32,
 }
 
-unsafe impl aya::Pod for AiSchedMapValue {}
+unsafe impl aya::Pod for AiSchedParam {}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum SchedClass {
@@ -60,7 +60,7 @@ pub struct TaskSchedPolicy {
 #[derive(Clone)]
 pub struct AiSchedMap {
     ebpf: Option<Arc<Mutex<Ebpf>>>,
-    fallback: Arc<Mutex<StdHashMap<u32, AiSchedMapValue>>>,
+    fallback: Arc<Mutex<StdHashMap<u32, AiSchedParam>>>,
 }
 
 impl AiSchedMap {
@@ -80,11 +80,11 @@ impl AiSchedMap {
         }
     }
 
-    pub async fn update_policy(&self, pid: u32, value: AiSchedMapValue) -> Result<(), String> {
+    pub async fn update_policy(&self, pid: u32, value: AiSchedParam) -> Result<(), String> {
         if let Some(ebpf_arc) = &self.ebpf {
             let mut ebpf = ebpf_arc.lock().await;
             if let Some(map) = ebpf.map_mut("AI_SCHED_MAP") {
-                if let Ok(mut bpf_map) = BpfHashMap::<_, u32, AiSchedMapValue>::try_from(map) {
+                if let Ok(mut bpf_map) = BpfHashMap::<_, u32, AiSchedParam>::try_from(map) {
                     if let Err(e) = bpf_map.insert(pid, value, 0) {
                         return Err(format!("Failed to insert PID {} into eBPF AI_SCHED_MAP: {}", pid, e));
                     }
@@ -100,11 +100,11 @@ impl AiSchedMap {
         Ok(())
     }
 
-    pub async fn get_policy(&self, pid: u32) -> Option<AiSchedMapValue> {
+    pub async fn get_policy(&self, pid: u32) -> Option<AiSchedParam> {
         if let Some(ebpf_arc) = &self.ebpf {
             let mut ebpf = ebpf_arc.lock().await;
             if let Some(map) = ebpf.map_mut("AI_SCHED_MAP") {
-                if let Ok(bpf_map) = BpfHashMap::<_, u32, AiSchedMapValue>::try_from(map) {
+                if let Ok(bpf_map) = BpfHashMap::<_, u32, AiSchedParam>::try_from(map) {
                     if let Ok(val) = bpf_map.get(&pid, 0) {
                         return Some(val);
                     }
@@ -120,7 +120,7 @@ impl AiSchedMap {
         if let Some(ebpf_arc) = &self.ebpf {
             let mut ebpf = ebpf_arc.lock().await;
             if let Some(map) = ebpf.map_mut("AI_SCHED_MAP") {
-                if let Ok(mut bpf_map) = BpfHashMap::<_, u32, AiSchedMapValue>::try_from(map) {
+                if let Ok(mut bpf_map) = BpfHashMap::<_, u32, AiSchedParam>::try_from(map) {
                     let _ = bpf_map.remove(&pid);
                 }
             }
@@ -131,11 +131,11 @@ impl AiSchedMap {
         Ok(())
     }
 
-    pub async fn list_policies(&self) -> Vec<(u32, AiSchedMapValue)> {
+    pub async fn list_policies(&self) -> Vec<(u32, AiSchedParam)> {
         if let Some(ebpf_arc) = &self.ebpf {
             let mut ebpf = ebpf_arc.lock().await;
             if let Some(map) = ebpf.map_mut("AI_SCHED_MAP") {
-                if let Ok(bpf_map) = BpfHashMap::<_, u32, AiSchedMapValue>::try_from(map) {
+                if let Ok(bpf_map) = BpfHashMap::<_, u32, AiSchedParam>::try_from(map) {
                     if let Ok(keys) = bpf_map.keys().collect::<Result<Vec<_>, _>>() {
                         let mut results = Vec::new();
                         for k in keys {
@@ -297,7 +297,7 @@ impl SchedExtController {
             return Err(msg);
         }
 
-        let map_val = AiSchedMapValue {
+        let map_val = AiSchedParam {
             pid: policy.pid,
             target_core: 0,
             core_type: 0,
@@ -331,7 +331,7 @@ mod tests {
         let map = AiSchedMap::new(None);
         assert!(!map.is_bpf_active().await);
 
-        let val = AiSchedMapValue {
+        let val = AiSchedParam {
             pid: 2048,
             target_core: 1,
             core_type: 0,

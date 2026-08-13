@@ -9,17 +9,14 @@ use zbus::proxy;
 /// Target eBPF scheduling structure written directly into Ring-0 `AI_SCHED_MAP`
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub struct AiSchedTarget {
-    pub pid: u32,
-    pub target_core: u32,       // Core ID: 0..=3 (P-Core), 4..=7 (E-Core)
-    pub core_type: u8,          // 0 = P-Core, 1 = E-Core, 2 = NPU-Core
-    pub _pad: [u8; 3],          // Padding for 4-byte C struct ABI alignment
-    pub priority_weight: u32,   // cgroup v2 cpu.weight 1..=10000
-    pub latency_slice_us: u64,  // microsecond scheduling target (e.g. 100us - 20000us)
+pub struct AiSchedParam {
+    pub priority: u32,
+    pub target_cpu: u32,
+    pub slice_ns: u64,
+    pub flags: u32,
 }
-
 // SAFETY: Struct is repr(C) and contains only plain data types with no padding padding issues
-unsafe impl aya::Pod for AiSchedTarget {}
+unsafe impl aya::Pod for AiSchedParam {}
 
 /// Zero-Copy DMA AI Tensor Frame extracted from NPU/GPU unified memory bus
 #[repr(C)]
@@ -360,7 +357,7 @@ pub struct AffinityOptimizationNode;
 
 impl AffinityOptimizationNode {
     /// Maps workload categories to hardware core topology (P-Cores vs E-Cores vs NPU-Cores)
-    pub fn optimize_affinity(task: &DiscoveredTask, category: &WorkloadCategory) -> Option<AiSchedTarget> {
+    pub fn optimize_affinity(task: &DiscoveredTask, category: &WorkloadCategory) -> Option<AiSchedParam> {
         // Confinement check: Refuse to touch PID 0 or PID 1
         if task.pid <= 1 {
             warn!("⛔ [AI Confinement Guard] Refused to modify scheduling parameters for critical PID {}", task.pid);
@@ -390,20 +387,13 @@ impl AffinityOptimizationNode {
             }
         };
 
-        Some(AiSchedTarget {
-            pid: task.pid,
-            target_core,
-            core_type,
-            _pad: [0; 3],
-            priority_weight,
-            latency_slice_us,
-        })
+        Some(AiSchedParam { priority: if priority_weight > 5000 { 1 } else { 2 }, target_cpu: target_core, slice_ns: latency_slice_us * 1000, flags: if core_type == 2 { 4 } else { 0 } })
     }
 }
 
 /// DAG Stage 4 & Main Engine: Ring-0 eBPF Map Synchronization Pipeline
 pub struct AiPredictorDAG {
-    map_cache: Arc<RwLock<StdHashMap<u32, AiSchedTarget>>>,
+    map_cache: Arc<RwLock<StdHashMap<u32, AiSchedParam>>>,
     tensor_bus: Option<Arc<UnifiedTensorBus>>,
 }
 
@@ -463,7 +453,7 @@ impl AiPredictorDAG {
                 );
             }
 
-            // Translate tensor probability vector to eBPF AiSchedTarget
+            // Translate tensor probability vector to eBPF AiSchedParam
             let priority_weight = if crash_prob > 0.75 {
                 50 // Throttled priority weight for unstable tasks
             } else {
@@ -485,14 +475,7 @@ impl AiPredictorDAG {
                 frame.core_type.min(2)
             };
 
-            let sched_target = AiSchedTarget {
-                pid: frame.pid,
-                target_core,
-                core_type,
-                _pad: [0; 3],
-                priority_weight,
-                latency_slice_us,
-            };
+            let sched_target = AiSchedParam { priority: if priority_weight > 5000 { 1 } else { 2 }, target_cpu: target_core, slice_ns: latency_slice_us * 1000, flags: if core_type == 2 { 4 } else { 0 } };
 
             // 3. Update local cache (panic-free async lock)
             {
@@ -586,7 +569,7 @@ impl AiPredictorDAG {
     }
 
     /// Queries target core allocation for a given PID from shared state cache
-    pub async fn get_sched_target(&self, pid: u32) -> Option<AiSchedTarget> {
+    pub async fn get_sched_target(&self, pid: u32) -> Option<AiSchedParam> {
         let cache_read = self.map_cache.read().await;
         cache_read.get(&pid).copied()
     }

@@ -117,7 +117,7 @@ impl EbpfMonitor {
     pub async fn update_ai_sched_map(
         &self,
         pid: u32,
-        target: crate::ai_predictor::AiSchedTarget,
+        target: crate::ai_predictor::AiSchedParam,
     ) -> Result<(), String> {
         if pid <= 1 {
             let msg = format!("⛔ [AI Confinement Guard] Refused to modify scheduling map for protected PID {}", pid);
@@ -128,7 +128,7 @@ impl EbpfMonitor {
         if let Some(bpf_arc) = &self.bpf {
             let mut bpf = bpf_arc.lock().await;
             if let Some(map) = bpf.map_mut("AI_SCHED_MAP") {
-                if let Ok(mut sched_map) = HashMap::<_, u32, crate::ai_predictor::AiSchedTarget>::try_from(map) {
+                if let Ok(mut sched_map) = HashMap::<_, u32, crate::ai_predictor::AiSchedParam>::try_from(map) {
                     sched_map
                         .insert(pid, target, 0)
                         .map_err(|e| format!("Failed to insert PID {} into AI_SCHED_MAP: {}", pid, e))?;
