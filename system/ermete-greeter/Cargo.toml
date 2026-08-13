@@ -22,6 +22,7 @@ gtk4-layer-shell = { workspace = true, optional = true }
 glib = { workspace = true, optional = true }
 pam-sys = "0.5"
 pam = "0.7"
+tss-esapi = "7.2.0"
 
 
 

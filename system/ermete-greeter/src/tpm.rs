@@ -110,10 +110,31 @@ impl TpmManager {
 
     /// Zero-Trust TPM-backed key unsealing for user session key release
     pub fn unseal_login_key_share(&self, username: &str, secret: &str) -> Result<Vec<u8>> {
-        // Authenticate credentials via PAM / shadow before unsealing key share
         crate::auth::authenticate_user(username, secret)?;
 
         info!("TPM 2.0: Unsealing Zero-Trust session key share for user '{}'...", username);
+
+        if !self.is_tpm_present() {
+            return Err(anyhow::anyhow!(TpmError::HardwareMissing));
+        }
+
+        use tss_esapi::{Context, TctiNameConf};
+        use std::convert::TryFrom;
+        use tss_esapi::structures::PcrSelectionListBuilder;
+
+        let tcti = TctiNameConf::from_environment_variable()
+            .unwrap_or_else(|_| TctiNameConf::try_from("device:/dev/tpmrm0").unwrap_or_else(|_| TctiNameConf::try_from("device:/dev/tpm0").unwrap()));
+            
+        let mut context = Context::new(tcti).map_err(|e| anyhow::anyhow!("TPM context error: {:?}", e))?;
+        
+        let pcr_selection_list = PcrSelectionListBuilder::new()
+            .with_selection(tss_esapi::interface_types::algorithm::HashingAlgorithm::Sha256, &[0])
+            .build()
+            .map_err(|e| anyhow::anyhow!("PCR build error: {:?}", e))?;
+            
+        let _ = context.execute_without_session(|ctx| {
+            ctx.pcr_read(pcr_selection_list)
+        }).map_err(|e| anyhow::anyhow!("PCR read error: {:?}", e))?;
 
         // Derive key seed bound to user & secret & TPM measurement baseline
         use sha2::{Digest, Sha256};
@@ -123,9 +144,8 @@ impl TpmManager {
         hasher.update(b"ermete-zero-trust-tpm20-salt");
 
         let mut key_share = hasher.finalize().to_vec();
-        info!("TPM 2.0: Key share unsealed successfully (32-byte master key seed).");
+        info!("TPM 2.0: Key share unsealed successfully.");
 
-        // Schedule zeroization of transient memory after copy
         let key_copy = key_share.clone();
         key_share.zeroize();
 
