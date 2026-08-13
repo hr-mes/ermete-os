@@ -3,6 +3,8 @@
 #![allow(clippy::undocumented_unsafe_blocks)]
 #![allow(clippy::needless_lifetimes)]
 #![allow(clippy::too_many_arguments)]
+#![allow(clippy::len_without_is_empty)]
+#![allow(clippy::mut_from_ref)]
 
 use anyhow::Result;
 use tracing::{info, Level};
