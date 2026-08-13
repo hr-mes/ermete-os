@@ -145,7 +145,7 @@ jobs:
           echo '=== Applying Post-Build BOLT Binary Optimization ==='
           if [ -f ~/rpmbuild/BUILD/vmlinux ]; then
             if [ -f /forge/profiles/kernel_bolt.fdata ]; then
-              llvm-bolt ~/rpmbuild/BUILD/vmlinux -o ~/rpmbuild/BUILD/vmlinux.bolt -data=/forge/profiles/kernel_bolt.fdata -reorder-blocks=ext-tsp -reorder-functions=hfsort -split-functions || true
+              llvm-bolt ~/rpmbuild/BUILD/vmlinux -o ~/rpmbuild/BUILD/vmlinux.bolt -data=/forge/profiles/kernel_bolt.fdata -reorder-blocks=ext-tsp -reorder-functions=hfsort -split-functions
             else
               echo 'BOLT optimization skipped: no profiling data available'
             fi

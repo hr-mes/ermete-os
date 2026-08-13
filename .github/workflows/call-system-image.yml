@@ -318,36 +318,9 @@ jobs:
         run: |
           set -euo pipefail
           echo "🚀 Executing GTK4 UI & Wayland Headless Compositor Regression Audit..."
-          xvfb-run -a cargo test --manifest-path system/ermete-compositor/Cargo.toml -- --nocapture || true
-          xvfb-run -a cargo test --manifest-path system/ermete-greeter/Cargo.toml -- --nocapture || true
+          xvfb-run -a cargo test --manifest-path system/ermete-compositor/Cargo.toml -- --nocapture
+          xvfb-run -a cargo test --manifest-path system/ermete-greeter/Cargo.toml -- --nocapture
           echo "✅ GTK4 UI and Wayland Headless Compositor checks passed successfully."
-      - name: 🎨 Generate Spectacular Job Summary
-        run: |
-          set -euo pipefail
-          cat << 'EOF' >> $GITHUB_STEP_SUMMARY
-          # 👁️ Nodo Supremo Visivo - Zero-Desync Architecture 🚀
-          
-          ![Quality](https://img.shields.io/badge/Quality-Supreme-success?style=for-the-badge)
-          ![Visual](https://img.shields.io/badge/Visual_Regression-0%25_Desync-brightgreen?style=for-the-badge)
-          ![Performance](https://img.shields.io/badge/UI_Performance-100%25-blue?style=for-the-badge)
-          
-          ### 📊 DAG Execution Graph (Topological Topology)
-          
-          ```mermaid
-          graph TD
-            A[Level 0: Tier 0/1] --> B[Level 1: Core]
-            B --> C[Level 2: Apps]
-            C --> D[Build Repositories]
-            D --> E[dag-system-image]
-            D --> F[dag-openwiki-portal]
-            E --> G[👁️ Visual Regression & UI]
-            F --> G
-            
-            style G fill:#f9f,stroke:#333,stroke-width:4px,color:#000
-          ```
-          
-          *L'Infrastruttura Suprema è stata forgiata.* ✅
-          EOF
 
       - name: 🧹 Fix Workspace Permissions (GH Actions Cleanup)
         if: always()

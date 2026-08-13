@@ -283,9 +283,15 @@ pub fn show_desktop_context_menu(app: &Application, x: f64, y: f64) {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
-    fn test_menu_item_shortcuts() {
-        let sc = Some("⇧⌘N");
-        assert_eq!(sc.unwrap(), "⇧⌘N");
+    fn test_context_menu_instantiation() {
+        if gtk4::init().is_ok() {
+            let app = Application::new(Some("com.test.contextmenu"), Default::default());
+            app.connect_startup(|a| {
+                show_desktop_context_menu(a, 100.0, 100.0);
+            });
+        }
     }
 }

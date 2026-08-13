@@ -513,16 +513,16 @@ pub fn show_widgets_board(app: &Application) {
 
 #[cfg(test)]
 mod tests {
-    #[test]
-    fn test_weather_widget_no_fake_data() {
-        let error_text = "Nessun dato meteo IPC disponibile";
-        assert!(error_text.contains("IPC"));
-    }
+    use super::*;
 
     #[test]
-    fn test_stocks_widget_offline_state() {
-        let offline_text = "OFFLINE";
-        assert_eq!(offline_text, "OFFLINE");
+    fn test_widgets_board_instantiation() {
+        if gtk4::init().is_ok() {
+            let app = Application::new(Some("com.test.widgets"), Default::default());
+            app.connect_startup(|a| {
+                show_widgets_board(a);
+            });
+        }
     }
 }
 

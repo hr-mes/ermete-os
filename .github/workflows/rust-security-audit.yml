@@ -187,7 +187,7 @@ jobs:
           set -euo pipefail
           cd ${{ matrix.dir }}
           if [ -n "${{ matrix.harness }}" ]; then
-            cargo kani --harness "${{ matrix.harness }}" || true
+            cargo kani --harness "${{ matrix.harness }}"
           else
             cargo kani
           fi
@@ -257,12 +257,12 @@ jobs:
       - name: 🔐 Formal Verification - PQC Mesh Bus (system/ermete-mesh-bus)
         run: |
           set -euo pipefail
-          RUSTFLAGS='--cfg curve25519_dalek_backend="serial"' cargo kani -p ermete-mesh-bus || true
+          RUSTFLAGS='--cfg curve25519_dalek_backend="serial"' cargo kani -p ermete-mesh-bus
 
       - name: 🛡️ Formal Verification - Hypervisor Daemon (system/ermete-hypervisor-daemon)
         run: |
           set -euo pipefail
-          RUSTFLAGS='--cfg curve25519_dalek_backend="serial"' cargo kani -p ermete-hypervisor-daemon || true
+          RUSTFLAGS='--cfg curve25519_dalek_backend="serial"' cargo kani -p ermete-hypervisor-daemon
 
       - name: 🧹 Fix Workspace Permissions (GH Actions Cleanup)
         if: always()

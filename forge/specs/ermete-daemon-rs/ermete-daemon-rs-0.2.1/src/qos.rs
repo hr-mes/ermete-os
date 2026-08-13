@@ -390,9 +390,10 @@ mod tests {
     #[tokio::test]
     async fn test_qos_observer_cancellation() {
         let token = CancellationToken::new();
-        start_qos_observer(token.clone()).await;
+        tokio::spawn(start_qos_observer(token.clone()));
         assert!(!token.is_cancelled());
         token.cancel();
+        tokio::time::sleep(Duration::from_millis(50)).await;
         assert!(token.is_cancelled());
     }
 
@@ -402,7 +403,8 @@ mod tests {
         let path = CgroupFreezer::get_cgroup_path_for_pid(pid);
         // On Linux, /proc/self/cgroup should return a PathBuf if cgroups v2 is active
         if Path::new("/sys/fs/cgroup").exists() {
-            assert!(path.is_some() || path.is_none()); // Validates no panic on parsing
+            let p = path.expect("cgroups v2 path should be resolved");
+            assert!(p.starts_with("/sys/fs/cgroup"));
         }
     }
 

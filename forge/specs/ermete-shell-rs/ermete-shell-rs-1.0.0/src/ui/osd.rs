@@ -358,9 +358,15 @@ pub fn spawn_osd(app: &Application) {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
-    fn test_bezier_curve_definition() {
-        let css = r#"transition: transform 300ms cubic-bezier(0.05, 0.9, 0.1, 1.05);"#;
-        assert!(css.contains("cubic-bezier(0.05, 0.9, 0.1, 1.05)"));
+    fn test_osd_ui_instantiation() {
+        if gtk4::init().is_ok() {
+            let app = Application::new(Some("com.test.osd"), Default::default());
+            app.connect_startup(|a| {
+                spawn_osd(a);
+            });
+        }
     }
 }

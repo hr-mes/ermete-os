@@ -570,10 +570,15 @@ mod tests {
         assert_eq!(processed, 1);
         assert_eq!(dropped, 0);
 
-        // Process single frame asynchronously
-        tokio::spawn(async move {
-            let _ = dag.run_tensor_stream_loop(rx, &ebpf_monitor).await;
-        });
+        // Process single frame asynchronously, drop bus to terminate the loop cleanly
+        drop(bus);
+        dag.run_tensor_stream_loop(rx, &ebpf_monitor).await.expect("Stream loop failed");
+        
+        // Validate real output
+        let target = dag.get_sched_target(1042).await.expect("Target should be scheduled in map cache");
+        assert_eq!(target.priority, 1);
+        assert_eq!(target.target_cpu, 2);
+        assert_eq!(target.flags, 0);
     }
 }
 
