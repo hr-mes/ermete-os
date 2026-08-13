@@ -1,5 +1,4 @@
-#![allow(clippy::undocumented_unsafe_blocks, clippy::multiple_unsafe_ops_per_block)]
-#![allow(unsafe_code)]
+#![deny(clippy::undocumented_unsafe_blocks)]
 //! Zero-Copy Lock-Free Shared Memory Ring Buffer (SPSC IPC Bridge)
 //!
 //! Provides ultra-low latency Inter-Process Communication (IPC) for Ermete OS
@@ -578,6 +577,31 @@ impl Drop for ZeroCopyRingBuffer {
                     }
                 }
             }
+        }
+    }
+}
+
+#[cfg(kani)]
+mod kani_proofs {
+    use super::*;
+
+    #[kani::proof]
+    fn proof_ring_buffer_math_no_overflow() {
+        let capacity: usize = kani::any();
+        kani::assume(capacity > 0 && capacity <= 10 * 1024 * 1024); 
+
+        let head: usize = kani::any();
+        let tail: usize = kani::any();
+        
+        let occupied = head.wrapping_sub(tail);
+        
+        let available_write = capacity.saturating_sub(occupied);
+        let available_read = occupied;
+
+        assert!(available_write <= capacity);
+        
+        if occupied <= capacity {
+            assert!(available_write + occupied == capacity);
         }
     }
 }

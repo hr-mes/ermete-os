@@ -1,6 +1,4 @@
-#![allow(unsafe_code)]
-#![allow(clippy::multiple_unsafe_ops_per_block)]
-#![allow(clippy::undocumented_unsafe_blocks)]
+#![deny(clippy::undocumented_unsafe_blocks)]
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::needless_lifetimes)]
 //! Ermete OS Post-Quantum Mesh Bus - AF_XDP Zero-Copy Frame Parser
@@ -414,5 +412,26 @@ mod tests {
         let mut invalid_magic_buf = vec![0u8; MeshHeader::SIZE + 10];
         invalid_magic_buf[0..4].copy_from_slice(b"XXXX");
         assert!(ZeroCopyParser::parse_frame(&invalid_magic_buf).is_err());
+    }
+}
+
+#[cfg(kani)]
+mod kani_proofs {
+    use super::*;
+
+    #[kani::proof]
+    fn proof_parse_frame_memory_safety() {
+        let buffer_len: usize = kani::any();
+        kani::assume(buffer_len <= 4096);
+        let mut buffer = [0u8; 4096];
+        let slice = &buffer[0..buffer_len];
+
+        let result = ZeroCopyParser::parse_frame(slice);
+
+        if let Ok(frame) = result {
+            let payload_len = frame.payload_len() as usize;
+            assert!(MeshHeader::SIZE + payload_len <= slice.len());
+            assert_eq!(frame.payload().len(), payload_len);
+        }
     }
 }
