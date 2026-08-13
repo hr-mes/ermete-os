@@ -50,6 +50,8 @@
       # Strumenti di Build e Packaging (Sostituiscono dnf/rpm-build)
       build-tools = with pkgs; [
         rpm
+        rpmdevtools
+        dnf
         cpio
         buildah
         skopeo
@@ -78,6 +80,7 @@
         policycoreutils
         spdlog
         systemd
+        nodejs_22
         nlohmann_json
         fmt
         speechd
@@ -108,7 +111,9 @@
         };
         fakeRootCommands = ''
           mkdir -p /root
-          mkdir -p /lib64 /lib /usr/lib /usr/lib64
+          mkdir -p /lib64 /lib /usr/lib /usr/lib64 /lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu
+          
+          # Standard FHS
           ln -s ${pkgs.glibc}/lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2 || true
           ln -s ${pkgs.glibc}/lib/ld-linux.so.2 /lib/ld-linux.so.2 || true
           ln -s ${pkgs.glibc}/lib/libc.so.6 /lib64/libc.so.6 || true
@@ -120,6 +125,16 @@
           ln -s ${pkgs.stdenv.cc.cc.lib}/lib/libstdc++.so.6 /usr/lib/libstdc++.so.6 || true
           ln -s ${pkgs.stdenv.cc.cc.lib}/lib/libgcc_s.so.1 /lib64/libgcc_s.so.1 || true
           ln -s ${pkgs.stdenv.cc.cc.lib}/lib/libgcc_s.so.1 /usr/lib64/libgcc_s.so.1 || true
+
+          # Ubuntu/Debian x86_64-linux-gnu FHS (for GitHub Actions node24)
+          ln -s ${pkgs.glibc}/lib/ld-linux-x86-64.so.2 /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 || true
+          ln -s ${pkgs.glibc}/lib/libc.so.6 /lib/x86_64-linux-gnu/libc.so.6 || true
+          ln -s ${pkgs.glibc}/lib/libm.so.6 /lib/x86_64-linux-gnu/libm.so.6 || true
+          ln -s ${pkgs.glibc}/lib/libpthread.so.0 /lib/x86_64-linux-gnu/libpthread.so.0 || true
+          ln -s ${pkgs.glibc}/lib/libdl.so.2 /lib/x86_64-linux-gnu/libdl.so.2 || true
+          ln -s ${pkgs.glibc}/lib/librt.so.1 /lib/x86_64-linux-gnu/librt.so.1 || true
+          ln -s ${pkgs.stdenv.cc.cc.lib}/lib/libstdc++.so.6 /lib/x86_64-linux-gnu/libstdc++.so.6 || true
+          ln -s ${pkgs.stdenv.cc.cc.lib}/lib/libgcc_s.so.1 /lib/x86_64-linux-gnu/libgcc_s.so.1 || true
         '';
       };
 
