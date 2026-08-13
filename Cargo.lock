@@ -665,6 +665,27 @@ dependencies = [
 
 [[package]]
 name = "candle-core"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6f1b20174c1707e20f4cb364a355b449803c03e9b0c9193324623cf9787a4e00"
+dependencies = [
+ "byteorder",
+ "gemm 0.17.1",
+ "half",
+ "memmap2",
+ "num-traits",
+ "num_cpus",
+ "rand 0.8.7",
+ "rand_distr 0.4.3",
+ "rayon",
+ "safetensors",
+ "thiserror 1.0.69",
+ "yoke 0.7.5",
+ "zip 0.6.6",
+]
+
+[[package]]
+name = "candle-core"
 version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06ccf5ee3532e66868516d9b315f73aec9f34ea1a37ae98514534d458915dbf1"
@@ -676,13 +697,13 @@ dependencies = [
  "num-traits",
  "num_cpus",
  "rand 0.9.5",
- "rand_distr",
+ "rand_distr 0.5.1",
  "rayon",
  "safetensors",
  "thiserror 1.0.69",
  "ug",
  "yoke 0.7.5",
- "zip",
+ "zip 1.1.4",
 ]
 
 [[package]]
@@ -691,7 +712,7 @@ version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be1160c3b63f47d40d91110a3e1e1e566ae38edddbbf492a60b40ffc3bc1ff38"
 dependencies = [
- "candle-core",
+ "candle-core 0.8.4",
  "half",
  "num-traits",
  "rayon",
@@ -1555,8 +1576,6 @@ dependencies = [
  "anyhow",
  "aya",
  "bytes",
- "candle-core",
- "candle-nn",
  "ermete-bus-api",
  "libc",
  "serde",
@@ -1571,7 +1590,7 @@ dependencies = [
 name = "ermete-ai-daemon"
 version = "1.0.0"
 dependencies = [
- "candle-core",
+ "candle-core 0.8.4",
  "candle-nn",
  "libc",
  "openvino",
@@ -1778,6 +1797,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "aya",
+ "candle-core 0.4.1",
  "libc",
  "serde",
  "serde_json",
@@ -3122,7 +3142,7 @@ dependencies = [
  "crunchy",
  "num-traits",
  "rand 0.9.5",
- "rand_distr",
+ "rand_distr 0.5.1",
  "zerocopy",
 ]
 
@@ -5042,6 +5062,16 @@ name = "rand_core"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "63b8176103e19a2643978565ca18b50549f6101881c443590420e4dc998a3c69"
+
+[[package]]
+name = "rand_distr"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "32cb0b9bc82b0a0876c2dd994a7e7a2683d3e7390ca40e6886785ef0c7e3ee31"
+dependencies = [
+ "num-traits",
+ "rand 0.8.7",
+]
 
 [[package]]
 name = "rand_distr"
@@ -7526,6 +7556,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.119",
+]
+
+[[package]]
+name = "zip"
+version = "0.6.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "760394e246e4c28189f19d488c058bf16f564016aefac5d32bb1f3b51d5e9261"
+dependencies = [
+ "byteorder",
+ "crc32fast",
+ "crossbeam-utils",
 ]
 
 [[package]]
