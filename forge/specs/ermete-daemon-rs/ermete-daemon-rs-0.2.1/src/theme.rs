@@ -1,3 +1,4 @@
+use std::os::unix::fs::OpenOptionsExt;
 use std::path::PathBuf;
 use std::process::Command;
 use tracing::{info, warn};

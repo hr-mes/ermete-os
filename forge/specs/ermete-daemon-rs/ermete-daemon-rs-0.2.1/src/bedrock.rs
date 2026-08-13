@@ -1,3 +1,4 @@
+extern crate serde;
 use zbus::interface;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};

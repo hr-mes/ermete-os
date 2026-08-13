@@ -20,7 +20,6 @@
       security-tools = with pkgs; [
         syft             # Generazione SBOM
         cosign           # Firma OCI / Zero-Trust Attestation
-        cargo-kani       # Kani Verifier per prove formali
       ];
 
       # Toolchain C/C++, eBPF e LLVM/BOLT (La Chimera)

@@ -48,6 +48,7 @@ pub fn drop_capabilities(keep_caps: &[u32]) -> Result<(), String> {
         },
     ];
 
+    // SAFETY: capset is required to drop privileges and is safe when passed correct capability masks.
     let ret = unsafe {
         libc::syscall(
             libc::SYS_capset,

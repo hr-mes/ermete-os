@@ -1,3 +1,4 @@
+use std::os::unix::fs::OpenOptionsExt;
 #![allow(unsafe_code)]
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 
