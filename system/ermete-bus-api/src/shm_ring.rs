@@ -483,8 +483,11 @@ impl ZeroCopyRingBuffer {
             ));
         }
 
-        self.push(header_bytes)?;
-        self.push(data)?;
+        let mut frame_buf = Vec::with_capacity(total_frame_len);
+        frame_buf.extend_from_slice(header_bytes);
+        frame_buf.extend_from_slice(data);
+        
+        self.push(&frame_buf)?;
 
         Ok(total_frame_len)
     }

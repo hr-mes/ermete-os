@@ -109,11 +109,14 @@ impl MeshTunnel {
             .unwrap_or_default()
             .as_secs();
 
-        let (response, _session_key) = self.pqc_engine.process_handshake_init(
+        let (response, session_key) = self.pqc_engine.process_handshake_init(
             &init_data,
             &peer_dilithium_pk,
             timestamp,
         )?;
+
+        // Salvataggio effettivo della chiave di sessione
+        self.peer_manager.store_session_key(&init_data.sender_node_id, session_key).await?;
 
         // Update peer state to authenticated
         self.peer_manager
@@ -182,7 +185,12 @@ impl MeshTunnel {
         // VITREOL: Enforce Strict Authenticated Encryption (AES-256-GCM / PQC Session)
         // If the payload is not encrypted and authenticated via the session key, we DROP it immediately.
         // For the sake of this audit, we mathematically enforce decryption using ring::aead.
-        let peer_id = src_addr.to_string(); // In reality, mapped via active session table
+        // Mappatura effettiva SocketAddr -> node_id
+        let peers = self.peer_manager.list_peers().await;
+        let peer_id = peers.iter()
+            .find(|p| p.endpoint.as_deref() == Some(&src_addr.to_string()))
+            .map(|p| p.node_id.clone())
+            .ok_or_else(|| anyhow!("Source address {} not mapped to any known peer node_id", src_addr))?;
         
         let session_key = self.peer_manager.get_active_session_key(&peer_id).await
             .map_err(|_| anyhow!("Dropping unauthenticated packet: No PQC session key established!"))?;

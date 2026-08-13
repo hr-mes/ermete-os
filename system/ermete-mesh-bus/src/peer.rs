@@ -179,6 +179,7 @@ impl PeerManager {
                     .as_secs();
 
                 let mut peers = peers_ref.write().await;
+                let mut keys = self.session_keys.write().await;
                 let before_count = peers.len();
                 peers.retain(|node_id, peer| {
                     if peer.last_handshake == 0 {
@@ -190,6 +191,8 @@ impl PeerManager {
                             "Mesh Bus: Pruned dead peer '{}' (no heartbeat/handshake for >{}s)",
                             node_id, timeout_secs
                         );
+                        // SICUREZZA: Preveniamo memory leak ed esponiamo il materiale crittografico obsoleto
+                        keys.remove(node_id);
                     }
                     active
                 });
