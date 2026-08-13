@@ -33,7 +33,7 @@ impl SyncEngine {
             .map_err(|e| anyhow::anyhow!("Failed to generate Kyber-1024 keypair for SyncEngine: {:?}", e))?;
         let dilithium_keypair = DilithiumKeypair::generate();
         
-        let dilithium_pk_b64 = BASE64.encode(&dilithium_keypair.public);
+        let dilithium_pk_b64 = BASE64.encode(dilithium_keypair.public);
         let short_id = if dilithium_pk_b64.len() >= 12 { &dilithium_pk_b64[..12] } else { "node" };
         let node_id = format!("node-{}", short_id);
 
@@ -54,11 +54,11 @@ impl SyncEngine {
     }
 
     pub fn get_kyber_public_key_b64(&self) -> String {
-        BASE64.encode(&self.kyber_keypair.public)
+        BASE64.encode(self.kyber_keypair.public)
     }
 
     pub fn get_dilithium_public_key_b64(&self) -> String {
-        BASE64.encode(&self.dilithium_keypair.public)
+        BASE64.encode(self.dilithium_keypair.public)
     }
 
     pub fn get_zk_identity_info(&self) -> String {
