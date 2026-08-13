@@ -4,9 +4,6 @@ ARG FEDORA_VERSION=43
 ENV FEDORA_VERSION=$FEDORA_VERSION
 ARG TETRAGON_VERSION=v1.3.0
 
-# Purge upstream Fedora kernel packages
-RUN dnf5 -y remove --no-autoremove kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-tools kernel-devel kernel-headers && \
-    rm -rf /usr/lib/modules/*
 
 # TIER 0: BEDROCK HARDWARE & KERNEL FOUNDATION
 RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier0-repo:latest,source=/,target=/mnt/tier0-repo \
@@ -29,7 +26,6 @@ RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier0-repo:latest,sour
         echo "Tier 0: Installing Bedrock hardware, kernel Chimera & NVIDIA dependencies..." && \
         dnf5 install -y --allowerasing --setopt=install_weak_deps=False --setopt=tsflags=nodocs $RPM_LIST; \
     fi && \
-    echo "excludepkgs=kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-devel kernel-debug kernel-debug-devel kernel-debug-core kernel-debug-modules kernel-debug-modules-core kernel-debug-modules-extra" >> /etc/dnf/dnf.conf && \
     rm -rf /usr/lib/firmware/{mellanox,qlogic,netronome,liquidio,cxgb4,bnx2x,cavium,dpaa2}
 
 # Tier 0: Install Cilium Tetragon eBPF Runtime Security is now delegated to ermete-tetragon RPM
@@ -76,28 +72,6 @@ RUN dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs fla
 COPY system/scripts/ /scripts/
 RUN /bin/bash /scripts/provision_flatpak.sh
 
-RUN cat << 'EOF' > /usr/lib/systemd/system/ermete-flatpak-provision.service
-[Unit]
-Description=Ermete OS Declarative Dynamic Flatpak Provisioner
-After=network-online.target flatpak-system-helper.service
-Wants=network-online.target
-
-[Service]
-LockPersonality=true
-RestrictSUIDSGID=true
-RestrictRealtime=true
-MemoryDenyWriteExecute=true
-ProtectControlGroups=true
-ProtectKernelLogs=true
-ProtectKernelModules=true
-ProtectKernelTunables=true
-Type=oneshot
-RemainAfterExit=yes
-ExecStart=/usr/libexec/ermete-flatpak-provisioner
-
-[Install]
-WantedBy=multi-user.target
-EOF
 
 # TPM 2.0 PCR Sealing Provisioning Service & Script for LUKS /var/home
 COPY forge/specs/ermete-secure-boot/SOURCES/usr/libexec/ermete-tpm-luks-seal.sh /usr/libexec/ermete-tpm-luks-seal.sh
@@ -106,7 +80,7 @@ RUN chmod +x /usr/libexec/ermete-tpm-luks-seal.sh
 
 # Declarative Systemd presets & sysusers
 RUN authselect enable-feature with-systemd-homed && \
-    systemctl enable tetragon.service systemd-sysext.service systemd-homed.service keylime_agent.service ermete-tpm-rollback-check.service ermete-tpm-rollback-update.service ermete-flatpak-provision.service ermete-tpm-luks-seal.service && systemd-sysusers && systemctl preset-all && systemctl --global preset-all
+    systemctl enable tetragon.service systemd-sysext.service systemd-homed.service keylime_agent.service ermete-tpm-rollback-check.service ermete-tpm-rollback-update.service ermete-tpm-luks-seal.service && systemd-sysusers && systemctl preset-all && systemctl --global preset-all
 
 # Initramfs & Unified Kernel Image (UKI) generation
 RUN --mount=type=secret,id=uki_key,required=false \

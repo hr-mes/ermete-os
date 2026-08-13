@@ -59,17 +59,16 @@ ProtectKernelTunables=true
 Environment="LD_PRELOAD="
 EOF
 
-%post
-# Create symlink dynamically based on compiler-rt installed
-if [ -d /usr/lib64/clang ]; then
-  SCUDO_LIB=$(find /usr/lib64/clang -name "libclang_rt.scudo_standalone.so" | head -n 1)
-  if [ -n "$SCUDO_LIB" ]; then
-    ln -sf "$SCUDO_LIB" /usr/lib64/libscudo.so
-  fi
-fi
+# Declarative symlink configuration via tmpfiles.d
+mkdir -p %{buildroot}%{_prefix}/lib/tmpfiles.d
+cat <<EOF > %{buildroot}%{_prefix}/lib/tmpfiles.d/10-scudo.conf
+L+ /usr/lib64/libscudo.so - - - - /usr/lib64/clang/19/lib/linux/libclang_rt.scudo_standalone.so
+EOF
+
 
 %files
 %{_prefix}/lib/environment.d/10-scudo.conf
+%{_prefix}/lib/tmpfiles.d/10-scudo.conf
 %{_unitdir}/greetd.service.d/override.conf
 %{_unitdir}/ermete-llm.service.d/override.conf
 

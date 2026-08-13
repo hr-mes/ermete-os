@@ -13,6 +13,13 @@ Provides:       kernel-bedrock = %{version}-%{release}
 Provides:       kernel = %{version}-%{release}
 Provides:       kernel-core = %{version}-%{release}
 Provides:       kernel-modules = %{version}-%{release}
+Provides:       kernel-modules-core = %{version}-%{release}
+Provides:       kernel-modules-extra = %{version}-%{release}
+Obsoletes:      kernel < %{version}-%{release}
+Obsoletes:      kernel-core < %{version}-%{release}
+Obsoletes:      kernel-modules < %{version}-%{release}
+Obsoletes:      kernel-modules-core < %{version}-%{release}
+Obsoletes:      kernel-modules-extra < %{version}-%{release}
 
 %description
 Ermete OS Chimera Kernel package metadata and build orchestration specification.

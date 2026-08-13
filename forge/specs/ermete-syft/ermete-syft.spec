@@ -12,6 +12,7 @@ Pre-compiled Anchore Syft SBOM generator, packaged directly for the Ermete OS bu
 
 %prep
 %setup -q -c
+echo "02bd83fae9a5579dc1f14a6763c6bee804c8eea8b2ca3ee82810b8b9d21e922f  syft" | sha256sum -c -
 
 %build
 # Pre-compiled binary, nothing to build.

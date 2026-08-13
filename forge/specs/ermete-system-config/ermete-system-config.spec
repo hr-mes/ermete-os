@@ -35,6 +35,8 @@ rm -f %{buildroot}/etc/yum.repos.d/ermete-forge.repo
 
 %post
 # Configurations are now managed declaratively via tmpfiles.d (10-ermete-greetd.conf)
+mkdir -p /etc/usbguard
+cp -f /usr/share/ermete-system-config/usbguard-daemon.conf /etc/usbguard/usbguard-daemon.conf
 
 %files
 %dir /usr/share/ermete-system-config
