@@ -19,15 +19,13 @@ Provides ermete-nix-support for Ermete OS.
 %install
 mkdir -p %{buildroot}/usr/lib/tmpfiles.d
 mkdir -p %{buildroot}/usr/share/nix-initial-state/var/nix/profiles
-ln -s var/nix %{buildroot}/nix
+
 cp -a %{_sourcedir}/usr/lib/tmpfiles.d/* %{buildroot}/usr/lib/tmpfiles.d/ || true
 
 %files
-/nix
 %dir /usr/share/nix-initial-state
 %dir /usr/share/nix-initial-state/var
-%dir /usr/share/nix-initial-state/var/nix
-%dir /usr/share/nix-initial-state/var/nix/profiles
+%dir /usr/share/nix-initial-state/var%dir /usr/share/nix-initial-state/var/nix/profiles
 /usr/lib/tmpfiles.d/10-ermete-nix.conf
 
 %changelog
