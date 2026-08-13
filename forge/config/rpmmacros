@@ -3,6 +3,8 @@
 # Holy Grail Optimizations: Clear Linux + CachyOS + Gentoo LTO
 # =========================================================================
 
+%_topdir %{getenv:HOME}/rpmbuild
+
 # Disable debug subpackages globally for Ermete Forge builds
 %debug_package %{nil}
 
