@@ -1,6 +1,5 @@
 use std::os::unix::fs::OpenOptionsExt;
 use anyhow::{bail, Result};
-use std::fs;
 use tracing::{info, warn};
 
 pub struct AutoHealer;

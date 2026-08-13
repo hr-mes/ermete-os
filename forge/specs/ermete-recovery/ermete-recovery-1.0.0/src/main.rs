@@ -490,8 +490,9 @@ fn native_bcachefs_snapshot(src: &std::path::Path, dst: &std::path::Path) -> std
         src_ptr: src_file.as_raw_fd() as u64,
     };
 
-    let res = unsafe {
-        libc::ioctl(src_file.as_raw_fd(), BCH_IOCTL_SUBVOLUME_CREATE as _, &mut arg)
+    // SAFETY: The syscall relies on valid filesystem paths and architecture-specific reboot flags, guaranteed by the kernel.
+    unsafe {
+        let res = libc::ioctl(src_file.as_raw_fd(), BCH_IOCTL_SUBVOLUME_CREATE as _, &mut arg)
     };
 
     if res == 0 {
