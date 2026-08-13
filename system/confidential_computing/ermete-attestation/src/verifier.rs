@@ -22,10 +22,6 @@ pub enum VerifiedHardwareReport {
         report_data: [u8; 64],
         attributes: [u8; 8],
     },
-    MockSimulated {
-        measurement: [u8; 48],
-        hardware_type: String,
-    },
 }
 
 pub struct AttestationVerifier {
