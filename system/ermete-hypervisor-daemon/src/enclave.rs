@@ -151,6 +151,25 @@ impl EnclaveController {
             cgroup_dir.display()
         );
 
+        // Apply real Zero-Trust network isolation via nftables matching cgroupv2
+        let cgroup_path_str = cgroup_dir.to_string_lossy();
+        let status = std::process::Command::new("nft")
+            .arg("add")
+            .arg("rule")
+            .arg("inet")
+            .arg("filter")
+            .arg("output")
+            .arg("meta")
+            .arg("cgroupv2")
+            .arg(cgroup_path_str.as_ref())
+            .arg("drop")
+            .status()
+            .map_err(|e| anyhow!("Failed to execute nftables: {}", e))?;
+
+        if !status.success() {
+            return Err(anyhow!("Hardware Enclave network isolation failed (nftables rule rejected). Refusing to launch!"));
+        }
+
         if let Some(target_pid) = pid {
             info!(
                 "EnclaveController: Target PID {} disconnected from host network stack. Only virtio-fs / internal IPC permitted.",
@@ -179,18 +198,18 @@ impl EnclaveController {
 
                 if cpuset_mems.exists() {
                     if let Err(e) = fs::write(&cpuset_mems, "0") {
-                tracing::error!("Failed cgroup write {:?}: {:?}", cpuset_mems, e);
-            }
+                        return Err(anyhow!("Failed writing cpuset.mems: {}", e));
+                    }
                 }
 
                 if cpuset_cpus.exists() {
                     if let Err(e) = fs::write(&cpuset_cpus, &cpu_cores) {
-                        warn!("EnclaveController (async): Failed writing cpuset.cpus: {}", e);
+                        return Err(anyhow!("Failed writing cpuset.cpus: {}", e));
                     } else {
                         info!("EnclaveController (async): cgroup pinned to CPU cores '{}'", cpu_cores);
                     }
                 } else if cgroup_dir_buf.exists() {
-                    warn!("EnclaveController (async): cpuset.cpus file unavailable in sysfs cgroup");
+                    return Err(anyhow!("cpuset.cpus file unavailable in sysfs cgroup"));
                 }
 
                 if let Some(target_pid) = pid {
@@ -205,13 +224,13 @@ impl EnclaveController {
 
             if cpuset_mems.exists() {
                 if let Err(e) = fs::write(&cpuset_mems, "0") {
-                tracing::error!("Failed cgroup write {:?}: {:?}", cpuset_mems, e);
-            }
+                    return Err(anyhow!("Failed writing cpuset.mems: {}", e));
+                }
             }
             if cpuset_cpus.exists() {
                 if let Err(e) = fs::write(&cpuset_cpus, &cpu_cores) {
-                tracing::error!("Failed cgroup write {:?}: {:?}", cpuset_cpus, e);
-            }
+                    return Err(anyhow!("Failed writing cpuset.cpus: {}", e));
+                }
             }
         }
 

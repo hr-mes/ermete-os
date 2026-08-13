@@ -100,35 +100,29 @@ pub fn setup_cvm_kernel_confinement(limits: &CvmConfinementLimits) -> Result<()>
     info!("CvmManager: Setting up kernel cgroup v2 slice at '{}'", cgroup_dir.display());
 
     if let Err(e) = fs::create_dir_all(cgroup_dir) {
-        warn!("CvmManager: Failed creating cgroup slice directory '{}': {}. Dev fallback active.", cgroup_dir.display(), e);
+        let err = anyhow!("Failed creating cgroup slice directory '{}': {}", cgroup_dir.display(), e);
+        error!("CvmManager: {}", err);
+        return Err(err);
     }
 
     let mem_max = cgroup_dir.join("memory.max");
-    if mem_max.exists() {
-        if let Err(e) = fs::write(&mem_max, limits.memory_max_bytes.to_string()) {
-                tracing::error!("Failed to set cgroup mem_max {:?}: {:?}", mem_max, e);
-            }
+    if let Err(e) = fs::write(&mem_max, limits.memory_max_bytes.to_string()) {
+        return Err(anyhow!("Failed to set cgroup mem_max at {:?}: {:?}", mem_max, e));
     }
 
     let swap_max = cgroup_dir.join("memory.swap.max");
-    if swap_max.exists() {
-        if let Err(e) = fs::write(&swap_max, "0") {
-                tracing::error!("Failed to set cgroup swap_max {:?}: {:?}", swap_max, e);
-            }
+    if let Err(e) = fs::write(&swap_max, "0") {
+        return Err(anyhow!("Failed to set cgroup swap_max at {:?}: {:?}", swap_max, e));
     }
 
     let net_marker = cgroup_dir.join("ermete_net_isolated");
-    if cgroup_dir.exists() {
-        if let Err(e) = fs::write(&net_marker, "isolated\n1") {
-                tracing::error!("Failed to set net_marker {:?}: {:?}", net_marker, e);
-            }
+    if let Err(e) = fs::write(&net_marker, "isolated\n1") {
+        return Err(anyhow!("Failed to set net_marker at {:?}: {:?}", net_marker, e));
     }
 
     let cpuset_cpus = cgroup_dir.join("cpuset.cpus");
-    if cpuset_cpus.exists() {
-        if let Err(e) = fs::write(&cpuset_cpus, &limits.cpu_cores) {
-                tracing::error!("Failed to set cpuset_cpus {:?}: {:?}", cpuset_cpus, e);
-            }
+    if let Err(e) = fs::write(&cpuset_cpus, &limits.cpu_cores) {
+        return Err(anyhow!("Failed to set cpuset_cpus at {:?}: {:?}", cpuset_cpus, e));
     }
 
     info!("CvmManager: Kernel cgroup v2 confinement initialized (RAM: {} bytes, Cores: '{}', NetIsolated: {})",
@@ -183,12 +177,39 @@ impl CvmManager {
         let client = reqwest::Client::new();
         let nonce_hex = hex::encode(nonce);
 
+        // Generate real TPM 2.0 quote via hardware
+        let quote_output = std::process::Command::new("tpm2_quote")
+            .arg("-c")
+            .arg("0x81010001") // Standard AK handle
+            .arg("-l")
+            .arg("sha256:0,7,10")
+            .arg("-q")
+            .arg(&nonce_hex)
+            .arg("-m")
+            .arg("-") // stdout
+            .output();
+
+        let quote_payload = match quote_output {
+            Ok(out) if out.status.success() => hex::encode(out.stdout),
+            _ => {
+                error!("Failed to generate hardware TPM quote");
+                return KeylimeAttestationReport {
+                    tpm_present: true,
+                    pcr0: String::new(),
+                    pcr7: String::new(),
+                    pcr10: String::new(),
+                    keylime_verifying_state: KeylimeStatus::Untrusted("Hardware TPM quote generation failed".to_string()),
+                    agent_id: String::from("ermete-keylime-agent-tpm20"),
+                };
+            }
+        };
+
         let request = client
             .post("https://keylime.ermete.local:8881/v1/quotes/verify")
             .json(&serde_json::json!({
                 "agent_id": "ermete-keylime-agent-tpm20",
                 "nonce": nonce_hex,
-                "quote_payload": "real-tpm-quote-data-would-go-here"
+                "quote_payload": quote_payload
             }))
             .send()
             .await;

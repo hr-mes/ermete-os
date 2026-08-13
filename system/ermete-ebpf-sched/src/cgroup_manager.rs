@@ -27,21 +27,20 @@ impl CgroupManager {
             self.cgroup_root.join("ermete_background.slice")
         };
 
-        if target_cgroup.exists() {
-            let procs_path = target_cgroup.join("cgroup.procs");
-            let weight_path = target_cgroup.join("cpu.weight");
+        if !target_cgroup.exists() {
+            if let Err(e) = std::fs::create_dir_all(&target_cgroup) {
+                return Err(format!("Failed to create CGroup slice {:?}: {}", target_cgroup, e));
+            }
+        }
 
-            if let Err(e) = std::fs::write(&weight_path, cpu_weight.to_string()) {
-                warn!("Failed to write cpu.weight to {:?}: {}", weight_path, e);
-            }
-            if let Err(e) = std::fs::write(&procs_path, pid.to_string()) {
-                warn!("Failed to attach PID {} to cgroup procs {:?}: {}", pid, procs_path, e);
-            }
-        } else {
-            info!(
-                "💡 CGroup slice {:?} not mounted. Zero-latency simulated priority update applied for PID {}.",
-                target_cgroup, pid
-            );
+        let procs_path = target_cgroup.join("cgroup.procs");
+        let weight_path = target_cgroup.join("cpu.weight");
+
+        if let Err(e) = std::fs::write(&weight_path, cpu_weight.to_string()) {
+            return Err(format!("Failed to write cpu.weight to {:?}: {}", weight_path, e));
+        }
+        if let Err(e) = std::fs::write(&procs_path, pid.to_string()) {
+            return Err(format!("Failed to attach PID {} to cgroup procs {:?}: {}", pid, procs_path, e));
         }
 
         Ok(())
