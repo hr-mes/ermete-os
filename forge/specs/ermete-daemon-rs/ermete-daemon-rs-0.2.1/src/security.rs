@@ -1,3 +1,4 @@
+#![allow(unsafe_code)]
 use tracing::{info, warn};
 
 /// Capability dropping helper using raw Linux sys_capset and prctl system calls.
