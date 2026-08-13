@@ -67,7 +67,7 @@ jobs:
             sudo chmod +x /usr/local/bin/cargo-deny
           fi
           if ! command -v cargo-vet >/dev/null 2>&1; then
-            curl -sSL https://github.com/mozilla/cargo-vet/releases/download/v0.9.1/cargo-vet-v0.9.1-x86_64-unknown-linux-musl.tar.gz | tar -xz --strip-components=1 -C /tmp
+            curl -sSL https://github.com/mozilla/cargo-vet/releases/download/v0.10.0/cargo-vet-x86_64-unknown-linux-gnu.tar.xz | tar -xJ --strip-components=1 -C /tmp
             sudo mv /tmp/cargo-vet /usr/local/bin/cargo-vet
             sudo chmod +x /usr/local/bin/cargo-vet
           fi
