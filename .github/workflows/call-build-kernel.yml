@@ -1,0 +1,384 @@
+name: Reusable Build Kernel & NVIDIA Workflow
+
+on:
+  workflow_call:
+    inputs:
+      builder_content_hash:
+        description: "Content hash of the base builder image"
+        required: true
+        type: string
+      hardware_hash:
+        description: "Hardware profile hash for AutoFDO/BOLT"
+        required: false
+        type: string
+        default: ''
+      march_target:
+        description: "Target architecture optimization"
+        required: false
+        type: string
+        default: 'x86-64-v3'
+    secrets:
+      MOK_PRIVATE_KEY:
+        required: false
+      MOK_PUBLIC_DER:
+        required: false
+    outputs:
+      nvidia_rebuilt:
+        description: "Indicates if NVIDIA module was rebuilt"
+        value: ${{ jobs.build-nvidia.outputs.rebuilt }}
+
+env:
+  REGISTRY: ghcr.io
+  FEDORA_VERSION: 43
+  SCCACHE_CACHE_SIZE: 5G
+
+jobs:
+  build-kernel:
+    name: 🧬 Build Chimera Kernel RPM (${{ matrix.target }})
+    runs-on: self-hosted
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        # target: [x86_64, aarch64, riscv64] # ARM/RISC-V disabled to save local disk space
+        target: [x86_64]
+    steps:
+    - name: Checkout Source
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      
+    - name: ⚡ Restore/Save Kernel CCache
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      with:
+        path: .ccache_local
+        key: kernel-ccache-${{ runner.os }}-${{ hashFiles('forge/specs/ermete-kernel/**') }}
+        restore-keys: |
+          kernel-ccache-${{ runner.os }}-
+
+    - name: 🚀 Boot Isolator (Start Ermete Builder Container)
+      env:
+        TARGET: ${{ matrix.target }}
+        BUILDER_HASH: ${{ inputs.builder_content_hash }}
+      run: |
+        set -euo pipefail
+        echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+        podman run -d --name chimera-builder-${TARGET} --pull=always \
+          --cap-add SYS_ADMIN \
+          --security-opt label=disable \
+          --security-opt seccomp=unconfined \
+          -v ${{ github.workspace }}:/forge \
+          -w /forge \
+          ghcr.io/hr-mes/ermete-os-builder:${BUILDER_HASH} sleep infinity
+
+    - name: "🧬 Phase 1: Fetch, Validate & Chimera Merge"
+      env:
+        TARGET: ${{ matrix.target }}
+      run: podman exec chimera-builder-${TARGET} bash forge/specs/ermete-kernel/prepare-chimera.sh
+        
+    - name: "📊 Collect AutoFDO & BOLT Profiles"
+      env:
+        HARDWARE_HASH: ${{ inputs.hardware_hash || github.event.inputs.hardware_hash || '' }}
+        TARGET: ${{ matrix.target }}
+      run: |
+        set -euo pipefail
+        podman exec -e HARDWARE_HASH="${HARDWARE_HASH}" chimera-builder-${TARGET} bash -c "set -euo pipefail; \
+          echo '=== Collecting AutoFDO Profiles ==='
+          mkdir -p /forge/profiles
+          if [ -n \"\${HARDWARE_HASH:-}\" ]; then
+            echo 'Fetching hardware-specific profiles from decentralized cache...'
+            curl -sSfL \"https://telemetry.ermete-os.org/profiles/\${HARDWARE_HASH:-}/kernel_bolt.fdata\" -o /forge/profiles/kernel_bolt.fdata || echo 'No hardware-specific profile found. Operating without PGO/BOLT.'
+            
+            # 🛡️ ZERO-TRUST ENFORCEMENT: Crittografia obbligatoria sul PGO/BOLT
+            if [ -f /forge/profiles/kernel_bolt.fdata ]; then
+              echo 'Verifying BOLT Profile Authenticity via Cosign...'
+              curl -sSfL \"https://telemetry.ermete-os.org/profiles/\${HARDWARE_HASH:-}/kernel_bolt.fdata.sig\" -o /forge/profiles/kernel_bolt.fdata.sig || true
+              if [ -f /forge/profiles/kernel_bolt.fdata.sig ]; then
+                cosign verify-blob --key https://telemetry.ermete-os.org/telemetry.pub --signature /forge/profiles/kernel_bolt.fdata.sig /forge/profiles/kernel_bolt.fdata || { echo '❌ CRITICAL: Invalid BOLT profile signature! Supply Chain Attack averted.'; rm -f /forge/profiles/kernel_bolt.fdata; exit 1; }
+                echo '✅ BOLT Profile cryptographically verified.'
+              else
+                echo '⚠️ WARNING: No signature found for BOLT profile. Dropping payload to maintain Zero-Trust Air-Gap.'
+                rm -f /forge/profiles/kernel_bolt.fdata
+              fi
+            fi
+          else
+            echo 'Generic build requested. Skipping AutoFDO/BOLT profiling.'
+          fi
+        "
+
+    - name: "⚙️ Phase 2: LLVM/ThinLTO & AutoFDO/BOLT Macro Injection"
+      env:
+        MARCH_TARGET: ${{ inputs.march_target || github.event.inputs.march_target || 'x86-64-v3' }}
+        TARGET: ${{ matrix.target }}
+      run: |
+        set -euo pipefail
+        podman exec -e MARCH_TARGET="${MARCH_TARGET}" chimera-builder-${TARGET} bash -c "set -euo pipefail; \
+          export CCACHE_DIR=/forge/.ccache_local
+          export CCACHE_COMPRESS=1
+          export CCACHE_MAXSIZE=3G
+          cat << MACRO >> ~/.rpmmacros
+        %_smp_mflags -j\$(nproc)
+        %toolchain clang
+        %__make /usr/bin/make LLVM=1 LLVM_IAS=1
+        %__cc clang
+        %__cxx clang++
+        %_build_cc clang
+        %_build_cxx clang++
+        %_host_cc clang
+        %_host_cxx clang++
+        %_ld ld.lld
+        %_ldflags -Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro -fuse-ld=lld
+        %optflags %{__global_compiler_flags} -march=\${MARCH_TARGET} -pipe -Wno-error -flto=thin
+        %kcflags -march=\${MARCH_TARGET} -pipe -Wno-error -flto=thin
+        MACRO
+        "
+        
+    - name: "🔥 Phase 3: RPMBuild (Clang LTO + AutoFDO + BOLT)"
+      env:
+        TARGET: ${{ matrix.target }}
+      run: |
+        set -euo pipefail
+        podman exec chimera-builder-${TARGET} bash -c "set -euo pipefail; \
+          export CCACHE_DIR=/forge/.ccache_local
+          export PATH=/usr/lib64/ccache:/usr/lib/ccache:\$PATH
+          cd ~/rpmbuild/SPECS
+          rpmbuild -bb --with toolchain_clang --with clang_lto --with clang_fdo --with bolt --noprep kernel.spec --target x86_64 </dev/null
+          
+          echo '=== Applying Post-Build BOLT Binary Optimization ==='
+          if [ -f ~/rpmbuild/BUILD/vmlinux ]; then
+            if [ -f /forge/profiles/kernel_bolt.fdata ]; then
+              llvm-bolt ~/rpmbuild/BUILD/vmlinux -o ~/rpmbuild/BUILD/vmlinux.bolt -data=/forge/profiles/kernel_bolt.fdata -reorder-blocks=ext-tsp -reorder-functions=hfsort -split-functions || true
+            else
+              echo 'BOLT optimization skipped: no profiling data available'
+            fi
+          fi
+          
+          mkdir -p /forge/RPMS_OUT
+          cp ~/rpmbuild/RPMS/x86_64/*.rpm /forge/RPMS_OUT/
+        "
+        
+    - name: Upload Binary RPMs
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      with:
+        name: ermete-chimera-kernel-rpms
+        path: RPMS_OUT/*.rpm
+        compression-level: 1
+        
+    - name: Publish Kernel Micro-Container OCI
+      env:
+        HARDWARE_HASH: ${{ inputs.hardware_hash || github.event.inputs.hardware_hash || 'generic' }}
+        TARGET: ${{ matrix.target }}
+      run: |
+        set -euo pipefail
+        podman exec -e HARDWARE_HASH="${HARDWARE_HASH}" chimera-builder-${TARGET} bash -c "set -euo pipefail; \
+          export STORAGE_DRIVER=vfs
+          export BUILDAH_ISOLATION=chroot
+          buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
+          ctr=\$(buildah from scratch)
+          buildah copy \$ctr /forge/RPMS_OUT/*.rpm /
+          IMAGE_BASE='ghcr.io/hr-mes/ermete-os-kernel'
+          IMAGE_LATEST=\$(echo \"\${IMAGE_BASE}:latest\" | tr '[:upper:]' '[:lower:]')
+          HW_TAG=\"\${HARDWARE_HASH:-generic}\"
+          IMAGE_HW=\$(echo \"\${IMAGE_BASE}:\${HW_TAG}\" | tr '[:upper:]' '[:lower:]')
+          buildah commit --omit-timestamp \$ctr \$IMAGE_LATEST
+          buildah tag \$IMAGE_LATEST \$IMAGE_HW
+          buildah push --digestfile /forge/kernel_digest.txt \$IMAGE_LATEST docker://\$IMAGE_LATEST
+          buildah push \$IMAGE_HW docker://\$IMAGE_HW
+        "
+        echo "KERNEL_DIGEST=$(cat kernel_digest.txt | tr -d '\n')" >> $GITHUB_ENV
+
+    - name: Generate Kernel SBOM (Syft)
+      env:
+        TARGET: ${{ matrix.target }}
+      run: |
+        set -euo pipefail
+        podman exec chimera-builder-${TARGET} bash -c "set -euo pipefail; \
+          syft ghcr.io/hr-mes/ermete-os-kernel@${{ env.KERNEL_DIGEST }} -o spdx-json > /forge/kernel-sbom.spdx.json
+        "
+
+    - name: Sign & Attest Kernel Micro-Container OCI
+      env:
+        COSIGN_EXPERIMENTAL: 1
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        TARGET: ${{ matrix.target }}
+      run: |
+        set -euo pipefail
+        podman exec -e COSIGN_EXPERIMENTAL=1 -e ACTIONS_ID_TOKEN_REQUEST_URL="${ACTIONS_ID_TOKEN_REQUEST_URL:-}" -e ACTIONS_ID_TOKEN_REQUEST_TOKEN="${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" -e GITHUB_TOKEN=${GITHUB_TOKEN} chimera-builder-${TARGET} bash -c "set -euo pipefail; \
+          cosign login ghcr.io -u ${{ github.actor }} -p \${GITHUB_TOKEN}
+          IMAGE_REF='ghcr.io/hr-mes/ermete-os-kernel@${{ env.KERNEL_DIGEST }}'
+          cosign sign -y \${IMAGE_REF}
+          cosign attest -y --type spdxjson --predicate /forge/kernel-sbom.spdx.json \${IMAGE_REF}
+        "
+
+    - name: Verify Kernel Image Signature & Attestation
+      env:
+        TARGET: ${{ matrix.target }}
+      run: |
+        set -euo pipefail
+        podman exec -e COSIGN_EXPERIMENTAL=1 chimera-builder-${TARGET} bash -c "set -euo pipefail; \
+          IMAGE_REF='ghcr.io/hr-mes/ermete-os-kernel@${{ env.KERNEL_DIGEST }}'
+          cosign verify --certificate-identity-regexp '^https://github.com/${{ github.repository_owner }}/' --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \${IMAGE_REF}
+          cosign verify-attestation --type spdxjson --certificate-identity-regexp '^https://github.com/${{ github.repository_owner }}/' --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \${IMAGE_REF}
+        "
+
+    - name: 🧹 Cleanup Isolator
+      if: always()
+      env:
+        TARGET: ${{ matrix.target }}
+      run: |
+        set -euo pipefail
+        podman rm -f chimera-builder-${TARGET} || true
+
+    - name: 🧹 Deep Workspace Cleanup (Prevent 0MB Error)
+      if: always()
+      run: |
+        set -euo pipefail
+        podman unshare rm -rf .ccache_local RPMS_OUT profiles || rm -rf .ccache_local RPMS_OUT profiles || true
+        podman container prune -f || true
+
+  build-nvidia:
+    needs: [build-kernel]
+    name: 🎮 Build NVIDIA KMOD
+    outputs:
+      rebuilt: ${{ steps.cache.outputs['cache-hit'] != 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: ⚙️ Set Default Rust Toolchain
+        run: rustup default stable
+      - name: ❄️ Install Nix (Bedrock Cache)
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
+        with:
+          extra_nix_config: "experimental-features = nix-command flakes"
+      - name: Authenticate Podman to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Resolve Kernel Version and Install Chimera Headers
+        id: kernel
+        env:
+          BUILDER_HASH: ${{ inputs.builder_content_hash }}
+        run: |
+          set -euo pipefail
+          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            ghcr.io/hr-mes/ermete-os-builder:${BUILDER_HASH} \
+            bash <<'EOF'
+              set -euo pipefail
+              cp /workspace/forge/assets/repos/fedora-nvidia.repo /etc/yum.repos.d/fedora-nvidia.repo
+              export BUILDAH_ISOLATION=chroot
+              buildah from ghcr.io/hr-mes/ermete-os-kernel:${BUILDER_HASH} > ctr_id
+              ctr=$(cat ctr_id)
+              mnt=$(buildah mount $ctr)
+              find $mnt/ -name "*.rpm" ! -name "*debug*" -exec rpm -Uvh --noscripts --oldpackage --replacepkgs --force --nodeps {} +
+              buildah umount $ctr
+              QUALIFIED_KERNEL=$(rpm -q --queryformat "%{VERSION}-%{RELEASE}.%{ARCH}\n" kernel-devel | sort -V | tail -n 1)
+              QUALIFIED_NVIDIA=$(dnf repoquery --qf "%{VERSION}-%{RELEASE}\n" akmod-nvidia 2>/dev/null | sort -V | tail -n 1)
+              echo "QUALIFIED_KERNEL=$QUALIFIED_KERNEL" > /workspace/kernel_info
+              echo "QUALIFIED_NVIDIA=$QUALIFIED_NVIDIA" >> /workspace/kernel_info
+          EOF
+          echo "kernel_ver=$(grep QUALIFIED_KERNEL ../kernel_info | cut -d= -f2)" >> $GITHUB_OUTPUT
+          echo "nvidia_ver=$(grep QUALIFIED_NVIDIA ../kernel_info | cut -d= -f2)" >> $GITHUB_OUTPUT
+
+      - name: Cache RPMs
+        id: cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: nvidia_cache/
+          key: rpm-nvidia-bedrock6-${{ steps.kernel.outputs.kernel_ver }}-${{ steps.kernel.outputs.nvidia_ver }}
+
+      - name: Install Dependencies and Build
+        if: steps.cache.outputs['cache-hit'] != 'true'
+        env:
+          BUILDER_HASH: ${{ inputs.builder_content_hash }}
+          MOK_PRIVATE_KEY: ${{ secrets.MOK_PRIVATE_KEY }}
+          MOK_PUBLIC_DER: ${{ secrets.MOK_PUBLIC_DER }}
+        run: |
+          set -euo pipefail
+          mkdir -p ${{ github.workspace }}/nvidia_cache
+          podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+            -v ${{ github.workspace }}:/workspace \
+            -v ${{ github.workspace }}/nvidia_cache:/var/cache/akmods/nvidia \
+            -w /workspace \
+            -e MOK_PRIVATE_KEY="${MOK_PRIVATE_KEY}" \
+            -e MOK_PUBLIC_DER="${MOK_PUBLIC_DER}" \
+            ghcr.io/hr-mes/ermete-os-builder:${BUILDER_HASH} \
+            bash <<'EOF'
+              cp /workspace/forge/assets/repos/fedora-nvidia.repo /etc/yum.repos.d/fedora-nvidia.repo
+              export BUILDAH_ISOLATION=chroot
+              ctr=$(buildah from ghcr.io/hr-mes/ermete-os-kernel:${BUILDER_HASH})
+              mnt=$(buildah mount $ctr)
+              find $mnt/ -name "*.rpm" ! -name "*debug*" -exec rpm -Uvh --noscripts --oldpackage --replacepkgs --force --nodeps {} +
+              buildah umount $ctr
+              
+              REAL_KERNEL_VER=$(ls /usr/src/kernels/ | grep -v "debug" | head -n 1)
+              if [ -z "$REAL_KERNEL_VER" ]; then exit 1; fi
+
+              dnf install -y akmods akmod-nvidia
+              mkdir -p /lib/modules/$REAL_KERNEL_VER
+              ln -sf /usr/src/kernels/$REAL_KERNEL_VER /lib/modules/$REAL_KERNEL_VER/build
+              mkdir -p /etc/pki/akmods/certs /etc/pki/akmods/private
+              if [ -n "$MOK_PRIVATE_KEY" ]; then echo "$MOK_PRIVATE_KEY" > /etc/pki/akmods/private/private_key.priv; fi
+              if [ -n "$MOK_PUBLIC_DER" ]; then echo "$MOK_PUBLIC_DER" | base64 -d > /etc/pki/akmods/certs/public_key.der; fi
+              cp forge/config/rpmmacros /etc/rpm/macros.98-config
+              chmod 600 /etc/pki/akmods/private/private_key.priv
+
+              echo -e "%_ldflags -Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro\n%optflags %{__global_compiler_flags} -O3 -march=x86-64-v3 -pipe -Wno-error\n%kcflags -O3 -march=x86-64-v3 -pipe -Wno-error" > /etc/rpm/macros.99-akmods
+
+              pushd /lib/modules/$REAL_KERNEL_VER/build
+              make syncconfig LLVM=1 LLVM_IAS=1 CC=clang
+              popd
+
+              rpm -ivh /usr/src/akmods/nvidia-kmod*.src.rpm
+              sed -i "s/make %{?_smp_mflags}/IGNORE_CC_MISMATCH=1 KCFLAGS=\\"-Wno-error -fno-lto\\"; make LLVM=1 LLVM_IAS=1 CC=clang LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf STRIP=llvm-strip %{?_smp_mflags}/g" ~/rpmbuild/SPECS/nvidia-kmod.spec
+              sed -i -E '/^(Provides|Requires|Conflicts|Obsoletes|BuildRequires):.*(kernel_uname_r|kernel >|kernel <|kernel-devel)/d' /usr/bin/kmodtool
+
+              mkdir -p /tmp/llvm-bin
+              ln -sf /usr/bin/ld.lld /tmp/llvm-bin/ld
+              export PATH=/tmp/llvm-bin:$PATH
+
+              rpmbuild -bb --target x86_64 --define "kernels $REAL_KERNEL_VER" ~/rpmbuild/SPECS/nvidia-kmod.spec
+              find ~/rpmbuild/RPMS -name "*.rpm" -exec cp {} /var/cache/akmods/nvidia/ \;
+              
+              dnf download -y --disablerepo="rpmfusion*" --destdir=/var/cache/akmods/nvidia/ \
+                nvidia-driver \
+                nvidia-driver-libs \
+                nvidia-driver-cuda \
+                nvidia-driver-cuda-libs \
+                nvidia-driver-selinux \
+                nvidia-persistenced \
+                nvidia-settings \
+                egl-wayland \
+                egl-gbm \
+                egl-wayland2 \
+                golang-github-nvidia-container-toolkit
+          EOF
+
+      - name: Publish Micro-Container OCI
+        run: |
+          set -euo pipefail
+          export BUILDAH_ISOLATION=chroot
+          buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
+          ctr=$(buildah from scratch)
+          buildah copy $ctr ${{ github.workspace }}/nvidia_cache/*.rpm /
+          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/ermete-os-forge-nvidia:latest" | tr '[:upper:]' '[:lower:]')
+          RPM_HASH=$(sha256sum ${{ github.workspace }}/nvidia_cache/*.rpm | sha256sum | awk '{print $1}')
+          buildah config --label tier.content.sha256="$RPM_HASH" $ctr
+          buildah commit --omit-timestamp $ctr $IMAGE_LOWER
+          buildah push $IMAGE_LOWER
+
+      - name: 🧹 Cleanup Workspace Permissions
+        if: always()
+        run: podman unshare chown -R $USER:$USER ${{ github.workspace }} || true
+
+      - name: 🧹 Fix Workspace Permissions (GH Actions Cleanup)
+        if: always()
+        run: |
+          set -euo pipefail
+          if command -v sudo >/dev/null 2>&1; then
+            sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
+          else
+            chown -R 1001:1001 . || chown -R 1000:1000 . || true
+          fi
