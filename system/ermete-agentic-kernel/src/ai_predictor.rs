@@ -153,44 +153,43 @@ impl TaskDiscoveryNode {
 
     /// Discovers live system processes from `/proc` or falls back to system task topology
     pub async fn discover_tasks() -> Vec<DiscoveredTask> {
-        let mut tasks = Vec::new();
+        tokio::task::spawn_blocking(|| {
+            let mut tasks = Vec::new();
 
-        // 1. Attempt to inspect live processes via /proc fs
-        if let Ok(entries) = std::fs::read_dir("/proc") {
-            for entry in entries.flatten() {
-                let file_name = entry.file_name();
-                if let Ok(pid) = file_name.to_string_lossy().parse::<u32>() {
-                    // Filter out protected system init/kernel PIDs
-                    if pid <= 1 {
-                        continue;
-                    }
-                    let comm_path = format!("/proc/{}/comm", pid);
-                    if let Ok(comm) = std::fs::read_to_string(&comm_path) {
-                        let comm_clean = comm.trim().to_string();
-                        if !comm_clean.is_empty() {
-                            let (cpu_time_ms, num_threads) = Self::read_proc_stat(pid);
-                            let (io_read, io_write) = Self::read_proc_io(pid);
-                            let mem_mb = Self::read_proc_mem(pid);
+            // 1. Inspect live processes via /proc fs (in a blocking thread)
+            if let Ok(entries) = std::fs::read_dir("/proc") {
+                for entry in entries.flatten() {
+                    let file_name = entry.file_name();
+                    if let Ok(pid) = file_name.to_string_lossy().parse::<u32>() {
+                        // Filter out protected system init/kernel PIDs
+                        if pid <= 1 {
+                            continue;
+                        }
+                        let comm_path = format!("/proc/{}/comm", pid);
+                        if let Ok(comm) = std::fs::read_to_string(&comm_path) {
+                            let comm_clean = comm.trim().to_string();
+                            if !comm_clean.is_empty() {
+                                let (cpu_time_ms, num_threads) = Self::read_proc_stat(pid);
+                                let (io_read, io_write) = Self::read_proc_io(pid);
+                                let mem_mb = Self::read_proc_mem(pid);
 
-                            tasks.push(DiscoveredTask {
-                                pid,
-                                comm: comm_clean.clone(),
-                                cmdline: comm_clean,
-                                mem_mb,
-                                cpu_time_ms,
-                                io_read_bytes: io_read,
-                                io_write_bytes: io_write,
-                                num_threads,
-                            });
+                                tasks.push(DiscoveredTask {
+                                    pid,
+                                    comm: comm_clean.clone(),
+                                    cmdline: comm_clean,
+                                    mem_mb,
+                                    cpu_time_ms,
+                                    io_read_bytes: io_read,
+                                    io_write_bytes: io_write,
+                                    num_threads,
+                                });
+                            }
                         }
                     }
                 }
             }
-        }
-
-        // 2. Nessun finto fallback. Se non troviamo task, restituiamo un vettore vuoto (nessun teatro).
-        tasks
-
+            tasks
+        }).await.unwrap_or_default()
     }
 }
 

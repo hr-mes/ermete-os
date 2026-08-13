@@ -24,6 +24,9 @@ Obsoletes:      system-logos-httpd < 43
 Provides:       fedora-release = 43
 Provides:       fedora-release = %{version}-%{release}
 Obsoletes:      fedora-release < 43
+Provides:       fedora-release-systemd = 43
+Provides:       fedora-release-systemd = %{version}-%{release}
+Obsoletes:      fedora-release-systemd < 43
 Provides:       fedora-release-identity = 43
 Provides:       fedora-release-identity = %{version}-%{release}
 Obsoletes:      fedora-release-identity < 43

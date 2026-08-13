@@ -38,7 +38,7 @@ RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier0-repo:latest,sour
 RUN --mount=type=bind,from=ghcr.io/hr-mes/ermete-os-forge-tier1-repo:latest,source=/,target=/mnt/tier1-repo \
     --mount=type=cache,dst=/var/cache --mount=type=cache,dst=/var/cache/libdnf5 \
     echo "Tier 1: Installing Scudo Hardened Allocator (compiler-rt), Keylime & UKI tools..." && \
-    dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs compiler-rt keylime-tenant keylime-agent systemd-ukify systemd-boot-unsigned sbsigntools openssl tpm2-tools cryptsetup && \
+    dnf5 install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs compiler-rt keylime-tenant keylime-agent systemd-ukify systemd-boot-unsigned sbsigntools openssl tpm2-tools cryptsetup dracut && \
     if find /mnt/tier1-repo -name "*.rpm" 1> /dev/null 2>&1; then \
         echo "Tier 1: Installing Core User Services, DBus & Policies..." && \
         RPM_LIST=$(find /mnt/tier1-repo -name "*.rpm" 2>/dev/null | grep -vE -- '-devel-|-doc-|debuginfo|debugsource' || true) && \

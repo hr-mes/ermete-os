@@ -10,22 +10,23 @@
 # ------------------------------------------------------------------------------
 # STAGE 1: Rust Builder Stage
 # ------------------------------------------------------------------------------
-FROM docker.io/library/rust:1.85-slim-bookworm@sha256:9f841bbe9e7d8e37ceb96ed907265a3a0df7f44e3737d0b100e7907a679acb36 AS builder
+FROM registry.fedoraproject.org/fedora-minimal:latest AS builder
 
 # Set build environment variables
-ENV CARGO_TERM_COLOR=always \
-    DEBIAN_FRONTEND=noninteractive
+ENV CARGO_TERM_COLOR=always
 
 # Install required native C/C++ compilation tools and system header dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
+RUN microdnf update -y && microdnf install -y \
+    gcc \
+    gcc-c++ \
     clang \
-    libclang-dev \
-    libdbus-1-dev \
-    libssl-dev \
-    pkg-config \
+    dbus-devel \
+    openssl-devel \
+    pkgconf-pkg-config \
     ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+    rust \
+    cargo \
+    && microdnf clean all
 
 WORKDIR /usr/src/ermete-os
 
