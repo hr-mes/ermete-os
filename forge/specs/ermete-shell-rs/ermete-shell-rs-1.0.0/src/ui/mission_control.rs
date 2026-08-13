@@ -92,22 +92,38 @@ button.mc-workspace-action:hover {
 /// Direct attachment point for Wayland Screencopy & DMA-BUF buffer rendering
 /// (`zwp_linux_dmabuf_v1` / `zwlr_screencopy_manager_v1`).
 /// Returns an empty frame buffer until Wayland Screencopy protocol FFI bindings are mapped.
-pub async fn fetch_window_thumbnail(_app_id: &str, _window_id: u64) -> Option<gdk::Texture> {
-    let width = 320;
-    let height = 180;
-    let pixels = vec![0u8; width * height * 4];
-
-    let bytes = glib::Bytes::from_owned(pixels);
-    let stride = width * 4;
-    let memory_texture = gdk::MemoryTexture::new(
-        width as i32,
-        height as i32,
-        gdk::MemoryFormat::R8g8b8a8Premultiplied,
-        &bytes,
-        stride as usize,
-    );
-
-    Some(memory_texture.upcast())
+pub async fn fetch_window_thumbnail(app_id: &str, window_id: u64) -> Option<gdk::Texture> {
+    use zbus::Connection;
+    
+    // Connect to the session bus to request a screencopy frame from the Compositor
+    let conn = Connection::session().await.ok()?;
+    let proxy = zbus::Proxy::new(
+        &conn,
+        "org.ermete.Compositor",
+        "/org/ermete/Compositor/Screencopy",
+        "org.ermete.Compositor.Screencopy",
+    ).await.ok()?;
+    
+    // Call CaptureWindow which returns (width, height, stride, bytes)
+    let reply: Result<(u32, u32, u32, Vec<u8>), zbus::Error> = proxy.call("CaptureWindow", &(app_id, window_id)).await;
+    
+    match reply {
+        Ok((width, height, stride, pixels)) => {
+            let bytes = glib::Bytes::from_owned(pixels);
+            let memory_texture = gdk::MemoryTexture::new(
+                width as i32,
+                height as i32,
+                gdk::MemoryFormat::R8g8b8a8Premultiplied,
+                &bytes,
+                stride as usize,
+            );
+            Some(memory_texture.upcast())
+        }
+        Err(e) => {
+            eprintln!("Failed to fetch window thumbnail over D-Bus for {}: {:?}", app_id, e);
+            None
+        }
+    }
 }
 
 pub fn build_ui(app: &Application) {

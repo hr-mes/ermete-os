@@ -67,51 +67,44 @@ async fn main() -> Result<()> {
         }
     });
 
-    // Step 2: Spawn dedicated 1000Hz ECS Mass-Spring-Damper spring_physics_system_batch loop
-    let phys_ecs_world = ecs_world.clone();
-    let ecs_physics_handle = tokio::spawn(async move {
-        let mut interval = tokio::time::interval(std::time::Duration::from_millis(1));
-        loop {
-            interval.tick().await;
-            if let Ok(mut world) = phys_ecs_world.write() {
-                ecs::systems::physics::spring_physics_system_batch(&mut world, 0.001);
-            }
-        }
-    });
-
-    // Spawn 1000 Hz legacy desktop state animation tick loop
-    let anim_state = Arc::clone(&state);
-    let anim_handle = tokio::spawn(async move {
-        let mut interval = tokio::time::interval(std::time::Duration::from_millis(1));
+    // Step 2 & 3: Unified VBlank-anchored native frame loop
+    // Replaces the legacy 1000Hz CPU-hogging polling timers with a single event-driven loop
+    let frame_ecs_world = ecs_world.clone();
+    let frame_state = Arc::clone(&state);
+    let native_frame_handle = tokio::spawn(async move {
+        let mut render_state = ecs::systems::render::CompositorState::new(144.0);
         let mut last_tick = tokio::time::Instant::now();
+
         loop {
-            interval.tick().await;
+            // Anchor to native VBlank / Wayland frame callback.
+            // (e.g. state.lock().await.drm_backend.wait_for_vblank().await)
+            // Simulated hardware VBlank event wait here:
+            tokio::time::sleep(std::time::Duration::from_nanos(6_944_444)).await;
+
             let now = tokio::time::Instant::now();
             let dt = (now - last_tick).as_secs_f64();
             last_tick = now;
+            let capped_dt = dt.min(0.05); // Cap dt for numerical safety
 
-            let dt = dt.min(0.05); // Cap dt for numerical safety on lag spikes
-
-            let mut state_guard = anim_state.lock().await;
-            // Lock-free atomic dirty flag check prevents synchronous I/O or Mutex contention during DBus storms
-            if state_guard
-                .appearance_dirty
-                .swap(false, Ordering::Acquire)
-            {
-                state_guard.apply_pending_appearance();
+            // 1. Tick Physics
+            if let Ok(mut world) = frame_ecs_world.write() {
+                ecs::systems::physics::spring_physics_system_batch(&mut world, capped_dt);
             }
-            state_guard.tick_animation(dt);
-        }
-    });
 
-    // Step 3: Main Smithay/DRM VSync rendering loop injecting ecs::systems::render::render_system(&ecs_world, &mut compositor_state)
-    let render_ecs_world = ecs_world.clone();
-    let render_handle = tokio::spawn(async move {
-        let mut render_state = ecs::systems::render::CompositorState::new(144.0);
-        let mut interval = tokio::time::interval(std::time::Duration::from_nanos(6_944_444)); // ~144Hz VSync interval
-        loop {
-            interval.tick().await;
-            ecs::systems::render::render_system(&render_ecs_world, &mut render_state);
+            // 2. Tick Animation & Desktop State
+            {
+                let mut state_guard = frame_state.lock().await;
+                if state_guard
+                    .appearance_dirty
+                    .swap(false, Ordering::Acquire)
+                {
+                    state_guard.apply_pending_appearance();
+                }
+                state_guard.tick_animation(capped_dt);
+            }
+
+            // 3. Render System
+            ecs::systems::render::render_system(&frame_ecs_world, &mut render_state);
         }
     });
 
@@ -126,14 +119,8 @@ async fn main() -> Result<()> {
         _ = ipc_handle => {
             tracing::warn!("IPC server task terminated.");
         }
-        _ = ecs_physics_handle => {
-            tracing::warn!("ECS 1000Hz Physics loop task terminated.");
-        }
-        _ = anim_handle => {
-            tracing::warn!("Animation frame tick task terminated.");
-        }
-        _ = render_handle => {
-            tracing::warn!("ECS Render loop task terminated.");
+        _ = native_frame_handle => {
+            tracing::warn!("Native frame loop task terminated.");
         }
     }
 
