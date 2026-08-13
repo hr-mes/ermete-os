@@ -28,10 +28,10 @@ jobs:
         run: |
           set -euo pipefail
           echo "Building kpatch..."
-          mkdir -p build/livepatch
+          mkdir -p forge/build/livepatch
           for patch in kernel/patches/*.patch; do
             if [ -f "$patch" ]; then
-              kpatch-build -t vmlinux -v "$patch" -o build/livepatch/
+              kpatch-build -t vmlinux -v "$patch" -o forge/build/livepatch/
             fi
           done
 
@@ -49,6 +49,6 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ermete-livepatch
-          path: build/livepatch/
+          path: forge/build/livepatch/
           compression-level: 1
 

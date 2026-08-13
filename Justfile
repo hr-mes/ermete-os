@@ -49,7 +49,7 @@ system-build target_image=env('IMAGE_NAME', 'ermete-os-system') tag=env('DEFAULT
 # Builds system bootc container image locally in offline fallback mode (GH Actions outage fallback)
 [group('Pipeline')]
 build-offline target_image="localhost/ermete-os-system" tag="offline":
-    ./build-offline.sh "{{ target_image }}" "{{ tag }}"
+    ./forge/scripts/build-offline.sh "{{ target_image }}" "{{ tag }}"
 
 # Builds QCOW2 VM disk image from system bootc container
 [group('Pipeline')]
@@ -143,7 +143,7 @@ format:
 [group('Utility')]
 clean:
     just system/clean
-    rm -rf RPMS_OUT/ build/ idemp.out *.lock
+    rm -rf RPMS_OUT/ forge/build/ idemp.out *.lock
 
 # Checks syntax of all Justfiles in repository
 [group('Utility')]
