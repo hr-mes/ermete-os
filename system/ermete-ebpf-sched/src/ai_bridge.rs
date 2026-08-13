@@ -139,6 +139,7 @@ impl AiDaemonBridge {
                 if let Ok(resp_str) = reply.body().deserialize::<String>() {
                     info!("🤖 NPU AI Model Prediction response for PID {}: {}", pid, resp_str);
                     if let Ok(classification) = serde_json::from_str::<AiProcessClassification>(&resp_str) {
+                        self.notify_morphic_pill(&classification).await;
                         return classification;
                     }
                     if let Ok(val) = serde_json::from_str::<serde_json::Value>(&resp_str) {
@@ -158,7 +159,7 @@ impl AiDaemonBridge {
                                 .and_then(|v| v.as_f64())
                                 .map(|v| v as f32)
                                 .unwrap_or(0.90);
-                            return AiProcessClassification {
+                            let classification = AiProcessClassification {
                                 pid,
                                 binary_name: comm.to_string(),
                                 recommended_sched_class: sched_class,
@@ -166,6 +167,8 @@ impl AiDaemonBridge {
                                 recommended_slice_us: slice,
                                 heuristic_score: score,
                             };
+                            self.notify_morphic_pill(&classification).await;
+                            return classification;
                         }
                     }
                 }
@@ -175,13 +178,40 @@ impl AiDaemonBridge {
         // Local low-latency fallback classification heuristics (mimicking local NPU output)
         let (sched_class, weight, slice_us, heuristic_score) = self.calculate_heuristic(comm, filename);
 
-        AiProcessClassification {
+        let classification = AiProcessClassification {
             pid,
             binary_name: comm.to_string(),
             recommended_sched_class: sched_class,
             recommended_weight: weight,
             recommended_slice_us: slice_us,
             heuristic_score,
+        };
+
+        self.notify_morphic_pill(&classification).await;
+
+        classification
+    }
+
+    async fn notify_morphic_pill(&self, class: &AiProcessClassification) {
+        if matches!(class.recommended_sched_class, SchedClass::InteractiveUi | SchedClass::BatchCompute) {
+            if let Some(conn) = &self.connection {
+                let payload = serde_json::json!({
+                    "activity_type": "AiSchedulingEvent",
+                    "process_name": class.binary_name,
+                    "pid": class.pid,
+                    "sched_class": format!("{:?}", class.recommended_sched_class),
+                    "priority_score": class.heuristic_score,
+                    "message": format!("Neural inference classified {} as {:?}", class.binary_name, class.recommended_sched_class),
+                }).to_string();
+
+                let _ = conn.call_method(
+                    Some("os.ermete.Shell"),
+                    "/os/ermete/Shell/LiveActivity",
+                    Some("os.ermete.Shell.LiveActivity"),
+                    "UpdateActivity",
+                    &(payload.as_str()),
+                ).await;
+            }
         }
     }
 }
