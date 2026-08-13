@@ -5,6 +5,10 @@ on:
     - cron: '0 0 * * 0'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   packages: write  # FORGE_PAT has delete:packages scope
@@ -12,11 +16,12 @@ permissions:
 jobs:
   cleanup-janitor:
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     container:
       image: ghcr.io/hr-mes/ermete-os-builder:${{ vars.BUILDER_STABLE_TAG || 'latest' }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Autonomous OCI Merkle Tree Deduplication & GHCR Cleanup
         env:

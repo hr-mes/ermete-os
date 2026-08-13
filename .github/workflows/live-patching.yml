@@ -7,14 +7,19 @@ on:
       - 'kernel/patches/**'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-livepatch:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     container:
       image: ghcr.io/hr-mes/ermete-os-builder:${{ vars.BUILDER_STABLE_TAG || 'latest' }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
 
@@ -41,7 +46,7 @@ jobs:
 
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ermete-livepatch
           path: build/livepatch/

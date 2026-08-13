@@ -27,6 +27,7 @@ jobs:
     name: 🧠 DAG Orchestrator Brain & Distributed Cache
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: forge
@@ -38,17 +39,17 @@ jobs:
       dirty_count: ${{ steps.brain.outputs.dirty_count }}
       has_changes: ${{ steps.brain.outputs.has_changes }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: ❄️ Install Nix (Bedrock Cache)
-        uses: cachix/install-nix-action@v27
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
         with:
           extra_nix_config: "experimental-features = nix-command flakes"
       - name: Align Repositories
         run: cp builder/rpmfusion-custom.repo /etc/yum.repos.d/ 2>/dev/null || true
       - name: Persist DAG State Cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .cache
           key: dag-cache-${{ github.run_id }}
@@ -79,6 +80,7 @@ jobs:
       content_hash: ${{ steps.check_idempotency.outputs.content_hash }}
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
     defaults:
       run:
         working-directory: forge
@@ -87,11 +89,11 @@ jobs:
       packages: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: ❄️ Install Nix (Bedrock Cache)
-        uses: cachix/install-nix-action@v27
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
         with:
           extra_nix_config: "experimental-features = nix-command flakes"
       - name: Check Idempotency (Content Hash)
@@ -146,6 +148,7 @@ jobs:
     if: needs.orchestrator-brain.outputs.dag_level_0 != '[]' && needs.orchestrator-brain.outputs.dag_level_0 != ''
     name: ⚡ DAG Level 0 Parallel Build
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
     defaults:
       run:
         working-directory: forge
@@ -159,11 +162,11 @@ jobs:
       packages: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: ❄️ Install Nix (Bedrock Cache)
-        uses: cachix/install-nix-action@v27
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
         with:
           extra_nix_config: "experimental-features = nix-command flakes"
       - name: Check Idempotency (GHCR Cache)
@@ -184,14 +187,14 @@ jobs:
 
       - name: Extreme Rust Cache (LLVM & Dependencies)
         if: steps.check.outputs.skip != 'true'
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           shared-key: "sccache-level0-${{ matrix.package }}"
           cache-on-failure: "true"
 
       - name: Cache sccache
         if: steps.check.outputs.skip != 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .sccache
           key: sccache-${{ matrix.package }}-${{ runner.os }}-${{ hashFiles(format('forge/specs/ermete-{0}/**', matrix.package)) }}
@@ -335,6 +338,7 @@ jobs:
     if: always() && needs.orchestrator-brain.outputs.dag_level_1 != '[]' && needs.orchestrator-brain.outputs.dag_level_1 != '' && !contains(needs.dag-build-level-0.result, 'failure')
     name: ⚡ DAG Level 1 Parallel Build
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
     defaults:
       run:
         working-directory: forge
@@ -348,11 +352,11 @@ jobs:
       packages: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: ❄️ Install Nix (Bedrock Cache)
-        uses: cachix/install-nix-action@v27
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
         with:
           extra_nix_config: "experimental-features = nix-command flakes"
       - name: Check Idempotency (GHCR Cache)
@@ -373,14 +377,14 @@ jobs:
 
       - name: Extreme Rust Cache (LLVM & Dependencies)
         if: steps.check.outputs.skip != 'true'
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           shared-key: "sccache-level1-${{ matrix.package }}"
           cache-on-failure: "true"
 
       - name: Cache sccache
         if: steps.check.outputs.skip != 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .sccache
           key: sccache-${{ matrix.package }}-${{ runner.os }}-${{ hashFiles(format('forge/specs/ermete-{0}/**', matrix.package)) }}
@@ -524,6 +528,7 @@ jobs:
     if: always() && needs.orchestrator-brain.outputs.dag_level_2 != '[]' && needs.orchestrator-brain.outputs.dag_level_2 != '' && !contains(needs.dag-build-level-1.result, 'failure')
     name: ⚡ DAG Level 2 Parallel Build
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
     defaults:
       run:
         working-directory: forge
@@ -537,11 +542,11 @@ jobs:
       packages: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: ❄️ Install Nix (Bedrock Cache)
-        uses: cachix/install-nix-action@v27
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
         with:
           extra_nix_config: "experimental-features = nix-command flakes"
       - name: Check Idempotency (GHCR Cache)
@@ -560,14 +565,14 @@ jobs:
 
       - name: Extreme Rust Cache (LLVM & Dependencies)
         if: steps.check.outputs.skip != 'true'
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           shared-key: "sccache-level2-${{ matrix.package }}"
           cache-on-failure: "true"
 
       - name: Cache sccache
         if: steps.check.outputs.skip != 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .sccache
           key: sccache-${{ matrix.package }}-${{ runner.os }}-${{ hashFiles(format('forge/specs/ermete-{0}/**', matrix.package)) }}
@@ -711,6 +716,7 @@ jobs:
     if: always() && needs.orchestrator-brain.outputs.dag_flatpaks != '[]' && needs.orchestrator-brain.outputs.dag_flatpaks != '' && !contains(needs.dag-build-level-2.result, 'failure')
     name: 📦 DAG Flatpaks Parallel Build
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: forge
@@ -720,11 +726,11 @@ jobs:
       matrix:
         flatpak: ${{ fromJson(needs.orchestrator-brain.outputs.dag_flatpaks) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: ❄️ Install Nix (Bedrock Cache)
-        uses: cachix/install-nix-action@v27
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
         with:
           extra_nix_config: "experimental-features = nix-command flakes"
       - name: Build & Validate Flatpak Package
@@ -748,6 +754,7 @@ jobs:
     needs: [build-builder]
     name: 🧬 Build Chimera Kernel RPM (${{ matrix.target }})
     runs-on: self-hosted
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -755,10 +762,10 @@ jobs:
         target: [x86_64]
     steps:
     - name: Checkout Source
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       
     - name: ⚡ Restore/Save Kernel CCache
-      uses: actions/cache@v4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
       with:
         path: .ccache_local
         key: kernel-ccache-${{ runner.os }}-${{ hashFiles('forge/specs/ermete-kernel/**') }}
@@ -862,7 +869,7 @@ jobs:
 
           
     - name: Upload Binary RPMs
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
         name: ermete-chimera-kernel-rpms
         path: RPMS_OUT/*.rpm
@@ -939,17 +946,17 @@ jobs:
     outputs:
       rebuilt: ${{ steps.cache.outputs['cache-hit'] != 'true' }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 180
+    timeout-minutes: 60
     permissions:
       contents: read
       packages: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: ❄️ Install Nix (Bedrock Cache)
-        uses: cachix/install-nix-action@v27
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
         with:
           extra_nix_config: "experimental-features = nix-command flakes"
       - name: Authenticate Podman to GHCR
@@ -981,7 +988,7 @@ jobs:
 
       - name: Cache RPMs
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: nvidia_cache/
           key: rpm-nvidia-bedrock6-${{ steps.kernel.outputs.kernel_ver }}-${{ steps.kernel.outputs.nvidia_ver }}
@@ -1081,16 +1088,17 @@ jobs:
     if: ${{ always() && needs.orchestrator-brain.outputs.has_changes == 'true' && !contains(needs.dag-build-level-0.result, 'failure') && !contains(needs.dag-build-level-1.result, 'failure') && !contains(needs.dag-build-level-2.result, 'failure') && !contains(needs.dag-build-flatpaks.result, 'failure') }}
     needs: [build-builder, orchestrator-brain, dag-build-level-0, dag-build-level-1, dag-build-level-2, dag-build-flatpaks, build-nvidia]
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
     permissions:
       contents: write
       packages: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: ❄️ Install Nix (Bedrock Cache)
-        uses: cachix/install-nix-action@v27
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
         with:
           extra_nix_config: "experimental-features = nix-command flakes"
       - name: Create Repo and Push OCI
@@ -1241,6 +1249,7 @@ jobs:
     name: 💿 System Image & Disk Build
     needs: [build-builder, build-repo]
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
     permissions:
       contents: write
       packages: write
@@ -1253,7 +1262,7 @@ jobs:
           echo "IMAGE_NAME=ermete-os-system" >> ${GITHUB_ENV}
           echo "DEFAULT_TAG=latest" >> ${GITHUB_ENV}
       - name: 📥 Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: 🧹 Maximize build space
@@ -1292,16 +1301,17 @@ jobs:
     name: 🌌 OpenWiki Spatial Portal Build
     needs: [build-repo]
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
       pull-requests: write
     steps:
       - name: 📥 Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: 🟢 Set up Node.js (v22)
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "22"
       - name: 🚀 Build Astro.js Portal
@@ -1328,11 +1338,12 @@ jobs:
     name: 👁️ Visual Regression & UI Performance
     needs: [build-builder, dag-system-image, dag-openwiki-portal]
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     container:
       image: ghcr.io/hr-mes/ermete-os-builder:${{ needs.build-builder.outputs.content_hash }}
     steps:
       - name: 📥 Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: 📸 GTK4 UI & Wayland Headless Compositor Visual Regression Tests
