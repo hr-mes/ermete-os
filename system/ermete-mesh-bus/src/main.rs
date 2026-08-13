@@ -1,3 +1,9 @@
+#![allow(unsafe_code)]
+#![allow(clippy::multiple_unsafe_ops_per_block)]
+#![allow(clippy::undocumented_unsafe_blocks)]
+#![allow(clippy::needless_lifetimes)]
+#![allow(clippy::too_many_arguments)]
+
 use anyhow::Result;
 use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
