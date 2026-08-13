@@ -80,12 +80,12 @@ impl WgMeshManager {
                 None::<()>,
                 "/org/ermete/Security",
                 "org.ermete.Security.Events",
-                "TunnelPQCEstablished",
-                &("Tunnel PQC Stabilito",),
+                "TunnelEstablished",
+                &("Tunnel Stabilito (Standard X25519)",),
             ).await;
         }
 
-        info!("Level 13 Post-Quantum WireGuard mesh tunnel scaffolding initialized.");
+        info!("WireGuard mesh tunnel initialized (Standard X25519).");
         Ok(())
     }
 }

@@ -14,7 +14,7 @@ struct MeshSyncBus {
 #[interface(name = "org.ermete.MeshSync")]
 impl MeshSyncBus {
     async fn status(&self) -> &str {
-        "Mesh Sync is running (Level 13 Post-Quantum WireGuard + Kyber-1024 / Dilithium5)"
+        "Mesh Sync is running (Standard WireGuard X25519)"
     }
     
     async fn get_public_key(&self) -> String {
@@ -23,7 +23,7 @@ impl MeshSyncBus {
     }
 
     async fn get_pqc_status(&self) -> String {
-        "PQC Level 13 ACTIVE: Kyber-1024 (ML-KEM) & Dilithium5 (ML-DSA)".to_string()
+        "PQC INACTIVE: Keys generated but not yet enforcing WireGuard PSK rotation (Missing Rosenpass). Traffic is standard X25519.".to_string()
     }
 }
 
@@ -46,26 +46,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
     tracing::info!("DBus interface org.ermete.MeshSync initialized on /org/ermete/MeshSync");
 
-    // 3. Asynchronous UDP listener for user-space WireGuard
-    let socket = UdpSocket::bind("0.0.0.0:51820").await?;
-    let socket = Arc::new(socket);
-    tracing::info!("Listening for Post-Quantum Mesh WG traffic on UDP 0.0.0.0:51820...");
-
-    let mut buf = [0u8; 2048];
-
-    // Main event loop
-    loop {
-        tokio::select! {
-            result = socket.recv_from(&mut buf) => {
-                match result {
-                    Ok((len, addr)) => {
-                        tracing::info!("Received {} bytes of PQC-protected packet from {}", len, addr);
-                    }
-                    Err(e) => {
-                        tracing::error!("Error receiving packet: {}", e);
-                    }
-                }
-            }
-        }
-    }
+    // Main event loop per mantenere in vita il demone DBus
+    std::future::pending::<()>().await;
+    Ok(())
 }
