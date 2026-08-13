@@ -57,7 +57,7 @@ impl AudioActor {
         let new_state = match &self.backend {
             IpcBackend::Dbus { session, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BedrockAudioProxy::new(session)).await {
-                    let current = proxy.muted().await.unwrap_or(false);
+                    let current = proxy.muted().await.map_err(|e| zbus::Error::Failure(e.to_string()))?;
                     let new_st = !current;
                     proxy.set_muted(new_st).await?;
                     new_st
@@ -75,7 +75,7 @@ impl AudioActor {
         match &self.backend {
             IpcBackend::Dbus { session, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BedrockAudioProxy::new(session)).await {
-                    let current = proxy.source_muted().await.unwrap_or(false);
+                    let current = proxy.source_muted().await.map_err(|e| zbus::Error::Failure(e.to_string()))?;
                     let new_state = !current;
                     proxy.set_source_muted(new_state).await?;
                     return Ok(new_state);
@@ -133,45 +133,37 @@ impl AudioController {
     pub async fn toggle_mute(&self) -> zbus::Result<bool> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(AudioCommand::ToggleMute(tx)).await.is_ok() {
-            rx.await.unwrap_or(Ok(false))
-        } else {
-            Ok(false)
-        }
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))??
+        } else { Err(zbus::Error::Failure("Actor channel offline".into())) }
     }
 
     pub async fn toggle_source_mute(&self) -> zbus::Result<bool> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(AudioCommand::ToggleSourceMute(tx)).await.is_ok() {
-            rx.await.unwrap_or(Ok(false))
-        } else {
-            Ok(false)
-        }
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))??
+        } else { Err(zbus::Error::Failure("Actor channel offline".into())) }
     }
 
     pub async fn set_volume(&self, volume: f64) -> zbus::Result<()> {
-        let mut c = self.cached_volume.blocking_lock();
+        let mut c = self.cached_volume.try_lock().expect("Deadlock detected in UI thread lock acquisition");
         {
             *c = volume;
         }
         let (tx, rx) = oneshot::channel();
         if self.sender.send(AudioCommand::SetVolume(volume, tx)).await.is_ok() {
-            rx.await.unwrap_or(Ok(()))
-        } else {
-            Ok(())
-        }
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))??
+        } else { Err(zbus::Error::Failure("Actor channel offline".into())) }
     }
 
     pub async fn set_source_volume(&self, volume: f64) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(AudioCommand::SetSourceVolume(volume, tx)).await.is_ok() {
-            rx.await.unwrap_or(Ok(()))
-        } else {
-            Ok(())
-        }
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))??
+        } else { Err(zbus::Error::Failure("Actor channel offline".into())) }
     }
 
     pub fn get_cached_volume(&self) -> f64 {
-        *self.cached_volume.blocking_lock()
+        *self.cached_volume.try_lock().expect("Deadlock detected in UI thread lock acquisition")
     }
 }
 

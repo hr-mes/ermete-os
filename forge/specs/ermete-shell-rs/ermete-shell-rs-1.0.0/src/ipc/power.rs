@@ -126,37 +126,29 @@ impl PowerController {
     pub async fn lock_screen(&self) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(PowerCommand::LockScreen(tx)).await.is_ok() {
-            rx.await.unwrap_or(Ok(()))
-        } else {
-            Ok(())
-        }
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))??
+        } else { Err(zbus::Error::Failure("Actor channel offline".into())) }
     }
 
     pub async fn power_off(&self) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(PowerCommand::PowerOff(tx)).await.is_ok() {
-            rx.await.unwrap_or(Ok(()))
-        } else {
-            Ok(())
-        }
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))??
+        } else { Err(zbus::Error::Failure("Actor channel offline".into())) }
     }
 
     pub async fn reboot(&self) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(PowerCommand::Reboot(tx)).await.is_ok() {
-            rx.await.unwrap_or(Ok(()))
-        } else {
-            Ok(())
-        }
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))??
+        } else { Err(zbus::Error::Failure("Actor channel offline".into())) }
     }
 
     pub async fn suspend(&self) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(PowerCommand::Suspend(tx)).await.is_ok() {
-            rx.await.unwrap_or(Ok(()))
-        } else {
-            Ok(())
-        }
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))??
+        } else { Err(zbus::Error::Failure("Actor channel offline".into())) }
     }
 }
 

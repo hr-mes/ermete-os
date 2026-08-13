@@ -93,7 +93,7 @@ impl NetworkActor {
         let new_state = match &self.backend {
             IpcBackend::Dbus { system, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), NetworkManagerProxy::new(system)).await {
-                    let current = proxy.wireless_enabled().await.unwrap_or(false);
+                    let current = proxy.wireless_enabled().await.map_err(|e| zbus::Error::Failure(e.to_string()))?;
                     let new_state = !current;
                     proxy.set_wireless_enabled(new_state).await?;
                     new_state
@@ -152,7 +152,7 @@ impl NetworkActor {
                                                         if let Ok(ssid_bytes) = ap_proxy.ssid().await {
                                                             let ssid = String::from_utf8_lossy(&ssid_bytes).trim().to_string();
                                                             if !ssid.is_empty() {
-                                                                let strength = ap_proxy.strength().await.unwrap_or(50) as i32;
+                                                                let strength = ap_proxy.strength().await.map_err(|e| zbus::Error::Failure(e.to_string()))? as i32;
                                                                 results.push(WifiNetworkInfo {
                                                                     ssid,
                                                                     signal: strength,
@@ -442,7 +442,7 @@ impl NetworkController {
     pub async fn toggle_wifi(&self) -> zbus::Result<bool> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::ToggleWifi(tx)).await.is_ok() {
-            rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())))
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?))
         } else {
             Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
@@ -451,7 +451,7 @@ impl NetworkController {
     pub async fn is_wifi_enabled(&self) -> zbus::Result<bool> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::IsWifiEnabled(tx)).await.is_ok() {
-            rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())))
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?))
         } else {
             Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
@@ -460,7 +460,7 @@ impl NetworkController {
     pub async fn set_wifi_powered(&self, powered: bool) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::SetWifiPowered(powered, tx)).await.is_ok() {
-            rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())))
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?))
         } else {
             Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
@@ -469,7 +469,7 @@ impl NetworkController {
     pub async fn list_wifi_networks(&self) -> zbus::Result<Vec<WifiNetworkInfo>> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::ListWifiNetworks(tx)).await.is_ok() {
-            rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())))
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?))
         } else {
             Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
@@ -478,9 +478,9 @@ impl NetworkController {
     pub async fn connect_wifi(&self, ssid: &str, password: &str) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::ConnectWifi(ssid.to_string(), password.to_string(), tx)).await.is_ok() {
-            let res = rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())));
+            let res = rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?));
             if res.is_ok() {
-                let mut l = self.active_wifi_ssid.blocking_lock();
+                let mut l = self.active_wifi_ssid.try_lock().expect("Deadlock detected in UI thread lock acquisition");
         {
                     *l = Some(ssid.to_string());
                 }
@@ -494,9 +494,9 @@ impl NetworkController {
     pub async fn disconnect_wifi(&self, ssid: &str) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::DisconnectWifi(ssid.to_string(), tx)).await.is_ok() {
-            let res = rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())));
+            let res = rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?));
             if res.is_ok() {
-                let mut l = self.active_wifi_ssid.blocking_lock();
+                let mut l = self.active_wifi_ssid.try_lock().expect("Deadlock detected in UI thread lock acquisition");
         {
                     *l = None;
                 }
@@ -510,7 +510,7 @@ impl NetworkController {
     pub async fn delete_wifi(&self, ssid: &str) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::DeleteWifi(ssid.to_string(), tx)).await.is_ok() {
-            rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())))
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?))
         } else {
             Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
@@ -519,7 +519,7 @@ impl NetworkController {
     pub async fn modify_wifi(&self, _ssid: &str, _autoconnect: bool, _ip: &str, _gw: &str, _dns: &str, _ipv6: bool) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::ModifyWifi(tx)).await.is_ok() {
-            rx.await.unwrap_or(Err(zbus::Error::Failure("ModifyWifi channel closed".into())))
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?))
         } else {
             Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
@@ -528,7 +528,7 @@ impl NetworkController {
     pub async fn get_wifi_details(&self, ssid: &str) -> zbus::Result<(String, String, String, String, bool)> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::GetWifiDetails(ssid.to_string(), tx)).await.is_ok() {
-            rx.await.unwrap_or(Err(zbus::Error::Failure("GetWifiDetails channel closed".into())))
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?))
         } else {
             Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
@@ -537,14 +537,14 @@ impl NetworkController {
     pub async fn refresh_network_status(&self) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::RefreshStatus(tx)).await.is_ok() {
-            rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())))
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?))
         } else {
             Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
     }
 
     pub async fn get_network_status_async(&self) -> (String, String, String) {
-        let l = self.active_wifi_ssid.blocking_lock();
+        let l = self.active_wifi_ssid.try_lock().expect("Deadlock detected in UI thread lock acquisition");
         {
             if let Some(ssid) = l.as_ref() {
                 let status = ("".to_string(), "Rete Wi-Fi".to_string(), ssid.clone());
@@ -560,7 +560,7 @@ impl NetworkController {
     }
 
     pub fn get_cached_network_status(&self) -> (String, String, String) {
-        let l = self.active_wifi_ssid.blocking_lock();
+        let l = self.active_wifi_ssid.try_lock().expect("Deadlock detected in UI thread lock acquisition");
         {
             if let Some(ssid) = l.as_ref() {
                 return ("".to_string(), "Rete Wi-Fi".to_string(), ssid.clone());

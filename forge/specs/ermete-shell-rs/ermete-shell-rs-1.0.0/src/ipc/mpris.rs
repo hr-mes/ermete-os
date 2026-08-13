@@ -181,29 +181,27 @@ impl MprisController {
 
 
     pub async fn player_command(&self, cmd: &str) -> zbus::Result<()> {
-        let mut lock = self.last_player_command.blocking_lock();
+        let mut lock = self.last_player_command.try_lock().expect("Deadlock detected in UI thread lock acquisition");
         {
             *lock = Some(cmd.to_string());
         }
         let (tx, rx) = oneshot::channel();
         if self.sender.send(MprisCommand::PlayerCommand(cmd.to_string(), tx)).await.is_ok() {
-            let res = rx.await.unwrap_or(Ok(()));
+            let res = rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))??;
             let _ = self.refresh_mpris().await;
             res
-        } else {
-            Ok(())
-        }
+        } else { Err(zbus::Error::Failure("Actor channel offline".into())) }
     }
 
     pub fn get_cached_mpris_state(&self) -> Option<MprisState> {
-        self.cached_mpris.blocking_lock().clone()
+        self.cached_mpris.try_lock().expect("Deadlock detected in UI thread lock acquisition").clone()
     }
 
     pub async fn refresh_mpris(&self) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(MprisCommand::GetCachedMprisState(tx)).await.is_ok() {
             if let Ok(state) = rx.await {
-                let mut lock = self.cached_mpris.blocking_lock();
+                let mut lock = self.cached_mpris.try_lock().expect("Deadlock detected in UI thread lock acquisition");
         {
                     *lock = state;
                 }

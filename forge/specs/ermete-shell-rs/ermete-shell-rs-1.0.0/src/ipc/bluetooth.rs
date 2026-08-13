@@ -66,7 +66,7 @@ impl BluetoothActor {
         let new_state = match &self.backend {
             IpcBackend::Dbus { system, .. } => {
                 if let Ok(Ok(proxy)) = tokio::time::timeout(std::time::Duration::from_secs(5), BlueZProxy::new(system)).await {
-                    let current = proxy.powered().await.unwrap_or(false);
+                    let current = proxy.powered().await.map_err(|e| zbus::Error::Failure(e.to_string()))?;
                     let new_st = !current;
                     proxy.set_powered(new_st).await?;
                     new_st
@@ -126,7 +126,7 @@ impl BluetoothActor {
                                     .unwrap_or_else(|| path.to_string());
                                 let connected = dev_props.get("Connected")
                                     .and_then(|v| bool::try_from(&**v).ok())
-                                    .unwrap_or(false);
+                                    .map_err(|e| zbus::Error::Failure(e.to_string()))?;
                                 results.push(BluetoothDeviceInfo { name, connected });
                             }
                         }
@@ -162,7 +162,7 @@ impl BluetoothController {
     pub async fn toggle_bluetooth(&self) -> zbus::Result<bool> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(BluetoothCommand::ToggleBluetooth(tx)).await.is_ok() {
-            rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())))
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?))
         } else {
             Err(zbus::Error::Failure("BluetoothActor disconnected".into()))
         }
@@ -171,7 +171,7 @@ impl BluetoothController {
     pub async fn is_bluetooth_enabled(&self) -> zbus::Result<bool> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(BluetoothCommand::IsBluetoothEnabled(tx)).await.is_ok() {
-            rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())))
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?))
         } else {
             Err(zbus::Error::Failure("BluetoothActor disconnected".into()))
         }
@@ -180,7 +180,7 @@ impl BluetoothController {
     pub async fn set_bluetooth_powered(&self, powered: bool) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(BluetoothCommand::SetBluetoothPowered(powered, tx)).await.is_ok() {
-            rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())))
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?))
         } else {
             Err(zbus::Error::Failure("BluetoothActor disconnected".into()))
         }
@@ -189,7 +189,7 @@ impl BluetoothController {
     pub async fn list_bluetooth_devices(&self) -> zbus::Result<Vec<BluetoothDeviceInfo>> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(BluetoothCommand::ListBluetoothDevices(tx)).await.is_ok() {
-            rx.await.unwrap_or(Err(zbus::Error::Failure("Channel closed".into())))
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?))
         } else {
             Err(zbus::Error::Failure("BluetoothActor disconnected".into()))
         }

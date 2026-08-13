@@ -65,13 +65,15 @@ pub fn spawn_dbus_appearance_listener(
                     if iface_str == "org.ermete.Settings.Appearance" || iface_str == "org.ermete.Settings" {
                         // Process update completely asynchronously:
                         // No disk reads are performed synchronously in the 1000Hz loop.
-                        let current = tx.borrow().clone();
+                        if let Ok(new_settings) = msg.body().deserialize::<AppearanceSettings>() {
+                            // Send new parsed settings to watch channel lock-free
+                            let _ = tx.send(new_settings);
 
-                        // Send to watch channel lock-free
-                        let _ = tx.send(current);
-
-                        // Signal cheap atomic flag for the 1000Hz tick loop
-                        dirty_flag.store(true, Ordering::Release);
+                            // Signal cheap atomic flag for the 1000Hz tick loop
+                            dirty_flag.store(true, Ordering::Release);
+                        } else {
+                            warn!("Ricevuto payload DBus non valido per AppearanceSettings. Aggiornamento ignorato.");
+                        }
                     }
                 }
             }
