@@ -255,13 +255,13 @@ jobs:
               -w /workspace/forge \
               registry.fedoraproject.org/fedora:40 \
               bash <<'EOF'
-              dnf install -y rpm-build rpmdevtools dnf-plugins-core
+              dnf install -y rpm-build rpmdevtools dnf-plugins-core which libtool checkpolicy autoconf automake
               cp config/rpmmacros ~/.rpmmacros
               mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
               SPEC_DIR=""
               if [ -d "specs/ermete-${{ matrix.package }}" ]; then SPEC_DIR="specs/ermete-${{ matrix.package }}"; elif [ -d "specs/${{ matrix.package }}" ]; then SPEC_DIR="specs/${{ matrix.package }}"; fi
               cd ~/rpmbuild/SRPMS
-              dnf download --source ${{ matrix.package }} || dnf download --source --disablerepo="rpmfusion*" ${{ matrix.package }}
+              dnf download --source --enablerepo=updates-source --enablerepo=fedora-source ${{ matrix.package }} || dnf download --source --disablerepo="rpmfusion*" ${{ matrix.package }}
               rpm -ivh *.src.rpm
               dnf builddep -y --allowerasing ~/rpmbuild/SPECS/*.spec
               rpmbuild -bb ~/rpmbuild/SPECS/*.spec
@@ -444,13 +444,13 @@ jobs:
               -w /workspace/forge \
               registry.fedoraproject.org/fedora:40 \
               bash <<'EOF'
-              dnf install -y rpm-build rpmdevtools dnf-plugins-core
+              dnf install -y rpm-build rpmdevtools dnf-plugins-core which libtool checkpolicy autoconf automake
               cp config/rpmmacros ~/.rpmmacros
               mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
               SPEC_DIR=""
               if [ -d "specs/ermete-${{ matrix.package }}" ]; then SPEC_DIR="specs/ermete-${{ matrix.package }}"; elif [ -d "specs/${{ matrix.package }}" ]; then SPEC_DIR="specs/${{ matrix.package }}"; fi
               cd ~/rpmbuild/SRPMS
-              dnf download --source ${{ matrix.package }} || dnf download --source --disablerepo="rpmfusion*" ${{ matrix.package }}
+              dnf download --source --enablerepo=updates-source --enablerepo=fedora-source ${{ matrix.package }} || dnf download --source --disablerepo="rpmfusion*" ${{ matrix.package }}
               rpm -ivh *.src.rpm
               dnf builddep -y --allowerasing ~/rpmbuild/SPECS/*.spec
               rpmbuild -bb ~/rpmbuild/SPECS/*.spec
@@ -631,13 +631,13 @@ jobs:
               -w /workspace/forge \
               registry.fedoraproject.org/fedora:40 \
               bash <<'EOF'
-              dnf install -y rpm-build rpmdevtools dnf-plugins-core
+              dnf install -y rpm-build rpmdevtools dnf-plugins-core which libtool checkpolicy autoconf automake
               cp config/rpmmacros ~/.rpmmacros
               mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
               SPEC_DIR=""
               if [ -d "specs/ermete-${{ matrix.package }}" ]; then SPEC_DIR="specs/ermete-${{ matrix.package }}"; elif [ -d "specs/${{ matrix.package }}" ]; then SPEC_DIR="specs/${{ matrix.package }}"; fi
               cd ~/rpmbuild/SRPMS
-              dnf download --source ${{ matrix.package }} || dnf download --source --disablerepo="rpmfusion*" ${{ matrix.package }}
+              dnf download --source --enablerepo=updates-source --enablerepo=fedora-source ${{ matrix.package }} || dnf download --source --disablerepo="rpmfusion*" ${{ matrix.package }}
               rpm -ivh *.src.rpm
               dnf builddep -y --allowerasing ~/rpmbuild/SPECS/*.spec
               rpmbuild -bb ~/rpmbuild/SPECS/*.spec

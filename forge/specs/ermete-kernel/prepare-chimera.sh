@@ -86,7 +86,7 @@ MIN_FVER=$((CURRENT_FVER - 4))
 for (( ver=$CURRENT_FVER; ver>=$MIN_FVER; ver-- )); do
     echo ">>> Analisi Fedora $ver..."
     
-    URL=$(dnf download --source kernel --releasever=$ver --url 2>/dev/null | awk '/\.src\.rpm/' | head -n 1 || true)
+    URL=$(dnf download --source kernel --releasever=$ver --enablerepo=updates-source --enablerepo=fedora-source --url 2>/dev/null | awk '/\.src\.rpm/' | head -n 1 || true)
     if [ -z "$URL" ]; then
         echo "    Nessun kernel sorgente trovato nei repo per Fedora $ver."
         continue
@@ -136,7 +136,7 @@ echo "========================================================="
 echo " FASE 2: LE FONDAMENTA (Fedora Upstream Zero-Trust)"
 echo "========================================================="
 echo ">>> Scaricamento kernel.src.rpm puro (Releasever: $TARGET_RELEASEVER)..."
-dnf download --source kernel --releasever=$TARGET_RELEASEVER
+dnf download --source kernel --releasever=$TARGET_RELEASEVER --enablerepo=updates-source --enablerepo=fedora-source
 rpm -ivh kernel-*.src.rpm
 KERNEL_SRPM=$(ls kernel-*.src.rpm | sort -V | head -n 1)
 KERNEL_VER=$(rpm -qp --qf '%{VERSION}' "$KERNEL_SRPM" | cut -d. -f1,2)
