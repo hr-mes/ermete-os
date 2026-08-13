@@ -75,6 +75,16 @@ impl WgMeshManager {
         info!("Node Kyber-1024 ML-KEM Public Key: {}", kyber_pk_base64);
         info!("Node Dilithium5 ML-DSA Public Key: {}", dilithium_pk_base64);
 
+        if let Ok(conn) = zbus::Connection::session().await {
+            let _ = conn.emit_signal(
+                None::<()>,
+                "/org/ermete/Security",
+                "org.ermete.Security.Events",
+                "TunnelPQCEstablished",
+                &("Tunnel PQC Stabilito",),
+            ).await;
+        }
+
         info!("Level 13 Post-Quantum WireGuard mesh tunnel scaffolding initialized.");
         Ok(())
     }

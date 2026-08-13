@@ -115,6 +115,19 @@ impl TpmManager {
         info!("TPM 2.0: Unsealing Zero-Trust session key share for user '{}'...", username);
 
         if !self.is_tpm_present() {
+            let _ = tokio::task::block_in_place(|| {
+                tokio::runtime::Handle::current().block_on(async {
+                    if let Ok(conn) = zbus::Connection::session().await {
+                        let _ = conn.emit_signal(
+                            None::<()>,
+                            "/org/ermete/Security",
+                            "org.ermete.Security.Events",
+                            "TpmUnsealFailed",
+                            &("Unseal TPM Fallito: Hardware Missing",),
+                        ).await;
+                    }
+                })
+            });
             return Err(anyhow::anyhow!(TpmError::HardwareMissing));
         }
 
@@ -145,6 +158,19 @@ impl TpmManager {
 
         let mut key_share = hasher.finalize().to_vec();
         info!("TPM 2.0: Key share unsealed successfully.");
+        let _ = tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current().block_on(async {
+                if let Ok(conn) = zbus::Connection::session().await {
+                    let _ = conn.emit_signal(
+                        None::<()>,
+                        "/org/ermete/Security",
+                        "org.ermete.Security.Events",
+                        "TpmUnsealSuccess",
+                        &("Unseal TPM Successo",),
+                    ).await;
+                }
+            })
+        });
 
         let key_copy = key_share.clone();
         key_share.zeroize();
