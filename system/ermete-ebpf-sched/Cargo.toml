@@ -16,3 +16,5 @@ serde_json = { workspace = true }
 zbus = { workspace = true }
 libc = { workspace = true }
 aya = { workspace = true }
+
+candle-core = "0.4.1"
