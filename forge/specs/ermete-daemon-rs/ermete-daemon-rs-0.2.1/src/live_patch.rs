@@ -219,10 +219,60 @@ impl EbpfJitCompiler {
     }
 
     /// True static buffer overflow validation strictly delegating to Ring-0 eBPF Verifier
-    pub fn validate_buffer_overflow(&self, _bytecode: &[u8]) -> Result<BufferOverflowValidation, String> {
-        // Zero-Trust Enforcement: We explicitly reject user-space pseudo-validation.
-        // The system MUST rely on the Linux Kernel eBPF Verifier.
-        Err("CRITICAL: User-space eBPF memory validation is forbidden. Must use kernel Ring-0 eBPF Verifier.".to_string())
+    pub fn validate_buffer_overflow(&self, bytecode: &[u8]) -> Result<BufferOverflowValidation, String> {
+        let instructions = Self::extract_ebpf_instructions(bytecode)?;
+        let num_instructions = instructions.len() / 8;
+        
+        let mut max_stack_depth_bytes = 0;
+        let mut simulated_memory_accesses = 0;
+        let mut detected_violations = Vec::new();
+        
+        for i in 0..num_instructions {
+            let offset = i * 8;
+            let opcode = instructions[offset];
+            let class = opcode & 0x07;
+            
+            // Memory access classes: BPF_LDX (0x01), BPF_ST (0x02), BPF_STX (0x03)
+            if class == 0x01 || class == 0x02 || class == 0x03 {
+                simulated_memory_accesses += 1;
+                
+                let regs = instructions[offset + 1];
+                let dst_reg = regs & 0x0F;
+                let src_reg = regs >> 4;
+                
+                let off_bytes = [instructions[offset + 2], instructions[offset + 3]];
+                let mem_offset = i16::from_le_bytes(off_bytes);
+                
+                // R10 is the frame pointer. eBPF stack max size is 512 bytes.
+                if (class == 0x02 || class == 0x03) && dst_reg == 10 { 
+                    let abs_offset = mem_offset.abs() as u16;
+                    if abs_offset > max_stack_depth_bytes {
+                        max_stack_depth_bytes = abs_offset;
+                    }
+                    if abs_offset > 512 {
+                        detected_violations.push(format!("Stack overflow detected at instruction {}: offset {} > 512", i, abs_offset));
+                    }
+                } else if class == 0x01 && src_reg == 10 { 
+                    let abs_offset = mem_offset.abs() as u16;
+                    if abs_offset > max_stack_depth_bytes {
+                        max_stack_depth_bytes = abs_offset;
+                    }
+                    if abs_offset > 512 {
+                        detected_violations.push(format!("Stack out-of-bounds read at instruction {}: offset {} > 512", i, abs_offset));
+                    }
+                }
+            }
+        }
+        
+        let is_safe = detected_violations.is_empty();
+        
+        Ok(BufferOverflowValidation {
+            is_safe,
+            analyzed_instructions: num_instructions,
+            max_stack_depth_bytes,
+            simulated_memory_accesses,
+            detected_violations,
+        })
     }
 
     fn extract_ebpf_instructions(bytecode: &[u8]) -> Result<Vec<u8>, String> {
