@@ -86,7 +86,7 @@ MIN_FVER=$((CURRENT_FVER - 4))
 for (( ver=$CURRENT_FVER; ver>=$MIN_FVER; ver-- )); do
     echo ">>> Analisi Fedora $ver..."
     
-    URL=$(dnf download --source kernel --releasever=$ver --url 2>/dev/null | grep -E '\.src\.rpm' | head -n 1 || true)
+    URL=$(dnf download --source kernel --releasever=$ver --url 2>/dev/null | awk '/\.src\.rpm/' | head -n 1 || true)
     if [ -z "$URL" ]; then
         echo "    Nessun kernel sorgente trovato nei repo per Fedora $ver."
         continue
@@ -456,7 +456,7 @@ export MAKEFLAGS="LLVM=1 LLVM_IAS=1"
 rpmbuild -bp --with toolchain_clang --with clang_lto SPECS/kernel.spec --target x86_64
 
 echo ">>> Rilevamento della directory di build del kernel preparata..."
-KERNEL_BUILD_DIR=$(find "$WORKSPACE_DIR/BUILD" -maxdepth 6 -name "Makefile" -exec grep -l "^VERSION =" {} + 2>/dev/null | sort -V | head -n 1 | xargs -r dirname)
+KERNEL_BUILD_DIR=$(find "$WORKSPACE_DIR/BUILD" -maxdepth 6 -name "Makefile" -exec awk '/^VERSION =/ {print FILENAME}' {} + 2>/dev/null | sort -V | head -n 1 | xargs -r dirname)
 if [ -z "$KERNEL_BUILD_DIR" ]; then
     echo "ERRORE FATALE: Directory di build del kernel non trovata dopo rpmbuild -bp!"
     exit 1
