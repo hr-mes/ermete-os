@@ -115,7 +115,7 @@ jobs:
         run: |
           set -euo pipefail
           echo "Building OCI image purely via Nix Flake..."
-          nix build ../#builderImage
+          nix build --extra-experimental-features "nix-command flakes" ../#builderImage
           podman load -i result
           
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
