@@ -124,6 +124,8 @@ jobs:
           podman tag $IMAGE_LOWER:latest $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
           podman push $IMAGE_LOWER:latest
           podman push $IMAGE_LOWER:${{ steps.check_idempotency.outputs.content_hash }}
+          echo "Waiting 15 seconds for GHCR eventual consistency..."
+          sleep 15
 
       - name: 🧹 Cleanup Workspace Permissions
         if: always()

@@ -59,7 +59,7 @@ if [[ -n "$DIR" && -d "$DIR" ]]; then
       echo -n "config/packages.json"
       cat "config/packages.json"
     fi
-    echo -n "CACHE_EPOCH=v8"
+    echo -n "CACHE_EPOCH=v9"
   } | sha256sum | awk '{print $1}')
 else
   # Pacchetti upstream senza spec locale
@@ -80,9 +80,9 @@ else
   
   VERSION=${UPSTREAM_VER:-unknown}
   if [[ -n "$UPSTREAM_VER" ]]; then
-    CONTENT_HASH=$(echo -n "${PACKAGE}-${UPSTREAM_VER}-${BASE_DIGEST}-v8" | sha256sum | awk '{print $1}')
+    CONTENT_HASH=$(echo -n "${PACKAGE}-${UPSTREAM_VER}-${BASE_DIGEST}-v9" | sha256sum | awk '{print $1}')
   else
-    CONTENT_HASH=$(echo -n "${PACKAGE}-${VERSION}-upstream-v8-${BASE_DIGEST}" | sha256sum | awk '{print $1}')
+    CONTENT_HASH=$(echo -n "${PACKAGE}-${VERSION}-upstream-v9-${BASE_DIGEST}" | sha256sum | awk '{print $1}')
   fi
 fi
 

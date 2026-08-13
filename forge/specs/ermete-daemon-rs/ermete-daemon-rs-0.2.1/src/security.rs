@@ -48,23 +48,23 @@ pub fn drop_capabilities(keep_caps: &[u32]) -> Result<(), String> {
         },
     ];
 
-    unsafe {
-        let ret = libc::syscall(
+    let ret = unsafe {
+        libc::syscall(
             libc::SYS_capset,
             &header as *const _ as *const libc::c_void,
             data.as_ptr() as *const libc::c_void,
-        );
+        )
+    };
 
-        if ret != 0 {
-            let err = std::io::Error::last_os_error();
-            return Err(format!("capset failed: {}", err));
-        }
+    if ret != 0 {
+        let err = std::io::Error::last_os_error();
+        return Err(format!("capset failed: {}", err));
+    }
 
-        let ret_pnp = libc::prctl(libc::PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
-        if ret_pnp != 0 {
-            let err = std::io::Error::last_os_error();
-            return Err(format!("prctl(PR_SET_NO_NEW_PRIVS) failed: {}", err));
-        }
+    let ret_pnp = unsafe { libc::prctl(libc::PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) };
+    if ret_pnp != 0 {
+        let err = std::io::Error::last_os_error();
+        return Err(format!("prctl(PR_SET_NO_NEW_PRIVS) failed: {}", err));
     }
 
     Ok(())

@@ -22,17 +22,9 @@ trait SettingsWorker {
 pub use crate::appearance_domain::*;
 
 /// Domain micro-state for accessibility / voiceover settings.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct VoiceOverDomainState {
     pub enabled: bool,
-}
-
-impl Default for VoiceOverDomainState {
-    fn default() -> Self {
-        Self {
-            enabled: false,
-        }
-    }
 }
 
 pub fn config_dir() -> PathBuf {
