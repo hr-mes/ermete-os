@@ -56,10 +56,7 @@ pub fn native_bcachefs_snapshot(src: &Path, dst: &Path) -> std::io::Result<()> {
     if res == 0 {
         Ok(())
     } else {
-        if dst.is_dir() {
-            return Ok(());
-        }
-        fs::create_dir_all(dst)
+        Err(std::io::Error::last_os_error())
     }
 }
 
@@ -99,10 +96,7 @@ pub fn native_bcachefs_delete(path: &Path) -> std::io::Result<()> {
     if res == 0 {
         Ok(())
     } else {
-        if let Err(e) = fs::remove_dir_all(path) {
-                tracing::error!("Failed to remove directory {:?}: {:?}", path, e);
-            }
-        Ok(())
+        Err(std::io::Error::last_os_error())
     }
 }
 
