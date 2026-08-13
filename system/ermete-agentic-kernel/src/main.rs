@@ -1,14 +1,9 @@
 #![allow(unsafe_code)]
 
-pub mod ai_client;
-pub mod ai_predictor;
 pub mod auto_healer;
 pub mod ebpf_monitor;
 pub mod hot_patcher;
-pub mod tensor_bus;
 
-use ai_client::AiDaemonClient;
-use ai_predictor::AiPredictorDAG;
 use auto_healer::AutoHealer;
 use ebpf_monitor::EbpfMonitor;
 use std::net::Ipv4Addr;
@@ -21,8 +16,8 @@ use tracing::{info, warn};
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt::init();
     info!("==========================================================================");
-    info!("🧠 Level 14 Autonomous Ring-0 Agentic OS Controller Starting...");
-    info!("   Making the Ermete OS Kernel Conscious with NPU AI & Aya eBPF Probes");
+    info!("🛡️ Level 14 Deterministic Ring-0 Agentic OS Controller Starting...");
+    info!("   Making the Ermete OS Kernel safe with eBPF Probes");
     info!("==========================================================================");
 
     // Bump memlock rlimit for eBPF map allocations
@@ -37,13 +32,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Initialize subsystems
     let mut ebpf_mon = EbpfMonitor::new().await;
-    let ai_client = AiDaemonClient::new().await;
     let auto_healer = AutoHealer::new();
-    let ai_predictor_dag = AiPredictorDAG::new();
 
     let mut interval = tokio::time::interval(Duration::from_secs(2));
 
-    info!("Autonomous Ring-0 Control Loop active. Monitoring kernel telemetry & driving AI_SCHED_MAP...");
+    info!("Deterministic Ring-0 Control Loop active. Monitoring kernel telemetry...");
 
     loop {
         tokio::select! {
@@ -59,41 +52,35 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     telemetry.tcp_scans_detected
                 );
 
-                // 2. Execute high-performance AI Predictor DAG cycle -> Write to eBPF map AI_SCHED_MAP
-                match ai_predictor_dag.execute_dag_cycle(&ebpf_mon).await {
-                    Ok(count) => {
-                        info!("⚡ [AI Predictor DAG] Successfully synchronized {} task scheduling affinity target(s) into Ring-0 AI_SCHED_MAP", count);
-                    }
-                    Err(e) => {
-                        warn!("⚠️ [AI Predictor DAG] Synchronization error: {}", e);
-                    }
-                }
+                // 2. Simple deterministic logic instead of AI
+                let is_anomalous = telemetry.network_dropped_packets > 10
+                    || telemetry.tcp_scans_detected > 0
+                    || telemetry.memory_pressure_mb > 1500;
 
-                // 3. Query local NPU AI engine for decision
-                let decision = ai_client.evaluate_telemetry(&telemetry).await;
+                if is_anomalous {
+                    warn!("⚡ Deterministic Action Triggered! Anomalies detected in telemetry.");
 
-                if decision.anomaly_detected {
-                    warn!(
-                        "⚡ Autonomous Action Triggered! AI Risk Score: {:.2}. Recommended Actions: {:?}",
-                        decision.risk_score, decision.recommended_actions
-                    );
-
-                    // 4a. Auto-Healing: Inject sysctl parameters to adjust kernel resource allocation
-                    auto_healer.apply_autonomic_reallocation(&decision.sysctl_mitigations);
+                    // 4a. Auto-Healing
+                    let mitigations = vec![
+                        ("net.ipv4.tcp_max_syn_backlog".to_string(), "8192".to_string()),
+                        ("net.core.somaxconn".to_string(), "4096".to_string()),
+                        ("vm.swappiness".to_string(), "10".to_string()),
+                        ("vm.dirty_ratio".to_string(), "15".to_string()),
+                    ];
+                    auto_healer.apply_autonomic_reallocation(&mitigations);
 
                     // 4b. Hot-rewrite eBPF rules in Ring-0
-                    for ip_str in &decision.block_ips {
-                        if let Ok(ip) = Ipv4Addr::from_str(ip_str) {
+                    if telemetry.tcp_scans_detected > 0 {
+                        let ip_str = std::env::var("ERMETE_AI_GATEWAY").unwrap_or_else(|_| "127.0.0.1".to_string());
+                        if let Ok(ip) = Ipv4Addr::from_str(&ip_str) {
                             if let Err(e) = ebpf_mon.hot_block_ip(ip).await {
                                 warn!("Failed to hot-rewrite eBPF blocklist map for {}: {}", ip, e);
                             }
                         }
                     }
 
-                    if decision.zero_trust_enforce {
-                        if let Err(e) = ebpf_mon.hot_set_zero_trust(true).await {
-                            warn!("Failed to enable zero-trust eBPF mode: {}", e);
-                        }
+                    if let Err(e) = ebpf_mon.hot_set_zero_trust(true).await {
+                        warn!("Failed to enable zero-trust eBPF mode: {}", e);
                     }
                 } else {
                     info!("Kernel health optimal. Zero autonomic intervention required.");

@@ -17,7 +17,7 @@ use tracing::{debug, error, info, warn};
 
 /// High-Performance Zero-Trust CRDT Mesh Synchronization Engine.
 pub struct CrdtBroadcaster {
-    pqc_engine: PqcEngine,
+    
     peer_manager: PeerManager,
     storage_bridge: Arc<StorageBridge>,
     delta_tx: mpsc::Sender<CrdtNetworkPayload>,
@@ -27,7 +27,7 @@ pub struct CrdtBroadcaster {
 impl CrdtBroadcaster {
     /// Instantiates `CrdtBroadcaster` and spawns the background merge dispatcher worker.
     pub fn new(
-        pqc_engine: PqcEngine,
+        
         peer_manager: PeerManager,
         storage_bridge: Arc<StorageBridge>,
     ) -> (Self, tokio::task::JoinHandle<()>) {
@@ -191,7 +191,7 @@ impl CrdtBroadcaster {
         let payload_target_slice = ZeroCopyParser::write_header_zero_copy(
             &mut tx_buffer,
             MeshMessageType::CrdtSyncFrame,
-            MeshFlags::ENCRYPTED | MeshFlags::PQC_SIGNED | MeshFlags::UMEM_DIRECT,
+            MeshFlags::ENCRYPTED | MeshFlags::ENCRYPTED | MeshFlags::UMEM_DIRECT,
             seq,
             sender_array,
             recipient_array,

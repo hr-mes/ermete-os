@@ -4,7 +4,6 @@ use zbus::proxy;
 pub mod shm_ring;
 pub use shm_ring::*;
 
-pub mod pqc;
 pub mod socket;
 
 
@@ -28,8 +27,6 @@ pub struct MeshPeerInfo {
     pub node_id: String,
     pub endpoint: Option<String>,
     pub virtual_ip: String,
-    pub dilithium_pk_b64: String,
-    pub kyber_pk_b64: String,
     pub x25519_pk_b64: String,
     pub state: String,
     pub last_handshake: u64,
@@ -44,9 +41,6 @@ pub struct MeshPeerInfo {
 pub struct NodeIdentityPayload {
     pub node_id: String,
     pub x25519_public_b64: String,
-    pub kyber_public_b64: String,
-    pub dilithium_public_b64: String,
-    pub pqc_level: String,
 }
 
 /// AI Decision Payload returned by the NPU inference engine.
@@ -66,7 +60,6 @@ pub struct MeshBusStatusPayload {
     pub node_id: String,
     pub status: String,
     pub active_peers: usize,
-    pub pqc_algorithm: String,
     pub zero_trust_enabled: bool,
 }
 
@@ -79,18 +72,13 @@ pub struct MeshBusStatusPayload {
 )]
 pub trait MeshBusInterface {
     async fn status(&self) -> zbus::Result<String>;
-    async fn get_pqc_capabilities(&self) -> zbus::Result<String>;
     async fn get_peers(&self) -> zbus::Result<String>;
     async fn add_peer(
         &self,
         node_id: String,
         endpoint: String,
-        dilithium_pk_b64: String,
-        kyber_pk_b64: String,
         x25519_pk_b64: String,
     ) -> zbus::Result<String>;
     async fn remove_peer(&self, node_id: String) -> zbus::Result<String>;
     async fn initiate_handshake(&self, node_id: String, endpoint: String) -> zbus::Result<String>;
-    async fn get_node_identity(&self) -> zbus::Result<String>;
-    async fn rotate_keys(&self) -> zbus::Result<String>;
 }

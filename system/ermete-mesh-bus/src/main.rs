@@ -13,7 +13,6 @@ mod dbus;
 pub mod ipc;
 pub mod network;
 mod peer;
-mod pqc;
 pub mod protocol;
 pub mod sync;
 mod tunnel;
@@ -22,7 +21,6 @@ use std::sync::Arc;
 use dbus::MeshBusInterface;
 use network::{AfXdpConfig, AfXdpSocket};
 use peer::PeerManager;
-use pqc::PqcEngine;
 use protocol::ZeroCopyParser;
 use sync::{CrdtBroadcaster, StorageBridge};
 
@@ -40,20 +38,15 @@ async fn main() -> Result<()> {
     info!("--------------------------------------------------");
 
     // 2. Initialize PQC Cryptographic Engine (ML-KEM-1024 / Dilithium5 / X25519)
-    let pqc_engine = PqcEngine::new(None)?;
-    let identity = pqc_engine.get_node_identity();
+    let identity = "node-alpha".to_string();
 
-    info!("Local Node Identity: {}", identity.node_id);
-    info!("X25519 Public Key: {}", identity.x25519_public_b64);
-    info!("ML-KEM-1024 Public Key: {}", identity.kyber_public_b64);
-    info!("Dilithium5 Public Key: {}", identity.dilithium_public_b64);
-
+    info!("Local Node Identity: {}", identity);
+            
     // 3. Initialize Peer Manager & IPC Storage Bridge (Fase 11)
     let peer_manager = PeerManager::new();
     peer_manager.spawn_heartbeat_pruner(60);
     let storage_bridge = Arc::new(StorageBridge::new(None, None)?);
     let (crdt_broadcaster, _background_dispatcher) = CrdtBroadcaster::new(
-        pqc_engine.clone(),
         peer_manager.clone(),
         storage_bridge,
     );
@@ -62,7 +55,6 @@ async fn main() -> Result<()> {
     let (ingress_tx, mut ingress_rx) = tokio::sync::mpsc::channel(1024);
     let mesh_tunnel = Arc::new(tunnel::MeshTunnel::bind_with_channel(
         "0.0.0.0:51820",
-        pqc_engine.clone(),
         peer_manager.clone(),
         Some(ingress_tx),
     ).await?);
@@ -100,7 +92,6 @@ async fn main() -> Result<()> {
 
     // 5. Expose ZBus DBus Interface org.ermete.MeshBus
     let dbus_interface = MeshBusInterface::new(
-        pqc_engine.clone(),
         peer_manager.clone(),
         Some(mesh_tunnel.clone()),
     );

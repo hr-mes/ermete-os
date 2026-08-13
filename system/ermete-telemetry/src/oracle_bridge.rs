@@ -1,8 +1,19 @@
-use crate::ai_engine::AnomalyReport;
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 use tracing::{error, info, warn};
 use zbus::Connection;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AnomalyReport {
+    pub anomaly_score: f32,
+    pub target_unit: String,
+    pub predicted_failure_mode: String,
+    pub suggested_intent: String,
+    pub confidence: f32,
+    pub embedding_vector: Vec<f32>,
+    pub timestamp: String,
+}
 
 pub struct OracleBridge {
     dbus_conn: Option<Connection>,

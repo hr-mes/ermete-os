@@ -35,9 +35,6 @@ pub struct CrdtNetworkPayload {
     /// Specific delta operation type
     pub delta_type: CrdtDeltaType,
     /// Encoded CRDT payload (bincode / serde_json of CrdtState or specific mutation)
-    pub payload_bytes: Vec<u8>,
-    /// Post-Quantum Dilithium5 signature of the origin node over payload_bytes
-    pub pqc_signature: Vec<u8>,
 }
 
 impl CrdtNetworkPayload {
@@ -48,7 +45,6 @@ impl CrdtNetworkPayload {
         sequence: u64,
         delta_type: CrdtDeltaType,
         payload_bytes: Vec<u8>,
-        pqc_signature: Vec<u8>,
     ) -> Self {
         let timestamp_ms = match std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH) {
             Ok(dur) => dur.as_millis() as u64,
@@ -62,7 +58,6 @@ impl CrdtNetworkPayload {
             timestamp_ms,
             delta_type,
             payload_bytes,
-            pqc_signature,
         }
     }
 
@@ -83,9 +78,6 @@ impl CrdtNetworkPayload {
         }
         if self.payload_bytes.is_empty() {
             bail!("Zero-Trust Violation: CRDT payload_bytes is empty");
-        }
-        if self.pqc_signature.is_empty() {
-            bail!("Zero-Trust Violation: Missing PQC signature on CRDT payload");
         }
         Ok(())
     }

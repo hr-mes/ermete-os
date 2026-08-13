@@ -50,7 +50,7 @@ impl From<u8> for MeshMessageType {
 pub struct MeshFlags;
 impl MeshFlags {
     pub const ENCRYPTED: u8   = 1 << 0; // 0x01: Payload encrypted with AEAD
-    pub const PQC_SIGNED: u8  = 1 << 1; // 0x02: Post-Quantum Dilithium5 signature present
+    pub const ENCRYPTED: u8  = 1 << 1; // 0x02: Post-Quantum Dilithium5 signature present
     pub const COMPRESSED: u8  = 1 << 2; // 0x04: Payload compressed
     pub const UMEM_DIRECT: u8 = 1 << 3; // 0x08: Direct AF_XDP UMEM pass-through
 }

@@ -15,6 +15,17 @@ pub struct PolkitSubject {
 }
 
 impl PolkitSubject {
+    pub fn unix_process(pid: u32) -> Self {
+        let mut details = std::collections::HashMap::new();
+        if let Ok(owned) = zbus::zvariant::Value::from(pid).try_into() {
+            details.insert("pid".to_string(), owned);
+        }
+        Self {
+            kind: "unix-process".to_string(),
+            details,
+        }
+    }
+
     pub fn system_bus_name(name: impl Into<String>) -> Self {
         let mut details = HashMap::new();
         let val: Value = Value::from(name.into());
@@ -73,7 +84,15 @@ pub async fn check_polkit_auth(sender: Option<&str>, action_id: &str) -> bool {
         }
     };
 
-    let subject = PolkitSubject::system_bus_name(sender_str);
+    let subject = if let Ok(creds) = conn.peer_creds().await {
+        if let Some(pid) = creds.process_id() {
+            PolkitSubject::unix_process(pid)
+        } else {
+            PolkitSubject::system_bus_name(sender_str)
+        }
+    } else {
+        PolkitSubject::system_bus_name(sender_str)
+    };
     let details = HashMap::<&str, &str>::new();
 
     match proxy.check_authorization(&subject, action_id, &details, 0, "").await {

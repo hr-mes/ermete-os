@@ -21,8 +21,6 @@ pub struct Peer {
     pub node_id: String,
     pub endpoint: Option<String>,
     pub virtual_ip: String,
-    pub dilithium_pk_b64: String,
-    pub kyber_pk_b64: String,
     pub x25519_pk_b64: String,
     pub state: PeerState,
     pub last_handshake: u64,
@@ -32,12 +30,10 @@ pub struct Peer {
     pub zero_trust_verified: bool,
 }
 
-use ermete_bus_api::pqc::SecretSessionKey;
 
 #[derive(Clone)]
 pub struct PeerManager {
     peers: Arc<RwLock<HashMap<String, Peer>>>,
-    session_keys: Arc<RwLock<HashMap<String, SecretSessionKey>>>,
     ip_counter: Arc<RwLock<u8>>,
 }
 
@@ -45,7 +41,6 @@ impl PeerManager {
     pub fn new() -> Self {
         Self {
             peers: Arc::new(RwLock::new(HashMap::new())),
-            session_keys: Arc::new(RwLock::new(HashMap::new())),
             ip_counter: Arc::new(RwLock::new(2)), // Starts at 10.99.0.2
         }
     }
@@ -54,8 +49,6 @@ impl PeerManager {
         &self,
         node_id: String,
         endpoint: Option<String>,
-        dilithium_pk_b64: String,
-        kyber_pk_b64: String,
         x25519_pk_b64: String,
     ) -> Result<Peer> {
         let mut peers = self.peers.write().await;
@@ -71,8 +64,6 @@ impl PeerManager {
             node_id: node_id.clone(),
             endpoint,
             virtual_ip: vip,
-            dilithium_pk_b64,
-            kyber_pk_b64,
             x25519_pk_b64,
             state: PeerState::Discovered,
             last_handshake: 0,
@@ -104,8 +95,6 @@ impl PeerManager {
 
     pub async fn remove_peer(&self, node_id: &str) -> Result<()> {
         let mut peers = self.peers.write().await;
-        let mut keys = self.session_keys.write().await;
-        keys.remove(node_id);
         if peers.remove(node_id).is_some() {
             info!("Removed peer '{}' from mesh bus (session key zeroized)", node_id);
             Ok(())
@@ -150,20 +139,6 @@ impl PeerManager {
         peers.values().cloned().collect()
     }
 
-    pub async fn get_dilithium_pk_bytes(&self, node_id: &str) -> Result<Vec<u8>> {
-        let peer = self.get_peer(node_id).await.ok_or_else(|| anyhow!("Peer not found"))?;
-        BASE64
-            .decode(&peer.dilithium_pk_b64)
-            .map_err(|e| anyhow!("Invalid Dilithium base64 for peer {}: {}", node_id, e))
-    }
-
-    #[allow(dead_code)]
-    pub async fn get_kyber_pk_bytes(&self, node_id: &str) -> Result<Vec<u8>> {
-        let peer = self.get_peer(node_id).await.ok_or_else(|| anyhow!("Peer not found"))?;
-        BASE64
-            .decode(&peer.kyber_pk_b64)
-            .map_err(|e| anyhow!("Invalid Kyber base64 for peer {}: {}", node_id, e))
-    }
 
     /// Spawns an asynchronous background worker that periodically purges inactive peers
     /// exceeding the specified heartbeat/handshake timeout in seconds.
@@ -179,7 +154,6 @@ impl PeerManager {
                     .as_secs();
 
                 let mut peers = peers_ref.write().await;
-                let mut keys = self.session_keys.write().await;
                 let before_count = peers.len();
                 peers.retain(|node_id, peer| {
                     if peer.last_handshake == 0 {
@@ -191,8 +165,6 @@ impl PeerManager {
                             "Mesh Bus: Pruned dead peer '{}' (no heartbeat/handshake for >{}s)",
                             node_id, timeout_secs
                         );
-                        // SICUREZZA: Preveniamo memory leak ed esponiamo il materiale crittografico obsoleto
-                        keys.remove(node_id);
                     }
                     active
                 });

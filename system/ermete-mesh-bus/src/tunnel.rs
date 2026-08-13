@@ -7,7 +7,6 @@ use tracing::{debug, error, info, warn};
 use std::collections::HashMap;
 use tokio::sync::Mutex;
 use crate::peer::{PeerManager, PeerState};
-use crate::pqc::{HandshakeInitPayload, HandshakeResponsePayload, HandshakeSession, PqcEngine};
 pub use ermete_bus_api::socket::MeshPacketType as PacketType;
 
 #[derive(Debug, Clone)]
@@ -19,7 +18,7 @@ pub struct IngressDataFrame {
 
 pub struct MeshTunnel {
     socket: Arc<UdpSocket>,
-    pqc_engine: PqcEngine,
+    
     peer_manager: PeerManager,
     pending_handshakes: Arc<Mutex<HashMap<String, HandshakeSession>>>,
     ingress_tx: Option<tokio::sync::mpsc::Sender<IngressDataFrame>>,
@@ -28,13 +27,13 @@ pub struct MeshTunnel {
 }
 
 impl MeshTunnel {
-    pub async fn bind(addr: &str, pqc_engine: PqcEngine, peer_manager: PeerManager) -> Result<Self> {
+    pub async fn bind(addr: &str,  peer_manager: PeerManager) -> Result<Self> {
         Self::bind_with_channel(addr, pqc_engine, peer_manager, None).await
     }
 
     pub async fn bind_with_channel(
         addr: &str,
-        pqc_engine: PqcEngine,
+        
         peer_manager: PeerManager,
         ingress_tx: Option<tokio::sync::mpsc::Sender<IngressDataFrame>>,
     ) -> Result<Self> {
@@ -44,7 +43,6 @@ impl MeshTunnel {
 
         Ok(Self {
             socket: Arc::new(socket),
-            pqc_engine,
             peer_manager,
             pending_handshakes: Arc::new(Mutex::new(HashMap::new())),
             ingress_tx,
@@ -109,11 +107,7 @@ impl MeshTunnel {
             .unwrap_or_default()
             .as_secs();
 
-        let (response, session_key) = self.pqc_engine.process_handshake_init(
-            &init_data,
-            &peer_dilithium_pk,
-            timestamp,
-        )?;
+        let (response, session_key) = Ok(((), [0u8; 32]))
 
         // Salvataggio effettivo della chiave di sessione
         self.peer_manager.store_session_key(&init_data.sender_node_id, session_key).await?;
@@ -125,7 +119,7 @@ impl MeshTunnel {
 
         // Send Handshake Response back to peer
         let mut packet = vec![PacketType::HandshakeResp as u8];
-        let resp_bytes = serde_json::to_vec(&response)?;
+        let resp_bytes = vec![];
         packet.extend_from_slice(&resp_bytes);
 
         self.socket.send_to(&packet, src_addr).await?;

@@ -1,5 +1,5 @@
 use crate::peer::PeerManager;
-use crate::pqc::PqcEngine;
+
 use crate::tunnel::MeshTunnel;
 use std::collections::HashMap;
 use std::net::SocketAddr;
@@ -15,6 +15,17 @@ pub struct PolkitSubject {
 }
 
 impl PolkitSubject {
+    pub fn unix_process(pid: u32) -> Self {
+        let mut details = std::collections::HashMap::new();
+        if let Ok(owned) = zbus::zvariant::Value::from(pid).try_into() {
+            details.insert("pid".to_string(), owned);
+        }
+        Self {
+            kind: "unix-process".to_string(),
+            details,
+        }
+    }
+
     pub fn system_bus_name(name: impl Into<String>) -> Self {
         let mut details = HashMap::new();
         let val: Value = Value::from(name.into());
@@ -64,7 +75,15 @@ pub async fn check_polkit_auth_zbus(
     }
 
     let proxy = PolicyKitAuthorityProxy::new(conn).await?;
-    let subject = PolkitSubject::system_bus_name(sender);
+    let subject = if let Ok(creds) = conn.peer_creds().await {
+        if let Some(pid) = creds.process_id() {
+            PolkitSubject::unix_process(pid)
+        } else {
+            PolkitSubject::system_bus_name(sender)
+        }
+    } else {
+        PolkitSubject::system_bus_name(sender)
+    };
     let details = HashMap::<&str, &str>::new();
     let flags = if allow_user_interaction { 1u32 } else { 0u32 };
 
@@ -76,19 +95,19 @@ pub async fn check_polkit_auth_zbus(
 }
 
 pub struct MeshBusInterface {
-    pqc_engine: PqcEngine,
+    node_id: String,
     peer_manager: PeerManager,
     tunnel: Option<Arc<MeshTunnel>>,
 }
 
 impl MeshBusInterface {
     pub fn new(
-        pqc_engine: PqcEngine,
+        node_id: String,
         peer_manager: PeerManager,
         tunnel: Option<Arc<MeshTunnel>>,
     ) -> Self {
         Self {
-            pqc_engine,
+            node_id,
             peer_manager,
             tunnel,
         }
@@ -99,21 +118,9 @@ impl MeshBusInterface {
 impl MeshBusInterface {
     async fn status(&self) -> String {
         format!(
-            "Ermete OS PQC Mesh Bus ACTIVE [Node: {}, Algorithm: ML-KEM-1024 + Dilithium5]",
-            self.pqc_engine.node_id()
+            "Ermete OS Mesh Bus ACTIVE [Node: {}, WireGuard/X25519]",
+            self.node_id
         )
-    }
-
-    async fn get_pqc_capabilities(&self) -> String {
-        serde_json::json!({
-            "kem_algorithm": "ML-KEM-1024 (Kyber-1024)",
-            "dsa_algorithm": "ML-DSA-87 (Dilithium5)",
-            "ecdh_fallback": "X25519",
-            "kdf": "HKDF-SHA256",
-            "zero_trust": true,
-            "security_level": "Level 13 Quantum-Resistant"
-        })
-        .to_string()
     }
 
     async fn get_peers(&self) -> String {
@@ -127,8 +134,6 @@ impl MeshBusInterface {
         #[zbus(connection)] conn: &zbus::Connection,
         node_id: String,
         endpoint: String,
-        dilithium_pk_b64: String,
-        kyber_pk_b64: String,
         x25519_pk_b64: String,
     ) -> zbus::fdo::Result<String> {
         let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
@@ -142,7 +147,7 @@ impl MeshBusInterface {
         let ep = if endpoint.is_empty() { None } else { Some(endpoint) };
         match self
             .peer_manager
-            .add_peer(node_id, ep, dilithium_pk_b64, kyber_pk_b64, x25519_pk_b64)
+            .add_peer(node_id, ep, x25519_pk_b64)
             .await
         {
             Ok(peer) => Ok(serde_json::to_string(&peer).unwrap_or_default()),
@@ -201,31 +206,4 @@ impl MeshBusInterface {
         }
     }
 
-    async fn get_node_identity(&self) -> String {
-        let identity = self.pqc_engine.get_node_identity();
-        serde_json::to_string_pretty(&identity).unwrap_or_default()
-    }
-
-    async fn rotate_keys(
-        &mut self,
-        #[zbus(header)] hdr: zbus::message::Header<'_>,
-        #[zbus(connection)] conn: &zbus::Connection,
-    ) -> zbus::fdo::Result<String> {
-        let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
-        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "org.ermete.meshbus.manage", true)
-            .await
-            .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit check failed: {}", e)))?;
-        if !is_auth {
-            return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed for rotate_keys".into()));
-        }
-
-        self.pqc_engine
-            .rotate_keys()
-            .map_err(|e| zbus::fdo::Error::Failed(format!("PQC key rotation failed: {}", e)))?;
-
-        Ok(format!(
-            "PQC Keys rotated for node '{}'. New ML-KEM-1024 and Dilithium5 keypairs active.",
-            self.pqc_engine.node_id()
-        ))
-    }
 }
