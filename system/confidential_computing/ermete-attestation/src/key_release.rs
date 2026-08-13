@@ -47,11 +47,7 @@ impl KeyReleaseManager {
                 info!("Attestor MRTD: {}", hex::encode(mrtd));
                 (&mrtd[..], b"ermete-tdx-luks-v1")
             }
-            VerifiedHardwareReport::MockSimulated { measurement, hardware_type } => {
-                error!("LUKS key release DENIED: Hardware enclave tier is SIMULATED ({})!", hardware_type);
-                warn!("Attestor Measurement: {}", hex::encode(measurement));
-                return Err(anyhow::anyhow!("LUKS secret key release strictly prohibited for simulated enclaves"));
-            }
+
         };
 
         
