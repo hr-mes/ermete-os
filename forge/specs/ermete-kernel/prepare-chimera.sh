@@ -21,6 +21,9 @@ fi
 
 
 WORKSPACE_DIR="$HOME/rpmbuild"
+echo ">>> Installazione di dnf-plugins-core per abilitare dnf download e repoquery..."
+dnf install -y dnf-plugins-core rpmdevtools || echo "Warning: impossibile installare dnf-plugins-core, proseguo a mio rischio e pericolo..."
+
 echo ">>> Pulizia profonda del workspace per evitare conflitti con vecchie build..."
 mkdir -p "$WORKSPACE_DIR"/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
 cd "$WORKSPACE_DIR"
