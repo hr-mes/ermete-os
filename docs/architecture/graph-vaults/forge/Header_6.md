@@ -1,0 +1,20 @@
+---
+source_file: ""
+type: "code"
+community: "Community 5"
+tags:
+  - graphify/code
+  - graphify/EXTRACTED
+  - community/Community_5
+---
+
+# Header
+
+## Connections
+- [[.approve_execution()]] - `references` [EXTRACTED]
+- [[.deny_execution()]] - `references` [EXTRACTED]
+- [[.request_root_privilege()]] - `references` [EXTRACTED]
+- [[.rollback_snapshot()]] - `references` [EXTRACTED]
+- [[dbus.rs_1]] - `imports_from` [EXTRACTED]
+
+#graphify/code #graphify/EXTRACTED #community/Community_5
