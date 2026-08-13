@@ -527,9 +527,11 @@ mod tests {
 
     #[test]
     fn test_cvm_manager_flow_dev_mode_fails_without_hardware() {
-        let mut config = AttestationConfig::default();
-        config.strict_zero_trust = false;
-        config.key_output_path = std::path::PathBuf::from("/tmp/test_var_home.key");
+        let config = AttestationConfig {
+            strict_zero_trust: false,
+            key_output_path: std::path::PathBuf::from("/tmp/test_var_home.key"),
+            ..Default::default()
+        };
 
         let manager = CvmManager::new(config);
         assert_eq!(manager.get_state(), EnclaveState::Uninitialized);
@@ -542,8 +544,10 @@ mod tests {
 
     #[test]
     fn test_cvm_manager_strict_mode_fail_without_hardware() {
-        let mut config = AttestationConfig::default();
-        config.strict_zero_trust = true;
+        let config = AttestationConfig {
+            strict_zero_trust: true,
+            ..Default::default()
+        };
 
         let manager = CvmManager::new(config);
         let result = manager.orchestrate_enclave_attestation();

@@ -61,6 +61,7 @@ pub fn drop_capabilities(keep_caps: &[u32]) -> Result<(), String> {
         return Err(format!("capset failed: {}", err));
     }
 
+    // SAFETY: prctl with PR_SET_NO_NEW_PRIVS is safe and required to prevent privilege escalation.
     let ret_pnp = unsafe { libc::prctl(libc::PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) };
     if ret_pnp != 0 {
         let err = std::io::Error::last_os_error();

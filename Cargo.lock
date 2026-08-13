@@ -1855,6 +1855,7 @@ dependencies = [
  "gtk4",
  "relm4",
  "tokio",
+ "tracing",
 ]
 
 [[package]]

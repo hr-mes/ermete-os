@@ -94,7 +94,7 @@
       packages.${system}.builderImage = pkgs.dockerTools.buildLayeredImage {
         name = "ghcr.io/hr-mes/ermete-os-builder";
         tag = "latest";
-        contents = [ pkgs.bashInteractive pkgs.coreutils pkgs.findutils pkgs.gnused pkgs.gawk pkgs.ca-certificates pkgs.tzdata pkgs.shadow ] ++ security-tools ++ c-toolchain ++ rust-toolchain ++ build-tools ++ system-deps;
+        contents = [ pkgs.bashInteractive pkgs.coreutils pkgs.findutils pkgs.gnused pkgs.gawk pkgs.cacert pkgs.tzdata pkgs.shadow ] ++ security-tools ++ c-toolchain ++ rust-toolchain ++ build-tools ++ system-deps;
         config = {
           Cmd = [ "/bin/bash" ];
           Env = [
