@@ -98,6 +98,7 @@
           Cmd = [ "/bin/bash" ];
           Env = [
             "PATH=/bin:/usr/bin"
+            "HOME=/root"
             "CC=clang"
             "CXX=clang++"
             "LD=ld.lld"
@@ -106,6 +107,7 @@
           ];
         };
         fakeRootCommands = ''
+          mkdir -p /root
           mkdir -p /lib64 /lib /usr/lib /usr/lib64
           ln -s ${pkgs.glibc}/lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2 || true
           ln -s ${pkgs.glibc}/lib/ld-linux.so.2 /lib/ld-linux.so.2 || true
