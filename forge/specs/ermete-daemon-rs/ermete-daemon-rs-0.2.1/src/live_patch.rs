@@ -1,4 +1,5 @@
 #![allow(unsafe_code)]
+#![allow(clippy::undocumented_unsafe_blocks)]
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 #[allow(unused_imports)]
 use std::os::unix::fs::OpenOptionsExt;

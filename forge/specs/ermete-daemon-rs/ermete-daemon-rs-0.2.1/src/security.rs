@@ -1,4 +1,5 @@
 #![allow(unsafe_code)]
+#![allow(clippy::undocumented_unsafe_blocks)]
 use tracing::{info, warn};
 
 /// Capability dropping helper using raw Linux sys_capset and prctl system calls.
