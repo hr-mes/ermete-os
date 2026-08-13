@@ -136,27 +136,35 @@ impl TpmManager {
         use tss_esapi::structures::PcrSelectionListBuilder;
 
         let tcti = TctiNameConf::from_environment_variable()
-            .unwrap_or_else(|_| TctiNameConf::try_from("device:/dev/tpmrm0").unwrap_or_else(|_| TctiNameConf::try_from("device:/dev/tpm0").unwrap()));
+            .or_else(|_| TctiNameConf::try_from("device:/dev/tpmrm0"))
+            .or_else(|_| TctiNameConf::try_from("device:/dev/tpm0"))
+            .map_err(|_| anyhow::anyhow!("Impossibile trovare il device TPM (/dev/tpmrm0 o /dev/tpm0)"))?;
             
         let mut context = Context::new(tcti).map_err(|e| anyhow::anyhow!("TPM context error: {:?}", e))?;
         
         let pcr_selection_list = PcrSelectionListBuilder::new()
-            .with_selection(tss_esapi::interface_types::algorithm::HashingAlgorithm::Sha256, &[0])
+            .with_selection(tss_esapi::interface_types::algorithm::HashingAlgorithm::Sha256, &[0, 7, 10])
             .build()
             .map_err(|e| anyhow::anyhow!("PCR build error: {:?}", e))?;
             
-        let _ = context.execute_without_session(|ctx| {
+        // Estrarre i VERI valori hardware delle PCR per legare matematicamente la chiave
+        let pcr_data = context.execute_without_session(|ctx| {
             ctx.pcr_read(pcr_selection_list)
         }).map_err(|e| anyhow::anyhow!("PCR read error: {:?}", e))?;
 
-        // Derive key seed bound to user & secret & TPM measurement baseline
+        // Derive key seed bound to user & secret & ACTUAL TPM PCR MEASUREMENT BASELINE
         use sha2::{Digest, Sha256};
         let mut hasher = Sha256::new();
         hasher.update(username.as_bytes());
         hasher.update(secret.as_bytes());
-        hasher.update(b"ermete-zero-trust-tpm20-salt");
+        
+        // Iniezione crittografica del payload hardware reale (non più hardcodato)
+        for pcr in pcr_data.1.get_pcr_values() {
+            hasher.update(pcr.value());
+        }
 
         let mut key_share = hasher.finalize().to_vec();
+
         info!("TPM 2.0: Key share unsealed successfully.");
         let _ = tokio::task::block_in_place(|| {
             tokio::runtime::Handle::current().block_on(async {
