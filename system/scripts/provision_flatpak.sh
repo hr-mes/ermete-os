@@ -35,7 +35,10 @@ fi
 for app in $FLATPAKS; do
     echo "[Ermete Flatpak] Provisioning $app..."
     if ! flatpak info "$app" &>/dev/null; then
-        flatpak install --system -y --noninteractive flathub "$app" || echo "[Ermete Flatpak] Failed to install $app"
+        flatpak install --system -y --noninteractive flathub "$app" || {
+            echo "[Ermete Flatpak] CRITICAL ERROR: Failed to install $app"
+            exit 1
+        }
     else
         echo "[Ermete Flatpak] $app is already installed."
     fi

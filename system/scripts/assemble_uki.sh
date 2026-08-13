@@ -87,22 +87,9 @@ elif [ -f /etc/pki/secureboot/db.crt ]; then
 fi
 
 if [ -z "$KEY_SRC" ] || [ -z "$CRT_SRC" ]; then
-    if [ "${STRICT_PROD:-0}" = "1" ] || [ "${ERMETE_STRICT_PROD:-0}" = "1" ] || [ "${PROD:-0}" = "1" ]; then
-        echo "ERROR: Secure Boot signing key or certificate missing in /run/secrets or /etc/pki/secureboot!" >&2
-        echo "Strict production mode active. Exiting." >&2
-        exit 1
-    fi
-
-    echo "========================================================================"
-    echo "WARNING: Using ephemeral self-signed keys!"
-    echo "========================================================================"
-
-    KEY_SRC="${TMP_KEY_DIR}/uki_ephemeral.key"
-    CRT_SRC="${TMP_KEY_DIR}/uki_ephemeral.crt"
-
-    openssl req -new -x509 -newkey rsa:2048 -nodes -days 365 \
-        -subj "/CN=ErmeteOS Ephemeral Dev Key/" \
-        -keyout "$KEY_SRC" -out "$CRT_SRC" 2>/dev/null
+    echo "ERROR: Secure Boot signing key or certificate missing in /run/secrets or /etc/pki/secureboot!" >&2
+    echo "Zero-Trust Policy: Ephemeral keys are strictly forbidden. Exiting." >&2
+    exit 1
 fi
 
 echo "Copying signing key into isolated temporary enclave..."
