@@ -75,8 +75,12 @@ echo ">>> Ricerca della migliore versione kernel supportata (Fedora -> NVIDIA Sh
 TARGET_RELEASEVER=""
 TARGET_KERNEL_VER=""
 
-source /etc/os-release
-CURRENT_FVER=$VERSION_ID
+if [ -f /etc/os-release ]; then
+    source /etc/os-release
+    CURRENT_FVER=$VERSION_ID
+else
+    CURRENT_FVER=${FEDORA_VERSION:-40}
+fi
 MIN_FVER=$((CURRENT_FVER - 4))
 
 for (( ver=$CURRENT_FVER; ver>=$MIN_FVER; ver-- )); do
