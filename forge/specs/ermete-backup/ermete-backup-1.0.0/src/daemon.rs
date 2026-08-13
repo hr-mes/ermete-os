@@ -208,30 +208,7 @@ impl BackupServer {
         Self { snapshot_dir: path }
     }
 
-    fn get_manifest_path(&self, id: &str) -> PathBuf {
-        let mut p = self.snapshot_dir.clone();
-        p.push(format!("{}.json", id));
-        p
-    }
-}
-
-#[interface(name = "org.ermete.Backup1")]
-impl BackupServer {
-    async fn create_snapshot(
-        &self,
-        note: &str,
-        #[zbus(header)] hdr: Header<'_>,
-        #[zbus(connection)] conn: &zbus::Connection,
-    ) -> zbus::fdo::Result<SnapshotInfo> {
-        let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
-        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "org.ermete.backup.create", true)
-            .await
-            .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit check failed: {}", e)))?;
-
-        if !is_auth {
-            return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed for create_snapshot".into()));
-        }
-
+    pub fn create_snapshot_internal(&self, note: &str) -> Result<SnapshotInfo, String> {
         let now = Local::now();
         let id = format!("snap-{}", now.format("%Y%m%d-%H%M%S"));
         let timestamp = now.format("%d/%m/%Y %H:%M:%S").to_string();
@@ -243,7 +220,7 @@ impl BackupServer {
         println!("[BackupDaemon] Creating Bcachefs CoW snapshot of {} at {:?}", home, target_dir);
         if let Err(e) = native_bcachefs_snapshot(Path::new(&home), &target_dir) {
             println!("[BackupDaemon] Bcachefs subvolume snapshot command failed: {:?}", e);
-            return Err(zbus::fdo::Error::Failed("Filesystem non supporta CoW o comando bcachefs fallito".to_string()));
+            return Err("Filesystem non supporta CoW o comando bcachefs fallito".to_string());
         }
 
         let info = SnapshotInfo {
@@ -271,20 +248,7 @@ impl BackupServer {
         Ok(info)
     }
 
-    async fn list_snapshots(
-        &self,
-        #[zbus(header)] hdr: Header<'_>,
-        #[zbus(connection)] conn: &zbus::Connection,
-    ) -> zbus::fdo::Result<Vec<SnapshotInfo>> {
-        let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
-        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "org.ermete.backup.list", false)
-            .await
-            .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit check failed: {}", e)))?;
-
-        if !is_auth {
-            return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed for list_snapshots".into()));
-        }
-
+    pub fn list_snapshots_internal(&self) -> Vec<SnapshotInfo> {
         let mut list = Vec::new();
         if let Ok(entries) = fs::read_dir(&self.snapshot_dir) {
             for entry in entries.flatten() {
@@ -299,7 +263,92 @@ impl BackupServer {
             }
         }
         list.sort_by(|a, b| b.id.cmp(&a.id));
-        Ok(list)
+        list
+    }
+
+    pub fn delete_snapshot_internal(&self, id: &str) -> bool {
+        if id.contains('/') || id.contains('.') || id.contains('\\') {
+            return false;
+        }
+        let mut target_dir = self.snapshot_dir.clone();
+        target_dir.push(id);
+
+        println!("[BackupDaemon] Deleting Bcachefs subvolume snapshot {:?}", target_dir);
+        if let Err(e) = native_bcachefs_delete(&target_dir) {
+            tracing::error!("Failed bcachefs delete {:?}: {:?}", target_dir, e);
+        }
+        let manifest_path = self.get_manifest_path(id);
+        if let Err(e) = fs::remove_file(&manifest_path) {
+            tracing::error!("Failed to remove manifest {:?}: {:?}", manifest_path, e);
+        }
+        true
+    }
+
+    pub fn restore_snapshot_internal(&self, id: &str) -> bool {
+        if id.contains('/') || id.contains('.') || id.contains('\\') {
+            return false;
+        }
+        println!("[BackupDaemon] Restoring home directory from snapshot ID: {}", id);
+        let manifest_path = self.get_manifest_path(id);
+        let mut target_dir = self.snapshot_dir.clone();
+        target_dir.push(id);
+
+        if !manifest_path.exists() && !target_dir.exists() {
+            println!("[BackupDaemon] Snapshot ID {} not found (no manifest or target dir).", id);
+            return false;
+        }
+
+        let home = std::env::var("HOME").unwrap_or_else(|_| dirs::home_dir().unwrap_or(std::path::PathBuf::from("/home")).to_string_lossy().into_owned().to_string());
+
+        if let Err(e) = native_bcachefs_delete(Path::new(&home)) {
+            tracing::error!("Failed bcachefs delete {:?}: {:?}", home, e);
+        }
+        let res = native_bcachefs_snapshot(&target_dir, Path::new(&home));
+
+        if res.is_err() {
+            println!("[BackupDaemon] Bcachefs subvolume restore failed.");
+            return false;
+        }
+
+        true
+    }
+}
+
+#[interface(name = "org.ermete.Backup1")]
+impl BackupServer {
+    async fn create_snapshot(
+        &self,
+        note: &str,
+        #[zbus(header)] hdr: Header<'_>,
+        #[zbus(connection)] conn: &zbus::Connection,
+    ) -> zbus::fdo::Result<SnapshotInfo> {
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
+        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "org.ermete.backup.create", true)
+            .await
+            .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit check failed: {}", e)))?;
+
+        if !is_auth {
+            return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed for create_snapshot".into()));
+        }
+
+        self.create_snapshot_internal(note).map_err(|e| zbus::fdo::Error::Failed(e))
+    }
+
+    async fn list_snapshots(
+        &self,
+        #[zbus(header)] hdr: Header<'_>,
+        #[zbus(connection)] conn: &zbus::Connection,
+    ) -> zbus::fdo::Result<Vec<SnapshotInfo>> {
+        let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
+        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "org.ermete.backup.list", false)
+            .await
+            .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit check failed: {}", e)))?;
+
+        if !is_auth {
+            return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed for list_snapshots".into()));
+        }
+
+        Ok(self.list_snapshots_internal())
     }
 
     async fn delete_snapshot(
@@ -317,21 +366,7 @@ impl BackupServer {
             return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed for delete_snapshot".into()));
         }
 
-        if id.contains('/') || id.contains('.') || id.contains('\\') {
-            return Ok(false);
-        }
-        let mut target_dir = self.snapshot_dir.clone();
-        target_dir.push(id);
-
-        println!("[BackupDaemon] Deleting Bcachefs subvolume snapshot {:?}", target_dir);
-        if let Err(e) = native_bcachefs_delete(&target_dir) {
-                tracing::error!("Failed bcachefs delete {:?}: {:?}", target_dir, e);
-            }
-        let manifest_path = self.get_manifest_path(id);
-            if let Err(e) = fs::remove_file(&manifest_path) {
-                tracing::error!("Failed to remove manifest {:?}: {:?}", manifest_path, e);
-            }
-        Ok(true)
+        Ok(self.delete_snapshot_internal(id))
     }
 
     async fn restore_snapshot(
@@ -349,32 +384,7 @@ impl BackupServer {
             return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed for restore_snapshot".into()));
         }
 
-        if id.contains('/') || id.contains('.') || id.contains('\\') {
-            return Ok(false);
-        }
-        println!("[BackupDaemon] Restoring home directory from snapshot ID: {}", id);
-        let manifest_path = self.get_manifest_path(id);
-        let mut target_dir = self.snapshot_dir.clone();
-        target_dir.push(id);
-
-        if !manifest_path.exists() && !target_dir.exists() {
-            println!("[BackupDaemon] Snapshot ID {} not found (no manifest or target dir).", id);
-            return Ok(false);
-        }
-
-        let home = std::env::var("HOME").unwrap_or_else(|_| dirs::home_dir().unwrap_or(std::path::PathBuf::from("/home")).to_string_lossy().into_owned().to_string());
-
-        if let Err(e) = native_bcachefs_delete(Path::new(&home)) {
-                tracing::error!("Failed bcachefs delete {:?}: {:?}", home, e);
-            }
-        let res = native_bcachefs_snapshot(&target_dir, Path::new(&home));
-
-        if res.is_err() {
-            println!("[BackupDaemon] Bcachefs subvolume restore failed.");
-            return Ok(false);
-        }
-
-        Ok(true)
+        Ok(self.restore_snapshot_internal(id))
     }
 }
 
@@ -405,22 +415,22 @@ mod tests {
 
     #[tokio::test]
     async fn test_snapshot_lifecycle_and_restore() {
-        // let server = BackupServer::new();
-        // let snap = server.create_snapshot("Test note").await;
-        // assert!(snap.id.starts_with("snap-"));
-        // assert_eq!(snap.note, "Test note");
+        let server = BackupServer::new();
+        // Uses the internal logic that doesn't need D-Bus/PolKit for testing
+        let snap = server.create_snapshot_internal("Test note").expect("create snapshot failed");
+        assert!(snap.id.starts_with("snap-"));
+        assert_eq!(snap.note, "Test note");
 
-        // let list = server.list_snapshots().await;
-        // assert!(list.iter().any(|s| s.id == snap.id));
+        let list = server.list_snapshots_internal();
+        assert!(list.iter().any(|s| s.id == snap.id));
 
         // Attempting to restore a non-existent snapshot must return false
-        // (commentato poiché restore_snapshot richiede zbus e PolKit)
-        // let restore_non_existent = server.restore_snapshot("non_existent_snapshot_id_xyz").await;
-        // assert!(!restore_non_existent, "Expected restore_snapshot on non-existent ID to return false");
+        let restore_non_existent = server.restore_snapshot_internal("non_existent_snapshot_id_xyz");
+        assert!(!restore_non_existent, "Expected restore_snapshot on non-existent ID to return false");
 
-        // Clean up (commentato poiché delete_snapshot richiede zbus e PolKit)
-        // let deleted = server.delete_snapshot(&snap.id, ...).await;
-        // assert!(deleted);
+        // Clean up
+        let deleted = server.delete_snapshot_internal(&snap.id);
+        assert!(deleted);
     }
 }
 
