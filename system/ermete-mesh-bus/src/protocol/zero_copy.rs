@@ -2,6 +2,7 @@
 #![allow(clippy::multiple_unsafe_ops_per_block)]
 #![allow(clippy::undocumented_unsafe_blocks)]
 #![allow(clippy::too_many_arguments)]
+#![allow(clippy::needless_lifetimes)]
 //! Ermete OS Post-Quantum Mesh Bus - AF_XDP Zero-Copy Frame Parser
 //!
 //! Provides ultra-low latency, zero-allocation binary protocol parsing directly
