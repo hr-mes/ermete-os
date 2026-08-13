@@ -229,7 +229,10 @@ impl AttestationEngine {
         let nonce = self.generate_attestation_nonce()?;
         *self.state.lock().unwrap_or_else(|e| e.into_inner()) = EnclaveLifecycleState::Attesting;
 
-        let _pqc_ok = self.verify_pqc_hardware_handshake(&nonce);
+        let pqc_ok = self.verify_pqc_hardware_handshake(&nonce).unwrap_or(false);
+        if !pqc_ok {
+            return Err(anyhow::anyhow!("Hardware Attestation Failed: PQC verification rejected (No Mocks)."));
+        }
 
         let keylime_report = self.verify_keylime_tpm();
 
@@ -360,7 +363,7 @@ mod tests {
         assert_eq!(engine.get_state(), EnclaveLifecycleState::Uninitialized);
 
         let res = engine.orchestrate_attestation("enc-12345", HardwareEnclaveType::SoftwareEnclave);
-        assert!(res.is_ok());
+        assert!(res.is_err(), "Software enclave must fail hardware attestation (Zero Trust)");
 
         let summary = res?;
         assert_eq!(summary.enclave_id, "enc-12345");

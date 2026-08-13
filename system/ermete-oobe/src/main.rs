@@ -76,7 +76,7 @@ impl OobeModel {
                 .open("/etc/locale.conf")
                 .and_then(|mut f| std::io::Write::write_all(&mut f, locale_content.as_bytes()))
             {
-                panic!("[ERMETE-OOBE] CRITICAL: Failed to write /etc/locale.conf: {}", e);
+                eprintln!("[ERMETE-OOBE] ERROR: Failed to write /etc/locale.conf: {}. Are you root?", e); return;
             }
         }
 
@@ -91,7 +91,7 @@ impl OobeModel {
                 .open("/etc/vconsole.conf")
                 .and_then(|mut f| std::io::Write::write_all(&mut f, vconsole_content.as_bytes()))
             {
-                panic!("[ERMETE-OOBE] CRITICAL: Failed to write /etc/vconsole.conf: {}", e);
+                eprintln!("[ERMETE-OOBE] ERROR: Failed to write /etc/vconsole.conf: {}. Are you root?", e); return;
             }
         }
 
