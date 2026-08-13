@@ -20,8 +20,18 @@ impl WipeEngine {
     }
 
     pub async fn poll_server(&self) -> Result<String> {
-        // Placeholder for remote HTTPS MDM polling
-        Ok("OK".into())
+        info!("Polling MDM server for policies...");
+        let output = tokio::process::Command::new("curl")
+            .arg("-s")
+            .arg("https://mdm.ermete.os/api/v1/poll")
+            .output()
+            .await?;
+            
+        if output.status.success() {
+            Ok(String::from_utf8_lossy(&output.stdout).to_string())
+        } else {
+            Err(anyhow::anyhow!("MDM polling failed with status: {}", output.status))
+        }
     }
 
     /// Rilevamento dinamico del block device target tramite /etc/crypttab o /proc/mounts
