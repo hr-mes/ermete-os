@@ -48,7 +48,7 @@ async fn wait_for_idle_conditions() {
 }
 
 pub async fn run_kernel_forge() -> Result<KernelForgeResult> {
-    info!("⚡ Starting Gentoo-Style Hardware-Tailored Kernel Forge Process...");
+    info!("⚡ Starting Ermete UKI Generator & OSTree Integrator...");
     
     // Attende che l'utente attacchi la spina per non distruggere la batteria
     wait_for_idle_conditions().await;
@@ -100,7 +100,7 @@ pub async fn run_kernel_forge() -> Result<KernelForgeResult> {
     }
 
     let summary = format!(
-        "Gentoo-Style Hardware-Tailored UKI Forged Successfully!\n\
+        "Unified Kernel Image (UKI) Generated Successfully!\n\
          - Architecture: {}\n\
          - CPU Target: {}\n\
          - Compiler Flags: {}\n\

@@ -522,7 +522,7 @@ impl AiPredictorDAG {
             match NeuralClassificationNode::classify(task).await {
                 Ok(category) => {
                     if let Some(target) = AffinityOptimizationNode::optimize_affinity(task, &category) {
-                        targets.push((task.comm.clone(), target));
+                        targets.push((task.comm.clone(), task.pid, target));
                     }
                 }
                 Err(e) => {
@@ -538,30 +538,28 @@ impl AiPredictorDAG {
         let mut count = 0;
         let mut cache_write = self.map_cache.write().await;
 
-        for (comm, target) in targets {
-            cache_write.insert(target.pid, target);
+        for (comm, pid, target) in targets {
+            cache_write.insert(pid, target);
             count += 1;
 
-            let core_label = match target.core_type {
-                0 => "Performance Core (P-Core)",
-                1 => "Efficiency Core (E-Core)",
-                2 => "Realtime NPU Core",
+            let core_label = match target.flags {
+                4 => "Realtime NPU Core",
                 _ => "Standard Core",
             };
 
             info!(
-                "🧠 [AI DAG Pipeline] PID {} ('{}') -> Locked to CPU Core {} [{}] | Weight: {} | Slice: {}us",
-                target.pid,
+                "🧠 [AI DAG Pipeline] PID {} ('{}') -> Locked to CPU Core {} [{}] | Priority: {} | Slice: {}us",
+                pid,
                 comm,
-                target.target_core,
+                target.target_cpu,
                 core_label,
-                target.priority_weight,
-                target.latency_slice_us
+                target.priority,
+                target.slice_ns / 1000
             );
 
             // Write asynchronously to Ring-0 eBPF AI_SCHED_MAP map
-            if let Err(e) = ebpf_monitor.update_ai_sched_map(target.pid, target).await {
-                warn!("eBPF map sync fallback for PID {}: {}", target.pid, e);
+            if let Err(e) = ebpf_monitor.update_ai_sched_map(pid, target).await {
+                warn!("eBPF map sync fallback for PID {}: {}", pid, e);
             }
         }
 

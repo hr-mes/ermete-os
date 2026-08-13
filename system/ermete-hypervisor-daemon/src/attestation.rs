@@ -269,7 +269,7 @@ impl AttestationEngine {
         );
 
         if hardware_valid && keylime_valid {
-            let measurement = format!("0x{:02x?}", sha2::Sha256::digest(enclave_id.as_bytes()).to_vec());
+            let measurement = format!("0x{:02x?}", sha2::Sha256::digest(std::fs::read("/proc/self/exe").unwrap_or_default()).to_vec());
             
             // Release secrets if path specified
             if let Some(parent) = self.config.key_output_path.parent() {
