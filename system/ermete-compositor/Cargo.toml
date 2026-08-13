@@ -28,3 +28,5 @@ smithay = { workspace = true, features = [
 ] }
 wayland-server = { workspace = true }
 glam = { workspace = true }
+drm = "0.15.0"
+gbm = "0.18.0"
