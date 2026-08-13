@@ -51,6 +51,7 @@ pub unsafe extern "C" fn ermete_free_c_string(ptr: *mut c_char) {
     if !ptr.is_null() {
         // Prevent AddressSanitizer/LeakSanitizer crashes from cross-allocator boundaries
         // by explicitly using the C ABI allocator for dynamic library boundaries.
+        // SAFETY: FFI free
         unsafe { free(ptr as *mut std::os::raw::c_void); }
     }
 }

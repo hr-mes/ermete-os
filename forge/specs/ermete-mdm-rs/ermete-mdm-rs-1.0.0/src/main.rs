@@ -1,3 +1,5 @@
+mod dbus;
+mod wipe;
 
 use mimalloc::MiMalloc;
 
