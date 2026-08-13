@@ -3,7 +3,6 @@ static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 use anyhow::Result;
 use tracing::{info, error};
-use std::thread;
 
 mod backend;
 #[tokio::main]
