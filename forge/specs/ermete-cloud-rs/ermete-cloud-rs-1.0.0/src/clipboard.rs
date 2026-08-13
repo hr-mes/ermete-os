@@ -27,8 +27,8 @@ pub async fn broadcast_clipboard(
     let prop_msg = format!("AUTH_BFT_PROP:{}", prop_json);
 
     if peers.is_empty() {
-        info!("Single node mesh: BFT Consensus immediately achieved for proposal {}", proposal.proposal_id);
-        return Ok(());
+        warn!("Single node mesh: Cannot achieve BFT quorum. Consensus requires multiple nodes.");
+        return Err(anyhow::anyhow!("BFT Consensus failed: insufficient fleet peers."));
     }
 
     // 2. Broadcast proposal to all peers to collect BFT Prepare / Commit votes

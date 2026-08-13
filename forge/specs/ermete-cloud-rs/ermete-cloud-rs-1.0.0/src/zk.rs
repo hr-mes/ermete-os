@@ -42,7 +42,14 @@ pub struct ZkProofEngine {
 
 impl ZkProofEngine {
     pub fn new(node_id: String, fleet_secret: Option<String>) -> Self {
-        let secret = fleet_secret.unwrap_or_else(|| "ERMETE_OS_GLOBAL_FLEET_SHARED_SECRET_KEY_V15".to_string());
+        let secret = fleet_secret.unwrap_or_else(|| {
+            std::env::var("ERMETE_FLEET_SECRET").unwrap_or_else(|_| {
+                std::fs::read_to_string("/etc/ermete/fleet.secret")
+                    .unwrap_or_else(|_| panic!("Fatal: Zero-Trust policy forbids hardcoded keys. Provide ERMETE_FLEET_SECRET or /etc/ermete/fleet.secret"))
+                    .trim()
+                    .to_string()
+            })
+        });
         let dilithium_keypair = DilithiumKeypair::generate();
         
         info!("Initialized Dilithium & SharedSecret Proof Engine for node {}", node_id);
