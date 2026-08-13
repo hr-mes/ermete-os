@@ -243,9 +243,6 @@ jobs:
    
               rpmbuild -bb --nodeps $SPEC_DIR/*.spec || true
             
-              if ls ~/rpmbuild/SRPMS/*.nosrc.rpm 1> /dev/null 2>&1; then
-              fi
-            
               rpmbuild -bb --nodeps $SPEC_DIR/*.spec
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
@@ -435,9 +432,6 @@ jobs:
    
               rpmbuild -bb --nodeps $SPEC_DIR/*.spec || true
             
-              if ls ~/rpmbuild/SRPMS/*.nosrc.rpm 1> /dev/null 2>&1; then
-              fi
-            
               rpmbuild -bb --nodeps $SPEC_DIR/*.spec
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
@@ -624,9 +618,6 @@ jobs:
               done
    
               rpmbuild -bb --nodeps $SPEC_DIR/*.spec || true
-            
-              if ls ~/rpmbuild/SRPMS/*.nosrc.rpm 1> /dev/null 2>&1; then
-              fi
             
               rpmbuild -bb --nodeps $SPEC_DIR/*.spec
               mkdir -p /workspace/forge/RPMS
