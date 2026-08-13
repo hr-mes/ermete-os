@@ -57,9 +57,31 @@ pub fn build_page() -> Box {
     container.append(&devices_title);
 
     let dev_row = ActionRow::builder("Ricerca dispositivi Ermete")
-        .subtitle("Scansione automatica in corso sulla rete locale via mDNS...")
+        .subtitle("Inizializzazione scansione mDNS...")
         .build();
     container.append(&dev_row);
+
+    let dev_row_clone = dev_row.clone();
+    relm4::spawn_local(async move {
+        if let Ok(output) = tokio::process::Command::new("avahi-browse")
+            .args(["-r", "-t", "_ermete-cloud._tcp"])
+            .output()
+            .await 
+        {
+            if output.status.success() {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                if stdout.trim().is_empty() {
+                    dev_row_clone.set_subtitle("Nessun dispositivo trovato sulla rete locale.");
+                } else {
+                    dev_row_clone.set_subtitle("Dispositivi Ermete rilevati via mDNS.");
+                }
+            } else {
+                dev_row_clone.set_subtitle("Errore durante la scansione avahi-browse.");
+            }
+        } else {
+            dev_row_clone.set_subtitle("Servizio mDNS non disponibile nel sistema.");
+        }
+    });
 
     container
 }

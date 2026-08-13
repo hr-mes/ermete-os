@@ -76,8 +76,16 @@ pub fn build_page() -> Box {
     update_button.connect_clicked(move |_| {
         let status_c = update_status_clone.clone();
         relm4::spawn_local(async move {
-            tokio::time::sleep(tokio::time::Duration::from_millis(300)).await;
-            status_c.set_label("Sistema Aggiornato");
+            status_c.set_label("Controllo in corso...");
+            if let Ok(output) = tokio::process::Command::new("ostree").args(["admin", "status"]).output().await {
+                if output.status.success() {
+                    status_c.set_label("Sistema Aggiornato");
+                } else {
+                    status_c.set_label("Errore controllo");
+                }
+            } else {
+                status_c.set_label("Comando ostree assente");
+            }
         });
     });
 

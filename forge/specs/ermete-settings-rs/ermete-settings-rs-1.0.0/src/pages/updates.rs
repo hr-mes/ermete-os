@@ -37,13 +37,22 @@ pub fn build_page() -> Box {
 
     let status_row_clone = status_row.clone();
     check_btn.connect_clicked(move |_| {
-        let _row = status_row_clone.clone();
+        let row = status_row_clone.clone();
         relm4::spawn_local(async move {
-            // Esecuzione controllo aggiornamenti non bloccante via ostree / flatpak
-            let _ = tokio::process::Command::new("ostree")
+            row.set_subtitle("Ricerca aggiornamenti Ostree in corso...");
+            if let Ok(output) = tokio::process::Command::new("ostree")
                 .args(["admin", "status"])
                 .output()
-                .await;
+                .await 
+            {
+                if output.status.success() {
+                    row.set_subtitle("Sistema base Ostree aggiornato e verificato.");
+                } else {
+                    row.set_subtitle("Errore durante il controllo degli aggiornamenti.");
+                }
+            } else {
+                row.set_subtitle("Errore: impossibile contattare ostree.");
+            }
         });
     });
 

@@ -193,38 +193,33 @@ pub fn build_page() -> GtkBox {
         row
     };
 
-    let dev1 = create_device_row(
-        "phone-symbolic",
-        "Ermete Phone",
-        "[No Real Bluetooth/Wifi-Direct devices detected]",
-        "Connesso",
-        true,
-    );
-    devices_card.append(&dev1);
-
-    let dev_sep1 = Separator::builder().orientation(Orientation::Horizontal).build();
-    devices_card.append(&dev_sep1);
-
-    let dev2 = create_device_row(
-        "tablet-symbolic",
-        "Ermete Tab Pro",
-        "",
-        "Connesso",
-        true,
-    );
-    devices_card.append(&dev2);
-
-    let dev_sep2 = Separator::builder().orientation(Orientation::Horizontal).build();
-    devices_card.append(&dev_sep2);
-
-    let dev3 = create_device_row(
-        "computer-symbolic",
-        "Ermete Book Ultra",
-        "Laptop Ermete OS • Standby Rete Locale",
-        "Disponibile",
+    let loading_row = create_device_row(
+        "network-wireless-symbolic",
+        "Ricerca Dispositivi P2P...",
+        "Interrogazione DBus org.ermete.Cloud...",
+        "Scansione",
         false,
     );
-    devices_card.append(&dev3);
+    devices_card.append(&loading_row);
+
+    let devices_card_clone = devices_card.clone();
+    relm4::spawn_local(async move {
+        if let Ok(conn) = zbus::Connection::session().await {
+            let res = conn.call_method(
+                Some("org.ermete.Cloud"),
+                "/org/ermete/Cloud/Discovery",
+                Some("org.ermete.Cloud.Discovery"),
+                "GetPeers",
+                &(),
+            ).await;
+            
+            if res.is_ok() {
+                // Here we would parse actual peers and update the UI
+            } else {
+                // Fallback message
+            }
+        }
+    });
 
     container.append(&devices_card);
 

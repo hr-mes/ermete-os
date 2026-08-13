@@ -95,6 +95,19 @@ pub fn build_page() -> GtkBox {
         .valign(Align::Center)
         .active(true)
         .build();
+
+    cam_switch.connect_state_set(move |_, state| {
+        relm4::spawn_local(async move {
+            let action = if state { "unblock" } else { "block" };
+            let _ = tokio::process::Command::new("rfkill")
+                .args([action, "camera"])
+                .output()
+                .await;
+            // Potremmo anche aggiungere rfkill block bluetooth se fosse il caso
+        });
+        glib::Propagation::Proceed
+    });
+
     let cam_row = ActionRow::builder("Fotocamera e Microfono")
         .subtitle("Permetti alle applicazioni di richiedere i sensori via PipeWire Portal")
         .suffix(&cam_switch)
