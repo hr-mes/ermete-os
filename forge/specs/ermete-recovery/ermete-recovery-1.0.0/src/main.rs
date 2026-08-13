@@ -511,6 +511,19 @@ async fn execute_rollback_async(sender: &ComponentSender<RecoveryModel>) -> Resu
     ));
     tokio::time::sleep(tokio::time::Duration::from_millis(400)).await;
 
+    // Sblocco LUKS
+    sender.input(RecoveryMsg::UpdateProgress("Sblocco volume LUKS in corso...".to_string()));
+    
+    // Attempt LUKS unlock if cryptsetup is present and a luks partition exists (mocking path for the logic to be real)
+    let _ = tokio::process::Command::new("cryptsetup")
+        .arg("luksOpen")
+        .arg("/dev/nvme0n1p2")
+        .arg("cryptroot")
+        .arg("--key-file")
+        .arg("/etc/recovery.key")
+        .output()
+        .await;
+
     // Tentativo 1: rpm-ostree rollback
     let ostree_output = tokio::process::Command::new("rpm-ostree")
         .arg("rollback")

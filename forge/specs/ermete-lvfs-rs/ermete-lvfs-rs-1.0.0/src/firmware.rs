@@ -9,7 +9,7 @@ use tracing::{info, warn};
 pub trait Fwupd {
     fn refresh_remote(&self, remote_id: &str, signature_filename: &str) -> zbus::Result<()>;
     fn get_devices(&self) -> zbus::Result<Vec<zbus::zvariant::OwnedValue>>;
-    fn get_updates(&self) -> zbus::Result<Vec<zbus::zvariant::OwnedValue>>;
+    fn get_updates(&self) -> zbus::Result<Vec<std::collections::HashMap<String, zbus::zvariant::OwnedValue>>>;
     fn install(&self, id: &str, reason: &str) -> zbus::Result<()>;
 }
 
@@ -101,8 +101,16 @@ impl FirmwareEngine {
         match proxy.get_updates().await {
             Ok(updates) => {
                 info!("Found {} firmware updates pending via fwupd D-Bus", updates.len());
-                for _dev in updates {
-                    let _ = proxy.install("", "").await;
+                for dev in updates {
+                    if let Some(id_val) = dev.get("DeviceId") {
+                        if let Ok(id) = id_val.try_into() {
+                            let id_str: &str = id;
+                            info!("Installing update for device ID: {}", id_str);
+                            if let Err(e) = proxy.install(id_str, "").await {
+                                warn!("Failed to install update for {}: {}", id_str, e);
+                            }
+                        }
+                    }
                 }
             }
             Err(e) => {

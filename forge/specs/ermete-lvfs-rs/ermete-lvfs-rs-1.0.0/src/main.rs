@@ -27,12 +27,15 @@ async fn main() -> Result<()> {
 
     info!("D-Bus Interface 'os.ermete.Lvfs' registered.");
 
-    let _engine = firmware::FirmwareEngine::new();
+    let engine = firmware::FirmwareEngine::new();
 
     // Main event loop
     loop {
-        // Here we could periodically check fwupdmgr in the background
+        // Periodically check fwupdmgr in the background
         info!("Polling for firmware updates...");
+        if let Err(e) = engine.check_and_update().await {
+            tracing::error!("Failed to check and update firmware: {}", e);
+        }
         
         sleep(Duration::from_secs(86400)).await; // Once a day
     }
