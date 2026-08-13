@@ -217,7 +217,7 @@ jobs:
               ghcr.io/hr-mes/ermete-os-builder:${{ needs.build-builder.outputs.content_hash }} \
               bash <<'EOF'
               cp config/rpmmacros ~/.rpmmacros
-              rpmdev-setuptree
+              mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
               SPEC_DIR=""
               if [ -d "specs/ermete-${{ matrix.package }}" ]; then SPEC_DIR="specs/ermete-${{ matrix.package }}"; elif [ -d "specs/${{ matrix.package }}" ]; then SPEC_DIR="specs/${{ matrix.package }}"; fi
             
@@ -232,9 +232,6 @@ jobs:
                 fi
               done
             
-              dnf builddep -y $SPEC_DIR/*.spec
-              spectool -g -R $SPEC_DIR/*.spec || true
-            
               mkdir -p ~/rpmbuild/BUILD/
               for spec_dir in /workspace/forge/specs/ermete-*/ /workspace/forge/specs/*/ ; do
                 if [ -d "$spec_dir" ]; then
@@ -244,26 +241,26 @@ jobs:
                 fi
               done
    
-              rpmbuild -bb $SPEC_DIR/*.spec || true
+              rpmbuild -bb --nodeps $SPEC_DIR/*.spec || true
             
               if ls ~/rpmbuild/SRPMS/*.nosrc.rpm 1> /dev/null 2>&1; then
-                  dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SRPMS/*.nosrc.rpm
               fi
             
-              rpmbuild -bb $SPEC_DIR/*.spec
+              rpmbuild -bb --nodeps $SPEC_DIR/*.spec
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
           EOF
           else
             echo "🌐 Compiling Upstream Package: ${{ matrix.package }}"
-            podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+            podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
               -w /workspace/forge \
-              ghcr.io/hr-mes/ermete-os-builder:${{ needs.build-builder.outputs.content_hash }} \
+              registry.fedoraproject.org/fedora:40 \
               bash <<'EOF'
+              dnf install -y rpm-build rpmdevtools dnf-plugins-core
               cp config/rpmmacros ~/.rpmmacros
-              rpmdev-setuptree
+              mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
               SPEC_DIR=""
               if [ -d "specs/ermete-${{ matrix.package }}" ]; then SPEC_DIR="specs/ermete-${{ matrix.package }}"; elif [ -d "specs/${{ matrix.package }}" ]; then SPEC_DIR="specs/${{ matrix.package }}"; fi
               cd ~/rpmbuild/SRPMS
@@ -412,7 +409,7 @@ jobs:
               ghcr.io/hr-mes/ermete-os-builder:${{ needs.build-builder.outputs.content_hash }} \
               bash <<'EOF'
               cp config/rpmmacros ~/.rpmmacros
-              rpmdev-setuptree
+              mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
               SPEC_DIR=""
               if [ -d "specs/ermete-${{ matrix.package }}" ]; then SPEC_DIR="specs/ermete-${{ matrix.package }}"; elif [ -d "specs/${{ matrix.package }}" ]; then SPEC_DIR="specs/${{ matrix.package }}"; fi
             
@@ -427,9 +424,6 @@ jobs:
                 fi
               done
             
-              dnf builddep -y $SPEC_DIR/*.spec
-              spectool -g -R $SPEC_DIR/*.spec || true
-            
               mkdir -p ~/rpmbuild/BUILD/
               for spec_dir in /workspace/forge/specs/ermete-*/ /workspace/forge/specs/*/ ; do
                 if [ -d "$spec_dir" ]; then
@@ -439,13 +433,12 @@ jobs:
                 fi
               done
    
-              rpmbuild -bb $SPEC_DIR/*.spec || true
+              rpmbuild -bb --nodeps $SPEC_DIR/*.spec || true
             
               if ls ~/rpmbuild/SRPMS/*.nosrc.rpm 1> /dev/null 2>&1; then
-                  dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SRPMS/*.nosrc.rpm
               fi
             
-              rpmbuild -bb $SPEC_DIR/*.spec
+              rpmbuild -bb --nodeps $SPEC_DIR/*.spec
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
           EOF
@@ -455,10 +448,11 @@ jobs:
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
               -w /workspace/forge \
-              ghcr.io/hr-mes/ermete-os-builder:${{ needs.build-builder.outputs.content_hash }} \
+              registry.fedoraproject.org/fedora:40 \
               bash <<'EOF'
+              dnf install -y rpm-build rpmdevtools dnf-plugins-core
               cp config/rpmmacros ~/.rpmmacros
-              rpmdev-setuptree
+              mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
               SPEC_DIR=""
               if [ -d "specs/ermete-${{ matrix.package }}" ]; then SPEC_DIR="specs/ermete-${{ matrix.package }}"; elif [ -d "specs/${{ matrix.package }}" ]; then SPEC_DIR="specs/${{ matrix.package }}"; fi
               cd ~/rpmbuild/SRPMS
@@ -605,7 +599,7 @@ jobs:
               ghcr.io/hr-mes/ermete-os-builder:${{ needs.build-builder.outputs.content_hash }} \
               bash <<'EOF'
               cp config/rpmmacros ~/.rpmmacros
-              rpmdev-setuptree
+              mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
               SPEC_DIR=""
               if [ -d "specs/ermete-${{ matrix.package }}" ]; then SPEC_DIR="specs/ermete-${{ matrix.package }}"; elif [ -d "specs/${{ matrix.package }}" ]; then SPEC_DIR="specs/${{ matrix.package }}"; fi
             
@@ -620,9 +614,6 @@ jobs:
                 fi
               done
             
-              dnf builddep -y $SPEC_DIR/*.spec
-              spectool -g -R $SPEC_DIR/*.spec || true
-            
               mkdir -p ~/rpmbuild/BUILD/
               for spec_dir in /workspace/forge/specs/ermete-*/ /workspace/forge/specs/*/ ; do
                 if [ -d "$spec_dir" ]; then
@@ -632,13 +623,12 @@ jobs:
                 fi
               done
    
-              rpmbuild -bb $SPEC_DIR/*.spec || true
+              rpmbuild -bb --nodeps $SPEC_DIR/*.spec || true
             
               if ls ~/rpmbuild/SRPMS/*.nosrc.rpm 1> /dev/null 2>&1; then
-                  dnf builddep -y --exclude="noopenh264*" ~/rpmbuild/SRPMS/*.nosrc.rpm
               fi
             
-              rpmbuild -bb $SPEC_DIR/*.spec
+              rpmbuild -bb --nodeps $SPEC_DIR/*.spec
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
           EOF
@@ -648,10 +638,11 @@ jobs:
               -v ${{ github.workspace }}:/workspace \
               -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
               -w /workspace/forge \
-              ghcr.io/hr-mes/ermete-os-builder:${{ needs.build-builder.outputs.content_hash }} \
+              registry.fedoraproject.org/fedora:40 \
               bash <<'EOF'
+              dnf install -y rpm-build rpmdevtools dnf-plugins-core
               cp config/rpmmacros ~/.rpmmacros
-              rpmdev-setuptree
+              mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
               SPEC_DIR=""
               if [ -d "specs/ermete-${{ matrix.package }}" ]; then SPEC_DIR="specs/ermete-${{ matrix.package }}"; elif [ -d "specs/${{ matrix.package }}" ]; then SPEC_DIR="specs/${{ matrix.package }}"; fi
               cd ~/rpmbuild/SRPMS
