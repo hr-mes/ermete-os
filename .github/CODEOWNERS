@@ -1,0 +1,20 @@
+# Code Owners for Ermete OS
+
+* @hr-mes-architect
+
+# Core OS & Kernel
+/system/ermete-ebpf-sched/ @hr-mes-architect
+/system/ermete-hypervisor-daemon/ @hr-mes-architect
+/forge/specs/kernel/ @hr-mes-architect
+
+# Post-Quantum Mesh
+/system/ermete-mesh-bus/ @hr-mes-architect
+
+# Wayland & UI
+/system/ermete-compositor/ @hr-mes-architect
+/system/ermete-greeter/ @hr-mes-architect
+
+# CI/CD
+/.github/ @hr-mes-architect
+/forge/ @hr-mes-architect
+/system/Containerfile @hr-mes-architect

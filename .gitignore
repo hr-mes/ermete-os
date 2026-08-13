@@ -39,3 +39,14 @@ forge/*.tar.gz
 *.pem
 .tmp_repo/
 tier0_extracted/
+
+# Scratch and temporary
+*.pyc
+__pycache__/
+fix_*.py
+replace_*.py
+*.tar.zst
+graphify-out/
+.cache/
+.dnf-cache/
+.tmp_repo/
