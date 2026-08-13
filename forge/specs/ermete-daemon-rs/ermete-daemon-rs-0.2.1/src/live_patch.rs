@@ -1,7 +1,7 @@
-#[allow(unused_imports)]
-use std::os::unix::fs::OpenOptionsExt;
 #![allow(unsafe_code)]
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
+#[allow(unused_imports)]
+use std::os::unix::fs::OpenOptionsExt;
 
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
