@@ -44,7 +44,7 @@ jobs:
       - name: ❄️ Install Nix (Bedrock Cache)
         uses: cachix/install-nix-action@v27
         with:
-          extra_nix_config: \"experimental-features = nix-command flakes\"
+          extra_nix_config: "experimental-features = nix-command flakes"
       - name: Align Repositories
         run: cp builder/rpmfusion-custom.repo /etc/yum.repos.d/ 2>/dev/null || true
       - name: Persist DAG State Cache
@@ -93,7 +93,7 @@ jobs:
       - name: ❄️ Install Nix (Bedrock Cache)
         uses: cachix/install-nix-action@v27
         with:
-          extra_nix_config: \"experimental-features = nix-command flakes\"
+          extra_nix_config: "experimental-features = nix-command flakes"
       - name: Check Idempotency (Content Hash)
         id: check_idempotency
         env:
@@ -165,7 +165,7 @@ jobs:
       - name: ❄️ Install Nix (Bedrock Cache)
         uses: cachix/install-nix-action@v27
         with:
-          extra_nix_config: \"experimental-features = nix-command flakes\"
+          extra_nix_config: "experimental-features = nix-command flakes"
       - name: Check Idempotency (GHCR Cache)
         id: check
         env:
@@ -357,7 +357,7 @@ jobs:
       - name: ❄️ Install Nix (Bedrock Cache)
         uses: cachix/install-nix-action@v27
         with:
-          extra_nix_config: \"experimental-features = nix-command flakes\"
+          extra_nix_config: "experimental-features = nix-command flakes"
       - name: Check Idempotency (GHCR Cache)
         id: check
         env:
@@ -549,7 +549,7 @@ jobs:
       - name: ❄️ Install Nix (Bedrock Cache)
         uses: cachix/install-nix-action@v27
         with:
-          extra_nix_config: \"experimental-features = nix-command flakes\"
+          extra_nix_config: "experimental-features = nix-command flakes"
       - name: Check Idempotency (GHCR Cache)
         id: check
         env:
@@ -735,7 +735,7 @@ jobs:
       - name: ❄️ Install Nix (Bedrock Cache)
         uses: cachix/install-nix-action@v27
         with:
-          extra_nix_config: \"experimental-features = nix-command flakes\"
+          extra_nix_config: "experimental-features = nix-command flakes"
       - name: Build & Validate Flatpak Package
         run: |
           set -euo pipefail
@@ -960,7 +960,7 @@ jobs:
       - name: ❄️ Install Nix (Bedrock Cache)
         uses: cachix/install-nix-action@v27
         with:
-          extra_nix_config: \"experimental-features = nix-command flakes\"
+          extra_nix_config: "experimental-features = nix-command flakes"
       - name: Authenticate Podman to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: Resolve Kernel Version and Install Chimera Headers
@@ -1101,7 +1101,7 @@ jobs:
       - name: ❄️ Install Nix (Bedrock Cache)
         uses: cachix/install-nix-action@v27
         with:
-          extra_nix_config: \"experimental-features = nix-command flakes\"
+          extra_nix_config: "experimental-features = nix-command flakes"
       - name: Create Repo and Push OCI
         run: |
           set -euo pipefail

@@ -37,11 +37,17 @@ fetch_pinned() {
   
   echo ">>> Fetching $TARGET (Commit: $COMMIT)..."
   rm -rf "$TARGET"
-  if [ "$COMMIT" = "HEAD" ]; then
-      git clone --depth 1 "$BRANCH_TAG" "$REPO" "$TARGET" || { echo "FATAL: Clone fallito per $REPO"; exit 1; }
+  mkdir -p "$TARGET"
+  if [ "$COMMIT" != "HEAD" ] && curl -sSL "https://github.com/CachyOS/kernel-patches/archive/${COMMIT}.tar.gz" | tar -xz --strip-components=1 -C "$TARGET" 2>/dev/null; then
+      echo ">>> Tarball scaricato ed estratto con successo per $REPO ($COMMIT)"
   else
-      git clone --depth 500 $BRANCH_TAG "$REPO" "$TARGET" || { echo "FATAL: Clone fallito per $REPO"; exit 1; }
-      git -C "$TARGET" checkout -q "$COMMIT" || { echo "FATAL: Checkout fallito per $COMMIT"; exit 1; }
+      echo ">>> Fallback a git clone per $REPO..."
+      if [ "$COMMIT" = "HEAD" ]; then
+          git -c http.sslVerify=false clone --depth 1 $BRANCH_TAG "$REPO" "$TARGET" || { echo "FATAL: Clone fallito per $REPO"; exit 1; }
+      else
+          git -c http.sslVerify=false clone --depth 500 $BRANCH_TAG "$REPO" "$TARGET" || { echo "FATAL: Clone fallito per $REPO"; exit 1; }
+          git -C "$TARGET" checkout -q "$COMMIT" || { echo "FATAL: Checkout fallito per $COMMIT"; exit 1; }
+      fi
   fi
 }
 
