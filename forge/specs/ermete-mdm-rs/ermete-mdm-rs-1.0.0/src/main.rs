@@ -1,4 +1,4 @@
-use std::os::unix::fs::OpenOptionsExt;
+
 use mimalloc::MiMalloc;
 
 #[global_allocator]
@@ -70,7 +70,7 @@ impl MdmDBusInterface {
         info!("Received policy payload: {}", payload_json);
 
         let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
-        let is_auth = dbus::check_polkit_auth_zbus(conn, sender.as_str(), "os.ermete.mdm.apply_policy", true)
+        let is_auth = zbus::check_polkit_auth_zbus(conn, sender.as_str(), "os.ermete.mdm.apply_policy", true)
             .await
             .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit check failed: {}", e)))?;
 
