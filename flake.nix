@@ -50,7 +50,7 @@
       # Strumenti di Build e Packaging (Sostituiscono dnf/rpm-build)
       build-tools = with pkgs; [
         rpm
-        rpmdevtools
+        rpm-devtools
         dnf
         cpio
         buildah
