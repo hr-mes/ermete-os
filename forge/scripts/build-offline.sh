@@ -14,7 +14,7 @@ IMAGE_TAG="${2:-offline}"
 FULL_IMAGE_REF="${IMAGE_NAME}:${IMAGE_TAG}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SYSTEM_DIR="${SCRIPT_DIR}/system"
+SYSTEM_DIR="${SCRIPT_DIR}/../../system"
 
 echo "======================================================================"
 echo "🌋 Ermete OS — Local Offline Fallback Build"

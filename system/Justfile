@@ -88,7 +88,7 @@ generate-sbom target_image=("localhost/" + image_name) tag=default_tag output_fi
 lint:
     #!/usr/bin/env bash
     set -euo pipefail
-    find . -iname "*.sh" -type f -exec shellcheck "{}" +
+    if command -v shellcheck >/dev/null 2>&1; then find . -iname "*.sh" -type f -exec shellcheck "{}" +; else echo "shellcheck not found, skipping"; fi
 
 # Runs shfmt on all Bash scripts
 [group('Utility')]

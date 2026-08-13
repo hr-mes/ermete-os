@@ -62,7 +62,7 @@ impl OpenVinoNpuEngine {
             self.device_name
         );
 
-        let device = Device::Cpu;
+        return Err(anyhow::anyhow!("Hardware NPU not found - failing fast (No Mocks)")); // let device = Device::Cpu;
         let in_dim = input_tensor.len();
         if in_dim == 0 {
             return Err("Input tensor must not be empty".to_string());

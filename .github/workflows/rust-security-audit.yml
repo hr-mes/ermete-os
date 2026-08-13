@@ -93,12 +93,12 @@ jobs:
       - name: Verify Cryptographic Supply-Chain Audits (cargo-vet)
         run: |
           set -euo pipefail
-          cargo vet check || true
+          cargo vet check
 
       - name: Check Dependencies & Vulnerabilities (cargo-deny)
         run: |
           set -euo pipefail
-          cargo deny check || true
+          cargo deny check
 
       - name: 🧹 Fix Workspace Permissions (GH Actions Cleanup)
         if: always()
@@ -189,7 +189,7 @@ jobs:
           if [ -n "${{ matrix.harness }}" ]; then
             cargo kani --harness "${{ matrix.harness }}" || true
           else
-            cargo kani || true
+            cargo kani
           fi
 
       - name: 📦 Upload Formal Verification Artifacts (ZSTD Compressed)

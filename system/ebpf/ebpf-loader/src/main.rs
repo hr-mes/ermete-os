@@ -81,7 +81,7 @@ async fn main() -> Result<(), anyhow::Error> {
 
         for ip_str in &opt.block_ip {
             if let Ok(ip) = Ipv4Addr::from_str(ip_str) {
-                let ip_u32 = u32::from_ne_bytes(ip.octets());
+                let ip_u32 = u32::from_be_bytes(ip.octets());
                 blocklist.insert(ip_u32, 1, 0)?;
                 info!("Added IPv4 {} to XDP Firewall blocklist", ip_str);
             } else {

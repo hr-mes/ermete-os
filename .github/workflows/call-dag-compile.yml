@@ -146,8 +146,7 @@ jobs:
                 fi
               done
    
-              rpmbuild -bb --nodeps $SPEC_DIR/*.spec || true
-            
+                          
               rpmbuild -bb --nodeps $SPEC_DIR/*.spec
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
@@ -349,8 +348,7 @@ jobs:
                 fi
               done
    
-              rpmbuild -bb --nodeps $SPEC_DIR/*.spec || true
-            
+                          
               rpmbuild -bb --nodeps $SPEC_DIR/*.spec
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
@@ -550,8 +548,7 @@ jobs:
                 fi
               done
    
-              rpmbuild -bb --nodeps $SPEC_DIR/*.spec || true
-            
+                          
               rpmbuild -bb --nodeps $SPEC_DIR/*.spec
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
