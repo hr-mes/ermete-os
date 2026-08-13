@@ -49,10 +49,8 @@ extern "C" {
 #[no_mangle]
 pub unsafe extern "C" fn ermete_free_c_string(ptr: *mut c_char) {
     if !ptr.is_null() {
-        // Prevent AddressSanitizer/LeakSanitizer crashes from cross-allocator boundaries
-        // by explicitly using the C ABI allocator for dynamic library boundaries.
-        // SAFETY: FFI free
-        unsafe { free(ptr as *mut std::os::raw::c_void); }
+        // Reconstruct CString to use Rust's global allocator instead of libc::free
+        unsafe { let _ = CString::from_raw(ptr); }
     }
 }
 
@@ -245,20 +243,28 @@ impl EbpfJitCompiler {
                 
                 // R10 is the frame pointer. eBPF stack max size is 512 bytes.
                 if (class == 0x02 || class == 0x03) && dst_reg == 10 { 
-                    let abs_offset = mem_offset.abs() as u16;
-                    if abs_offset > max_stack_depth_bytes {
-                        max_stack_depth_bytes = abs_offset;
-                    }
-                    if abs_offset > 512 {
-                        detected_violations.push(format!("Stack overflow detected at instruction {}: offset {} > 512", i, abs_offset));
+                    if mem_offset >= 0 {
+                        detected_violations.push(format!("Stack overflow detected at instruction {}: positive offset {}", i, mem_offset));
+                    } else {
+                        let abs_offset = (-mem_offset) as u16;
+                        if abs_offset > max_stack_depth_bytes {
+                            max_stack_depth_bytes = abs_offset;
+                        }
+                        if mem_offset < -512 {
+                            detected_violations.push(format!("Stack overflow detected at instruction {}: offset {} < -512", i, mem_offset));
+                        }
                     }
                 } else if class == 0x01 && src_reg == 10 { 
-                    let abs_offset = mem_offset.abs() as u16;
-                    if abs_offset > max_stack_depth_bytes {
-                        max_stack_depth_bytes = abs_offset;
-                    }
-                    if abs_offset > 512 {
-                        detected_violations.push(format!("Stack out-of-bounds read at instruction {}: offset {} > 512", i, abs_offset));
+                    if mem_offset >= 0 {
+                        detected_violations.push(format!("Stack out-of-bounds read at instruction {}: positive offset {}", i, mem_offset));
+                    } else {
+                        let abs_offset = (-mem_offset) as u16;
+                        if abs_offset > max_stack_depth_bytes {
+                            max_stack_depth_bytes = abs_offset;
+                        }
+                        if mem_offset < -512 {
+                            detected_violations.push(format!("Stack out-of-bounds read at instruction {}: offset {} < -512", i, mem_offset));
+                        }
                     }
                 }
             }
