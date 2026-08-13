@@ -188,93 +188,9 @@ impl TaskDiscoveryNode {
             }
         }
 
-        // 2. Complement with default system task topology if operating in isolated container sandbox
-        if tasks.is_empty() {
-            tasks = vec![
-                DiscoveredTask {
-                    pid: 1042,
-                    comm: "niri".into(),
-                    cmdline: "/usr/bin/niri".into(),
-                    mem_mb: 256,
-                    cpu_time_ms: 450,
-                    io_read_bytes: 524_288,
-                    io_write_bytes: 131_072,
-                    num_threads: 8,
-                },
-                DiscoveredTask {
-                    pid: 1088,
-                    comm: "waybar".into(),
-                    cmdline: "/usr/bin/waybar".into(),
-                    mem_mb: 120,
-                    cpu_time_ms: 300,
-                    io_read_bytes: 262_144,
-                    io_write_bytes: 65_536,
-                    num_threads: 4,
-                },
-                DiscoveredTask {
-                    pid: 1120,
-                    comm: "ghostty".into(),
-                    cmdline: "/usr/bin/ghostty".into(),
-                    mem_mb: 180,
-                    cpu_time_ms: 600,
-                    io_read_bytes: 1_048_576,
-                    io_write_bytes: 262_144,
-                    num_threads: 6,
-                },
-                DiscoveredTask {
-                    pid: 1400,
-                    comm: "ollama".into(),
-                    cmdline: "/usr/bin/ollama".into(),
-                    mem_mb: 4096,
-                    cpu_time_ms: 15_000,
-                    io_read_bytes: 200_000_000,
-                    io_write_bytes: 100_000_000,
-                    num_threads: 32,
-                },
-                DiscoveredTask {
-                    pid: 1850,
-                    comm: "cargo".into(),
-                    cmdline: "cargo build --release".into(),
-                    mem_mb: 1024,
-                    cpu_time_ms: 8_500,
-                    io_read_bytes: 150_000_000,
-                    io_write_bytes: 80_000_000,
-                    num_threads: 16,
-                },
-                DiscoveredTask {
-                    pid: 1851,
-                    comm: "rustc".into(),
-                    cmdline: "rustc src/main.rs".into(),
-                    mem_mb: 2048,
-                    cpu_time_ms: 9_200,
-                    io_read_bytes: 180_000_000,
-                    io_write_bytes: 90_000_000,
-                    num_threads: 16,
-                },
-                DiscoveredTask {
-                    pid: 2048,
-                    comm: "podman".into(),
-                    cmdline: "podman build .".into(),
-                    mem_mb: 512,
-                    cpu_time_ms: 5_000,
-                    io_read_bytes: 80_000_000,
-                    io_write_bytes: 40_000_000,
-                    num_threads: 12,
-                },
-                DiscoveredTask {
-                    pid: 3100,
-                    comm: "systemd-journald".into(),
-                    cmdline: "/usr/lib/systemd/systemd-journald".into(),
-                    mem_mb: 64,
-                    cpu_time_ms: 120,
-                    io_read_bytes: 65_536,
-                    io_write_bytes: 262_144,
-                    num_threads: 2,
-                },
-            ];
-        }
-
+        // 2. Nessun finto fallback. Se non troviamo task, restituiamo un vettore vuoto (nessun teatro).
         tasks
+
     }
 }
 

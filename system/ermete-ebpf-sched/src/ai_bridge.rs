@@ -95,25 +95,6 @@ impl AiDaemonBridge {
             (SchedClass::IdleBackground, 100, 20000, 0.50)
         }
     }
-            "ollama" | "torch" => {
-                let score = if has_valid_path { 0.99 } else { 0.95 };
-                (SchedClass::RealtimeNpu, 1000, 1000, score)
-            }
-            "rustc" | "cargo" | "gcc" => {
-                let score = if has_valid_path { 0.85 } else { 0.80 };
-                (SchedClass::BatchCompute, 400, 10000, score)
-            }
-            _ => {
-                if has_valid_path && filename.starts_with("/usr/") {
-                    (SchedClass::IdleBackground, 100, 20000, 0.60)
-                } else if !filename.is_empty() {
-                    (SchedClass::IdleBackground, 100, 20000, 0.50)
-                } else {
-                    (SchedClass::IdleBackground, 100, 20000, 0.35)
-                }
-            }
-        }
-    }
 
     /// Query `ermete-ai-daemon` for AI weights/predictions for a newly executed process
     pub async fn predict_task_priority(&self, pid: u32, comm: &str, filename: &str) -> AiProcessClassification {
