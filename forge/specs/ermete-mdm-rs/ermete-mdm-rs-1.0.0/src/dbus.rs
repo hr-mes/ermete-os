@@ -79,7 +79,7 @@ impl MdmIface {
     /// Manually trigger a local device wipe (e.g. from the UI before giving PC away)
     async fn trigger_local_wipe(
         &self,
-        #[zbus(header)] hdr: zbus::MessageHeader<'_>,
+        #[zbus(header)] hdr: zbus::message::Header<'_>,
         #[zbus(connection)] conn: &zbus::Connection,
     ) -> std::result::Result<String, zbus::fdo::Error> {
         info!("Received D-Bus request to trigger LOCAL WIPE.");
