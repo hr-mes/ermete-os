@@ -105,6 +105,20 @@
             "LLVM_IAS=1"
           ];
         };
+        fakeRootCommands = ''
+          mkdir -p /lib64 /lib /usr/lib /usr/lib64
+          ln -s ${pkgs.glibc}/lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2 || true
+          ln -s ${pkgs.glibc}/lib/ld-linux.so.2 /lib/ld-linux.so.2 || true
+          ln -s ${pkgs.glibc}/lib/libc.so.6 /lib64/libc.so.6 || true
+          ln -s ${pkgs.glibc}/lib/libm.so.6 /lib64/libm.so.6 || true
+          ln -s ${pkgs.glibc}/lib/libpthread.so.0 /lib64/libpthread.so.0 || true
+          ln -s ${pkgs.glibc}/lib/libdl.so.2 /lib64/libdl.so.2 || true
+          ln -s ${pkgs.glibc}/lib/librt.so.1 /lib64/librt.so.1 || true
+          ln -s ${pkgs.stdenv.cc.cc.lib}/lib/libstdc++.so.6 /usr/lib64/libstdc++.so.6 || true
+          ln -s ${pkgs.stdenv.cc.cc.lib}/lib/libstdc++.so.6 /usr/lib/libstdc++.so.6 || true
+          ln -s ${pkgs.stdenv.cc.cc.lib}/lib/libgcc_s.so.1 /lib64/libgcc_s.so.1 || true
+          ln -s ${pkgs.stdenv.cc.cc.lib}/lib/libgcc_s.so.1 /usr/lib64/libgcc_s.so.1 || true
+        '';
       };
 
       # L'ambiente di sviluppo nativo (nix develop) e Builder Environment
