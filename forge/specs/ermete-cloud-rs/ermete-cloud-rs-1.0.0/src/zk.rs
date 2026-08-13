@@ -82,14 +82,14 @@ impl ZkProofEngine {
         // Challenge e = Fiat-Shamir transformation Hash(C || x || nonce)
         let challenge_str = format!("{}:{}:{}", commitment, public_input, nonce);
         let sig = self.dilithium_keypair.sign(challenge_str.as_bytes());
-        let challenge = BASE64.encode(&sig);
+        let challenge = BASE64.encode(sig);
 
         // Response r proves knowledge of shared secret and key signature
         let response_str = format!("{}:{}:{}", challenge, self.node_id, nonce);
         let resp_sig = self.dilithium_keypair.sign(response_str.as_bytes());
-        let response = BASE64.encode(&resp_sig);
+        let response = BASE64.encode(resp_sig);
 
-        let dilithium_pk_b64 = BASE64.encode(&self.dilithium_keypair.public);
+        let dilithium_pk_b64 = BASE64.encode(self.dilithium_keypair.public);
 
         Ok(ZkProof {
             node_id: self.node_id.clone(),
