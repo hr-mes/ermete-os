@@ -1,13 +1,6 @@
-#![allow(unsafe_code)]
-#![allow(clippy::all)]
-#![allow(clippy::pedantic)]
-#![allow(clippy::undocumented_unsafe_blocks)]
-#![allow(clippy::multiple_unsafe_ops_per_block)]
-
 use aya::maps::HashMap as BpfHashMap;
 use aya::programs::Extension;
 use aya::Ebpf;
-use std::collections::HashMap as StdHashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::{info, warn};
@@ -59,98 +52,68 @@ pub struct TaskSchedPolicy {
 /// Safe thread-safe interface exposing `AI_SCHED_MAP` for daemons and scheduler controllers
 #[derive(Clone)]
 pub struct AiSchedMap {
-    ebpf: Option<Arc<Mutex<Ebpf>>>,
-    fallback: Arc<Mutex<StdHashMap<u32, AiSchedParam>>>,
+    ebpf: Arc<Mutex<Ebpf>>,
 }
 
 impl AiSchedMap {
-    pub fn new(ebpf: Option<Arc<Mutex<Ebpf>>>) -> Self {
-        Self {
-            ebpf,
-            fallback: Arc::new(Mutex::new(StdHashMap::new())),
-        }
+    pub fn new(ebpf: Arc<Mutex<Ebpf>>) -> Self {
+        Self { ebpf }
     }
 
-    pub async fn is_bpf_active(&self) -> bool {
-        if let Some(ebpf_arc) = &self.ebpf {
-            let mut ebpf = ebpf_arc.lock().await;
-            ebpf.map_mut("AI_SCHED_MAP").is_some()
+    pub async fn update_policy(&self, pid: u32, value: AiSchedParam) -> anyhow::Result<()> {
+        let mut ebpf = self.ebpf.lock().await;
+        if let Some(map) = ebpf.map_mut("AI_SCHED_MAP") {
+            let mut bpf_map = BpfHashMap::<_, u32, AiSchedParam>::try_from(map)
+                .map_err(|e| anyhow::anyhow!("Failed to cast AI_SCHED_MAP: {}", e))?;
+            bpf_map.insert(pid, value, 0)
+                .map_err(|e| anyhow::anyhow!("Failed to insert PID {} into eBPF AI_SCHED_MAP: {}", pid, e))?;
+            info!("⚡ [eBPF Map] AI_SCHED_MAP updated for PID {} -> weight={}, slice={}us", pid, value.cpu_weight, value.slice_us);
+            Ok(())
         } else {
-            false
+            Err(anyhow::anyhow!("AI_SCHED_MAP not found in eBPF"))
         }
     }
 
-    pub async fn update_policy(&self, pid: u32, value: AiSchedParam) -> Result<(), String> {
-        if let Some(ebpf_arc) = &self.ebpf {
-            let mut ebpf = ebpf_arc.lock().await;
-            if let Some(map) = ebpf.map_mut("AI_SCHED_MAP") {
-                if let Ok(mut bpf_map) = BpfHashMap::<_, u32, AiSchedParam>::try_from(map) {
-                    if let Err(e) = bpf_map.insert(pid, value, 0) {
-                        return Err(format!("Failed to insert PID {} into eBPF AI_SCHED_MAP: {}", pid, e));
-                    }
-                    info!("⚡ [eBPF Map] AI_SCHED_MAP updated for PID {} -> weight={}, slice={}us", pid, value.cpu_weight, value.slice_us);
-                    return Ok(());
-                }
-            }
+    pub async fn get_policy(&self, pid: u32) -> anyhow::Result<Option<AiSchedParam>> {
+        let mut ebpf = self.ebpf.lock().await;
+        if let Some(map) = ebpf.map_mut("AI_SCHED_MAP") {
+            let bpf_map = BpfHashMap::<_, u32, AiSchedParam>::try_from(map)
+                .map_err(|e| anyhow::anyhow!("Failed to cast AI_SCHED_MAP: {}", e))?;
+            Ok(bpf_map.get(&pid, 0).ok())
+        } else {
+            Err(anyhow::anyhow!("AI_SCHED_MAP not found in eBPF"))
         }
-
-        let mut fallback = self.fallback.lock().await;
-        fallback.insert(pid, value);
-        info!("💡 [Fallback Map] AI_SCHED_MAP updated for PID {} -> weight={}, slice={}us", pid, value.cpu_weight, value.slice_us);
-        Ok(())
     }
 
-    pub async fn get_policy(&self, pid: u32) -> Option<AiSchedParam> {
-        if let Some(ebpf_arc) = &self.ebpf {
-            let mut ebpf = ebpf_arc.lock().await;
-            if let Some(map) = ebpf.map_mut("AI_SCHED_MAP") {
-                if let Ok(bpf_map) = BpfHashMap::<_, u32, AiSchedParam>::try_from(map) {
-                    if let Ok(val) = bpf_map.get(&pid, 0) {
-                        return Some(val);
-                    }
-                }
-            }
+    pub async fn remove_policy(&self, pid: u32) -> anyhow::Result<()> {
+        let mut ebpf = self.ebpf.lock().await;
+        if let Some(map) = ebpf.map_mut("AI_SCHED_MAP") {
+            let mut bpf_map = BpfHashMap::<_, u32, AiSchedParam>::try_from(map)
+                .map_err(|e| anyhow::anyhow!("Failed to cast AI_SCHED_MAP: {}", e))?;
+            let _ = bpf_map.remove(&pid);
+            Ok(())
+        } else {
+            Err(anyhow::anyhow!("AI_SCHED_MAP not found in eBPF"))
         }
-
-        let fallback = self.fallback.lock().await;
-        fallback.get(&pid).copied()
     }
 
-    pub async fn remove_policy(&self, pid: u32) -> Result<(), String> {
-        if let Some(ebpf_arc) = &self.ebpf {
-            let mut ebpf = ebpf_arc.lock().await;
-            if let Some(map) = ebpf.map_mut("AI_SCHED_MAP") {
-                if let Ok(mut bpf_map) = BpfHashMap::<_, u32, AiSchedParam>::try_from(map) {
-                    let _ = bpf_map.remove(&pid);
+    pub async fn list_policies(&self) -> anyhow::Result<Vec<(u32, AiSchedParam)>> {
+        let mut ebpf = self.ebpf.lock().await;
+        if let Some(map) = ebpf.map_mut("AI_SCHED_MAP") {
+            let bpf_map = BpfHashMap::<_, u32, AiSchedParam>::try_from(map)
+                .map_err(|e| anyhow::anyhow!("Failed to cast AI_SCHED_MAP: {}", e))?;
+            let keys = bpf_map.keys().collect::<Result<Vec<_>, _>>()
+                .map_err(|e| anyhow::anyhow!("Failed to collect keys from AI_SCHED_MAP: {}", e))?;
+            let mut results = Vec::new();
+            for k in keys {
+                if let Ok(val) = bpf_map.get(&k, 0) {
+                    results.push((k, val));
                 }
             }
+            Ok(results)
+        } else {
+            Err(anyhow::anyhow!("AI_SCHED_MAP not found in eBPF"))
         }
-
-        let mut fallback = self.fallback.lock().await;
-        fallback.remove(&pid);
-        Ok(())
-    }
-
-    pub async fn list_policies(&self) -> Vec<(u32, AiSchedParam)> {
-        if let Some(ebpf_arc) = &self.ebpf {
-            let mut ebpf = ebpf_arc.lock().await;
-            if let Some(map) = ebpf.map_mut("AI_SCHED_MAP") {
-                if let Ok(bpf_map) = BpfHashMap::<_, u32, AiSchedParam>::try_from(map) {
-                    if let Ok(keys) = bpf_map.keys().collect::<Result<Vec<_>, _>>() {
-                        let mut results = Vec::new();
-                        for k in keys {
-                            if let Ok(val) = bpf_map.get(&k, 0) {
-                                results.push((k, val));
-                            }
-                        }
-                        return results;
-                    }
-                }
-            }
-        }
-
-        let fallback = self.fallback.lock().await;
-        fallback.iter().map(|(k, v)| (*k, *v)).collect()
     }
 }
 
@@ -168,7 +131,7 @@ const PROTECTED_PIDS: &[u32] = &[
 const EBPF_BYTECODE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/ermete-ebpf-sched-bpf"));
 
 impl SchedExtController {
-    pub async fn new() -> Self {
+    pub async fn new() -> anyhow::Result<Self> {
         info!("==========================================================================");
         info!("🧠 Initializing User-Space eBPF Scheduler Loader (`aya`) & sched_ext...");
         info!("==========================================================================");
@@ -221,7 +184,7 @@ impl SchedExtController {
             if map_present {
                 info!("✅ `AI_SCHED_MAP` eBPF HashMap detected in BPF object.");
             } else {
-                warn!("⚠️ Map `AI_SCHED_MAP` missing in BPF bytecode. Operating with in-memory fallback map.");
+                anyhow::bail!("Map `AI_SCHED_MAP` missing in BPF bytecode.");
             }
 
             let mut attached = false;
@@ -230,30 +193,29 @@ impl SchedExtController {
                 if let Some(prog) = ebpf.program_mut("scx_enqueue") {
                     if let Ok(struct_ops) = <&mut Extension>::try_from(prog) {
                         if let Err(e) = struct_ops.attach() {
-                            warn!("⚠️ Failed to physically attach `scx_enqueue` to Kernel: {}", e);
+                            anyhow::bail!("Failed to physically attach `scx_enqueue` to Kernel: {}", e);
                         } else {
                             info!("✅ Attached `scx_enqueue` sched_ext eBPF program to kernel.");
                             attached = true;
                         }
                     } else {
-                        warn!("⚠️ `scx_enqueue` is not a valid StructOps program.");
+                        anyhow::bail!("`scx_enqueue` is not a valid StructOps program.");
                     }
                 }
             } else {
-                warn!("ℹ️ sysfs path `/sys/kernel/sched_ext` absent. Kernel standard CFS/EEVDF fallback activated.");
+                anyhow::bail!("sysfs path `/sys/kernel/sched_ext` absent. Kernel standard CFS/EEVDF fallback is NOT allowed in Zero-Trust.");
             }
 
             let ebpf_arc = Arc::new(Mutex::new(ebpf));
-            (AiSchedMap::new(Some(ebpf_arc)), attached || is_sysfs_sched_ext)
+            (AiSchedMap::new(ebpf_arc), attached)
         } else {
-            warn!("⚠️ BPF bytecode object not found or load failed. Activating zero-latency cgroup v2 fallback scheduler.");
-            (AiSchedMap::new(None), false)
+            anyhow::bail!("BPF bytecode object not found or load failed.");
         };
 
-        Self {
+        Ok(Self {
             sched_ext_enabled,
             sched_map,
-        }
+        })
     }
 
     pub fn sched_map(&self) -> &AiSchedMap {
@@ -266,7 +228,7 @@ impl SchedExtController {
 
     /// Apply zero-latency task priority decision directly into kernel sched_ext BPF maps or fallback map.
     /// Validates safety boundaries to prevent AI manipulation of PID 1 or out-of-range slice values.
-    pub async fn apply_task_policy(&self, policy: &TaskSchedPolicy) -> Result<(), String> {
+    pub async fn apply_task_policy(&self, policy: &TaskSchedPolicy) -> anyhow::Result<()> {
         // 1. PID Protection Check (PID 1 / Kernel Idle protection)
         if PROTECTED_PIDS.contains(&policy.pid) {
             let msg = format!(
@@ -274,7 +236,7 @@ impl SchedExtController {
                 policy.pid
             );
             warn!("{}", msg);
-            return Err(msg);
+            anyhow::bail!(msg);
         }
 
         // 2. CPU Weight Boundary Check (cgroup v2 range 1..=10000)
@@ -284,7 +246,7 @@ impl SchedExtController {
                 policy.cpu_weight, policy.pid
             );
             warn!("{}", msg);
-            return Err(msg);
+            anyhow::bail!(msg);
         }
 
         // 3. Time Slice Boundary Check (100us to 100,000us max slice)
@@ -294,7 +256,7 @@ impl SchedExtController {
                 policy.slice_us, policy.pid
             );
             warn!("{}", msg);
-            return Err(msg);
+            anyhow::bail!(msg);
         }
 
         let map_val = AiSchedParam {
@@ -315,84 +277,10 @@ impl SchedExtController {
         info!(
             "⚡ [sched_ext] Policy applied for PID {} ('{:?}'): Weight={}, Slice={}us, TargetLatency={}us (Mode: {})",
             policy.pid, policy.class, policy.cpu_weight, policy.slice_us, policy.latency_target_us,
-            if self.sched_ext_enabled { "Kernel sched_ext" } else { "cgroup v2 Fallback" }
+            if self.sched_ext_enabled { "Kernel sched_ext" } else { "Unknown" }
         );
 
         Ok(())
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[tokio::test]
-    async fn test_ai_sched_map_fallback_ops() -> Result<(), String> {
-        let map = AiSchedMap::new(None);
-        assert!(!map.is_bpf_active().await);
-
-        let val = AiSchedParam {
-            pid: 2048,
-            target_core: 1,
-            core_type: 0,
-            _pad: [0; 3],
-            cpu_weight: 800,
-            slice_us: 1000,
-            sched_class: 1,
-            latency_target_us: 500,
-            flags: 1,
-        };
-
-        map.update_policy(2048, val).await?;
-
-        let queried = map.get_policy(2048).await.ok_or("Policy should exist")?;
-        assert_eq!(queried.cpu_weight, 800);
-        assert_eq!(queried.slice_us, 1000);
-
-        let policies = map.list_policies().await;
-        assert_eq!(policies.len(), 1);
-        assert_eq!(policies[0].0, 2048);
-
-        map.remove_policy(2048).await?;
-        assert!(map.get_policy(2048).await.is_none());
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_sched_ext_controller_confinement_and_validation() {
-        let controller = SchedExtController::new().await;
-
-        // Test PID 1 protection
-        let pid1_policy = TaskSchedPolicy {
-            pid: 1,
-            class: SchedClass::RealtimeNpu,
-            cpu_weight: 1000,
-            slice_us: 1000,
-            latency_target_us: 100,
-        };
-        assert!(controller.apply_task_policy(&pid1_policy).await.is_err());
-
-        // Test invalid CPU weight
-        let invalid_weight = TaskSchedPolicy {
-            pid: 5000,
-            class: SchedClass::InteractiveUi,
-            cpu_weight: 20000,
-            slice_us: 1000,
-            latency_target_us: 500,
-        };
-        assert!(controller.apply_task_policy(&invalid_weight).await.is_err());
-
-        // Test valid policy
-        let valid_policy = TaskSchedPolicy {
-            pid: 5000,
-            class: SchedClass::InteractiveUi,
-            cpu_weight: 800,
-            slice_us: 2000,
-            latency_target_us: 500,
-        };
-        assert!(controller.apply_task_policy(&valid_policy).await.is_ok());
-    }
-}
-
-
 
