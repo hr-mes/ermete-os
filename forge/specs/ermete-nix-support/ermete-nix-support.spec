@@ -19,14 +19,18 @@ Provides ermete-nix-support for Ermete OS.
 %install
 mkdir -p %{buildroot}/usr/lib/tmpfiles.d
 mkdir -p %{buildroot}/usr/share/nix-initial-state/var/nix/profiles
+mkdir -p %{buildroot}/usr/lib/systemd/system
 
 cp -a %{_sourcedir}/usr/lib/tmpfiles.d/* %{buildroot}/usr/lib/tmpfiles.d/ || true
+cp -a %{_sourcedir}/usr/lib/systemd/system/* %{buildroot}/usr/lib/systemd/system/ || true
 
 %files
 %dir /usr/share/nix-initial-state
 %dir /usr/share/nix-initial-state/var
 %dir /usr/share/nix-initial-state/var%dir /usr/share/nix-initial-state/var/nix/profiles
 /usr/lib/tmpfiles.d/10-ermete-nix.conf
+/usr/lib/systemd/system/nix-daemon.socket
+/usr/lib/systemd/system/nix-daemon.service
 
 %changelog
 * Wed Jul 01 2026 Ermete Forge <forge@ermete.os> - 1.0.0-1

@@ -39,7 +39,6 @@ install -m 0644 %{_sourcedir}/usr/lib/systemd/system/systemd-pcrphase-sysinit.se
 cat <<EOF > %{buildroot}%{_unitdir}/ermete-secure-boot.service
 [Unit]
 Description=Ermete OS Measured Boot & UKI Signer
-ConditionPathExists=/etc/keys/ermete-secure-boot.key
 
 [Service]
 MemoryDenyWriteExecute=true
