@@ -1,218 +1,54 @@
-# Technical Specification: Desktop UI Stack — Ermete OS (`doc_shell_ui.md`)
+# Ermete OS: Architettura dell'Interfaccia Utente e dell'Esperienza Utente (Shell & UI)
 
-## 1. Desktop Stack Architectural Overview
+Benvenuti nella documentazione ufficiale dell'interfaccia utente di Ermete OS. Questo documento esplora le scelte architetturali e di design che alimentano il nostro ambiente desktop, spiegando come abbiamo unito sicurezza, prestazioni e semplicità d'uso. Il nostro obiettivo è offrire un'esperienza fluida, robusta e priva di distrazioni, adatta sia all'utente quotidiano che al professionista.
 
-The UI infrastructure of **Ermete OS** is built upon a high-performance Rust stack integrating **GTK4 / Relm4**, **Wayland Layer Shell**, **Tokio Async I/O**, and the **Niri** scrollable tiling compositor.
+## Il Compositor Wayland: Sicurezza e Tiling con `niri`
 
-```mermaid
-graph TD
-    subgraph SystemLayer ["Compositor & System Layer"]
-        Niri[Niri Compositor] <-->|Unix Socket / NIRI_SOCKET| IPC[ermete-niri-ipc]
-        DBus[DBus System/Session Bus] <-->|zbus| Proxies[System Proxies / IPC]
-    end
+Il cuore visivo di Ermete OS è il nostro compositor Wayland, basato su [niri](https://github.com/YaLTeR/niri). Abbiamo scelto di abbandonare i server grafici tradizionali a favore di un paradigma più moderno, isolato e intrinsecamente sicuro.
 
-    subgraph DesignSystem ["Design System"]
-        Style[ermete-style] -->|Glassmorphic CSS / Load Theme| Shell
-        Style -->|Glassmorphic CSS / Load Theme| Dock
-        Style -->|Glassmorphic CSS / Load Theme| Settings
-        Style -->|Glassmorphic CSS / Load Theme| Store
-    end
+### Perché Wayland e `niri`?
+In un ambiente Wayland ben implementato, le applicazioni sono confinate: non possono "spiare" l'intero schermo o intercettare gli input destinati ad altre finestre senza permessi espliciti e controllati. Questo isolamento è fondamentale per la nostra filosofia Zero-Trust.
 
-    subgraph AppLayer ["Applications & Overlays (GTK4 / Relm4)"]
-        Shell[ermete-shell-rs] <-->|glib::Sender / EventStream| IPC
-        Shell <-->|zbus| DBus
-        
-        Dock[ermete-dock] <-->|LayerShell Overlay & Top| Niri
-        Dock <-->|Watchers / IPC| IPC
-        
-        Settings[ermete-settings-rs] -->|Lazy Stack / Relm4| Shell
-        Settings <-->|Config Mutation / IPC| IPC
-        
-        Store[ermete-store-rs] <-->|Tokio DBus Server| DBus
-    end
-```
+Inoltre, `niri` introduce un concetto innovativo di **TilingEngine a scorrimento** (scrollable tiling). Invece di forzare le finestre a rimpicciolirsi in una griglia statica via via che se ne aprono di nuove, `niri` le dispone su un nastro orizzontale infinito. L'utente può scorrere fluidamente tra le applicazioni, mantenendole a una dimensione leggibile e naturale (*WindowPlacement* intelligente). Questo approccio unisce l'efficienza chirurgica dei window manager a mosaico con una curva di apprendimento morbida, rendendolo naturale per chiunque.
 
-### Execution Parameters & Runtime Technologies
-- **Memory Allocator:** `mimalloc` (`mimalloc::MiMalloc`), configured globally across all binaries (`#[global_allocator]`), eliminating fragmentation pauses and maintaining responsive rendering performance.
-- **GSK Graphics Renderer:** Forced to `ngl` (New OpenGL / Vulkan) via `std::env::set_var("GSK_RENDERER", "ngl")`.
-- **GDK Backend:** Pure Wayland backend (`std::env::set_var("GDK_BACKEND", "wayland")`).
-- **Scaling:** Fractional scaling under X11 disabled (`GDK_SCALE=1`) to prevent font rasterization blur.
-- **Sandboxing & Security:** Sandboxing via **Landlock** applied at startup (`crate::sys::sandbox::apply_landlock_sandbox()`).
+## Il Pannello delle Impostazioni: `ermete-settings-rs`
 
----
+Per gestire il sistema, abbiamo sviluppato `ermete-settings-rs`, un centro di controllo nativo scritto interamente in **Rust**, utilizzando il toolkit **GTK4** e l'elegante architettura reattiva di **Relm4**.
 
-## 2. In-Depth Component Breakdown of UI Stack
+### Rust vs JavaScript: Efficienza e Sicurezza
+Molte interfacce moderne fanno affidamento su tecnologie web (come Electron o framework JavaScript/TypeScript) per costruire la UI. Pur essendo facili da sviluppare, queste soluzioni tendono a consumare enormi quantità di RAM, impegnare intensamente la CPU e introdurre micro-latenze fastidiose.
 
-### 2.1 `ermete-shell-rs`
-- **Role:** Core system shell and provider of modal overlays (`os.ermete.Shell`).
-- **Included UI Modules:**
-  - `topbar`: Upper status bar and workspace navigation.
-  - `control_center`: Quick control center (Wi-Fi, Bluetooth, Audio, Brightness, Energy profiles).
-  - `spotlight` & `launcher`: Global search & Application Launcher.
-  - `notifications`: Desktop notification daemon.
-  - `greeter` / `lockscreen`: Authentication interface and lockscreen.
-  - `osd`: On-Screen Display overlay for volume and brightness feedback.
-  - `powermenu`, `calendar`, `clipboard`, `desktop_widgets`, `store`, `privacy_prompt`, `gatekeeper_prompt`.
+Scegliendo Rust, GTK4 e Relm4, otteniamo benefici strutturali ineguagliabili:
+- **Latenza quasi zero:** L'interfaccia risponde istantaneamente agli input dell'utente perché è compilata in codice macchina nativo e ottimizzato.
+- **Sicurezza e Stabilità assolute:** Rust elimina alla radice intere categorie di bug legati alla gestione della memoria (niente *segfault*, niente *data race*). Il pannello delle impostazioni semplicemente non va in crash.
+- **Rispetto delle risorse:** Meno cicli di CPU sprecati e meno RAM occupata significano un sistema che respira e batterie dei portatili che durano molto di più.
 
-#### Relm4 Architecture & Actor Model in Topbar
-The Topbar incorporates the Actor Model provided by **Relm4**:
-- **`TopbarModel`:** Implements `SimpleComponent`. Manages global bar state (clock, battery level, network status, active window title).
-- **`WorkspaceItem`:** Implements `FactoryComponent` contained within a `FactoryVecDeque<WorkspaceItem>`. Each workspace renders as a reactive button widget (`WorkspaceMsg::Focus`).
-- **`TopbarInput` Messages:**
-  - `TickSecond`: Clock updates and UPower/NetworkManager poll ticks.
-  - `TickFast`: Continuous focused window title polling.
-  - `UpdateWorkspaces(Vec<NiriWorkspace>)`: Dynamic workspace list sync emitted by Niri.
-  - `ToggleControlCenter`, `ToggleSpotlight`, `ToggleCalendar`, etc.
+### Comunicazione con il Sistema
+Coerentemente con il principio del privilegio minimo, `ermete-settings-rs` non esegue azioni di modifica del sistema in modo diretto. Agisce invece da client reattivo, dialogando con demoni isolati e di basso livello tramite bus di comunicazione sicuri:
+- **D-Bus:** Per la gestione delle chiamate di sistema generali e l'integrazione desktop.
+- **AudioBus:** Per una gestione reattiva, sicura e senza *glitch* dei dispositivi audio (integrato con PipeWire).
+- **NetBus:** Per la configurazione e il monitoraggio istantaneo delle reti Wi-Fi e VPN.
 
-#### Wayland Layer Shell Integration
-All modal overlays and popups leverage `gtk4-layer-shell`:
-- Anchoring (`set_anchor(Edge::Top, true)`), layer management (`Layer::Top` / `Layer::Overlay`).
-- **Autoclose Overlay Pattern (`setup_popup_autoclose` in `wayland/popup.rs`):** Spawns a full-screen transparent window (`bg-overlay-window`) on `Layer::Top` listening for `GestureClick`. Any click outside the active modal automatically dismisses the popup without interrupting compositor events.
+Questa separazione netta assicura che il codice di interfaccia rimanga snello, mentre i processi che richiedono privilegi elevati rimangono compartimentalizzati e rigidamente validati.
+
+## L'Esperienza dell'OS Immutabile per l'Utente
+
+Uno dei concetti più potenti e rassicuranti di Ermete OS è la sua **immutabilità**. Per l'utente, questo termine tecnico si traduce in una garanzia molto semplice: **il computer non si rompe da solo.**
+
+Nei sistemi operativi tradizionali, l'installazione di programmi o un aggiornamento di sistema modificano direttamente i file vitali sul disco. Se si verifica un calo di tensione, o se un aggiornamento è difettoso, la macchina può diventare inutilizzabile.
+In Ermete OS, le fondamenta del sistema operativo sono in sola lettura. Gli aggiornamenti avvengono in modo **transazionale**:
+1. Il sistema scarica il nuovo aggiornamento silenziosamente in background.
+2. Viene preparata una "nuova immagine" parallela del sistema, senza alterare quella attualmente in uso.
+3. Al riavvio successivo, il computer semplicemente passa alla nuova versione.
+4. Se l'aggiornamento introduce problemi, l'utente (o il sistema stesso) può tornare istantaneamente alla versione precedente e funzionante al boot successivo.
+
+Niente schermate di errore irrimediabili, niente "Decadimento del Sistema" nel tempo. L'utente ha sempre a disposizione un dispositivo affidabile come il primo giorno.
+
+## Il Futuro dello Store (App Center)
+
+Al momento, la gestione e l'installazione delle applicazioni utente avvengono tramite strumenti containerizzati robusti (Flatpak/Podman) ma operano in modalità temporaneamente *headless* (senza un'interfaccia grafica proprietaria).
+
+Stiamo lavorando alla realizzazione di un App Store grafico completamente nativo, anch'esso progettato in puro Rust (*pure-Rust UI*). Abbiamo scelto consapevolmente di non rilasciare soluzioni intermedie e approssimative basate sul web, preferendo attendere di poter offrire un'interfaccia che rispetti pienamente i nostri standard: zero latenza, integrazione perfetta con le API transazionali del sistema immutabile, e un'esperienza di navigazione fluida, sicura e coerente.
 
 ---
-
-### 2.2 `ermete-dock`
-- **Role:** Dynamic multi-monitor desktop dock (`os.ermete.Dock`).
-- **GTK4 + Layer Shell Construction:**
-  - For each active display output (`gdk::Display::monitors()`), a dedicated `DockMonitorInstance` is spawned.
-  - **Main Dock Window:** `ApplicationWindow` anchored to bottom (`Edge::Bottom`, `margin=12`) on `Layer::Top` with CSS class `.dock-container`.
-  - **Invisible Trigger Window (`dock-trigger`):** Secondary 6px window anchored on `Layer::Overlay` with exclusive zone disabled (`set_exclusive_zone(-1)`). Tracks cursor proximity (`EventControllerMotion::connect_enter`) to reveal the Dock when auto-hidden.
-
-#### Dynamic Reconciliation Engine (`reconcile_dock_items`)
-Reconciles dock icons in real time by merging two data streams:
-1. **Pinned Applications:** Parsed from `dock_config.rs` (`~/.config/ermete-dock/dock.json`).
-2. **Active Niri Windows:** Queried from `niri_client::fetch_niri_data::<Vec<NiriWindowInfo>>("Windows", "Windows")`.
-
-#### Multi-Monitor Auto-Hide Algorithm (`should_autohide_for_monitor`)
-Calculates whether the Dock should collapse on a given monitor connector:
-- Identifies active workspace for target connector (`DP-1`, `HDMI-A-1`).
-- Analyzes vertical bounding geometry (`y` coordinate and height `h`) of windows in that workspace.
-- If window bottom edge crosses threshold (`screen_height - 85.0`), toggles CSS class `.dock-hidden`.
-
-#### Interactive Features
-- **Right-Click Context Menu:** Implemented via `gtk4::Popover` providing actions to pin/unpin apps, launch new instances, or close window instances.
-- **Scroll Wheel Navigation:** `EventControllerScroll` over dock items cycles through open windows of an application by focusing target window IDs on Niri.
-- **Drag-and-Drop Feedback:** `DropControllerMotion` applies CSS class `.aura-active` during drag hover events over dock icons.
-
----
-
-### 2.3 `ermete-settings-rs`
-- **Role:** System Control Center & Settings Application (`os.ermete.Settings`).
-- **Relm4 Architecture:** Core `AppModel` (`SimpleComponent`) driven by `RelmApp`.
-
-#### Lazy Page Loading Architecture
-To eliminate cold-start delay and optimize RAM consumption, `ermete-settings-rs` employs deferred container loading:
-1. At startup, empty placeholder `gtk4::Box` containers are registered inside the main `gtk4::Stack`.
-2. Only the initial target view (default `"wifi"` or specified via CLI `--page=...`) is immediately instantiated.
-3. The `connect_visible_child_name_notify` signal intercepts tab switches: if the selected stack container is empty (`container.first_child().is_none()`), it invokes the page constructor (`build_fn()`), lazily populating GTK4 widgets.
-
-#### Natural Language Search & Query Routing
-A natural language search interface (`AppMsg::RouteAi`) analyzes user intent through keyword matching and routing:
-- Query *"My audio is broken"* -> Routes to tab `"audio"`.
-- Query *"I want to change the wallpaper"* -> Routes to tab `"appearance"`.
-
-#### Available Configuration Pages (17 Pages)
-Wi-Fi, Bluetooth, Wired Network, Audio, Notifications, Focus / Do-Not-Disturb, General, Appearance & Themes, Desktop & Dock, Displays (Niri output config), Ecosystem, Updates, Battery, Keyboard, Mouse & Trackpad, Accounts, Privacy & Security.
-
----
-
-### 2.4 `ermete-store-rs`
-- **Role:** Software Store & Package Manager Application (`os.ermete.Store`).
-- **Dual-Thread Tokio/Relm4 Architecture:**
-  - **Backend Tokio DBus Server (Background Thread):** Dedicated thread executing `backend::dbus::start_dbus_server()` on async Tokio runtime to execute system operations without blocking UI frame rendering.
-  - **Frontend Relm4 UI (Main Thread):** Main window (`AppModel`) powered by Relm4 GTK4 featuring a sidebar layout (`store-sidebar`) and stack navigation (`ShowcaseModel`).
-- **Supported Package Engine Backends:**
-  - **Flatpak:** Installation and management from designated repositories or private OCI endpoints.
-  - **OCI Containers:** Containerized application bundle management.
-  - **EOPKG:** Native system package operations.
-
----
-
-### 2.5 `ermete-style`
-- **Role:** Central crate supplying global **Design System** assets and Glassmorphic CSS themes across all OS applications.
-- **Theme Initialization (`load_glass_theme()`):** Loads `style.css` (embedded at compile time via `include_str!("style.css")`) and registers provider to `gdk::Display::default()` with `STYLE_PROVIDER_PRIORITY_APPLICATION`.
-
-#### CSS Tokens & Glassmorphism Properties
-```css
-@define-color glass_bg rgba(30, 30, 32, 0.65);
-@define-color glass_border rgba(255, 255, 255, 0.1);
-@define-color accent_color #007aff;
-@define-color hover_bg rgba(255, 255, 255, 0.15);
-
-/* Core Glassmorphism Base */
-window, popover {
-    background-color: @glass_bg;
-    backdrop-filter: blur(20px);
-    border: 1px solid @glass_border;
-    border-radius: 24px;
-    padding: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-}
-
-/* Tactile Buttons with Reactive Motion Feedback */
-button {
-    background-color: transparent;
-    color: white;
-    border: 1px solid @glass_border;
-    border-radius: 16px;
-    padding: 12px 24px;
-    font-weight: bold;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-}
-
-button:hover {
-    background-color: @hover_bg;
-    transform: scale(1.02);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-button:active {
-    transform: scale(0.98);
-}
-```
-
----
-
-## 3. Compositor `niri` & `ermete-niri-ipc` Crate
-
-### 3.1 Compositor Configuration (`niri/config.kdl`)
-- **Layout Engine:** Scrollable tiling layout with column width presets (33.3%, 50%, 66.6%, 100%).
-- **Focus Ring & Shadow:** Soft gradient focus ring (`active-gradient from="#89b4fa" to="#cba6f7"`) and drop shadows (`softness 32`, `color "#00000070"`).
-- **Layer Shell Rules (`layer-rule`):** Automatic corner rounding (`geometry-corner-radius 10`) and shadows applied across shell overlays (`bar`, `dock`, `control-center`, `launcher`, `spotlight`, `powermenu`, `clipboard`, `wifi`, `notifications`, `osd`).
-- **Keybindings Matrix:** Full shortcut mapping for invoking `ermete-shell-rs` flags (`--dock`, `--launcher`, `--control-center`, `--media-player`, `--sys-monitor`, `--calendar`, `--powermenu`, `--clipboard`).
-
-### 3.2 `ermete-niri-ipc` Crate (`async_client.rs`)
-Non-blocking Tokio async client communicating over Unix Sockets (`NIRI_SOCKET`):
-- **Safety & Timeouts:** Socket I/O calls are wrapped in `tokio::time::timeout(Duration::from_millis(1000), ...)`, preventing UI thread hangs.
-- **Core IPC Methods:**
-  - `get_outputs()`, `set_output_scale()`, `set_output_vrr()`, `set_output_hdr()`, `set_output_mode()`.
-  - `focus_window()`, `close_window()`, `focus_workspace_down()`, `focus_workspace_up()`, `focus_workspace_by_id()`.
-- **KDL Config Mutation (`update_niri_kdl_setting`):** Non-blocking modification of `~/.config/niri/config.kdl` key-value pairs via `tokio::fs`.
-- **Reactive Event Streaming (`watch_niri_event_stream`):** Connects to Niri's `"EventStream"` socket in a background Tokio task. On compositor events (e.g. workspace change), emits signals to `glib::Sender` channels.
-
----
-
-## 4. Event Flow Topology (CodeGraph & Actor Model)
-
-The diagram below details the reactive propagation of compositor events from Niri through to GTK4 display rendering:
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Niri as Niri Compositor
-    participant EventTask as Tokio Event Stream Task (ermete-niri-ipc)
-    participant Channel as glib::Sender<Vec<NiriWorkspace>>
-    participant GTKLoop as GTK4 Main Context / Loop
-    participant Component as Relm4 TopbarModel Component
-    participant Factory as Relm4 FactoryVecDeque<WorkspaceItem>
-    participant GSK as GSK NGL Renderer (Vulkan/GL)
-
-    Niri->>EventTask: EventStream Notification ("WorkspaceChanged")
-    EventTask->>EventTask: fetch_niri_data::<Vec<NiriWorkspace>>("Workspaces")
-    EventTask->>Channel: send(workspaces)
-    Channel->>GTKLoop: Dispatch event to main GUI thread
-    GTKLoop->>Component: TopbarInput::UpdateWorkspaces(workspaces)
-    Component->>Factory: Reactive mutation of component list
-    Component->>GSK: Invalidation & Redraw (View Macro Re-render)
-    GSK->>Niri: Present Wayland Frame (Layer Shell Top)
-```
+*Ermete OS: costruito con il rigore dei sistemi critici, progettato per la serenità dell'utente.*
