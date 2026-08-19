@@ -61,9 +61,9 @@ jobs:
           restore-keys: |
             dag-cache-
 
-      - name: Compute Dependency DAG & Topological Matrix
+      - name: Compute Dependency DAG & Topological Matrix (Nix Flake Hermetic Shell)
         id: brain
-        run: ./scripts/dynamic-matrix.sh
+        run: nix develop .. --command bash -c "./scripts/dynamic-matrix.sh"
 
       - name: 🧹 Cleanup Workspace Permissions
         if: always()
