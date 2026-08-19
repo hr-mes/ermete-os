@@ -436,7 +436,7 @@ mod tests {
     async fn test_snapshot_lifecycle_and_restore() {
         let server = BackupServer::new();
         // Uses the internal logic that doesn't need D-Bus/PolKit for testing
-        let snap = server.create_snapshot_internal("Test note").expect("create snapshot failed");
+        let snap = server.create_snapshot_internal("Test note")?;
         assert!(snap.id.starts_with("snap-"));
         assert_eq!(snap.note, "Test note");
 
