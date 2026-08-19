@@ -23,11 +23,11 @@ Pure Rust native shell for Ermete OS, replacing AGS/GJS.
 cargo build --release --locked
 
 %install
-mkdir -p %{buildroot}%{_bindir}
-install -m 0755 target/release/ermete-shell-rs %{buildroot}%{_bindir}/ermete-shell-rs
+mkdir -p %{buildroot}/usr/bin
+install -m 0755 target/release/ermete-shell-rs %{buildroot}/usr/bin/ermete-shell-rs
 
 %files
-%{_bindir}/ermete-shell-rs
+/usr/bin/ermete-shell-rs
 
 %changelog
 * Wed Jul 22 2026 Ermete Forge <forge@ermete.os> - 1.0.0-21

@@ -23,8 +23,8 @@ Provides 1-click OSTree/bootc visual rollback and automatic failover when `greet
 cargo build --release --locked
 
 %install
-mkdir -p %{buildroot}%{_bindir}
-install -m 0755 target/release/ermete-recovery-ui %{buildroot}%{_bindir}/ermete-recovery-ui
+mkdir -p %{buildroot}/usr/bin
+install -m 0755 target/release/ermete-recovery-ui %{buildroot}/usr/bin/ermete-recovery-ui
 
 mkdir -p %{buildroot}/usr/lib/systemd/system
 install -m 0644 systemd/ermete-recovery.service %{buildroot}/usr/lib/systemd/system/ermete-recovery.service
@@ -34,7 +34,7 @@ mkdir -p %{buildroot}/usr/lib/systemd/system/greetd.service.d
 install -m 0644 systemd/greetd-recovery-fallback.conf %{buildroot}/usr/lib/systemd/system/greetd.service.d/recovery-fallback.conf
 
 %files
-%{_bindir}/ermete-recovery-ui
+/usr/bin/ermete-recovery-ui
 /usr/lib/systemd/system/ermete-recovery.service
 /usr/lib/systemd/system/ermete-recovery.target
 %dir /usr/lib/systemd/system/greetd.service.d

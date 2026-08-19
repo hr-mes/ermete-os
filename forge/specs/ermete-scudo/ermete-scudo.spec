@@ -19,10 +19,10 @@ Sets up Scudo standalone allocator via LD_PRELOAD globally for Ermete OS.
 # No build
 
 %install
-mkdir -p %{buildroot}%{_sysconfdir}
+mkdir -p %{buildroot}/etc
 mkdir -p %{buildroot}%{_prefix}/lib/environment.d
-mkdir -p %{buildroot}%{_unitdir}/greetd.service.d
-mkdir -p %{buildroot}%{_unitdir}/ermete-llm.service.d
+mkdir -p %{buildroot}/usr/lib/systemd/system/greetd.service.d
+mkdir -p %{buildroot}/usr/lib/systemd/system/ermete-llm.service.d
 
 # Global LD_PRELOAD injection removed to preserve system stability and immutability
 
@@ -32,7 +32,7 @@ SCUDO_OPTIONS="ZeroContents=1:PatternFillRet=1:DeallocationTypeMismatch=1:Delete
 EOF
 
 # Greetd override
-cat <<EOF > %{buildroot}%{_unitdir}/greetd.service.d/override.conf
+cat <<EOF > %{buildroot}/usr/lib/systemd/system/greetd.service.d/override.conf
 [Service]
 LockPersonality=true
 RestrictSUIDSGID=true
@@ -46,7 +46,7 @@ Environment="LD_PRELOAD="
 EOF
 
 # Ermete LLM override
-cat <<EOF > %{buildroot}%{_unitdir}/ermete-llm.service.d/override.conf
+cat <<EOF > %{buildroot}/usr/lib/systemd/system/ermete-llm.service.d/override.conf
 [Service]
 LockPersonality=true
 RestrictSUIDSGID=true
@@ -69,8 +69,8 @@ EOF
 %files
 %{_prefix}/lib/environment.d/10-scudo.conf
 %{_prefix}/lib/tmpfiles.d/10-scudo.conf
-%{_unitdir}/greetd.service.d/override.conf
-%{_unitdir}/ermete-llm.service.d/override.conf
+/usr/lib/systemd/system/greetd.service.d/override.conf
+/usr/lib/systemd/system/ermete-llm.service.d/override.conf
 
 %changelog
 * Mon Aug 03 2026 Ermete Forge <forge@ermete.os> - 1.0.0-1

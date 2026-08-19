@@ -26,12 +26,12 @@ cargo build --release
 
 %install
 rm -rf %{buildroot}
-mkdir -p %{buildroot}%{_bindir}
-install -m 755 target/release/%{name} %{buildroot}%{_bindir}/%{name}
+mkdir -p %{buildroot}/usr/bin
+install -m 755 target/release/%{name} %{buildroot}/usr/bin/%{name}
 
 # systemd service
-mkdir -p %{buildroot}%{_unitdir}
-cat > %{buildroot}%{_unitdir}/%{name}.service <<EOF
+mkdir -p %{buildroot}/usr/lib/systemd/system
+cat > %{buildroot}/usr/lib/systemd/system/%{name}.service <<EOF
 [Unit]
 Description=Ermete OS Zero-Trust Gatekeeper
 After=network.target
@@ -44,7 +44,7 @@ MemoryMax=256M
 
 OOMScoreAdjust=-200
 Type=simple
-ExecStart=%{_bindir}/%{name}
+ExecStart=/usr/bin/%{name}
 Restart=on-failure
 RestartSec=5s
 ProtectSystem=strict
@@ -77,8 +77,8 @@ EOF
 %systemd_postun_with_restart %{name}.service
 
 %files
-%{_bindir}/%{name}
-%{_unitdir}/%{name}.service
+/usr/bin/%{name}
+/usr/lib/systemd/system/%{name}.service
 
 %changelog
 * Wed Jul 15 2026 Ermete Forge <forge@ermete.os> - 1.0.0-1

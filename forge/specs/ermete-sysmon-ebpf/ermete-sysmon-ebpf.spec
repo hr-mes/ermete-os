@@ -25,11 +25,11 @@ System monitoring and telemetry daemon leveraging Aya eBPF for kernel-level perf
 cargo build --release --locked
 
 %install
-mkdir -p %{buildroot}%{_bindir}
-install -m 0755 target/release/%{name} %{buildroot}%{_bindir}/%{name}
+mkdir -p %{buildroot}/usr/bin
+install -m 0755 target/release/%{name} %{buildroot}/usr/bin/%{name}
 
 %files
-%{_bindir}/%{name}
+/usr/bin/%{name}
 
 %changelog
 * Wed Aug 05 2026 Ermete Forge <forge@ermete.os> - 1.0.0-1

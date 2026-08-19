@@ -25,7 +25,7 @@ Ermete OS Universal App Store Daemon for Flatpak and OCI container management.
 cargo build --release --locked
 
 %install
-install -D -m 0755 target/release/%{name} %{buildroot}%{_bindir}/%{name}
+install -D -m 0755 target/release/%{name} %{buildroot}/usr/bin/%{name}
 
 # Install D-Bus system configuration
 install -D -m 0644 os.ermete.Store.conf %{buildroot}%{_datadir}/dbus-1/system.d/os.ermete.Store.conf
@@ -34,8 +34,8 @@ install -D -m 0644 os.ermete.Store.conf %{buildroot}%{_datadir}/dbus-1/system.d/
 install -D -m 0644 os.ermete.store.policy %{buildroot}%{_datadir}/polkit-1/actions/os.ermete.store.policy
 
 # Create a systemd service file
-mkdir -p %{buildroot}%{_unitdir}
-cat <<EOF > %{buildroot}%{_unitdir}/%{name}.service
+mkdir -p %{buildroot}/usr/lib/systemd/system
+cat <<EOF > %{buildroot}/usr/lib/systemd/system/%{name}.service
 [Unit]
 Description=Ermete OS Universal App Store Daemon
 After=network-online.target dbus.service
@@ -48,7 +48,7 @@ MemoryMax=768M
 OOMScoreAdjust=200
 Type=dbus
 BusName=os.ermete.Store
-ExecStart=%{_bindir}/%{name}
+ExecStart=/usr/bin/%{name}
 Restart=always
 RestartSec=5s
 DynamicUser=yes
@@ -80,8 +80,8 @@ EOF
 %systemd_postun_with_restart %{name}.service
 
 %files
-%{_bindir}/%{name}
-%{_unitdir}/%{name}.service
+/usr/bin/%{name}
+/usr/lib/systemd/system/%{name}.service
 %{_datadir}/dbus-1/system.d/os.ermete.Store.conf
 %{_datadir}/polkit-1/actions/os.ermete.store.policy
 

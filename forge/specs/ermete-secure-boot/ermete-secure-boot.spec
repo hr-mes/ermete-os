@@ -28,15 +28,15 @@ install -m 0755 %{_sourcedir}/usr/libexec/ermete/ermete-tpm-rollback-check.sh %{
 install -m 0755 %{_sourcedir}/usr/libexec/ermete/ermete-tpm-rollback-update.sh %{buildroot}%{_libexecdir}/ermete/ermete-tpm-rollback-update.sh
 
 # Install systemd services
-mkdir -p %{buildroot}%{_unitdir}
-install -m 0644 %{_sourcedir}/usr/lib/systemd/system/ermete-tpm-rollback-check.service %{buildroot}%{_unitdir}/ermete-tpm-rollback-check.service
-install -m 0644 %{_sourcedir}/usr/lib/systemd/system/ermete-tpm-rollback-update.service %{buildroot}%{_unitdir}/ermete-tpm-rollback-update.service
-install -m 0644 %{_sourcedir}/usr/lib/systemd/system/ermete-tpm-luks-seal.service %{buildroot}%{_unitdir}/ermete-tpm-luks-seal.service
+mkdir -p %{buildroot}/usr/lib/systemd/system
+install -m 0644 %{_sourcedir}/usr/lib/systemd/system/ermete-tpm-rollback-check.service %{buildroot}/usr/lib/systemd/system/ermete-tpm-rollback-check.service
+install -m 0644 %{_sourcedir}/usr/lib/systemd/system/ermete-tpm-rollback-update.service %{buildroot}/usr/lib/systemd/system/ermete-tpm-rollback-update.service
+install -m 0644 %{_sourcedir}/usr/lib/systemd/system/ermete-tpm-luks-seal.service %{buildroot}/usr/lib/systemd/system/ermete-tpm-luks-seal.service
 
-mkdir -p %{buildroot}%{_unitdir}/systemd-pcrphase-sysinit.service.d
-install -m 0644 %{_sourcedir}/usr/lib/systemd/system/systemd-pcrphase-sysinit.service.d/10-rollback-check.conf %{buildroot}%{_unitdir}/systemd-pcrphase-sysinit.service.d/10-rollback-check.conf
+mkdir -p %{buildroot}/usr/lib/systemd/system/systemd-pcrphase-sysinit.service.d
+install -m 0644 %{_sourcedir}/usr/lib/systemd/system/systemd-pcrphase-sysinit.service.d/10-rollback-check.conf %{buildroot}/usr/lib/systemd/system/systemd-pcrphase-sysinit.service.d/10-rollback-check.conf
 
-cat <<EOF > %{buildroot}%{_unitdir}/ermete-secure-boot.service
+cat <<EOF > %{buildroot}/usr/lib/systemd/system/ermete-secure-boot.service
 [Unit]
 Description=Ermete OS Measured Boot & UKI Signer
 
@@ -72,11 +72,11 @@ EOF
 %{_libexecdir}/ermete-tpm-luks-seal.sh
 %{_libexecdir}/ermete/ermete-tpm-rollback-check.sh
 %{_libexecdir}/ermete/ermete-tpm-rollback-update.sh
-%{_unitdir}/ermete-secure-boot.service
-%{_unitdir}/ermete-tpm-luks-seal.service
-%{_unitdir}/ermete-tpm-rollback-check.service
-%{_unitdir}/ermete-tpm-rollback-update.service
-%{_unitdir}/systemd-pcrphase-sysinit.service.d/10-rollback-check.conf
+/usr/lib/systemd/system/ermete-secure-boot.service
+/usr/lib/systemd/system/ermete-tpm-luks-seal.service
+/usr/lib/systemd/system/ermete-tpm-rollback-check.service
+/usr/lib/systemd/system/ermete-tpm-rollback-update.service
+/usr/lib/systemd/system/systemd-pcrphase-sysinit.service.d/10-rollback-check.conf
 
 %changelog
 * Fri Aug 07 2026 Ermete <ermete@ermete.os> - 1.0.0-2

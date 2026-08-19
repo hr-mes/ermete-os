@@ -38,7 +38,7 @@ make DESTDIR=%{buildroot} install_sw install_ssldirs
 /usr/lib64/libcrypto.so*
 /usr/lib64/libssl.so*
 /usr/include/openssl
-%{_sysconfdir}/pki/tls
+/etc/pki/tls
 
 %changelog
 * Sat Aug 08 2026 Ermete Forge <forge@ermete.os> - 3.4.1-1

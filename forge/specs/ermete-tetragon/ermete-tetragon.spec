@@ -20,22 +20,22 @@ Cilium Tetragon eBPF Runtime Security engine, packaged for Ermete OS.
 # Offline hermetic build using pre-fetched Source0 tarball
 
 %install
-mkdir -p %{buildroot}%{_bindir}
+mkdir -p %{buildroot}/usr/bin
 mkdir -p %{buildroot}%{_sharedstatedir}/tetragon
-mkdir -p %{buildroot}%{_sysconfdir}/tetragon/tetragon.tp.d
-mkdir -p %{buildroot}%{_unitdir}
+mkdir -p %{buildroot}/etc/tetragon/tetragon.tp.d
+mkdir -p %{buildroot}/usr/lib/systemd/system
 
 # Copy binaries
-install -m 0755 tetragon-v%{version}-amd64/usr/local/bin/tetragon %{buildroot}%{_bindir}/tetragon
-install -m 0755 tetragon-v%{version}-amd64/usr/local/bin/tetra %{buildroot}%{_bindir}/tetra
+install -m 0755 tetragon-v%{version}-amd64/usr/local/bin/tetragon %{buildroot}/usr/bin/tetragon
+install -m 0755 tetragon-v%{version}-amd64/usr/local/bin/tetra %{buildroot}/usr/bin/tetra
 
 # Copy bpf bytecode
 cp -r tetragon-v%{version}-amd64/usr/local/lib/tetragon/bpf %{buildroot}%{_sharedstatedir}/tetragon/
 
 # Copy services and configs from SOURCES
-install -m 0644 %{_sourcedir}/tetragon.service %{buildroot}%{_unitdir}/tetragon.service
-install -m 0644 %{_sourcedir}/tetragon.yaml %{buildroot}%{_sysconfdir}/tetragon/tetragon.yaml
-install -m 0644 %{_sourcedir}/tetragon.tp.d/sys_execve.yaml %{buildroot}%{_sysconfdir}/tetragon/tetragon.tp.d/sys_execve.yaml
+install -m 0644 %{_sourcedir}/tetragon.service %{buildroot}/usr/lib/systemd/system/tetragon.service
+install -m 0644 %{_sourcedir}/tetragon.yaml %{buildroot}/etc/tetragon/tetragon.yaml
+install -m 0644 %{_sourcedir}/tetragon.tp.d/sys_execve.yaml %{buildroot}/etc/tetragon/tetragon.tp.d/sys_execve.yaml
 
 %post
 %systemd_post tetragon.service
@@ -47,12 +47,12 @@ install -m 0644 %{_sourcedir}/tetragon.tp.d/sys_execve.yaml %{buildroot}%{_sysco
 %systemd_postun_with_restart tetragon.service
 
 %files
-%{_bindir}/tetragon
-%{_bindir}/tetra
+/usr/bin/tetragon
+/usr/bin/tetra
 %{_sharedstatedir}/tetragon/bpf/
-%{_unitdir}/tetragon.service
-%config(noreplace) %{_sysconfdir}/tetragon/tetragon.yaml
-%config(noreplace) %{_sysconfdir}/tetragon/tetragon.tp.d/sys_execve.yaml
+/usr/lib/systemd/system/tetragon.service
+%config(noreplace) /etc/tetragon/tetragon.yaml
+%config(noreplace) /etc/tetragon/tetragon.tp.d/sys_execve.yaml
 
 %changelog
 * Mon Aug 03 2026 Ermete Forge <forge@ermete.os> - 1.3.0-1

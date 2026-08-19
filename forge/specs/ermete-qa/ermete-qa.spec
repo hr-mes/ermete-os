@@ -18,11 +18,11 @@ Diagnostic and testing scripts for Ermete OS CI/CD.
 # No build
 
 %install
-mkdir -p %{buildroot}%{_bindir}
-install -m 0755 %{_sourcedir}/test-nvidia-modules.sh %{buildroot}%{_bindir}/test-nvidia-modules.sh
+mkdir -p %{buildroot}/usr/bin
+install -m 0755 %{_sourcedir}/test-nvidia-modules.sh %{buildroot}/usr/bin/test-nvidia-modules.sh
 
 %files
-%{_bindir}/test-nvidia-modules.sh
+/usr/bin/test-nvidia-modules.sh
 
 %changelog
 * Mon Aug 03 2026 Ermete Forge <forge@ermete.os> - 1.0.0-1

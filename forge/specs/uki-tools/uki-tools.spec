@@ -35,33 +35,33 @@ Ermete OS Forge to guarantee 100% autarchic boot generation and CI pipelines.
 # Pre-compiled native binaries and Python tools
 
 %install
-mkdir -p %{buildroot}%{_bindir}
+mkdir -p %{buildroot}/usr/bin
 mkdir -p %{buildroot}%{_prefix}/lib/systemd
 mkdir -p %{buildroot}%{_prefix}/lib/kernel/install.d
 
 # Install sbsigntools binaries
-install -m 0755 %{_sourcedir}/sbsign %{buildroot}%{_bindir}/sbsign
-install -m 0755 %{_sourcedir}/sbverify %{buildroot}%{_bindir}/sbverify
-install -m 0755 %{_sourcedir}/sbattach %{buildroot}%{_bindir}/sbattach
-install -m 0755 %{_sourcedir}/sbkeysync %{buildroot}%{_bindir}/sbkeysync
-install -m 0755 %{_sourcedir}/sbsiglist %{buildroot}%{_bindir}/sbsiglist
-install -m 0755 %{_sourcedir}/sbvarsign %{buildroot}%{_bindir}/sbvarsign
+install -m 0755 %{_sourcedir}/sbsign %{buildroot}/usr/bin/sbsign
+install -m 0755 %{_sourcedir}/sbverify %{buildroot}/usr/bin/sbverify
+install -m 0755 %{_sourcedir}/sbattach %{buildroot}/usr/bin/sbattach
+install -m 0755 %{_sourcedir}/sbkeysync %{buildroot}/usr/bin/sbkeysync
+install -m 0755 %{_sourcedir}/sbsiglist %{buildroot}/usr/bin/sbsiglist
+install -m 0755 %{_sourcedir}/sbvarsign %{buildroot}/usr/bin/sbvarsign
 
 # Install ukify python tool and kernel install plugin
-install -m 0755 %{_sourcedir}/ukify %{buildroot}%{_bindir}/ukify
+install -m 0755 %{_sourcedir}/ukify %{buildroot}/usr/bin/ukify
 install -m 0755 %{_sourcedir}/60-ukify.install %{buildroot}%{_prefix}/lib/kernel/install.d/60-ukify.install
 
 # Symlink systemd-ukify path to bin/ukify
 ln -sf ../../bin/ukify %{buildroot}%{_prefix}/lib/systemd/ukify
 
 %files
-%{_bindir}/sbsign
-%{_bindir}/sbverify
-%{_bindir}/sbattach
-%{_bindir}/sbkeysync
-%{_bindir}/sbsiglist
-%{_bindir}/sbvarsign
-%{_bindir}/ukify
+/usr/bin/sbsign
+/usr/bin/sbverify
+/usr/bin/sbattach
+/usr/bin/sbkeysync
+/usr/bin/sbsiglist
+/usr/bin/sbvarsign
+/usr/bin/ukify
 %{_prefix}/lib/systemd/ukify
 %{_prefix}/lib/kernel/install.d/60-ukify.install
 

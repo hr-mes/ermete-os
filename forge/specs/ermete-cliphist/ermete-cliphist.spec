@@ -26,11 +26,11 @@ export GOCACHE=%{_builddir}/go-cache
 go build -v -o cliphist
 
 %install
-mkdir -p %{buildroot}%{_bindir}
-install -m 0755 cliphist %{buildroot}%{_bindir}/cliphist
+mkdir -p %{buildroot}/usr/bin
+install -m 0755 cliphist %{buildroot}/usr/bin/cliphist
 
 %files
-%{_bindir}/cliphist
+/usr/bin/cliphist
 
 %changelog
 * Fri Jul 10 2026 Ermete Forge <forge@ermete.os> - 0.7.0-1

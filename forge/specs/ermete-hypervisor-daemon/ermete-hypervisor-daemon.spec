@@ -27,12 +27,12 @@ cargo build --release -p ermete-hypervisor-daemon
 
 %install
 rm -rf %{buildroot}
-mkdir -p %{buildroot}%{_bindir}
-install -m 755 target/release/ermete-hypervisor-daemon %{buildroot}%{_bindir}/ermete-hypervisor-daemon
+mkdir -p %{buildroot}/usr/bin
+install -m 755 target/release/ermete-hypervisor-daemon %{buildroot}/usr/bin/ermete-hypervisor-daemon
 
 # systemd service
-mkdir -p %{buildroot}%{_unitdir}
-cat > %{buildroot}%{_unitdir}/ermete-hypervisor.service <<EOF
+mkdir -p %{buildroot}/usr/lib/systemd/system
+cat > %{buildroot}/usr/lib/systemd/system/ermete-hypervisor.service <<EOF
 [Unit]
 Description=Ermete OS Zero-Trust Hardware Micro-Hypervisor Daemon
 After=network.target dbus.service
@@ -53,7 +53,7 @@ MemoryMax=512M
 
 OOMScoreAdjust=-300
 Type=simple
-ExecStart=%{_bindir}/ermete-hypervisor-daemon
+ExecStart=/usr/bin/ermete-hypervisor-daemon
 Restart=on-failure
 RestartSec=3s
 ProtectSystem=strict
@@ -78,8 +78,8 @@ EOF
 %systemd_postun_with_restart ermete-hypervisor.service
 
 %files
-%{_bindir}/ermete-hypervisor-daemon
-%{_unitdir}/ermete-hypervisor.service
+/usr/bin/ermete-hypervisor-daemon
+/usr/lib/systemd/system/ermete-hypervisor.service
 
 %changelog
 * Fri Aug 07 2026 Ermete Security Architect <security@ermete.os> - 1.0.0-1

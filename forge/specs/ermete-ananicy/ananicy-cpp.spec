@@ -28,13 +28,13 @@ Ananicy-cpp is a rewrite of ananicy in C++ for lower resource usage and faster s
 %install
 %cmake_install
 mkdir -p %{buildroot}/etc/ananicy.d/
-mkdir -p %{buildroot}%{_unitdir}
-install -Dm644 ananicy-cpp.service %{buildroot}%{_unitdir}/ananicy-cpp.service
+mkdir -p %{buildroot}/usr/lib/systemd/system
+install -Dm644 ananicy-cpp.service %{buildroot}/usr/lib/systemd/system/ananicy-cpp.service
 
 %files
 %license LICENSE
-%{_bindir}/ananicy-cpp
-%{_unitdir}/ananicy-cpp.service
+/usr/bin/ananicy-cpp
+/usr/lib/systemd/system/ananicy-cpp.service
 %config(noreplace) /etc/ananicy.d/
 
 %changelog

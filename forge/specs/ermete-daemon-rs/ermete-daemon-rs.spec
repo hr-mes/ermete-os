@@ -23,14 +23,14 @@ Pure Rust native D-Bus IPC service for Ermete OS audio, system bedrock managemen
 cargo build --release --locked
 
 %install
-mkdir -p %{buildroot}%{_bindir}
-install -m 0755 target/release/ermete-daemon-rs %{buildroot}%{_bindir}/ermete-daemon-rs
+mkdir -p %{buildroot}/usr/bin
+install -m 0755 target/release/ermete-daemon-rs %{buildroot}/usr/bin/ermete-daemon-rs
 
 mkdir -p %{buildroot}%{_datadir}/dbus-1/services
 install -m 0644 org.ermete.Settings.service %{buildroot}%{_datadir}/dbus-1/services/org.ermete.Settings.service
 
-mkdir -p %{buildroot}%{_unitdir}
-install -m 0644 %{_sourcedir}/../ermete-daemon.service %{buildroot}%{_unitdir}/ermete-daemon.service || install -m 0644 ermete-daemon.service %{buildroot}%{_unitdir}/ermete-daemon.service
+mkdir -p %{buildroot}/usr/lib/systemd/system
+install -m 0644 %{_sourcedir}/../ermete-daemon.service %{buildroot}/usr/lib/systemd/system/ermete-daemon.service || install -m 0644 ermete-daemon.service %{buildroot}/usr/lib/systemd/system/ermete-daemon.service
 
 %post
 %systemd_post ermete-daemon.service
@@ -42,9 +42,9 @@ install -m 0644 %{_sourcedir}/../ermete-daemon.service %{buildroot}%{_unitdir}/e
 %systemd_postun_with_restart ermete-daemon.service
 
 %files
-%{_bindir}/ermete-daemon-rs
+/usr/bin/ermete-daemon-rs
 %{_datadir}/dbus-1/services/org.ermete.Settings.service
-%{_unitdir}/ermete-daemon.service
+/usr/lib/systemd/system/ermete-daemon.service
 
 %changelog
 * Fri Jul 17 2026 Ermete Forge <forge@ermete.os> - 0.2.1-1

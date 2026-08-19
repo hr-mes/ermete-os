@@ -28,13 +28,13 @@ cargo build --release --locked
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT/%{_bindir}
-install -m 0755 target/release/%{name} $RPM_BUILD_ROOT/%{_bindir}/%{name}
+install -d $RPM_BUILD_ROOT//usr/bin
+install -m 0755 target/release/%{name} $RPM_BUILD_ROOT//usr/bin/%{name}
 install -d $RPM_BUILD_ROOT/%{_datadir}/applications
 install -m 0644 os.ermete.Settings.desktop $RPM_BUILD_ROOT/%{_datadir}/applications/os.ermete.Settings.desktop
 
 %files
-%{_bindir}/%{name}
+/usr/bin/%{name}
 %{_datadir}/applications/os.ermete.Settings.desktop
 
 %changelog

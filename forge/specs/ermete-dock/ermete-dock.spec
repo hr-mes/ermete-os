@@ -27,13 +27,13 @@ Visual Dock and taskbar application library component for Ermete OS built with G
 cargo build --release --locked
 
 %install
-mkdir -p %{buildroot}%{_libdir}/ermete
+mkdir -p %{buildroot}/usr/lib64/ermete
 if [ -f target/release/libermete_dock.rlib ]; then
-    install -m 0644 target/release/libermete_dock.rlib %{buildroot}%{_libdir}/ermete/
+    install -m 0644 target/release/libermete_dock.rlib %{buildroot}/usr/lib64/ermete/
 fi
 
 %files
-%{_libdir}/ermete/
+/usr/lib64/ermete/
 
 %changelog
 * Wed Aug 05 2026 Ermete Forge <forge@ermete.os> - 1.0.0-1

@@ -23,7 +23,7 @@ Ermete OS LVFS Daemon for automated background UEFI/BIOS firmware updates via fw
 cargo build --release --locked
 
 %install
-install -D -m 0755 target/release/%{name} %{buildroot}%{_bindir}/%{name}
+install -D -m 0755 target/release/%{name} %{buildroot}/usr/bin/%{name}
 
 # Install D-Bus system configuration
 install -D -m 0644 os.ermete.Lvfs.conf %{buildroot}%{_datadir}/dbus-1/system.d/os.ermete.Lvfs.conf
@@ -32,8 +32,8 @@ install -D -m 0644 os.ermete.Lvfs.conf %{buildroot}%{_datadir}/dbus-1/system.d/o
 install -D -m 0644 os.ermete.lvfs.policy %{buildroot}%{_datadir}/polkit-1/actions/os.ermete.lvfs.policy
 
 # Create a systemd service file
-mkdir -p %{buildroot}%{_unitdir}
-cat <<EOF > %{buildroot}%{_unitdir}/%{name}.service
+mkdir -p %{buildroot}/usr/lib/systemd/system
+cat <<EOF > %{buildroot}/usr/lib/systemd/system/%{name}.service
 [Unit]
 Description=Ermete OS Firmware Automation Daemon
 After=network-online.target dbus.service fwupd.service
@@ -51,7 +51,7 @@ AmbientCapabilities=CAP_SYS_ADMIN
 Type=dbus
 
 BusName=os.ermete.Lvfs
-ExecStart=%{_bindir}/%{name}
+ExecStart=/usr/bin/%{name}
 Restart=always
 RestartSec=5s
 DynamicUser=yes
@@ -82,8 +82,8 @@ EOF
 %systemd_postun_with_restart %{name}.service
 
 %files
-%{_bindir}/%{name}
-%{_unitdir}/%{name}.service
+/usr/bin/%{name}
+/usr/lib/systemd/system/%{name}.service
 %{_datadir}/dbus-1/system.d/os.ermete.Lvfs.conf
 %{_datadir}/polkit-1/actions/os.ermete.lvfs.policy
 

@@ -27,12 +27,12 @@ cargo build --release -p ermete-net-unikernel
 
 %install
 rm -rf %{buildroot}
-mkdir -p %{buildroot}%{_bindir}
-install -m 755 target/release/ermete-net-unikernel %{buildroot}%{_bindir}/ermete-net-unikernel
+mkdir -p %{buildroot}/usr/bin
+install -m 755 target/release/ermete-net-unikernel %{buildroot}/usr/bin/ermete-net-unikernel
 
 # systemd service
-mkdir -p %{buildroot}%{_unitdir}
-cat > %{buildroot}%{_unitdir}/ermete-net-unikernel.service <<EOF
+mkdir -p %{buildroot}/usr/lib/systemd/system
+cat > %{buildroot}/usr/lib/systemd/system/ermete-net-unikernel.service <<EOF
 [Unit]
 Description=Ermete OS Isolated Rust Userspace TCP/IP Network Unikernel Daemon
 After=network.target dbus.service
@@ -51,7 +51,7 @@ MemoryHigh=256M
 MemoryMax=512M
 OOMScoreAdjust=-300
 Type=simple
-ExecStart=%{_bindir}/ermete-net-unikernel
+ExecStart=/usr/bin/ermete-net-unikernel
 Restart=on-failure
 RestartSec=3s
 ProtectSystem=strict
@@ -75,8 +75,8 @@ EOF
 %systemd_postun_with_restart ermete-net-unikernel.service
 
 %files
-%{_bindir}/ermete-net-unikernel
-%{_unitdir}/ermete-net-unikernel.service
+/usr/bin/ermete-net-unikernel
+/usr/lib/systemd/system/ermete-net-unikernel.service
 
 %changelog
 * Sat Aug 08 2026 Ermete Network Architect <network@ermete.os> - 1.0.0-1

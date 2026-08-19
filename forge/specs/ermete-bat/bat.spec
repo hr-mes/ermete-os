@@ -234,7 +234,7 @@ License:        Apache-2.0 AND BSD-2-Clause AND BSD-2-Clause-Views AND BSD-3-Cla
 %license LICENSE-MIT
 %license NOTICE
 %license LICENSE.dependencies
-%{_bindir}/bat
+/usr/bin/bat
 %{bash_completions_dir}/bat.bash
 %{fish_completions_dir}/bat.fish
 %{zsh_completions_dir}/_bat

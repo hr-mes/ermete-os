@@ -23,11 +23,11 @@ Diagnostic CLI tool for verifying Ermete OS system health and hardware configura
 cargo build --release --locked
 
 %install
-mkdir -p %{buildroot}%{_bindir}
-install -m 0755 target/release/ermete-doctor %{buildroot}%{_bindir}/ermete-doctor
+mkdir -p %{buildroot}/usr/bin
+install -m 0755 target/release/ermete-doctor %{buildroot}/usr/bin/ermete-doctor
 
 %files
-%{_bindir}/ermete-doctor
+/usr/bin/ermete-doctor
 
 %changelog
 * Mon Jul 13 2026 Ermete Forge <forge@ermete.os> - 0.1.0-1

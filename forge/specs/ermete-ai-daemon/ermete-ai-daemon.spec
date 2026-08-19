@@ -25,11 +25,11 @@ Local AI and Machine Learning inference service for Ermete OS using Candle frame
 cargo build --release --locked
 
 %install
-mkdir -p %{buildroot}%{_bindir}
-install -m 0755 target/release/%{name} %{buildroot}%{_bindir}/%{name}
+mkdir -p %{buildroot}/usr/bin
+install -m 0755 target/release/%{name} %{buildroot}/usr/bin/%{name}
 
-mkdir -p %{buildroot}%{_unitdir}
-install -m 0644 %{_sourcedir}/../ermete-ai-daemon.service %{buildroot}%{_unitdir}/%{name}.service || install -m 0644 ermete-ai-daemon.service %{buildroot}%{_unitdir}/%{name}.service
+mkdir -p %{buildroot}/usr/lib/systemd/system
+install -m 0644 %{_sourcedir}/../ermete-ai-daemon.service %{buildroot}/usr/lib/systemd/system/%{name}.service || install -m 0644 ermete-ai-daemon.service %{buildroot}/usr/lib/systemd/system/%{name}.service
 
 %post
 %systemd_post %{name}.service
@@ -41,8 +41,8 @@ install -m 0644 %{_sourcedir}/../ermete-ai-daemon.service %{buildroot}%{_unitdir
 %systemd_postun_with_restart %{name}.service
 
 %files
-%{_bindir}/%{name}
-%{_unitdir}/%{name}.service
+/usr/bin/%{name}
+/usr/lib/systemd/system/%{name}.service
 
 %changelog
 * Wed Aug 05 2026 Ermete Forge <forge@ermete.os> - 1.0.0-1
