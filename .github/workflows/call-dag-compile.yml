@@ -109,8 +109,11 @@ jobs:
           mkdir -p ${{ github.workspace }}/.sccache
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           
+          PKG_CLEAN=$(echo "$PKG_NAME" | tr -d '
+')
           SPEC_DIR=""
-          if [ -d "forge/specs/ermete-${PKG_NAME}" ]; then SPEC_DIR="forge/specs/ermete-${PKG_NAME}"; elif [ -d "forge/specs/${PKG_NAME}" ]; then SPEC_DIR="forge/specs/${PKG_NAME}"; fi
+          if [ -d "forge/specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="forge/specs/ermete-${PKG_CLEAN}"; elif [ -d "forge/specs/${PKG_CLEAN}" ]; then SPEC_DIR="forge/specs/${PKG_CLEAN}"; fi
+          if [ -z "$SPEC_DIR" ]; then echo "DEBUG FAIL: PKG='$PKG_NAME' CLEAN='$PKG_CLEAN'"; ls -la forge/specs/ | grep "$PKG_CLEAN"; fi
           if [ -n "$SPEC_DIR" ]; then
             echo "📦 Compiling Custom Spec: $SPEC_DIR"
             podman run -i --rm \
@@ -123,8 +126,10 @@ jobs:
               bash <<'EOF'
               cp config/rpmmacros ~/.rpmmacros
               mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+              PKG_CLEAN=$(echo "$PKG_NAME" | tr -d '
+')
               SPEC_DIR=""
-              if [ -d "specs/ermete-${PKG_NAME}" ]; then SPEC_DIR="specs/ermete-${PKG_NAME}"; elif [ -d "specs/${PKG_NAME}" ]; then SPEC_DIR="specs/${PKG_NAME}"; fi
+              if [ -d "specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="specs/ermete-${PKG_CLEAN}"; elif [ -d "specs/${PKG_CLEAN}" ]; then SPEC_DIR="specs/${PKG_CLEAN}"; fi
             
               if [ -d "$SPEC_DIR/SOURCES" ]; then 
                 cp -a $SPEC_DIR/SOURCES/* ~/rpmbuild/SOURCES/ || true
@@ -302,8 +307,11 @@ jobs:
           mkdir -p ${{ github.workspace }}/.sccache
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           
+          PKG_CLEAN=$(echo "$PKG_NAME" | tr -d '
+')
           SPEC_DIR=""
-          if [ -d "forge/specs/ermete-${PKG_NAME}" ]; then SPEC_DIR="forge/specs/ermete-${PKG_NAME}"; elif [ -d "forge/specs/${PKG_NAME}" ]; then SPEC_DIR="forge/specs/${PKG_NAME}"; fi
+          if [ -d "forge/specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="forge/specs/ermete-${PKG_CLEAN}"; elif [ -d "forge/specs/${PKG_CLEAN}" ]; then SPEC_DIR="forge/specs/${PKG_CLEAN}"; fi
+          if [ -z "$SPEC_DIR" ]; then echo "DEBUG FAIL: PKG='$PKG_NAME' CLEAN='$PKG_CLEAN'"; ls -la forge/specs/ | grep "$PKG_CLEAN"; fi
           if [ -n "$SPEC_DIR" ]; then
             echo "📦 Compiling Custom Spec: $SPEC_DIR"
             podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
@@ -316,8 +324,10 @@ jobs:
               bash <<'EOF'
               cp config/rpmmacros ~/.rpmmacros
               mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+              PKG_CLEAN=$(echo "$PKG_NAME" | tr -d '
+')
               SPEC_DIR=""
-              if [ -d "specs/ermete-${PKG_NAME}" ]; then SPEC_DIR="specs/ermete-${PKG_NAME}"; elif [ -d "specs/${PKG_NAME}" ]; then SPEC_DIR="specs/${PKG_NAME}"; fi
+              if [ -d "specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="specs/ermete-${PKG_CLEAN}"; elif [ -d "specs/${PKG_CLEAN}" ]; then SPEC_DIR="specs/${PKG_CLEAN}"; fi
             
               if [ -d "$SPEC_DIR/SOURCES" ]; then 
                 cp -a $SPEC_DIR/SOURCES/* ~/rpmbuild/SOURCES/ || true
@@ -493,8 +503,11 @@ jobs:
           mkdir -p ${{ github.workspace }}/.sccache
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           
+          PKG_CLEAN=$(echo "$PKG_NAME" | tr -d '
+')
           SPEC_DIR=""
-          if [ -d "forge/specs/ermete-${PKG_NAME}" ]; then SPEC_DIR="forge/specs/ermete-${PKG_NAME}"; elif [ -d "forge/specs/${PKG_NAME}" ]; then SPEC_DIR="forge/specs/${PKG_NAME}"; fi
+          if [ -d "forge/specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="forge/specs/ermete-${PKG_CLEAN}"; elif [ -d "forge/specs/${PKG_CLEAN}" ]; then SPEC_DIR="forge/specs/${PKG_CLEAN}"; fi
+          if [ -z "$SPEC_DIR" ]; then echo "DEBUG FAIL: PKG='$PKG_NAME' CLEAN='$PKG_CLEAN'"; ls -la forge/specs/ | grep "$PKG_CLEAN"; fi
           if [ -n "$SPEC_DIR" ]; then
             echo "📦 Compiling Custom Spec: $SPEC_DIR"
             podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
@@ -507,8 +520,10 @@ jobs:
               bash <<'EOF'
               cp config/rpmmacros ~/.rpmmacros
               mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+              PKG_CLEAN=$(echo "$PKG_NAME" | tr -d '
+')
               SPEC_DIR=""
-              if [ -d "specs/ermete-${PKG_NAME}" ]; then SPEC_DIR="specs/ermete-${PKG_NAME}"; elif [ -d "specs/${PKG_NAME}" ]; then SPEC_DIR="specs/${PKG_NAME}"; fi
+              if [ -d "specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="specs/ermete-${PKG_CLEAN}"; elif [ -d "specs/${PKG_CLEAN}" ]; then SPEC_DIR="specs/${PKG_CLEAN}"; fi
             
               if [ -d "$SPEC_DIR/SOURCES" ]; then 
                 cp -a $SPEC_DIR/SOURCES/* ~/rpmbuild/SOURCES/ || true
