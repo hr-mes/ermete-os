@@ -10,11 +10,11 @@ URL:            https://github.com/hr-mes/ermete-os
 
 Provides:       sbsigntools = %{version}-%{release}
 Provides:       sbsigntools = 0.9.5
-Obsoletes:      sbsigntools <= 0.9.5
+Obsoletes:      sbsigntools < %{version}-%{release}
 
 Provides:       systemd-ukify = %{version}-%{release}
 Provides:       systemd-ukify = 258.9
-Obsoletes:      systemd-ukify <= 258.9
+Obsoletes:      systemd-ukify < %{version}-%{release}
 
 Provides:       sbsign = %{version}-%{release}
 Provides:       ukify = %{version}-%{release}

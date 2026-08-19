@@ -24,7 +24,7 @@ BuildRequires:  pipewire-devel
 BuildRequires:  libdisplay-info-devel
 
 # Evita conflitti con il niri vanilla di Fedora
-Conflicts:      niri
+Obsoletes:      niri < %{version}-%{release}
 Provides:       niri = %{version}-%{release}
 
 %description

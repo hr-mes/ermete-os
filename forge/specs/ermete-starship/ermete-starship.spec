@@ -7,6 +7,9 @@ License:        ISC
 URL:            https://starship.rs
 Source0:        https://github.com/starship/starship/archive/refs/tags/v%{version}.tar.gz
 
+Provides:       starship = %{version}-%{release}
+Obsoletes:      starship < %{version}-%{release}
+
 BuildRequires:  cargo
 BuildRequires:  rust
 BuildRequires:  cmake

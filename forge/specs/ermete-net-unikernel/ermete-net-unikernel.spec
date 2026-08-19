@@ -71,6 +71,9 @@ EOF
 %preun
 %systemd_preun ermete-net-unikernel.service
 
+%postun
+%systemd_postun_with_restart ermete-net-unikernel.service
+
 %files
 %{_bindir}/ermete-net-unikernel
 %{_unitdir}/ermete-net-unikernel.service

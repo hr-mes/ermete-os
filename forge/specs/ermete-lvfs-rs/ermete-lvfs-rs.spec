@@ -72,6 +72,15 @@ LockPersonality=true
 WantedBy=multi-user.target
 EOF
 
+%post
+%systemd_post %{name}.service
+
+%preun
+%systemd_preun %{name}.service
+
+%postun
+%systemd_postun_with_restart %{name}.service
+
 %files
 %{_bindir}/%{name}
 %{_unitdir}/%{name}.service

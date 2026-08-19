@@ -11,7 +11,7 @@ BuildArch:      noarch
 Requires: cage greetd greenboot systemd-ukify niri nodejs
 # Core UI andDaemons
 Requires: ermete-shell-rs ermete-settings-rs ermete-daemon-rs
-Requires: ermete-store-rs ermete-telemetry ermete-cloud-rs xdg-desktop-portal-ermete
+Requires: ermete-store-rs ermete-sysmon-ebpf ermete-cloud-rs xdg-desktop-portal-ermete
 Requires: usbguard bolt
 
 Requires:       bcachefs-tools

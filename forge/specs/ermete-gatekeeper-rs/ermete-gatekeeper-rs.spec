@@ -73,6 +73,9 @@ EOF
 %preun
 %systemd_preun %{name}.service
 
+%postun
+%systemd_postun_with_restart %{name}.service
+
 %files
 %{_bindir}/%{name}
 %{_unitdir}/%{name}.service

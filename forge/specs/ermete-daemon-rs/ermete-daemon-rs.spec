@@ -32,6 +32,15 @@ install -m 0644 org.ermete.Settings.service %{buildroot}%{_datadir}/dbus-1/servi
 mkdir -p %{buildroot}%{_unitdir}
 install -m 0644 %{_sourcedir}/../ermete-daemon.service %{buildroot}%{_unitdir}/ermete-daemon.service || install -m 0644 ermete-daemon.service %{buildroot}%{_unitdir}/ermete-daemon.service
 
+%post
+%systemd_post ermete-daemon.service
+
+%preun
+%systemd_preun ermete-daemon.service
+
+%postun
+%systemd_postun_with_restart ermete-daemon.service
+
 %files
 %{_bindir}/ermete-daemon-rs
 %{_datadir}/dbus-1/services/org.ermete.Settings.service

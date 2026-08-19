@@ -74,6 +74,9 @@ EOF
 %preun
 %systemd_preun ermete-hypervisor.service
 
+%postun
+%systemd_postun_with_restart ermete-hypervisor.service
+
 %files
 %{_bindir}/ermete-hypervisor-daemon
 %{_unitdir}/ermete-hypervisor.service

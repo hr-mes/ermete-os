@@ -9,7 +9,9 @@ Source0:        https://github.com/openssl/openssl/releases/download/openssl-%{v
 Provides:       openssl = %{version}-%{release}
 Provides:       openssl-libs = %{version}-%{release}
 Provides:       openssl-devel = %{version}-%{release}
-Obsoletes:      openssl < %{version}
+Obsoletes:      openssl < %{version}-%{release}
+Obsoletes:      openssl-libs < %{version}-%{release}
+Obsoletes:      openssl-devel < %{version}-%{release}
 
 BuildRequires:  gcc
 BuildRequires:  make

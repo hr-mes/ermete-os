@@ -31,6 +31,15 @@ install -m 0755 target/release/%{name} %{buildroot}%{_bindir}/%{name}
 mkdir -p %{buildroot}%{_unitdir}
 install -m 0644 %{_sourcedir}/../ermete-ai-daemon.service %{buildroot}%{_unitdir}/%{name}.service || install -m 0644 ermete-ai-daemon.service %{buildroot}%{_unitdir}/%{name}.service
 
+%post
+%systemd_post %{name}.service
+
+%preun
+%systemd_preun %{name}.service
+
+%postun
+%systemd_postun_with_restart %{name}.service
+
 %files
 %{_bindir}/%{name}
 %{_unitdir}/%{name}.service

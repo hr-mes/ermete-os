@@ -43,6 +43,9 @@ install -m 0644 %{_sourcedir}/tetragon.tp.d/sys_execve.yaml %{buildroot}%{_sysco
 %preun
 %systemd_preun tetragon.service
 
+%postun
+%systemd_postun_with_restart tetragon.service
+
 %files
 %{_bindir}/tetragon
 %{_bindir}/tetra

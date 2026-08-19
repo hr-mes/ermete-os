@@ -27,7 +27,9 @@ cp -a %{_sourcedir}/usr/lib/systemd/system/* %{buildroot}/usr/lib/systemd/system
 %files
 %dir /usr/share/nix-initial-state
 %dir /usr/share/nix-initial-state/var
-%dir /usr/share/nix-initial-state/var%dir /usr/share/nix-initial-state/var/nix/profiles
+%dir /usr/share/nix-initial-state/var
+%dir /usr/share/nix-initial-state/var/nix
+%dir /usr/share/nix-initial-state/var/nix/profiles
 /usr/lib/tmpfiles.d/10-ermete-nix.conf
 /usr/lib/systemd/system/nix-daemon.socket
 /usr/lib/systemd/system/nix-daemon.service

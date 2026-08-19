@@ -8,7 +8,8 @@ Source0:        https://mirrors.edge.kernel.org/pub/software/scm/git/git-%{versi
 
 Provides:       git = %{version}-%{release}
 Provides:       git-core = %{version}-%{release}
-Obsoletes:      git < %{version}
+Obsoletes:      git < %{version}-%{release}
+Obsoletes:      git-core < %{version}-%{release}
 
 BuildRequires:  gcc
 BuildRequires:  make
