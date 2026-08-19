@@ -63,7 +63,7 @@ jobs:
 
       - name: Compute Dependency DAG & Topological Matrix (Nix Flake Hermetic Shell)
         id: brain
-        run: nix develop .. --command bash -c "./scripts/dynamic-matrix.sh"
+        run: ./scripts/dynamic-matrix.sh
 
       - name: 🧹 Cleanup Workspace Permissions
         if: always()
