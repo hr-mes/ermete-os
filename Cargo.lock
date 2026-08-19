@@ -1650,7 +1650,7 @@ dependencies = [
  "sha2",
  "subtle",
  "tracing",
- "x25519-dalek 2.0.1",
+ "x25519-dalek 3.0.0",
  "zbus",
  "zeroize",
 ]
@@ -1960,7 +1960,7 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-subscriber",
- "x25519-dalek 2.0.1",
+ "x25519-dalek 3.0.0",
  "zbus",
  "zeroize",
 ]
@@ -1982,7 +1982,7 @@ dependencies = [
  "rtnetlink",
  "tokio",
  "tracing",
- "x25519-dalek 2.0.1",
+ "x25519-dalek 3.0.0",
  "zbus",
 ]
 
