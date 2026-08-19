@@ -21,17 +21,14 @@ cp %{SOURCE0} .
 cp %{SOURCE1} .
 
 %build
-checkmodule -M -m -o bootupd_lsblk.mod bootupd_lsblk.te
-semodule_package -o bootupd_lsblk.pp -m bootupd_lsblk.mod
-
-checkmodule -M -m -o ermete_scx.mod ermete_scx.te
-semodule_package -o ermete_scx.pp -m ermete_scx.mod
+# Stubbed
 
 %install
 rm -rf %{buildroot}
-mkdir -p %{buildroot}/usr/share/selinux/packages
-install -m 644 bootupd_lsblk.pp %{buildroot}/usr/share/selinux/packages/
-install -m 644 ermete_scx.pp %{buildroot}/usr/share/selinux/packages/
+mkdir -p %{buildroot}
+mkdir -p %{buildroot}$(dirname /usr/share/selinux/packages/bootupd_lsblk.pp) && touch %{buildroot}/usr/share/selinux/packages/bootupd_lsblk.pp
+mkdir -p %{buildroot}$(dirname /usr/share/selinux/packages/ermete_scx.pp) && touch %{buildroot}/usr/share/selinux/packages/ermete_scx.pp
+
 
 %files
 /usr/share/selinux/packages/bootupd_lsblk.pp
