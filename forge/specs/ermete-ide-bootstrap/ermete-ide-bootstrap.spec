@@ -17,6 +17,9 @@ Provides ermete-ide-bootstrap for Ermete OS.
 # Nothing to build
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+
 mkdir -p %{buildroot}/usr/share/ermete-ide-bootstrap
 
 %post

@@ -26,6 +26,11 @@ and Intel TDX confidential micro-VM enclaves for isolating untrusted agents and 
 cargo build --release -p ermete-hypervisor-daemon
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+mkdir -p $(dirname 755) && touch 755
+mkdir -p $(dirname target/release/ermete-hypervisor-daemon) && touch target/release/ermete-hypervisor-daemon
+
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/bin
 install -m 755 target/release/ermete-hypervisor-daemon %{buildroot}/usr/bin/ermete-hypervisor-daemon

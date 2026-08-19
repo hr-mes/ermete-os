@@ -17,6 +17,9 @@ Core component implementation for ermete-greeter.
 echo "Building ermete-greeter..."
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+
 mkdir -p %{buildroot}/usr/bin
 cat << 'BINEOF' > %{buildroot}/usr/bin/ermete-greeter
 #!/bin/bash

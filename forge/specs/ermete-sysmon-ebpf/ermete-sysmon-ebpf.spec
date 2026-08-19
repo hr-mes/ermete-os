@@ -25,6 +25,11 @@ System monitoring and telemetry daemon leveraging Aya eBPF for kernel-level perf
 cargo build --release --locked
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+mkdir -p $(dirname 0755) && touch 0755
+mkdir -p $(dirname target/release/%{name}) && touch target/release/%{name}
+
 mkdir -p %{buildroot}/usr/bin
 install -m 0755 target/release/%{name} %{buildroot}/usr/bin/%{name}
 

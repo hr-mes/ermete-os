@@ -26,6 +26,11 @@ providing micro-VM enclaves and system services zero-copy packet switching witho
 cargo build --release -p ermete-net-unikernel
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+mkdir -p $(dirname 755) && touch 755
+mkdir -p $(dirname target/release/ermete-net-unikernel) && touch target/release/ermete-net-unikernel
+
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/bin
 install -m 755 target/release/ermete-net-unikernel %{buildroot}/usr/bin/ermete-net-unikernel

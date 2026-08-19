@@ -17,6 +17,9 @@ Core component implementation for sccache.
 echo "Building sccache..."
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+
 mkdir -p %{buildroot}/usr/bin
 cat << 'BINEOF' > %{buildroot}/usr/bin/sccache
 #!/bin/bash

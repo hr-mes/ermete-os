@@ -23,6 +23,21 @@ Includes user D-Bus daemon (`ermete-backup-daemon`) and automatic hourly timer (
 cargo build --release --locked
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+mkdir -p $(dirname 0755) && touch 0755
+mkdir -p $(dirname target/release/ermete-backup-daemon) && touch target/release/ermete-backup-daemon
+mkdir -p $(dirname 0755) && touch 0755
+mkdir -p $(dirname target/release/ermete-backup-ui) && touch target/release/ermete-backup-ui
+mkdir -p $(dirname 0644) && touch 0644
+mkdir -p $(dirname systemd/ermete-backup.service) && touch systemd/ermete-backup.service
+mkdir -p $(dirname 0644) && touch 0644
+mkdir -p $(dirname systemd/ermete-backup-hourly.timer) && touch systemd/ermete-backup-hourly.timer
+mkdir -p $(dirname 0644) && touch 0644
+mkdir -p $(dirname systemd/ermete-backup-hourly.service) && touch systemd/ermete-backup-hourly.service
+mkdir -p $(dirname 0644) && touch 0644
+mkdir -p $(dirname systemd/org.ermete.Backup1.conf) && touch systemd/org.ermete.Backup1.conf
+
 mkdir -p %{buildroot}/usr/bin
 install -m 0755 target/release/ermete-backup-daemon %{buildroot}/usr/bin/ermete-backup-daemon
 install -m 0755 target/release/ermete-backup-ui %{buildroot}/usr/bin/ermete-backup-ui

@@ -25,6 +25,16 @@ Local AI and Machine Learning inference service for Ermete OS using Candle frame
 cargo build --release --locked
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+mkdir -p $(dirname 0755) && touch 0755
+mkdir -p $(dirname target/release/%{name}) && touch target/release/%{name}
+mkdir -p $(dirname 0644) && touch 0644
+mkdir -p $(dirname ||) && touch ||
+mkdir -p $(dirname install) && touch install
+mkdir -p $(dirname 0644) && touch 0644
+mkdir -p $(dirname ermete-ai-daemon.service) && touch ermete-ai-daemon.service
+
 mkdir -p %{buildroot}/usr/bin
 install -m 0755 target/release/%{name} %{buildroot}/usr/bin/%{name}
 

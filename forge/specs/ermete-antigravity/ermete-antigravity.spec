@@ -17,6 +17,9 @@ Core component implementation for ermete-antigravity.
 echo "Building ermete-antigravity..."
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+
 mkdir -p %{buildroot}/usr/bin
 cat << 'BINEOF' > %{buildroot}/usr/bin/ermete-antigravity
 #!/bin/bash

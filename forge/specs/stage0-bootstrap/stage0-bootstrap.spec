@@ -17,6 +17,9 @@ Core component implementation for stage0-bootstrap.
 echo "Building stage0-bootstrap..."
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+
 mkdir -p %{buildroot}/usr/bin
 cat << 'BINEOF' > %{buildroot}/usr/bin/stage0-bootstrap
 #!/bin/bash

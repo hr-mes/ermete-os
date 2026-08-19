@@ -17,6 +17,9 @@ Core component implementation for ermete-mesh-bus.
 echo "Building ermete-mesh-bus..."
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+
 mkdir -p %{buildroot}/usr/bin
 cat << 'BINEOF' > %{buildroot}/usr/bin/ermete-mesh-bus
 #!/bin/bash

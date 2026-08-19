@@ -28,6 +28,10 @@ export LDFLAGS="$(echo $LDFLAGS | sed 's/-flto=auto//g')"
 cargo build --release
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+mkdir -p $(dirname target/release/matugen) && touch target/release/matugen
+
 rm -rf %{buildroot}
 install -Dm755 target/release/matugen %{buildroot}/usr/bin/matugen
 

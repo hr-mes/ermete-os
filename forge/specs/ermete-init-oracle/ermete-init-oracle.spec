@@ -17,6 +17,9 @@ Core component implementation for ermete-init-oracle.
 echo "Building ermete-init-oracle..."
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+
 mkdir -p %{buildroot}/usr/bin
 cat << 'BINEOF' > %{buildroot}/usr/bin/ermete-init-oracle
 #!/bin/bash

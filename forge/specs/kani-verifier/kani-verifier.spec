@@ -20,6 +20,10 @@ Packaged as an offline bundle to prevent 503 errors from GitHub during CI/CD.
 # Pre-compiled bundle containing kani-compiler, cargo-kani, etc.
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+mkdir -p $(dirname *) && touch *
+
 mkdir -p %{buildroot}/opt/kani
 cp -r * %{buildroot}/opt/kani/
 

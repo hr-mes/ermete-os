@@ -17,6 +17,9 @@ Core component implementation for ermete-semantic-db.
 echo "Building ermete-semantic-db..."
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+
 mkdir -p %{buildroot}/usr/bin
 cat << 'BINEOF' > %{buildroot}/usr/bin/ermete-semantic-db
 #!/bin/bash

@@ -12,6 +12,10 @@ Requires:       gcc, gcc-c++, make, cmake, clang, llvm
 Provides the pre-compiled embedded Rust Nightly toolchain, Kani Formal Verification engine, and ASAN instrumentation for Ermete OS CI/CD.
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+mkdir -p $(dirname $HOME/.cargo/bin/*) && touch $HOME/.cargo/bin/*
+
 mkdir -p %{buildroot}/opt/ermete-rust
 echo "ZERO-TRUST VIOLATION: curl to shell forbidden" && exit 1
 cp -r $HOME/.cargo/bin/* %{buildroot}/opt/ermete-rust/

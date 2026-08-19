@@ -17,6 +17,9 @@ Core component implementation for osbuild.
 echo "Building osbuild..."
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+
 mkdir -p %{buildroot}/usr/bin
 cat << 'BINEOF' > %{buildroot}/usr/bin/osbuild
 #!/bin/bash

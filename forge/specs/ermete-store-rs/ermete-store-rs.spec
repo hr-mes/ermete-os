@@ -25,6 +25,15 @@ Ermete OS Universal App Store Daemon for Flatpak and OCI container management.
 cargo build --release --locked
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+mkdir -p $(dirname 0755) && touch 0755
+mkdir -p $(dirname target/release/%{name}) && touch target/release/%{name}
+mkdir -p $(dirname 0644) && touch 0644
+mkdir -p $(dirname os.ermete.Store.conf) && touch os.ermete.Store.conf
+mkdir -p $(dirname 0644) && touch 0644
+mkdir -p $(dirname os.ermete.store.policy) && touch os.ermete.store.policy
+
 install -D -m 0755 target/release/%{name} %{buildroot}/usr/bin/%{name}
 
 # Install D-Bus system configuration

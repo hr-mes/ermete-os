@@ -17,6 +17,9 @@ Core component implementation for ermete-telemetry.
 echo "Building ermete-telemetry..."
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+
 mkdir -p %{buildroot}/usr/bin
 cat << 'BINEOF' > %{buildroot}/usr/bin/ermete-telemetry
 #!/bin/bash

@@ -17,6 +17,9 @@ Core component implementation for ermete-astro-toolchain.
 echo "Building ermete-astro-toolchain..."
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+
 mkdir -p %{buildroot}/usr/bin
 cat << 'BINEOF' > %{buildroot}/usr/bin/ermete-astro-toolchain
 #!/bin/bash

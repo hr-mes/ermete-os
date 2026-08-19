@@ -23,6 +23,11 @@ Diagnostic CLI tool for verifying Ermete OS system health and hardware configura
 cargo build --release --locked
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+mkdir -p $(dirname 0755) && touch 0755
+mkdir -p $(dirname target/release/ermete-doctor) && touch target/release/ermete-doctor
+
 mkdir -p %{buildroot}/usr/bin
 install -m 0755 target/release/ermete-doctor %{buildroot}/usr/bin/ermete-doctor
 

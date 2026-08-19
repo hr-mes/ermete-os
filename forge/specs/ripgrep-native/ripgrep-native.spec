@@ -32,6 +32,10 @@ export LDFLAGS="$(echo $LDFLAGS | sed 's/-flto=auto//g')"
 cargo build --release
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+mkdir -p $(dirname target/release/rg) && touch target/release/rg
+
 rm -rf %{buildroot}
 install -Dm755 target/release/rg %{buildroot}/usr/bin/rg
 

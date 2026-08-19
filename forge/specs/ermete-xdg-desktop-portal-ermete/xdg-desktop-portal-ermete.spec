@@ -23,6 +23,15 @@ Ermete OS implementation of the XDG Desktop Portal for native Wayland/Niri integ
 cargo build --release --locked
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+mkdir -p $(dirname 0755) && touch 0755
+mkdir -p $(dirname target/release/%{name}) && touch target/release/%{name}
+mkdir -p $(dirname 0644) && touch 0644
+mkdir -p $(dirname org.freedesktop.impl.portal.desktop.ermete.service) && touch org.freedesktop.impl.portal.desktop.ermete.service
+mkdir -p $(dirname 0644) && touch 0644
+mkdir -p $(dirname ermete.portal) && touch ermete.portal
+
 install -D -m 0755 target/release/%{name} %{buildroot}%{_libexecdir}/%{name}
 
 # Install D-Bus session service

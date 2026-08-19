@@ -25,6 +25,11 @@ Ermete OS Zero-Trust binary execution gatekeeper using fanotify.
 cargo build --release
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+mkdir -p $(dirname 755) && touch 755
+mkdir -p $(dirname target/release/%{name}) && touch target/release/%{name}
+
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/bin
 install -m 755 target/release/%{name} %{buildroot}/usr/bin/%{name}

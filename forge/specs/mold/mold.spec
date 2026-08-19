@@ -17,6 +17,9 @@ Core component implementation for mold.
 echo "Building mold..."
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+
 mkdir -p %{buildroot}/usr/bin
 cat << 'BINEOF' > %{buildroot}/usr/bin/mold
 #!/bin/bash

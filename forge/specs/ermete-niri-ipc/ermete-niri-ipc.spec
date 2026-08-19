@@ -24,6 +24,11 @@ Async IPC library crate for interacting with the Niri Wayland compositor via UNI
 cargo build --release
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+mkdir -p $(dirname 0644) && touch 0644
+mkdir -p $(dirname target/release/libermete_niri_ipc.rlib) && touch target/release/libermete_niri_ipc.rlib
+
 mkdir -p %{buildroot}/usr/lib64/ermete
 if [ -f target/release/libermete_niri_ipc.rlib ]; then
     install -m 0644 target/release/libermete_niri_ipc.rlib %{buildroot}/usr/lib64/ermete/

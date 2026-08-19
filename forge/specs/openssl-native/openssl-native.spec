@@ -30,6 +30,9 @@ OpenSSL Toolkit compiled natively from source with aggressive x86_64-v3 optimiza
 make %{?_smp_mflags}
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+
 rm -rf %{buildroot}
 make DESTDIR=%{buildroot} install_sw install_ssldirs
 

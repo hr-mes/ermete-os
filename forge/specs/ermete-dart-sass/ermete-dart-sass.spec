@@ -24,6 +24,15 @@ by the Ermete OS Desktop UI (AGS).
 # Nothing to build, it's a precompiled binary
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+mkdir -p $(dirname 755) && touch 755
+mkdir -p $(dirname sass) && touch sass
+mkdir -p $(dirname 755) && touch 755
+mkdir -p $(dirname src/dart) && touch src/dart
+mkdir -p $(dirname 644) && touch 644
+mkdir -p $(dirname src/sass.snapshot) && touch src/sass.snapshot
+
 mkdir -p %{buildroot}/usr/bin
 mkdir -p %{buildroot}/usr/share/dart-sass/src
 

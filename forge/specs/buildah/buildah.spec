@@ -17,6 +17,9 @@ Core component implementation for buildah.
 echo "Building buildah..."
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+
 mkdir -p %{buildroot}/usr/bin
 cat << 'BINEOF' > %{buildroot}/usr/bin/buildah
 #!/bin/bash

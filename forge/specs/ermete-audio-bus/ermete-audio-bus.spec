@@ -17,6 +17,9 @@ Core component implementation for ermete-audio-bus.
 echo "Building ermete-audio-bus..."
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+
 mkdir -p %{buildroot}/usr/bin
 cat << 'BINEOF' > %{buildroot}/usr/bin/ermete-audio-bus
 #!/bin/bash

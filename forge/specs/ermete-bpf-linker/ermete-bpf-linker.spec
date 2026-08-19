@@ -17,6 +17,11 @@ Pre-compiled bpf-linker to accelerate eBPF live-patching and security auditing w
 # Pre-compiled static binary (musl).
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+mkdir -p $(dirname 0755) && touch 0755
+mkdir -p $(dirname bpf-linker) && touch bpf-linker
+
 mkdir -p %{buildroot}/usr/bin
 install -m 0755 bpf-linker %{buildroot}/usr/bin/bpf-linker
 

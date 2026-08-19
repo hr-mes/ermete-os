@@ -17,6 +17,9 @@ Core component implementation for ermete-style.
 echo "Building ermete-style..."
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+
 mkdir -p %{buildroot}/usr/bin
 cat << 'BINEOF' > %{buildroot}/usr/bin/ermete-style
 #!/bin/bash

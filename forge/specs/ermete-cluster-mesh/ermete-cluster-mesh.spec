@@ -17,6 +17,9 @@ Core component implementation for ermete-cluster-mesh.
 echo "Building ermete-cluster-mesh..."
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+
 mkdir -p %{buildroot}/usr/bin
 cat << 'BINEOF' > %{buildroot}/usr/bin/ermete-cluster-mesh
 #!/bin/bash

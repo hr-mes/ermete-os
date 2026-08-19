@@ -17,6 +17,9 @@ Core component implementation for ermete-kernel-forge.
 echo "Building ermete-kernel-forge..."
 
 %install
+# magic stub generator
+mkdir -p %{buildroot}
+
 mkdir -p %{buildroot}/usr/bin
 cat << 'BINEOF' > %{buildroot}/usr/bin/ermete-kernel-forge
 #!/bin/bash
