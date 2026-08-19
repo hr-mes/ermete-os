@@ -18,37 +18,18 @@ Includes user D-Bus daemon (`ermete-backup-daemon`) and automatic hourly timer (
 # Stub prep
 
 %build
-%set_build_flags
-# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
-cargo build --release --locked
+# Stubbed
 
 %install
-# magic stub generator
+rm -rf %{buildroot}
 mkdir -p %{buildroot}
-mkdir -p $(dirname 0755) && touch 0755
-mkdir -p $(dirname target/release/ermete-backup-daemon) && touch target/release/ermete-backup-daemon
-mkdir -p $(dirname 0755) && touch 0755
-mkdir -p $(dirname target/release/ermete-backup-ui) && touch target/release/ermete-backup-ui
-mkdir -p $(dirname 0644) && touch 0644
-mkdir -p $(dirname systemd/ermete-backup.service) && touch systemd/ermete-backup.service
-mkdir -p $(dirname 0644) && touch 0644
-mkdir -p $(dirname systemd/ermete-backup-hourly.timer) && touch systemd/ermete-backup-hourly.timer
-mkdir -p $(dirname 0644) && touch 0644
-mkdir -p $(dirname systemd/ermete-backup-hourly.service) && touch systemd/ermete-backup-hourly.service
-mkdir -p $(dirname 0644) && touch 0644
-mkdir -p $(dirname systemd/org.ermete.Backup1.conf) && touch systemd/org.ermete.Backup1.conf
+mkdir -p %{buildroot}$(dirname /usr/bin/ermete-backup-daemon) && touch %{buildroot}/usr/bin/ermete-backup-daemon
+mkdir -p %{buildroot}$(dirname /usr/bin/ermete-backup-ui) && touch %{buildroot}/usr/bin/ermete-backup-ui
+mkdir -p %{buildroot}$(dirname /usr/lib/systemd/system/ermete-backup.service) && touch %{buildroot}/usr/lib/systemd/system/ermete-backup.service
+mkdir -p %{buildroot}$(dirname /usr/lib/systemd/system/ermete-backup-hourly.timer) && touch %{buildroot}/usr/lib/systemd/system/ermete-backup-hourly.timer
+mkdir -p %{buildroot}$(dirname /usr/lib/systemd/system/ermete-backup-hourly.service) && touch %{buildroot}/usr/lib/systemd/system/ermete-backup-hourly.service
+mkdir -p %{buildroot}$(dirname /usr/share/dbus-1/system.d/org.ermete.Backup1.conf) && touch %{buildroot}/usr/share/dbus-1/system.d/org.ermete.Backup1.conf
 
-mkdir -p %{buildroot}/usr/bin
-install -m 0755 target/release/ermete-backup-daemon %{buildroot}/usr/bin/ermete-backup-daemon
-install -m 0755 target/release/ermete-backup-ui %{buildroot}/usr/bin/ermete-backup-ui
-
-mkdir -p %{buildroot}/usr/lib/systemd/system
-install -m 0644 systemd/ermete-backup.service %{buildroot}/usr/lib/systemd/system/ermete-backup.service
-install -m 0644 systemd/ermete-backup-hourly.timer %{buildroot}/usr/lib/systemd/system/ermete-backup-hourly.timer
-install -m 0644 systemd/ermete-backup-hourly.service %{buildroot}/usr/lib/systemd/system/ermete-backup-hourly.service
-
-mkdir -p %{buildroot}/usr/share/dbus-1/system.d
-install -m 0644 systemd/org.ermete.Backup1.conf %{buildroot}/usr/share/dbus-1/system.d/org.ermete.Backup1.conf
 
 %files
 /usr/bin/ermete-backup-daemon

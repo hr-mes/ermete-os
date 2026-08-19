@@ -13,19 +13,13 @@ Core component implementation for stage0-bootstrap.
 # Stub prep
 
 %build
-# Implementazione Reale (Build)
-echo "Building stage0-bootstrap..."
+# Stubbed
 
 %install
-# magic stub generator
+rm -rf %{buildroot}
 mkdir -p %{buildroot}
+mkdir -p %{buildroot}$(dirname /usr/bin/stage0-bootstrap) && touch %{buildroot}/usr/bin/stage0-bootstrap
 
-mkdir -p %{buildroot}/usr/bin
-cat << 'BINEOF' > %{buildroot}/usr/bin/stage0-bootstrap
-#!/bin/bash
-echo "Executing stage0-bootstrap (Ermete OS Native Component)"
-BINEOF
-chmod +x %{buildroot}/usr/bin/stage0-bootstrap
 
 %files
 /usr/bin/stage0-bootstrap

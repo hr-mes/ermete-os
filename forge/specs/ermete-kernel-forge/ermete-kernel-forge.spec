@@ -13,19 +13,13 @@ Core component implementation for ermete-kernel-forge.
 # Stub prep
 
 %build
-# Implementazione Reale (Build)
-echo "Building ermete-kernel-forge..."
+# Stubbed
 
 %install
-# magic stub generator
+rm -rf %{buildroot}
 mkdir -p %{buildroot}
+mkdir -p %{buildroot}$(dirname /usr/bin/ermete-kernel-forge) && touch %{buildroot}/usr/bin/ermete-kernel-forge
 
-mkdir -p %{buildroot}/usr/bin
-cat << 'BINEOF' > %{buildroot}/usr/bin/ermete-kernel-forge
-#!/bin/bash
-echo "Executing ermete-kernel-forge (Ermete OS Native Component)"
-BINEOF
-chmod +x %{buildroot}/usr/bin/ermete-kernel-forge
 
 %files
 /usr/bin/ermete-kernel-forge

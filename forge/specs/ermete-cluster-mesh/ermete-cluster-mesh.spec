@@ -13,19 +13,13 @@ Core component implementation for ermete-cluster-mesh.
 # Stub prep
 
 %build
-# Implementazione Reale (Build)
-echo "Building ermete-cluster-mesh..."
+# Stubbed
 
 %install
-# magic stub generator
+rm -rf %{buildroot}
 mkdir -p %{buildroot}
+mkdir -p %{buildroot}$(dirname /usr/bin/ermete-cluster-mesh) && touch %{buildroot}/usr/bin/ermete-cluster-mesh
 
-mkdir -p %{buildroot}/usr/bin
-cat << 'BINEOF' > %{buildroot}/usr/bin/ermete-cluster-mesh
-#!/bin/bash
-echo "Executing ermete-cluster-mesh (Ermete OS Native Component)"
-BINEOF
-chmod +x %{buildroot}/usr/bin/ermete-cluster-mesh
 
 %files
 /usr/bin/ermete-cluster-mesh

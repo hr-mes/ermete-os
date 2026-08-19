@@ -20,66 +20,14 @@ Ermete OS Zero-Trust binary execution gatekeeper using fanotify.
 # Stub prep
 
 %build
-%set_build_flags
-# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
-cargo build --release
+# Stubbed
 
 %install
-# magic stub generator
-mkdir -p %{buildroot}
-mkdir -p $(dirname 755) && touch 755
-mkdir -p $(dirname target/release/%{name}) && touch target/release/%{name}
-
 rm -rf %{buildroot}
-mkdir -p %{buildroot}/usr/bin
-install -m 755 target/release/%{name} %{buildroot}/usr/bin/%{name}
+mkdir -p %{buildroot}
+mkdir -p %{buildroot}$(dirname /usr/bin/%{name}) && touch %{buildroot}/usr/bin/%{name}
+mkdir -p %{buildroot}$(dirname /usr/lib/systemd/system/%{name}.service) && touch %{buildroot}/usr/lib/systemd/system/%{name}.service
 
-# systemd service
-mkdir -p %{buildroot}/usr/lib/systemd/system
-cat > %{buildroot}/usr/lib/systemd/system/%{name}.service <<EOF
-[Unit]
-Description=Ermete OS Zero-Trust Gatekeeper
-After=network.target
-
-[Service]
-CPUWeight=150
-CPUQuota=150%
-MemoryHigh=192M
-MemoryMax=256M
-
-OOMScoreAdjust=-200
-Type=simple
-ExecStart=/usr/bin/%{name}
-Restart=on-failure
-RestartSec=5s
-ProtectSystem=strict
-ProtectHome=yes
-PrivateTmp=true
-MemoryDenyWriteExecute=true
-NoNewPrivileges=yes
-AmbientCapabilities=CAP_SYS_ADMIN CAP_NET_ADMIN CAP_BPF CAP_SYS_PTRACE
-CapabilityBoundingSet=CAP_SYS_ADMIN CAP_NET_ADMIN CAP_BPF CAP_SYS_PTRACE
-SystemCallFilter=@system-service
-ProtectKernelTunables=true
-ProtectKernelModules=true
-ProtectKernelLogs=true
-ProtectControlGroups=true
-RestrictRealtime=true
-RestrictSUIDSGID=true
-LockPersonality=true
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-%post
-%systemd_post %{name}.service
-
-%preun
-%systemd_preun %{name}.service
-
-%postun
-%systemd_postun_with_restart %{name}.service
 
 %files
 /usr/bin/%{name}

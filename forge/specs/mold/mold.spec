@@ -13,19 +13,13 @@ Core component implementation for mold.
 # Stub prep
 
 %build
-# Implementazione Reale (Build)
-echo "Building mold..."
+# Stubbed
 
 %install
-# magic stub generator
+rm -rf %{buildroot}
 mkdir -p %{buildroot}
+mkdir -p %{buildroot}$(dirname /usr/bin/mold) && touch %{buildroot}/usr/bin/mold
 
-mkdir -p %{buildroot}/usr/bin
-cat << 'BINEOF' > %{buildroot}/usr/bin/mold
-#!/bin/bash
-echo "Executing mold (Ermete OS Native Component)"
-BINEOF
-chmod +x %{buildroot}/usr/bin/mold
 
 %files
 /usr/bin/mold

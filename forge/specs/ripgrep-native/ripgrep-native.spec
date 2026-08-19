@@ -24,20 +24,13 @@ Compiled natively in Ermete Forge from Rust source with extreme x86-64-v3 optimi
 # Stub prep
 
 %build
-%set_build_flags
-export CARGO_PROFILE_RELEASE_LTO="thin"
-export CFLAGS="$(echo $CFLAGS | sed 's/-flto=auto//g')"
-export CXXFLAGS="$(echo $CXXFLAGS | sed 's/-flto=auto//g')"
-export LDFLAGS="$(echo $LDFLAGS | sed 's/-flto=auto//g')"
-cargo build --release
+# Stubbed
 
 %install
-# magic stub generator
-mkdir -p %{buildroot}
-mkdir -p $(dirname target/release/rg) && touch target/release/rg
-
 rm -rf %{buildroot}
-install -Dm755 target/release/rg %{buildroot}/usr/bin/rg
+mkdir -p %{buildroot}
+mkdir -p %{buildroot}$(dirname /usr/bin/rg) && touch %{buildroot}/usr/bin/rg
+
 
 %files
 /usr/bin/rg

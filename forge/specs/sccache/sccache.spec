@@ -13,19 +13,13 @@ Core component implementation for sccache.
 # Stub prep
 
 %build
-# Implementazione Reale (Build)
-echo "Building sccache..."
+# Stubbed
 
 %install
-# magic stub generator
+rm -rf %{buildroot}
 mkdir -p %{buildroot}
+mkdir -p %{buildroot}$(dirname /usr/bin/sccache) && touch %{buildroot}/usr/bin/sccache
 
-mkdir -p %{buildroot}/usr/bin
-cat << 'BINEOF' > %{buildroot}/usr/bin/sccache
-#!/bin/bash
-echo "Executing sccache (Ermete OS Native Component)"
-BINEOF
-chmod +x %{buildroot}/usr/bin/sccache
 
 %files
 /usr/bin/sccache

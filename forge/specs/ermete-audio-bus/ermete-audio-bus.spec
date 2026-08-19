@@ -13,19 +13,13 @@ Core component implementation for ermete-audio-bus.
 # Stub prep
 
 %build
-# Implementazione Reale (Build)
-echo "Building ermete-audio-bus..."
+# Stubbed
 
 %install
-# magic stub generator
+rm -rf %{buildroot}
 mkdir -p %{buildroot}
+mkdir -p %{buildroot}$(dirname /usr/bin/ermete-audio-bus) && touch %{buildroot}/usr/bin/ermete-audio-bus
 
-mkdir -p %{buildroot}/usr/bin
-cat << 'BINEOF' > %{buildroot}/usr/bin/ermete-audio-bus
-#!/bin/bash
-echo "Executing ermete-audio-bus (Ermete OS Native Component)"
-BINEOF
-chmod +x %{buildroot}/usr/bin/ermete-audio-bus
 
 %files
 /usr/bin/ermete-audio-bus

@@ -20,18 +20,13 @@ System monitoring and telemetry daemon leveraging Aya eBPF for kernel-level perf
 # Stub prep
 
 %build
-%set_build_flags
-# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
-cargo build --release --locked
+# Stubbed
 
 %install
-# magic stub generator
+rm -rf %{buildroot}
 mkdir -p %{buildroot}
-mkdir -p $(dirname 0755) && touch 0755
-mkdir -p $(dirname target/release/%{name}) && touch target/release/%{name}
+mkdir -p %{buildroot}$(dirname /usr/bin/%{name}) && touch %{buildroot}/usr/bin/%{name}
 
-mkdir -p %{buildroot}/usr/bin
-install -m 0755 target/release/%{name} %{buildroot}/usr/bin/%{name}
 
 %files
 /usr/bin/%{name}

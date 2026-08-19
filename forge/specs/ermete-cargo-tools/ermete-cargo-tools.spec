@@ -13,19 +13,13 @@ Core component implementation for ermete-cargo-tools.
 # Stub prep
 
 %build
-# Implementazione Reale (Build)
-echo "Building ermete-cargo-tools..."
+# Stubbed
 
 %install
-# magic stub generator
+rm -rf %{buildroot}
 mkdir -p %{buildroot}
+mkdir -p %{buildroot}$(dirname /usr/bin/ermete-cargo-tools) && touch %{buildroot}/usr/bin/ermete-cargo-tools
 
-mkdir -p %{buildroot}/usr/bin
-cat << 'BINEOF' > %{buildroot}/usr/bin/ermete-cargo-tools
-#!/bin/bash
-echo "Executing ermete-cargo-tools (Ermete OS Native Component)"
-BINEOF
-chmod +x %{buildroot}/usr/bin/ermete-cargo-tools
 
 %files
 /usr/bin/ermete-cargo-tools

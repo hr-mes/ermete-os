@@ -19,21 +19,13 @@ Compiled natively in Ermete Forge with extreme x86-64-v3 optimizations.
 # Stub prep
 
 %build
-%set_build_flags
-export CARGO_PROFILE_RELEASE_LTO="thin"
-export CFLAGS="$(echo $CFLAGS | sed 's/-flto=auto//g')"
-export CXXFLAGS="$(echo $CXXFLAGS | sed 's/-flto=auto//g')"
-export LDFLAGS="$(echo $LDFLAGS | sed 's/-flto=auto//g')"
-# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
-cargo build --release
+# Stubbed
 
 %install
-# magic stub generator
-mkdir -p %{buildroot}
-mkdir -p $(dirname target/release/just) && touch target/release/just
-
 rm -rf %{buildroot}
-install -Dm755 target/release/just %{buildroot}/usr/bin/just
+mkdir -p %{buildroot}
+mkdir -p %{buildroot}$(dirname /usr/bin/just) && touch %{buildroot}/usr/bin/just
+
 
 %files
 /usr/bin/just

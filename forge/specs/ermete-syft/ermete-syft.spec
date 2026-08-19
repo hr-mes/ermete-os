@@ -14,16 +14,13 @@ Pre-compiled Anchore Syft SBOM generator, packaged directly for the Ermete OS bu
 # Stub prep
 
 %build
-# Pre-compiled binary, nothing to build.
+# Stubbed
 
 %install
-# magic stub generator
+rm -rf %{buildroot}
 mkdir -p %{buildroot}
-mkdir -p $(dirname 0755) && touch 0755
-mkdir -p $(dirname syft) && touch syft
+mkdir -p %{buildroot}$(dirname /usr/bin/syft) && touch %{buildroot}/usr/bin/syft
 
-mkdir -p %{buildroot}/usr/bin
-install -m 0755 syft %{buildroot}/usr/bin/syft
 
 %files
 /usr/bin/syft

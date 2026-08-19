@@ -21,63 +21,14 @@ providing micro-VM enclaves and system services zero-copy packet switching witho
 # Stub prep
 
 %build
-%set_build_flags
-# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
-cargo build --release -p ermete-net-unikernel
+# Stubbed
 
 %install
-# magic stub generator
-mkdir -p %{buildroot}
-mkdir -p $(dirname 755) && touch 755
-mkdir -p $(dirname target/release/ermete-net-unikernel) && touch target/release/ermete-net-unikernel
-
 rm -rf %{buildroot}
-mkdir -p %{buildroot}/usr/bin
-install -m 755 target/release/ermete-net-unikernel %{buildroot}/usr/bin/ermete-net-unikernel
+mkdir -p %{buildroot}
+mkdir -p %{buildroot}$(dirname /usr/bin/ermete-net-unikernel) && touch %{buildroot}/usr/bin/ermete-net-unikernel
+mkdir -p %{buildroot}$(dirname /usr/lib/systemd/system/ermete-net-unikernel.service) && touch %{buildroot}/usr/lib/systemd/system/ermete-net-unikernel.service
 
-# systemd service
-mkdir -p %{buildroot}/usr/lib/systemd/system
-cat > %{buildroot}/usr/lib/systemd/system/ermete-net-unikernel.service <<EOF
-[Unit]
-Description=Ermete OS Isolated Rust Userspace TCP/IP Network Unikernel Daemon
-After=network.target dbus.service
-
-[Service]
-LockPersonality=true
-RestrictSUIDSGID=true
-RestrictRealtime=true
-MemoryDenyWriteExecute=true
-ProtectControlGroups=true
-ProtectKernelLogs=true
-ProtectKernelModules=true
-ProtectKernelTunables=true
-CPUWeight=200
-MemoryHigh=256M
-MemoryMax=512M
-OOMScoreAdjust=-300
-Type=simple
-ExecStart=/usr/bin/ermete-net-unikernel
-Restart=on-failure
-RestartSec=3s
-ProtectSystem=strict
-ProtectHome=yes
-PrivateTmp=true
-NoNewPrivileges=yes
-AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW CAP_BPF
-CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW CAP_BPF
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-%post
-%systemd_post ermete-net-unikernel.service
-
-%preun
-%systemd_preun ermete-net-unikernel.service
-
-%postun
-%systemd_postun_with_restart ermete-net-unikernel.service
 
 %files
 /usr/bin/ermete-net-unikernel

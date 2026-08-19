@@ -30,13 +30,12 @@ LLVM ThinLTO optimization (-march=x86-64-v3), and zero-trust security hardening.
 # Stub prep
 
 %build
-# Built via ThinLTO Clang toolchain and rpmbuild execution in build-local.sh
+# Stubbed
 
 %install
-# magic stub generator
+rm -rf %{buildroot}
 mkdir -p %{buildroot}
 
-# Kernel artifacts installed directly into rpmbuild workspace
 
 %files
 

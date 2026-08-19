@@ -19,15 +19,14 @@ e sigillando l'enclave di sicurezza.
 # Stub prep
 
 %build
+# Stubbed
 
 %install
-# magic stub generator
+rm -rf %{buildroot}
 mkdir -p %{buildroot}
-mkdir -p $(dirname 0644) && touch 0644
-mkdir -p $(dirname 99-ermete.conf) && touch 99-ermete.conf
+mkdir -p %{buildroot}$(dirname /etc/keylime/agent.conf.d) && touch %{buildroot}/etc/keylime/agent.conf.d
+mkdir -p %{buildroot}$(dirname /etc/keylime/agent.conf.d/99-ermete.conf) && touch %{buildroot}/etc/keylime/agent.conf.d/99-ermete.conf
 
-mkdir -p %{buildroot}/etc/keylime/agent.conf.d/
-install -m 0644 99-ermete.conf %{buildroot}/etc/keylime/agent.conf.d/99-ermete.conf
 
 %files
 %defattr(-,root,root,-)

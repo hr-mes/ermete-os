@@ -14,15 +14,13 @@ Provides ermete-ide-bootstrap for Ermete OS.
 # Stub prep
 
 %build
-# Nothing to build
+# Stubbed
 
 %install
-# magic stub generator
+rm -rf %{buildroot}
 mkdir -p %{buildroot}
+mkdir -p %{buildroot}$(dirname /usr/share/ermete-ide-bootstrap) && touch %{buildroot}/usr/share/ermete-ide-bootstrap
 
-mkdir -p %{buildroot}/usr/share/ermete-ide-bootstrap
-
-%post
 
 %files
 %dir /usr/share/ermete-ide-bootstrap

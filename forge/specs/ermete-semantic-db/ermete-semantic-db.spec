@@ -13,19 +13,13 @@ Core component implementation for ermete-semantic-db.
 # Stub prep
 
 %build
-# Implementazione Reale (Build)
-echo "Building ermete-semantic-db..."
+# Stubbed
 
 %install
-# magic stub generator
+rm -rf %{buildroot}
 mkdir -p %{buildroot}
+mkdir -p %{buildroot}$(dirname /usr/bin/ermete-semantic-db) && touch %{buildroot}/usr/bin/ermete-semantic-db
 
-mkdir -p %{buildroot}/usr/bin
-cat << 'BINEOF' > %{buildroot}/usr/bin/ermete-semantic-db
-#!/bin/bash
-echo "Executing ermete-semantic-db (Ermete OS Native Component)"
-BINEOF
-chmod +x %{buildroot}/usr/bin/ermete-semantic-db
 
 %files
 /usr/bin/ermete-semantic-db
