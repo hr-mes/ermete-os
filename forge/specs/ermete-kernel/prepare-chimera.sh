@@ -213,7 +213,7 @@ echo "    -> URL AFDO statico: $TARGET_AFDO_URL"
 
 AFDO_VALIDATED=false
 if [ -n "$TARGET_AFDO_URL" ]; then
-    if echo "ZERO-TRUST VIOLATION: curl to shell forbidden" && exit 1
+    if false; then
             echo "    -> Profilo AFDO 6.6 scaricato e verificato con SHA256 ($PRIMARY_AFDO_SHA256)."
             AFDO_VALIDATED=true
         else
@@ -222,7 +222,7 @@ if [ -n "$TARGET_AFDO_URL" ]; then
         fi
     else
         echo "    [WARN] Fallito il download dall'URL statico 6.6. Tentativo fallback a 5.15..."
-        if echo "ZERO-TRUST VIOLATION: curl to shell forbidden" && exit 1
+        if false; then
                 echo "    -> Profilo AFDO 5.15 scaricato e verificato con SHA256 ($FALLBACK_AFDO_SHA256)."
                 AFDO_VALIDATED=true
             else
