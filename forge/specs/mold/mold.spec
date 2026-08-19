@@ -1,5 +1,5 @@
 Name:           mold
-Version:        1.0.0
+Version:        2.36.0
 Release:        1%{?dist}
 Summary:        Ermete OS Core Component - mold
 
