@@ -14,6 +14,11 @@ import json
 import hashlib
 from collections import defaultdict, deque
 
+try:
+    import redis
+except ImportError:
+    redis = None
+
 CONFIG_PATH = os.environ.get("CONFIG_PATH", "config/packages.json")
 if not os.path.exists(CONFIG_PATH) and os.path.exists("forge/config/packages.json"):
     CONFIG_PATH = "forge/config/packages.json"
@@ -187,6 +192,17 @@ def evaluate_dirty_nodes(all_nodes, graph, prereqs, node_hashes):
                 queue.append(neighbor)
 
     os.makedirs(".cache", exist_ok=True)
+    
+    redis_client = None
+    if redis is not None:
+        redis_url = os.environ.get("ERMETE_REDIS_URL")
+        if redis_url:
+            try:
+                redis_client = redis.from_url(redis_url, socket_timeout=2, socket_connect_timeout=2)
+                redis_client.ping()
+            except Exception as e:
+                print(f"⚠️ Redis connection failed: {e}. Falling back to local cache.")
+                redis_client = None
 
     for node in topo_order:
         hasher = hashlib.sha256()
@@ -197,7 +213,17 @@ def evaluate_dirty_nodes(all_nodes, graph, prereqs, node_hashes):
         transitive_hashes[node] = trans_hash
         
         cached_val = None
-        if os.path.exists(f".cache/{node}.hash"):
+        redis_key = f"ermete:build:hash:{node}"
+        
+        if redis_client:
+            try:
+                val = redis_client.get(redis_key)
+                if val:
+                    cached_val = val.decode("utf-8")
+            except Exception:
+                pass
+
+        if cached_val is None and os.path.exists(f".cache/{node}.hash"):
             try:
                 with open(f".cache/{node}.hash", "r") as f:
                     cached_val = f.read().strip()
@@ -208,6 +234,12 @@ def evaluate_dirty_nodes(all_nodes, graph, prereqs, node_hashes):
         
         if cached_val != trans_hash or is_parent_dirty:
             dirty_nodes.add(node)
+            
+            if redis_client:
+                try:
+                    redis_client.set(redis_key, trans_hash)
+                except Exception:
+                    pass
             # Write new hash to disk for future runs
             try:
                 with open(f".cache/{node}.hash", "w") as f:
