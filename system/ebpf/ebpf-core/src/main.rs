@@ -146,6 +146,16 @@ fn process_ipv4(ctx: &XdpContext) -> Result<u32, ()> {
     // SAFETY: Memory bounds verified by prior checks or eBPF verifier
     let dst_addr = unsafe { (*ipv4hdr).dst_addr };
 
+    // ZERO-TRUST ENFORCEMENT: Restrict routing to Cloudflare CGNAT (100.64.0.0/10)
+    if is_zero_trust_enabled() {
+        let src_be = u32::from_be(src_addr);
+        if (src_be & 0xFFC00000) != 0x64400000 {
+            increment_stat(STAT_DROP_UNAUTHORIZED_PORT);
+            warn!(ctx, "XDP_DROP: IP not in Cloudflare 100.64.0.0/10 range");
+            return Ok(xdp_action::XDP_DROP);
+        }
+    }
+
     // 1. Check Land Attack (src IP == dst IP)
     if src_addr == dst_addr && src_addr != 0 {
         increment_stat(STAT_DROP_LAND_ATTACK);

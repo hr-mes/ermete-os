@@ -169,9 +169,8 @@ impl CrdtBroadcaster {
             let secret = EphemeralSecret::random_from_rng(OsRng);
             let public = PublicKey::from(&secret);
             
-            // In a real scenario we'd use recipient_node public key for ECDH,
-            // here we simulate the paranoid wrapper fallback
-            let peer_public = PublicKey::from([0u8; 32]); 
+            let recipient_pub = recipient_node.ok_or_else(|| anyhow::anyhow!("Zero-Trust Violation: Broadcast CRDT frames are forbidden. Missing specific recipient public key for X25519 DH."))?;
+            let peer_public = PublicKey::from(recipient_pub);
             let shared_secret = secret.diffie_hellman(&peer_public);
             
             let unbound_key = UnboundKey::new(&CHACHA20_POLY1305, shared_secret.as_bytes()).unwrap();

@@ -54,7 +54,7 @@ async fn main() -> Result<()> {
     // 3.5 Initialize MeshTunnel (UDP Fallback)
     let (ingress_tx, mut ingress_rx) = tokio::sync::mpsc::channel(1024);
     let mesh_tunnel = Arc::new(tunnel::MeshTunnel::bind_with_channel(
-        "0.0.0.0:51820",
+        "100.64.0.1:51820",
         peer_manager.clone(),
         Some(ingress_tx),
     ).await?);
