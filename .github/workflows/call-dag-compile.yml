@@ -116,47 +116,47 @@ jobs:
           if [ -n "$SPEC_DIR" ]; then
             echo "📦 Compiling Custom Spec: $SPEC_DIR"
             SPEC_DIR="specs/${PKG_NAME}"
-  [ ! -d "$SPEC_DIR" ] && SPEC_DIR="specs/ermete-${PKG_NAME}"
-  if [ -f "$SPEC_DIR/default.nix" ]; then
-    echo "🚀 [FASE 3 NIX] Compilazione Nativa Hermetic per ${PKG_NAME} (SLSA Level 4)..."
-    nix build ".#${PKG_NAME}"
-    mkdir -p repo-cache/rpms
-    cp result/*.rpm repo-cache/rpms/ || true
-  else
-    echo "⚙️ [LEGACY PODMAN] Compilazione FHS per ${PKG_NAME} (SLSA Level 3)..."
-    podman run -i --rm \
-                  -e PKG_NAME="${PKG_NAME}" \
-                  -e SCCACHE_CACHE_SIZE="${SCCACHE_CACHE_SIZE}" \
-                  -v ${{ github.workspace }}:/workspace \
-                  -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
-                  -w /workspace/forge \
-                  ghcr.io/hr-mes/ermete-os-builder:${{ inputs.builder_hash }} \
-                  bash <<'EOF'
-                  cp config/rpmmacros ~/.rpmmacros
-                  mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-                  PKG_CLEAN=$(echo "$PKG_NAME" | tr -cd '[:alnum:]-')
-                  SPEC_DIR=""
-                  if [ -d "specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="specs/ermete-${PKG_CLEAN}"; elif [ -d "specs/${PKG_CLEAN}" ]; then SPEC_DIR="specs/${PKG_CLEAN}"; fi
-                
-                  if [ -d "$SPEC_DIR/SOURCES" ]; then 
-                    cp -a $SPEC_DIR/SOURCES/* ~/rpmbuild/SOURCES/ || true
-                  fi
-                
-                  mkdir -p ~/rpmbuild/BUILD/
-                  for spec_dir in /workspace/forge/specs/ermete-*/ /workspace/forge/specs/*/ ; do
-                    if [ -d "$spec_dir" ]; then
-                      crate_name=$(basename "$spec_dir")
-                      mkdir -p ~/rpmbuild/BUILD/"$crate_name"
-                      cp -a "$spec_dir"/. ~/rpmbuild/BUILD/"$crate_name"/ 2>/dev/null || true
-                    fi
-                  done
-       
-                              
-                  rpmbuild -bb --nodeps $SPEC_DIR/*.spec
-                  mkdir -p /workspace/forge/RPMS
-                  cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
-              EOF
-  fi
+            [ ! -d "$SPEC_DIR" ] && SPEC_DIR="specs/ermete-${PKG_NAME}"
+            if [ -f "$SPEC_DIR/default.nix" ]; then
+              echo "🚀 [FASE 3 NIX] Compilazione Nativa Hermetic per ${PKG_NAME} (SLSA Level 4)..."
+              nix build ".#${PKG_NAME}"
+              mkdir -p repo-cache/rpms
+              cp result/*.rpm repo-cache/rpms/ || true
+            else
+              echo "⚙️ [LEGACY PODMAN] Compilazione FHS per ${PKG_NAME} (SLSA Level 3)..."
+              podman run -i --rm \
+                            -e PKG_NAME="${PKG_NAME}" \
+                            -e SCCACHE_CACHE_SIZE="${SCCACHE_CACHE_SIZE}" \
+                            -v ${{ github.workspace }}:/workspace \
+                            -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
+                            -w /workspace/forge \
+                            ghcr.io/hr-mes/ermete-os-builder:${{ inputs.builder_hash }} \
+                            bash <<'EOF'
+                            cp config/rpmmacros ~/.rpmmacros
+                            mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+                            PKG_CLEAN=$(echo "$PKG_NAME" | tr -cd '[:alnum:]-')
+                            SPEC_DIR=""
+                            if [ -d "specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="specs/ermete-${PKG_CLEAN}"; elif [ -d "specs/${PKG_CLEAN}" ]; then SPEC_DIR="specs/${PKG_CLEAN}"; fi
+                          
+                            if [ -d "$SPEC_DIR/SOURCES" ]; then 
+                              cp -a $SPEC_DIR/SOURCES/* ~/rpmbuild/SOURCES/ || true
+                            fi
+                          
+                            mkdir -p ~/rpmbuild/BUILD/
+                            for spec_dir in /workspace/forge/specs/ermete-*/ /workspace/forge/specs/*/ ; do
+                              if [ -d "$spec_dir" ]; then
+                                crate_name=$(basename "$spec_dir")
+                                mkdir -p ~/rpmbuild/BUILD/"$crate_name"
+                                cp -a "$spec_dir"/. ~/rpmbuild/BUILD/"$crate_name"/ 2>/dev/null || true
+                              fi
+                            done
+                 
+                                        
+                            rpmbuild -bb --nodeps $SPEC_DIR/*.spec
+                            mkdir -p /workspace/forge/RPMS
+                            cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
+                        EOF
+            fi
           else
             echo "❌ [MARTIAL LAW FATAL] Attempted to build upstream package ${PKG_NAME} without local spec! Dynamic downloads are strictly forbidden!"
             exit 1
@@ -315,47 +315,47 @@ jobs:
           if [ -n "$SPEC_DIR" ]; then
             echo "📦 Compiling Custom Spec: $SPEC_DIR"
             SPEC_DIR="specs/${PKG_NAME}"
-  [ ! -d "$SPEC_DIR" ] && SPEC_DIR="specs/ermete-${PKG_NAME}"
-  if [ -f "$SPEC_DIR/default.nix" ]; then
-    echo "🚀 [FASE 3 NIX] Compilazione Nativa Hermetic per ${PKG_NAME} (SLSA Level 4)..."
-    nix build ".#${PKG_NAME}"
-    mkdir -p repo-cache/rpms
-    cp result/*.rpm repo-cache/rpms/ || true
-  else
-    echo "⚙️ [LEGACY PODMAN] Compilazione FHS per ${PKG_NAME} (SLSA Level 3)..."
-    podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
-                  -e PKG_NAME="${PKG_NAME}" \
-                  -e SCCACHE_CACHE_SIZE="${SCCACHE_CACHE_SIZE}" \
-                  -v ${{ github.workspace }}:/workspace \
-                  -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
-                  -w /workspace/forge \
-                  ghcr.io/hr-mes/ermete-os-builder:${{ inputs.builder_hash }} \
-                  bash <<'EOF'
-                  cp config/rpmmacros ~/.rpmmacros
-                  mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-                  PKG_CLEAN=$(echo "$PKG_NAME" | tr -cd '[:alnum:]-')
-                  SPEC_DIR=""
-                  if [ -d "specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="specs/ermete-${PKG_CLEAN}"; elif [ -d "specs/${PKG_CLEAN}" ]; then SPEC_DIR="specs/${PKG_CLEAN}"; fi
-                
-                  if [ -d "$SPEC_DIR/SOURCES" ]; then 
-                    cp -a $SPEC_DIR/SOURCES/* ~/rpmbuild/SOURCES/ || true
-                  fi
-                
-                  mkdir -p ~/rpmbuild/BUILD/
-                  for spec_dir in /workspace/forge/specs/ermete-*/ /workspace/forge/specs/*/ ; do
-                    if [ -d "$spec_dir" ]; then
-                      crate_name=$(basename "$spec_dir")
-                      mkdir -p ~/rpmbuild/BUILD/"$crate_name"
-                      cp -a "$spec_dir"/. ~/rpmbuild/BUILD/"$crate_name"/ 2>/dev/null || true
-                    fi
-                  done
-       
-                              
-                  rpmbuild -bb --nodeps $SPEC_DIR/*.spec
-                  mkdir -p /workspace/forge/RPMS
-                  cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
-              EOF
-  fi
+            [ ! -d "$SPEC_DIR" ] && SPEC_DIR="specs/ermete-${PKG_NAME}"
+            if [ -f "$SPEC_DIR/default.nix" ]; then
+              echo "🚀 [FASE 3 NIX] Compilazione Nativa Hermetic per ${PKG_NAME} (SLSA Level 4)..."
+              nix build ".#${PKG_NAME}"
+              mkdir -p repo-cache/rpms
+              cp result/*.rpm repo-cache/rpms/ || true
+            else
+              echo "⚙️ [LEGACY PODMAN] Compilazione FHS per ${PKG_NAME} (SLSA Level 3)..."
+              podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+                            -e PKG_NAME="${PKG_NAME}" \
+                            -e SCCACHE_CACHE_SIZE="${SCCACHE_CACHE_SIZE}" \
+                            -v ${{ github.workspace }}:/workspace \
+                            -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
+                            -w /workspace/forge \
+                            ghcr.io/hr-mes/ermete-os-builder:${{ inputs.builder_hash }} \
+                            bash <<'EOF'
+                            cp config/rpmmacros ~/.rpmmacros
+                            mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+                            PKG_CLEAN=$(echo "$PKG_NAME" | tr -cd '[:alnum:]-')
+                            SPEC_DIR=""
+                            if [ -d "specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="specs/ermete-${PKG_CLEAN}"; elif [ -d "specs/${PKG_CLEAN}" ]; then SPEC_DIR="specs/${PKG_CLEAN}"; fi
+                          
+                            if [ -d "$SPEC_DIR/SOURCES" ]; then 
+                              cp -a $SPEC_DIR/SOURCES/* ~/rpmbuild/SOURCES/ || true
+                            fi
+                          
+                            mkdir -p ~/rpmbuild/BUILD/
+                            for spec_dir in /workspace/forge/specs/ermete-*/ /workspace/forge/specs/*/ ; do
+                              if [ -d "$spec_dir" ]; then
+                                crate_name=$(basename "$spec_dir")
+                                mkdir -p ~/rpmbuild/BUILD/"$crate_name"
+                                cp -a "$spec_dir"/. ~/rpmbuild/BUILD/"$crate_name"/ 2>/dev/null || true
+                              fi
+                            done
+                 
+                                        
+                            rpmbuild -bb --nodeps $SPEC_DIR/*.spec
+                            mkdir -p /workspace/forge/RPMS
+                            cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
+                        EOF
+            fi
           else
             echo "❌ [MARTIAL LAW FATAL] Attempted to build upstream package ${PKG_NAME} without local spec! Dynamic downloads are strictly forbidden!"
             exit 1
@@ -512,47 +512,47 @@ jobs:
           if [ -n "$SPEC_DIR" ]; then
             echo "📦 Compiling Custom Spec: $SPEC_DIR"
             SPEC_DIR="specs/${PKG_NAME}"
-  [ ! -d "$SPEC_DIR" ] && SPEC_DIR="specs/ermete-${PKG_NAME}"
-  if [ -f "$SPEC_DIR/default.nix" ]; then
-    echo "🚀 [FASE 3 NIX] Compilazione Nativa Hermetic per ${PKG_NAME} (SLSA Level 4)..."
-    nix build ".#${PKG_NAME}"
-    mkdir -p repo-cache/rpms
-    cp result/*.rpm repo-cache/rpms/ || true
-  else
-    echo "⚙️ [LEGACY PODMAN] Compilazione FHS per ${PKG_NAME} (SLSA Level 3)..."
-    podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
-                  -e PKG_NAME="${PKG_NAME}" \
-                  -e SCCACHE_CACHE_SIZE="${SCCACHE_CACHE_SIZE}" \
-                  -v ${{ github.workspace }}:/workspace \
-                  -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
-                  -w /workspace/forge \
-                  ghcr.io/hr-mes/ermete-os-builder:${{ inputs.builder_hash }} \
-                  bash <<'EOF'
-                  cp config/rpmmacros ~/.rpmmacros
-                  mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-                  PKG_CLEAN=$(echo "$PKG_NAME" | tr -cd '[:alnum:]-')
-                  SPEC_DIR=""
-                  if [ -d "specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="specs/ermete-${PKG_CLEAN}"; elif [ -d "specs/${PKG_CLEAN}" ]; then SPEC_DIR="specs/${PKG_CLEAN}"; fi
-                
-                  if [ -d "$SPEC_DIR/SOURCES" ]; then 
-                    cp -a $SPEC_DIR/SOURCES/* ~/rpmbuild/SOURCES/ || true
-                  fi
-                
-                  mkdir -p ~/rpmbuild/BUILD/
-                  for spec_dir in /workspace/forge/specs/ermete-*/ /workspace/forge/specs/*/ ; do
-                    if [ -d "$spec_dir" ]; then
-                      crate_name=$(basename "$spec_dir")
-                      mkdir -p ~/rpmbuild/BUILD/"$crate_name"
-                      cp -a "$spec_dir"/. ~/rpmbuild/BUILD/"$crate_name"/ 2>/dev/null || true
-                    fi
-                  done
-       
-                              
-                  rpmbuild -bb --nodeps $SPEC_DIR/*.spec
-                  mkdir -p /workspace/forge/RPMS
-                  cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
-              EOF
-  fi
+            [ ! -d "$SPEC_DIR" ] && SPEC_DIR="specs/ermete-${PKG_NAME}"
+            if [ -f "$SPEC_DIR/default.nix" ]; then
+              echo "🚀 [FASE 3 NIX] Compilazione Nativa Hermetic per ${PKG_NAME} (SLSA Level 4)..."
+              nix build ".#${PKG_NAME}"
+              mkdir -p repo-cache/rpms
+              cp result/*.rpm repo-cache/rpms/ || true
+            else
+              echo "⚙️ [LEGACY PODMAN] Compilazione FHS per ${PKG_NAME} (SLSA Level 3)..."
+              podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
+                            -e PKG_NAME="${PKG_NAME}" \
+                            -e SCCACHE_CACHE_SIZE="${SCCACHE_CACHE_SIZE}" \
+                            -v ${{ github.workspace }}:/workspace \
+                            -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
+                            -w /workspace/forge \
+                            ghcr.io/hr-mes/ermete-os-builder:${{ inputs.builder_hash }} \
+                            bash <<'EOF'
+                            cp config/rpmmacros ~/.rpmmacros
+                            mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+                            PKG_CLEAN=$(echo "$PKG_NAME" | tr -cd '[:alnum:]-')
+                            SPEC_DIR=""
+                            if [ -d "specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="specs/ermete-${PKG_CLEAN}"; elif [ -d "specs/${PKG_CLEAN}" ]; then SPEC_DIR="specs/${PKG_CLEAN}"; fi
+                          
+                            if [ -d "$SPEC_DIR/SOURCES" ]; then 
+                              cp -a $SPEC_DIR/SOURCES/* ~/rpmbuild/SOURCES/ || true
+                            fi
+                          
+                            mkdir -p ~/rpmbuild/BUILD/
+                            for spec_dir in /workspace/forge/specs/ermete-*/ /workspace/forge/specs/*/ ; do
+                              if [ -d "$spec_dir" ]; then
+                                crate_name=$(basename "$spec_dir")
+                                mkdir -p ~/rpmbuild/BUILD/"$crate_name"
+                                cp -a "$spec_dir"/. ~/rpmbuild/BUILD/"$crate_name"/ 2>/dev/null || true
+                              fi
+                            done
+                 
+                                        
+                            rpmbuild -bb --nodeps $SPEC_DIR/*.spec
+                            mkdir -p /workspace/forge/RPMS
+                            cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
+                        EOF
+            fi
           else
             echo "❌ [MARTIAL LAW FATAL] Attempted to build upstream package ${PKG_NAME} without local spec! Dynamic downloads are strictly forbidden!"
             exit 1
