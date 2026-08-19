@@ -110,7 +110,7 @@ jobs:
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           
           SPEC_DIR=""
-          if [ -d "specs/ermete-${PKG_NAME}" ]; then SPEC_DIR="specs/ermete-${PKG_NAME}"; elif [ -d "specs/${PKG_NAME}" ]; then SPEC_DIR="specs/${PKG_NAME}"; fi
+          if [ -d "forge/specs/ermete-${PKG_NAME}" ]; then SPEC_DIR="forge/specs/ermete-${PKG_NAME}"; elif [ -d "forge/specs/${PKG_NAME}" ]; then SPEC_DIR="forge/specs/${PKG_NAME}"; fi
           if [ -n "$SPEC_DIR" ]; then
             echo "📦 Compiling Custom Spec: $SPEC_DIR"
             podman run -i --rm \
@@ -303,7 +303,7 @@ jobs:
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           
           SPEC_DIR=""
-          if [ -d "specs/ermete-${PKG_NAME}" ]; then SPEC_DIR="specs/ermete-${PKG_NAME}"; elif [ -d "specs/${PKG_NAME}" ]; then SPEC_DIR="specs/${PKG_NAME}"; fi
+          if [ -d "forge/specs/ermete-${PKG_NAME}" ]; then SPEC_DIR="forge/specs/ermete-${PKG_NAME}"; elif [ -d "forge/specs/${PKG_NAME}" ]; then SPEC_DIR="forge/specs/${PKG_NAME}"; fi
           if [ -n "$SPEC_DIR" ]; then
             echo "📦 Compiling Custom Spec: $SPEC_DIR"
             podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
@@ -494,7 +494,7 @@ jobs:
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           
           SPEC_DIR=""
-          if [ -d "specs/ermete-${PKG_NAME}" ]; then SPEC_DIR="specs/ermete-${PKG_NAME}"; elif [ -d "specs/${PKG_NAME}" ]; then SPEC_DIR="specs/${PKG_NAME}"; fi
+          if [ -d "forge/specs/ermete-${PKG_NAME}" ]; then SPEC_DIR="forge/specs/ermete-${PKG_NAME}"; elif [ -d "forge/specs/${PKG_NAME}" ]; then SPEC_DIR="forge/specs/${PKG_NAME}"; fi
           if [ -n "$SPEC_DIR" ]; then
             echo "📦 Compiling Custom Spec: $SPEC_DIR"
             podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
