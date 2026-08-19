@@ -44,7 +44,27 @@ impl ZeroConfDiscovery {
         self: Arc<Self>,
         swarm_manager: Arc<crate::swarm_manager::SwarmManager>,
     ) -> Result<()> {
-        let bind_addr = format!("0.0.0.0:{}", self.discovery_port);
+        let bind_addr = {
+            let output = std::process::Command::new("ip").args(["-4", "addr", "show"]).output()?;
+            let out_str = String::from_utf8_lossy(&output.stdout);
+            let mut found_ip = None;
+            for line in out_str.lines() {
+                if line.contains("inet 100.") {
+                    let parts: Vec<&str> = line.trim().split_whitespace().collect();
+                    if parts.len() > 1 && parts[1].starts_with("100.") {
+                        let ip_cidr = parts[1];
+                        let ip = ip_cidr.split('/').next().unwrap();
+                        let octets: Vec<u8> = ip.split('.').filter_map(|s| s.parse().ok()).collect();
+                        if octets.len() == 4 && octets[0] == 100 && (octets[1] >= 64 && octets[1] <= 127) {
+                            found_ip = Some(ip.to_string());
+                            break;
+                        }
+                    }
+                }
+            }
+            let ip = found_ip.ok_or_else(|| anyhow::anyhow!("CloudflareWARP / CGNAT interface not found. Zero-Trust network requirement failed."))?;
+            format!("{}:{}", ip, self.discovery_port)
+        };
         let socket = Arc::new(UdpSocket::bind(&bind_addr).await?);
         socket.set_broadcast(true)?;
 
@@ -78,7 +98,15 @@ impl ZeroConfDiscovery {
                 };
 
                 if let Ok(bytes) = serde_json::to_vec(&beacon) {
-                    if let Ok(target_addr) = format!("255.255.255.255:{}", self_tx.discovery_port).parse::<SocketAddr>() {
+                    let mut target_addrs = Vec::new();
+                    if let Ok(addrs) = tokio::net::lookup_host(("swarm.ermete.mesh.cloudflare", self_tx.discovery_port)).await {
+                        for addr in addrs {
+                            target_addrs.push(addr);
+                        }
+                    } else if let Ok(target_addr) = format!("255.255.255.255:{}", self_tx.discovery_port).parse::<SocketAddr>() {
+                        target_addrs.push(target_addr);
+                    }
+                    for target_addr in target_addrs {
                         let _ = socket_tx.send_to(&bytes, target_addr).await;
                     }
                 }

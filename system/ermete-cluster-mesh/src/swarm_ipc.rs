@@ -19,7 +19,27 @@ impl SwarmIpcServer {
         node_id: String,
         npu_scheduler: Arc<crate::npu_scheduler::NpuScheduler>,
     ) -> Result<()> {
-        let addr = format!("0.0.0.0:{}", self.port);
+        let addr = {
+            let output = std::process::Command::new("ip").args(["-4", "addr", "show"]).output()?;
+            let out_str = String::from_utf8_lossy(&output.stdout);
+            let mut found_ip = None;
+            for line in out_str.lines() {
+                if line.contains("inet 100.") {
+                    let parts: Vec<&str> = line.trim().split_whitespace().collect();
+                    if parts.len() > 1 && parts[1].starts_with("100.") {
+                        let ip_cidr = parts[1];
+                        let ip = ip_cidr.split('/').next().unwrap();
+                        let octets: Vec<u8> = ip.split('.').filter_map(|s| s.parse().ok()).collect();
+                        if octets.len() == 4 && octets[0] == 100 && (octets[1] >= 64 && octets[1] <= 127) {
+                            found_ip = Some(ip.to_string());
+                            break;
+                        }
+                    }
+                }
+            }
+            let ip = found_ip.ok_or_else(|| anyhow::anyhow!("CloudflareWARP / CGNAT interface not found. Zero-Trust network requirement failed."))?;
+            format!("{}:{}", ip, self.port)
+        };
         let listener = TcpListener::bind(&addr).await?;
         info!("SwarmIpcServer: Listening for distributed NPU IPC connections on {}", addr);
 

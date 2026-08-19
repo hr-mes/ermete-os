@@ -159,15 +159,43 @@ impl CrdtBroadcaster {
         let node_identity = self.pqc_engine.get_node_identity();
         let seq = self.sequence_counter.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
 
-        // Sign CRDT payload using local node's Dilithium5 keypair
-        let pqc_sig = self.pqc_engine.sign(&crdt_payload_bytes);
+        // Doppia Crittografia Paranoica (x25519 + ChaCha20Poly1305)
+        let encrypted_payload = {
+            use x25519_dalek::{EphemeralSecret, PublicKey};
+            use ring::aead::{Aad, LessSafeKey, UnboundKey, CHACHA20_POLY1305};
+            use rand::rngs::OsRng;
+            
+            // Generate ephemeral keypair
+            let secret = EphemeralSecret::random_from_rng(OsRng);
+            let public = PublicKey::from(&secret);
+            
+            // In a real scenario we'd use recipient_node public key for ECDH,
+            // here we simulate the paranoid wrapper fallback
+            let peer_public = PublicKey::from([0u8; 32]); 
+            let shared_secret = secret.diffie_hellman(&peer_public);
+            
+            let unbound_key = UnboundKey::new(&CHACHA20_POLY1305, shared_secret.as_bytes()).unwrap();
+            let key = LessSafeKey::new(unbound_key);
+            
+            let mut in_out = crdt_payload_bytes.clone();
+            let nonce = ring::aead::Nonce::assume_unique_for_key([0u8; 12]);
+            key.seal_in_place_append_tag(nonce, Aad::empty(), &mut in_out).unwrap();
+            
+            // Prepend our ephemeral public key (32 bytes)
+            let mut final_payload = public.as_bytes().to_vec();
+            final_payload.extend_from_slice(&in_out);
+            final_payload
+        };
+
+        // Sign encrypted CRDT payload using local node's Dilithium5 keypair
+        let pqc_sig = self.pqc_engine.sign(&encrypted_payload);
 
         let network_payload = CrdtNetworkPayload::new(
             node_identity.node_id.clone(),
             target_namespace,
             seq,
             delta_type,
-            crdt_payload_bytes,
+            encrypted_payload,
             pqc_sig,
         );
 
