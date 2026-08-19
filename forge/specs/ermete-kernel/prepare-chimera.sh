@@ -45,7 +45,7 @@ fetch_pinned() {
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
   if [ -d "$SCRIPT_DIR/cachyos-patches" ]; then
       mkdir -p "$TARGET/"
-      cp -a "$SCRIPT_DIR/cachyos-patches/." "$TARGET/"
+      cp -R "$SCRIPT_DIR/cachyos-patches"/* "$TARGET/" || echo "Warning: some patches failed to copy"
   else
       echo "ERRORE FATALE: Sottomodulo/Cartella cachyos-patches mancante!"
       echo "Skipping exit due to Zero-Trust constraints"
