@@ -1,169 +1,55 @@
 {
-  description = "Ermete OS - The Chimera Bedrock Environment";
+  description = "Ermete OS - Immutable Build Factory (Zero-Trust)";
 
   inputs = {
-    # Usiamo il branch stabile di nixpkgs per massima riproducibilità
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
-    # Rust overlay per avere le versioni esatte (se serve in futuro)
-    rust-overlay.url = "github:oxalica/rust-overlay";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, rust-overlay }: 
-    let
-      system = "x86_64-linux";
-      pkgs = import nixpkgs {
-        inherit system;
-        overlays = [ rust-overlay.overlays.default ];
-      };
-      
-      # Strumenti Crittografici, Sicurezza e SBOM (Sostituiscono i `curl` bash)
-      security-tools = with pkgs; [
-        syft             # Generazione SBOM
-        cosign           # Firma OCI / Zero-Trust Attestation
-      ];
-
-      # Toolchain C/C++, eBPF e LLVM/BOLT (La Chimera)
-      c-toolchain = with pkgs; [
-        gcc
-        gnumake
-        cmake
-        mold
-        llvmPackages_latest.llvm
-        llvmPackages_latest.clang
-        llvmPackages_latest.lld
-        ccache
-        bpf-linker       # Linker eBPF (Niente più .tar.zst corrotti)
-        pahole           # BTF generation per eBPF (dwarves in Fedora)
-        elfutils         # libelf
-      ];
-
-      # Toolchain Rust
-      rust-toolchain = with pkgs; [
-        rustc
-        cargo
-        rustfmt
-        clippy
-        rust-bindgen
-        sccache
-      ];
-
-      # Strumenti di Build e Packaging (Sostituiscono dnf/rpm-build)
-      build-tools = with pkgs; [
-        rpm
-        cpio
-        buildah
-        skopeo
-        jq
-        git
-        gnutar
-        xz
-        curl
-        wget
-        rsync
-        flex
-        bison
-        bc
-        zstd
-        perl
-        pkg-config
-        autoconf
-        automake
-        libtool
-      ];
-
-      # Dipendenze di libreria del sistema e Kernel
-      system-deps = with pkgs; [
-        zlib
-        openssl
-        policycoreutils
-        spdlog
-        systemd
-        nodejs_22
-        nlohmann_json
-        fmt
-        speechd
-        gnupg
-        ipxe
-        ncurses
-        iproute2
-        fio
-      ];
-
-    in {
-      # Immagine OCI per il Builder (Sostituisce il Containerfile)
-      packages.${system}.builderImage = pkgs.dockerTools.buildLayeredImage {
-        name = "ghcr.io/hr-mes/ermete-os-builder";
-        tag = "latest";
-        contents = [ pkgs.bashInteractive pkgs.coreutils pkgs.findutils pkgs.gnused pkgs.gawk pkgs.cacert pkgs.tzdata pkgs.shadow ] ++ security-tools ++ c-toolchain ++ rust-toolchain ++ build-tools ++ system-deps;
-        config = {
-          Cmd = [ "/bin/bash" ];
-          Env = [
-            "PATH=/bin:/usr/bin"
-            "HOME=/root"
-            "CC=clang"
-            "CXX=clang++"
-            "LD=ld.lld"
-            "LLVM=1"
-            "LLVM_IAS=1"
+  outputs = { self, nixpkgs, flake-utils }:
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = nixpkgs.legacyPackages.${system};
+      in
+      {
+        # The hermetic development and build shell
+        devShells.default = pkgs.mkShell {
+          name = "ermete-forge-env";
+          
+          buildInputs = with pkgs; [
+            # Core Build Tools
+            rpm
+            python311
+            python311Packages.networkx
+            python311Packages.pyyaml
+            
+            # Languages
+            rustc
+            cargo
+            mold
+            sccache
+            
+            # Container & OS Build Tools
+            podman
+            skopeo
+            osbuild
+            
+            # Security & Attestation
+            cosign
+            syft
+            jq
+            git
           ];
+
+          shellHook = ''
+            echo "=========================================================="
+            echo "🛡️ Benvenuto nella Fabbrica Ermete OS (Nix Hermetic Shell)"
+            echo "=========================================================="
+            echo "Tutti i compilatori, le chiavi crittografiche e le dipendenze"
+            echo "sono ora bloccati in un grafo matematico immutabile."
+            export ERMETE_NIX_FACTORY="1"
+          '';
         };
-        fakeRootCommands = ''
-          mkdir -p /root
-          mkdir -p /lib64 /lib /usr/lib /usr/lib64 /lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu
-          
-          # Standard FHS
-          ln -s ${pkgs.glibc}/lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2 || true
-          ln -s ${pkgs.glibc}/lib/ld-linux.so.2 /lib/ld-linux.so.2 || true
-          ln -s ${pkgs.glibc}/lib/libc.so.6 /lib64/libc.so.6 || true
-          ln -s ${pkgs.glibc}/lib/libm.so.6 /lib64/libm.so.6 || true
-          ln -s ${pkgs.glibc}/lib/libpthread.so.0 /lib64/libpthread.so.0 || true
-          ln -s ${pkgs.glibc}/lib/libdl.so.2 /lib64/libdl.so.2 || true
-          ln -s ${pkgs.glibc}/lib/librt.so.1 /lib64/librt.so.1 || true
-          ln -s ${pkgs.stdenv.cc.cc.lib}/lib/libstdc++.so.6 /usr/lib64/libstdc++.so.6 || true
-          ln -s ${pkgs.stdenv.cc.cc.lib}/lib/libstdc++.so.6 /usr/lib/libstdc++.so.6 || true
-          ln -s ${pkgs.stdenv.cc.cc.lib}/lib/libgcc_s.so.1 /lib64/libgcc_s.so.1 || true
-          ln -s ${pkgs.stdenv.cc.cc.lib}/lib/libgcc_s.so.1 /usr/lib64/libgcc_s.so.1 || true
-
-          # Ubuntu/Debian x86_64-linux-gnu FHS (for GitHub Actions node24)
-          ln -s ${pkgs.glibc}/lib/ld-linux-x86-64.so.2 /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 || true
-          ln -s ${pkgs.glibc}/lib/libc.so.6 /lib/x86_64-linux-gnu/libc.so.6 || true
-          ln -s ${pkgs.glibc}/lib/libm.so.6 /lib/x86_64-linux-gnu/libm.so.6 || true
-          ln -s ${pkgs.glibc}/lib/libpthread.so.0 /lib/x86_64-linux-gnu/libpthread.so.0 || true
-          ln -s ${pkgs.glibc}/lib/libdl.so.2 /lib/x86_64-linux-gnu/libdl.so.2 || true
-          ln -s ${pkgs.glibc}/lib/librt.so.1 /lib/x86_64-linux-gnu/librt.so.1 || true
-          ln -s ${pkgs.stdenv.cc.cc.lib}/lib/libstdc++.so.6 /lib/x86_64-linux-gnu/libstdc++.so.6 || true
-          ln -s ${pkgs.stdenv.cc.cc.lib}/lib/libgcc_s.so.1 /lib/x86_64-linux-gnu/libgcc_s.so.1 || true
-        '';
-      };
-
-      # L'ambiente di sviluppo nativo (nix develop) e Builder Environment
-      devShells.${system}.default = pkgs.mkShell {
-        name = "ermete-os-bedrock-builder";
-        
-        buildInputs = security-tools ++ c-toolchain ++ rust-toolchain ++ build-tools ++ system-deps;
-
-        # Variabili d'ambiente essenziali iniettate al volo
-        shellHook = ''
-          echo "========================================================="
-          echo " 🌋 Ermete OS - Nix Bedrock Builder Attivato"
-          echo "========================================================="
-          echo "[*] LLVM / Clang        : $(clang --version | head -n 1)"
-          echo "[*] Rust Toolchain      : $(rustc --version)"
-          echo "[*] Security Tools      : Cosign $(cosign version 2>&1 | grep GitVersion | awk '{print $2}') | Syft $(syft --version | awk '{print $2}')"
-          echo "[*] eBPF Linker         : $(bpf-linker --version 2>/dev/null || echo 'Installed')"
-          echo "========================================================="
-          
-          # Forziamo LLVM e Clang come default al posto di GCC per la Chimera Build
-          export CC=clang
-          export CXX=clang++
-          export LD=ld.lld
-          export LLVM=1
-          export LLVM_IAS=1
-          
-          # Setup sicuro di sccache e ccache
-          export SCCACHE_DIR="$PWD/.sccache"
-          export CCACHE_DIR="$PWD/.ccache"
-        '';
-      };
-    };
+      }
+    );
 }
