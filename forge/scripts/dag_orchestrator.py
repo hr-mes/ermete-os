@@ -338,12 +338,14 @@ def main():
     # Creazione della Rappresentazione Visiva del DAG (Mermaid) per Github Actions
     mermaid = ["```mermaid", "graph TD;"]
     for node in dirty_nodes:
+        safe_node = "n_" + node.replace("-", "_")
         parents = [p for p in prereqs[node] if p in dirty_nodes]
         if parents:
             for p in parents:
-                mermaid.append(f"    {p} --> {node};")
+                safe_p = "n_" + p.replace("-", "_")
+                mermaid.append(f'    {safe_p}["{p}"] --> {safe_node}["{node}"];')
         else:
-            mermaid.append(f"    {node};")
+            mermaid.append(f'    {safe_node}["{node}"];')
     mermaid.append("```")
     mermaid_str = "\n".join(mermaid)
     
