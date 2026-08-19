@@ -31,21 +31,39 @@ echo "=== PREPARAZIONE REPOSITORIES (RPMFusion) ==="
 echo "========================================"
 sudo dnf install -y https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-43.noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-43.noarch.rpm || true
 
-echo "========================================"
-echo "=== DOWNLOAD SORGENTI ==="
-echo "========================================"
-cd "$RPMBUILD_DIR"/SRPMS
-dnf download --source "$PACKAGE"
 
-echo "========================================"
-echo "=== INSTALLAZIONE DIPENDENZE E FIX ==="
-echo "========================================"
-sudo dnf builddep -y *.src.rpm
+SPEC_DIR="$(realpath "$(dirname "$0")/../specs")"
+CUSTOM_DIR="$SPEC_DIR/ermete-$PACKAGE"
+if [ ! -d "$CUSTOM_DIR" ]; then
+    CUSTOM_DIR="$SPEC_DIR/$PACKAGE"
+fi
 
-echo "========================================"
-echo "=== ESTRAZIONE E INIEZIONE PONYTAIL ==="
-echo "========================================"
-rpm -ivh *.src.rpm
+if [ -d "$CUSTOM_DIR" ]; then
+    echo "========================================"
+    echo "=== [ZERO-TRUST] PACCHETTO LOCALE ==="
+    echo "========================================"
+    cp -a "$CUSTOM_DIR"/* "$RPMBUILD_DIR"/SOURCES/
+    mv "$RPMBUILD_DIR"/SOURCES/*.spec "$RPMBUILD_DIR"/SPECS/ 2>/dev/null || true
+    echo "========================================"
+    echo "=== INSTALLAZIONE DIPENDENZE E FIX ==="
+    echo "========================================"
+    sudo dnf builddep -y "$RPMBUILD_DIR"/SPECS/*.spec || true
+else
+    echo "========================================"
+    echo "=== DOWNLOAD SORGENTI UPSTREAM ==="
+    echo "========================================"
+    cd "$RPMBUILD_DIR"/SRPMS
+    dnf download --source "$PACKAGE"
+    echo "========================================"
+    echo "=== INSTALLAZIONE DIPENDENZE E FIX ==="
+    echo "========================================"
+    sudo dnf builddep -y *.src.rpm
+    echo "========================================"
+    echo "=== ESTRAZIONE E INIEZIONE PONYTAIL ==="
+    echo "========================================"
+    rpm -ivh *.src.rpm
+fi
+
 
 for spec in "$RPMBUILD_DIR"/SPECS/*.spec; do
   if ! grep -q "debug_package %{nil}" "$spec"; then

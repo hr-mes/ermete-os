@@ -41,16 +41,12 @@ fetch_pinned() {
   echo ">>> Fetching $TARGET (Commit: $COMMIT)..."
   rm -rf "$TARGET"
   mkdir -p "$TARGET"
-  if [ "$COMMIT" != "HEAD" ] && curl -sSL "https://github.com/CachyOS/kernel-patches/archive/${COMMIT}.tar.gz" | tar -xz --strip-components=1 -C "$TARGET" 2>/dev/null; then
-      echo ">>> Tarball scaricato ed estratto con successo per $REPO ($COMMIT)"
+  echo ">>> [ZERO-TRUST] Nessun download consentito! Copia offline dalla repo (Legge Marziale)."
+  if [ -d "$(dirname "$0")/cachyos-patches" ]; then
+      cp -a "$(dirname "$0")/cachyos-patches/." "$TARGET/"
   else
-      echo ">>> Fallback a git clone per $REPO..."
-      if [ "$COMMIT" = "HEAD" ]; then
-          git clone --depth 1 $BRANCH_TAG "$REPO" "$TARGET" || { echo "FATAL: Clone fallito per $REPO"; exit 1; }
-      else
-          git clone --depth 500 $BRANCH_TAG "$REPO" "$TARGET" || { echo "FATAL: Clone fallito per $REPO"; exit 1; }
-          git -C "$TARGET" checkout -q "$COMMIT" || { echo "FATAL: Checkout fallito per $COMMIT"; exit 1; }
-      fi
+      echo "ERRORE FATALE: Sottomodulo/Cartella cachyos-patches mancante!"
+      exit 1
   fi
 }
 
@@ -59,7 +55,7 @@ fetch_pinned "https://github.com/CachyOS/kernel-patches.git" "/tmp/cachyos-patch
 
 
 echo ">>> [BEDROCK SECURE] Calcolo dinamico dello Scudo NVIDIA (Dynamic Ceiling)..."
-curl -sLo /tmp/fedora-nvidia.repo https://negativo17.org/repos/fedora-nvidia.repo || true
+cp "$(dirname "$0")/fedora-nvidia.repo" /tmp/fedora-nvidia.repo || true
 EXPECTED_SHA="9126880310a20437de6ba1a83d299ee9a2119f8a1ef1e40de601676054320fc5"
 if [ -f /tmp/fedora-nvidia.repo ]; then
     echo "$EXPECTED_SHA  /tmp/fedora-nvidia.repo" | sha256sum -c || { echo "FATAL: Checksum mismatch per fedora-nvidia.repo"; exit 1; }
