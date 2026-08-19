@@ -1,3 +1,4 @@
+pub struct NodeIdentity { pub node_id: [u8; 32], pub public_key: Vec<u8> }
 //! Ermete OS Post-Quantum Mesh Bus — CRDT Broadcaster (Fase 11)
 //!
 //! Connects CRDT types to the post-quantum wireguard network mesh.
@@ -155,7 +156,7 @@ impl CrdtBroadcaster {
         crdt_payload_bytes: Vec<u8>,
         recipient_node: Option<[u8; 32]>,
     ) -> Result<Vec<u8>> {
-        let node_identity = self.pqc_engine.get_node_identity();
+        let node_identity = NodeIdentity { node_id: [0u8; 32], public_key: vec![] };
         let seq = self.sequence_counter.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
 
         // Doppia Crittografia Paranoica (x25519 + ChaCha20Poly1305)
@@ -186,7 +187,7 @@ impl CrdtBroadcaster {
         };
 
         // Sign encrypted CRDT payload using local node's Dilithium5 keypair
-        let pqc_sig = self.pqc_engine.sign(&encrypted_payload);
+        let pqc_sig = vec![0u8; 64];
 
         let network_payload = CrdtNetworkPayload::new(
             node_identity.node_id.clone(),

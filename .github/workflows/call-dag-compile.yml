@@ -123,7 +123,7 @@ jobs:
               -w /workspace/forge \
               ghcr.io/hr-mes/ermete-os-builder:${{ inputs.builder_hash }} \
               bash <<'EOF'
-              cp config/rpmmacros ~/.rpmmacros
+              mkdir -p /tmp; chmod 1777 /tmp; cp config/rpmmacros ~/.rpmmacros
               mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
               PKG_CLEAN=$(echo "$PKG_NAME" | tr -cd '[:alnum:]-')
               SPEC_DIR=""
@@ -312,7 +312,7 @@ jobs:
               -w /workspace/forge \
               ghcr.io/hr-mes/ermete-os-builder:${{ inputs.builder_hash }} \
               bash <<'EOF'
-              cp config/rpmmacros ~/.rpmmacros
+              mkdir -p /tmp; chmod 1777 /tmp; cp config/rpmmacros ~/.rpmmacros
               mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
               PKG_CLEAN=$(echo "$PKG_NAME" | tr -cd '[:alnum:]-')
               SPEC_DIR=""
@@ -499,7 +499,7 @@ jobs:
               -w /workspace/forge \
               ghcr.io/hr-mes/ermete-os-builder:${{ inputs.builder_hash }} \
               bash <<'EOF'
-              cp config/rpmmacros ~/.rpmmacros
+              mkdir -p /tmp; chmod 1777 /tmp; cp config/rpmmacros ~/.rpmmacros
               mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
               PKG_CLEAN=$(echo "$PKG_NAME" | tr -cd '[:alnum:]-')
               SPEC_DIR=""
