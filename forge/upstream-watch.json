@@ -1,18 +1,12 @@
 [
-  {
-    "repo": "starship/starship",
-    "spec": "specs/ermete-starship/ermete-starship.spec"
-  },
-  {
-    "repo": "InioX/matugen",
-    "spec": "specs/ermete-matugen/ermete-matugen.spec"
-  },
-  {
-    "repo": "ful1e5/Bibata_Cursor",
-    "spec": "specs/ermete-bibata/ermete-bibata.spec"
-  },
-  {
-    "repo": "sentriz/cliphist",
-    "spec": "specs/ermete-cliphist/ermete-cliphist.spec"
-  }
+  { "repo": "casey/just", "spec": "specs/just/just.spec", "tarball_format": "{repo_name}-{version}.tar.gz" },
+  { "repo": "git/git", "spec": "specs/git-native/git-native.spec", "tarball_format": "{repo_name}-{version}.tar.gz" },
+  { "repo": "rui314/mold", "spec": "specs/mold/mold.spec", "tarball_format": "{repo_name}-{version}.tar.gz" },
+  { "repo": "BurntSushi/ripgrep", "spec": "specs/ripgrep-native/ripgrep-native.spec", "tarball_format": "ripgrep-{version}.tar.gz" },
+  { "repo": "mozilla/sccache", "spec": "specs/sccache/sccache.spec", "tarball_format": "{repo_name}-{version}.tar.gz" },
+  { "repo": "cilium/tetragon", "spec": "specs/ermete-tetragon/ermete-tetragon.spec", "tarball_format": "{repo_name}-{tag}-amd64.tar.gz" },
+  { "repo": "starship/starship", "spec": "specs/ermete-starship/ermete-starship.spec", "tarball_format": "{repo_name}-{version}.tar.gz" },
+  { "repo": "InioX/matugen", "spec": "specs/ermete-matugen/ermete-matugen.spec", "tarball_format": "{repo_name}-{version}.tar.gz" },
+  { "repo": "ful1e5/Bibata_Cursor", "spec": "specs/ermete-bibata/ermete-bibata.spec", "tarball_format": "{repo_name}-{version}.tar.gz" },
+  { "repo": "sentriz/cliphist", "spec": "specs/ermete-cliphist/ermete-cliphist.spec", "tarball_format": "{repo_name}-{version}.tar.gz" }
 ]

@@ -2,7 +2,7 @@ name: ⚙️ Forge Auto-Update Specs
 
 on:
   schedule:
-    - cron: '0 2 * * *' # Run at 2 AM UTC, an hour before build-forge
+    - cron: '0 2 * * *'
   workflow_dispatch:
 
 concurrency:
@@ -12,7 +12,6 @@ concurrency:
 permissions:
   contents: write
   pull-requests: write
-  packages: read
 
 defaults:
   run:
@@ -21,98 +20,27 @@ defaults:
 jobs:
   update-specs:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout Repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           token: ${{ secrets.PAT_TOKEN || github.token }}
-      - name: ⚙️ Set Default Rust Toolchain
-        run: rustup default stable
-
-      - name: "Autonomous Janitor: Check & Update Specs with OCI Merkle Verification"
+          
+      - name: "🛡️ Zero-Trust Autonomous Dependency Injector"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REGISTRY: "ghcr.io"
-          OWNER: ${{ github.repository_owner }}
         run: |
-          set -euo pipefail
-          UPDATED=0
-
-          echo "=== 🤖 Autonomous Spec Janitor & OCI Merkle Verifier ==="
-
-          function update_spec() {
-            local repo=$1
-            local spec_file=$2
-            local package_name
-            package_name=$(basename "$spec_file" .spec | sed 's/^ermete-//')
-
-            echo "--------------------------------------------------"
-            echo "Evaluating Spec: $spec_file ($repo)..."
-
-            if [ ! -f "$spec_file" ]; then
-              echo "Warning: Spec file $spec_file not found. Skipping."
-              return
-            fi
-
-            # Fetch latest release tag via GitHub CLI (gestisce rate-limit nativamente)
-            local latest_tag
-            latest_tag=$(gh api "repos/${repo}/releases/latest" --jq '.tag_name // empty' 2>/dev/null | sed 's/^v//' || echo "")
-
-            if [ -z "$latest_tag" ] || [ "$latest_tag" == "null" ]; then
-              echo "  Could not fetch release from /releases/latest for $repo. Checking /tags..."
-              latest_tag=$(gh api "repos/${repo}/tags" --jq '.[0].name // empty' 2>/dev/null | sed 's/^v//' || echo "")
-            fi
-
-            if [ -z "$latest_tag" ] || [ "$latest_tag" == "null" ]; then
-              echo "  Warning: Unable to resolve latest tag for $repo."
-              return
-            fi
-
-            # Get current version from spec
-            local current_ver
-            current_ver=$(grep -E '^Version:' "$spec_file" | awk '{print $2}')
-
-            echo "  Current Spec Version: $current_ver | Upstream Latest: $latest_tag"
-
-
-            if [ "$latest_tag" != "$current_ver" ]; then
-              echo "  --> Bumping $spec_file from $current_ver to $latest_tag"
-              sed -i "s|^Version:.*$|Version:        $latest_tag|" "$spec_file"
-              sed -i "s/^Release:.*$/Release:        1%{?dist}/" "$spec_file" || true
-              UPDATED=1
-            else
-              echo "  $spec_file is up to date ($current_ver)."
-            fi
-          }
-
-          # Dynamically parse upstream-watch.json manifest for packages to monitor
-          if [ -f "upstream-watch.json" ]; then
-            while read -r repo spec; do
-              if [ -n "$repo" ] && [ -n "$spec" ]; then
-                update_spec "$repo" "$spec"
-              fi
-            done < <(jq -r 'if type == "array" then .[] | "\(.repo) \(.spec)" else to_entries[] | "\(.key) \(.value)" end' upstream-watch.json)
-          else
-            echo "Warning: upstream-watch.json manifest not found."
-          fi
-
-          if [ "$UPDATED" -eq 1 ]; then
-            echo "updates=true" >> "$GITHUB_ENV"
-            echo "Spec updates detected and staged."
-          else
-            echo "updates=false" >> "$GITHUB_ENV"
-            echo "No spec updates required."
-          fi
+          echo "=== 🤖 Starting Python Zero-Trust Updater ==="
+          python3 scripts/zero_trust_updater.py
 
       - name: Create Pull Request
         if: env.updates == 'true'
         uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
         with:
           token: ${{ secrets.PAT_TOKEN || github.token }}
-          commit-message: "chore(deps): auto-update spec versions to latest upstream"
-          title: "chore(deps): auto-update spec versions"
-          branch: "chore/update-specs"
+          commit-message: "chore(deps): auto-update spec versions and vendor offline tarballs (Zero-Trust)"
+          title: "chore(deps): auto-update specs & vendor dependencies"
+          branch: "chore/update-specs-zero-trust"
           base: "main"
           delete-branch: true
-
