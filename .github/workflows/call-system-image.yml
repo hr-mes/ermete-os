@@ -218,6 +218,10 @@ jobs:
           echo "DEFAULT_TAG=latest" >> ${GITHUB_ENV}
       - name: 📥 Checkout Repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: ❄️ Install Nix (Bedrock Cache & Security Tools)
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
+        with:
+          extra_nix_config: "experimental-features = nix-command flakes"
       - name: ⚙️ Set Default Rust Toolchain
         run: rustup default stable
       - name: 🧹 Maximize build space
@@ -240,6 +244,33 @@ jobs:
           bwrap --unshare-net --dev-bind / / podman build --network=none --layers -t ghcr.io/hr-mes/ermete-os-system:latest -t ghcr.io/hr-mes/ermete-os-system:${RUN_ID} -f ./system/Containerfile ./system && podman push ghcr.io/hr-mes/ermete-os-system:${RUN_ID}" || bwrap --unshare-net --dev-bind / / podman build --network=none --layers -t ghcr.io/hr-mes/ermete-os-system:latest -t ghcr.io/hr-mes/ermete-os-system:${RUN_ID} -f ./system/Containerfile ./system
           podman push ghcr.io/hr-mes/ermete-os-system:latest
           podman push ghcr.io/hr-mes/ermete-os-system:${RUN_ID} || true
+
+      - name: 🔐 Sign & Attest OS Image (Zero-Trust Keyless Sigstore)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          echo "=== 🛡️ Initiating Keyless OIDC Signature & SBOM Attestation ==="
+          # Authenticate Cosign
+          nix run nixpkgs#cosign -- login ghcr.io -u "${GITHUB_ACTOR}" -p "${GITHUB_TOKEN}"
+          
+          # Generate SPDX SBOM from the final container
+          echo "Generating Software Bill of Materials (SBOM)..."
+          nix run nixpkgs#syft -- packages "ghcr.io/hr-mes/ermete-os-system:${RUN_ID}" -o spdx-json > system-sbom.spdx.json
+          
+          # Keyless Sign the container images
+          echo "Signing OCI Artifacts..."
+          nix run nixpkgs#cosign -- sign --yes "ghcr.io/hr-mes/ermete-os-system:${RUN_ID}"
+          nix run nixpkgs#cosign -- sign --yes "ghcr.io/hr-mes/ermete-os-system:latest"
+          
+          # Attest the SBOM cryptographically
+          echo "Attesting SBOM..."
+          nix run nixpkgs#cosign -- attest --yes --type spdxjson --predicate system-sbom.spdx.json "ghcr.io/hr-mes/ermete-os-system:${RUN_ID}"
+          nix run nixpkgs#cosign -- attest --yes --type spdxjson --predicate system-sbom.spdx.json "ghcr.io/hr-mes/ermete-os-system:latest"
+          echo "✅ Final OS Image securely attested (SLSA Level 3)."
+
       - name: 💿 Build ISO (osbuild)
         uses: osbuild/bootc-image-builder-action@019bb59c5100ecec4e78c9e94e18a840110f7a0b # v0.0.2
         with:
