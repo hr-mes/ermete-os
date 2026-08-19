@@ -42,8 +42,9 @@ fetch_pinned() {
   rm -rf "$TARGET"
   mkdir -p "$TARGET"
   echo ">>> [ZERO-TRUST] Nessun download consentito! Copia offline dalla repo (Legge Marziale)."
-  if [ -d "$(dirname "$0")/cachyos-patches" ]; then
-      cp -a "$(dirname "$0")/cachyos-patches/." "$TARGET/"
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+  if [ -d "$SCRIPT_DIR/cachyos-patches" ]; then
+      cp -a "$SCRIPT_DIR/cachyos-patches/." "$TARGET/"
   else
       echo "ERRORE FATALE: Sottomodulo/Cartella cachyos-patches mancante!"
       exit 1
