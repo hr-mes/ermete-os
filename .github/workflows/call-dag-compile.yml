@@ -111,8 +111,8 @@ jobs:
           
           PKG_CLEAN=$(echo "$PKG_NAME" | tr -cd '[:alnum:]-')
           SPEC_DIR=""
-          if [ -d "forge/specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="forge/specs/ermete-${PKG_CLEAN}"; elif [ -d "forge/specs/${PKG_CLEAN}" ]; then SPEC_DIR="forge/specs/${PKG_CLEAN}"; fi
-          if [ -z "$SPEC_DIR" ]; then echo "DEBUG: PKG_NAME='$PKG_NAME' PKG_CLEAN='$PKG_CLEAN'"; ls -la forge/specs/; fi
+          if [ -d "specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="specs/ermete-${PKG_CLEAN}"; elif [ -d "specs/${PKG_CLEAN}" ]; then SPEC_DIR="specs/${PKG_CLEAN}"; fi
+          if [ -z "$SPEC_DIR" ]; then echo "DEBUG: PKG_NAME='$PKG_NAME' PKG_CLEAN='$PKG_CLEAN'"; ls -la specs/; fi
           if [ -n "$SPEC_DIR" ]; then
             echo "📦 Compiling Custom Spec: $SPEC_DIR"
             podman run -i --rm \
@@ -307,8 +307,8 @@ jobs:
           
           PKG_CLEAN=$(echo "$PKG_NAME" | tr -cd '[:alnum:]-')
           SPEC_DIR=""
-          if [ -d "forge/specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="forge/specs/ermete-${PKG_CLEAN}"; elif [ -d "forge/specs/${PKG_CLEAN}" ]; then SPEC_DIR="forge/specs/${PKG_CLEAN}"; fi
-          if [ -z "$SPEC_DIR" ]; then echo "DEBUG: PKG_NAME='$PKG_NAME' PKG_CLEAN='$PKG_CLEAN'"; ls -la forge/specs/; fi
+          if [ -d "specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="specs/ermete-${PKG_CLEAN}"; elif [ -d "specs/${PKG_CLEAN}" ]; then SPEC_DIR="specs/${PKG_CLEAN}"; fi
+          if [ -z "$SPEC_DIR" ]; then echo "DEBUG: PKG_NAME='$PKG_NAME' PKG_CLEAN='$PKG_CLEAN'"; ls -la specs/; fi
           if [ -n "$SPEC_DIR" ]; then
             echo "📦 Compiling Custom Spec: $SPEC_DIR"
             podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
@@ -501,8 +501,8 @@ jobs:
           
           PKG_CLEAN=$(echo "$PKG_NAME" | tr -cd '[:alnum:]-')
           SPEC_DIR=""
-          if [ -d "forge/specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="forge/specs/ermete-${PKG_CLEAN}"; elif [ -d "forge/specs/${PKG_CLEAN}" ]; then SPEC_DIR="forge/specs/${PKG_CLEAN}"; fi
-          if [ -z "$SPEC_DIR" ]; then echo "DEBUG: PKG_NAME='$PKG_NAME' PKG_CLEAN='$PKG_CLEAN'"; ls -la forge/specs/; fi
+          if [ -d "specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="specs/ermete-${PKG_CLEAN}"; elif [ -d "specs/${PKG_CLEAN}" ]; then SPEC_DIR="specs/${PKG_CLEAN}"; fi
+          if [ -z "$SPEC_DIR" ]; then echo "DEBUG: PKG_NAME='$PKG_NAME' PKG_CLEAN='$PKG_CLEAN'"; ls -la specs/; fi
           if [ -n "$SPEC_DIR" ]; then
             echo "📦 Compiling Custom Spec: $SPEC_DIR"
             podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
