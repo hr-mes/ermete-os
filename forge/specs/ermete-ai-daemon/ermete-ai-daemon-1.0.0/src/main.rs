@@ -8,7 +8,7 @@ pub mod npu;
 pub mod security;
 pub mod types;
 
-use model_loader::NeuralModelEngine;
+use model_loader::InferenceEngine;
 use types::{AiIntent, WorkloadClassificationRequest, WorkloadClassificationResponse};
 
 use std::sync::Arc;
@@ -22,7 +22,7 @@ use npu::HardwareOffloader;
 
 pub struct AiDaemonProxy {
     offloader: Arc<HardwareOffloader>,
-    model_engine: Arc<RwLock<NeuralModelEngine>>,
+    model_engine: Arc<RwLock<InferenceEngine>>,
 }
 
 #[interface(name = "os.ermete.AiDaemon")]
@@ -67,7 +67,7 @@ impl AiDaemonProxy {
 
         let engine = self.model_engine.read().await;
         let logits = engine
-            .infer(&features)
+            .predict_workload(&features)
             .map_err(zbus::fdo::Error::Failed)?;
 
         let mut max_idx = 3;
@@ -108,7 +108,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Initialize Candle real model engine with default weights path
     let default_weights_path = "/etc/ermete/ai/workload_classifier.safetensors";
-    let model_engine = Arc::new(RwLock::new(NeuralModelEngine::new(default_weights_path)));
+    let model_engine = Arc::new(RwLock::new(InferenceEngine::new(default_weights_path)));
 
     // Acquire exclusive DRM Lease for AI Offloading
     if let Err(e) = drm_lease::acquire_drm_lease().await {
