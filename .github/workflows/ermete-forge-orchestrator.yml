@@ -6,6 +6,7 @@ on:
     branches: [ main ]
     paths:
       - 'forge/**'
+      - 'Cargo.toml'
       - '.github/workflows/ermete-forge-orchestrator.yml'
       - '.github/workflows/call-*.yml'
   workflow_dispatch:

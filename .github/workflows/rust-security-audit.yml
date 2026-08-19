@@ -158,8 +158,8 @@ jobs:
             sudo chmod +x /usr/local/bin/sccache
           fi
           if ! command -v cargo-kani >/dev/null 2>&1; then
-            curl -sSL https://github.com/model-checking/kani/releases/download/kani-0.67.0/kani-0.67.0-x86_64-unknown-linux-gnu.tar.gz | tar -xz -C /tmp
-            sudo cp -r /tmp/kani-0.67.0/bin/* /usr/local/bin/
+            mkdir -p /tmp/kani && curl -sSL https://github.com/model-checking/kani/releases/download/kani-0.67.0/kani-0.67.0-x86_64-unknown-linux-gnu.tar.gz | tar -xz -C /tmp/kani --strip-components=1
+            sudo cp -a /tmp/kani/bin/* /usr/local/bin/
             sudo chmod +x /usr/local/bin/cargo-kani /usr/local/bin/kani-compiler || true
           fi
 
@@ -236,8 +236,8 @@ jobs:
             sudo chmod +x /usr/local/bin/sccache
           fi
           if ! command -v cargo-kani >/dev/null 2>&1; then
-            curl -sSL https://github.com/model-checking/kani/releases/download/kani-0.67.0/kani-0.67.0-x86_64-unknown-linux-gnu.tar.gz | tar -xz -C /tmp
-            sudo cp -r /tmp/kani-0.67.0/bin/* /usr/local/bin/
+            mkdir -p /tmp/kani && curl -sSL https://github.com/model-checking/kani/releases/download/kani-0.67.0/kani-0.67.0-x86_64-unknown-linux-gnu.tar.gz | tar -xz -C /tmp/kani --strip-components=1
+            sudo cp -a /tmp/kani/bin/* /usr/local/bin/
             sudo chmod +x /usr/local/bin/cargo-kani /usr/local/bin/kani-compiler || true
           fi
 
