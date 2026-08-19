@@ -50,3 +50,6 @@ graphify-out/
 .cache/
 .dnf-cache/
 .tmp_repo/
+
+# Local workspace for AI agents and temporary scripts
+/.scratch/

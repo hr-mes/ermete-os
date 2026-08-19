@@ -17,6 +17,7 @@ To avoid continuity errors and hallucinations in future sessions, you must stric
 - **Rule 3 (Panic-Free Concurrency)**: Never use `.unwrap()` on `RwLock` or `Mutex`. Always propagate poisoning errors via `anyhow::Result` to prevent cascading daemon crashes.
 - **Rule 4 (Swarm Orchestration)**: When tasked with large refactoring, do NOT do it alone. Use the `dispatching-parallel-agents` skill to spawn `flash` subagents, then aggregate their results.
 - **Rule 5 (The Brain is on GitHub)**: If you need historical context, read `ARCHITECTURE_SHOWCASE.md` and the files in `docs/brain/`. They contain the forensic audits and design rationales of past AI sessions.
+- **Rule 7 (The Scratchpad Protocol)**: Never push temporary scripts, test binaries, or debug logs to GitHub. All scratch work, temporary python scripts, and local testing artifacts MUST be placed inside the `/.scratch/` directory, which is strictly git-ignored.
 - **Rule 6 (Agentic Tooling)**: Before reading code manually, leverage `codegraph_explore` if the repository is indexed.
 
 ## 🚀 YOUR PRIME DIRECTIVE
