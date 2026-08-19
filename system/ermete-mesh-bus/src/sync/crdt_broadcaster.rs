@@ -36,8 +36,7 @@ impl CrdtBroadcaster {
         let dispatcher_handle = storage_bridge.clone().spawn_background_merge_dispatcher(rx);
 
         let broadcaster = Self {
-            pqc_engine,
-            peer_manager,
+                        peer_manager,
             storage_bridge,
             delta_tx: tx,
             sequence_counter: std::sync::atomic::AtomicU64::new(1),
