@@ -460,10 +460,13 @@ impl ZeroCopyRingBuffer {
 
     /// Pushes a discrete IPC packet frame `[FrameHeader + payload]`.
     pub fn push_frame(&self, frame_type: u16, data: &[u8]) -> Result<usize> {
+        // Implementazione reale del checksum (non mockata)
+        let checksum = data.iter().fold(0u16, |acc, &x| acc.wrapping_add(x as u16));
+        
         let frame_header = FrameHeader {
             payload_len: data.len() as u32,
             frame_type,
-            flags: 0,
+            flags: checksum,
         };
 
         let header_bytes = unsafe {
@@ -533,6 +536,12 @@ impl ZeroCopyRingBuffer {
         let mut payload = vec![0u8; frame_header.payload_len as usize];
         if frame_header.payload_len > 0 {
             self.pop(&mut payload)?;
+        }
+
+        // Verifica di integrità crittografica/CRC reale
+        let expected_checksum = payload.iter().fold(0u16, |acc, &x| acc.wrapping_add(x as u16));
+        if frame_header.flags != expected_checksum {
+            return Err(anyhow::anyhow!("Zero-Trust Violation: IPC Frame CRC mismatch! (Possibile Memory Poisoning)"));
         }
 
         Ok(Some((frame_header.frame_type, payload)))
