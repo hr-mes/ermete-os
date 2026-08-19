@@ -132,13 +132,6 @@ jobs:
               if [ -d "$SPEC_DIR/SOURCES" ]; then 
                 cp -a $SPEC_DIR/SOURCES/* ~/rpmbuild/SOURCES/ || true
               fi
-
-              for dir in $SPEC_DIR/*/ ; do
-                if [ -d "$dir" ] && [ "$(basename "$dir")" != "SOURCES" ]; then
-                  pkg_dir=$(basename "$dir")
-                  tar -czf ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz -C $SPEC_DIR ${pkg_dir}
-                fi
-              done
             
               mkdir -p ~/rpmbuild/BUILD/
               for spec_dir in /workspace/forge/specs/ermete-*/ /workspace/forge/specs/*/ ; do
@@ -329,13 +322,6 @@ jobs:
                 cp -a $SPEC_DIR/SOURCES/* ~/rpmbuild/SOURCES/ || true
               fi
             
-              for dir in $SPEC_DIR/*/ ; do
-                if [ -d "$dir" ] && [ "$(basename "$dir")" != "SOURCES" ]; then
-                  pkg_dir=$(basename "$dir")
-                  tar -czf ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz -C $SPEC_DIR ${pkg_dir}
-                fi
-              done
-            
               mkdir -p ~/rpmbuild/BUILD/
               for spec_dir in /workspace/forge/specs/ermete-*/ /workspace/forge/specs/*/ ; do
                 if [ -d "$spec_dir" ]; then
@@ -522,13 +508,6 @@ jobs:
               if [ -d "$SPEC_DIR/SOURCES" ]; then 
                 cp -a $SPEC_DIR/SOURCES/* ~/rpmbuild/SOURCES/ || true
               fi
-            
-              for dir in $SPEC_DIR/*/ ; do
-                if [ -d "$dir" ] && [ "$(basename "$dir")" != "SOURCES" ]; then
-                  pkg_dir=$(basename "$dir")
-                  tar -czf ~/rpmbuild/SOURCES/${pkg_dir}.tar.gz -C $SPEC_DIR ${pkg_dir}
-                fi
-              done
             
               mkdir -p ~/rpmbuild/BUILD/
               for spec_dir in /workspace/forge/specs/ermete-*/ /workspace/forge/specs/*/ ; do
