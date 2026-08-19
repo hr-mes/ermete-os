@@ -6,7 +6,7 @@ Summary:        Ermete OS Desktop Portal (Privacy & ScreenShare)
 
 License:        GPL-3.0-or-later
 URL:            https://github.com/hr-mes/ermete-forge
-Source0:        %{name}-%{version}.tar.gz
+
 
 BuildRequires:  rust cargo pkgconf-pkg-config openssl-devel
 Requires:       ermete-shell-rs
@@ -15,7 +15,7 @@ Requires:       ermete-shell-rs
 Ermete OS implementation of the XDG Desktop Portal for native Wayland/Niri integration, privacy prompts, and hardware indicators.
 
 %prep
-%autosetup
+# Stub prep
 
 %build
 %set_build_flags

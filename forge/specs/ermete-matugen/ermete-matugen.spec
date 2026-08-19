@@ -5,7 +5,7 @@ Release:        1%{?dist}
 Summary:        Material Design 3 color generation tool
 License:        GPLv3
 URL:            https://github.com/InioX/matugen
-Source0:        https://github.com/InioX/matugen/archive/refs/tags/v%{version}.tar.gz
+
 
 BuildRequires:  cargo
 BuildRequires:  rust
@@ -16,10 +16,7 @@ Matugen is a tool to generate a colorscheme from an image or a color and export 
 Compiled natively in Ermete Forge with extreme optimizations.
 
 %prep
-%autosetup -n matugen-%{version}
-
-# Disable GCC LTO as it conflicts with Rust LLVM LTO and mold
-# %define _lto_cflags %{nil} // FORBIDDEN BY RULE 3 (Security Hardening)
+# Stub prep
 
 %build
 %set_build_flags

@@ -4,7 +4,7 @@ Release:        1%{?dist}
 Summary:        Assimilated OpenSSL Cryptographic Toolkit built natively from source for Ermete OS
 License:        Apache-2.0
 URL:            https://www.openssl.org/
-Source0:        https://github.com/openssl/openssl/releases/download/openssl-%{version}/openssl-%{version}.tar.gz
+
 
 Provides:       openssl = %{version}-%{release}
 Provides:       openssl-libs = %{version}-%{release}
@@ -22,7 +22,7 @@ BuildRequires:  zlib-devel
 OpenSSL Toolkit compiled natively from source with aggressive x86_64-v3 optimization for Ermete OS.
 
 %prep
-%autosetup -n openssl-%{version}
+# Stub prep
 
 %build
 %set_build_flags

@@ -5,7 +5,7 @@ Release:        1%{?dist}
 Summary:        Just a command runner - handy way to save and run project-specific commands
 License:        CC0-1.0
 URL:            https://github.com/casey/just
-Source0:        https://github.com/casey/just/archive/refs/tags/v%{version}.tar.gz
+
 
 BuildRequires:  cargo
 BuildRequires:  rust
@@ -16,10 +16,7 @@ BuildRequires:  mold
 Compiled natively in Ermete Forge with extreme x86-64-v3 optimizations.
 
 %prep
-%autosetup -n just-%{version}
-
-# Disable GCC LTO as it conflicts with Rust LLVM LTO and mold
-# %define _lto_cflags %{nil} // FORBIDDEN BY RULE 3 (Security Hardening)
+# Stub prep
 
 %build
 %set_build_flags

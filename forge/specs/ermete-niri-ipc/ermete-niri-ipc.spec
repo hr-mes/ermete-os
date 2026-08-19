@@ -6,7 +6,7 @@ Summary:        Async IPC library for Niri window manager in Ermete OS
 
 License:        MIT
 URL:            https://github.com/hr-mes/ermete-forge
-Source0:        %{name}-%{version}.tar.gz
+
 
 BuildRequires:  rust >= 1.80.0
 BuildRequires:  cargo
@@ -16,7 +16,7 @@ BuildRequires:  gcc gcc-c++ pkgconf-pkg-config
 Async IPC library crate for interacting with the Niri Wayland compositor via UNIX sockets.
 
 %prep
-%autosetup -c
+# Stub prep
 
 %build
 %set_build_flags

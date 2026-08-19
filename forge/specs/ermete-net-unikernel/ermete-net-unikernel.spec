@@ -7,7 +7,7 @@ Summary:        Ermete OS Userspace Zero-Copy Isolated Rust TCP/IP Stack Daemon
 License:        GPLv3+
 URL:            https://github.com/hr-mes/ermete-os
 Requires:       dbus
-Source0:        %{name}-%{version}.tar.gz
+
 
 BuildRequires:  rust >= 1.83.0
 BuildRequires:  cargo
@@ -18,7 +18,7 @@ Ermete OS Userspace isolated Rust TCP/IP/IPv6 stack daemon (smoltcp + TUN/TAP / 
 providing micro-VM enclaves and system services zero-copy packet switching without Linux C networking overhead.
 
 %prep
-%setup -q
+# Stub prep
 
 %build
 %set_build_flags

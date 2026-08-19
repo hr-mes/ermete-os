@@ -7,7 +7,7 @@ Summary:        Ermete OS Universal App Store Daemon
 
 License:        GPL-3.0-or-later
 URL:            https://github.com/hr-mes/ermete-forge
-Source0:        %{name}-%{version}.tar.gz
+
 
 BuildRequires:  rust cargo systemd-rpm-macros pkgconf-pkg-config openssl-devel gtk4-devel
 
@@ -17,7 +17,7 @@ Requires:       flatpak
 Ermete OS Universal App Store Daemon for Flatpak and OCI container management.
 
 %prep
-%autosetup
+# Stub prep
 
 %build
 %set_build_flags

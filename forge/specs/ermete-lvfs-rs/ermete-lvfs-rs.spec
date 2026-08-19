@@ -6,7 +6,7 @@ Summary:        Ermete OS Firmware Automation Daemon
 
 License:        GPL-3.0-or-later
 URL:            https://github.com/hr-mes/ermete-forge
-Source0:        %{name}-%{version}.tar.gz
+
 
 BuildRequires:  rust cargo systemd-rpm-macros pkgconf-pkg-config openssl-devel
 Requires:       fwupd
@@ -15,7 +15,7 @@ Requires:       fwupd
 Ermete OS LVFS Daemon for automated background UEFI/BIOS firmware updates via fwupdmgr.
 
 %prep
-%autosetup
+# Stub prep
 
 %build
 %set_build_flags

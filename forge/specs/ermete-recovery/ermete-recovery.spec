@@ -5,7 +5,7 @@ Release:        2%{?dist}
 Summary:        Ermete OS Pre-Boot GUI Recovery Kiosk & Rollback Manager
 
 License:        MIT
-Source0:        ermete-recovery-%{version}.tar.gz
+
 
 BuildRequires:  rust cargo gcc gcc-c++ gtk4-devel glib2-devel pkgconf-pkg-config
 Requires:       gtk4 glib2 cage rpm-ostree systemd
@@ -15,7 +15,7 @@ Pre-Boot GUI Wayland Kiosk recovery environment for Ermete OS (`ermete-recovery-
 Provides 1-click OSTree/bootc visual rollback and automatic failover when `greetd` or the graphical session crashes.
 
 %prep
-%autosetup
+# Stub prep
 
 %build
 %set_build_flags

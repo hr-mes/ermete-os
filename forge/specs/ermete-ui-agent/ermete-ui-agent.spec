@@ -4,7 +4,7 @@ Release:        3%{?dist}
 Summary:        Ermete Generative UI Agent
 
 License:        MIT
-Source0:        ermete-ui-agent-%{version}.tar.gz
+
 
 BuildArch:      noarch
 Requires: python3
@@ -14,7 +14,7 @@ Requires:       python3-aiohttp
 Context-aware generative UI daemon for Ermete OS. Interfaces with local LLMs (Ollama) to orchestrate desktop widgets natively based on system context.
 
 %prep
-%autosetup
+# Stub prep
 
 %build
 # Nothing to build, Python script

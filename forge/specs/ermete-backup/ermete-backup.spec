@@ -5,7 +5,7 @@ Release:        2%{?dist}
 Summary:        Ermete OS Time Machine & Bcachefs Home Snapshot Manager
 
 License:        MIT
-Source0:        ermete-backup-%{version}.tar.gz
+
 
 BuildRequires:  rust cargo gcc gcc-c++ gtk4-devel glib2-devel pkgconf-pkg-config
 Requires:       gtk4 glib2 bcachefs-tools systemd
@@ -15,7 +15,7 @@ Instant zero-overhead Bcachefs Copy-on-Write (CoW) Home snapshot manager and Tim
 Includes user D-Bus daemon (`ermete-backup-daemon`) and automatic hourly timer (`ermete-backup-hourly.timer`).
 
 %prep
-%autosetup
+# Stub prep
 
 %build
 %set_build_flags

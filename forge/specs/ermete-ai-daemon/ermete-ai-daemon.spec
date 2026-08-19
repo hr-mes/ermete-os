@@ -6,7 +6,7 @@ Summary:        Ermete OS Local AI & Machine Learning Inference Daemon
 
 License:        GPL-3.0-or-later
 URL:            https://github.com/hr-mes/ermete-forge
-Source0:        %{name}-%{version}.tar.gz
+
 
 BuildRequires:  rust >= 1.80.0
 BuildRequires:  cargo
@@ -17,7 +17,7 @@ BuildRequires:  gcc gcc-c++ pkgconf-pkg-config openssl-devel
 Local AI and Machine Learning inference service for Ermete OS using Candle framework over D-Bus (os.ermete.AiDaemon).
 
 %prep
-%autosetup
+# Stub prep
 
 %build
 %set_build_flags

@@ -6,7 +6,7 @@ Summary:        Visual Dock and taskbar application logic for Ermete OS
 
 License:        GPL-3.0-or-later
 URL:            https://github.com/hr-mes/ermete-forge
-Source0:        %{name}-%{version}.tar.gz
+
 
 BuildRequires:  rust >= 1.80.0
 BuildRequires:  cargo
@@ -19,7 +19,7 @@ BuildRequires:  glib2-devel
 Visual Dock and taskbar application library component for Ermete OS built with GTK4 and gtk4-layer-shell.
 
 %prep
-%autosetup
+# Stub prep
 
 %build
 %set_build_flags

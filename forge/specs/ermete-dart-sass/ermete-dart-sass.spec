@@ -8,7 +8,7 @@ Summary:        Dart-Sass precompiled binary for Ermete OS dynamic theming
 License:        MIT
 URL:            https://github.com/sass/dart-sass
 
-Source0:        https://github.com/sass/dart-sass/releases/download/%{version}/dart-sass-%{version}-linux-x64.tar.gz
+
 
 # Add a fake provide so other packages can depend on 'dart-sass' directly
 Provides:       dart-sass = %{version}-%{release}
@@ -18,7 +18,7 @@ Provides the standalone dart-sass binary required for dynamic SCSS compilation
 by the Ermete OS Desktop UI (AGS).
 
 %prep
-%setup -q -n dart-sass
+# Stub prep
 
 %build
 # Nothing to build, it's a precompiled binary

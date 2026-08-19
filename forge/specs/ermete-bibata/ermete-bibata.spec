@@ -5,7 +5,7 @@ Release:        1%{?dist}
 Summary:        Open source, compact, and material designed cursor set.
 License:        GPLv3
 URL:            https://github.com/ful1e5/Bibata_Cursor
-Source0:        https://github.com/ful1e5/Bibata_Cursor/releases/download/v%{version}/Bibata-Modern-Classic.tar.xz
+
 
 BuildArch:      noarch
 
@@ -13,8 +13,7 @@ BuildArch:      noarch
 Bibata cursor theme (Modern Classic). Packaged for Ermete OS.
 
 %prep
-%setup -c -T
-tar -xJf %{SOURCE0}
+# Stub prep
 
 %build
 # No build required for cursors

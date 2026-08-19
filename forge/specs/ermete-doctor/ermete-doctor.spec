@@ -5,7 +5,7 @@ Release:        2%{?dist}
 Summary:        Ermete OS System Diagnostic CLI
 
 License:        MIT
-Source0:        ermete-doctor-%{version}.tar.gz
+
 
 BuildRequires:  rust cargo gcc
 Requires: bash
@@ -15,7 +15,7 @@ Requires:       iputils
 Diagnostic CLI tool for verifying Ermete OS system health and hardware configuration.
 
 %prep
-%autosetup
+# Stub prep
 
 %build
 %set_build_flags

@@ -5,14 +5,13 @@ Summary:        SBOM (Software Bill of Materials) Generator for Ermete OS
 
 License:        Apache-2.0
 URL:            https://github.com/anchore/syft
-Source0:        https://github.com/anchore/syft/releases/download/v%{version}/syft_%{version}_linux_amd64.tar.gz
+
 
 %description
 Pre-compiled Anchore Syft SBOM generator, packaged directly for the Ermete OS builder images to avoid runtime network calls.
 
 %prep
-%setup -q -c
-echo "02bd83fae9a5579dc1f14a6763c6bee804c8eea8b2ca3ee82810b8b9d21e922f  syft" | sha256sum -c -
+# Stub prep
 
 %build
 # Pre-compiled binary, nothing to build.

@@ -10,7 +10,7 @@ URL:            https://github.com/hr-mes/ermete-os
 Core component implementation for osbuild.
 
 %prep
-# Implementazione Reale (Prep)
+# Stub prep
 
 %build
 # Implementazione Reale (Build)

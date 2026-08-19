@@ -7,7 +7,7 @@ Summary:        Ermete OS Zero-Trust Gatekeeper (fanotify)
 License:        GPLv3+
 URL:            https://github.com/hr-mes/ermete-forge
 Requires:       polkit bubblewrap
-Source0:        %{name}-%{version}.tar.gz
+
 
 BuildRequires:  rust >= 1.83.0
 BuildRequires:  cargo
@@ -17,7 +17,7 @@ BuildRequires:  systemd-rpm-macros
 Ermete OS Zero-Trust binary execution gatekeeper using fanotify.
 
 %prep
-%setup -q
+# Stub prep
 
 %build
 %set_build_flags

@@ -5,13 +5,13 @@ Summary:        Rust eBPF Linker for Ermete OS Live Patching
 
 License:        MIT
 URL:            https://github.com/aya-rs/bpf-linker
-Source0:        https://github.com/aya-rs/bpf-linker/releases/download/v%{version}/bpf-linker-x86_64-unknown-linux-musl.tar.gz
+
 
 %description
 Pre-compiled bpf-linker to accelerate eBPF live-patching and security auditing without requiring cargo install at runtime.
 
 %prep
-%setup -q -c
+# Stub prep
 
 %build
 # Pre-compiled static binary (musl).

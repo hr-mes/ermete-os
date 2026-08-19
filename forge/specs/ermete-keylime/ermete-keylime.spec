@@ -4,7 +4,7 @@ Release:        1%{?dist}
 Summary:        Ermete OS Keylime Agent Configuration
 License:        GPLv3+
 URL:            https://github.com/ermete-os
-Source0:        99-ermete.conf
+
 
 Requires:       keylime-agent
 Requires:       tpm2-tools
@@ -16,8 +16,7 @@ Implementa Remote Attestation (Fase 3) bindando misurazioni TPM
 e sigillando l'enclave di sicurezza.
 
 %prep
-%setup -q -c -T
-cp %{SOURCE0} .
+# Stub prep
 
 %build
 

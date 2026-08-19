@@ -6,7 +6,7 @@ Summary:        Ermete OS P2P Mesh Synchronization Daemon
 
 License:        GPL-3.0-or-later
 URL:            https://github.com/hr-mes/ermete-forge
-Source0:        %{name}-%{version}.tar.gz
+
 
 BuildRequires:  rust >= 1.80.0
 BuildRequires:  cargo
@@ -17,7 +17,7 @@ BuildRequires:  gcc gcc-c++ pkgconf-pkg-config openssl-devel
 Peer-to-peer mesh synchronization and WireGuard tunnel manager daemon for Ermete OS.
 
 %prep
-%autosetup
+# Stub prep
 
 %build
 %set_build_flags

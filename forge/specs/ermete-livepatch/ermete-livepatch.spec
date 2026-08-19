@@ -14,7 +14,7 @@ Requires:       kmod
 Live patches for Ermete OS kernel (Zero-Downtime ring-0 patching).
 
 %prep
-# Nothing to unpack
+# Stub prep
 
 %build
 # kpatch-build was already executed in a previous step

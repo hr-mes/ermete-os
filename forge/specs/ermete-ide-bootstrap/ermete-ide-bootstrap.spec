@@ -11,7 +11,7 @@ BuildArch:      noarch
 Provides ermete-ide-bootstrap for Ermete OS.
 
 %prep
-# Nothing to prep
+# Stub prep
 
 %build
 # Nothing to build

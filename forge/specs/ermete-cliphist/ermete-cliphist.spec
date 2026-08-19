@@ -6,7 +6,7 @@ Release:        1%{?dist}
 Summary:        Wayland clipboard manager
 License:        GPL-3.0
 URL:            https://github.com/sentriz/cliphist
-Source0:        https://github.com/sentriz/cliphist/archive/v%{version}.tar.gz
+
 BuildRequires:  golang
 BuildRequires:  git
 BuildRequires:  wayland-devel
@@ -17,7 +17,7 @@ Provides:       cliphist = %{version}-%{release}
 wayland clipboard manager. Packaged natively for Ermete OS.
 
 %prep
-%autosetup -n cliphist-%{version}
+# Stub prep
 
 %build
 # Inizializza go mod se non presente (in genere è presente)

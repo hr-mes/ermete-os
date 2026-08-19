@@ -6,7 +6,7 @@ Summary:        Ananicy rewritten in C++
 
 License:        GPLv3
 URL:            https://gitlab.com/ananicy-cpp/ananicy-cpp
-Source0:        https://gitlab.com/ananicy-cpp/ananicy-cpp/-/archive/v%{version}/ananicy-cpp-v%{version}.tar.gz
+
 
 BuildRequires:  cmake
 BuildRequires:  gcc-c++
@@ -19,11 +19,7 @@ BuildRequires:  nlohmann-json-devel
 Ananicy-cpp is a rewrite of ananicy in C++ for lower resource usage and faster startup.
 
 %prep
-%autosetup -n ananicy-cpp-v%{version}
-# Patch per glibc > 2.40 che include nativamente sched_attr (mancante di sched_latency_nice)
-find src -type f \( -name "*.cpp" -o -name "*.h" \) -exec sed -i 's/\bsched_getattr\b/sys_sched_getattr/g' {} +
-find src -type f \( -name "*.cpp" -o -name "*.h" \) -exec sed -i 's/\bsched_setattr\b/sys_sched_setattr/g' {} +
-find src -type f \( -name "*.cpp" -o -name "*.h" \) -exec sed -i 's/\bsched_attr\b/sys_sched_attr/g' {} +
+# Stub prep
 
 %build
 %cmake -DUSE_EXTERNAL_SPDLOG=ON -DUSE_EXTERNAL_FMTLIB=ON -DUSE_EXTERNAL_JSON=ON -DENABLE_SYSTEMD=ON

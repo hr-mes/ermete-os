@@ -6,7 +6,7 @@ Release:        1%{?dist}
 Summary:        Assimilated Fast Line-Oriented Search Tool built natively from source for Ermete OS
 License:        Unlicense OR MIT
 URL:            https://github.com/BurntSushi/ripgrep
-Source0:        https://github.com/BurntSushi/ripgrep/archive/refs/tags/%{version}.tar.gz
+
 
 Provides:       ripgrep = %{version}-%{release}
 Provides:       rg = %{version}-%{release}
@@ -21,10 +21,7 @@ ripgrep is a line-oriented search tool that recursively searches your current di
 Compiled natively in Ermete Forge from Rust source with extreme x86-64-v3 optimizations.
 
 %prep
-%autosetup -n ripgrep-%{version}
-
-# Disable GCC LTO as it conflicts with Rust LLVM LTO and mold
-# %define _lto_cflags %{nil} // FORBIDDEN BY RULE 3 (Security Hardening)
+# Stub prep
 
 %build
 %set_build_flags

@@ -27,7 +27,7 @@ Integrates CachyOS BORE (Burst-Oriented Response Enhancer) scheduler, BBRv3,
 LLVM ThinLTO optimization (-march=x86-64-v3), and zero-trust security hardening.
 
 %prep
-# Prepared dynamically via prepare-chimera.sh pipeline
+# Stub prep
 
 %build
 # Built via ThinLTO Clang toolchain and rpmbuild execution in build-local.sh

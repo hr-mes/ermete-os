@@ -7,7 +7,7 @@ Summary:        Ermete OS Zero-Trust Hardware Micro-Hypervisor & Confidential En
 License:        GPLv3+
 URL:            https://github.com/hr-mes/ermete-os
 Requires:       qemu-kvm dbus
-Source0:        %{name}-%{version}.tar.gz
+
 
 BuildRequires:  rust >= 1.83.0
 BuildRequires:  cargo
@@ -18,7 +18,7 @@ Ermete OS Zero-Trust Hardware Micro-Hypervisor daemon managing lightweight AMD S
 and Intel TDX confidential micro-VM enclaves for isolating untrusted agents and applications.
 
 %prep
-%setup -q
+# Stub prep
 
 %build
 %set_build_flags
