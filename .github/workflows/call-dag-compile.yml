@@ -182,7 +182,7 @@ jobs:
         run: |
           set -euo pipefail
           export BUILDAH_ISOLATION=chroot
-          buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
+          echo "${{ secrets.GITHUB_TOKEN }}" | buildah login -u ${{ github.actor }} --password-stdin ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
           buildah copy $ctr RPMS/*.rpm /
           
@@ -384,7 +384,7 @@ jobs:
         run: |
           set -euo pipefail
           export BUILDAH_ISOLATION=chroot
-          buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
+          echo "${{ secrets.GITHUB_TOKEN }}" | buildah login -u ${{ github.actor }} --password-stdin ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
           buildah copy $ctr RPMS/*.rpm /
           
@@ -584,7 +584,7 @@ jobs:
         run: |
           set -euo pipefail
           export BUILDAH_ISOLATION=chroot
-          buildah login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ${{ env.REGISTRY }}
+          echo "${{ secrets.GITHUB_TOKEN }}" | buildah login -u ${{ github.actor }} --password-stdin ${{ env.REGISTRY }}
           ctr=$(buildah from scratch)
           buildah copy $ctr RPMS/*.rpm /
           

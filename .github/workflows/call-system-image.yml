@@ -93,7 +93,7 @@ jobs:
             echo "${GITHUB_TOKEN}" | buildah login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
             bash scripts/fetch_repo_rpms.sh "${GITHUB_REPOSITORY_OWNER}"
             
-            buildah login -u "${GITHUB_ACTOR}" -p "${GITHUB_TOKEN}" ghcr.io
+            echo "${GITHUB_TOKEN}" | buildah login -u "${GITHUB_ACTOR}" --password-stdin ghcr.io
             
             mkdir -p .manifests
             for tier in tier0 tier1 tier2 tier3 ""; do
@@ -238,7 +238,7 @@ jobs:
           set -euo pipefail
           podman run -i --rm --privileged -v "${GITHUB_WORKSPACE}:/workspace" -w /workspace "ghcr.io/hr-mes/ermete-os-builder:${BUILDER_CONTENT_HASH}" bash -c "set -euo pipefail; \
           bwrap --unshare-net --dev-bind / / podman build --network=none --layers -t ghcr.io/hr-mes/ermete-os-system:latest -t ghcr.io/hr-mes/ermete-os-system:${RUN_ID} -f ./system/Containerfile ./system && podman push ghcr.io/hr-mes/ermete-os-system:${RUN_ID}" || bwrap --unshare-net --dev-bind / / podman build --network=none --layers -t ghcr.io/hr-mes/ermete-os-system:latest -t ghcr.io/hr-mes/ermete-os-system:${RUN_ID} -f ./system/Containerfile ./system
-          podman push ghcr.io/hr-mes/ermete-os-system:latest || true
+          podman push ghcr.io/hr-mes/ermete-os-system:latest
           podman push ghcr.io/hr-mes/ermete-os-system:${RUN_ID} || true
       - name: 💿 Build ISO (osbuild)
         uses: osbuild/bootc-image-builder-action@019bb59c5100ecec4e78c9e94e18a840110f7a0b # v0.0.2
