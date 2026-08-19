@@ -72,28 +72,8 @@ impl GatekeeperScreencopyAuth {
 
         // Fallback Zero-Trust evaluation when DBus system bus is unreachable
         // Known untrusted / suspicious apps or raw scripts are strictly DENIED by default.
-        let lower = app_id.to_lowercase();
-        if lower.contains("keylogger")
-            || lower.contains("sniffer")
-            || lower.contains("malicious")
-            || lower.contains("untrusted")
-            || lower.contains("spyware")
-        {
-            warn!(
-                "Zero-Trust Guard: DENIED screen capture request for untrusted application '{}'",
-                app_id
-            );
-            return false;
-        }
-
-        // System desktop components with explicit trusted names (e.g. system portal / shell)
-        if lower == "ermete-shell" || lower == "ermete-desktop-portal" || lower == "obs-trusted" {
-            info!("Zero-Trust Guard: Pre-approved system desktop application '{}'", app_id);
-            return true;
-        }
-
         warn!(
-            "Zero-Trust Guard: Defaulting to DENY for unauthenticated screen capture request by '{}'",
+            "Zero-Trust Guard: DBus unreachable. Defaulting to strict DENY for unauthenticated screen capture request by '{}'",
             app_id
         );
         false
@@ -240,25 +220,7 @@ mod tests {
         assert_eq!(frame.status, ScreencopyStatus::Denied);
     }
 
-    #[tokio::test]
-    async fn test_screencopy_granted_with_gatekeeper_auth() {
-        let mut manager = ScreencopyManager::new();
-        // Relying on Zero-Trust Fallback which allows pre-approved apps
 
-        let frame_id = manager
-            .request_capture_output("obs-trusted", 2048, 1, true, None)
-            .await
-            .unwrap();
-
-        assert_eq!(frame_id, 1);
-
-        let frame = manager.get_frame(frame_id).unwrap();
-        assert_eq!(frame.status, ScreencopyStatus::Authorized);
-
-        // Commit copy
-        let committed = manager.commit_frame_copy(frame_id).unwrap();
-        assert_eq!(committed.status, ScreencopyStatus::Copied);
-    }
 
     #[tokio::test]
     async fn test_screencopy_cannot_copy_denied_frame() {
