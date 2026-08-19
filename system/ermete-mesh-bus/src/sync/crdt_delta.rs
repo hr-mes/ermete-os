@@ -34,7 +34,9 @@ pub struct CrdtNetworkPayload {
     pub timestamp_ms: u64,
     /// Specific delta operation type
     pub delta_type: CrdtDeltaType,
+    pub payload: Vec<u8>,
     /// Encoded CRDT payload (bincode / serde_json of CrdtState or specific mutation)
+    pub _marker: (),
 }
 
 impl CrdtNetworkPayload {

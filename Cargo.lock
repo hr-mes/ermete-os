@@ -1729,6 +1729,7 @@ dependencies = [
  "p384",
  "pqc_dilithium",
  "pqc_kyber",
+ "reqwest 0.12.28",
  "ring",
  "serde",
  "serde_json",
@@ -1894,17 +1895,6 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "zbus",
-]
-
-[[package]]
-name = "ermete-live-patcher"
-version = "1.0.0"
-dependencies = [
- "serde",
  "tokio",
  "tracing",
  "tracing-subscriber",

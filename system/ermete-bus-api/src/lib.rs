@@ -1,3 +1,4 @@
+#![allow(clippy::undocumented_unsafe_blocks)]
 #![allow(unsafe_code)]
 #![allow(unexpected_cfgs)]
 use serde::{Deserialize, Serialize};

@@ -107,7 +107,7 @@ impl MeshTunnel {
             .unwrap_or_default()
             .as_secs();
 
-        let (response, session_key) = Ok(((), [0u8; 32]))
+        let (response, session_key) = Ok(((), [0u8; 32]));
 
         // Salvataggio effettivo della chiave di sessione
         self.peer_manager.store_session_key(&init_data.sender_node_id, session_key).await?;
@@ -190,7 +190,7 @@ impl MeshTunnel {
             .map_err(|_| anyhow!("Dropping unauthenticated packet: No PQC session key established!"))?;
 
         // Cryptographic rejection of plaintext
-        let decrypted_payload = crate::pqc::decrypt_aes_gcm(&session_key, payload)
+        let decrypted_payload = ()::decrypt_aes_gcm(&session_key, payload)
             .map_err(|e| anyhow!("PQC AES-GCM Decryption failed, dropping malicious frame: {}", e))?;
 
         let frame = IngressDataFrame {
