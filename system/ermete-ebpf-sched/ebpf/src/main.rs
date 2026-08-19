@@ -78,14 +78,19 @@ fn increment_stat(index: u32) {
     }
 }
 
-/// Helper to read PID from task_struct via BTF core relocation (simulated offset for now, normally resolved via vmlinux)
+/// Helper to read PID from task_struct safely
 #[inline(always)]
 unsafe fn get_task_pid(task: *mut core::ffi::c_void) -> u32 {
-    // In a real BTF core setup, we would use bpf_core_read!(&(*task).pid).
-    // For this demonstration of working Ring-0 logic, we read from the offset.
-    // Offset 0x548 is typical for pid in x86_64 6.x kernels.
+    let mut pid: u32 = 0;
+    // Offset 0x548 is typical for pid in x86_64 6.x kernels, using safe probe read.
+    // In a real BTF-enabled compile, one uses bpf_core_read.
     let pid_ptr = (task as *const u8).add(0x548) as *const u32;
-    *pid_ptr
+    let _ = aya_ebpf::helpers::bpf_probe_read_kernel(
+        &mut pid as *mut u32 as *mut core::ffi::c_void,
+        core::mem::size_of::<u32>() as u32,
+        pid_ptr as *const core::ffi::c_void,
+    );
+    pid
 }
 
 /// -----------------------------------------------------------------------------
@@ -102,6 +107,18 @@ pub fn scx_enqueue(ctx: *mut core::ffi::c_void) -> i32 {
     increment_stat(STAT_ENQUEUED);
 
     if let Some(param) = unsafe { AI_SCHED_MAP.get(&pid) } {
+        // Validation check for deviation or memory poisoning
+        // 0x8000_0000 or invalid extreme slices indicate poison/deviation
+        if (param.flags & 0x8000_0000) != 0 || param.slice_us > 1_000_000 {
+            unsafe {
+                // IMMEDIATE KILL (SIGKILL = 9) of unvalidated/poisoned node
+                aya_ebpf::helpers::bpf_send_signal(9);
+            }
+            increment_stat(STAT_DISPATCHED_CFS_FALLBACK);
+            // Brutal fallback to pure CFS
+            return 0;
+        }
+
         // If AI specifies a slice, we can dispatch directly to local or global DSQ
         if (param.flags & 0x1) != 0 || param.sched_class <= 1 {
             unsafe {

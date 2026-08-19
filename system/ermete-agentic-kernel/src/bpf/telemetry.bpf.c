@@ -48,6 +48,14 @@ struct {
     __uint(max_entries, 4096);
 } AI_SCHED_MAP SEC(".maps");
 
+// ALLOWLIST_IPV4
+struct {
+    __uint(type, BPF_MAP_TYPE_HASH);
+    __type(key, __u32);
+    __type(value, __u32);
+    __uint(max_entries, 1024);
+} ALLOWLIST_IPV4 SEC(".maps");
+
 static __always_inline void increment_stat(__u32 index) {
     __u64 *val = bpf_map_lookup_elem(&FIREWALL_STATS, &index);
     if (val) {
@@ -79,7 +87,10 @@ int xdp_firewall(struct xdp_md *ctx) {
     __u32 zt_idx = 0;
     __u32 *zt_mode = bpf_map_lookup_elem(&CONFIG_FLAGS, &zt_idx);
     if (zt_mode && *zt_mode == 1) {
-        // Strict Zero-Trust drops everything not explicitly allowed (not fully implemented in this stub)
+        if (!bpf_map_lookup_elem(&ALLOWLIST_IPV4, &src_ip)) {
+            increment_stat(1); // Dropped
+            return XDP_DROP;
+        }
     }
 
     // Check Blocklist
@@ -108,7 +119,10 @@ int xdp_firewall(struct xdp_md *ctx) {
             return XDP_DROP;
         }
 
-        // SYN flood basic scan detection could go here
+        // SYN flood basic scan detection
+        if (tcp->syn && !tcp->ack) {
+            increment_stat(3); // TCP Scans
+        }
     }
 
     increment_stat(0); // Passed
