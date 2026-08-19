@@ -20,7 +20,7 @@ Async IPC library crate for interacting with the Niri Wayland compositor via UNI
 
 %build
 %set_build_flags
-cargo generate-lockfile
+# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
 cargo build --release
 
 %install

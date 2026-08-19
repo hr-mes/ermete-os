@@ -46,7 +46,7 @@ pub fn start_tcp_listener(
 
                 tokio::spawn(async move {
                     let mut content = String::new();
-                    if stream.read_to_string(&mut content).await.is_ok() {
+                    if tokio::io::AsyncReadExt::read_to_string(&mut tokio::io::AsyncReadExt::take(&mut stream, 1024 * 1024 * 10), &mut content).await.is_ok() {
                         if content.is_empty() {
                             return;
                         }

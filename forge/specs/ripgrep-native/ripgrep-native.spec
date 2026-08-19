@@ -24,7 +24,7 @@ Compiled natively in Ermete Forge from Rust source with extreme x86-64-v3 optimi
 %autosetup -n ripgrep-%{version}
 
 # Disable GCC LTO as it conflicts with Rust LLVM LTO and mold
-%define _lto_cflags %{nil}
+# %define _lto_cflags %{nil} // FORBIDDEN BY RULE 3 (Security Hardening)
 
 %build
 %set_build_flags

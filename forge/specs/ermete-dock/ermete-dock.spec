@@ -23,7 +23,7 @@ Visual Dock and taskbar application library component for Ermete OS built with G
 
 %build
 %set_build_flags
-cargo generate-lockfile
+# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
 cargo build --release --locked
 
 %install

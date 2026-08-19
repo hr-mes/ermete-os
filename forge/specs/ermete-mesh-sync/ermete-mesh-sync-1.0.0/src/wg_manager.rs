@@ -27,7 +27,7 @@ impl WgMeshManager {
 
         // 1. Create wg0 interface using rtnetlink
         let (connection, handle, _) = new_connection().map_err(|e| anyhow!("Failed to open netlink connection: {}", e))?;
-        tokio::spawn(connection);
+        tokio::spawn(async move { if let Err(e) = connection.await { tracing::error!("Netlink connection failed: {}", e); std::process::exit(1); } });
 
         let if_name = "wg0";
 

@@ -21,7 +21,7 @@ Ermete OS Zero-Trust binary execution gatekeeper using fanotify.
 
 %build
 %set_build_flags
-cargo generate-lockfile
+# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
 cargo build --release
 
 %install

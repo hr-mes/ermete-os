@@ -19,7 +19,7 @@ Compiled natively in Ermete Forge with extreme optimizations.
 %autosetup -n matugen-%{version}
 
 # Disable GCC LTO as it conflicts with Rust LLVM LTO and mold
-%define _lto_cflags %{nil}
+# %define _lto_cflags %{nil} // FORBIDDEN BY RULE 3 (Security Hardening)
 
 %build
 %set_build_flags
@@ -27,7 +27,7 @@ export CARGO_PROFILE_RELEASE_LTO="thin"
 export CFLAGS="$(echo $CFLAGS | sed 's/-flto=auto//g')"
 export CXXFLAGS="$(echo $CXXFLAGS | sed 's/-flto=auto//g')"
 export LDFLAGS="$(echo $LDFLAGS | sed 's/-flto=auto//g')"
-cargo generate-lockfile
+# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
 cargo build --release
 
 %install

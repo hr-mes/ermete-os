@@ -13,7 +13,7 @@ Provides the pre-compiled embedded Rust Nightly toolchain, Kani Formal Verificat
 
 %install
 mkdir -p %{buildroot}/opt/ermete-rust
-curl --proto \'=https\' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly
+echo "ZERO-TRUST VIOLATION: curl to shell forbidden" && exit 1
 cp -r $HOME/.cargo/bin/* %{buildroot}/opt/ermete-rust/
 
 %files

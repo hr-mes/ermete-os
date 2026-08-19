@@ -181,7 +181,7 @@ impl MprisController {
 
 
     pub async fn player_command(&self, cmd: &str) -> zbus::Result<()> {
-        let mut lock = self.last_player_command.try_lock().expect("Deadlock detected in UI thread lock acquisition");
+        let mut lock = self.last_player_command.lock().unwrap_or_else(|e| e.into_inner());
         {
             *lock = Some(cmd.to_string());
         }
@@ -194,14 +194,14 @@ impl MprisController {
     }
 
     pub fn get_cached_mpris_state(&self) -> Option<MprisState> {
-        self.cached_mpris.try_lock().expect("Deadlock detected in UI thread lock acquisition").clone()
+        self.cached_mpris.lock().unwrap_or_else(|e| e.into_inner()).clone()
     }
 
     pub async fn refresh_mpris(&self) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(MprisCommand::GetCachedMprisState(tx)).await.is_ok() {
             if let Ok(state) = rx.await {
-                let mut lock = self.cached_mpris.try_lock().expect("Deadlock detected in UI thread lock acquisition");
+                let mut lock = self.cached_mpris.lock().unwrap_or_else(|e| e.into_inner());
         {
                     *lock = state;
                 }

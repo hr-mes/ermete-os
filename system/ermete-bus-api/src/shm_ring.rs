@@ -155,8 +155,8 @@ impl ZeroCopyRingBuffer {
         }
 
         let header_ptr = header_map as *const RingBufferHeader;
-        let magic = unsafe { std::ptr::read_volatile(&(*header_ptr).magic) };
-        let capacity = unsafe { std::ptr::read_volatile(&(*header_ptr).capacity) };
+        let magic = unsafe { (*(header_ptr as *const std::sync::atomic::AtomicU64)).load(std::sync::atomic::Ordering::Acquire) };
+        let capacity = unsafe { (*((header_ptr as *const u8).add(8) as *const std::sync::atomic::AtomicUsize)).load(std::sync::atomic::Ordering::Acquire) };
 
         // Unmap initial header inspection map
         unsafe { munmap(header_map, header_len) };

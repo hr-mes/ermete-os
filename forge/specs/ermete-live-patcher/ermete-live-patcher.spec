@@ -22,7 +22,7 @@ Daemon for zero-downtime ring-0 kernel live patching in Ermete OS over D-Bus wit
 
 %build
 %set_build_flags
-cargo generate-lockfile
+# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
 cargo build --release --locked
 
 %install

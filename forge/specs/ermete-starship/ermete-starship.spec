@@ -24,7 +24,7 @@ Compiled natively in Ermete Forge with extreme optimizations.
 %autosetup -n starship-%{version}
 
 # Disable GCC LTO as it conflicts with Rust LLVM LTO and mold
-%define _lto_cflags %{nil}
+# %define _lto_cflags %{nil} // FORBIDDEN BY RULE 3 (Security Hardening)
 
 %build
 %set_build_flags
@@ -34,7 +34,7 @@ export CFLAGS="$(echo $CFLAGS | sed 's/-flto=auto//g')"
 export CXXFLAGS="$(echo $CXXFLAGS | sed 's/-flto=auto//g')"
 export LDFLAGS="$(echo $LDFLAGS | sed 's/-flto=auto//g')"
 # The global rpmmacros will inject -C target-cpu=x86-64-v3 and mold linker
-cargo generate-lockfile
+# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
 cargo build --release
 
 %install

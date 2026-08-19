@@ -22,7 +22,7 @@ and Intel TDX confidential micro-VM enclaves for isolating untrusted agents and 
 
 %build
 %set_build_flags
-cargo generate-lockfile
+# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
 cargo build --release -p ermete-hypervisor-daemon
 
 %install

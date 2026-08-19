@@ -19,7 +19,7 @@ Includes user D-Bus daemon (`ermete-backup-daemon`) and automatic hourly timer (
 
 %build
 %set_build_flags
-cargo generate-lockfile
+# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
 cargo build --release --locked
 
 %install

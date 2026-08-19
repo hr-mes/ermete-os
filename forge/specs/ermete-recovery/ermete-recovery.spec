@@ -19,7 +19,7 @@ Provides 1-click OSTree/bootc visual rollback and automatic failover when `greet
 
 %build
 %set_build_flags
-cargo generate-lockfile
+# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
 cargo build --release --locked
 
 %install

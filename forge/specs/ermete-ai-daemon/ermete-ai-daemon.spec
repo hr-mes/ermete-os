@@ -21,7 +21,7 @@ Local AI and Machine Learning inference service for Ermete OS using Candle frame
 
 %build
 %set_build_flags
-cargo generate-lockfile
+# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
 cargo build --release --locked
 
 %install

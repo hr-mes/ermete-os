@@ -43,7 +43,7 @@ impl ProxyRegistry {
     pub fn register(&self, controller: Box<dyn ControllerBackend>) {
         let name = controller.name();
         let arc_controller: Arc<dyn ControllerBackend> = Arc::from(controller);
-        let mut map = self.controllers.try_lock().expect("Deadlock detected in UI thread lock acquisition");
+        let mut map = self.controllers.lock().unwrap_or_else(|e| e.into_inner());
         {
             map.insert(name, arc_controller);
         }
@@ -52,7 +52,7 @@ impl ProxyRegistry {
     #[allow(dead_code)]
     pub fn register_arc(&self, controller: Arc<dyn ControllerBackend>) {
         let name = controller.name();
-        let mut map = self.controllers.try_lock().expect("Deadlock detected in UI thread lock acquisition");
+        let mut map = self.controllers.lock().unwrap_or_else(|e| e.into_inner());
         {
             map.insert(name, controller);
         }
@@ -60,12 +60,12 @@ impl ProxyRegistry {
 
     #[allow(dead_code)]
     pub fn get(&self, name: &str) -> Option<Arc<dyn ControllerBackend>> {
-        let map = self.controllers.try_lock().expect("Deadlock detected in UI thread lock acquisition");
+        let map = self.controllers.lock().unwrap_or_else(|e| e.into_inner());
         map.get(name).cloned()
     }
 
     pub fn get_typed<T: 'static + Clone>(&self, name: &str) -> Option<T> {
-        let map = self.controllers.try_lock().expect("Deadlock detected in UI thread lock acquisition");
+        let map = self.controllers.lock().unwrap_or_else(|e| e.into_inner());
         {
             if let Some(ctrl) = map.get(name) {
                 if let Some(concrete) = ctrl.as_any().downcast_ref::<T>() {

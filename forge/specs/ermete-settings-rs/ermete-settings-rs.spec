@@ -23,7 +23,7 @@ Ermete Settings is the native control panel for Ermete OS, written in pure Rust 
 
 %build
 %set_build_flags
-cargo generate-lockfile
+# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
 cargo build --release --locked
 
 %install

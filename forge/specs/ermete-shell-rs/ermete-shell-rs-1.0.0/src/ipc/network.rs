@@ -480,7 +480,7 @@ impl NetworkController {
         if self.sender.send(NetworkCommand::ConnectWifi(ssid.to_string(), password.to_string(), tx)).await.is_ok() {
             let res = rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?));
             if res.is_ok() {
-                let mut l = self.active_wifi_ssid.try_lock().expect("Deadlock detected in UI thread lock acquisition");
+                let mut l = self.active_wifi_ssid.lock().unwrap_or_else(|e| e.into_inner());
         {
                     *l = Some(ssid.to_string());
                 }
@@ -496,7 +496,7 @@ impl NetworkController {
         if self.sender.send(NetworkCommand::DisconnectWifi(ssid.to_string(), tx)).await.is_ok() {
             let res = rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?));
             if res.is_ok() {
-                let mut l = self.active_wifi_ssid.try_lock().expect("Deadlock detected in UI thread lock acquisition");
+                let mut l = self.active_wifi_ssid.lock().unwrap_or_else(|e| e.into_inner());
         {
                     *l = None;
                 }
@@ -544,7 +544,7 @@ impl NetworkController {
     }
 
     pub async fn get_network_status_async(&self) -> (String, String, String) {
-        let l = self.active_wifi_ssid.try_lock().expect("Deadlock detected in UI thread lock acquisition");
+        let l = self.active_wifi_ssid.lock().unwrap_or_else(|e| e.into_inner());
         {
             if let Some(ssid) = l.as_ref() {
                 let status = ("".to_string(), "Rete Wi-Fi".to_string(), ssid.clone());
@@ -560,7 +560,7 @@ impl NetworkController {
     }
 
     pub fn get_cached_network_status(&self) -> (String, String, String) {
-        let l = self.active_wifi_ssid.try_lock().expect("Deadlock detected in UI thread lock acquisition");
+        let l = self.active_wifi_ssid.lock().unwrap_or_else(|e| e.into_inner());
         {
             if let Some(ssid) = l.as_ref() {
                 return ("".to_string(), "Rete Wi-Fi".to_string(), ssid.clone());

@@ -22,7 +22,7 @@ providing micro-VM enclaves and system services zero-copy packet switching witho
 
 %build
 %set_build_flags
-cargo generate-lockfile
+# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
 cargo build --release -p ermete-net-unikernel
 
 %install

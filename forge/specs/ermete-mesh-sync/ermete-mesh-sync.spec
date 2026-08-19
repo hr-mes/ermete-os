@@ -21,7 +21,7 @@ Peer-to-peer mesh synchronization and WireGuard tunnel manager daemon for Ermete
 
 %build
 %set_build_flags
-cargo generate-lockfile
+# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
 cargo build --release --locked
 
 %install

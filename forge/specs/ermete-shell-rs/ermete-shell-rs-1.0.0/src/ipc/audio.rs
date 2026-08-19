@@ -145,7 +145,7 @@ impl AudioController {
     }
 
     pub async fn set_volume(&self, volume: f64) -> zbus::Result<()> {
-        let mut c = self.cached_volume.try_lock().expect("Deadlock detected in UI thread lock acquisition");
+        let mut c = self.cached_volume.lock().unwrap_or_else(|e| e.into_inner());
         {
             *c = volume;
         }
@@ -163,7 +163,7 @@ impl AudioController {
     }
 
     pub fn get_cached_volume(&self) -> f64 {
-        *self.cached_volume.try_lock().expect("Deadlock detected in UI thread lock acquisition")
+        *self.cached_volume.lock().unwrap_or_else(|e| e.into_inner())
     }
 }
 

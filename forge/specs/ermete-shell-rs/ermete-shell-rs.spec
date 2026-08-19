@@ -19,7 +19,7 @@ Pure Rust native shell for Ermete OS, replacing AGS/GJS.
 
 %build
 %set_build_flags
-cargo generate-lockfile
+# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
 cargo build --release --locked
 
 %install
