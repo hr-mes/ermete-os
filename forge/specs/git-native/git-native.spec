@@ -4,6 +4,7 @@ Release:        1%{?dist}
 Summary:        Assimilated Git Version Control System built natively from source for Ermete OS
 License:        GPL-2.0-only
 URL:            https://git-scm.com/
+Source0:        git-2.48.1.tar.gz
 
 
 Provides:       git = %{version}-%{release}
@@ -23,7 +24,7 @@ BuildRequires:  zlib-devel
 Git version control system compiled natively from source for Ermete OS Forge.
 
 %prep
-# Stub prep
+%autosetup -n %{name}-%{version}
 
 %build
 %set_build_flags

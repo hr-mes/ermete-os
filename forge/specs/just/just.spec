@@ -5,6 +5,7 @@ Release:        1%{?dist}
 Summary:        Just a command runner - handy way to save and run project-specific commands
 License:        CC0-1.0
 URL:            https://github.com/casey/just
+Source0:        just-1.39.0.tar.gz
 
 
 BuildRequires:  cargo
@@ -16,7 +17,7 @@ BuildRequires:  mold
 Compiled natively in Ermete Forge with extreme x86-64-v3 optimizations.
 
 %prep
-# Stub prep
+%autosetup -n %{name}-%{version}
 
 %build
 %set_build_flags

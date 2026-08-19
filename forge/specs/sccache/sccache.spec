@@ -5,12 +5,13 @@ Summary:        Ermete OS Core Component - sccache
 
 License:        GPLv3
 URL:            https://github.com/hr-mes/ermete-os
+Source0:        sccache-0.9.1.tar.gz
 
 %description
 Core component implementation for sccache.
 
 %prep
-# Stub prep
+%autosetup -n %{name}-%{version}
 
 %build
 # Implementazione Reale (Build)
