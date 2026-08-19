@@ -348,6 +348,8 @@ def main():
             mermaid.append(f'    {safe_node}["{node}"];')
     mermaid.append("```")
     mermaid_str = "\n".join(mermaid)
+    if len(mermaid_str) > 40000:
+        mermaid_str = "```mermaid\ngraph TD;\n    too_large[\"Il DAG supera i 40k caratteri e non puo' essere renderizzato.\"];\n```"
     
     github_summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if github_summary:
