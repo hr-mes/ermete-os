@@ -281,7 +281,7 @@ def partition_dag_levels(dirty_nodes, graph, prereqs, node_types):
     for node in dirty_nodes:
         if node_types.get(node) == "flatpak":
             flatpaks.append(node)
-        else:
+        elif node_types.get(node) == "custom":
             lvl = level_map.get(node, 0)
             if lvl == 0:
                 level_0.append(node)
@@ -289,6 +289,8 @@ def partition_dag_levels(dirty_nodes, graph, prereqs, node_types):
                 level_1.append(node)
             else:
                 level_2.append(node)
+        else:
+            pass # [MARTIAL LAW] Do not schedule upstream packages for compilation!
                 
     return level_0, level_1, level_2, flatpaks
 

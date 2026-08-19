@@ -152,27 +152,8 @@ jobs:
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
           EOF
           else
-            echo "🌐 Compiling Upstream Package: ${PKG_NAME}"
-            podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
-              -e PKG_NAME="${PKG_NAME}" \
-              -v ${{ github.workspace }}:/workspace \
-              -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
-              -w /workspace/forge \
-              registry.fedoraproject.org/fedora:40 \
-              bash <<'EOF'
-              dnf install -y rpm-build rpmdevtools dnf-plugins-core which libtool checkpolicy autoconf automake
-              cp config/rpmmacros ~/.rpmmacros
-              mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-              SPEC_DIR=""
-              if [ -d "specs/ermete-${PKG_NAME}" ]; then SPEC_DIR="specs/ermete-${PKG_NAME}"; elif [ -d "specs/${PKG_NAME}" ]; then SPEC_DIR="specs/${PKG_NAME}"; fi
-              cd ~/rpmbuild/SRPMS
-              dnf download --source --enablerepo=updates-source --enablerepo=fedora-source "${PKG_NAME}" || dnf download --source --disablerepo="rpmfusion*" "${PKG_NAME}"
-              rpm -ivh *.src.rpm
-              dnf builddep -y --allowerasing ~/rpmbuild/SPECS/*.spec
-              rpmbuild -bb ~/rpmbuild/SPECS/*.spec
-              mkdir -p /workspace/forge/RPMS
-              cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
-          EOF
+            echo "❌ [MARTIAL LAW FATAL] Attempted to build upstream package ${PKG_NAME} without local spec! Dynamic downloads are strictly forbidden!"
+            exit 1
           fi
 
       - name: Publish Micro-Container OCI
@@ -364,27 +345,8 @@ jobs:
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
           EOF
           else
-            echo "🌐 Compiling Upstream Package: ${PKG_NAME}"
-            podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
-              -e PKG_NAME="${PKG_NAME}" \
-              -v ${{ github.workspace }}:/workspace \
-              -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
-              -w /workspace/forge \
-              registry.fedoraproject.org/fedora:40 \
-              bash <<'EOF'
-              dnf install -y rpm-build rpmdevtools dnf-plugins-core which libtool checkpolicy autoconf automake
-              cp config/rpmmacros ~/.rpmmacros
-              mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-              SPEC_DIR=""
-              if [ -d "specs/ermete-${PKG_NAME}" ]; then SPEC_DIR="specs/ermete-${PKG_NAME}"; elif [ -d "specs/${PKG_NAME}" ]; then SPEC_DIR="specs/${PKG_NAME}"; fi
-              cd ~/rpmbuild/SRPMS
-              dnf download --source --enablerepo=updates-source --enablerepo=fedora-source "${PKG_NAME}" || dnf download --source --disablerepo="rpmfusion*" "${PKG_NAME}"
-              rpm -ivh *.src.rpm
-              dnf builddep -y --allowerasing ~/rpmbuild/SPECS/*.spec
-              rpmbuild -bb ~/rpmbuild/SPECS/*.spec
-              mkdir -p /workspace/forge/RPMS
-              cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
-          EOF
+            echo "❌ [MARTIAL LAW FATAL] Attempted to build upstream package ${PKG_NAME} without local spec! Dynamic downloads are strictly forbidden!"
+            exit 1
           fi
 
       - name: Publish Micro-Container OCI
@@ -574,27 +536,8 @@ jobs:
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
           EOF
           else
-            echo "🌐 Compiling Upstream Package: ${PKG_NAME}"
-            podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
-              -e PKG_NAME="${PKG_NAME}" \
-              -v ${{ github.workspace }}:/workspace \
-              -v ${{ github.workspace }}/.sccache:/root/.cache/sccache \
-              -w /workspace/forge \
-              registry.fedoraproject.org/fedora:40 \
-              bash <<'EOF'
-              dnf install -y rpm-build rpmdevtools dnf-plugins-core which libtool checkpolicy autoconf automake
-              cp config/rpmmacros ~/.rpmmacros
-              mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-              SPEC_DIR=""
-              if [ -d "specs/ermete-${PKG_NAME}" ]; then SPEC_DIR="specs/ermete-${PKG_NAME}"; elif [ -d "specs/${PKG_NAME}" ]; then SPEC_DIR="specs/${PKG_NAME}"; fi
-              cd ~/rpmbuild/SRPMS
-              dnf download --source --enablerepo=updates-source --enablerepo=fedora-source "${PKG_NAME}" || dnf download --source --disablerepo="rpmfusion*" "${PKG_NAME}"
-              rpm -ivh *.src.rpm
-              dnf builddep -y --allowerasing ~/rpmbuild/SPECS/*.spec
-              rpmbuild -bb ~/rpmbuild/SPECS/*.spec
-              mkdir -p /workspace/forge/RPMS
-              cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
-          EOF
+            echo "❌ [MARTIAL LAW FATAL] Attempted to build upstream package ${PKG_NAME} without local spec! Dynamic downloads are strictly forbidden!"
+            exit 1
           fi
 
       - name: Publish Micro-Container OCI
