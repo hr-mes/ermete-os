@@ -109,11 +109,10 @@ jobs:
           mkdir -p ${{ github.workspace }}/.sccache
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           
-          PKG_CLEAN=$(echo "$PKG_NAME" | tr -d '
-')
+          PKG_CLEAN=$(echo "$PKG_NAME" | tr -cd '[:alnum:]-')
           SPEC_DIR=""
           if [ -d "forge/specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="forge/specs/ermete-${PKG_CLEAN}"; elif [ -d "forge/specs/${PKG_CLEAN}" ]; then SPEC_DIR="forge/specs/${PKG_CLEAN}"; fi
-          if [ -z "$SPEC_DIR" ]; then echo "DEBUG FAIL: PKG='$PKG_NAME' CLEAN='$PKG_CLEAN'"; ls -la forge/specs/ | grep "$PKG_CLEAN"; fi
+          if [ -z "$SPEC_DIR" ]; then echo "DEBUG: PKG_NAME='$PKG_NAME' PKG_CLEAN='$PKG_CLEAN'"; ls -la forge/specs/; fi
           if [ -n "$SPEC_DIR" ]; then
             echo "📦 Compiling Custom Spec: $SPEC_DIR"
             podman run -i --rm \
@@ -126,8 +125,7 @@ jobs:
               bash <<'EOF'
               cp config/rpmmacros ~/.rpmmacros
               mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-              PKG_CLEAN=$(echo "$PKG_NAME" | tr -d '
-')
+              PKG_CLEAN=$(echo "$PKG_NAME" | tr -cd '[:alnum:]-')
               SPEC_DIR=""
               if [ -d "specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="specs/ermete-${PKG_CLEAN}"; elif [ -d "specs/${PKG_CLEAN}" ]; then SPEC_DIR="specs/${PKG_CLEAN}"; fi
             
@@ -307,11 +305,10 @@ jobs:
           mkdir -p ${{ github.workspace }}/.sccache
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           
-          PKG_CLEAN=$(echo "$PKG_NAME" | tr -d '
-')
+          PKG_CLEAN=$(echo "$PKG_NAME" | tr -cd '[:alnum:]-')
           SPEC_DIR=""
           if [ -d "forge/specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="forge/specs/ermete-${PKG_CLEAN}"; elif [ -d "forge/specs/${PKG_CLEAN}" ]; then SPEC_DIR="forge/specs/${PKG_CLEAN}"; fi
-          if [ -z "$SPEC_DIR" ]; then echo "DEBUG FAIL: PKG='$PKG_NAME' CLEAN='$PKG_CLEAN'"; ls -la forge/specs/ | grep "$PKG_CLEAN"; fi
+          if [ -z "$SPEC_DIR" ]; then echo "DEBUG: PKG_NAME='$PKG_NAME' PKG_CLEAN='$PKG_CLEAN'"; ls -la forge/specs/; fi
           if [ -n "$SPEC_DIR" ]; then
             echo "📦 Compiling Custom Spec: $SPEC_DIR"
             podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
@@ -324,8 +321,7 @@ jobs:
               bash <<'EOF'
               cp config/rpmmacros ~/.rpmmacros
               mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-              PKG_CLEAN=$(echo "$PKG_NAME" | tr -d '
-')
+              PKG_CLEAN=$(echo "$PKG_NAME" | tr -cd '[:alnum:]-')
               SPEC_DIR=""
               if [ -d "specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="specs/ermete-${PKG_CLEAN}"; elif [ -d "specs/${PKG_CLEAN}" ]; then SPEC_DIR="specs/${PKG_CLEAN}"; fi
             
@@ -503,11 +499,10 @@ jobs:
           mkdir -p ${{ github.workspace }}/.sccache
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           
-          PKG_CLEAN=$(echo "$PKG_NAME" | tr -d '
-')
+          PKG_CLEAN=$(echo "$PKG_NAME" | tr -cd '[:alnum:]-')
           SPEC_DIR=""
           if [ -d "forge/specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="forge/specs/ermete-${PKG_CLEAN}"; elif [ -d "forge/specs/${PKG_CLEAN}" ]; then SPEC_DIR="forge/specs/${PKG_CLEAN}"; fi
-          if [ -z "$SPEC_DIR" ]; then echo "DEBUG FAIL: PKG='$PKG_NAME' CLEAN='$PKG_CLEAN'"; ls -la forge/specs/ | grep "$PKG_CLEAN"; fi
+          if [ -z "$SPEC_DIR" ]; then echo "DEBUG: PKG_NAME='$PKG_NAME' PKG_CLEAN='$PKG_CLEAN'"; ls -la forge/specs/; fi
           if [ -n "$SPEC_DIR" ]; then
             echo "📦 Compiling Custom Spec: $SPEC_DIR"
             podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged \
@@ -520,8 +515,7 @@ jobs:
               bash <<'EOF'
               cp config/rpmmacros ~/.rpmmacros
               mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-              PKG_CLEAN=$(echo "$PKG_NAME" | tr -d '
-')
+              PKG_CLEAN=$(echo "$PKG_NAME" | tr -cd '[:alnum:]-')
               SPEC_DIR=""
               if [ -d "specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="specs/ermete-${PKG_CLEAN}"; elif [ -d "specs/${PKG_CLEAN}" ]; then SPEC_DIR="specs/${PKG_CLEAN}"; fi
             
