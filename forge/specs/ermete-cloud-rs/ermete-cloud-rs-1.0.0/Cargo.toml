@@ -13,7 +13,7 @@ tracing-subscriber = { workspace = true }
 pqc_kyber = { workspace = true, features = ["kyber1024"] }
 pqc_dilithium = { workspace = true }
 sha2 = { workspace = true }
-rand_core = "0.6"
+rand_core = "0.10"
 base64 = "0.21"
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
