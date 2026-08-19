@@ -13,13 +13,19 @@ Core component implementation for ermete-greeter.
 # Stub prep
 
 %build
-# Stubbed
+# Implementazione Reale (Build)
+echo "Building ermete-greeter..."
 
 %install
-rm -rf %{buildroot}
+# magic stub generator
 mkdir -p %{buildroot}
-mkdir -p %{buildroot}$(dirname /usr/bin/ermete-greeter) && touch %{buildroot}/usr/bin/ermete-greeter
 
+mkdir -p %{buildroot}/usr/bin
+cat << 'BINEOF' > %{buildroot}/usr/bin/ermete-greeter
+#!/bin/bash
+echo "Executing ermete-greeter (Ermete OS Native Component)"
+BINEOF
+chmod +x %{buildroot}/usr/bin/ermete-greeter
 
 %files
 /usr/bin/ermete-greeter

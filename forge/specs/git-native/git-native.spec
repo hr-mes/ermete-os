@@ -26,13 +26,15 @@ Git version control system compiled natively from source for Ermete OS Forge.
 # Stub prep
 
 %build
-# Stubbed
+%set_build_flags
+make %{?_smp_mflags} prefix=/usr all
 
 %install
-rm -rf %{buildroot}
+# magic stub generator
 mkdir -p %{buildroot}
-mkdir -p %{buildroot}$(dirname /usr/bin/git*) && touch %{buildroot}/usr/bin/git*
 
+rm -rf %{buildroot}
+make %{?_smp_mflags} prefix=/usr DESTDIR=%{buildroot} install
 
 %files
 /usr/bin/git*

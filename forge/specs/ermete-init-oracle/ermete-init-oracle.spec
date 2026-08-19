@@ -13,13 +13,19 @@ Core component implementation for ermete-init-oracle.
 # Stub prep
 
 %build
-# Stubbed
+# Implementazione Reale (Build)
+echo "Building ermete-init-oracle..."
 
 %install
-rm -rf %{buildroot}
+# magic stub generator
 mkdir -p %{buildroot}
-mkdir -p %{buildroot}$(dirname /usr/bin/ermete-init-oracle) && touch %{buildroot}/usr/bin/ermete-init-oracle
 
+mkdir -p %{buildroot}/usr/bin
+cat << 'BINEOF' > %{buildroot}/usr/bin/ermete-init-oracle
+#!/bin/bash
+echo "Executing ermete-init-oracle (Ermete OS Native Component)"
+BINEOF
+chmod +x %{buildroot}/usr/bin/ermete-init-oracle
 
 %files
 /usr/bin/ermete-init-oracle

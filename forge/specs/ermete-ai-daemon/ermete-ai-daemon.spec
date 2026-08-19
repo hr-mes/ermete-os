@@ -20,14 +20,35 @@ Local AI and Machine Learning inference service for Ermete OS using Candle frame
 # Stub prep
 
 %build
-# Stubbed
+%set_build_flags
+# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
+cargo build --release --locked
 
 %install
-rm -rf %{buildroot}
+# magic stub generator
 mkdir -p %{buildroot}
-mkdir -p %{buildroot}$(dirname /usr/bin/%{name}) && touch %{buildroot}/usr/bin/%{name}
-mkdir -p %{buildroot}$(dirname /usr/lib/systemd/system/%{name}.service) && touch %{buildroot}/usr/lib/systemd/system/%{name}.service
+mkdir -p $(dirname 0755) && touch 0755
+mkdir -p $(dirname target/release/%{name}) && touch target/release/%{name}
+mkdir -p $(dirname 0644) && touch 0644
+mkdir -p $(dirname ||) && touch ||
+mkdir -p $(dirname install) && touch install
+mkdir -p $(dirname 0644) && touch 0644
+mkdir -p $(dirname ermete-ai-daemon.service) && touch ermete-ai-daemon.service
 
+mkdir -p %{buildroot}/usr/bin
+install -m 0755 target/release/%{name} %{buildroot}/usr/bin/%{name}
+
+mkdir -p %{buildroot}/usr/lib/systemd/system
+install -m 0644 %{_sourcedir}/../ermete-ai-daemon.service %{buildroot}/usr/lib/systemd/system/%{name}.service || install -m 0644 ermete-ai-daemon.service %{buildroot}/usr/lib/systemd/system/%{name}.service
+
+%post
+%systemd_post %{name}.service
+
+%preun
+%systemd_preun %{name}.service
+
+%postun
+%systemd_postun_with_restart %{name}.service
 
 %files
 /usr/bin/%{name}

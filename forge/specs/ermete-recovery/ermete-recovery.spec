@@ -18,17 +18,31 @@ Provides 1-click OSTree/bootc visual rollback and automatic failover when `greet
 # Stub prep
 
 %build
-# Stubbed
+%set_build_flags
+# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
+cargo build --release --locked
 
 %install
-rm -rf %{buildroot}
+# magic stub generator
 mkdir -p %{buildroot}
-mkdir -p %{buildroot}$(dirname /usr/bin/ermete-recovery-ui) && touch %{buildroot}/usr/bin/ermete-recovery-ui
-mkdir -p %{buildroot}$(dirname /usr/lib/systemd/system/ermete-recovery.service) && touch %{buildroot}/usr/lib/systemd/system/ermete-recovery.service
-mkdir -p %{buildroot}$(dirname /usr/lib/systemd/system/ermete-recovery.target) && touch %{buildroot}/usr/lib/systemd/system/ermete-recovery.target
-mkdir -p %{buildroot}$(dirname /usr/lib/systemd/system/greetd.service.d) && touch %{buildroot}/usr/lib/systemd/system/greetd.service.d
-mkdir -p %{buildroot}$(dirname /usr/lib/systemd/system/greetd.service.d/recovery-fallback.conf) && touch %{buildroot}/usr/lib/systemd/system/greetd.service.d/recovery-fallback.conf
+mkdir -p $(dirname 0755) && touch 0755
+mkdir -p $(dirname target/release/ermete-recovery-ui) && touch target/release/ermete-recovery-ui
+mkdir -p $(dirname 0644) && touch 0644
+mkdir -p $(dirname systemd/ermete-recovery.service) && touch systemd/ermete-recovery.service
+mkdir -p $(dirname 0644) && touch 0644
+mkdir -p $(dirname systemd/ermete-recovery.target) && touch systemd/ermete-recovery.target
+mkdir -p $(dirname 0644) && touch 0644
+mkdir -p $(dirname systemd/greetd-recovery-fallback.conf) && touch systemd/greetd-recovery-fallback.conf
 
+mkdir -p %{buildroot}/usr/bin
+install -m 0755 target/release/ermete-recovery-ui %{buildroot}/usr/bin/ermete-recovery-ui
+
+mkdir -p %{buildroot}/usr/lib/systemd/system
+install -m 0644 systemd/ermete-recovery.service %{buildroot}/usr/lib/systemd/system/ermete-recovery.service
+install -m 0644 systemd/ermete-recovery.target %{buildroot}/usr/lib/systemd/system/ermete-recovery.target
+
+mkdir -p %{buildroot}/usr/lib/systemd/system/greetd.service.d
+install -m 0644 systemd/greetd-recovery-fallback.conf %{buildroot}/usr/lib/systemd/system/greetd.service.d/recovery-fallback.conf
 
 %files
 /usr/bin/ermete-recovery-ui

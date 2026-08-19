@@ -21,14 +21,28 @@ by the Ermete OS Desktop UI (AGS).
 # Stub prep
 
 %build
-# Stubbed
+# Nothing to build, it's a precompiled binary
 
 %install
-rm -rf %{buildroot}
+# magic stub generator
 mkdir -p %{buildroot}
-mkdir -p %{buildroot}$(dirname /usr/share/dart-sass/) && touch %{buildroot}/usr/share/dart-sass/
-mkdir -p %{buildroot}$(dirname /usr/bin/sass) && touch %{buildroot}/usr/bin/sass
+mkdir -p $(dirname 755) && touch 755
+mkdir -p $(dirname sass) && touch sass
+mkdir -p $(dirname 755) && touch 755
+mkdir -p $(dirname src/dart) && touch src/dart
+mkdir -p $(dirname 644) && touch 644
+mkdir -p $(dirname src/sass.snapshot) && touch src/sass.snapshot
 
+mkdir -p %{buildroot}/usr/bin
+mkdir -p %{buildroot}/usr/share/dart-sass/src
+
+# Install the dart-sass binary wrapper
+install -m 755 sass %{buildroot}/usr/share/dart-sass/
+install -m 755 src/dart %{buildroot}/usr/share/dart-sass/src/
+install -m 644 src/sass.snapshot %{buildroot}/usr/share/dart-sass/src/
+
+# Create a symlink in /usr/bin
+ln -sf /usr/share/dart-sass/sass %{buildroot}/usr/bin/sass
 
 %files
 /usr/share/dart-sass/

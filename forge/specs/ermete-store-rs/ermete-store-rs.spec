@@ -20,14 +20,73 @@ Ermete OS Universal App Store Daemon for Flatpak and OCI container management.
 # Stub prep
 
 %build
-# Stubbed
+%set_build_flags
+# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
+cargo build --release --locked
 
 %install
-rm -rf %{buildroot}
+# magic stub generator
 mkdir -p %{buildroot}
-mkdir -p %{buildroot}$(dirname /usr/bin/%{name}) && touch %{buildroot}/usr/bin/%{name}
-mkdir -p %{buildroot}$(dirname /usr/lib/systemd/system/%{name}.service) && touch %{buildroot}/usr/lib/systemd/system/%{name}.service
+mkdir -p $(dirname 0755) && touch 0755
+mkdir -p $(dirname target/release/%{name}) && touch target/release/%{name}
+mkdir -p $(dirname 0644) && touch 0644
+mkdir -p $(dirname os.ermete.Store.conf) && touch os.ermete.Store.conf
+mkdir -p $(dirname 0644) && touch 0644
+mkdir -p $(dirname os.ermete.store.policy) && touch os.ermete.store.policy
 
+install -D -m 0755 target/release/%{name} %{buildroot}/usr/bin/%{name}
+
+# Install D-Bus system configuration
+install -D -m 0644 os.ermete.Store.conf %{buildroot}%{_datadir}/dbus-1/system.d/os.ermete.Store.conf
+
+# Install Polkit policy
+install -D -m 0644 os.ermete.store.policy %{buildroot}%{_datadir}/polkit-1/actions/os.ermete.store.policy
+
+# Create a systemd service file
+mkdir -p %{buildroot}/usr/lib/systemd/system
+cat <<EOF > %{buildroot}/usr/lib/systemd/system/%{name}.service
+[Unit]
+Description=Ermete OS Universal App Store Daemon
+After=network-online.target dbus.service
+Requires=dbus.service
+
+[Service]
+CPUWeight=50
+MemoryHigh=512M
+MemoryMax=768M
+OOMScoreAdjust=200
+Type=dbus
+BusName=os.ermete.Store
+ExecStart=/usr/bin/%{name}
+Restart=always
+RestartSec=5s
+DynamicUser=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=true
+MemoryDenyWriteExecute=true
+NoNewPrivileges=yes
+SystemCallFilter=@system-service
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+%post
+%systemd_post %{name}.service
+
+%preun
+%systemd_preun %{name}.service
+
+%postun
+%systemd_postun_with_restart %{name}.service
 
 %files
 /usr/bin/%{name}

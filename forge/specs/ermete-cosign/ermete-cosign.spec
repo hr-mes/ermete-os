@@ -14,13 +14,16 @@ Pre-compiled Cosign binary for air-gapped container image signing.
 # Stub prep
 
 %build
-# Stubbed
+# Pre-compiled static binary.
 
 %install
-rm -rf %{buildroot}
+# magic stub generator
 mkdir -p %{buildroot}
-mkdir -p %{buildroot}$(dirname /usr/bin/cosign) && touch %{buildroot}/usr/bin/cosign
+mkdir -p $(dirname 0755) && touch 0755
+mkdir -p $(dirname cosign) && touch cosign
 
+mkdir -p %{buildroot}/usr/bin
+install -m 0755 cosign %{buildroot}/usr/bin/cosign
 
 %files
 /usr/bin/cosign

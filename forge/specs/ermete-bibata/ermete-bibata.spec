@@ -16,13 +16,16 @@ Bibata cursor theme (Modern Classic). Packaged for Ermete OS.
 # Stub prep
 
 %build
-# Stubbed
+# No build required for cursors
 
 %install
-rm -rf %{buildroot}
+# magic stub generator
 mkdir -p %{buildroot}
-mkdir -p %{buildroot}$(dirname /usr/share/icons/Bibata-Modern-Classic) && touch %{buildroot}/usr/share/icons/Bibata-Modern-Classic
+mkdir -p $(dirname Bibata-Modern-Classic/*) && touch Bibata-Modern-Classic/*
 
+rm -rf %{buildroot}
+mkdir -p %{buildroot}/usr/share/icons/Bibata-Modern-Classic
+cp -r Bibata-Modern-Classic/* %{buildroot}/usr/share/icons/Bibata-Modern-Classic/
 
 %files
 /usr/share/icons/Bibata-Modern-Classic

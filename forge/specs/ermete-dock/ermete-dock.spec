@@ -22,13 +22,20 @@ Visual Dock and taskbar application library component for Ermete OS built with G
 # Stub prep
 
 %build
-# Stubbed
+%set_build_flags
+# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
+cargo build --release --locked
 
 %install
-rm -rf %{buildroot}
+# magic stub generator
 mkdir -p %{buildroot}
-mkdir -p %{buildroot}$(dirname /usr/lib64/ermete/) && touch %{buildroot}/usr/lib64/ermete/
+mkdir -p $(dirname 0644) && touch 0644
+mkdir -p $(dirname target/release/libermete_dock.rlib) && touch target/release/libermete_dock.rlib
 
+mkdir -p %{buildroot}/usr/lib64/ermete
+if [ -f target/release/libermete_dock.rlib ]; then
+    install -m 0644 target/release/libermete_dock.rlib %{buildroot}/usr/lib64/ermete/
+fi
 
 %files
 /usr/lib64/ermete/

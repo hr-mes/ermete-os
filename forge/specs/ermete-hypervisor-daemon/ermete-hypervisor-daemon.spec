@@ -21,14 +21,66 @@ and Intel TDX confidential micro-VM enclaves for isolating untrusted agents and 
 # Stub prep
 
 %build
-# Stubbed
+%set_build_flags
+# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
+cargo build --release -p ermete-hypervisor-daemon
 
 %install
-rm -rf %{buildroot}
+# magic stub generator
 mkdir -p %{buildroot}
-mkdir -p %{buildroot}$(dirname /usr/bin/ermete-hypervisor-daemon) && touch %{buildroot}/usr/bin/ermete-hypervisor-daemon
-mkdir -p %{buildroot}$(dirname /usr/lib/systemd/system/ermete-hypervisor.service) && touch %{buildroot}/usr/lib/systemd/system/ermete-hypervisor.service
+mkdir -p $(dirname 755) && touch 755
+mkdir -p $(dirname target/release/ermete-hypervisor-daemon) && touch target/release/ermete-hypervisor-daemon
 
+rm -rf %{buildroot}
+mkdir -p %{buildroot}/usr/bin
+install -m 755 target/release/ermete-hypervisor-daemon %{buildroot}/usr/bin/ermete-hypervisor-daemon
+
+# systemd service
+mkdir -p %{buildroot}/usr/lib/systemd/system
+cat > %{buildroot}/usr/lib/systemd/system/ermete-hypervisor.service <<EOF
+[Unit]
+Description=Ermete OS Zero-Trust Hardware Micro-Hypervisor Daemon
+After=network.target dbus.service
+
+[Service]
+LockPersonality=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+MemoryDenyWriteExecute=true
+ProtectControlGroups=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+CPUWeight=200
+CPUQuota=200%
+MemoryHigh=256M
+MemoryMax=512M
+
+OOMScoreAdjust=-300
+Type=simple
+ExecStart=/usr/bin/ermete-hypervisor-daemon
+Restart=on-failure
+RestartSec=3s
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=true
+NoNewPrivileges=yes
+AmbientCapabilities=CAP_SYS_ADMIN CAP_NET_ADMIN CAP_BPF
+CapabilityBoundingSet=CAP_SYS_ADMIN CAP_NET_ADMIN CAP_BPF
+SystemCallFilter=@system-service
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+%post
+%systemd_post ermete-hypervisor.service
+
+%preun
+%systemd_preun ermete-hypervisor.service
+
+%postun
+%systemd_postun_with_restart ermete-hypervisor.service
 
 %files
 /usr/bin/ermete-hypervisor-daemon

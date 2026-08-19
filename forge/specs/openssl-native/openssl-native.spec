@@ -25,17 +25,16 @@ OpenSSL Toolkit compiled natively from source with aggressive x86_64-v3 optimiza
 # Stub prep
 
 %build
-# Stubbed
+%set_build_flags
+./config --prefix=/usr --openssldir=/etc/pki/tls shared zlib
+make %{?_smp_mflags}
 
 %install
-rm -rf %{buildroot}
+# magic stub generator
 mkdir -p %{buildroot}
-mkdir -p %{buildroot}$(dirname /usr/bin/openssl) && touch %{buildroot}/usr/bin/openssl
-mkdir -p %{buildroot}$(dirname /usr/lib64/libcrypto.so*) && touch %{buildroot}/usr/lib64/libcrypto.so*
-mkdir -p %{buildroot}$(dirname /usr/lib64/libssl.so*) && touch %{buildroot}/usr/lib64/libssl.so*
-mkdir -p %{buildroot}$(dirname /usr/include/openssl) && touch %{buildroot}/usr/include/openssl
-mkdir -p %{buildroot}$(dirname /etc/pki/tls) && touch %{buildroot}/etc/pki/tls
 
+rm -rf %{buildroot}
+make DESTDIR=%{buildroot} install_sw install_ssldirs
 
 %files
 /usr/bin/openssl

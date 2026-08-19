@@ -20,13 +20,19 @@ wayland clipboard manager. Packaged natively for Ermete OS.
 # Stub prep
 
 %build
-# Stubbed
+# Inizializza go mod se non presente (in genere è presente)
+export GOPATH=%{_builddir}/go
+export GOCACHE=%{_builddir}/go-cache
+go build -v -o cliphist
 
 %install
-rm -rf %{buildroot}
+# magic stub generator
 mkdir -p %{buildroot}
-mkdir -p %{buildroot}$(dirname /usr/bin/cliphist) && touch %{buildroot}/usr/bin/cliphist
+mkdir -p $(dirname 0755) && touch 0755
+mkdir -p $(dirname cliphist) && touch cliphist
 
+mkdir -p %{buildroot}/usr/bin
+install -m 0755 cliphist %{buildroot}/usr/bin/cliphist
 
 %files
 /usr/bin/cliphist

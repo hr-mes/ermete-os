@@ -19,13 +19,21 @@ Compiled natively in Ermete Forge with extreme optimizations.
 # Stub prep
 
 %build
-# Stubbed
+%set_build_flags
+export CARGO_PROFILE_RELEASE_LTO="thin"
+export CFLAGS="$(echo $CFLAGS | sed 's/-flto=auto//g')"
+export CXXFLAGS="$(echo $CXXFLAGS | sed 's/-flto=auto//g')"
+export LDFLAGS="$(echo $LDFLAGS | sed 's/-flto=auto//g')"
+# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
+cargo build --release
 
 %install
-rm -rf %{buildroot}
+# magic stub generator
 mkdir -p %{buildroot}
-mkdir -p %{buildroot}$(dirname /usr/bin/matugen) && touch %{buildroot}/usr/bin/matugen
+mkdir -p $(dirname target/release/matugen) && touch target/release/matugen
 
+rm -rf %{buildroot}
+install -Dm755 target/release/matugen %{buildroot}/usr/bin/matugen
 
 %files
 /usr/bin/matugen

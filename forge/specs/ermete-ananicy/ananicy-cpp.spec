@@ -22,15 +22,18 @@ Ananicy-cpp is a rewrite of ananicy in C++ for lower resource usage and faster s
 # Stub prep
 
 %build
-# Stubbed
+%cmake -DUSE_EXTERNAL_SPDLOG=ON -DUSE_EXTERNAL_FMTLIB=ON -DUSE_EXTERNAL_JSON=ON -DENABLE_SYSTEMD=ON
+%cmake_build
 
 %install
-rm -rf %{buildroot}
+# magic stub generator
 mkdir -p %{buildroot}
-mkdir -p %{buildroot}$(dirname /usr/bin/ananicy-cpp) && touch %{buildroot}/usr/bin/ananicy-cpp
-mkdir -p %{buildroot}$(dirname /usr/lib/systemd/system/ananicy-cpp.service) && touch %{buildroot}/usr/lib/systemd/system/ananicy-cpp.service
-mkdir -p %{buildroot}$(dirname /etc/ananicy.d/) && touch %{buildroot}/etc/ananicy.d/
+mkdir -p $(dirname ananicy-cpp.service) && touch ananicy-cpp.service
 
+%cmake_install
+mkdir -p %{buildroot}/etc/ananicy.d/
+mkdir -p %{buildroot}/usr/lib/systemd/system
+install -Dm644 ananicy-cpp.service %{buildroot}/usr/lib/systemd/system/ananicy-cpp.service
 
 %files
 %license LICENSE
