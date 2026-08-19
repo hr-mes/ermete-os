@@ -3,8 +3,6 @@ set -euo pipefail
 
 if [ "${0}" != "/usr/libexec/ermete-flatpak-provisioner" ]; then
     mkdir -p /usr/libexec
-    cp "${0}" /usr/libexec/ermete-flatpak-provisioner
-    chmod +x /usr/libexec/ermete-flatpak-provisioner
 fi
 
 MANIFEST="/usr/share/ermete/packages.json"

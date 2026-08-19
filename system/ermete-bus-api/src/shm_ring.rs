@@ -155,8 +155,8 @@ impl ZeroCopyRingBuffer {
         }
 
         let header_ptr = header_map as *const RingBufferHeader;
-        let magic = unsafe { (*header_ptr).magic };
-        let capacity = unsafe { (*header_ptr).capacity };
+        let magic = unsafe { std::ptr::read_volatile(&(*header_ptr).magic) };
+        let capacity = unsafe { std::ptr::read_volatile(&(*header_ptr).capacity) };
 
         // Unmap initial header inspection map
         unsafe { munmap(header_map, header_len) };

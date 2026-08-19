@@ -8,4 +8,4 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-negativo17
 enabled_metadata=1
 metadata_expire=6h
 type=rpm-md
-repo_gpgcheck=0
+repo_gpgcheck=1

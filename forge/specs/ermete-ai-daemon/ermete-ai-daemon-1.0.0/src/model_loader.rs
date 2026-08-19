@@ -93,19 +93,7 @@ impl InferenceEngine {
             .map_err(|e| format!("Candle tensor instantiation failed: {}", e))?;
 
         if !self.is_loaded {
-            warn!("Model not fully loaded. Executing ML logic with real tensors but untuned synthetic weights.");
-            // We use standard ML math logically representing the MLP even if weights failed to load
-            let w1_dummy = Tensor::randn(0f32, 0.1f32, (4, 8), &self.device).unwrap();
-            let w2_dummy = Tensor::randn(0f32, 0.1f32, (8, 4), &self.device).unwrap();
-            
-            let hidden = input_tensor.matmul(&w1_dummy).unwrap().relu().unwrap();
-            let logits = hidden.matmul(&w2_dummy).unwrap();
-            
-            return logits
-                .squeeze(0)
-                .unwrap()
-                .to_vec1::<f32>()
-                .map_err(|e| format!("Logits extraction failed: {}", e));
+            return Err("ZERO-TRUST VIOLATION: Refusing to execute inference with uninitialized or dummy weights. Real AI models must be signed and loaded.".to_string());
         }
 
         let (l1, l2) = match (&self.w1, &self.w2) {
