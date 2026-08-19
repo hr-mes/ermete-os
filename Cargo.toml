@@ -17,7 +17,6 @@ members = [
     "forge/specs/ermete-xdg-desktop-portal-ermete/xdg-desktop-portal-ermete-1.0.0",
     "forge/specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0",
     "forge/specs/ermete-niri-ipc",
-    "forge/specs/ermete-live-patcher/ermete-live-patcher-1.0.0",
     "system/confidential_computing/ermete-attestation",
     "system/ebpf/ebpf-core",
     "system/ebpf/ebpf-loader",
