@@ -227,6 +227,16 @@ jobs:
           nix run nixpkgs#cosign -- sign --yes $IMAGE_LOWER
           nix run nixpkgs#cosign -- attest --yes --type spdxjson --predicate sbom-${PKG_NAME}.spdx.json $IMAGE_LOWER
 
+      - name: 🛟 Upload Crash Artifacts (Nix/SCCache)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crash-logs-${{ matrix.package || matrix.flatpak }}
+          path: |
+            /tmp/nix-build*/
+            RPMS/
+            idemp.out
+
       - name: 🧹 Cleanup Workspace Permissions
         if: always()
         run: podman unshare chown -R $USER:$USER ${{ github.workspace }} || true
@@ -429,6 +439,16 @@ jobs:
           nix run nixpkgs#cosign -- sign --yes $IMAGE_LOWER
           nix run nixpkgs#cosign -- attest --yes --type spdxjson --predicate sbom-${PKG_NAME}.spdx.json $IMAGE_LOWER
 
+      - name: 🛟 Upload Crash Artifacts (Nix/SCCache)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crash-logs-${{ matrix.package || matrix.flatpak }}
+          path: |
+            /tmp/nix-build*/
+            RPMS/
+            idemp.out
+
       - name: 🧹 Cleanup Workspace Permissions
         if: always()
         run: podman unshare chown -R $USER:$USER ${{ github.workspace }} || true
@@ -628,6 +648,16 @@ jobs:
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ github.repository_owner }}/${img_prefix}-${PKG_NAME}:latest" | tr '[:upper:]' '[:lower:]')
           nix run nixpkgs#cosign -- sign --yes $IMAGE_LOWER
           nix run nixpkgs#cosign -- attest --yes --type spdxjson --predicate sbom-${PKG_NAME}.spdx.json $IMAGE_LOWER
+
+      - name: 🛟 Upload Crash Artifacts (Nix/SCCache)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crash-logs-${{ matrix.package || matrix.flatpak }}
+          path: |
+            /tmp/nix-build*/
+            RPMS/
+            idemp.out
 
       - name: 🧹 Cleanup Workspace Permissions
         if: always()

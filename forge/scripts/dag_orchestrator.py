@@ -334,6 +334,28 @@ def main():
     print(f"  -> Flatpak Parallel Nodes ({len(flatpaks)}): {j_fp}")
     print(f"  -> Has Changes: {has_changes}")
 
+    
+    # Creazione della Rappresentazione Visiva del DAG (Mermaid) per Github Actions
+    mermaid = ["```mermaid", "graph TD;"]
+    for node in dirty_nodes:
+        parents = [p for p in prereqs[node] if p in dirty_nodes]
+        if parents:
+            for p in parents:
+                mermaid.append(f"    {p} --> {node};")
+        else:
+            mermaid.append(f"    {node};")
+    mermaid.append("```")
+    mermaid_str = "\n".join(mermaid)
+    
+    github_summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if github_summary:
+        try:
+            with open(github_summary, "a") as f:
+                f.write("### 🌋 Ermete Forge DAG - Execution Topology\n")
+                f.write(mermaid_str + "\n")
+        except OSError:
+            pass
+
     github_output = os.environ.get("GITHUB_OUTPUT")
     if github_output:
         with open(github_output, "a") as f:

@@ -161,3 +161,8 @@ update-specs:
 [group('Utility')]
 clean-ghcr owner="hr-mes":
     just forge/clean-ghcr "{{ owner }}"
+
+# Runs the entire CI pipeline locally via Act for rapid debugging
+[group('Utility')]
+test-ci-local:
+    act -W .github/workflows/ermete-forge-orchestrator.yml --container-architecture linux/amd64
