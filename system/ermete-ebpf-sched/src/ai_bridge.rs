@@ -46,8 +46,8 @@ impl AiDaemonBridge {
         // Inizializza i tensori del modello MLP (Multi-Layer Perceptron).
         // In produzione verrebbero caricati da un file .safetensors (es. /etc/ermete/ai/model.safetensors).
         let (weights, biases) = match (
-            Tensor::randn(0f32, 1f32, (3, 4), &Device::Cpu),
-            Tensor::randn(0f32, 1f32, (3,), &Device::Cpu)
+            Tensor::zeros(0f32, 1f32, (3, 4), &Device::Cpu),
+            Tensor::zeros(0f32, 1f32, (3,), &Device::Cpu)
         ) {
             (Ok(w), Ok(b)) => (Some(w), Some(b)),
             _ => (None, None),
@@ -78,7 +78,7 @@ impl AiDaemonBridge {
                                 let weight = ((vals[2].abs() * 500.0) as u32).clamp(100, 1000);
                                 let slice_us = if class == SchedClass::InteractiveUi { 2000 } else { 10000 };
                                 
-                                tracing::info!("🧠 [TinyML Tensor Inference] Process: {}, Output: {:?}, Weight: {}", comm, class, weight);
+                                tracing::info!("🧠 [Deterministic Fallback] Process: {}, Output: {:?}, Weight: {}", comm, class, weight);
                                 return (class, weight, slice_us, score);
                             }
                         }
