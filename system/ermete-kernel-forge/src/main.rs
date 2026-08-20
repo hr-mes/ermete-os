@@ -80,15 +80,9 @@ pub async fn check_polkit_auth_zbus(
     }
 
     let proxy = PolicyKitAuthorityProxy::new(conn).await?;
-    let subject = if let Ok(creds) = conn.peer_creds().await {
-        if let Some(pid) = creds.process_id() {
-            PolkitSubject::unix_process(pid)
-        } else {
-            PolkitSubject::system_bus_name(sender)
-        }
-    } else {
-        PolkitSubject::system_bus_name(sender)
-    };
+    // ZERO-TRUST FIX: Removed TOCTOU PID vulnerability.
+    // D-Bus broker natively resolves the unique sender name (:1.x) to the process safely.
+    let subject = PolkitSubject::system_bus_name(sender);
     let details = HashMap::<&str, &str>::new();
     let flags = if allow_user_interaction { 1u32 } else { 0u32 };
 
