@@ -62,7 +62,22 @@ echo "Selected LUKS device for TPM2 PCR sealing: $TARGET_DEV"
 # Execute systemd-cryptenroll with TPM2 PCRs 0, 2, 7, 11
 if [ -b "$TARGET_DEV" ]; then
     echo "Running systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=0,2,7,11 $TARGET_DEV ..."
-    systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=0,2,7,11 "$TARGET_DEV" || {
+    
+    # Enterprise Signed PCR Policy: Sigilliamo PCR 11 alla chiave pubblica, permettendo aggiornamenti OS fluidi
+    PUB_KEY="/etc/pki/uki/uki-signing.crt"
+    if [ -f "/etc/pki/secureboot/db.crt" ]; then PUB_KEY="/etc/pki/secureboot/db.crt"; fi
+    
+    if [ -f "$PUB_KEY" ]; then
+        echo "Running systemd-cryptenroll with Signed PCR Policy (--tpm2-public-key)..."
+        systemd-cryptenroll --tpm2-device=auto \
+            --tpm2-pcrs=0,2,7 \
+            --tpm2-public-key="$PUB_KEY" \
+            "$TARGET_DEV"
+    else
+        echo "Fallback: Running systemd-cryptenroll with static hashes..."
+        systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=0,2,7,11 "$TARGET_DEV"
+    fi
+ || {
         echo "WARNING: systemd-cryptenroll failed or TPM2 hardware device is absent in this execution environment."
         exit 0
     }
