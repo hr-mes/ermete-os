@@ -206,7 +206,7 @@ jobs:
 
       - name: 🛟 Upload Crash Artifacts (Nix/SCCache)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: crash-logs-${{ matrix.package || matrix.flatpak }}
           path: |
@@ -395,7 +395,7 @@ jobs:
 
       - name: 🛟 Upload Crash Artifacts (Nix/SCCache)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: crash-logs-${{ matrix.package || matrix.flatpak }}
           path: |
@@ -582,7 +582,7 @@ jobs:
 
       - name: 🛟 Upload Crash Artifacts (Nix/SCCache)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: crash-logs-${{ matrix.package || matrix.flatpak }}
           path: |
