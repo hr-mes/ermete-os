@@ -26,11 +26,11 @@ jobs:
       - name: Validate Hermetic Environment (devShell)
         run: nix develop --command echo "✅ DevShell pura inizializzata con successo."
 
-      - name: Compile Proof-of-Concept (just-hermetic)
-        run: nix build .#just-hermetic
+      - name: Compile Ermete OS Core Workspace (No Cache)
+        run: nix build .#ermete-core
         
-      - name: Verify Binary Determinism
+      - name: Verify Binary Determinism (Ermete OS Daemons)
         run: |
-          echo "Binary built successfully at:"
-          ls -la result/bin/just
-          file result/bin/just
+          echo "Binaries built successfully at:"
+          ls -la result/bin/
+          file result/bin/ermete-mesh-bus
