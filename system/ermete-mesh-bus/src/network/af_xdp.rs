@@ -1,4 +1,3 @@
-#![allow(unsafe_code)]
 //! AF_XDP (XSK) High-Performance Kernel Bypass Engine for Ermete OS Mesh Bus
 //!
 //! Provides zero-copy packet ingress/egress directly between Network Interface Cards (NICs)

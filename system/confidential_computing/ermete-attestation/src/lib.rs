@@ -1,4 +1,3 @@
-#![allow(unsafe_code)]
 
 pub mod config;
 pub mod cvm_manager;

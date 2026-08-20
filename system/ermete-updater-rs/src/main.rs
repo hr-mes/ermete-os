@@ -1,7 +1,4 @@
-#![allow(unsafe_code)]
-#![allow(clippy::undocumented_unsafe_blocks)]
 #![allow(clippy::needless_lifetimes)]
-#![allow(clippy::multiple_unsafe_ops_per_block)]
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::mut_from_ref)]
 #![allow(clippy::new_without_default)]

@@ -1,6 +1,3 @@
-#![allow(clippy::undocumented_unsafe_blocks)]
-#![allow(clippy::multiple_unsafe_ops_per_block)]
-#![allow(unsafe_code)]
 
 pub mod drm_lease;
 pub mod model_loader;

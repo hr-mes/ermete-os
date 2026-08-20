@@ -1,4 +1,3 @@
-#![allow(unsafe_code)]
 
 pub mod auto_healer;
 pub mod ebpf_monitor;

@@ -1,4 +1,3 @@
-#![allow(unsafe_code)]
 
 use crate::node_tree::NodeTree;
 use crate::routing::RoutingEngine;

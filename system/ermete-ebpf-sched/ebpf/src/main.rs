@@ -1,6 +1,5 @@
 #![no_std]
 #![no_main]
-#![allow(unsafe_code)]
 
 use aya_ebpf::{
     macros::map,

@@ -1,4 +1,3 @@
-#![allow(unsafe_code)]
 
 use anyhow::{Context, Result};
 
