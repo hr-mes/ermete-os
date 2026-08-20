@@ -41,3 +41,22 @@ for app in $FLATPAKS; do
         echo "[Ermete Flatpak] $app is already installed."
     fi
 done
+
+
+echo "[Ermete Flatpak] Enforcing Zero-Trust Global Overrides (Martial Law)..."
+# 1. Distruzione totale del protocollo legacy X11 (Previene i keylogger globali)
+flatpak override --system --nosocket=x11
+flatpak override --system --nosocket=fallback-x11
+
+# 2. Isolamento del Filesystem (Forza le app a usare gli XDG Portals per leggere/scrivere file)
+flatpak override --system --nofilesystem=host
+flatpak override --system --nofilesystem=home
+
+# 3. Forzatura del Backend Nativo Wayland
+flatpak override --system --env=GDK_BACKEND=wayland
+flatpak override --system --env=QT_QPA_PLATFORM=wayland
+
+# 4. Prevenzione dell'evasione Flatpak-in-Flatpak
+flatpak override --system --no-talk-name=org.freedesktop.Flatpak
+
+echo "[Ermete Flatpak] Provisioning Completato. Sandbox sigillata."
