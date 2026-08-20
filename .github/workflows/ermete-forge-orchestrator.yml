@@ -1,0 +1,109 @@
+# Force trigger to wake up GitHub Actions
+name: Ermete Forge Orchestrator
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'forge/**'
+      - 'Cargo.toml'
+      - '.github/workflows/ermete-forge-orchestrator.yml'
+      - '.github/workflows/call-*.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '0 4 * * *'
+
+env:
+  REGISTRY: ghcr.io
+  FEDORA_VERSION: 43
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  orchestrator-brain:
+    name: 🧠 DAG Orchestrator Brain & Distributed Cache
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: forge
+    outputs:
+      dag_level_0: ${{ steps.brain.outputs.dag_level_0 }}
+      dag_level_1: ${{ steps.brain.outputs.dag_level_1 }}
+      dag_level_2: ${{ steps.brain.outputs.dag_level_2 }}
+      dag_flatpaks: ${{ steps.brain.outputs.dag_flatpaks }}
+      dirty_count: ${{ steps.brain.outputs.dirty_count }}
+      has_changes: ${{ steps.brain.outputs.has_changes }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: ⚙️ Set Default Rust Toolchain
+        run: rustup default stable
+      - name: ❄️ Install Nix (Bedrock Cache)
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
+        with:
+          extra_nix_config: "experimental-features = nix-command flakes"
+      - name: Align Repositories
+        run: cp builder/rpmfusion-custom.repo /etc/yum.repos.d/ 2>/dev/null || true
+      - name: Persist DAG State Cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: .cache
+          key: dag-cache-${{ github.run_id }}
+          restore-keys: |
+            dag-cache-
+
+      - name: Compute Dependency DAG & Topological Matrix (Nix Flake Hermetic Shell)
+        id: brain
+        run: ./scripts/dynamic-matrix.sh
+
+      - name: 🧹 Cleanup Workspace Permissions
+        if: always()
+        run: podman unshare chown -R $USER:$USER ${{ github.workspace }} || true
+
+      - name: 🧹 Fix Workspace Permissions (GH Actions Cleanup)
+        if: always()
+        run: |
+          set -euo pipefail
+          if command -v sudo >/dev/null 2>&1; then
+            sudo chown -R 1001:1001 . || sudo chown -R 1000:1000 . || true
+          else
+            chown -R 1001:1001 . || chown -R 1000:1000 . || true
+          fi
+
+  build-builder:
+    uses: ./.github/workflows/call-build-builder.yml
+
+  dag-compile:
+    needs: [orchestrator-brain, build-builder]
+    uses: ./.github/workflows/call-dag-compile.yml
+    with:
+      dag_level_0: ${{ needs.orchestrator-brain.outputs.dag_level_0 }}
+      dag_level_1: ${{ needs.orchestrator-brain.outputs.dag_level_1 }}
+      dag_level_2: ${{ needs.orchestrator-brain.outputs.dag_level_2 }}
+      dag_flatpaks: ${{ needs.orchestrator-brain.outputs.dag_flatpaks }}
+      builder_hash: ${{ needs.build-builder.outputs.content_hash }}
+
+  build-kernel:
+    needs: [build-builder]
+    uses: ./.github/workflows/call-build-kernel.yml
+    with:
+      builder_content_hash: ${{ needs.build-builder.outputs.content_hash }}
+    secrets: inherit
+
+  system-image:
+    needs: [orchestrator-brain, dag-compile, build-kernel, build-builder]
+    if: ${{ always() && needs.orchestrator-brain.outputs.has_changes == 'true' }}
+    uses: ./.github/workflows/call-system-image.yml
+    with:
+      builder_content_hash: ${{ needs.build-builder.outputs.content_hash }}
+      has_changes: ${{ needs.orchestrator-brain.outputs.has_changes }}
+    secrets: inherit
