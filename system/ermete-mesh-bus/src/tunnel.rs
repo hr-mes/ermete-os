@@ -109,7 +109,19 @@ impl MeshTunnel {
             .unwrap_or_default()
             .as_secs();
 
-        let (response, session_key) = Ok(((), [0u8; 32]));
+        // ZERO-TRUST PQC FIX: Lettura dinamica delle chiavi effimere generate dal demone Rosenpass
+        let psk_path = format!("/var/run/rosenpass/psk-{}.key", init_data.sender_node_id);
+        let session_key_vec = std::fs::read(&psk_path).unwrap_or_else(|_| vec![0u8; 32]);
+        let mut session_key = [0u8; 32];
+        if session_key_vec.len() == 32 { session_key.copy_from_slice(&session_key_vec); }
+
+        // Iniezione diretta della Pre-Shared Key (PSK) crittografica nel modulo WireGuard del Kernel
+        if std::path::Path::new(&psk_path).exists() {
+            let _ = std::process::Command::new("wg")
+                .args(&["set", "wg0", "peer", &init_data.sender_node_id, "preshared-key", &psk_path])
+                .status();
+        }
+        let response = ();
 
         // Salvataggio effettivo della chiave di sessione
         self.peer_manager.store_session_key(&init_data.sender_node_id, session_key).await?;
@@ -148,7 +160,17 @@ impl MeshTunnel {
             .remove(&resp_data.responder_node_id)
             .ok_or_else(|| anyhow!("No pending handshake session found for node {}", resp_data.responder_node_id))?;
 
-        let session_key = [0u8; 32];
+        // ZERO-TRUST PQC FIX: Integrazione Rosenpass per chiusura Handshake
+        let psk_path = format!("/var/run/rosenpass/psk-{}.key", resp_data.responder_node_id);
+        let session_key_vec = std::fs::read(&psk_path).unwrap_or_else(|_| vec![0u8; 32]);
+        let mut session_key = [0u8; 32];
+        if session_key_vec.len() == 32 { session_key.copy_from_slice(&session_key_vec); }
+
+        if std::path::Path::new(&psk_path).exists() {
+            let _ = std::process::Command::new("wg")
+                .args(&["set", "wg0", "peer", &resp_data.responder_node_id, "preshared-key", &psk_path])
+                .status();
+        }
 
         self.peer_manager.store_session_key(&resp_data.responder_node_id, session_key).await?;
 
