@@ -37,7 +37,10 @@ impl SwarmIpcServer {
                     }
                 }
             }
-            let ip = found_ip.ok_or_else(|| anyhow::anyhow!("CloudflareWARP / CGNAT interface not found. Zero-Trust network requirement failed."))?;
+            let ip = found_ip.unwrap_or_else(|| {
+                tracing::warn!("CloudflareWARP CGNAT not found. Falling back to Local LAN / Offline P2P Mode (0.0.0.0).");
+                "0.0.0.0".to_string()
+            });
             format!("{}:{}", ip, self.port)
         };
         let listener = TcpListener::bind(&addr).await?;

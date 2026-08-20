@@ -62,7 +62,10 @@ impl ZeroConfDiscovery {
                     }
                 }
             }
-            let ip = found_ip.ok_or_else(|| anyhow::anyhow!("CloudflareWARP / CGNAT interface not found. Zero-Trust network requirement failed."))?;
+            let ip = found_ip.unwrap_or_else(|| {
+                tracing::warn!("CloudflareWARP CGNAT not found. Falling back to Local LAN / Offline P2P Mode (0.0.0.0).");
+                "0.0.0.0".to_string()
+            });
             format!("{}:{}", ip, self.discovery_port)
         };
         let socket = Arc::new(UdpSocket::bind(&bind_addr).await?);
@@ -103,7 +106,9 @@ impl ZeroConfDiscovery {
                         for addr in addrs {
                             target_addrs.push(addr);
                         }
-                    } else if let Ok(target_addr) = format!("255.255.255.255:{}", self_tx.discovery_port).parse::<SocketAddr>() {
+                    } 
+                    // DUAL-PATH: Invia SEMPRE il beacon anche in Local LAN Multicast
+                    if let Ok(target_addr) = format!("255.255.255.255:{}", self_tx.discovery_port).parse::<SocketAddr>() {
                         target_addrs.push(target_addr);
                     }
                     for target_addr in target_addrs {
