@@ -1,5 +1,3 @@
-pub struct HandshakeInitPayload { pub timestamp: u64, pub ephemeral_pk: Vec<u8> }
-pub struct HandshakeSession {}
 type SecretSessionKey = [u8; 32];
 struct HandshakeSession {}
 use anyhow::{anyhow, Result};
@@ -234,7 +232,7 @@ impl MeshTunnel {
             .unwrap_or_default()
             .as_secs();
 
-        let init_payload = HandshakeInitPayload { timestamp, ephemeral_pk: vec![] }; let session = HandshakeSession {};
+        let init_payload = HandshakeInitPayload { timestamp, ephemeral_pk: vec![] }; let session = HandshakeSession { session_key: [0u8; 32] };
         
         self.pending_handshakes
             .lock()
@@ -255,3 +253,6 @@ impl MeshTunnel {
         Ok(())
     }
 }
+
+
+pub struct HandshakeInitPayload { pub timestamp: u64, pub ephemeral_pk: Vec<u8> }

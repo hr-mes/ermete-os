@@ -1,4 +1,3 @@
-pub struct NodeIdentity { pub node_id: [u8; 32], pub public_key: Vec<u8> }
 //! Ermete OS Post-Quantum Mesh Bus — CRDT Broadcaster (Fase 11)
 //!
 //! Connects CRDT types to the post-quantum wireguard network mesh.
@@ -238,3 +237,6 @@ impl CrdtBroadcaster {
         Ok(tx_buffer)
     }
 }
+
+
+pub struct NodeIdentity { pub node_id: [u8; 32], pub public_key: Vec<u8> }
