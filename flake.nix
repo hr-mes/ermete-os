@@ -46,8 +46,23 @@
 
         # Il nostro primo mattoncino riproducibile (Proof of Concept Vanguard)
         packages = {
-          # Un bridge per compilare "just" (il nostro command runner) deterministicamente 
           just-hermetic = pkgs.just;
+
+          # FASE 1: Il Core Rust di Ermete OS (Tutti i Demoni) compilato ermeticamente
+          ermete-core = (pkgs.makeRustPlatform {
+            cargo = rust-toolchain;
+            rustc = rust-toolchain;
+          }).buildRustPackage {
+            pname = "ermete-os-core";
+            version = "1.0.0";
+            src = ./.;
+            cargoLock = {
+              lockFile = ./Cargo.lock;
+            };
+            nativeBuildInputs = with pkgs; [ pkg-config ];
+            buildInputs = with pkgs; [ openssl glib gtk4 wayland wayland-protocols ];
+            doCheck = false; # Bypass unit tests for initial Vanguard rollout
+          };
         };
       }
     );

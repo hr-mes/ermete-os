@@ -1,0 +1,8 @@
+{
+  "bpf-lib": "/var/lib/tetragon/",
+  "config-dir": "/etc/tetragon/tetragon.tp.d",
+  "log-format": "json",
+  "log-level": "info",
+  "export-filename": "/var/log/tetragon/tetragon.log",
+  "process-cache-size": 65536
+}
