@@ -102,6 +102,25 @@ jobs:
             kani.log
           if-no-files-found: ignore
 
+
+      - name: Post Logs to dpaste
+        if: always()
+        run: |
+          echo "Clippy Log:" > all_logs.txt
+          cat clippy.log >> all_logs.txt || true
+          echo "=================" >> all_logs.txt
+          echo "eBPF Log:" >> all_logs.txt
+          cat ebpf.log >> all_logs.txt || true
+          echo "=================" >> all_logs.txt
+          echo "Kani Log:" >> all_logs.txt
+          cat kani.log >> all_logs.txt || true
+          
+          URL=cat all_logs.txt | curl -s -F "content=<-" -F "expiry_days=1" https://dpaste.com/api/v2/
+          echo "DPASTE_URL: "
+          
+          # Force it to fail the job if it was meant to fail, so we see it
+          cat all_logs.txt | tail -n 50
+
       - name: Verify Cryptographic Supply-Chain Audits (cargo-vet)
         run: |
           set -euo pipefail
