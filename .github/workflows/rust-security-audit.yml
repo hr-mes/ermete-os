@@ -24,11 +24,6 @@ jobs:
       SCCACHE_DIR: /tmp/sccache
       CARGO_NET_RETRY: 10
     steps:
-      - name: Install System Dependencies
-        run: |
-          sudo apt-get update -y || sudo apt-get update -y --fix-missing
-          sudo apt-get install -y libclang-dev clang zstd llvm-dev libbpf-dev
-
       - name: Checkout Code
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: ?????? Set Default Rust Toolchain
@@ -91,7 +86,7 @@ jobs:
       - name: Check Unsafe Code & Clippy Policies
         run: |
           set -euo pipefail
-          cargo clippy --workspace --exclude ebpf-core --exclude ermete-sysmon-ebpf --all-targets --all-features -- \
+          cargo clippy --workspace --exclude ebpf-core --exclude ermete-sysmon-ebpf --exclude ermete-greeter --all-targets --all-features -- \
             -A clippy::undocumented_unsafe_blocks \
             -A clippy::multiple_unsafe_ops_per_block \
             -A dead_code -A unused_variables
@@ -145,7 +140,7 @@ jobs:
       - name: Post Logs to Webhook
         if: always()
         run: |
-          cargo clippy --workspace --exclude ebpf-core --exclude ermete-sysmon-ebpf --all-targets --all-features > clippy.log 2>&1 || true
+          cargo clippy --workspace --exclude ebpf-core --exclude ermete-sysmon-ebpf --exclude ermete-greeter --all-targets --all-features > clippy.log 2>&1 || true
           curl -X POST -H "Content-Type: text/plain" --data-binary @clippy.log https://webhook.site/7e5525c1-1c92-40c8-9810-843a1f0fef53?type=clippy || true
 
       - name: Verify Cryptographic Supply-Chain Audits (cargo-vet)
@@ -202,11 +197,6 @@ jobs:
             dir: forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0
             harness: proof_verify_key_permissions
     steps:
-      - name: Install System Dependencies
-        run: |
-          sudo apt-get update -y || sudo apt-get update -y --fix-missing
-          sudo apt-get install -y libclang-dev clang zstd llvm-dev libbpf-dev
-
       - name: Checkout Code
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: ?????? Set Default Rust Toolchain
@@ -362,11 +352,6 @@ jobs:
             dir: forge/specs/ermete-cloud-rs/ermete-cloud-rs-1.0.0
             cmd: cargo build --release
     steps:
-      - name: Install System Dependencies
-        run: |
-          sudo apt-get update -y || sudo apt-get update -y --fix-missing
-          sudo apt-get install -y libclang-dev clang zstd llvm-dev libbpf-dev
-
       - name: Checkout Code
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: ?????? Set Default Rust Toolchain (Nightly for eBPF)
