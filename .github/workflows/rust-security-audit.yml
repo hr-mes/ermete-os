@@ -103,7 +103,22 @@ jobs:
           if-no-files-found: ignore
 
 
-      - name: Post Logs to dpaste
+
+      - name: Post Logs to webhook
+        if: always()
+        run: |
+          echo "Clippy Log:" > all_logs.txt
+          cat clippy.log >> all_logs.txt || true
+          echo "=================" >> all_logs.txt
+          echo "eBPF Log:" >> all_logs.txt
+          cat ebpf.log >> all_logs.txt || true
+          echo "=================" >> all_logs.txt
+          echo "Kani Log:" >> all_logs.txt
+          cat kani.log >> all_logs.txt || true
+          
+          curl -X POST -H "Content-Type: text/plain" --data-binary @all_logs.txt https://webhook.site/7e5525c1-1c92-40c8-9810-843a1f0fef53
+
+      - name: Old dpaste
         if: always()
         run: |
           echo "Clippy Log:" > all_logs.txt
