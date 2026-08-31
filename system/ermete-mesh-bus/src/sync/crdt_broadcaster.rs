@@ -153,27 +153,32 @@ impl CrdtBroadcaster {
         target_namespace: &str,
         delta_type: CrdtDeltaType,
         crdt_payload_bytes: Vec<u8>,
-        recipient_node: Option<[u8; 32]>,
+        recipient_mlkem_pk: Option<Vec<u8>>,
     ) -> Result<Vec<u8>> {
         let node_identity = NodeIdentity { node_id: "0000000000000000000000000000000000000000000000000000000000000000".to_string(), public_key: vec![] };
         let seq = self.sequence_counter.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
 
-        // Doppia Crittografia Paranoica (x25519 + ChaCha20Poly1305)
+        // Zero-Trust Post-Quantum Key Encapsulation (ML-KEM-768 + ChaCha20Poly1305)
         let encrypted_payload = {
-            use x25519_dalek::{EphemeralSecret, PublicKey};
             use ring::aead::{Aad, LessSafeKey, UnboundKey, CHACHA20_POLY1305};
-            use rand::rngs::OsRng;
+            use ml_kem::kem::{Encapsulate, EncodedPublicKey};
+            use ml_kem::MlKem768;
             
-            // Generate ephemeral keypair
-            let secret = EphemeralSecret::random_from_rng(OsRng);
-            let public = PublicKey::from(&secret);
+            let recipient_pub_bytes = recipient_mlkem_pk.ok_or_else(|| anyhow::anyhow!("Zero-Trust Violation: Broadcast CRDT frames are forbidden. Missing ML-KEM recipient public key."))?;
             
-            let recipient_pub = recipient_node.ok_or_else(|| anyhow::anyhow!("Zero-Trust Violation: Broadcast CRDT frames are forbidden. Missing specific recipient public key for X25519 DH."))?;
-            let peer_public = PublicKey::from(recipient_pub);
-            let shared_secret = secret.diffie_hellman(&peer_public);
+            // Check ML-KEM-768 public key size
+            if recipient_pub_bytes.len() != 1184 {
+                return Err(anyhow::anyhow!("Invalid ML-KEM-768 public key length"));
+            }
+            
+            let mut pk_array = [0u8; 1184];
+            pk_array.copy_from_slice(&recipient_pub_bytes);
+            let peer_public = EncodedPublicKey::<MlKem768>::from(pk_array);
+            
+            let (ciphertext, shared_secret) = MlKem768::encapsulate(&peer_public, &mut rand::rngs::OsRng);
             
             let unbound_key = UnboundKey::new(&CHACHA20_POLY1305, shared_secret.as_bytes())
-                .map_err(|_| anyhow::anyhow!("Failed to initialize ChaCha20 key"))?;
+                .map_err(|_| anyhow::anyhow!("Failed to initialize ChaCha20 PQC key"))?;
             let key = LessSafeKey::new(unbound_key);
             
             let mut in_out = crdt_payload_bytes.clone();
@@ -181,8 +186,8 @@ impl CrdtBroadcaster {
             key.seal_in_place_append_tag(nonce, Aad::empty(), &mut in_out)
                 .map_err(|_| anyhow::anyhow!("ChaCha20 AEAD sealing failed"))?;
             
-            // Prepend our ephemeral public key (32 bytes)
-            let mut final_payload = public.as_bytes().to_vec();
+            // Prepend the ML-KEM ciphertext (1088 bytes for ML-KEM-768) so the recipient can decapsulate
+            let mut final_payload = ciphertext.as_bytes().to_vec();
             final_payload.extend_from_slice(&in_out);
             final_payload
         };
@@ -211,7 +216,7 @@ impl CrdtBroadcaster {
         let copy_len = sender_id_bytes.len().min(32);
         sender_array[..copy_len].copy_from_slice(&sender_id_bytes[..copy_len]);
 
-        let recipient_array = recipient_node.unwrap_or([0xFF; 32]); // Broadcast if None
+        let recipient_array = [0xFF; 32]; // Handled by ML-KEM encapsulation directly via peer mapping
         let nonce = [0u8; 12];
         let kyber_sig = [0u8; 64];
 
@@ -242,12 +247,14 @@ impl CrdtBroadcaster {
 
 
 pub struct NodeIdentity { pub node_id: String, pub public_key: Vec<u8> }
-use ring::signature;
 pub struct PqcEngine;
 impl PqcEngine {
     pub fn verify_signature(payload: &[u8], sig: &[u8], pk: &[u8]) -> bool {
-        let unparsed_pk = signature::UnparsedPublicKey::new(&signature::ED25519, pk);
-        unparsed_pk.verify(payload, sig).is_ok()
+        // Enforce true Post-Quantum Digital Signature Verification using Dilithium5
+        if pk.len() != pqc_dilithium::mode5::PUBLICKEYBYTES || sig.len() != pqc_dilithium::mode5::BYTES {
+            return false;
+        }
+        pqc_dilithium::mode5::verify(sig, payload, pk).is_ok()
     }
 }
 
