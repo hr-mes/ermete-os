@@ -10,22 +10,17 @@ URL:            https://github.com/hr-mes/ermete-os
 Core component implementation for ermete-telemetry.
 
 %prep
-# Stub prep
+# No prep needed for local workspace build, sources are mounted directly
 
 %build
-# Implementazione Reale (Build)
-echo "Building ermete-telemetry..."
+%set_build_flags
+cd /forge/system/ermete-telemetry
+cargo build --release --offline
 
 %install
-# magic stub generator
-mkdir -p %{buildroot}
-
 mkdir -p %{buildroot}/usr/bin
-cat << 'BINEOF' > %{buildroot}/usr/bin/ermete-telemetry
-#!/bin/bash
-echo "Executing ermete-telemetry (Ermete OS Native Component)"
-BINEOF
-chmod +x %{buildroot}/usr/bin/ermete-telemetry
+install -m 755 /forge/system/ermete-telemetry/target/release/ermete-telemetry %{buildroot}/usr/bin/ermete-telemetry
 
 %files
 /usr/bin/ermete-telemetry
+

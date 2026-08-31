@@ -18,57 +18,16 @@ Ermete OS Userspace isolated Rust TCP/IP/IPv6 stack daemon (smoltcp + TUN/TAP / 
 providing micro-VM enclaves and system services zero-copy packet switching without Linux C networking overhead.
 
 %prep
-# Stub prep
+# No prep needed for local workspace build, sources are mounted directly
 
 %build
 %set_build_flags
-# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
-cargo build --release -p ermete-net-unikernel
+cd /forge/system/ermete-net-unikernel
+cargo build --release --offline
 
 %install
-# magic stub generator
-mkdir -p %{buildroot}
-mkdir -p $(dirname 755) && touch 755
-mkdir -p $(dirname target/release/ermete-net-unikernel) && touch target/release/ermete-net-unikernel
-
-rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/bin
-install -m 755 target/release/ermete-net-unikernel %{buildroot}/usr/bin/ermete-net-unikernel
-
-# systemd service
-mkdir -p %{buildroot}/usr/lib/systemd/system
-cat > %{buildroot}/usr/lib/systemd/system/ermete-net-unikernel.service <<EOF
-[Unit]
-Description=Ermete OS Isolated Rust Userspace TCP/IP Network Unikernel Daemon
-After=network.target dbus.service
-
-[Service]
-LockPersonality=true
-RestrictSUIDSGID=true
-RestrictRealtime=true
-MemoryDenyWriteExecute=true
-ProtectControlGroups=true
-ProtectKernelLogs=true
-ProtectKernelModules=true
-ProtectKernelTunables=true
-CPUWeight=200
-MemoryHigh=256M
-MemoryMax=512M
-OOMScoreAdjust=-300
-Type=simple
-ExecStart=/usr/bin/ermete-net-unikernel
-Restart=on-failure
-RestartSec=3s
-ProtectSystem=strict
-ProtectHome=yes
-PrivateTmp=true
-NoNewPrivileges=yes
-AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW CAP_BPF
-CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW CAP_BPF
-
-[Install]
-WantedBy=multi-user.target
-EOF
+install -m 755 /forge/system/ermete-net-unikernel/target/release/ermete-net-unikernel %{buildroot}/usr/bin/ermete-net-unikernel
 
 %post
 %systemd_post ermete-net-unikernel.service
@@ -86,3 +45,4 @@ EOF
 %changelog
 * Sat Aug 08 2026 Ermete Network Architect <network@ermete.os> - 1.0.0-1
 - Initial release of isolated userspace Rust TCP/IP/IPv6 stack daemon
+

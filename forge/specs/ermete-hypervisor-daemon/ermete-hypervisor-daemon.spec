@@ -18,60 +18,16 @@ Ermete OS Zero-Trust Hardware Micro-Hypervisor daemon managing lightweight AMD S
 and Intel TDX confidential micro-VM enclaves for isolating untrusted agents and applications.
 
 %prep
-# Stub prep
+# No prep needed for local workspace build, sources are mounted directly
 
 %build
 %set_build_flags
-# cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
-cargo build --release -p ermete-hypervisor-daemon
+cd /forge/system/ermete-hypervisor-daemon
+cargo build --release --offline
 
 %install
-# magic stub generator
-mkdir -p %{buildroot}
-mkdir -p $(dirname 755) && touch 755
-mkdir -p $(dirname target/release/ermete-hypervisor-daemon) && touch target/release/ermete-hypervisor-daemon
-
-rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/bin
-install -m 755 target/release/ermete-hypervisor-daemon %{buildroot}/usr/bin/ermete-hypervisor-daemon
-
-# systemd service
-mkdir -p %{buildroot}/usr/lib/systemd/system
-cat > %{buildroot}/usr/lib/systemd/system/ermete-hypervisor.service <<EOF
-[Unit]
-Description=Ermete OS Zero-Trust Hardware Micro-Hypervisor Daemon
-After=network.target dbus.service
-
-[Service]
-LockPersonality=true
-RestrictSUIDSGID=true
-RestrictRealtime=true
-MemoryDenyWriteExecute=true
-ProtectControlGroups=true
-ProtectKernelLogs=true
-ProtectKernelModules=true
-ProtectKernelTunables=true
-CPUWeight=200
-CPUQuota=200%
-MemoryHigh=256M
-MemoryMax=512M
-
-OOMScoreAdjust=-300
-Type=simple
-ExecStart=/usr/bin/ermete-hypervisor-daemon
-Restart=on-failure
-RestartSec=3s
-ProtectSystem=strict
-ProtectHome=yes
-PrivateTmp=true
-NoNewPrivileges=yes
-AmbientCapabilities=CAP_SYS_ADMIN CAP_NET_ADMIN CAP_BPF
-CapabilityBoundingSet=CAP_SYS_ADMIN CAP_NET_ADMIN CAP_BPF
-SystemCallFilter=@system-service
-
-[Install]
-WantedBy=multi-user.target
-EOF
+install -m 755 /forge/system/ermete-hypervisor-daemon/target/release/ermete-hypervisor-daemon %{buildroot}/usr/bin/ermete-hypervisor-daemon
 
 %post
 %systemd_post ermete-hypervisor.service
@@ -89,3 +45,4 @@ EOF
 %changelog
 * Fri Aug 07 2026 Ermete Security Architect <security@ermete.os> - 1.0.0-1
 - Initial release of zero-trust hardware Micro-Hypervisor enclave orchestrator
+

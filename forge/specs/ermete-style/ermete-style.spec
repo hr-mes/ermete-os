@@ -10,22 +10,17 @@ URL:            https://github.com/hr-mes/ermete-os
 Core component implementation for ermete-style.
 
 %prep
-# Stub prep
+# No prep needed for local workspace build, sources are mounted directly
 
 %build
-# Implementazione Reale (Build)
-echo "Building ermete-style..."
+%set_build_flags
+cd /forge/system/ermete-style
+cargo build --release --offline
 
 %install
-# magic stub generator
-mkdir -p %{buildroot}
-
 mkdir -p %{buildroot}/usr/bin
-cat << 'BINEOF' > %{buildroot}/usr/bin/ermete-style
-#!/bin/bash
-echo "Executing ermete-style (Ermete OS Native Component)"
-BINEOF
-chmod +x %{buildroot}/usr/bin/ermete-style
+install -m 755 /forge/system/ermete-style/target/release/ermete-style %{buildroot}/usr/bin/ermete-style
 
 %files
 /usr/bin/ermete-style
+

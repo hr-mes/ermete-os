@@ -10,22 +10,17 @@ URL:            https://github.com/hr-mes/ermete-os
 Core component implementation for ermete-init-oracle.
 
 %prep
-# Stub prep
+# No prep needed for local workspace build, sources are mounted directly
 
 %build
-# Implementazione Reale (Build)
-echo "Building ermete-init-oracle..."
+%set_build_flags
+cd /forge/system/ermete-init-oracle
+cargo build --release --offline
 
 %install
-# magic stub generator
-mkdir -p %{buildroot}
-
 mkdir -p %{buildroot}/usr/bin
-cat << 'BINEOF' > %{buildroot}/usr/bin/ermete-init-oracle
-#!/bin/bash
-echo "Executing ermete-init-oracle (Ermete OS Native Component)"
-BINEOF
-chmod +x %{buildroot}/usr/bin/ermete-init-oracle
+install -m 755 /forge/system/ermete-init-oracle/target/release/ermete-init-oracle %{buildroot}/usr/bin/ermete-init-oracle
 
 %files
 /usr/bin/ermete-init-oracle
+

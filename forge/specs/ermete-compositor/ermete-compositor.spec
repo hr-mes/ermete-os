@@ -10,22 +10,17 @@ URL:            https://github.com/hr-mes/ermete-os
 Core component implementation for ermete-compositor.
 
 %prep
-# Stub prep
+# No prep needed for local workspace build, sources are mounted directly
 
 %build
-# Implementazione Reale (Build)
-echo "Building ermete-compositor..."
+%set_build_flags
+cd /forge/system/ermete-compositor
+cargo build --release --offline
 
 %install
-# magic stub generator
-mkdir -p %{buildroot}
-
 mkdir -p %{buildroot}/usr/bin
-cat << 'BINEOF' > %{buildroot}/usr/bin/ermete-compositor
-#!/bin/bash
-echo "Executing ermete-compositor (Ermete OS Native Component)"
-BINEOF
-chmod +x %{buildroot}/usr/bin/ermete-compositor
+install -m 755 /forge/system/ermete-compositor/target/release/ermete-compositor %{buildroot}/usr/bin/ermete-compositor
 
 %files
 /usr/bin/ermete-compositor
+

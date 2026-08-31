@@ -10,22 +10,17 @@ URL:            https://github.com/hr-mes/ermete-os
 Core component implementation for ermete-cluster-mesh.
 
 %prep
-# Stub prep
+# No prep needed for local workspace build, sources are mounted directly
 
 %build
-# Implementazione Reale (Build)
-echo "Building ermete-cluster-mesh..."
+%set_build_flags
+cd /forge/system/ermete-cluster-mesh
+cargo build --release --offline
 
 %install
-# magic stub generator
-mkdir -p %{buildroot}
-
 mkdir -p %{buildroot}/usr/bin
-cat << 'BINEOF' > %{buildroot}/usr/bin/ermete-cluster-mesh
-#!/bin/bash
-echo "Executing ermete-cluster-mesh (Ermete OS Native Component)"
-BINEOF
-chmod +x %{buildroot}/usr/bin/ermete-cluster-mesh
+install -m 755 /forge/system/ermete-cluster-mesh/target/release/ermete-cluster-mesh %{buildroot}/usr/bin/ermete-cluster-mesh
 
 %files
 /usr/bin/ermete-cluster-mesh
+
