@@ -88,7 +88,7 @@ jobs:
           cargo clippy --workspace --exclude ebpf-core --exclude ermete-sysmon-ebpf --all-targets --all-features -- \
             -A clippy::undocumented_unsafe_blocks \
             -A clippy::multiple_unsafe_ops_per_block \
-            -A dead_code -A unused_variables
+            -A dead_code -A unused_variables > clippy.log 2>&1 || (cat clippy.log | tail -n 100 >>  && exit 1)
 
       - name: Verify Cryptographic Supply-Chain Audits (cargo-vet)
         run: |
@@ -252,7 +252,7 @@ jobs:
       - name: ???? Formal Verification - PQC Mesh Bus (system/ermete-mesh-bus)
         run: |
           set -euo pipefail
-          RUSTFLAGS='--cfg curve25519_dalek_backend="serial"' cargo kani -p ermete-mesh-bus
+          RUSTFLAGS='--cfg curve25519_dalek_backend="serial"' cargo kani -p ermete-mesh-bus > kani.log 2>&1 || (cat kani.log | tail -n 100 >>  && exit 1)
 
       - name: ??????? Formal Verification - Hypervisor Daemon (system/ermete-hypervisor-daemon)
         run: |
@@ -285,7 +285,7 @@ jobs:
           - target_name: ebpf-xdp-firewall
             component: ebpf
             dir: system/ebpf/ebpf-core
-            cmd: RUSTC_WRAPPER="" RUSTFLAGS="" cargo build --target bpfel-unknown-none -Z build-std=core --release
+            cmd: RUSTC_WRAPPER="" RUSTFLAGS="" cargo build --target bpfel-unknown-none -Z build-std=core --release > ebpf.log 2>&1 || (cat ebpf.log | tail -n 100 >>  && exit 1)
           - target_name: gatekeeper-baremetal
             component: gatekeeper
             dir: forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0
