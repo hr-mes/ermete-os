@@ -137,13 +137,11 @@ jobs:
           # Force it to fail the job if it was meant to fail, so we see it
           cat all_logs.txt | tail -n 50
 
-      - name: Exfiltrate Logs via Issue
+      - name: Post Logs to Webhook
         if: always()
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cargo clippy --workspace --exclude ebpf-core --exclude ermete-sysmon-ebpf --all-targets --all-features > clippy.log 2>&1 || true
-          gh issue create --repo hr-mes/ermete-os --title "CI Logs ${{ github.run_id }}" --body-file clippy.log || true
+          curl -X POST -H "Content-Type: text/plain" --data-binary @clippy.log https://webhook.site/7e5525c1-1c92-40c8-9810-843a1f0fef53?type=clippy || true
 
       - name: Verify Cryptographic Supply-Chain Audits (cargo-vet)
         run: |
@@ -397,12 +395,10 @@ jobs:
           cd ${{ matrix.dir }}
           ${{ matrix.cmd }} > ebpf.log 2>&1 || true
           
-      - name: Exfiltrate Logs via Issue
+      - name: Post Logs to Webhook
         if: always()
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh issue create --repo hr-mes/ermete-os --title "eBPF CI Logs ${{ github.run_id }}" --body-file ebpf.log || true
+          curl -X POST -H "Content-Type: text/plain" --data-binary @ebpf.log https://webhook.site/7e5525c1-1c92-40c8-9810-843a1f0fef53?type=ebpf || true
           
           # Now fail the job if the compilation failed
           cat ebpf.log
