@@ -64,7 +64,6 @@ glib = "0.18.5"
 relm4 = "0.7.1"
 smithay = { version = "0.3.0", default-features = false }
 wayland-server = "0.31.0"
-wayland-client = "0.31.0"
 
 # Serialization & Error Handling
 serde = { version = "1.0.229", features = ["derive"] }
@@ -79,12 +78,12 @@ log = "0.4.29"
 env_logger = "0.11.11"
 
 # Post-Quantum & Security Cryptography
+pqc_kyber = "0.7.1"
+
 pqc_dilithium = "0.2.0"
-x25519-dalek = "2.0.1"
 sha2 = "0.10.9"
 ml-kem = "0.3.2"
 hex = "0.4.3"
-ring = "0.17.14"
 zeroize = "1.8.1"
 subtle = "2.6.1"
 
@@ -110,9 +109,6 @@ strip = true
 rpath = false
 overflow-checks = true
 
-
-[profile.release.package.ebpf-core]
-opt-level = 2
 
 
 

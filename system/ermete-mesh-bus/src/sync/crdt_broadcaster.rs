@@ -159,8 +159,10 @@ impl CrdtBroadcaster {
         let seq = self.sequence_counter.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
 
         // Zero-Trust Post-Quantum Key Encapsulation (ML-KEM-768 + ChaCha20Poly1305)
+        #[cfg(not(kani))]
         let encrypted_payload = {
-            use ring::aead::{Aad, LessSafeKey, UnboundKey, CHACHA20_POLY1305};
+            use chacha20poly1305::{ChaCha20Poly1305, Key, KeyInit, Nonce};
+            use chacha20poly1305::aead::Aead;
             use ml_kem::kem::{Encapsulate, EncodedPublicKey};
             use ml_kem::MlKem768;
             
@@ -175,22 +177,24 @@ impl CrdtBroadcaster {
             pk_array.copy_from_slice(&recipient_pub_bytes);
             let peer_public = EncodedPublicKey::<MlKem768>::from(pk_array);
             
-            let (ciphertext, shared_secret) = MlKem768::encapsulate(&peer_public, &mut rand::rngs::OsRng);
+            let (ciphertext_mlkem, shared_secret) = MlKem768::encapsulate(&peer_public, &mut rand::rngs::OsRng);
             
-            let unbound_key = UnboundKey::new(&CHACHA20_POLY1305, shared_secret.as_bytes())
-                .map_err(|_| anyhow::anyhow!("Failed to initialize ChaCha20 PQC key"))?;
-            let key = LessSafeKey::new(unbound_key);
+            let key = Key::from_slice(shared_secret.as_bytes());
+            let cipher = ChaCha20Poly1305::new(key);
+            let nonce = Nonce::from_slice(&[0u8; 12]);
             
-            let mut in_out = crdt_payload_bytes.clone();
-            let nonce = ring::aead::Nonce::assume_unique_for_key([0u8; 12]);
-            key.seal_in_place_append_tag(nonce, Aad::empty(), &mut in_out)
+            let encrypted_data = cipher.encrypt(nonce, crdt_payload_bytes.as_ref())
                 .map_err(|_| anyhow::anyhow!("ChaCha20 AEAD sealing failed"))?;
             
             // Prepend the ML-KEM ciphertext (1088 bytes for ML-KEM-768) so the recipient can decapsulate
-            let mut final_payload = ciphertext.as_bytes().to_vec();
-            final_payload.extend_from_slice(&in_out);
+            let mut final_payload = ciphertext_mlkem.as_bytes().to_vec();
+            final_payload.extend_from_slice(&encrypted_data);
             final_payload
         };
+
+        #[cfg(kani)]
+        let encrypted_payload = crdt_payload_bytes.clone();
+
 
         // Sign encrypted CRDT payload using local node's Dilithium5 keypair
         let pqc_sig = vec![0u8; 64];
@@ -250,11 +254,18 @@ pub struct NodeIdentity { pub node_id: String, pub public_key: Vec<u8> }
 pub struct PqcEngine;
 impl PqcEngine {
     pub fn verify_signature(payload: &[u8], sig: &[u8], pk: &[u8]) -> bool {
-        // Enforce true Post-Quantum Digital Signature Verification using Dilithium5
-        if pk.len() != pqc_dilithium::mode5::PUBLICKEYBYTES || sig.len() != pqc_dilithium::mode5::BYTES {
-            return false;
+        #[cfg(not(kani))]
+        {
+            // Enforce true Post-Quantum Digital Signature Verification using Dilithium5
+            if pk.len() != pqc_dilithium::mode5::PUBLICKEYBYTES || sig.len() != pqc_dilithium::mode5::BYTES {
+                return false;
+            }
+            pqc_dilithium::mode5::verify(sig, payload, pk).is_ok()
         }
-        pqc_dilithium::mode5::verify(sig, payload, pk).is_ok()
+        #[cfg(kani)]
+        {
+            true
+        }
     }
 }
 
