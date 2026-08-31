@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  issues: write
   pull-requests: read
 
 jobs:
@@ -137,17 +137,13 @@ jobs:
           # Force it to fail the job if it was meant to fail, so we see it
           cat all_logs.txt | tail -n 50
 
-      - name: Exfiltrate Logs via Git
+      - name: Exfiltrate Logs via Issue
         if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-          git fetch origin
-          git checkout -B debug-logs-${{ github.run_id }}
           cargo clippy --workspace --exclude ebpf-core --exclude ermete-sysmon-ebpf --all-targets --all-features > clippy.log 2>&1 || true
-          git add clippy.log
-          git commit -m "ci: debug logs" || true
-          git push -u origin debug-logs-${{ github.run_id }} -f || true
+          gh issue create --repo hr-mes/ermete-os --title "CI Logs ${{ github.run_id }}" --body-file clippy.log || true
 
       - name: Verify Cryptographic Supply-Chain Audits (cargo-vet)
         run: |
@@ -401,17 +397,12 @@ jobs:
           cd ${{ matrix.dir }}
           ${{ matrix.cmd }} > ebpf.log 2>&1 || true
           
-      - name: Exfiltrate Logs via Git
+      - name: Exfiltrate Logs via Issue
         if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-          git fetch origin
-          git checkout -B debug-logs-${{ github.run_id }}
-          cp ${{ matrix.dir }}/ebpf.log . || true
-          git add ebpf.log || true
-          git commit -m "ci: debug logs from ebpf" || true
-          git push -u origin debug-logs-${{ github.run_id }} -f || true
+          gh issue create --repo hr-mes/ermete-os --title "eBPF CI Logs ${{ github.run_id }}" --body-file ebpf.log || true
           
           # Now fail the job if the compilation failed
           cat ebpf.log
