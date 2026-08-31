@@ -63,8 +63,6 @@ jobs:
       - name: ⚙️ Set Default Rust Toolchain & Install cargo-fuzz
         run: |
           set -euo pipefail
-          rustup default nightly
-          rustup component add rust-src
           nix profile install nixpkgs#cargo-fuzz nixpkgs#sccache
 
 

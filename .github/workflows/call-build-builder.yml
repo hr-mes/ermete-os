@@ -30,7 +30,6 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: ⚙️ Set Default Rust Toolchain
-        run: rustup default stable
       - name: ❄️ Install Nix (Bedrock Cache)
         uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
         with:

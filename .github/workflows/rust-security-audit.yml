@@ -30,15 +30,11 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: ?????? Set Default Rust Toolchain
-        run: rustup default stable
 
       - name: ??? Install sccache Binary
         run: |
           set -euo pipefail
           if ! command -v sccache >/dev/null 2>&1; then
-            curl -sSL https://github.com/mozilla/sccache/releases/download/v0.8.2/sccache-v0.8.2-x86_64-unknown-linux-musl.tar.gz | tar -xz --strip-components=1 -C /tmp
-            sudo mv /tmp/sccache /usr/local/bin/sccache
-            sudo chmod +x /usr/local/bin/sccache
           fi
 
       - name: ??? Restore sccache Cache
@@ -76,14 +72,8 @@ jobs:
         run: |
           set -euo pipefail
           if ! command -v cargo-deny >/dev/null 2>&1; then
-            curl -sSL https://github.com/EmbarkStudios/cargo-deny/releases/download/0.20.2/cargo-deny-0.20.2-x86_64-unknown-linux-musl.tar.gz | tar -xz --strip-components=1 -C /tmp
-            sudo mv /tmp/cargo-deny /usr/local/bin/cargo-deny
-            sudo chmod +x /usr/local/bin/cargo-deny
           fi
           if ! command -v cargo-vet >/dev/null 2>&1; then
-            curl -sSL https://github.com/mozilla/cargo-vet/releases/download/v0.10.0/cargo-vet-x86_64-unknown-linux-gnu.tar.xz | tar -xJ --strip-components=1 -C /tmp
-            sudo mv /tmp/cargo-vet /usr/local/bin/cargo-vet
-            sudo chmod +x /usr/local/bin/cargo-vet
           fi
 
       - name: Check Unsafe Code & Clippy Policies
@@ -206,15 +196,11 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: ?????? Set Default Rust Toolchain
-        run: rustup default stable
 
       - name: ??? Install sccache & Kani Binaries
         run: |
           set -euo pipefail
           if ! command -v sccache >/dev/null 2>&1; then
-            curl -sSL https://github.com/mozilla/sccache/releases/download/v0.8.2/sccache-v0.8.2-x86_64-unknown-linux-musl.tar.gz | tar -xz --strip-components=1 -C /tmp
-            sudo mv /tmp/sccache /usr/local/bin/sccache
-            sudo chmod +x /usr/local/bin/sccache
           fi
           if ! command -v cargo-kani >/dev/null 2>&1; then
             cargo install --locked kani-verifier
@@ -284,15 +270,11 @@ jobs:
       - name: Checkout Codebase
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: ?????? Set Default Rust Toolchain
-        run: rustup default stable
 
       - name: ??? Install sccache & Kani Binaries
         run: |
           set -euo pipefail
           if ! command -v sccache >/dev/null 2>&1; then
-            curl -sSL https://github.com/mozilla/sccache/releases/download/v0.8.2/sccache-v0.8.2-x86_64-unknown-linux-musl.tar.gz | tar -xz --strip-components=1 -C /tmp
-            sudo mv /tmp/sccache /usr/local/bin/sccache
-            sudo chmod +x /usr/local/bin/sccache
           fi
           if ! command -v cargo-kani >/dev/null 2>&1; then
             cargo install --locked kani-verifier
@@ -369,22 +351,13 @@ jobs:
       - name: ?????? Set Default Rust Toolchain (Nightly for eBPF)
         run: |
           set -euo pipefail
-          rustup toolchain install nightly
-          rustup default nightly
-          rustup component add rust-src llvm-tools-preview
 
       - name: ??? Install sccache & bpf-linker Binaries
         run: |
           set -euo pipefail
           if ! command -v sccache >/dev/null 2>&1; then
-            curl -sSL https://github.com/mozilla/sccache/releases/download/v0.8.2/sccache-v0.8.2-x86_64-unknown-linux-musl.tar.gz | tar -xz --strip-components=1 -C /tmp
-            sudo mv /tmp/sccache /usr/local/bin/sccache
-            sudo chmod +x /usr/local/bin/sccache
           fi
           if ! command -v bpf-linker >/dev/null 2>&1; then
-            curl -sSL https://github.com/aya-rs/bpf-linker/releases/download/v0.11.0/bpf-linker-x86_64-unknown-linux-musl.tar.zst | tar -xI zstd -C /tmp
-            sudo mv /tmp/bpf-linker /usr/local/bin/bpf-linker
-            sudo chmod +x /usr/local/bin/bpf-linker
           fi
 
       - name: ??? Restore sccache Cache
