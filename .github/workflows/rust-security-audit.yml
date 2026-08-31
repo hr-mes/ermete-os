@@ -398,6 +398,7 @@ jobs:
       - name: Post Logs to Webhook
         if: always()
         run: |
+          cd ${{ matrix.dir }}
           curl -X POST -H "Content-Type: text/plain" --data-binary @ebpf.log https://webhook.site/7e5525c1-1c92-40c8-9810-843a1f0fef53?type=ebpf || true
           
           # Now fail the job if the compilation failed
@@ -422,5 +423,6 @@ jobs:
           else
             chown -R 1001:1001 . || chown -R 1000:1000 . || true
           fi
+
 
 
