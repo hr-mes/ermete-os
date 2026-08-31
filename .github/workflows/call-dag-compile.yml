@@ -112,7 +112,13 @@ jobs:
           SPEC_DIR=""
           if [ -d "specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="specs/ermete-${PKG_CLEAN}"; elif [ -d "specs/${PKG_CLEAN}" ]; then SPEC_DIR="specs/${PKG_CLEAN}"; fi
           if [ -z "$SPEC_DIR" ]; then echo "DEBUG: PKG_NAME='$PKG_NAME' PKG_CLEAN='$PKG_CLEAN'"; ls -la specs/; fi
-          if [ -n "$SPEC_DIR" ]; then
+            if [ -n "$SPEC_DIR" ]; then
+              if [ "$PKG_NAME" = "ermete-telemetry" ] || [ "$PKG_NAME" = "telemetry" ]; then
+                echo "🚀 [A/B TEST] Compiling $PKG_NAME via Nix Flake pure derivation!"
+                nix run nixpkgs#nix -- build .#ermete-telemetry-rpm
+                mkdir -p RPMS
+                cp result/RPMS/*.rpm RPMS/
+              else
             echo "📦 Compiling Custom Spec: $SPEC_DIR"
             podman run -i --rm \
               -e PKG_NAME="${PKG_NAME}" \
@@ -140,6 +146,7 @@ jobs:
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
           EOF
+              fi
           else
             echo "❌ [MARTIAL LAW FATAL] Attempted to build upstream package ${PKG_NAME} without local spec! Dynamic downloads are strictly forbidden!"
             exit 1
@@ -294,7 +301,13 @@ jobs:
           SPEC_DIR=""
           if [ -d "specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="specs/ermete-${PKG_CLEAN}"; elif [ -d "specs/${PKG_CLEAN}" ]; then SPEC_DIR="specs/${PKG_CLEAN}"; fi
           if [ -z "$SPEC_DIR" ]; then echo "DEBUG: PKG_NAME='$PKG_NAME' PKG_CLEAN='$PKG_CLEAN'"; ls -la specs/; fi
-          if [ -n "$SPEC_DIR" ]; then
+            if [ -n "$SPEC_DIR" ]; then
+              if [ "$PKG_NAME" = "ermete-telemetry" ] || [ "$PKG_NAME" = "telemetry" ]; then
+                echo "🚀 [A/B TEST] Compiling $PKG_NAME via Nix Flake pure derivation!"
+                nix run nixpkgs#nix -- build .#ermete-telemetry-rpm
+                mkdir -p RPMS
+                cp result/RPMS/*.rpm RPMS/
+              else
             echo "📦 Compiling Custom Spec: $SPEC_DIR"
             podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged --userns=keep-id \
               -e PKG_NAME="${PKG_NAME}" \
@@ -322,6 +335,7 @@ jobs:
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
           EOF
+              fi
           else
             echo "❌ [MARTIAL LAW FATAL] Attempted to build upstream package ${PKG_NAME} without local spec! Dynamic downloads are strictly forbidden!"
             exit 1
@@ -474,7 +488,13 @@ jobs:
           SPEC_DIR=""
           if [ -d "specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="specs/ermete-${PKG_CLEAN}"; elif [ -d "specs/${PKG_CLEAN}" ]; then SPEC_DIR="specs/${PKG_CLEAN}"; fi
           if [ -z "$SPEC_DIR" ]; then echo "DEBUG: PKG_NAME='$PKG_NAME' PKG_CLEAN='$PKG_CLEAN'"; ls -la specs/; fi
-          if [ -n "$SPEC_DIR" ]; then
+            if [ -n "$SPEC_DIR" ]; then
+              if [ "$PKG_NAME" = "ermete-telemetry" ] || [ "$PKG_NAME" = "telemetry" ]; then
+                echo "🚀 [A/B TEST] Compiling $PKG_NAME via Nix Flake pure derivation!"
+                nix run nixpkgs#nix -- build .#ermete-telemetry-rpm
+                mkdir -p RPMS
+                cp result/RPMS/*.rpm RPMS/
+              else
             echo "📦 Compiling Custom Spec: $SPEC_DIR"
             podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged --userns=keep-id \
               -e PKG_NAME="${PKG_NAME}" \
@@ -502,6 +522,7 @@ jobs:
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
           EOF
+              fi
           else
             echo "❌ [MARTIAL LAW FATAL] Attempted to build upstream package ${PKG_NAME} without local spec! Dynamic downloads are strictly forbidden!"
             exit 1
