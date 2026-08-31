@@ -23,6 +23,7 @@ jobs:
       RUSTC_WRAPPER: sccache
       SCCACHE_DIR: /tmp/sccache
       CARGO_NET_RETRY: 10
+      LIBCLANG_PATH: /usr/lib/llvm-18/lib
     steps:
       - name: Checkout Code
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -171,6 +172,7 @@ jobs:
       RUSTC_WRAPPER: sccache
       SCCACHE_DIR: /tmp/sccache
       CARGO_NET_RETRY: 10
+      LIBCLANG_PATH: /usr/lib/llvm-18/lib
     strategy:
       fail-fast: false
       max-parallel: 20
@@ -270,6 +272,7 @@ jobs:
     timeout-minutes: 20
     env:
       CARGO_NET_RETRY: 10
+      LIBCLANG_PATH: /usr/lib/llvm-18/lib
 
     steps:
       - name: Checkout Codebase
@@ -330,6 +333,7 @@ jobs:
       RUSTC_WRAPPER: sccache
       SCCACHE_DIR: /tmp/sccache
       CARGO_NET_RETRY: 10
+      LIBCLANG_PATH: /usr/lib/llvm-18/lib
     strategy:
       fail-fast: false
       max-parallel: 20
