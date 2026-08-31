@@ -84,25 +84,8 @@ jobs:
         podman exec -e HARDWARE_HASH="${HARDWARE_HASH}" chimera-builder-${TARGET} bash -c "set -euo pipefail; \
           echo '=== Collecting AutoFDO Profiles ==='
           mkdir -p /forge/profiles
-          if [ -n \"\${HARDWARE_HASH:-}\" ]; then
-            echo 'Fetching hardware-specific profiles from decentralized cache...'
-            curl -sSfL \"https://telemetry.ermete-os.org/profiles/\${HARDWARE_HASH:-}/kernel_bolt.fdata\" -o /forge/profiles/kernel_bolt.fdata || echo 'No hardware-specific profile found. Operating without PGO/BOLT.'
-            
-            # 🛡️ ZERO-TRUST ENFORCEMENT: Crittografia obbligatoria sul PGO/BOLT
-            if [ -f /forge/profiles/kernel_bolt.fdata ]; then
-              echo 'Verifying BOLT Profile Authenticity via Cosign...'
-              curl -sSfL \"https://telemetry.ermete-os.org/profiles/\${HARDWARE_HASH:-}/kernel_bolt.fdata.sig\" -o /forge/profiles/kernel_bolt.fdata.sig || true
-              if [ -f /forge/profiles/kernel_bolt.fdata.sig ]; then
-                cosign verify-blob --key https://telemetry.ermete-os.org/telemetry.pub --signature /forge/profiles/kernel_bolt.fdata.sig /forge/profiles/kernel_bolt.fdata || { echo '❌ CRITICAL: Invalid BOLT profile signature! Supply Chain Attack averted.'; rm -f /forge/profiles/kernel_bolt.fdata; exit 1; }
-                echo '✅ BOLT Profile cryptographically verified.'
-              else
-                echo '⚠️ WARNING: No signature found for BOLT profile. Dropping payload to maintain Zero-Trust Air-Gap.'
-                rm -f /forge/profiles/kernel_bolt.fdata
-              fi
-            fi
-          else
-            echo 'Generic build requested. Skipping AutoFDO/BOLT profiling.'
-          fi
+          echo 'Fetching generic PGO/BOLT profile from CachyOS...'
+          curl -sSfL \"https://raw.githubusercontent.com/CachyOS/kernel-profiles/main/bolt/vmlinux.fdata\" -o /forge/profiles/kernel_bolt.fdata || echo 'No profile found. Operating without PGO/BOLT.'
         "
 
     - name: "⚙️ Phase 2: LLVM/ThinLTO & AutoFDO/BOLT Macro Injection"
