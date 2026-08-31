@@ -40,8 +40,33 @@
           '';
         };
 
-        packages = {
+        packages = rec {
           just-hermetic = pkgs.just;
+
+          ermete-telemetry-rpm = pkgs.runCommand "ermete-telemetry-rpm" {
+            nativeBuildInputs = [ pkgs.nfpm ];
+            # Dipende matematicamente dalla compilazione Rust pura
+            src = ermete-core;
+          } ''
+            mkdir -p $out/RPMS
+            cat > nfpm.yaml <<EOF
+name: "ermete-telemetry"
+arch: "x86_64"
+platform: "linux"
+version: "1.0.0"
+section: "default"
+priority: "extra"
+maintainer: "Ermete OS"
+description: "Ermete Telemetry Daemon"
+vendor: "Ermete OS"
+license: "MIT"
+contents:
+  - src: "$src/bin/ermete-telemetry"
+    dst: "/usr/bin/ermete-telemetry"
+EOF
+            # Infallibilità: Genera l'RPM senza root e senza dnf!
+            nfpm pkg --packager rpm --target $out/RPMS/ermete-telemetry.rpm
+          '';
 
           ermete-core = (pkgs.makeRustPlatform {
             cargo = rust-toolchain;
