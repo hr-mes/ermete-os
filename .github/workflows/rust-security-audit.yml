@@ -215,8 +215,6 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
-      RUSTC_WRAPPER: sccache
-      SCCACHE_DIR: /tmp/sccache
       CARGO_NET_RETRY: 10
 
     steps:
@@ -307,7 +305,7 @@ jobs:
           set -euo pipefail
           rustup toolchain install nightly
           rustup default nightly
-          rustup component add rust-src
+          rustup component add rust-src llvm-tools-preview
 
       - name: ??? Install sccache & bpf-linker Binaries
         run: |

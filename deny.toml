@@ -103,16 +103,16 @@ allow = [
     "Unicode-DFS-2016",
     "CC0-1.0",
     "LicenseRef-Upl",
-    "GPL-3.0-only",
-    "GPL-3.0-or-later",
-    "GPL-2.0-only",
-    "GPL-2.0-or-later",
-    "LGPL-3.0-only",
-    "LGPL-3.0-or-later",
-    "LGPL-2.0-only",
-    "LGPL-2.0-or-later",
-    "LGPL-2.1-only",
-    "LGPL-2.1-or-later",
+    "GPL-3.0",
+    "GPL-3.0+",
+    "GPL-2.0",
+    "GPL-2.0+",
+    "LGPL-3.0",
+    "LGPL-3.0+",
+    "LGPL-2.0",
+    "LGPL-2.0+",
+    "LGPL-2.1",
+    "LGPL-2.1+",
     "Unicode-3.0",
     "0BSD",
     "MPL-2.0",
@@ -181,7 +181,7 @@ allow = [
 # If true, workspace members are automatically allowed even when using deny-by-default
 # This is useful for organizations that want to deny all external dependencies by default
 # but allow their own workspace crates without having to explicitly list them
-allow-workspace = false
+# allow-workspace = false
 # List of crates to deny
 deny = [
     #"ansi_term@0.11.0",
