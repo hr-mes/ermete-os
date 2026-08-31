@@ -45,29 +45,6 @@ jobs:
       has_changes: ${{ steps.brain.outputs.has_changes }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - name: ⚙️ Set Default Rust Toolchain
-        run: rustup default stable
-      - name: ❄️ Install Nix (Bedrock Cache)
-        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
-        with:
-          extra_nix_config: "experimental-features = nix-command flakes"
-      - name: Align Repositories
-        run: cp builder/rpmfusion-custom.repo /etc/yum.repos.d/ 2>/dev/null || true
-      - name: Persist DAG State Cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: .cache
-          key: dag-cache-${{ github.run_id }}
-          restore-keys: |
-            dag-cache-
-
-      - name: Compute Dependency DAG & Topological Matrix (Nix Flake Hermetic Shell)
-        id: brain
-        run: ./scripts/dynamic-matrix.sh
-
-      - name: 🧹 Cleanup Workspace Permissions
-        if: always()
-        run: podman unshare chown -R $USER:$USER ${{ github.workspace }} || true
 
       - name: 🧹 Fix Workspace Permissions (GH Actions Cleanup)
         if: always()
@@ -107,3 +84,4 @@ jobs:
       builder_content_hash: ${{ needs.build-builder.outputs.content_hash }}
       has_changes: ${{ needs.orchestrator-brain.outputs.has_changes }}
     secrets: inherit
+

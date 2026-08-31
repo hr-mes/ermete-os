@@ -63,6 +63,7 @@ jobs:
         echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
         podman run -d --name chimera-builder-${TARGET} --pull=always \
           --cap-add SYS_ADMIN \
+          --userns=keep-id \\
           --security-opt label=disable \
           --security-opt seccomp=unconfined \
           -v ${{ github.workspace }}:/forge \
@@ -381,5 +382,6 @@ jobs:
           else
             chown -R 1001:1001 . || chown -R 1000:1000 . || true
           fi
+
 
 
