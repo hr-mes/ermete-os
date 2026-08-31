@@ -90,6 +90,18 @@ jobs:
             -A clippy::multiple_unsafe_ops_per_block \
             -A dead_code -A unused_variables > clippy.log 2>&1 || (cat clippy.log | tail -n 100 >>  && exit 1)
 
+
+      - name: Upload Logs Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-logs
+          path: |
+            clippy.log
+            ebpf.log
+            kani.log
+          if-no-files-found: ignore
+
       - name: Verify Cryptographic Supply-Chain Audits (cargo-vet)
         run: |
           set -euo pipefail
