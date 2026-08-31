@@ -10,12 +10,12 @@ members: 6
 **Members:** 6 nodes
 
 ## Members
-- [[AiIntent]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/types.rs
+- [[AiIntent]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/types.rs
 - [[String_7]] - code
 - [[Vec_4]] - code
-- [[WorkloadClassificationRequest]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/types.rs
-- [[WorkloadClassificationResponse]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/types.rs
-- [[types.rs]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/types.rs
+- [[WorkloadClassificationRequest]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/types.rs
+- [[WorkloadClassificationResponse]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/types.rs
+- [[types.rs]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/types.rs
 
 ## Live Query (requires Dataview plugin)
 

@@ -414,11 +414,11 @@ mod tests {
         let self_pid = std::process::id();
 
         // Attempting to freeze self PID must be blocked by protection
-        let result = scheduler.freeze_app(self_pid, "ermete-daemon-rs").await.unwrap();
+        let result = scheduler.freeze_app(self_pid, "ermete-daemon-rs").await.expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato.");
         assert!(!result);
 
         // Attempting to freeze PID 1 must be blocked
-        let result_init = scheduler.freeze_app(1, "systemd").await.unwrap();
+        let result_init = scheduler.freeze_app(1, "systemd").await.expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato.");
         assert!(!result_init);
     }
 
@@ -435,3 +435,4 @@ mod tests {
         assert!(!frozen.contains(&dummy_pid)); // Protected PID not frozen
     }
 }
+

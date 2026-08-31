@@ -30,3 +30,9 @@ subtle = { workspace = true }
 default = ["std"]
 std = []
 scudo_ffi = []
+
+[profile.release]
+lto = "thin"
+opt-level = 3
+codegen-units = 1
+panic = "abort"

@@ -30,3 +30,9 @@ wayland-server = { workspace = true }
 glam = { workspace = true }
 drm = "0.15.0"
 gbm = "0.18.0"
+
+[profile.release]
+lto = "thin"
+opt-level = 3
+codegen-units = 1
+panic = "abort"

@@ -10,21 +10,21 @@ members: 15
 **Members:** 15 nodes
 
 ## Members
-- [[.default()]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/npu/offloader.rs
-- [[.get_active_hardware_info()]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/npu/offloader.rs
-- [[.new()_1]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/npu/offloader.rs
-- [[.process_inference()]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/npu/offloader.rs
-- [[AccelerationBackend]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/npu/offloader.rs
+- [[.default()]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/npu/offloader.rs
+- [[.get_active_hardware_info()]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/npu/offloader.rs
+- [[.new()_1]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/npu/offloader.rs
+- [[.process_inference()]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/npu/offloader.rs
+- [[AccelerationBackend]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/npu/offloader.rs
 - [[Default]] - code
-- [[HardwareDeviceInfo]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/npu/offloader.rs
-- [[HardwareOffloader]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/npu/offloader.rs
-- [[OffloadPolicy]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/npu/offloader.rs
+- [[HardwareDeviceInfo]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/npu/offloader.rs
+- [[HardwareOffloader]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/npu/offloader.rs
+- [[OffloadPolicy]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/npu/offloader.rs
 - [[Result_3]] - code
 - [[Self_1]] - code
 - [[String_3]] - code
 - [[Vec_1]] - code
-- [[mod.rs]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/npu/mod.rs
-- [[offloader.rs]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/npu/offloader.rs
+- [[mod.rs]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/npu/mod.rs
+- [[offloader.rs]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/npu/offloader.rs
 
 ## Live Query (requires Dataview plugin)
 

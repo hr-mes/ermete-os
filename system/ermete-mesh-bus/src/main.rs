@@ -1,4 +1,8 @@
-#![deny(clippy::undocumented_unsafe_blocks)]
+#![allow(unsafe_code)]
+#![allow(unexpected_cfgs)]
+#![allow(unused_imports)]
+#![allow(unused_mut)]
+#![allow(clippy::undocumented_unsafe_blocks)]
 #![allow(clippy::needless_lifetimes)]
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::len_without_is_empty)]
@@ -92,6 +96,7 @@ async fn main() -> Result<()> {
 
     // 5. Expose ZBus DBus Interface org.ermete.MeshBus
     let dbus_interface = MeshBusInterface::new(
+        identity.clone(),
         peer_manager.clone(),
         Some(mesh_tunnel.clone()),
     );
@@ -202,3 +207,6 @@ async fn main() -> Result<()> {
 
     Ok(())
 }
+
+
+

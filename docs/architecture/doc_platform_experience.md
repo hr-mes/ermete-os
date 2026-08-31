@@ -42,7 +42,7 @@ Ermete OS √® per sua natura un sistema ostile al software legacy. Il filesystem 
 
 ### Flatpak come Standard Assoluto
 Tutte le applicazioni grafiche utente (Browser, Editor, Media Player) esistono esclusivamente sotto forma di **Container Flatpak** (o OCI) sottoposti a verifica SLSA Level 4.
-Queste app operano in un sandbox stretto (Bubblewrap). Se scarichi un PDF maligno tramite il browser, l'exploit rimane confinato nel filesystem effimero del browser e non pu√≤ toccare la root del sistema o i tuoi documenti personali senza passare per i portali XDG (`xdg-desktop-portal-ermete`).
+Queste app operano in un sandbox stretto (Bubblewrap). Se scarichi un PDF maligno tramite il browser, l'exploit rimane confinato nel filesystem effimero del browser e non pu√≤ toccare la root del sistema o i tuoi documenti personali senza passare per i portali XDG (`xdg-desktop-portal-ermete`), i quali operano sotto una rigorosa policy **Fail-Closed Zero-Trust** (nessun permesso viene accordato in caso di errore di sistema).
 
 ### Le App Predefinite Minimali
 Al primo avvio, l'OS fornisce un set di strumenti essenziali curati per non violare l'isolamento:
@@ -59,5 +59,6 @@ L'anello di congiunzione tra l'utente avanzato e la documentazione del sistema √
 ### Motore Astro.js e Ricerca Pagefind
 Il codice in `system/portal/` genera un sito web statico compresso ad altissime prestazioni. Utilizza `Pagefind` per offrire una barra di ricerca istantanea (Zero-JS) che indicizza tutta l'architettura dell'OS, i log di sistema e i comandi utili.
 
-### Traduzione Neurale Offline
-L'aspetto pi√π avanzato del portale √® la sua integrazione con il demone AI locale (`ermete-ai-daemon`). Invece di affidarsi a servizi cloud per la traduzione, il portale utilizza il modello IA sulla NPU/GPU locale per tradurre i documenti, le notifiche di sistema e i log complessi in italiano, inglese, spagnolo o cinese in tempo reale, garantendo il 100% di privacy. Questo strumento fa s√¨ che l'utente abbia a disposizione un "esperto" residente nella macchina, in grado di spiegare l'OS senza mai inviare dati su internet.
+### Ricerca e Documentazione (Zero-JS e Zero-AI)
+L'aspetto pi˘ avanzato del portale Ë la sua staticit‡ estrema. Invece di affidarsi a instabili demoni di traduzione AI (ormai rimossi dall'OS) o pesanti framework JavaScript, il portale utilizza **Astro.js e Pagefind**. L'indicizzazione e la traduzione dei documenti avvengono in fase di build statica, permettendo una ricerca fulminea e a zero overhead sulla macchina locale.
+

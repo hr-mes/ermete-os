@@ -132,6 +132,12 @@ impl CrosvmInstance {
             cmd.arg("--wayland-sock").arg(wsock);
         }
 
+        // Mesh-Bus Integration
+        if self.config.enable_gpu { // Reusing flag for simplicity in setup
+            info!("Crosvm [{}]: Attaching TAP device to Ermete Mesh-Bus for Zero-Trust P2P networking", self.id);
+            cmd.arg("--net").arg("tap-name=ermete-mesh-tap0");
+        }
+
         // 2. GPU Acceleration (--gpu)
         if self.config.enable_gpu {
             info!("Crosvm [{}]: Enabling Hardware GPU acceleration", self.id);
@@ -266,3 +272,4 @@ mod tests {
         Ok(())
     }
 }
+

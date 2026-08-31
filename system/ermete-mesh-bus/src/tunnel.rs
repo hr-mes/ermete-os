@@ -1,5 +1,5 @@
 type SecretSessionKey = [u8; 32];
-struct HandshakeSession {}
+struct HandshakeSession { session_key: SecretSessionKey }
 use anyhow::{anyhow, Result};
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -118,7 +118,7 @@ impl MeshTunnel {
         // Iniezione diretta della Pre-Shared Key (PSK) crittografica nel modulo WireGuard del Kernel
         if std::path::Path::new(&psk_path).exists() {
             let _ = std::process::Command::new("wg")
-                .args(&["set", "wg0", "peer", &init_data.sender_node_id, "preshared-key", &psk_path])
+                .args(["set", "wg0", "peer", &init_data.sender_node_id, "preshared-key", &psk_path])
                 .status();
         }
         let response = ();
@@ -153,7 +153,7 @@ impl MeshTunnel {
             .get_dilithium_pk_bytes(&resp_data.responder_node_id)
             .await?;
 
-        let session = self
+        let _session = self
             .pending_handshakes
             .lock()
             .await
@@ -168,7 +168,7 @@ impl MeshTunnel {
 
         if std::path::Path::new(&psk_path).exists() {
             let _ = std::process::Command::new("wg")
-                .args(&["set", "wg0", "peer", &resp_data.responder_node_id, "preshared-key", &psk_path])
+                .args(["set", "wg0", "peer", &resp_data.responder_node_id, "preshared-key", &psk_path])
                 .status();
         }
 
@@ -213,9 +213,28 @@ impl MeshTunnel {
         let session_key = self.peer_manager.get_active_session_key(&peer_id).await
             .map_err(|_| anyhow!("Dropping unauthenticated packet: No PQC session key established!"))?;
 
-        // Cryptographic rejection of plaintext
-        let decrypted_payload = Ok(payload.to_vec())
-            .map_err(|e| anyhow!("PQC AES-GCM Decryption failed, dropping malicious frame: {}", e))?;
+        // Cryptographic rejection of plaintext (Real Implementation)
+        let unbound_key = ring::aead::UnboundKey::new(&ring::aead::CHACHA20_POLY1305, &session_key)
+            .map_err(|_| anyhow!("Failed to create CHACHA20 key from session key"))?;
+        let opening_key = ring::aead::LessSafeKey::new(unbound_key);
+        
+        let mut in_out = payload.to_vec();
+        // The nonce must be exactly 12 bytes. For this mesh, we extract it from the first 12 bytes of the payload (or header).
+        if in_out.len() < 12 {
+            return Err(anyhow!("Payload too short to contain nonce"));
+        }
+        let (nonce_bytes, ciphertext) = in_out.split_at(12);
+        let mut nonce_arr = [0u8; 12];
+        nonce_arr.copy_from_slice(nonce_bytes);
+        let nonce = ring::aead::Nonce::assume_unique_for_key(nonce_arr);
+
+        // In-place decryption. If MAC is invalid, this returns an Error.
+        let mut ciphertext_vec = ciphertext.to_vec();
+        let decrypted_payload_len = opening_key.open_in_place(nonce, ring::aead::Aad::empty(), &mut ciphertext_vec)
+            .map_err(|_| anyhow!("AEAD Decryption/Auth failed! Dropping malicious or corrupted frame."))?.len();
+        
+        ciphertext_vec.truncate(decrypted_payload_len);
+        let decrypted_payload = ciphertext_vec;
 
         let frame = IngressDataFrame {
             src_addr,
@@ -254,7 +273,7 @@ impl MeshTunnel {
             .unwrap_or_default()
             .as_secs();
 
-        let init_payload = HandshakeInitPayload { timestamp, ephemeral_pk: vec![] }; let session = HandshakeSession { session_key: [0u8; 32] };
+        let init_payload = HandshakeInitPayload { sender_node_id: "local_node".to_string(), timestamp, ephemeral_pk: vec![] }; let session = HandshakeSession { session_key: [0u8; 32] };
         
         self.pending_handshakes
             .lock()
@@ -277,4 +296,15 @@ impl MeshTunnel {
 }
 
 
-pub struct HandshakeInitPayload { pub timestamp: u64, pub ephemeral_pk: Vec<u8> }
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct HandshakeResponsePayload { pub responder_node_id: String, pub timestamp: u64, pub ephemeral_pk: Vec<u8> }
+
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct HandshakeInitPayload { pub sender_node_id: String, pub timestamp: u64, pub ephemeral_pk: Vec<u8> }
+
+
+
+
+
+
+

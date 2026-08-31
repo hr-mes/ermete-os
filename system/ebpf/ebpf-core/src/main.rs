@@ -299,6 +299,9 @@ fn process_tcp(ctx: &XdpContext, offset: usize) -> Result<u32, ()> {
     Ok(xdp_action::XDP_PASS)
 }
 
+#[map]
+static AUTHORIZED_PEERS: HashMap<[u8; 32], u8> = HashMap::with_max_entries(1024, 0);
+
 fn process_udp(ctx: &XdpContext, offset: usize) -> Result<u32, ()> {
     let data = ctx.data();
     let data_end = ctx.data_end();
@@ -308,15 +311,43 @@ fn process_udp(ctx: &XdpContext, offset: usize) -> Result<u32, ()> {
     }
 
     let udphdr: *const UdpHdr = ptr_at(ctx, offset)?;
-    // SAFETY: Memory bounds verified by prior checks or eBPF verifier
+    // SAFETY: Memory bounds verified by prior checks
     let dest_port = u16::from_be(unsafe { (*udphdr).dest });
 
     // Zero-Trust Port Authorization Check
     if is_zero_trust_enabled() {
-        // SAFETY: Memory bounds verified by prior checks or eBPF verifier
         if unsafe { ALLOWED_PORTS.get(&dest_port) }.is_none() {
             increment_stat(STAT_DROP_UNAUTHORIZED_PORT);
-            warn!(ctx, "XDP_DROP: Unauthorized UDP destination port: {}", dest_port);
+            warn!(ctx, "XDP_DROP: Unauthorized UDP port: {}", dest_port);
+            return Ok(xdp_action::XDP_DROP);
+        }
+    }
+
+    // XDP OFFLOAD: Ermete Mesh Bus (Port 51820)
+    // Validate structural integrity of the MeshHeader in Ring-0 to defeat DDoS
+    if dest_port == 51820 {
+        let payload_offset = offset + mem::size_of::<UdpHdr>();
+        // Check if we have enough bytes for Magic Bytes (4) + Version (2) + Type (1) + Flags (1) + Seq (8) + Sender (32)
+        if data_end >= data + payload_offset + 48 {
+            let magic_ptr = (data + payload_offset) as *const [u8; 4];
+            let sender_ptr = (data + payload_offset + 16) as *const [u8; 32]; // offset to sender_node_id
+
+            // SAFETY: Bounds checked right above
+            let magic = unsafe { *magic_ptr };
+            if magic != [b'E', b'R', b'M', b'Q'] {
+                increment_stat(STAT_DROP_INVALID_HDR);
+                warn!(ctx, "XDP_DROP: Invalid Mesh Bus Magic Bytes!");
+                return Ok(xdp_action::XDP_DROP);
+            }
+
+            let sender_id = unsafe { *sender_ptr };
+            // Look up Session IDs in the BPF HashMap to drop unauthorized peers instantly.
+            if unsafe { AUTHORIZED_PEERS.get(&sender_id) }.is_none() {
+                warn!(ctx, "XDP_DROP: Unauthorized Mesh Node ID!");
+                return Ok(xdp_action::XDP_DROP);
+            }
+        } else {
+            // Packet is too small to even be a Mesh Packet
             return Ok(xdp_action::XDP_DROP);
         }
     }

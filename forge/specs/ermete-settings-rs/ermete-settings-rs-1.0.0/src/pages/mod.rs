@@ -20,3 +20,5 @@ pub mod continuity;
 pub mod a11y;
 
 pub mod updates;
+
+pub mod security_audit;

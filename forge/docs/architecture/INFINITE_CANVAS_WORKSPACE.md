@@ -16,3 +16,4 @@ Ermete OS is evolving beyond the archaic concept of discrete, compartmentalized 
 ## User Experience
 - **Spatial Memory**: Users map tasks to physical locations on their canvas, leveraging human spatial memory instead of abstract workspace numbers.
 - **Context Clusters**: Applications related to the same task (e.g., an IDE, a browser, and a terminal) can be clustered together. Zooming out treats the cluster as a single node on the macro-canvas.
+

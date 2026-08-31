@@ -59,9 +59,10 @@ Both daemons are engineered in **Pure Rust**, leveraging the `mimalloc` high-per
 4. **`bluetooth.rs` (`os.ermete.Bedrock.Bluetooth`)**:
    - **BlueZ Integration**: Interoperates with BlueZ (`org.bluez`) on `/org/bluez/hci0` via `PropertiesProxy` and `ObjectManagerProxy` to enumerate paired/connected Bluetooth peripherals.
 
-5. **`portal.rs` & `portal_screencast.rs` (XDG Desktop Portal Implementation)**:
+5. **`portal.rs` & `portal_screencast.rs` (Strict Fail-Closed XDG Desktop Portal)**:
+   - **Zero-Trust Fail-Closed Policy**: If permission prompts fail, or if Micro-VM DBus authentication cannot be established via `org.ermete.Hypervisor`, the portal enforces a strict `return false` (denial by default). String-based application ID spoofing is architecturally rejected.
    - **`org.freedesktop.impl.portal.Settings`**: Exposes desktop theme tokens read reactively from `watch::Receiver<AppearanceDomainState>`.
-   - **`org.freedesktop.impl.portal.ScreenCast` & `RemoteDesktop`**: Manages screen capture sessions for the **Niri** Wayland compositor. Communicates directly over the compositor UNIX socket (`$NIRI_SOCKET`) via `OutputDiscovery::query_niri_outputs()` to map physical displays and resolve PipeWire node IDs (`PipeWireStreamManager::resolve_pipewire_node`).
+   - **`org.freedesktop.impl.portal.ScreenCast`**: Rejects mocked or insecure `/dev/null` PipeWire stream passing. Acknowledges missing features explicitly via DBus Errors instead of presenting a fake success surface.
 
 6. **`voiceover.rs` (`os.ermete.VoiceOver`)**:
    - Monitors state from `watch::Receiver<VoiceOverDomainState>` and forwards text payloads to `os.ermete.VoiceOverWorker`.
@@ -217,3 +218,4 @@ graph TD
     DM -- UNIX Socket Query --> NIRI
     DM -- Stream Node Resolution --> PW
 ```
+

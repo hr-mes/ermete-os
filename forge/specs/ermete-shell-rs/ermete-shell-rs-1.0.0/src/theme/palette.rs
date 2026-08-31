@@ -454,10 +454,11 @@ mod tests {
 
         let palette = Material3Palette::extract_from_wallpaper(Some(&wallpaper), true);
         let out_css = tmp.join("theme.css");
-        palette.write_to_file(&out_css).unwrap();
+        palette.write_to_file(&out_css).expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato.");
 
         assert!(out_css.exists());
-        let content = std::fs::read_to_string(&out_css).unwrap();
+        let content = std::fs::read_to_string(&out_css).expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato.");
         assert!(content.contains("@define-color primary"));
     }
 }
+

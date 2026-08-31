@@ -1,7 +1,8 @@
 #![allow(unsafe_code)]
 #![allow(clippy::undocumented_unsafe_blocks)]
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
+use std::os::unix::fs::OpenOptionsExt;
 use std::sync::{RwLock, OnceLock};
 use tracing::info;
 use serde::{Deserialize, Serialize};
@@ -39,6 +40,9 @@ impl Default for EbpfJitCompiler {
 }
 
 impl EbpfJitCompiler {
+    pub fn dispatch(&self, _action: &str, _arg: &str) -> Option<String> { None }
+    pub fn get_status(&self) -> String { "ok".to_string() }
+
     pub fn new() -> Self {
         Self {
             output_dir: PathBuf::from("/tmp/ermete-patches"),
@@ -218,6 +222,9 @@ impl LivePatchManager {
         })
     }
 
+    pub fn dispatch(&self, _action: &str, _arg: &str) -> Option<String> { None }
+    pub fn get_status(&self) -> String { "ok".to_string() }
+
     pub fn jit_compile_patch(&self, rust_source: &str, patch_id: &str) -> Result<CompiledEbpfArtifact, String> {
         let compiler = EbpfJitCompiler::new();
         let artifact = compiler.compile_and_validate(rust_source, patch_id)?;
@@ -246,3 +253,5 @@ mod tests {
         assert_eq!(compiler.output_dir, custom_dir);
     }
 }
+
+

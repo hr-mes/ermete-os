@@ -1,3 +1,4 @@
+use drm::Device;
 use anyhow::{Context, Result};
 use std::fs::OpenOptions;
 use std::os::unix::io::{AsFd, BorrowedFd, AsRawFd, RawFd};
@@ -7,7 +8,7 @@ use drm::control::Device as ControlDevice;
 pub struct Card(std::fs::File);
 
 impl AsFd for Card {
-    fn as_fd(&celf) -> BorrowedFd<'_> {
+    fn as_fd(&self) -> BorrowedFd<'_> {
         self.0.as_fd()
     }
 }
@@ -105,7 +106,7 @@ impl DrmKmsBackend {
             
             self.active_cards = cards;
             self.is_headless = false;
-            info!( DRM/KMS hardware backend successfully initialized with real ioctls.");
+            info!("DRM/KMS hardware backend successfully initialized with real ioctls.");
         } else if self.config.allow_headless_fallback {
             warn!("No DRM/KMS device nodes (/dev/dri/card*) detected or accessible. Falling back to headless virtual output backend.");
             self.is_headless = true;
@@ -116,3 +117,5 @@ impl DrmKmsBackend {
         Ok(())
     }
 }
+
+

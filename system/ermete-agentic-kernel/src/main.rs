@@ -1,6 +1,8 @@
+#![allow(unsafe_code)]
 
 pub mod auto_healer;
-pub mod ebpf_monitor;
+pub mod ai_predictor;
+mod ebpf_monitor;
 pub mod hot_patcher;
 
 use auto_healer::AutoHealer;
@@ -94,3 +96,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+
+

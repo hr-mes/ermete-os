@@ -165,7 +165,7 @@ mod tests {
         // 8000x8000 32bpp (stride 32000) -> 256,000,000 bytes (244 MB) -> Should pass
         let res = guard.validate_buffer_allocation(8000, 8000, 32000, 0);
         assert!(res.is_ok());
-        assert_eq!(res.unwrap(), 256_000_000);
+        assert_eq!(res.expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato."), 256_000_000);
 
         // 16000x16000 32bpp (stride 64000) -> 1,024,000,000 bytes (976 MB) -> Exceeds 512MB limit -> Should be rejected
         let res = guard.validate_buffer_allocation(16000, 16000, 64000, 0);
@@ -227,3 +227,4 @@ mod tests {
         );
     }
 }
+

@@ -181,7 +181,7 @@ mod tests {
         }
 
         let wallpaper_str = wallpaper.to_str().expect("wallpaper path UTF-8");
-        apply_dynamic_theme(wallpaper_str, "prefer-dark").await.unwrap();
+        apply_dynamic_theme(wallpaper_str, "prefer-dark").await.expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato.");
 
         let cfg_dir = config_dir();
         let theme_css = cfg_dir.join("theme.css");
@@ -191,4 +191,5 @@ mod tests {
         assert!(content.contains("@define-color surface"));
     }
 }
+
 

@@ -15,13 +15,11 @@ members = [
     "forge/specs/ermete-store-rs/ermete-store-rs-1.0.0",
     "forge/specs/ermete-sysmon-ebpf/ermete-sysmon-ebpf-1.0.0",
     "forge/specs/ermete-xdg-desktop-portal-ermete/xdg-desktop-portal-ermete-1.0.0",
-    "forge/specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0",
     "forge/specs/ermete-niri-ipc",
     "system/confidential_computing/ermete-attestation",
     "system/ebpf/ebpf-core",
     "system/ebpf/ebpf-loader",
     "system/ermete-agentic-kernel",
-    "system/ermete-audio-bus",
     "system/ermete-bus-api",
     "system/ermete-cluster-mesh",
     "system/ermete-compositor",
@@ -29,7 +27,6 @@ members = [
     "system/ermete-greeter",
     "system/ermete-hypervisor-daemon",
     "system/ermete-init-oracle",
-    "system/ermete-kernel-forge",
     "system/ermete-mesh-bus",
     "system/ermete-net-unikernel",
     "system/ermete-store",
@@ -82,10 +79,10 @@ log = "0.4.29"
 env_logger = "0.11.11"
 
 # Post-Quantum & Security Cryptography
-pqc_kyber = "0.7.1"
 pqc_dilithium = "0.2.0"
 x25519-dalek = "2.0.1"
 sha2 = "0.10.9"
+ml-kem = "0.3.2"
 hex = "0.4.3"
 ring = "0.17.14"
 zeroize = "1.8.1"
@@ -113,8 +110,9 @@ strip = true
 rpath = false
 overflow-checks = true
 
-[profile.release.package.ermete-ai-daemon]
-opt-level = 3
 
 [profile.release.package.ebpf-core]
 opt-level = 2
+
+
+

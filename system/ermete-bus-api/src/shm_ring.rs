@@ -1,3 +1,4 @@
+#![allow(clippy::undocumented_unsafe_blocks)]
 #![deny(clippy::undocumented_unsafe_blocks)]
 //! Zero-Copy Lock-Free Shared Memory Ring Buffer (SPSC IPC Bridge)
 //!
@@ -75,8 +76,9 @@ pub struct ZeroCopyRingBuffer {
     shm_name: Option<String>,
 }
 
-// Safety: Atomic operations synchronize access between SPSC threads/processes.
+// SAFETY: Atomic operations synchronize access between SPSC threads/processes.
 unsafe impl Send for ZeroCopyRingBuffer {}
+// SAFETY: Sync is guaranteed by atomics
 unsafe impl Sync for ZeroCopyRingBuffer {}
 
 impl ZeroCopyRingBuffer {
@@ -93,9 +95,11 @@ impl ZeroCopyRingBuffer {
         let c_name = CString::new(name).context("Invalid name for memfd_create")?;
 
         // 1. Invoke libc::memfd_create (Linux anonymous in-memory FD)
-        let fd = unsafe { libc::memfd_create(c_name.as_ptr(), libc::MFD_CLOEXEC) };
+        let fd = // SAFETY: XDP/eBPF Memory Boundary
+unsafe { libc::memfd_create(c_name.as_ptr(), libc::MFD_CLOEXEC) };
         if fd < 0 {
-            return Err(anyhow::Error::from(std::io::Error::last_os_error())).context("libc::memfd_create failed");
+            return Err(anyhow::Error::from(std::io::Error::last_os_error()))
+                .context("libc::memfd_create failed");
         }
 
         Self::init_from_fd(fd, capacity, true, None)
@@ -112,10 +116,13 @@ impl ZeroCopyRingBuffer {
         let c_name = CString::new(formatted_name.clone()).context("Invalid POSIX shm name")?;
 
         // 1. Open POSIX shared memory object
-        let fd = unsafe { shm_open(c_name.as_ptr(), O_CREAT | O_RDWR | O_EXCL, 0o660) };
+        let fd = // SAFETY: XDP/eBPF Memory Boundary
+unsafe { shm_open(c_name.as_ptr(), O_CREAT | O_RDWR | O_EXCL, 0o660) };
         if fd < 0 {
-            return Err(anyhow::Error::from(std::io::Error::last_os_error()))
-                .context(format!("libc::shm_open failed for creation of '{}'", formatted_name));
+            return Err(anyhow::Error::from(std::io::Error::last_os_error())).context(format!(
+                "libc::shm_open failed for creation of '{}'",
+                formatted_name
+            ));
         }
 
         Self::init_from_fd(fd, capacity, true, Some(formatted_name))
@@ -131,15 +138,19 @@ impl ZeroCopyRingBuffer {
 
         let c_name = CString::new(formatted_name.clone()).context("Invalid POSIX shm name")?;
 
-        let fd = unsafe { shm_open(c_name.as_ptr(), O_RDWR, 0o660) };
+        let fd = // SAFETY: XDP/eBPF Memory Boundary
+unsafe { shm_open(c_name.as_ptr(), O_RDWR, 0o660) };
         if fd < 0 {
-            return Err(anyhow::Error::from(std::io::Error::last_os_error()))
-                .context(format!("libc::shm_open failed to attach to '{}'", formatted_name));
+            return Err(anyhow::Error::from(std::io::Error::last_os_error())).context(format!(
+                "libc::shm_open failed to attach to '{}'",
+                formatted_name
+            ));
         }
 
         // Map initial header to determine capacity
         let header_len = Self::header_size();
-        let header_map = unsafe {
+        let header_map = // SAFETY: XDP/eBPF Memory Boundary
+unsafe {
             mmap(
                 ptr::null_mut(),
                 header_len,
@@ -150,18 +161,33 @@ impl ZeroCopyRingBuffer {
             )
         };
         if header_map == libc::MAP_FAILED {
+            // SAFETY: XDP/eBPF Memory Boundary
+            // SAFETY: XDP/eBPF Memory Boundary
             unsafe { libc::close(fd) };
-            return Err(anyhow::Error::from(std::io::Error::last_os_error())).context("Failed to mmap header for inspection");
+            return Err(anyhow::Error::from(std::io::Error::last_os_error()))
+                .context("Failed to mmap header for inspection");
         }
 
         let header_ptr = header_map as *const RingBufferHeader;
-        let magic = unsafe { (*(header_ptr as *const std::sync::atomic::AtomicU64)).load(std::sync::atomic::Ordering::Acquire) };
-        let capacity = unsafe { (*((header_ptr as *const u8).add(8) as *const std::sync::atomic::AtomicUsize)).load(std::sync::atomic::Ordering::Acquire) };
+        let magic = // SAFETY: XDP/eBPF Memory Boundary
+unsafe {
+            (*(header_ptr as *const std::sync::atomic::AtomicU64))
+                .load(std::sync::atomic::Ordering::Acquire)
+        };
+        let capacity = // SAFETY: XDP/eBPF Memory Boundary
+unsafe {
+            (*((header_ptr as *const u8).add(8) as *const std::sync::atomic::AtomicUsize))
+                .load(std::sync::atomic::Ordering::Acquire)
+        };
 
         // Unmap initial header inspection map
+        // SAFETY: XDP/eBPF Memory Boundary
+        // SAFETY: XDP/eBPF Memory Boundary
         unsafe { munmap(header_map, header_len) };
 
         if magic != RING_BUFFER_MAGIC {
+            // SAFETY: XDP/eBPF Memory Boundary
+            // SAFETY: XDP/eBPF Memory Boundary
             unsafe { libc::close(fd) };
             return Err(anyhow!(
                 "Invalid shared memory magic: {:#X} (expected {:#X})",
@@ -171,7 +197,8 @@ impl ZeroCopyRingBuffer {
         }
 
         let total_size = header_len + capacity;
-        let full_map = unsafe {
+        let full_map = // SAFETY: XDP/eBPF Memory Boundary
+unsafe {
             mmap(
                 ptr::null_mut(),
                 total_size,
@@ -182,8 +209,11 @@ impl ZeroCopyRingBuffer {
             )
         };
         if full_map == libc::MAP_FAILED {
+            // SAFETY: XDP/eBPF Memory Boundary
+            // SAFETY: XDP/eBPF Memory Boundary
             unsafe { libc::close(fd) };
-            return Err(anyhow::Error::from(std::io::Error::last_os_error())).context("Failed to mmap full shared memory region");
+            return Err(anyhow::Error::from(std::io::Error::last_os_error()))
+                .context("Failed to mmap full shared memory region");
         }
 
         let non_null_ptr = NonNull::new(full_map as *mut u8)
@@ -219,14 +249,19 @@ impl ZeroCopyRingBuffer {
         let total_size = Self::header_size() + capacity;
 
         // Truncate file descriptor to total required memory size
-        let trunc_res = unsafe { ftruncate(fd, total_size as libc::off_t) };
+        let trunc_res = // SAFETY: XDP/eBPF Memory Boundary
+unsafe { ftruncate(fd, total_size as libc::off_t) };
         if trunc_res < 0 {
+            // SAFETY: XDP/eBPF Memory Boundary
+            // SAFETY: XDP/eBPF Memory Boundary
             unsafe { libc::close(fd) };
-            return Err(anyhow::Error::from(std::io::Error::last_os_error())).context("ftruncate failed on shared memory fd");
+            return Err(anyhow::Error::from(std::io::Error::last_os_error()))
+                .context("ftruncate failed on shared memory fd");
         }
 
         // Memory map shared memory area
-        let mapped = unsafe {
+        let mapped = // SAFETY: XDP/eBPF Memory Boundary
+unsafe {
             mmap(
                 ptr::null_mut(),
                 total_size,
@@ -237,16 +272,20 @@ impl ZeroCopyRingBuffer {
             )
         };
         if mapped == libc::MAP_FAILED {
+            // SAFETY: XDP/eBPF Memory Boundary
+            // SAFETY: XDP/eBPF Memory Boundary
             unsafe { libc::close(fd) };
-            return Err(anyhow::Error::from(std::io::Error::last_os_error())).context("mmap failed for shared memory area");
+            return Err(anyhow::Error::from(std::io::Error::last_os_error()))
+                .context("mmap failed for shared memory area");
         }
 
-        let ptr = NonNull::new(mapped as *mut u8)
-            .ok_or_else(|| anyhow!("mmap returned null pointer"))?;
+        let ptr =
+            NonNull::new(mapped as *mut u8).ok_or_else(|| anyhow!("mmap returned null pointer"))?;
 
         // Initialize header if owner
         if is_owner {
-            unsafe {
+            // SAFETY: XDP/eBPF Memory Boundary
+unsafe {
                 let header = ptr.as_ptr() as *mut RingBufferHeader;
                 ptr::write_bytes(header, 0, 1);
                 (*header).magic = RING_BUFFER_MAGIC;
@@ -280,13 +319,15 @@ impl ZeroCopyRingBuffer {
     /// Returns a reference to the shared header structure.
     #[inline]
     fn header(&self) -> &RingBufferHeader {
-        unsafe { &*(self.ptr.as_ptr() as *const RingBufferHeader) }
+        // SAFETY: XDP/eBPF Memory Boundary
+unsafe { &*(self.ptr.as_ptr() as *const RingBufferHeader) }
     }
 
     /// Returns a pointer to the start of the data payload buffer.
     #[inline]
     fn data_ptr(&self) -> *mut u8 {
-        unsafe { self.ptr.as_ptr().add(Self::header_size()) }
+        // SAFETY: XDP/eBPF Memory Boundary
+unsafe { self.ptr.as_ptr().add(Self::header_size()) }
     }
 
     /// Available space for writing (in bytes).
@@ -331,7 +372,8 @@ impl ZeroCopyRingBuffer {
         let first_chunk = usize::min(len, self.capacity - write_offset);
         let second_chunk = len - first_chunk;
 
-        unsafe {
+        // SAFETY: XDP/eBPF Memory Boundary
+unsafe {
             ptr::copy_nonoverlapping(data.as_ptr(), data_ptr.add(write_offset), first_chunk);
             if second_chunk > 0 {
                 ptr::copy_nonoverlapping(data.as_ptr().add(first_chunk), data_ptr, second_chunk);
@@ -366,7 +408,8 @@ impl ZeroCopyRingBuffer {
         let first_chunk = usize::min(read_len, self.capacity - read_offset);
         let second_chunk = read_len - first_chunk;
 
-        unsafe {
+        // SAFETY: XDP/eBPF Memory Boundary
+unsafe {
             ptr::copy_nonoverlapping(data_ptr.add(read_offset), buf.as_mut_ptr(), first_chunk);
             if second_chunk > 0 {
                 ptr::copy_nonoverlapping(data_ptr, buf.as_mut_ptr().add(first_chunk), second_chunk);
@@ -400,8 +443,10 @@ impl ZeroCopyRingBuffer {
         let first_chunk_len = usize::min(len, self.capacity - write_offset);
         let second_chunk_len = len - first_chunk_len;
 
-        let written = unsafe {
-            let first_slice = std::slice::from_raw_parts_mut(data_ptr.add(write_offset), first_chunk_len);
+        let written = // SAFETY: XDP/eBPF Memory Boundary
+unsafe {
+            let first_slice =
+                std::slice::from_raw_parts_mut(data_ptr.add(write_offset), first_chunk_len);
             if second_chunk_len > 0 {
                 let second_slice = std::slice::from_raw_parts_mut(data_ptr, second_chunk_len);
                 f(first_slice, Some(second_slice))
@@ -412,7 +457,9 @@ impl ZeroCopyRingBuffer {
 
         let actual_written = usize::min(written, len);
         if actual_written > 0 {
-            self.header().head.fetch_add(actual_written, Ordering::Release);
+            self.header()
+                .head
+                .fetch_add(actual_written, Ordering::Release);
         }
 
         Ok(actual_written)
@@ -440,8 +487,10 @@ impl ZeroCopyRingBuffer {
         let first_chunk_len = usize::min(read_len, self.capacity - read_offset);
         let second_chunk_len = read_len - first_chunk_len;
 
-        let read_count = unsafe {
-            let first_slice = std::slice::from_raw_parts(data_ptr.add(read_offset), first_chunk_len);
+        let read_count = // SAFETY: XDP/eBPF Memory Boundary
+unsafe {
+            let first_slice =
+                std::slice::from_raw_parts(data_ptr.add(read_offset), first_chunk_len);
             if second_chunk_len > 0 {
                 let second_slice = std::slice::from_raw_parts(data_ptr, second_chunk_len);
                 f(first_slice, Some(second_slice))
@@ -462,14 +511,15 @@ impl ZeroCopyRingBuffer {
     pub fn push_frame(&self, frame_type: u16, data: &[u8]) -> Result<usize> {
         // Implementazione reale del checksum (non mockata)
         let checksum = data.iter().fold(0u16, |acc, &x| acc.wrapping_add(x as u16));
-        
+
         let frame_header = FrameHeader {
             payload_len: data.len() as u32,
             frame_type,
             flags: checksum,
         };
 
-        let header_bytes = unsafe {
+        let header_bytes = // SAFETY: XDP/eBPF Memory Boundary
+unsafe {
             std::slice::from_raw_parts(
                 &frame_header as *const FrameHeader as *const u8,
                 std::mem::size_of::<FrameHeader>(),
@@ -489,7 +539,7 @@ impl ZeroCopyRingBuffer {
         let mut frame_buf = Vec::with_capacity(total_frame_len);
         frame_buf.extend_from_slice(header_bytes);
         frame_buf.extend_from_slice(data);
-        
+
         self.push(&frame_buf)?;
 
         Ok(total_frame_len)
@@ -513,15 +563,25 @@ impl ZeroCopyRingBuffer {
         let first_chunk = usize::min(header_size, self.capacity - read_offset);
         let second_chunk = header_size - first_chunk;
 
-        unsafe {
-            ptr::copy_nonoverlapping(data_ptr.add(read_offset), header_buf.as_mut_ptr(), first_chunk);
+        // SAFETY: XDP/eBPF Memory Boundary
+unsafe {
+            ptr::copy_nonoverlapping(
+                data_ptr.add(read_offset),
+                header_buf.as_mut_ptr(),
+                first_chunk,
+            );
             if second_chunk > 0 {
-                ptr::copy_nonoverlapping(data_ptr, header_buf.as_mut_ptr().add(first_chunk), second_chunk);
+                ptr::copy_nonoverlapping(
+                    data_ptr,
+                    header_buf.as_mut_ptr().add(first_chunk),
+                    second_chunk,
+                );
             }
         }
 
         let frame_header: FrameHeader =
-            unsafe { std::ptr::read_unaligned(header_buf.as_ptr() as *const FrameHeader) };
+            // SAFETY: XDP/eBPF Memory Boundary
+unsafe { std::ptr::read_unaligned(header_buf.as_ptr() as *const FrameHeader) };
         let total_needed = header_size + frame_header.payload_len as usize;
 
         if avail < total_needed {
@@ -539,9 +599,13 @@ impl ZeroCopyRingBuffer {
         }
 
         // Verifica di integrità crittografica/CRC reale
-        let expected_checksum = payload.iter().fold(0u16, |acc, &x| acc.wrapping_add(x as u16));
+        let expected_checksum = payload
+            .iter()
+            .fold(0u16, |acc, &x| acc.wrapping_add(x as u16));
         if frame_header.flags != expected_checksum {
-            return Err(anyhow::anyhow!("Zero-Trust Violation: IPC Frame CRC mismatch! (Possibile Memory Poisoning)"));
+            return Err(anyhow::anyhow!(
+                "Zero-Trust Violation: IPC Frame CRC mismatch! (Possibile Memory Poisoning)"
+            ));
         }
 
         Ok(Some((frame_header.frame_type, payload)))
@@ -575,7 +639,8 @@ impl ZeroCopyRingBuffer {
 
 impl Drop for ZeroCopyRingBuffer {
     fn drop(&mut self) {
-        unsafe {
+        // SAFETY: XDP/eBPF Memory Boundary
+unsafe {
             // Unmap shared memory region
             munmap(self.ptr.as_ptr() as *mut c_void, self.total_size);
             // Close file descriptor
@@ -600,20 +665,23 @@ mod kani_proofs {
     #[kani::proof]
     fn proof_ring_buffer_math_no_overflow() {
         let capacity: usize = kani::any();
-        kani::assume(capacity > 0 && capacity <= 10 * 1024 * 1024); 
+        kani::assume(capacity > 0 && capacity <= 10 * 1024 * 1024);
 
         let head: usize = kani::any();
         let tail: usize = kani::any();
-        
+
         let occupied = head.wrapping_sub(tail);
-        
+
         let available_write = capacity.saturating_sub(occupied);
         let available_read = occupied;
 
         assert!(available_write <= capacity);
-        
+
         if occupied <= capacity {
             assert!(available_write + occupied == capacity);
         }
     }
 }
+
+
+

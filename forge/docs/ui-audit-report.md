@@ -26,3 +26,4 @@ Multiple structural flaws in the UI layer impact stability and styling.
 * **Missing CSS Watcher Dead End (`src/ui/topbar.rs`):** The app hardcodes CSS paths (`~/.config/ermete-shell/colors.css`). While it implements a string fallback if missing, the `watcher.watch(&path)` call silently drops errors if the directory itself doesn't exist. This silently breaks live-reloading logic, leaving the user with a stale UI.
 * **Orphaned Widgets (`src/ui/dock.rs`):** Event handlers aggressively use `popover.connect_closed(|p| p.unparent());`. In complex GTK4 layouts, unparenting a widget without proper cleanup or un-referencing from internal vectors leads to memory leaks or orphaned visual artifacts.
 * **Shell Injection Risks (`ermete-settings-rs/src/pages/focus.rs`):** System actions are performed via direct `Command::new("sh")` and `Command::new("systemctl")` calls. This poses a severe logic dead end if the specific shell is missing and prevents safe input sanitization.
+

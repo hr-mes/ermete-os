@@ -85,7 +85,7 @@ jobs:
             if [ -n "${RPM_GPG_KEY}" ]; then
               echo "::add-mask::${RPM_GPG_PASSPHRASE}"
               echo "${RPM_GPG_KEY}" | gpg --import
-              echo '%_signature gpg' > ~/.rpmmacros
+              mkdir -p ~; echo '%_signature gpg' > ~/.rpmmacros
               echo '%_gpg_name ermete' >> ~/.rpmmacros
               echo '%__gpg_sign_cmd %{__gpg} --batch --verbose --no-armor --passphrase "${RPM_GPG_PASSPHRASE}" --pinentry-mode loopback --no-secmem-warning -u "%{_gpg_name}" -sbo %{__signature_filename} --digest-algo sha256 %{__plaintext_filename}' >> ~/.rpmmacros
             fi
@@ -293,7 +293,7 @@ jobs:
   dag-openwiki-portal:
     name: 🌌 OpenWiki Spatial Portal Build
     needs: [build-repo]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: write
@@ -330,7 +330,7 @@ jobs:
   visual-regression-ui-performance:
     name: 👁️ Visual Regression & UI Performance
     needs: [dag-system-image, dag-openwiki-portal]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     container:
       image: ghcr.io/hr-mes/ermete-os-builder:${{ inputs.builder_content_hash }}
@@ -362,3 +362,5 @@ jobs:
           else
             chown -R 1001:1001 . || chown -R 1000:1000 . || true
           fi
+
+

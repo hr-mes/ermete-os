@@ -1,3 +1,4 @@
+#![allow(unsafe_code)]
 use aya::maps::HashMap as BpfHashMap;
 use aya::programs::Extension;
 use aya::Ebpf;
@@ -72,6 +73,11 @@ impl AiSchedMap {
         } else {
             Err(anyhow::anyhow!("AI_SCHED_MAP not found in eBPF"))
         }
+    }
+
+    pub async fn is_bpf_active(&self) -> bool {
+        let ebpf = self.ebpf.lock().await;
+        ebpf.map("AI_SCHED_MAP").is_some()
     }
 
     pub async fn get_policy(&self, pid: u32) -> anyhow::Result<Option<AiSchedParam>> {
@@ -283,4 +289,6 @@ impl SchedExtController {
         Ok(())
     }
 }
+
+
 

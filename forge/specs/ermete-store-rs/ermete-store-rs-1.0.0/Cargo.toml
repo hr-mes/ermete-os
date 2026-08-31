@@ -18,3 +18,9 @@ hex = { workspace = true }
 
 
 
+
+[profile.release]
+lto = "thin"
+opt-level = 3
+codegen-units = 1
+panic = "abort"

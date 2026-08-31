@@ -106,33 +106,33 @@ async fn main() -> Result<()> {
         aggregator.run_loop().await;
     });
 
-    let deterministic_engine_task = tokio::spawn(async move {
-        info!("Deterministic Rules Engine active.");
+    let log_analyzer_task = tokio::spawn(async move {
+        info!("Static Log Rules Engine active (Monitoring CRITICAL/FATAL events).");
         while let Some(batch) = batch_rx.recv().await {
-            let mut anomalous = false;
+            let mut critical_event = false;
             let mut unit = "systemd".to_string();
             
             for record in &batch.records {
                 let msg_upper = record.message.to_uppercase();
                 if msg_upper.contains("SIGSEGV") || msg_upper.contains("SIGKILL") || msg_upper.contains("FATAL") {
-                    anomalous = true;
+                    critical_event = true;
                     unit = record.unit.clone();
                     break;
                 }
             }
 
-            if anomalous {
+            if critical_event {
                 let report = AnomalyReport {
-                    anomaly_score: 0.9,
+                    anomaly_score: 1.0,
                     target_unit: unit.clone(),
-                    predicted_failure_mode: "DETERMINISTIC_RULE_MATCH".to_string(),
+                    predicted_failure_mode: "STATIC_RULE_MATCH".to_string(),
                     suggested_intent: "MITIGATE_ERROR".to_string(),
                     confidence: 1.0,
-                    embedding_vector: vec![],
+                    embedding_vector: vec![], // Embeddings are disabled. Use external log aggregator for ML.
                     timestamp: chrono::Utc::now().to_rfc3339(),
                 };
                 if let Err(e) = report_tx.send(report).await {
-                    error!("Failed to send anomaly report: {}", e);
+                    error!("Failed to send critical log report: {}", e);
                 }
             }
         }
@@ -159,11 +159,6 @@ async fn main() -> Result<()> {
                 error!("Aggregator task terminated unexpectedly: {}", e);
             }
         }
-        res = deterministic_engine_task => {
-            if let Err(e) = res {
-                error!("Rules engine task terminated unexpectedly: {}", e);
-            }
-        }
         res = oracle_bridge_task => {
             if let Err(e) = res {
                 error!("Oracle bridge task terminated unexpectedly: {}", e);
@@ -174,3 +169,4 @@ async fn main() -> Result<()> {
     info!("👋 ermete-telemetry daemon stopped.");
     Ok(())
 }
+

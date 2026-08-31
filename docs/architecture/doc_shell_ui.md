@@ -26,7 +26,7 @@ Scegliendo Rust, GTK4 e Relm4, otteniamo benefici strutturali ineguagliabili:
 ### Comunicazione con il Sistema
 Coerentemente con il principio del privilegio minimo, `ermete-settings-rs` non esegue azioni di modifica del sistema in modo diretto. Agisce invece da client reattivo, dialogando con demoni isolati e di basso livello tramite bus di comunicazione sicuri:
 - **D-Bus:** Per la gestione delle chiamate di sistema generali e l'integrazione desktop.
-- **AudioBus:** Per una gestione reattiva, sicura e senza *glitch* dei dispositivi audio (integrato con PipeWire).
+- **WirePlumber / PipeWire:** Per la gestione reattiva, sicura e standard dei dispositivi audio (sostituisce il finto AudioBus deprecato).
 - **NetBus:** Per la configurazione e il monitoraggio istantaneo delle reti Wi-Fi e VPN.
 
 Questa separazione netta assicura che il codice di interfaccia rimanga snello, mentre i processi che richiedono privilegi elevati rimangono compartimentalizzati e rigidamente validati.
@@ -52,3 +52,4 @@ Stiamo lavorando alla realizzazione di un App Store grafico completamente nativo
 
 ---
 *Ermete OS: costruito con il rigore dei sistemi critici, progettato per la serenità dell'utente.*
+

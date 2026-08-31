@@ -1,5 +1,5 @@
 ---
-source_file: "ermete-kernel-forge/src/ostree_hook.rs"
+source_file: "bootc/OSTree pipeline/src/ostree_hook.rs"
 type: "code"
 community: "Community 5"
 location: "L61"

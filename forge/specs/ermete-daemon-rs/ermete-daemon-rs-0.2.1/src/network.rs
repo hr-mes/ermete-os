@@ -343,27 +343,27 @@ mod tests {
         );
 
         let conn = dict.get("connection").expect("missing 'connection' setting");
-        assert_eq!(conn.get("id").unwrap(), &Value::from("Corporate-SSID"));
-        assert_eq!(conn.get("type").unwrap(), &Value::from("802-11-wireless"));
+        assert_eq!(conn.get("id").expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato."), &Value::from("Corporate-SSID"));
+        assert_eq!(conn.get("type").expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato."), &Value::from("802-11-wireless"));
 
         let wifi = dict.get("802-11-wireless").expect("missing '802-11-wireless' setting");
-        assert_eq!(wifi.get("ssid").unwrap(), &Value::from("Corporate-SSID".as_bytes().to_vec()));
-        assert_eq!(wifi.get("security").unwrap(), &Value::from("802-11-wireless-security"));
+        assert_eq!(wifi.get("ssid").expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato."), &Value::from("Corporate-SSID".as_bytes().to_vec()));
+        assert_eq!(wifi.get("security").expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato."), &Value::from("802-11-wireless-security"));
 
         let sec = dict.get("802-11-wireless-security").expect("missing '802-11-wireless-security' setting");
-        assert_eq!(sec.get("key-mgmt").unwrap(), &Value::from("wpa-eap"));
+        assert_eq!(sec.get("key-mgmt").expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato."), &Value::from("wpa-eap"));
 
         let eap = dict.get("802-1x").expect("missing '802-1x' setting");
-        assert_eq!(eap.get("eap").unwrap(), &Value::from(vec!["peap".to_string()]));
-        assert_eq!(eap.get("identity").unwrap(), &Value::from("user@ermete.os"));
-        assert_eq!(eap.get("password-flags").unwrap(), &Value::from(1u32));
-        assert_eq!(eap.get("ca-cert").unwrap(), &Value::from("/etc/ssl/certs/ca.pem".as_bytes().to_vec()));
+        assert_eq!(eap.get("eap").expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato."), &Value::from(vec!["peap".to_string()]));
+        assert_eq!(eap.get("identity").expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato."), &Value::from("user@ermete.os"));
+        assert_eq!(eap.get("password-flags").expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato."), &Value::from(1u32));
+        assert_eq!(eap.get("ca-cert").expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato."), &Value::from("/etc/ssl/certs/ca.pem".as_bytes().to_vec()));
 
         let ipv4 = dict.get("ipv4").expect("missing 'ipv4' setting");
-        assert_eq!(ipv4.get("method").unwrap(), &Value::from("auto"));
+        assert_eq!(ipv4.get("method").expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato."), &Value::from("auto"));
 
         let ipv6 = dict.get("ipv6").expect("missing 'ipv6' setting");
-        assert_eq!(ipv6.get("method").unwrap(), &Value::from("auto"));
+        assert_eq!(ipv6.get("method").expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato."), &Value::from("auto"));
     }
 
     #[test]
@@ -383,19 +383,19 @@ mod tests {
         let dict = Network::build_vpn_tunnel_dict("Ermete-VPN", "openvpn", tmp_path, content);
 
         let conn = dict.get("connection").expect("missing 'connection' setting");
-        assert_eq!(conn.get("id").unwrap(), &Value::from("Ermete-VPN"));
-        assert_eq!(conn.get("type").unwrap(), &Value::from("openvpn"));
+        assert_eq!(conn.get("id").expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato."), &Value::from("Ermete-VPN"));
+        assert_eq!(conn.get("type").expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato."), &Value::from("openvpn"));
 
         let vpn = dict.get("vpn").expect("missing 'vpn' setting");
-        assert_eq!(vpn.get("service-type").unwrap(), &Value::from("org.freedesktop.NetworkManager.openvpn"));
+        assert_eq!(vpn.get("service-type").expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato."), &Value::from("org.freedesktop.NetworkManager.openvpn"));
 
         let data = vpn.get("data").expect("missing 'data' dictionary");
         if let Value::Dict(d) = data {
             let remote_key = Value::from("remote");
-            let remote: Value = d.get::<_, Value<'_>>(&remote_key).unwrap().unwrap().clone();
+            let remote: Value = d.get::<_, Value<'_>>(&remote_key).expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato.").expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato.").clone();
             assert_eq!(remote, Value::from("vpn.ermete.os"));
             let port_key = Value::from("port");
-            let port: Value = d.get::<_, Value<'_>>(&port_key).unwrap().unwrap().clone();
+            let port: Value = d.get::<_, Value<'_>>(&port_key).expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato.").expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato.").clone();
             assert_eq!(port, Value::from("1194"));
         } else {
             panic!("expected Dict for vpn.data");
@@ -405,4 +405,5 @@ mod tests {
         }
     }
 }
+
 

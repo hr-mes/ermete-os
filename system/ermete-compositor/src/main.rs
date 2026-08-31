@@ -1,4 +1,5 @@
 #![deny(unsafe_code)]
+pub mod ecs;
 
 mod animation;
 mod backend;
@@ -134,3 +135,5 @@ async fn main() -> Result<()> {
     info!("Ermete Compositor gracefully stopped.");
     Ok(())
 }
+
+

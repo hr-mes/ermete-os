@@ -1,6 +1,6 @@
 use std::io::Write;
 use anyhow::{Context, Result};
-use log::{error, info, warn};
+use log::{error, info};
 use std::fs::{self, OpenOptions};
 use std::os::unix::fs::OpenOptionsExt;
 use std::path::Path;
@@ -56,7 +56,6 @@ impl KeyReleaseManager {
         let enclave_tool = match report {
             VerifiedHardwareReport::SevSnp { .. } => "sev-guest-unseal",
             VerifiedHardwareReport::Tdx { .. } => "tdx-guest-unseal",
-            _ => "tpm2_unseal",
         };
 
         info!("Invoking strict hardware unseal via {}", enclave_tool);
@@ -121,3 +120,5 @@ impl KeyReleaseManager {
         }
     }
 }
+
+

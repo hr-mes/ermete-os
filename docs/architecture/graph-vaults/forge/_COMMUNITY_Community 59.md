@@ -10,19 +10,19 @@ members: 13
 **Members:** 13 nodes
 
 ## Members
-- [[.default()_2]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/npu/vulkan.rs
-- [[.device_name()_1]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/npu/vulkan.rs
-- [[.execute_vulkan_compute()]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/npu/vulkan.rs
-- [[.has_tensor_cores()]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/npu/vulkan.rs
-- [[.is_available()_1]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/npu/vulkan.rs
-- [[.new()_3]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/npu/vulkan.rs
+- [[.default()_2]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/npu/vulkan.rs
+- [[.device_name()_1]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/npu/vulkan.rs
+- [[.execute_vulkan_compute()]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/npu/vulkan.rs
+- [[.has_tensor_cores()]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/npu/vulkan.rs
+- [[.is_available()_1]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/npu/vulkan.rs
+- [[.new()_3]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/npu/vulkan.rs
 - [[Default_2]] - code
 - [[Result_5]] - code
 - [[Self_3]] - code
 - [[String_5]] - code
 - [[Vec_3]] - code
-- [[VulkanTensorEngine]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/npu/vulkan.rs
-- [[vulkan.rs]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/npu/vulkan.rs
+- [[VulkanTensorEngine]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/npu/vulkan.rs
+- [[vulkan.rs]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/npu/vulkan.rs
 
 ## Live Query (requires Dataview plugin)
 

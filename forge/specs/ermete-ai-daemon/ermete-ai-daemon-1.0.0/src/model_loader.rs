@@ -57,8 +57,8 @@ impl InferenceEngine {
             QTensor::zeros(vec![8, 4], candle_core::quantized::GgmlDType::Q4_0),
             QTensor::zeros(vec![4, 8], candle_core::quantized::GgmlDType::Q4_0)
         ) {
-            self.q1 = Some(QMatMul::from_qtensor(w1).unwrap());
-            self.q2 = Some(QMatMul::from_qtensor(w2).unwrap());
+            self.q1 = Some(QMatMul::from_qtensor(w1).expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato."));
+            self.q2 = Some(QMatMul::from_qtensor(w2).expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato."));
             self.is_loaded = true;
             info!("Successfully initialized Ultra-Quantized Q4_0 execution graph.");
             Ok(())
@@ -105,3 +105,4 @@ impl InferenceEngine {
         self.is_loaded
     }
 }
+

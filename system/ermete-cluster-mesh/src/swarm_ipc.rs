@@ -25,10 +25,10 @@ impl SwarmIpcServer {
             let mut found_ip = None;
             for line in out_str.lines() {
                 if line.contains("inet 100.") {
-                    let parts: Vec<&str> = line.trim().split_whitespace().collect();
+                    let parts: Vec<&str> = line.split_whitespace().collect();
                     if parts.len() > 1 && parts[1].starts_with("100.") {
                         let ip_cidr = parts[1];
-                        let ip = ip_cidr.split('/').next().unwrap();
+                        let ip = ip_cidr.split('/').next().unwrap_or(ip_cidr);
                         let octets: Vec<u8> = ip.split('.').filter_map(|s| s.parse().ok()).collect();
                         if octets.len() == 4 && octets[0] == 100 && (octets[1] >= 64 && octets[1] <= 127) {
                             found_ip = Some(ip.to_string());
@@ -173,3 +173,4 @@ impl SwarmIpcClient {
         Ok(resp)
     }
 }
+

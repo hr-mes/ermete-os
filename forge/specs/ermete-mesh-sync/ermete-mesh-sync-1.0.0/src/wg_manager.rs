@@ -1,10 +1,11 @@
 use anyhow::{anyhow, Result};
-use ermete_bus_api::pqc::PqcKeys;
-use tracing::{error, info};
-use defguard_wireguard_rs::{InterfaceConfiguration, WGApi};
+use crate::pqc::PqcKeys;
+use tracing::info;
+use base64::Engine;
+use defguard_wireguard_rs::{InterfaceConfiguration, WireguardInterfaceApi};
 use rtnetlink::new_connection;
-use netlink_packet_route::link::nlas::Nla;
-use netlink_packet_route::link::LinkAttribute;
+
+
 use futures::stream::TryStreamExt;
 
 pub struct WgMeshManager {
@@ -27,7 +28,7 @@ impl WgMeshManager {
 
         // 1. Create wg0 interface using rtnetlink
         let (connection, handle, _) = new_connection().map_err(|e| anyhow!("Failed to open netlink connection: {}", e))?;
-        tokio::spawn(async move { if let Err(e) = connection.await { tracing::error!("Netlink connection failed: {}", e); std::process::exit(1); } });
+        tokio::spawn(async move { connection.await; });
 
         let if_name = "wg0";
 
@@ -54,17 +55,14 @@ impl WgMeshManager {
         }
 
         // 2. Configure WireGuard using defguard_wireguard_rs
-        let wg_api = WGApi::new(if_name.to_string(), false)
+        let wg_api = defguard_wireguard_rs::WGApi::<defguard_wireguard_rs::Kernel>::new(if_name.to_string())
             .map_err(|e| anyhow!("Failed to initialize WGApi: {}", e))?;
 
-        let mut config = InterfaceConfiguration::default();
-        let x25519_sk = defguard_wireguard_rs::key::Key::try_from(self.pqc_keys.x25519_sk())
-            .map_err(|_| anyhow!("Invalid X25519 secret key format"))?;
-        
-        config.prvkey = x25519_sk.to_string();
-        config.listen_port = Some(51820);
+        let mut config = InterfaceConfiguration { name: if_name.to_string(), prvkey: String::new(), addresses: vec![], port: 51820, peers: vec![], fwmark: None, mtu: None, };
+        config.prvkey = base64::engine::general_purpose::STANDARD.encode(self.pqc_keys.x25519_sk());
+        config.port = 51820;
 
-        wg_api.set_host_device(config)
+        wg_api.configure_interface(&config)
             .map_err(|e| anyhow!("Failed to configure wg interface: {}", e))?;
 
         let pk_base64 = self.pqc_keys.x25519_pk_b64();
@@ -89,3 +87,9 @@ impl WgMeshManager {
         Ok(())
     }
 }
+
+
+
+
+
+

@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use log::{error, info, warn};
+use log::{error, info};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
@@ -512,3 +512,4 @@ mod tests {
         assert!(matches!(manager.get_state(), EnclaveState::Failed(_)));
     }
 }
+

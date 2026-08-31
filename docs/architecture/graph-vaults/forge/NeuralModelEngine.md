@@ -1,5 +1,5 @@
 ---
-source_file: "specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/model_loader.rs"
+source_file: "specs/Static Rules Engine/Static Rules Engine-1.0.0/src/model_loader.rs"
 type: "code"
 community: "Community 51"
 location: "L7"

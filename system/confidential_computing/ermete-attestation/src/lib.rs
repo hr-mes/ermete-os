@@ -1,3 +1,4 @@
+#![allow(unsafe_code)]
 
 pub mod config;
 pub mod cvm_manager;
@@ -16,4 +17,5 @@ pub fn generate_hardware_nonce() -> Result<[u8; 64]> {
         .map_err(|_| anyhow!("Cryptographic RNG failed to generate attestation nonce"))?;
     Ok(nonce)
 }
+
 

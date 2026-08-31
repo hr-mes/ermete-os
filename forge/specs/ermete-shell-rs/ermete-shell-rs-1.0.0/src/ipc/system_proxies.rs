@@ -43,7 +43,7 @@ impl ProxyRegistry {
     pub fn register(&self, controller: Box<dyn ControllerBackend>) {
         let name = controller.name();
         let arc_controller: Arc<dyn ControllerBackend> = Arc::from(controller);
-        let mut map = self.controllers.lock().unwrap_or_else(|e| e.into_inner());
+        let mut map = self.controllers.blocking_lock();
         {
             map.insert(name, arc_controller);
         }
@@ -52,7 +52,7 @@ impl ProxyRegistry {
     #[allow(dead_code)]
     pub fn register_arc(&self, controller: Arc<dyn ControllerBackend>) {
         let name = controller.name();
-        let mut map = self.controllers.lock().unwrap_or_else(|e| e.into_inner());
+        let mut map = self.controllers.blocking_lock();
         {
             map.insert(name, controller);
         }
@@ -60,12 +60,12 @@ impl ProxyRegistry {
 
     #[allow(dead_code)]
     pub fn get(&self, name: &str) -> Option<Arc<dyn ControllerBackend>> {
-        let map = self.controllers.lock().unwrap_or_else(|e| e.into_inner());
+        let map = self.controllers.blocking_lock();
         map.get(name).cloned()
     }
 
     pub fn get_typed<T: 'static + Clone>(&self, name: &str) -> Option<T> {
-        let map = self.controllers.lock().unwrap_or_else(|e| e.into_inner());
+        let map = self.controllers.blocking_lock();
         {
             if let Some(ctrl) = map.get(name) {
                 if let Some(concrete) = ctrl.as_any().downcast_ref::<T>() {
@@ -85,3 +85,5 @@ pub fn init_system_controller(controllers: Vec<Box<dyn ControllerBackend>>) {
         registry.register(controller);
     }
 }
+
+

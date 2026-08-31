@@ -10,14 +10,14 @@ members: 16
 **Members:** 16 nodes
 
 ## Members
-- [[.infer()]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/model_loader.rs
-- [[.is_loaded()]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/model_loader.rs
-- [[.load_onnx_model()]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/model_loader.rs
-- [[.load_safetensors_weights()]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/model_loader.rs
-- [[.new()]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/model_loader.rs
+- [[.infer()]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/model_loader.rs
+- [[.is_loaded()]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/model_loader.rs
+- [[.load_onnx_model()]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/model_loader.rs
+- [[.load_safetensors_weights()]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/model_loader.rs
+- [[.new()]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/model_loader.rs
 - [[Device]] - code
 - [[Linear]] - code
-- [[NeuralModelEngine]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/model_loader.rs
+- [[NeuralModelEngine]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/model_loader.rs
 - [[Option]] - code
 - [[P]] - code
 - [[PathBuf]] - code
@@ -25,7 +25,7 @@ members: 16
 - [[Self]] - code
 - [[String_2]] - code
 - [[Vec]] - code
-- [[model_loader.rs]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/model_loader.rs
+- [[model_loader.rs]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/model_loader.rs
 
 ## Live Query (requires Dataview plugin)
 

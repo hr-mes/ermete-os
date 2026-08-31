@@ -12,8 +12,8 @@ members: 4
 ## Members
 - [[Result]] - code
 - [[String]] - code
-- [[acquire_drm_lease()]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/drm_lease.rs
-- [[drm_lease.rs]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/drm_lease.rs
+- [[acquire_drm_lease()]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/drm_lease.rs
+- [[drm_lease.rs]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/drm_lease.rs
 
 ## Live Query (requires Dataview plugin)
 
@@ -21,3 +21,4 @@ members: 4
 TABLE source_file, type FROM #community/Community_108
 SORT file.name ASC
 ```
+

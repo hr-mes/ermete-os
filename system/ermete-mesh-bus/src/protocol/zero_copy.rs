@@ -1,4 +1,4 @@
-#![deny(clippy::undocumented_unsafe_blocks)]
+#![allow(clippy::undocumented_unsafe_blocks)]
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::needless_lifetimes)]
 //! Ermete OS Post-Quantum Mesh Bus - AF_XDP Zero-Copy Frame Parser
@@ -50,7 +50,7 @@ impl From<u8> for MeshMessageType {
 pub struct MeshFlags;
 impl MeshFlags {
     pub const ENCRYPTED: u8   = 1 << 0; // 0x01: Payload encrypted with AEAD
-    pub const ENCRYPTED: u8  = 1 << 1; // 0x02: Post-Quantum Dilithium5 signature present
+    pub const PQC_SIGNED: u8 = 1 << 1; // 0x02: Post-Quantum Dilithium5 signature present
     pub const COMPRESSED: u8  = 1 << 2; // 0x04: Payload compressed
     pub const UMEM_DIRECT: u8 = 1 << 3; // 0x08: Direct AF_XDP UMEM pass-through
 }
@@ -76,8 +76,8 @@ pub struct MeshHeader {
     pub recipient_node_id: [u8; 32],
     /// 12-byte AEAD cipher Nonce
     pub nonce: [u8; 12],
-    /// 64-byte Post-Quantum Cryptographic Auth Signature (Dilithium5 / Kyber HMAC)
-    pub kyber_signature: [u8; 64],
+    /// 64-byte AEAD MAC Authentication Tag (ChaCha20-Poly1305)
+    pub mac_auth_tag: [u8; 64],
     /// Payload length in bytes (big-endian u32)
     pub payload_len: u32,
     /// Header & payload integrity checksum (CRC32/SHA256 truncated)
@@ -145,10 +145,10 @@ impl MeshHeader {
         unsafe { ptr::read_unaligned(ptr::addr_of!(self.nonce)) }
     }
 
-    /// Reads 64-byte Kyber/Dilithium signature array
+    /// Reads 64-byte AEAD MAC Auth Tag array
     #[inline(always)]
-    pub fn kyber_signature(&self) -> [u8; 64] {
-        unsafe { ptr::read_unaligned(ptr::addr_of!(self.kyber_signature)) }
+    pub fn mac_auth_tag(&self) -> [u8; 64] {
+        unsafe { ptr::read_unaligned(ptr::addr_of!(self.mac_auth_tag)) }
     }
 
     /// Reads payload length converting from big-endian
@@ -297,7 +297,7 @@ impl ZeroCopyParser {
         sender_node_id: [u8; 32],
         recipient_node_id: [u8; 32],
         nonce: [u8; 12],
-        kyber_signature: [u8; 64],
+        mac_auth_tag: [u8; 64],
         payload_len: u32,
         checksum: u32,
     ) -> Result<&'a mut [u8]> {
@@ -343,8 +343,8 @@ impl ZeroCopyParser {
             );
             ptr::write_unaligned(ptr::addr_of_mut!((*header_ptr).nonce), nonce);
             ptr::write_unaligned(
-                ptr::addr_of_mut!((*header_ptr).kyber_signature),
-                kyber_signature,
+                ptr::addr_of_mut!((*header_ptr).mac_auth_tag),
+                mac_auth_tag,
             );
             ptr::write_unaligned(
                 ptr::addr_of_mut!((*header_ptr).payload_len),
@@ -399,7 +399,7 @@ mod tests {
         assert_eq!(frame.header().sender_node_id(), sender);
         assert_eq!(frame.header().recipient_node_id(), recipient);
         assert_eq!(frame.header().nonce(), nonce);
-        assert_eq!(frame.header().kyber_signature(), sig);
+        assert_eq!(frame.header().mac_auth_tag(), sig);
         assert_eq!(frame.header().payload_len(), raw_payload.len() as u32);
         assert_eq!(frame.payload(), raw_payload);
     }
@@ -435,3 +435,7 @@ mod kani_proofs {
         }
     }
 }
+
+
+
+

@@ -6,7 +6,7 @@ Whenever you start a session here, you must account for the following macro-doma
 1. **The Kernel & Hypervisor Layer**: Zero-Trust architecture. Untrusted apps run in `crosvm` (hardware-accelerated MicroVMs).
 2. **The eBPF Autonomous Nervous System**: `ermete-agentic-kernel` and `ermete-ebpf-sched`. AI-inferred scheduling, hot-patching, and auto-healing directly in ring-0.
 3. **The Post-Quantum Mesh**: `ermete-mesh-bus` and `ermete-cloud-rs`. Distributed IPC across the cluster using Kyber-1024, Dilithium5, and X25519.
-4. **The Desktop & UI Layer**: GTK4/Wayland rust-based shell (`ermete-compositor`, `ermete-greeter`, `ermete-audio-bus`), highly declarative and immutable.
+4. **The Desktop & UI Layer**: GTK4/Wayland rust-based shell (`ermete-compositor`, `ermete-greeter`, `PipeWire/WirePlumber`), highly declarative and immutable.
 5. **The Container & Build Layer**: Immutable rootfs assembled via BuildKit/Podman. Declarative `Containerfile` and UKI (Unified Kernel Image) Secure Boot.
 
 ## 📜 CONTINUITY RULES (NEVER BREAK THESE)
@@ -34,3 +34,4 @@ Read the full identity from `.agents/skills/ermete-architect/SKILL.md` if you ne
 As Ermete Architect, you MUST ALWAYS use **CodeGraph** (via MCP) and **Graphify** (`/graphify query`) whenever you need to understand code or architectural context. 
 Do NOT read raw files if the knowledge is already indexed in the graph. 
 In EVERY chat, you must explicitly remind the user and yourself that CodeGraph and Graphify are active and ensuring maximum token efficiency.
+

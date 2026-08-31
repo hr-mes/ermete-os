@@ -38,12 +38,29 @@ impl UpdaterEngine {
         Self {
             state: Arc::new(RwLock::new(UpdateState::Idle)),
             status: Arc::new(RwLock::new(DeploymentStatus {
-                current_booted_image: "localhost/ermete-os:v1.0.0-current".to_string(),
+                current_booted_image: "unknown".to_string(),
                 pending_image: None,
-                rollback_image: Some("localhost/ermete-os:v0.9.9-rollback".to_string()),
+                rollback_image: None,
                 last_checked_timestamp: 0,
             })),
         }
+    }
+
+    pub async fn sync_real_status(&self) -> Result<()> {
+        let output = tokio::process::Command::new("bootc")
+            .arg("status")
+            .arg("--json")
+            .output()
+            .await?;
+        
+        if output.status.success() {
+            let json_str = String::from_utf8_lossy(&output.stdout);
+            // In a full implementation, we parse the bootc JSON to extract actual image refs
+            let mut st = self.status.write().await;
+            st.current_booted_image = "LIVE_FROM_BOOTC_JSON".to_string(); // Placeholder for actual JSON parse logic
+            st.last_checked_timestamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs();
+        }
+        Ok(())
     }
 
     pub async fn get_state(&self) -> UpdateState {

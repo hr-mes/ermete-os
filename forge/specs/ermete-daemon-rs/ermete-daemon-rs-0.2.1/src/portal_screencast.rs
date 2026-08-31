@@ -307,36 +307,36 @@ mod tests {
     #[tokio::test]
     async fn test_portal_screencast_session_and_dynamic_node() {
         let service = PortalScreenCastService::new();
-        let req_path = ObjectPath::try_from("/org/freedesktop/portal/desktop/request/1/req").unwrap();
-        let session_path = ObjectPath::try_from("/org/freedesktop/portal/desktop/session/1/s1").unwrap();
+        let req_path = ObjectPath::try_from("/org/freedesktop/portal/desktop/request/1/req").expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato.");
+        let session_path = ObjectPath::try_from("/org/freedesktop/portal/desktop/session/1/s1").expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato.");
         let app_id = "org.ermete.TestApp".to_string();
 
         // 1. Create Session
         let (status, results) = service
             .create_session(req_path.clone(), session_path.clone(), app_id.clone(), HashMap::new())
             .await
-            .unwrap();
+            .expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato.");
         assert_eq!(status, 0);
         assert!(results.contains_key("session_handle"));
 
         let sessions = service.sessions.lock().await;
-        let session = sessions.get("/org/freedesktop/portal/desktop/session/1/s1").unwrap();
+        let session = sessions.get("/org/freedesktop/portal/desktop/session/1/s1").expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato.");
         assert_ne!(session.pipewire_node_id, 101, "hardcoded node_id 101 must be eliminated");
         drop(sessions);
 
         // 2. Select Sources with types=2 (Window) and cursor_mode=1
         let mut options: HashMap<String, OwnedValue> = HashMap::new();
-        options.insert("types".to_string(), Value::from(2u32).try_into().unwrap());
-        options.insert("cursor_mode".to_string(), Value::from(1u32).try_into().unwrap());
+        options.insert("types".to_string(), Value::from(2u32).try_into().expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato."));
+        options.insert("cursor_mode".to_string(), Value::from(1u32).try_into().expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato."));
 
         let (status, _) = service
             .select_sources(req_path.clone(), session_path.clone(), app_id.clone(), options)
             .await
-            .unwrap();
+            .expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato.");
         assert_eq!(status, 0);
 
         let sessions = service.sessions.lock().await;
-        let session = sessions.get("/org/freedesktop/portal/desktop/session/1/s1").unwrap();
+        let session = sessions.get("/org/freedesktop/portal/desktop/session/1/s1").expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato.");
         assert_eq!(session.source_types, 2);
         assert_eq!(session.cursor_mode, 1);
         drop(sessions);
@@ -345,7 +345,7 @@ mod tests {
         let (status, start_results) = service
             .start(req_path.clone(), session_path.clone(), app_id.clone(), "".to_string(), HashMap::new())
             .await
-            .unwrap();
+            .expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato.");
         assert_eq!(status, 0);
 
         let streams_ov = start_results.get("streams").expect("missing 'streams' result");
@@ -374,3 +374,4 @@ mod tests {
         }
     }
 }
+

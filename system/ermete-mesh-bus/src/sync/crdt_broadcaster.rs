@@ -155,7 +155,7 @@ impl CrdtBroadcaster {
         crdt_payload_bytes: Vec<u8>,
         recipient_node: Option<[u8; 32]>,
     ) -> Result<Vec<u8>> {
-        let node_identity = NodeIdentity { node_id: [0u8; 32], public_key: vec![] };
+        let node_identity = NodeIdentity { node_id: "0000000000000000000000000000000000000000000000000000000000000000".to_string(), public_key: vec![] };
         let seq = self.sequence_counter.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
 
         // Doppia Crittografia Paranoica (x25519 + ChaCha20Poly1305)
@@ -172,12 +172,14 @@ impl CrdtBroadcaster {
             let peer_public = PublicKey::from(recipient_pub);
             let shared_secret = secret.diffie_hellman(&peer_public);
             
-            let unbound_key = UnboundKey::new(&CHACHA20_POLY1305, shared_secret.as_bytes()).unwrap();
+            let unbound_key = UnboundKey::new(&CHACHA20_POLY1305, shared_secret.as_bytes())
+                .map_err(|_| anyhow::anyhow!("Failed to initialize ChaCha20 key"))?;
             let key = LessSafeKey::new(unbound_key);
             
             let mut in_out = crdt_payload_bytes.clone();
             let nonce = ring::aead::Nonce::assume_unique_for_key([0u8; 12]);
-            key.seal_in_place_append_tag(nonce, Aad::empty(), &mut in_out).unwrap();
+            key.seal_in_place_append_tag(nonce, Aad::empty(), &mut in_out)
+                .map_err(|_| anyhow::anyhow!("ChaCha20 AEAD sealing failed"))?;
             
             // Prepend our ephemeral public key (32 bytes)
             let mut final_payload = public.as_bytes().to_vec();
@@ -217,7 +219,7 @@ impl CrdtBroadcaster {
         let payload_target_slice = ZeroCopyParser::write_header_zero_copy(
             &mut tx_buffer,
             MeshMessageType::CrdtSyncFrame,
-            MeshFlags::ENCRYPTED | MeshFlags::ENCRYPTED | MeshFlags::UMEM_DIRECT,
+            MeshFlags::ENCRYPTED | MeshFlags::UMEM_DIRECT,
             seq,
             sender_array,
             recipient_array,
@@ -239,4 +241,15 @@ impl CrdtBroadcaster {
 }
 
 
-pub struct NodeIdentity { pub node_id: [u8; 32], pub public_key: Vec<u8> }
+pub struct NodeIdentity { pub node_id: String, pub public_key: Vec<u8> }
+use ring::signature;
+pub struct PqcEngine;
+impl PqcEngine {
+    pub fn verify_signature(payload: &[u8], sig: &[u8], pk: &[u8]) -> bool {
+        let unparsed_pk = signature::UnparsedPublicKey::new(&signature::ED25519, pk);
+        unparsed_pk.verify(payload, sig).is_ok()
+    }
+}
+
+
+

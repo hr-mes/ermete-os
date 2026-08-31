@@ -39,19 +39,19 @@ pub fn build_page() -> Box {
     check_btn.connect_clicked(move |_| {
         let row = status_row_clone.clone();
         relm4::spawn_local(async move {
-            row.set_subtitle("Ricerca aggiornamenti Ostree in corso...");
+            row.set_tooltip_text(Some("Ricerca aggiornamenti Ostree in corso..."));
             if let Ok(output) = tokio::process::Command::new("ostree")
                 .args(["admin", "status"])
                 .output()
                 .await 
             {
                 if output.status.success() {
-                    row.set_subtitle("Sistema base Ostree aggiornato e verificato.");
+                    row.set_tooltip_text(Some("Sistema base Ostree aggiornato e verificato."));
                 } else {
-                    row.set_subtitle("Errore durante il controllo degli aggiornamenti.");
+                    row.set_tooltip_text(Some("Errore durante il controllo degli aggiornamenti."));
                 }
             } else {
-                row.set_subtitle("Errore: impossibile contattare ostree.");
+                row.set_tooltip_text(Some("Errore: impossibile contattare ostree."));
             }
         });
     });
@@ -82,3 +82,4 @@ pub fn build_page() -> Box {
 
     container
 }
+

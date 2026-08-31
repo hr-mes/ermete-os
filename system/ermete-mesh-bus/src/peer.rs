@@ -1,4 +1,4 @@
-type SecretSessionKey = [u8; 32];
+pub type SecretSessionKey = [u8; 32];
 use anyhow::{anyhow, Result};
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64;
@@ -36,13 +36,15 @@ pub struct Peer {
 pub struct PeerManager {
     peers: Arc<RwLock<HashMap<String, Peer>>>,
     ip_counter: Arc<RwLock<u8>>,
+    session_keys: Arc<RwLock<HashMap<String, SecretSessionKey>>>,
 }
 
 impl PeerManager {
     pub fn new() -> Self {
         Self {
             peers: Arc::new(RwLock::new(HashMap::new())),
-            ip_counter: Arc::new(RwLock::new(2)), // Starts at 10.99.0.2
+            ip_counter: Arc::new(RwLock::new(2)),
+            session_keys: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
@@ -82,18 +84,15 @@ impl PeerManager {
 
     pub async fn store_session_key(&self, node_id: &str, session_key: [u8; 32]) -> Result<()> {
         let mut keys = self.session_keys.write().await;
-        keys.insert(node_id.to_string(), SecretSessionKey::new(session_key));
+        keys.insert(node_id.to_string(), session_key);
         info!("Stored ZeroizeOnDrop PQC session key in RAM for peer '{}'", node_id);
         Ok(())
     }
 
     pub async fn get_active_session_key(&self, node_id: &str) -> Result<SecretSessionKey> {
         let keys = self.session_keys.read().await;
-        keys.get(node_id)
-            .cloned()
-            .ok_or_else(|| anyhow!("No active PQC session key for peer '{}'", node_id))
+        keys.get(node_id).copied().ok_or_else(|| anyhow::anyhow!("No active PQC session key for peer '{}'", node_id))
     }
-
     pub async fn remove_peer(&self, node_id: &str) -> Result<()> {
         let mut peers = self.peers.write().await;
         if peers.remove(node_id).is_some() {
@@ -133,6 +132,14 @@ impl PeerManager {
     pub async fn get_peer(&self, node_id: &str) -> Option<Peer> {
         let peers = self.peers.read().await;
         peers.get(node_id).cloned()
+    }
+
+        pub async fn get_dilithium_pk_bytes(&self, node_id: &str) -> Result<Vec<u8>> {
+        let peers = self.peers.read().await;
+        let peer = peers.get(node_id).ok_or_else(|| anyhow::anyhow!("Peer not found"))?;
+        use base64::{engine::general_purpose, Engine as _};
+        let bytes = general_purpose::STANDARD.decode(&peer.x25519_pk_b64)?;
+        Ok(bytes)
     }
 
     pub async fn list_peers(&self) -> Vec<Peer> {
@@ -177,3 +184,12 @@ impl PeerManager {
         });
     }
 }
+
+
+
+
+
+
+
+
+

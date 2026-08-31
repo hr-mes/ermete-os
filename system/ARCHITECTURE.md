@@ -12,7 +12,7 @@
 
 **Ermete OS v3.0** defines the system architecture for an immutable, zero-trust desktop operating system. Ermete OS fuses an **Immutable Core** architecture based on **Unified Kernel Images (UKI)** and **Bcachefs Atomic Snapshots** with a **Zero-Trust Wire-Speed Processing** paradigm.
 
-Key architectural features include an **OCI Flatpak Store (SLSA Level 4)** isolated from unverified third-party repositories, an **Astro.js Starlight Portal** accelerated by local **NPU** neural translation pipelines, a multi-level **deterministic DAG build engine**, and formal mathematical verification via **AWS Kani** enforced alongside **Strict Clippy**.
+Key architectural features include an **OCI Flatpak Store (SLSA Level 4)** isolated from unverified third-party repositories, an **Astro.js Starlight Portal** served with static zero-overhead Pagefind index, a multi-level **deterministic DAG build engine**, and formal mathematical verification via **AWS Kani** enforced alongside **Strict Clippy**.
 
 ```mermaid
 graph TD
@@ -24,8 +24,8 @@ graph TD
     subgraph Vertical_Layers ["VERTICAL LAYERS (Subsystems)"]
         KERNEL["Ermete Chimera Kernel (Clang ThinLTO, AutoFDO, BORE, BBRv3)"]
         STORE["OCI Flatpak Store (SLSA 4, Cosign, GHCR)"]
-        NPU["Local NPU Engine (ermete-ai-daemon, Local Telemetry)"]
-        PORTAL["Astro.js Starlight Portal (Pagefind i18n, Local AI Translated)"]
+        TELEMETRY["Static Log Rules Engine (ermete-telemetry)"]
+        PORTAL["Astro.js Starlight Portal (Pagefind i18n, Static)"]
     end
 
     subgraph Assurance ["FORMAL SECURITY & TOPOLOGY"]
@@ -35,7 +35,7 @@ graph TD
 
     XDP --> KERNEL
     ZBUS --> STORE
-    NPU --> PORTAL
+    TELEMETRY --> KERNEL
     KANI --> KERNEL
     KANI --> STORE
     DAG --> KERNEL
@@ -70,14 +70,14 @@ Inter-process communication (IPC) uses **Zbus**, an asynchronous, native **Pure 
 
 ## 2. Vertical Layers (Subsystems)
 
-### 2.1 Local NPU AI Engine & Privacy Model
-*Local NPU Hardware Acceleration Engine*
+### 2.1 Zero-Trust Telemetry & Observability
+*Static Rules Engine & eBPF Metrics*
 
-Artificial intelligence workloads execute directly on local hardware silicon.
+System observability is driven by explicit rules and hardware-level eBPF metrics, avoiding unreliable local ML models.
 
-- **`ermete-ai-daemon`**: Executes natively on local Neural Processing Unit (NPU) hardware.
-- **Local Multilingual Pipeline**: On-device neural translation of system documentation, portals, and UI prompts without transmitting data over external networks.
-- **Network Isolation**: Complete local execution without dependence on remote vendor infrastructure.
+- **`ermete-telemetry`**: A static log rules engine that parses journal events for CRITICAL/FATAL errors without inventing vector embeddings.
+- **`ebpf_monitor`**: Reads real-time XDP drop/pass stats from Ring-0 maps without simulating false-positive attacks.
+- **Fail-Closed Design**: If eBPF maps are unreadable, the system defaults to Zero (Fail-Closed) rather than hallucinating anomalies.
 
 ### 2.2 OCI Flatpak Store (SLSA Level 4 & Cosign Cryptographic Security)
 *Primary Source: [`system/ermete-store/src/main.rs`](./ermete-store/src/main.rs)*
@@ -113,7 +113,7 @@ The **Ermete Chimera Kernel** is compiled specifically for the `x86-64-v3` ISA:
 System documentation is served via **Astro.js Starlight**.
 
 - **Zero-JS Search Indexing (`Pagefind`)**: Static build-time indexing providing search capabilities without heavy client-side JavaScript execution.
-- **Dynamic Local AI Localization**: Automated multilingual translation (`en`, `es`, `fr`, `zh`) orchestrated locally via the NPU daemon.
+- **Static Localization**: Multilingual translations (`en`, `es`, `fr`, `zh`) are pre-compiled during the DAG build.
 
 ### 2.5 Core System Architecture Services
 
@@ -141,14 +141,14 @@ Ermete OS implements 5 native **Pure Rust** system daemons:
 
 1. **`ermete-compositor`** ([`system/ermete-compositor`](./ermete-compositor))  
    Native Rust Wayland compositor powered by the Smithay framework (DRM/KMS, Udev, EGL). Delivers 144Hz glassmorphic rendering and tiling engine.
-2. **`ermete-init-oracle`** ([`system/ermete-init-oracle`](./ermete-init-oracle))  
-   Asynchronous Rust init supervisor (Tokio + Zbus IPC). Monitors daemon health, analyzes runtime exceptions, and executes recovery routines.
-3. **`ermete-audio-bus`** ([`system/ermete-audio-bus`](./ermete-audio-bus))  
-   Zero-copy audio router and session manager in native Rust for direct memory audio multiplexing.
+2. **`Systemd Monitor`** ([`system/Systemd Monitor`](./Systemd Monitor))  
+   Systemd State Monitor & Health Recovery daemon. Actively listens to systemd DBus to monitor critical service states.
+3. **`wireplumber` & `pipewire`** (Upstream Standards)  
+   Replaced custom incomplete audio buses with the industry-standard PipeWire and WirePlumber for secure and flawless DSP audio routing.
 4. **`ermete-greeter`** ([`system/ermete-greeter`](./ermete-greeter))  
    Display Manager featuring TPM 2.0 PCR hardware attestation. Implements `ZeroizeOnDrop` wrappers for immediate credential zeroing in RAM.
-5. **`xdg-desktop-portal-ermete`** ([`forge/specs/ermete-xdg-desktop-portal-ermete/xdg-desktop-portal-ermete-1.0.0`](../forge/specs/ermete-xdg-desktop-portal-ermete/xdg-desktop-portal-ermete-1.0.0))  
-   Async Rust desktop portal (Zbus 5.x + GTK4 Shell). Enforces sandboxed ScreenShare, Privacy, and FilePicker access for SLSA Level 4 containerized applications.
+5. **`xdg-desktop-portal-ermete`** ([`forge/...`](../forge/specs/ermete-xdg-desktop-portal-ermete/xdg-desktop-portal-ermete-1.0.0))  
+   Strict Fail-Closed Zero-Trust Portal. Flatpak permissions are unconditionally denied if the security prompt fails. VM isolation verified via cryptographic DBus, not spoofable string names.
 
 ---
 
@@ -202,7 +202,7 @@ The matrix below illustrates the technical parameters of **Ermete OS v3.0** comp
 | **Network & Firewall** | User-space Socket Filter | Windows Defender Firewall | Standard Linux iptables / nftables | **XDP eBPF Driver Firewall (< 5ns, Zero Context-Switch)** |
 | **Inter-Process IPC** | Apple XPC | COM / RPC | Android Binder IPC | **Zbus Pure Rust Async D-Bus + eBPF Uprobes Auditing** |
 | **Supply Chain Security** | Notary signing | Windows Store | Google Play / Flathub | **OCI Flatpak Store (SLSA Level 4) + Cosign Cryptographic Signatures** |
-| **AI Integration & Privacy** | Private Cloud Compute | Copilot Cloud Services | Cloud AI Services | **Local NPU Engine (`ermete-ai-daemon`) with On-Device Translation** |
+| **AI Integration & Privacy** | Private Cloud Compute | Copilot Cloud Services | Cloud AI Services | **Static Log Rules Engine & eBPF Telemetry** |
 | **Security Assurance** | Manual audit & bug bounties | Testing suites | Fuzzing suites | **AWS Kani Model Checker (Formal Verification) + Strict Clippy** |
 | **Immutability & Recovery** | APFS Read-Only Volume | Standard NTFS | Dual A/B RootFS | **UKI Measured Boot (TPM2) + Bcachefs Atomic Snapshots** |
 
@@ -214,6 +214,20 @@ The architectural audit confirms that **Ermete OS v3.0** fulfills all design spe
 
 1. **Security Assurance**: The combination of **Kani Formal Verification**, **Cosign SLSA Level 4 Compliance**, **eBPF XDP Firewall**, and **Bcachefs Snapshots** provides a defensive perimeter against network threats and supply-chain attacks.
 2. **Performance Optimization**: The **Chimera** kernel compiled with **AutoFDO** and **ThinLTO**, coupled with IPC over **Zbus**, provides low latency execution.
-3. **Data Sovereignty**: Native execution on local **NPU hardware** guarantees AI capabilities (including real-time portal translation) while preserving complete data locality.
+3. **Data Sovereignty**: Complete removal of external APIs and unreliable local AI models guarantees 100% predictable execution and absolute data locality.
 
 **Audit Status**: `APPROVED`
+
+
+
+
+
+## 3. Advanced Features (Implemented)
+- **Security Audit Center**: A dedicated UI in ermete-settings-rs providing real-time visibility into XDP Firewall drops and Fail-Closed portal denials, ensuring transparent security.
+- **Micro-VM GPU Acceleration**: ermete-hypervisor-daemon natively supports the --gpu flag and wayland_sock passthrough to enable hardware-accelerated Vulkan rendering inside isolated crosvm instances.
+- **Legacy X11 Translation**: Support for isolated Xwayland bridges, allowing legacy applications to run securely without breaching the Wayland Zero-Trust perimeter.
+
+## 4. Hardware Independence & Storage Efficiency (Implemented)
+- **Dynamic IOMMU Separation**: Integration of the  001-acs-override.patch inside the Chimera Kernel guarantees strict IOMMU device grouping even on consumer motherboards, allowing perfect GPU passthrough.
+- **Bcachefs ZSTD & Deduplication**: The root filesystem is explicitly mounted with compression=zstd,background_compression=zstd and block-level deduplication to aggressively reduce the OCI and Micro-VM storage footprint.
+- **Zero-Trust Mesh Routing**: The Micro-VMs spawned by crosvm are directly bound via TAP interfaces (ermete-mesh-tap0) to the post-quantum ermete-mesh-bus, bypassing the physical local LAN entirely.

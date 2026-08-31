@@ -442,7 +442,7 @@ impl NetworkController {
     pub async fn toggle_wifi(&self) -> zbus::Result<bool> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::ToggleWifi(tx)).await.is_ok() {
-            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?))
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?
         } else {
             Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
@@ -451,7 +451,7 @@ impl NetworkController {
     pub async fn is_wifi_enabled(&self) -> zbus::Result<bool> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::IsWifiEnabled(tx)).await.is_ok() {
-            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?))
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?
         } else {
             Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
@@ -460,7 +460,7 @@ impl NetworkController {
     pub async fn set_wifi_powered(&self, powered: bool) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::SetWifiPowered(powered, tx)).await.is_ok() {
-            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?))
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?
         } else {
             Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
@@ -469,7 +469,7 @@ impl NetworkController {
     pub async fn list_wifi_networks(&self) -> zbus::Result<Vec<WifiNetworkInfo>> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::ListWifiNetworks(tx)).await.is_ok() {
-            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?))
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?
         } else {
             Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
@@ -478,9 +478,9 @@ impl NetworkController {
     pub async fn connect_wifi(&self, ssid: &str, password: &str) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::ConnectWifi(ssid.to_string(), password.to_string(), tx)).await.is_ok() {
-            let res = rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?));
+            let res = rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?;
             if res.is_ok() {
-                let mut l = self.active_wifi_ssid.lock().unwrap_or_else(|e| e.into_inner());
+                let mut l = self.active_wifi_ssid.lock().await;
         {
                     *l = Some(ssid.to_string());
                 }
@@ -494,9 +494,9 @@ impl NetworkController {
     pub async fn disconnect_wifi(&self, ssid: &str) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::DisconnectWifi(ssid.to_string(), tx)).await.is_ok() {
-            let res = rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?));
+            let res = rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?;
             if res.is_ok() {
-                let mut l = self.active_wifi_ssid.lock().unwrap_or_else(|e| e.into_inner());
+                let mut l = self.active_wifi_ssid.lock().await;
         {
                     *l = None;
                 }
@@ -510,7 +510,7 @@ impl NetworkController {
     pub async fn delete_wifi(&self, ssid: &str) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::DeleteWifi(ssid.to_string(), tx)).await.is_ok() {
-            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?))
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?
         } else {
             Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
@@ -519,7 +519,7 @@ impl NetworkController {
     pub async fn modify_wifi(&self, _ssid: &str, _autoconnect: bool, _ip: &str, _gw: &str, _dns: &str, _ipv6: bool) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::ModifyWifi(tx)).await.is_ok() {
-            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?))
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?
         } else {
             Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
@@ -528,7 +528,7 @@ impl NetworkController {
     pub async fn get_wifi_details(&self, ssid: &str) -> zbus::Result<(String, String, String, String, bool)> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::GetWifiDetails(ssid.to_string(), tx)).await.is_ok() {
-            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?))
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?
         } else {
             Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
@@ -537,14 +537,14 @@ impl NetworkController {
     pub async fn refresh_network_status(&self) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(NetworkCommand::RefreshStatus(tx)).await.is_ok() {
-            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?))
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?
         } else {
             Err(zbus::Error::Failure("NetworkActor disconnected".into()))
         }
     }
 
     pub async fn get_network_status_async(&self) -> (String, String, String) {
-        let l = self.active_wifi_ssid.lock().unwrap_or_else(|e| e.into_inner());
+        let l = self.active_wifi_ssid.lock().await;
         {
             if let Some(ssid) = l.as_ref() {
                 let status = ("".to_string(), "Rete Wi-Fi".to_string(), ssid.clone());
@@ -560,7 +560,7 @@ impl NetworkController {
     }
 
     pub fn get_cached_network_status(&self) -> (String, String, String) {
-        let l = self.active_wifi_ssid.lock().unwrap_or_else(|e| e.into_inner());
+        let l = self.active_wifi_ssid.blocking_lock();
         {
             if let Some(ssid) = l.as_ref() {
                 return ("".to_string(), "Rete Wi-Fi".to_string(), ssid.clone());
@@ -613,5 +613,8 @@ pub fn get_network_controller() -> NetworkController {
         NetworkController::new_disconnected(bus)
     }
 }
+
+
+
 
 

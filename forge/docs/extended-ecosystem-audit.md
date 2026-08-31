@@ -21,3 +21,4 @@ This report outlines the hidden technical debt, concurrency flaws, and vulnerabi
 *   **`ermete-cloud-rs`:** Maintains an unbounded `Arc<Mutex<HashSet<String>>>` for peer discovery without any eviction or TTL strategy. Long-running sessions will indefinitely leak memory as new DHCP leases cycle on the network.
 *   **`ermete-daemon-rs`:** Spawns unstructured, detached `tokio::spawn` loops (e.g., in `gatekeeper_listener.rs`, `qos.rs`) that reference global states without cancellation tokens, leading to orphaned zombie tasks upon service reloads.
 *   **`ermete-store-rs`:** In `ui.rs`, async UI closures capture heavily cloned components without structured memory cleanup, risking reference cycle leaks when searching and regenerating application list nodes.
+

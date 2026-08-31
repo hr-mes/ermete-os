@@ -13,3 +13,9 @@ tracing-subscriber = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 zbus = { workspace = true, features = ["tokio"] }
+
+[profile.release]
+lto = "thin"
+opt-level = 3
+codegen-units = 1
+panic = "abort"

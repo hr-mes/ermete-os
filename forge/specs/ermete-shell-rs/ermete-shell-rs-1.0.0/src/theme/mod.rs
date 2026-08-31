@@ -108,7 +108,7 @@ mod tests {
     #[test]
     fn test_theme_css_path() {
         let path = get_theme_css_path();
-        assert!(path.to_str().unwrap().contains("theme.css"));
+        assert!(path.to_str().expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato.").contains("theme.css"));
     }
 
     #[test]
@@ -119,8 +119,9 @@ mod tests {
         apply_dynamic_material3_theme(None, true);
         let theme_file = get_theme_css_path();
         assert!(theme_file.exists());
-        let content = std::fs::read_to_string(&theme_file).unwrap();
+        let content = std::fs::read_to_string(&theme_file).expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato.");
         assert!(content.contains("@define-color primary"));
         assert!(content.contains("@define-color surface"));
     }
 }
+

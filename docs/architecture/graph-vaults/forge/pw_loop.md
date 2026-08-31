@@ -1,5 +1,5 @@
 ---
-source_file: "ermete-audio-bus/src/pipewire_manager.rs"
+source_file: "PipeWire/WirePlumber/src/pipewire_manager.rs"
 type: "code"
 community: "Community 43"
 location: "L19"

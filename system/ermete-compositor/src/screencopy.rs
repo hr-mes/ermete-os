@@ -216,7 +216,7 @@ mod tests {
             })
         );
 
-        let frame = manager.get_frame(1).unwrap();
+        let frame = manager.get_frame(1).expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato.");
         assert_eq!(frame.status, ScreencopyStatus::Denied);
     }
 
@@ -240,3 +240,4 @@ mod tests {
         );
     }
 }
+

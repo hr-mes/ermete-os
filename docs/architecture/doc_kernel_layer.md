@@ -19,18 +19,12 @@ Il vero salto prestazionale è garantito dall'utilizzo di **Umem**, una regione 
 
 Questo approccio ci consente di saturare link a 100 Gbps utilizzando una frazione delle risorse della CPU, riducendo le latenze a livelli di microsecondi. Non eliminiamo la complessità del networking, ma la spostiamo dove può essere gestita in modo più efficiente, riducendo l'impatto sul resto del sistema.
 
-### Scheduling eBPF In-Kernel guidato dall'AI
+### Scheduling eBPF In-Kernel Deterministico (Zero-AI)
 
-Oltre al networking, eBPF è il cuore pulsante del nostro sistema di telemetria e scheduling. In Ermete OS, le decisioni di scheduling (chi esegue cosa e quando) non sono puramente euristiche o basate su logiche statiche.
+Oltre al networking, eBPF � il cuore pulsante del nostro sistema di telemetria e scheduling. In Ermete OS, le decisioni di scheduling si basano su solide e rigorose euristiche deterministiche, allontanandosi dalle pericolose allucinazioni dei modelli di Intelligenza Artificiale locale.
 
-Abbiamo integrato un demone AI reale, scritto interamente in **Rust** e basato sul framework **`candle-core`**. Questo demone analizza in tempo reale i pattern di carico estratti dalle sonde eBPF (memoria, I/O, cache miss, lock contention) e inferisce la migliore allocazione dei thread.
-
-Per garantire che questo processo non diventi un collo di bottiglia:
-- Il demone cerca di eseguire l'inferenza primariamente su **NPU** (Neural Processing Unit), se disponibile.
-- In mancanza di NPU, esegue un fallback su **GPU**.
-- Come ultima risorsa, utilizza la **CPU** con modelli quantizzati ultraleggeri.
-
-I pesi e le decisioni del modello vengono poi iniettate nuovamente nel kernel via mappe eBPF (`bpf_map`), influenzando le code di scheduling in modo dinamico e adattivo. Questa architettura ci permette di reagire a picchi di carico e anomalie in tempo reale. L'AI non rimpiazza la robustezza dello scheduler di base, ma lo guida per ottimizzare l'uso dell'hardware moderno.
+Abbiamo rimosso ogni traccia di inferenza instabile (NPU/GPU/candle-core) a favore di uno **Static Log Rules Engine**. Il demone `ermete-ebpf-sched` analizza in tempo reale i pattern di carico estratti dalle sonde eBPF (memoria, I/O) e applica pesi di esecuzione precisi, fallendo in modalit� *closed* se i dati non sono disponibili.
+I pesi vengono iniettati nel kernel via mappe eBPF (`bpf_map`), influenzando le code di scheduling in modo dinamico e adattivo ma **matematicamente predicibile**.
 
 ---
 
@@ -77,6 +71,7 @@ Con Kani, non ci limitiamo a "testare" il codice con casi d'uso noti, ma dimostr
 
 ## Conclusione
 
-L'architettura del Kernel e della Sicurezza di Ermete OS è il risultato di scelte ingegneristiche deliberate. Uniamo tecnologie all'avanguardia come eBPF, AI per lo scheduling, MicroVM confidenziali e verifica formale matematica, il tutto orchestrato in Rust.
+L'architettura del Kernel e della Sicurezza di Ermete OS è il risultato di scelte ingegneristiche deliberate. Uniamo tecnologie all'avanguardia come eBPF, Scheduling eBPF deterministico, MicroVM confidenziali e verifica formale matematica, il tutto orchestrato in Rust.
 
 Il nostro approccio è guidato dalla consapevolezza che il software è intrinsecamente fallibile. L'adozione di queste tecnologie non ci rende immuni da bug, ma costruisce una serie di compartimenti stagni e reti di sicurezza che arginano gli errori, mitigano gli attacchi e mantengono il sistema stabile e reattivo in ogni condizione. Invitiamo la community a studiare questo codice, a sfidare le nostre assunzioni e a contribuire a rendere Ermete OS ancora più sicuro.
+

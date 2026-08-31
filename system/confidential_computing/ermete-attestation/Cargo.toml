@@ -20,9 +20,15 @@ hex = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 pqc_dilithium = { workspace = true }
-pqc_kyber = { workspace = true, features = ["kyber1024"] }
 reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
 tokio = { workspace = true, features = ["full"] }
 zbus = { workspace = true }
 tracing = { workspace = true }
+
+
+[profile.release]
+lto = "thin"
+opt-level = 3
+codegen-units = 1
+panic = "abort"
 

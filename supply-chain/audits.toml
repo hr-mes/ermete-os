@@ -1,10 +1,3 @@
-[criteria.safe-to-deploy]
-description = "The code has been audited for memory safety, undefined behavior, and security vulnerabilities. FFI boundaries and unsafe blocks are verified."
-implies = "safe-to-run"
-
-[criteria.safe-to-run]
-description = "The code does not perform malicious actions during build or execution."
-
 [audits]
 
 [[audits.libc]]

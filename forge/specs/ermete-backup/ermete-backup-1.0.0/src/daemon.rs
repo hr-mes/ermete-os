@@ -217,6 +217,13 @@ impl Default for BackupServer {
 }
 
 impl BackupServer {
+    fn get_manifest_path(&self, id: &str) -> PathBuf {
+        let mut path = self.snapshot_dir.clone();
+        path.push(id);
+        path.push("manifest.json");
+        path
+    }
+
     pub fn new() -> Self {
         let home = std::env::var("HOME").unwrap_or_else(|_| dirs::home_dir().unwrap_or(std::path::PathBuf::from("/home")).to_string_lossy().into_owned().to_string());
         let mut path = PathBuf::from(&home);
@@ -350,7 +357,7 @@ impl BackupServer {
             return Err(zbus::fdo::Error::AccessDenied("Polkit authorization failed for create_snapshot".into()));
         }
 
-        self.create_snapshot_internal(note).map_err(|e| zbus::fdo::Error::Failed(e))
+        self.create_snapshot_internal(note).map_err(zbus::fdo::Error::Failed)
     }
 
     async fn list_snapshots(
@@ -436,7 +443,7 @@ mod tests {
     async fn test_snapshot_lifecycle_and_restore() {
         let server = BackupServer::new();
         // Uses the internal logic that doesn't need D-Bus/PolKit for testing
-        let snap = server.create_snapshot_internal("Test note")?;
+        let snap = server.create_snapshot_internal("Test note").unwrap();
         assert!(snap.id.starts_with("snap-"));
         assert_eq!(snap.note, "Test note");
 
@@ -452,4 +459,6 @@ mod tests {
         assert!(deleted);
     }
 }
+
+
 

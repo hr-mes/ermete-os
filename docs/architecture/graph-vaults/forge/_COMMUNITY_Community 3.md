@@ -31,10 +31,10 @@ members: 49
 - [[Self_26]] - code
 - [[String_6]] - code
 - [[String_37]] - code
-- [[apply_ai_hardening()]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/security.rs
+- [[apply_ai_hardening()]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/security.rs
 - [[build_crosvm_command()]] - code - specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0/src/hypervisor.rs
 - [[constant_time_eq()]] - code - specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0/src/security.rs
-- [[drop_capabilities()]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/security.rs
+- [[drop_capabilities()]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/security.rs
 - [[encode_ipc_header()]] - code - specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0/src/ipc.rs
 - [[ensure_seccomp_policy()]] - code - specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0/src/hypervisor.rs
 - [[evaluate_execution_rate_limit()]] - code - specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0/src/security.rs
@@ -50,7 +50,7 @@ members: 49
 - [[proof_verify_auth_token_no_panic()]] - code - specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0/src/security.rs
 - [[proof_verify_key_permissions()]] - code - specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0/src/security.rs
 - [[read_seccomp_policy()]] - code - specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0/src/hypervisor.rs
-- [[security.rs]] - code - specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/security.rs
+- [[security.rs]] - code - specs/Static Rules Engine/Static Rules Engine-1.0.0/src/security.rs
 - [[security.rs_2]] - code - specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0/src/security.rs
 - [[spawn_microvm_isolated_app()]] - code - specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0/src/hypervisor.rs
 - [[test_crosvm_command_memory_and_balloon_args()]] - code - specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0/src/hypervisor.rs

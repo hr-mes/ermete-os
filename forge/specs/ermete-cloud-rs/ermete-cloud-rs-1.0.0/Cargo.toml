@@ -10,7 +10,6 @@ zbus = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
-pqc_kyber = { workspace = true, features = ["kyber1024"] }
 pqc_dilithium = { workspace = true }
 sha2 = { workspace = true }
 rand_core = "0.6"
@@ -24,4 +23,11 @@ subtle = { workspace = true }
 
 
 [target.'cfg(not(target_os = "hermit"))'.dependencies]
+
+
+[profile.release]
+lto = "thin"
+opt-level = 3
+codegen-units = 1
+panic = "abort"
 

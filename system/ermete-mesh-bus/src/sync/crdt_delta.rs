@@ -34,9 +34,10 @@ pub struct CrdtNetworkPayload {
     pub timestamp_ms: u64,
     /// Specific delta operation type
     pub delta_type: CrdtDeltaType,
-    pub payload: Vec<u8>,
-    /// Encoded CRDT payload (bincode / serde_json of CrdtState or specific mutation)
-    pub _marker: (),
+    /// Encoded CRDT payload
+    pub payload_bytes: Vec<u8>,
+    /// Post-Quantum signature
+    pub pqc_signature: Vec<u8>,
 }
 
 impl CrdtNetworkPayload {
@@ -47,6 +48,7 @@ impl CrdtNetworkPayload {
         sequence: u64,
         delta_type: CrdtDeltaType,
         payload_bytes: Vec<u8>,
+        pqc_signature: Vec<u8>,
     ) -> Self {
         let timestamp_ms = match std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH) {
             Ok(dur) => dur.as_millis() as u64,
@@ -60,6 +62,7 @@ impl CrdtNetworkPayload {
             timestamp_ms,
             delta_type,
             payload_bytes,
+            pqc_signature,
         }
     }
 
@@ -84,3 +87,4 @@ impl CrdtNetworkPayload {
         Ok(())
     }
 }
+

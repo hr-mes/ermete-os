@@ -181,27 +181,27 @@ impl MprisController {
 
 
     pub async fn player_command(&self, cmd: &str) -> zbus::Result<()> {
-        let mut lock = self.last_player_command.lock().unwrap_or_else(|e| e.into_inner());
+        let mut lock = self.last_player_command.lock().await;
         {
             *lock = Some(cmd.to_string());
         }
         let (tx, rx) = oneshot::channel();
         if self.sender.send(MprisCommand::PlayerCommand(cmd.to_string(), tx)).await.is_ok() {
-            let res = rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))??;
+            let res = rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?;
             let _ = self.refresh_mpris().await;
             res
         } else { Err(zbus::Error::Failure("Actor channel offline".into())) }
     }
 
     pub fn get_cached_mpris_state(&self) -> Option<MprisState> {
-        self.cached_mpris.lock().unwrap_or_else(|e| e.into_inner()).clone()
+        self.cached_mpris.blocking_lock().clone()
     }
 
     pub async fn refresh_mpris(&self) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(MprisCommand::GetCachedMprisState(tx)).await.is_ok() {
             if let Ok(state) = rx.await {
-                let mut lock = self.cached_mpris.lock().unwrap_or_else(|e| e.into_inner());
+                let mut lock = self.cached_mpris.lock().await;
         {
                     *lock = state;
                 }
@@ -228,3 +228,6 @@ pub fn get_mpris_controller() -> MprisController {
         MprisController::new(IpcBackend::Disconnected, bus)
     }
 }
+
+
+

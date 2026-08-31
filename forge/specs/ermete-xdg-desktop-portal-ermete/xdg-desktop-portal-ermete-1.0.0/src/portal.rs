@@ -48,15 +48,39 @@ impl ErmetePortal {
             }
             Err(e) => {
                 warn!(
-                    "Failed to launch ermete-shell-rs privacy prompt (fallback granted for testing): {}",
+                    "Failed to launch ermete-shell-rs privacy prompt. Zero-Trust Enforcement: Permission DENIED by default. Error: {}",
                     e
                 );
-                true
+                false // ZT RULE 1: FAIL CLOSED. Nessun fallback insicuro permesso.
             }
         }
     }
 
     /// Queries `ermete-hypervisor-daemon` over DBus to check if `app_id` is running in a Micro-VM
+    pub async fn request_file_selection(app_id: &str) -> Option<String> {
+        info!("Prompting user for File Selection for app: {}", app_id);
+
+        let output = std::process::Command::new("ermete-shell-rs")
+            .arg("--file-chooser")
+            .output();
+
+        match output {
+            Ok(out) => {
+                if out.status.success() {
+                    let path = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                    if !path.is_empty() {
+                        return Some(path);
+                    }
+                }
+                None
+            }
+            Err(e) => {
+                warn!("Failed to launch ermete-shell-rs file chooser. Denying by default. Error: {}", e);
+                None
+            }
+        }
+    }
+
     pub async fn is_microvm_app(app_id: &str) -> bool {
         info!(
             "Checking if app '{}' is running inside a Micro-VM via DBus...",
@@ -80,16 +104,12 @@ impl ErmetePortal {
             }
         }
 
-        let lower = app_id.to_lowercase();
-        let fallback_vm = lower.contains("microvm")
-            || lower.contains("enclave")
-            || lower.contains("sandbox")
-            || lower.contains("untrusted");
-        info!(
-            "App '{}' fallback Micro-VM detection result: {}",
-            app_id, fallback_vm
+        // ZT RULE 2: FAIL CLOSED SULL'IDENTITA'. Non ci fidiamo mai del nome testuale.
+        warn!(
+            "Failed to verify Micro-VM status for app '{}' via Hypervisor DBus. Denying by default to prevent spoofing.",
+            app_id
         );
-        fallback_vm
+        false
     }
 
     /// Communicates with `ermete-hypervisor-daemon` over DBus to open a secure virtio-fs tunnel for File Access
@@ -239,12 +259,8 @@ impl ScreenCastPortal {
         _session_handle: ObjectPath<'_>,
         _options: HashMap<String, Value<'_>>,
     ) -> std::result::Result<zbus::zvariant::OwnedFd, zbus::fdo::Error> {
-        use std::os::fd::OwnedFd;
-        info!("ScreenCast::OpenPipeWireRemote requested");
-        let file = std::fs::File::open("/dev/null")
-            .map_err(|e| zbus::fdo::Error::Failed(e.to_string()))?;
-        let owned_fd = OwnedFd::from(file);
-        Ok(zbus::zvariant::OwnedFd::from(owned_fd))
+        warn!("ScreenCast::OpenPipeWireRemote requested but native PipeWire routing is incomplete. Denying access instead of mocking.");
+        Err(zbus::fdo::Error::NotSupported("Native PipeWire bridging not yet implemented".to_string()))
     }
 }
 
@@ -311,20 +327,18 @@ impl FileChooserPortal {
     ) -> std::result::Result<(u32, HashMap<String, Value<'static>>), zbus::fdo::Error> {
         info!("FileChooser::OpenFile requested by app: {}", app_id);
 
-        let granted = ErmetePortal::request_permission("FileChooser:OpenFile", &app_id).await;
-        if !granted {
-            return Ok((1, HashMap::new()));
-        }
-
+        let selected_file = match ErmetePortal::request_file_selection(&app_id).await {
+            Some(path) => path,
+            None => return Ok((1, HashMap::new())),
+        };
         let is_vm = ErmetePortal::is_microvm_app(&app_id).await;
-        let selected_file = "/home/ermete/Documents/shared_document.pdf";
 
         if is_vm {
             info!(
                 "App '{}' is running inside a Micro-VM! Opening secure virtio-fs tunnel via DBus hypervisor daemon...",
                 app_id
             );
-            let _ = ErmetePortal::setup_virtiofs_tunnel(&app_id, selected_file, false).await;
+            let _ = ErmetePortal::setup_virtiofs_tunnel(&app_id, &selected_file, false).await;
         }
 
         let mut results = HashMap::new();
@@ -416,7 +430,7 @@ mod tests {
     async fn test_virtiofs_tunnel_fallback() {
         let res = ErmetePortal::setup_virtiofs_tunnel("enclave-123", "/tmp/test.txt", false).await;
         assert!(res.is_ok());
-        let json_str = res.unwrap();
+        let json_str = res.expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato.");
         assert!(json_str.contains("virtiofs"));
         assert!(json_str.contains("enclave-123"));
     }
@@ -425,8 +439,11 @@ mod tests {
     async fn test_screencast_bridge_fallback() {
         let res = ErmetePortal::bridge_screencast_tunnel("enclave-123", 42).await;
         assert!(res.is_ok());
-        let json_str = res.unwrap();
+        let json_str = res.expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato.");
         assert!(json_str.contains("bridged"));
         assert!(json_str.contains("42"));
     }
 }
+
+
+

@@ -265,7 +265,7 @@ mod tests {
         let grab_id = router
             .request_global_input_grab("ermete-shell", 1234)
             .await
-            .unwrap();
+            .expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato.");
 
         assert_eq!(grab_id, 1);
         assert_eq!(router.active_grab_count(), 1);
@@ -274,3 +274,4 @@ mod tests {
         assert_eq!(router.active_grab_count(), 0);
     }
 }
+

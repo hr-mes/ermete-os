@@ -30,13 +30,13 @@ The `system/` directory hosts the core daemons managing system execution, hardwa
 +-----------------------------------------------------------------------------------+
 |               KERNEL AI SCHEDULER                                                 |
 |                        system/ermete-ebpf-sched                                   |
-|         - Ring-0 sys_execve eBPF Tracepoints, NPU AI Prediction, sched_ext        |
+|         - Ring-0 sys_execve eBPF Tracepoints, Static Rule Engine AI Prediction, sched_ext        |
 +-----------------------------------------------------------------------------------+
 ```
 
 ### 1. Kernel AI Scheduler ([`system/ermete-ebpf-sched`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-ebpf-sched))
 - **Role:** eBPF Kernel Scheduler Bridge.
-- **Implementation:** Intercepts `sys_execve` process creation events via eBPF, passes process metadata to `ermete-ai-daemon` on the NPU, and configures Ring-0 `sched_ext` task latency slice targets (100μs to 20ms) and cgroup v2 `cpu.weight`.
+- **Implementation:** Intercepts `sys_execve` process creation events via eBPF, passes process metadata to `Static Rules Engine` on the Static Rule Engine, and configures Ring-0 `sched_ext` task latency slice targets (100μs to 20ms) and cgroup v2 `cpu.weight`.
 
 ### 2. Micro-Hypervisor Enclave ([`system/ermete-hypervisor-daemon`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-hypervisor-daemon))
 - **Role:** Hardware Confidential Enclave Daemon.
@@ -57,8 +57,8 @@ The `system/` directory hosts the core daemons managing system execution, hardwa
 In addition to core system daemons, `system/` hosts native Pure Rust subsystems replacing legacy C components:
 
 1. **`ermete-compositor` ([`system/ermete-compositor`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-compositor))**: Pure Rust Wayland Compositor powered by Smithay (DRM/KMS, Udev, EGL) with a dynamic window tiling engine.
-2. **`ermete-init-oracle` ([`system/ermete-init-oracle`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-init-oracle))**: Asynchronous Tokio & Zbus systemd init supervisor that monitors unit lifecycle and auto-heals failing services.
-3. **`ermete-audio-bus` ([`system/ermete-audio-bus`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-audio-bus))**: Pure Rust real-time PipeWire session manager and audio stream router.
+2. **`Systemd Monitor` ([`system/Systemd Monitor`](file:///var/home/ermete/GEMINI/ermete-os/system/Systemd Monitor))**: Asynchronous Tokio & Zbus systemd init supervisor that monitors unit lifecycle and auto-heals failing services.
+3. **`PipeWire/WirePlumber` ([`system/PipeWire/WirePlumber`](file:///var/home/ermete/GEMINI/ermete-os/system/PipeWire/WirePlumber))**: Pure Rust real-time PipeWire session manager and audio stream router.
 4. **`ermete-greeter` ([`system/ermete-greeter`](file:///var/home/ermete/GEMINI/ermete-os/system/ermete-greeter))**: Zero-Trust TPM 2.0 key release & hardware attestation display manager with `ZeroizeOnDrop` memory protection.
 5. **`xdg-desktop-portal-ermete` ([`forge/specs/ermete-xdg-desktop-portal-ermete`](file:///var/home/ermete/GEMINI/ermete-os/forge/specs/ermete-xdg-desktop-portal-ermete/xdg-desktop-portal-ermete-1.0.0))**: Native Rust Zbus 4.4 async desktop portal implementation for SLSA Level 4 Flatpak sandboxes.
 
@@ -131,3 +131,5 @@ sudo podman run --rm -it --privileged --pull=newer \
     --type iso --kickstart /config.ks \
     ghcr.io/hr-mes/ermete-os-system:latest
 ```
+
+

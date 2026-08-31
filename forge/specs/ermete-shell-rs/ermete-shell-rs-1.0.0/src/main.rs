@@ -23,6 +23,8 @@ pub mod launcher;
 #[command(author, version, about, long_about = None)]
 struct Args {
     #[arg(long)]
+    file_chooser: bool,
+    #[arg(long)]
     topbar: bool,
     #[arg(long)]
     greeter: bool,
@@ -97,6 +99,17 @@ fn main() -> glib::ExitCode {
         app.connect_activate(move |app| {
             crate::theme::init_css();
             crate::ui::privacy_prompt::build_ui(app, &req_clone);
+        });
+        return app.run_with_args(&Vec::<String>::new());
+    }
+
+        if args.file_chooser {
+        let app = Application::builder()
+            .application_id("os.ermete.FileChooser")
+            .build();
+        app.connect_activate(move |app| {
+            crate::theme::init_css();
+            crate::ui::file_chooser::build_ui(app);
         });
         return app.run_with_args(&Vec::<String>::new());
     }
@@ -254,3 +267,4 @@ thread_local! {
     // Pass original CLI args to run so GTK forwards them to primary instance
     app.run()
 }
+

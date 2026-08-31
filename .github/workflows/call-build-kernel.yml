@@ -114,21 +114,20 @@ jobs:
           export CCACHE_DIR=/forge/.ccache_local
           export CCACHE_COMPRESS=1
           export CCACHE_MAXSIZE=3G
-          cat << MACRO >> ~/.rpmmacros
-        %_smp_mflags -j\$(nproc)
-        %toolchain clang
-        %__make /usr/bin/make LLVM=1 LLVM_IAS=1
-        %__cc clang
-        %__cxx clang++
-        %_build_cc clang
-        %_build_cxx clang++
-        %_host_cc clang
-        %_host_cxx clang++
-        %_ld ld.lld
-        %_ldflags -Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro -fuse-ld=lld
-        %optflags %{__global_compiler_flags} -march=\${MARCH_TARGET} -pipe -Wno-error -flto=thin
-        %kcflags -march=\${MARCH_TARGET} -pipe -Wno-error -flto=thin
-        MACRO
+          mkdir -p ~
+          echo '%_smp_mflags -j$(nproc)' >> ~/.rpmmacros
+          echo '%toolchain clang' >> ~/.rpmmacros
+          echo '%__make /usr/bin/make LLVM=1 LLVM_IAS=1' >> ~/.rpmmacros
+          echo '%__cc clang' >> ~/.rpmmacros
+          echo '%__cxx clang++' >> ~/.rpmmacros
+          echo '%_build_cc clang' >> ~/.rpmmacros
+          echo '%_build_cxx clang++' >> ~/.rpmmacros
+          echo '%_host_cc clang' >> ~/.rpmmacros
+          echo '%_host_cxx clang++' >> ~/.rpmmacros
+          echo '%_ld ld.lld' >> ~/.rpmmacros
+          echo '%_ldflags -Wl,-O2 -Wl,--as-needed -Wl,--sort-common -Wl,-z,now -Wl,-z,relro -fuse-ld=lld' >> ~/.rpmmacros
+          echo '%optflags %{__global_compiler_flags} -march=${MARCH_TARGET} -pipe -Wno-error -flto=thin' >> ~/.rpmmacros
+          echo '%kcflags -march=${MARCH_TARGET} -pipe -Wno-error -flto=thin' >> ~/.rpmmacros
         "
         
     - name: "🔥 Phase 3: RPMBuild (Clang LTO + AutoFDO + BOLT)"
@@ -382,3 +381,5 @@ jobs:
           else
             chown -R 1001:1001 . || chown -R 1000:1000 . || true
           fi
+
+

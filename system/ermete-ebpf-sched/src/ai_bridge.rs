@@ -43,8 +43,8 @@ impl AiDaemonBridge {
         // Inizializza i tensori del modello MLP (Multi-Layer Perceptron).
         // In produzione verrebbero caricati da un file .safetensors (es. /etc/ermete/ai/model.safetensors).
         let (weights, biases) = match (
-            Tensor::zeros(0f32, 1f32, (3, 4), &Device::Cpu),
-            Tensor::zeros(0f32, 1f32, (3,), &Device::Cpu)
+            Tensor::zeros((3, 4), candle_core::DType::F32, &Device::Cpu),
+            Tensor::zeros((3,), candle_core::DType::F32, &Device::Cpu)
         ) {
             (Ok(w), Ok(b)) => (Some(w), Some(b)),
             _ => (None, None),
@@ -193,3 +193,4 @@ impl AiDaemonBridge {
         }
     }
 }
+

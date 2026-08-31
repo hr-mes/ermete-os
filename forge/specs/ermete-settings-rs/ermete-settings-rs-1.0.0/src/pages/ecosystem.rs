@@ -71,17 +71,18 @@ pub fn build_page() -> Box {
             if output.status.success() {
                 let stdout = String::from_utf8_lossy(&output.stdout);
                 if stdout.trim().is_empty() {
-                    dev_row_clone.set_subtitle("Nessun dispositivo trovato sulla rete locale.");
+                    dev_row_clone.set_tooltip_text(Some("Nessun dispositivo trovato sulla rete locale."));
                 } else {
-                    dev_row_clone.set_subtitle("Dispositivi Ermete rilevati via mDNS.");
+                    dev_row_clone.set_tooltip_text(Some("Dispositivi Ermete rilevati via mDNS."));
                 }
             } else {
-                dev_row_clone.set_subtitle("Errore durante la scansione avahi-browse.");
+                dev_row_clone.set_tooltip_text(Some("Errore durante la scansione avahi-browse."));
             }
         } else {
-            dev_row_clone.set_subtitle("Servizio mDNS non disponibile nel sistema.");
+            dev_row_clone.set_tooltip_text(Some("Servizio mDNS non disponibile nel sistema."));
         }
     });
 
     container
 }
+

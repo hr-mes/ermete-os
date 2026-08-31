@@ -1,5 +1,5 @@
 ---
-source_file: "specs/ermete-ai-daemon/ermete-ai-daemon-1.0.0/src/npu/openvino.rs"
+source_file: "specs/Static Rules Engine/Static Rules Engine-1.0.0/src/npu/openvino.rs"
 type: "code"
 community: "Community 65"
 location: "L1"

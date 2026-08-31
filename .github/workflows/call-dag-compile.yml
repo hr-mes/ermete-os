@@ -123,7 +123,7 @@ jobs:
               -w /workspace/forge \
               ghcr.io/hr-mes/ermete-os-builder:${{ inputs.builder_hash }} \
               bash <<'EOF'
-              mkdir -p /tmp; chmod 1777 /tmp; cp config/rpmmacros ~/.rpmmacros
+              mkdir -p /tmp; chmod 1777 /tmp; mkdir -p ~; cp config/rpmmacros ~/.rpmmacros
               mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
               PKG_CLEAN=$(echo "$PKG_NAME" | tr -cd '[:alnum:]-')
               SPEC_DIR=""
@@ -134,15 +134,9 @@ jobs:
               fi
             
               mkdir -p ~/rpmbuild/BUILD/
-              for spec_dir in /workspace/forge/specs/ermete-*/ /workspace/forge/specs/*/ ; do
-                if [ -d "$spec_dir" ]; then
-                  crate_name=$(basename "$spec_dir")
-                  mkdir -p ~/rpmbuild/BUILD/"$crate_name"
-                  cp -a "$spec_dir"/. ~/rpmbuild/BUILD/"$crate_name"/ 2>/dev/null || true
-                fi
-              done
+              cp -a /workspace/. ~/rpmbuild/BUILD/ 2>/dev/null || true
    
-                          
+              spectool -g -R $SPEC_DIR/*.spec || true            
               rpmbuild -bb --nodeps $SPEC_DIR/*.spec
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
@@ -312,7 +306,7 @@ jobs:
               -w /workspace/forge \
               ghcr.io/hr-mes/ermete-os-builder:${{ inputs.builder_hash }} \
               bash <<'EOF'
-              mkdir -p /tmp; chmod 1777 /tmp; cp config/rpmmacros ~/.rpmmacros
+              mkdir -p /tmp; chmod 1777 /tmp; mkdir -p ~; cp config/rpmmacros ~/.rpmmacros
               mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
               PKG_CLEAN=$(echo "$PKG_NAME" | tr -cd '[:alnum:]-')
               SPEC_DIR=""
@@ -323,15 +317,9 @@ jobs:
               fi
             
               mkdir -p ~/rpmbuild/BUILD/
-              for spec_dir in /workspace/forge/specs/ermete-*/ /workspace/forge/specs/*/ ; do
-                if [ -d "$spec_dir" ]; then
-                  crate_name=$(basename "$spec_dir")
-                  mkdir -p ~/rpmbuild/BUILD/"$crate_name"
-                  cp -a "$spec_dir"/. ~/rpmbuild/BUILD/"$crate_name"/ 2>/dev/null || true
-                fi
-              done
+              cp -a /workspace/. ~/rpmbuild/BUILD/ 2>/dev/null || true
    
-                          
+              spectool -g -R $SPEC_DIR/*.spec || true            
               rpmbuild -bb --nodeps $SPEC_DIR/*.spec
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
@@ -499,7 +487,7 @@ jobs:
               -w /workspace/forge \
               ghcr.io/hr-mes/ermete-os-builder:${{ inputs.builder_hash }} \
               bash <<'EOF'
-              mkdir -p /tmp; chmod 1777 /tmp; cp config/rpmmacros ~/.rpmmacros
+              mkdir -p /tmp; chmod 1777 /tmp; mkdir -p ~; cp config/rpmmacros ~/.rpmmacros
               mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
               PKG_CLEAN=$(echo "$PKG_NAME" | tr -cd '[:alnum:]-')
               SPEC_DIR=""
@@ -510,15 +498,9 @@ jobs:
               fi
             
               mkdir -p ~/rpmbuild/BUILD/
-              for spec_dir in /workspace/forge/specs/ermete-*/ /workspace/forge/specs/*/ ; do
-                if [ -d "$spec_dir" ]; then
-                  crate_name=$(basename "$spec_dir")
-                  mkdir -p ~/rpmbuild/BUILD/"$crate_name"
-                  cp -a "$spec_dir"/. ~/rpmbuild/BUILD/"$crate_name"/ 2>/dev/null || true
-                fi
-              done
+              cp -a /workspace/. ~/rpmbuild/BUILD/ 2>/dev/null || true
    
-                          
+              spectool -g -R $SPEC_DIR/*.spec || true            
               rpmbuild -bb --nodeps $SPEC_DIR/*.spec
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
@@ -644,3 +626,5 @@ jobs:
           else
             chown -R 1001:1001 . || chown -R 1000:1000 . || true
           fi
+
+

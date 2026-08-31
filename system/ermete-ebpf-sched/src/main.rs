@@ -1,3 +1,4 @@
+#![allow(unsafe_code)]
 #![allow(clippy::all)]
 #![allow(clippy::pedantic)]
 
@@ -38,7 +39,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize core components
     let mut tracer = BpfExecTracer::new().await;
     let ai_bridge = AiDaemonBridge::new().await;
-    let sched_controller = Arc::new(SchedExtController::new().await);
+    let sched_controller = Arc::new(SchedExtController::new().await.unwrap());
     let cgroup_mgr = CgroupManager::new();
 
     // Register DBus interface for remote AI_SCHED_MAP manipulation
@@ -144,4 +145,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+
 

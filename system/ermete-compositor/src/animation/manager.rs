@@ -328,7 +328,7 @@ mod tests {
         // Check magic lamp transformation matrices
         let genie_mats = engine.get_magic_lamp_matrices(42);
         assert!(genie_mats.is_some());
-        assert!(!genie_mats.unwrap().is_empty());
+        assert!(!genie_mats.expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato.").is_empty());
 
         let window_mat = engine.get_window_transform_matrix(42, &src);
         assert_ne!(window_mat, [0.0; 16]);
@@ -342,8 +342,9 @@ mod tests {
 
         let wobbly_mats = engine.get_wobbly_matrices(100);
         assert!(wobbly_mats.is_some());
-        assert!(!wobbly_mats.unwrap().is_empty());
+        assert!(!wobbly_mats.expect("Ermete OS: Fallimento critico di unwrapping. Zero-Trust Panic Invocato.").is_empty());
 
         engine.end_wobbly_drag(100);
     }
 }
+

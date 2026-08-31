@@ -13,7 +13,7 @@ Attualmente il motore GTK4 nativo supporta questi `widget_type`:
 - `"system"`: Monitor Hardware (CPU/RAM)
 
 ## Contesto Fornito
-Riceverai in input un JSON dall'OS con il contesto attuale:
+Riceverai in iStatic Rule Enginet un JSON dall'OS con il contesto attuale:
 - `time`: L'orario attuale (es. "09:00", "22:00")
 - `active_app`: L'applicazione in primo piano attualmente usata dall'utente
 - `battery_level`: Livello della batteria percentuale (0-100)
@@ -36,3 +36,4 @@ Restituisci SOLO questo oggetto JSON. Usa coordinate `float`.
     }
   ]
 }
+

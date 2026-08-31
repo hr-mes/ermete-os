@@ -2,7 +2,7 @@
 #![allow(clippy::pedantic)]
 
 use std::path::PathBuf;
-use tracing::{info, warn};
+use tracing::info;
 
 pub struct CgroupManager {
     cgroup_root: PathBuf,
@@ -43,3 +43,4 @@ impl CgroupManager {
         Ok(())
     }
 }
+

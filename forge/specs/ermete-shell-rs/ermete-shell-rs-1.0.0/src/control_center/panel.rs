@@ -263,9 +263,9 @@ impl SimpleComponent for ControlCenterPanel {
             };
             
             if let Ok(mesh_proxy) = MeshSyncProxy::new(&conn).await {
-                let update_mesh = |proxy: &MeshSyncProxy<'_>| async {
+                macro_rules! update_mesh_macro { () => {
                     if let (Ok(connected), Ok(ssid), Ok(ip_addr), Ok(signal), Ok(wifi), Ok(eth)) = 
-                        (proxy.connected().await, proxy.ssid().await, proxy.ip_addr().await, proxy.signal_strength().await, proxy.wifi_enabled().await, proxy.eth_active().await) {
+                        (mesh_proxy.connected().await, mesh_proxy.ssid().await, mesh_proxy.ip_addr().await, mesh_proxy.signal_strength().await, mesh_proxy.wifi_enabled().await, mesh_proxy.eth_active().await) {
                         let net_data = NetworkModuleData {
                             connected,
                             ssid,
@@ -276,14 +276,14 @@ impl SimpleComponent for ControlCenterPanel {
                         };
                         sender_mesh.input(CcPanelInput::UpdateNetwork(net_data));
                     }
-                };
+                } }
                 
-                update_mesh(&mesh_proxy).await;
+                update_mesh_macro!();
                 
-                if let Ok(mut changes) = mesh_proxy.receive_all_properties_changed().await {
-                    use zbus::export::futures_util::StreamExt;
+                let mut changes = mesh_proxy.receive_ssid_changed().await; {
+                    use futures_util::stream::StreamExt;
                     while let Some(_) = changes.next().await {
-                        update_mesh(&mesh_proxy).await;
+                        update_mesh_macro!();
                     }
                 }
             }
@@ -297,9 +297,9 @@ impl SimpleComponent for ControlCenterPanel {
             };
             
             if let Ok(ai_proxy) = AiDaemonProxy::new(&conn).await {
-                let update_ai = |proxy: &AiDaemonProxy<'_>| async {
+                macro_rules! update_ai_macro { () => {
                     if let (Ok(mode_str), Ok(tracepoints), Ok(latency), Ok(cs_saved), Ok(status)) = 
-                        (proxy.current_mode().await, proxy.ring0_tracepoints_active().await, proxy.latency_reduction_pct().await, proxy.context_switches_saved().await, proxy.status_text().await) {
+                        (ai_proxy.current_mode().await, ai_proxy.ring0_tracepoints_active().await, ai_proxy.latency_reduction_pct().await, ai_proxy.context_switches_saved().await, ai_proxy.status_text().await) {
                         
                         let mode = match mode_str.as_str() {
                             "GamingLowLatency" => crate::control_center::ebpf::EbpfMode::GamingLowLatency,
@@ -317,14 +317,14 @@ impl SimpleComponent for ControlCenterPanel {
                         };
                         sender_ai.input(CcPanelInput::UpdateEbpf(ebpf_data));
                     }
-                };
+                } }
                 
-                update_ai(&ai_proxy).await;
+                update_ai_macro!();
                 
-                if let Ok(mut changes) = ai_proxy.receive_all_properties_changed().await {
-                    use zbus::export::futures_util::StreamExt;
+                let mut changes = ai_proxy.receive_current_mode_changed().await; {
+                    use futures_util::stream::StreamExt;
                     while let Some(_) = changes.next().await {
-                        update_ai(&ai_proxy).await;
+                        update_ai_macro!();
                     }
                 }
             }
@@ -368,3 +368,9 @@ impl SimpleComponent for ControlCenterPanel {
         }
     }
 }
+
+
+
+
+
+

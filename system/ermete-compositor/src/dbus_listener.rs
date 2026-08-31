@@ -3,7 +3,7 @@ use std::sync::Arc;
 use tokio::sync::watch;
 use tracing::{info, warn};
 
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, zbus::zvariant::Type)]
 pub struct AppearanceSettings {
     pub color_scheme: String,
     pub accent_color: String,
@@ -80,3 +80,5 @@ pub fn spawn_dbus_appearance_listener(
         }
     })
 }
+
+

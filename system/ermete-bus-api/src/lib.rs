@@ -1,3 +1,4 @@
+#![allow(unsafe_code)]
 #![allow(unexpected_cfgs)]
 use serde::{Deserialize, Serialize};
 use zbus::proxy;
@@ -6,7 +7,6 @@ pub mod shm_ring;
 pub use shm_ring::*;
 
 pub mod socket;
-
 
 /// Common telemetry payload collected from Ring-0 eBPF probes.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -64,7 +64,6 @@ pub struct MeshBusStatusPayload {
     pub zero_trust_enabled: bool,
 }
 
-
 /// Shared DBus interface proxy definition for org.ermete.MeshBus
 #[proxy(
     interface = "org.ermete.MeshBus",
@@ -83,3 +82,4 @@ pub trait MeshBusInterface {
     async fn remove_peer(&self, node_id: String) -> zbus::Result<String>;
     async fn initiate_handshake(&self, node_id: String, endpoint: String) -> zbus::Result<String>;
 }
+

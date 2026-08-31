@@ -143,7 +143,7 @@ impl SchedExtDbusInterface {
     /// Query policy for a specific PID from `AI_SCHED_MAP`
     async fn get_sched_map(&self, pid: u32) -> String {
         match self.controller.sched_map().get_policy(pid).await {
-            Some(val) => serde_json::json!({
+            Ok(Some(val)) => serde_json::json!({
                 "found": true,
                 "pid": val.pid,
                 "cpu_weight": val.cpu_weight,
@@ -153,7 +153,7 @@ impl SchedExtDbusInterface {
                 "flags": val.flags
             })
             .to_string(),
-            None => serde_json::json!({
+            Ok(None) | Err(_) => serde_json::json!({
                 "found": false,
                 "pid": pid
             })
@@ -163,7 +163,7 @@ impl SchedExtDbusInterface {
 
     /// List all policies registered in `AI_SCHED_MAP`
     async fn list_sched_map(&self) -> String {
-        let policies = self.controller.sched_map().list_policies().await;
+        let policies = self.controller.sched_map().list_policies().await.unwrap_or_default();
         let serialized: Vec<_> = policies
             .into_iter()
             .map(|(pid, val)| {
@@ -197,3 +197,4 @@ impl SchedExtDbusInterface {
         .to_string()
     }
 }
+

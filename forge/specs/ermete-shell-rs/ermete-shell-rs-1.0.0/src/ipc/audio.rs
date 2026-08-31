@@ -133,37 +133,37 @@ impl AudioController {
     pub async fn toggle_mute(&self) -> zbus::Result<bool> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(AudioCommand::ToggleMute(tx)).await.is_ok() {
-            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))??
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?
         } else { Err(zbus::Error::Failure("Actor channel offline".into())) }
     }
 
     pub async fn toggle_source_mute(&self) -> zbus::Result<bool> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(AudioCommand::ToggleSourceMute(tx)).await.is_ok() {
-            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))??
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?
         } else { Err(zbus::Error::Failure("Actor channel offline".into())) }
     }
 
     pub async fn set_volume(&self, volume: f64) -> zbus::Result<()> {
-        let mut c = self.cached_volume.lock().unwrap_or_else(|e| e.into_inner());
+        let mut c = self.cached_volume.lock().await;
         {
             *c = volume;
         }
         let (tx, rx) = oneshot::channel();
         if self.sender.send(AudioCommand::SetVolume(volume, tx)).await.is_ok() {
-            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))??
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?
         } else { Err(zbus::Error::Failure("Actor channel offline".into())) }
     }
 
     pub async fn set_source_volume(&self, volume: f64) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(AudioCommand::SetSourceVolume(volume, tx)).await.is_ok() {
-            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))??
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?
         } else { Err(zbus::Error::Failure("Actor channel offline".into())) }
     }
 
     pub fn get_cached_volume(&self) -> f64 {
-        *self.cached_volume.lock().unwrap_or_else(|e| e.into_inner())
+        *self.cached_volume.blocking_lock()
     }
 }
 
@@ -184,3 +184,6 @@ pub fn get_audio_controller() -> AudioController {
         AudioController::new(IpcBackend::Disconnected, bus)
     }
 }
+
+
+

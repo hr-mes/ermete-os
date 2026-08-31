@@ -22,5 +22,11 @@ tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 vmm-sys-util = "0.12"
 pqc_dilithium = { workspace = true }
-pqc_kyber = { workspace = true, features = ["kyber1024"] }
 tempfile = "3.27.0"
+
+[profile.release]
+lto = "thin"
+opt-level = 3
+codegen-units = 1
+panic = "abort"
+

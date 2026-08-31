@@ -1,5 +1,5 @@
 ---
-source_file: "ermete-audio-bus/src/dbus.rs"
+source_file: "PipeWire/WirePlumber/src/dbus.rs"
 type: "code"
 community: "Community 42"
 location: "L11"

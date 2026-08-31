@@ -38,26 +38,26 @@ impl EbpfMonitor {
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap_or_default()
                 .as_secs(),
-            syscall_frequency_hz: 18500,
-            memory_pressure_mb: 2048,
+            syscall_frequency_hz: 0,
+            memory_pressure_mb: 0, // In a real app, read from /proc/meminfo instead of faking 2048
             network_passed_packets: 0,
             network_dropped_packets: 0,
             land_attacks_detected: 0,
-            tcp_scans_detected: 2,
-            blocklist_drops: 1,
-            unauthorized_port_drops: 2,
+            tcp_scans_detected: 0, // ZT Rule 2: NEVER mock an attack
+            blocklist_drops: 0,
+            unauthorized_port_drops: 0,
         };
 
         if let Some(bpf_arc) = &self.bpf {
             let bpf = bpf_arc.lock().await;
             if let Some(stats_map) = bpf.map("FIREWALL_STATS") {
                 if let Ok(array) = Array::<_, u64>::try_from(stats_map) {
-                    telemetry.network_passed_packets = array.get(&0, 0).unwrap_or(telemetry.network_passed_packets);
-                    telemetry.network_dropped_packets = array.get(&1, 0).unwrap_or(telemetry.network_dropped_packets);
+                    telemetry.network_passed_packets = array.get(&0, 0).unwrap_or(0);
+                    telemetry.network_dropped_packets = array.get(&1, 0).unwrap_or(0);
                     telemetry.land_attacks_detected = array.get(&2, 0).unwrap_or(0);
-                    telemetry.tcp_scans_detected = array.get(&3, 0).unwrap_or(2);
-                    telemetry.blocklist_drops = array.get(&4, 0).unwrap_or(1);
-                    telemetry.unauthorized_port_drops = array.get(&5, 0).unwrap_or(2);
+                    telemetry.tcp_scans_detected = array.get(&3, 0).unwrap_or(0);
+                    telemetry.blocklist_drops = array.get(&4, 0).unwrap_or(0);
+                    telemetry.unauthorized_port_drops = array.get(&5, 0).unwrap_or(0);
                 }
             }
         }
@@ -138,19 +138,8 @@ impl EbpfMonitor {
             }
         }
 
-        info!(
-            "⚡ [Ring-0 eBPF Sync] Map `AI_SCHED_MAP` updated: PID {} -> Core {} ({}), Weight {}",
-            pid,
-            target.target_core,
-            match target.core_type {
-                0 => "P-Core",
-                1 => "E-Core",
-                2 => "NPU-Core",
-                _ => "Core",
-            },
-            target.priority_weight
-        );
-        Ok(())
+        Err("CRITICAL: Failed to hot-update Ring-0 AI_SCHED_MAP. eBPF context is unavailable. Simulation prohibited.".to_string())
     }
 }
+
 

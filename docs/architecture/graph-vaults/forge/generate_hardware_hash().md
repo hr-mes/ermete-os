@@ -1,5 +1,5 @@
 ---
-source_file: "ermete-kernel-forge/src/hw_scanner.rs"
+source_file: "bootc/OSTree pipeline/src/hw_scanner.rs"
 type: "code"
 community: "Community 127"
 location: "L13"

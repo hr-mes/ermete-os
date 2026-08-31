@@ -23,3 +23,9 @@ ring = "0.17"
 zeroize = { workspace = true, features = ["zeroize_derive"] }
 subtle = { workspace = true }
 
+
+[profile.release]
+lto = "thin"
+opt-level = 3
+codegen-units = 1
+panic = "abort"

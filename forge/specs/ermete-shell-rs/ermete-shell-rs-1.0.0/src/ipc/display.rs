@@ -76,7 +76,7 @@ impl DisplayController {
     pub async fn set_brightness(&self, brightness: f64) -> zbus::Result<()> {
         let (tx, rx) = oneshot::channel();
         if self.sender.send(DisplayCommand::SetBrightness(brightness, tx)).await.is_ok() {
-            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))??
+            rx.await.map_err(|_| zbus::Error::Failure("IPC channel closed".into()))?
         } else { Err(zbus::Error::Failure("Actor channel offline".into())) }
     }
 }
@@ -98,3 +98,4 @@ pub fn get_display_controller() -> DisplayController {
         DisplayController::new(IpcBackend::Disconnected, bus)
     }
 }
+

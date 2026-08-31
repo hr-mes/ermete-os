@@ -35,3 +35,4 @@ The goal is to seamlessly transition the 2D Wayland desktop environment into a f
 *   **Zero App Modification**: Existing Wayland/GTK apps run natively in 3D space.
 *   **Performance**: Leveraging Rust and zero-copy texture sharing (via DMA-BUF) between Wayland and OpenXR ensures minimal latency, which is critical for VR.
 *   **Native Integration**: The entire stack remains strictly within the Ermete OS architecture (Pure Rust Shell, Wayland Compositor).
+

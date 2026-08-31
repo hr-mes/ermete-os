@@ -220,3 +220,4 @@ fn main() {
     let app = RelmApp::new("os.ermete.Settings");
     app.run::<AppModel>(page_id);
 }
+
