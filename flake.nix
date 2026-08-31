@@ -24,7 +24,7 @@
         
         security-tools = with pkgs; [ syft cosign ];
         c-toolchain = with pkgs; [ gcc gnumake cmake mold llvmPackages_latest.llvm llvmPackages_latest.clang llvmPackages_latest.lld ccache bpf-linker pahole elfutils ];
-        rust-tools = with pkgs; [ rust-toolchain sccache clippy rustfmt ];
+        rust-tools = with pkgs; [ rust-toolchain sccache clippy rustfmt cargo-deny cargo-vet cargo-fuzz ];
         build-tools = with pkgs; [ rpm cpio buildah skopeo jq git gnutar xz curl wget rsync flex bison bc zstd perl pkg-config autoconf automake libtool ];
         system-deps = with pkgs; [ zlib openssl policycoreutils spdlog systemd nodejs_22 nlohmann_json fmt speechd gnupg ipxe ncurses iproute2 fio ];
       in
