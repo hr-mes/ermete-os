@@ -1,2 +1,3 @@
 [build]
-target = "bpfel-unknown-none"
+target = ""bpfel-unknown-none""
+rustflags = [""-C"", ""link-arg=--opt-level=2""]
