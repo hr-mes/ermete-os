@@ -13,19 +13,12 @@ Core component implementation for osbuild.
 # Stub prep
 
 %build
-# Implementazione Reale (Build)
-echo "Building osbuild..."
+make %{?_smp_mflags}
 
 %install
-# magic stub generator
-mkdir -p %{buildroot}
-
-mkdir -p %{buildroot}/usr/bin
-cat << 'BINEOF' > %{buildroot}/usr/bin/osbuild
-#!/bin/bash
-echo "Executing osbuild (Ermete OS Native Component)"
-BINEOF
-chmod +x %{buildroot}/usr/bin/osbuild
+rm -rf %{buildroot}
+make install DESTDIR=%{buildroot}
 
 %files
 /usr/bin/osbuild
+

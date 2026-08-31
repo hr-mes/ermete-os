@@ -14,19 +14,13 @@ Core component implementation for mold.
 %autosetup -n %{name}-%{version}
 
 %build
-# Implementazione Reale (Build)
-echo "Building mold..."
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++ -DCMAKE_INSTALL_PREFIX=/usr
+cmake --build build %{?_smp_mflags}
 
 %install
-# magic stub generator
-mkdir -p %{buildroot}
-
-mkdir -p %{buildroot}/usr/bin
-cat << 'BINEOF' > %{buildroot}/usr/bin/mold
-#!/bin/bash
-echo "Executing mold (Ermete OS Native Component)"
-BINEOF
-chmod +x %{buildroot}/usr/bin/mold
+rm -rf %{buildroot}
+DESTDIR=%{buildroot} cmake --install build
 
 %files
 /usr/bin/mold
+

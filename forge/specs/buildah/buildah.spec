@@ -13,19 +13,12 @@ Core component implementation for buildah.
 # Stub prep
 
 %build
-# Implementazione Reale (Build)
-echo "Building buildah..."
+make %{?_smp_mflags}
 
 %install
-# magic stub generator
-mkdir -p %{buildroot}
-
-mkdir -p %{buildroot}/usr/bin
-cat << 'BINEOF' > %{buildroot}/usr/bin/buildah
-#!/bin/bash
-echo "Executing buildah (Ermete OS Native Component)"
-BINEOF
-chmod +x %{buildroot}/usr/bin/buildah
+rm -rf %{buildroot}
+make install DESTDIR=%{buildroot} PREFIX=/usr
 
 %files
 /usr/bin/buildah
+

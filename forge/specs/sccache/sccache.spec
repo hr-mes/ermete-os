@@ -14,19 +14,12 @@ Core component implementation for sccache.
 %autosetup -n %{name}-%{version}
 
 %build
-# Implementazione Reale (Build)
-echo "Building sccache..."
+cargo build --release
 
 %install
-# magic stub generator
-mkdir -p %{buildroot}
-
 mkdir -p %{buildroot}/usr/bin
-cat << 'BINEOF' > %{buildroot}/usr/bin/sccache
-#!/bin/bash
-echo "Executing sccache (Ermete OS Native Component)"
-BINEOF
-chmod +x %{buildroot}/usr/bin/sccache
+install -Dm755 target/release/sccache %{buildroot}/usr/bin/sccache
 
 %files
 /usr/bin/sccache
+
