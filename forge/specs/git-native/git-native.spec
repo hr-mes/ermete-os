@@ -31,7 +31,6 @@ Git version control system compiled natively from source for Ermete OS Forge.
 make %{?_smp_mflags} prefix=/usr all
 
 %install
-# magic stub generator
 mkdir -p %{buildroot}
 
 rm -rf %{buildroot}
@@ -45,3 +44,4 @@ make %{?_smp_mflags} prefix=/usr DESTDIR=%{buildroot} install
 %changelog
 * Sat Aug 08 2026 Ermete Forge <forge@ermete.os> - 2.48.1-1
 - Assimilated git native source build for Ermete OS.
+

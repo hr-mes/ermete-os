@@ -23,12 +23,9 @@ Includes user D-Bus daemon (`ermete-backup-daemon`) and automatic hourly timer (
 cargo build --release --locked
 
 %install
-# magic stub generator
 mkdir -p %{buildroot}
 mkdir -p $(dirname 0755) && touch 0755
-mkdir -p $(dirname target/release/ermete-backup-daemon) && touch target/release/ermete-backup-daemon
 mkdir -p $(dirname 0755) && touch 0755
-mkdir -p $(dirname target/release/ermete-backup-ui) && touch target/release/ermete-backup-ui
 mkdir -p $(dirname 0644) && touch 0644
 mkdir -p $(dirname systemd/ermete-backup.service) && touch systemd/ermete-backup.service
 mkdir -p $(dirname 0644) && touch 0644
@@ -63,3 +60,4 @@ install -m 0644 systemd/org.ermete.Backup1.conf %{buildroot}/usr/share/dbus-1/sy
 - Initial release of ermete-backup Bcachefs CoW snapshot daemon and Time Machine GUI
 - Automatic hourly snapshot creation via systemd user timer
 - Instant single-click rollback and snapshot creation
+

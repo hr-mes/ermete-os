@@ -24,7 +24,6 @@ by the Ermete OS Desktop UI (AGS).
 # Nothing to build, it's a precompiled binary
 
 %install
-# magic stub generator
 mkdir -p %{buildroot}
 mkdir -p $(dirname 755) && touch 755
 mkdir -p $(dirname sass) && touch sass
@@ -51,3 +50,4 @@ ln -sf /usr/share/dart-sass/sass %{buildroot}/usr/bin/sass
 %changelog
 * Tue Jul 07 2026 Ermete Forge <forge@ermete.os> - 1.77.8-1
 - Initial encapsulation of dart-sass for runtime UI theming
+

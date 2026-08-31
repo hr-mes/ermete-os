@@ -23,10 +23,8 @@ Provides 1-click OSTree/bootc visual rollback and automatic failover when `greet
 cargo build --release --locked
 
 %install
-# magic stub generator
 mkdir -p %{buildroot}
 mkdir -p $(dirname 0755) && touch 0755
-mkdir -p $(dirname target/release/ermete-recovery-ui) && touch target/release/ermete-recovery-ui
 mkdir -p $(dirname 0644) && touch 0644
 mkdir -p $(dirname systemd/ermete-recovery.service) && touch systemd/ermete-recovery.service
 mkdir -p $(dirname 0644) && touch 0644
@@ -56,3 +54,4 @@ install -m 0644 systemd/greetd-recovery-fallback.conf %{buildroot}/usr/lib/syste
 - Initial release of ermete-recovery Pre-Boot GUI Wayland Kiosk (`cage` + `ermete-recovery-ui`)
 - Automatic isolation to ermete-recovery.target when greetd fails StartLimitBurst=3 times
 - Visual 1-click rollback to Bedrock Stable Commit (`8aa3fd4`) and previous stable OSTree deployments
+

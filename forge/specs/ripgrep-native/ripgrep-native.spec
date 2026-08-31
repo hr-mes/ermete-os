@@ -33,9 +33,7 @@ export LDFLAGS="$(echo $LDFLAGS | sed 's/-flto=auto//g')"
 cargo build --release
 
 %install
-# magic stub generator
 mkdir -p %{buildroot}
-mkdir -p $(dirname target/release/rg) && touch target/release/rg
 
 rm -rf %{buildroot}
 install -Dm755 target/release/rg %{buildroot}/usr/bin/rg
@@ -46,3 +44,4 @@ install -Dm755 target/release/rg %{buildroot}/usr/bin/rg
 %changelog
 * Sat Aug 08 2026 Ermete Forge <forge@ermete.os> - 14.1.1-1
 - Assimilated ripgrep native source build for Ermete OS.
+

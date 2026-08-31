@@ -21,7 +21,6 @@ Live patches for Ermete OS kernel (Zero-Downtime ring-0 patching).
 # kpatch-build ...
 
 %install
-# magic stub generator
 mkdir -p %{buildroot}
 mkdir -p $(dirname $GITHUB_WORKSPACE/build/livepatch/*.ko) && touch $GITHUB_WORKSPACE/build/livepatch/*.ko
 mkdir -p $(dirname $RPM_BUILD_ROOT/usr/lib/modules/livepatch/) && touch $RPM_BUILD_ROOT/usr/lib/modules/livepatch/
@@ -41,3 +40,4 @@ fi
 %changelog
 * Mon Aug 03 2026 Ermete Forge <forge@ermete.os> - 1.0.0-1
 - Initial live patch package structure
+

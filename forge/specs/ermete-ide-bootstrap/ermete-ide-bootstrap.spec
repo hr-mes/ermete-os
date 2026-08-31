@@ -17,7 +17,6 @@ Provides ermete-ide-bootstrap for Ermete OS.
 # Nothing to build
 
 %install
-# magic stub generator
 mkdir -p %{buildroot}
 
 mkdir -p %{buildroot}/usr/share/ermete-ide-bootstrap
@@ -30,3 +29,4 @@ mkdir -p %{buildroot}/usr/share/ermete-ide-bootstrap
 %changelog
 * Wed Jul 01 2026 Ermete Forge <forge@ermete.os> - 1.0.0-1
 - Initial Bedrock encapsulation
+

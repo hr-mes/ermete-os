@@ -23,10 +23,8 @@ Ermete OS MDM Daemon for Anti-Theft tracking and cryptographic Remote Wipe.
 cargo build --release --locked
 
 %install
-# magic stub generator
 mkdir -p %{buildroot}
 mkdir -p $(dirname 0755) && touch 0755
-mkdir -p $(dirname target/release/%{name}) && touch target/release/%{name}
 mkdir -p $(dirname 0644) && touch 0644
 mkdir -p $(dirname os.ermete.Mdm.conf) && touch os.ermete.Mdm.conf
 mkdir -p $(dirname 0644) && touch 0644
@@ -95,3 +93,4 @@ EOF
 %changelog
 * Thu Jul 16 2026 Ermete <ermete@ermete.os> - 1.0.0-1
 - Initial release
+

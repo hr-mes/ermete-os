@@ -28,9 +28,7 @@ export LDFLAGS="$(echo $LDFLAGS | sed 's/-flto=auto//g')"
 cargo build --release
 
 %install
-# magic stub generator
 mkdir -p %{buildroot}
-mkdir -p $(dirname target/release/matugen) && touch target/release/matugen
 
 rm -rf %{buildroot}
 install -Dm755 target/release/matugen %{buildroot}/usr/bin/matugen
@@ -41,3 +39,4 @@ install -Dm755 target/release/matugen %{buildroot}/usr/bin/matugen
 %changelog
 * Sun Jun 28 2026 Ermete Forge <forge@ermete.os> - 2.4.0-1
 - Native OCI build with x86-64-v3 optimizations
+

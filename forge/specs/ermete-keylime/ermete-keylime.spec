@@ -21,7 +21,6 @@ e sigillando l'enclave di sicurezza.
 %build
 
 %install
-# magic stub generator
 mkdir -p %{buildroot}
 mkdir -p $(dirname 0644) && touch 0644
 mkdir -p $(dirname 99-ermete.conf) && touch 99-ermete.conf
@@ -37,3 +36,4 @@ install -m 0644 99-ermete.conf %{buildroot}/etc/keylime/agent.conf.d/99-ermete.c
 %changelog
 * Mon Aug 03 2026 Ermete Core <core@ermete.os> - 1.0-1
 - Initial release for Phase 3
+

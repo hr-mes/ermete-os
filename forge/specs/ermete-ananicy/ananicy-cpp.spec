@@ -26,7 +26,6 @@ Ananicy-cpp is a rewrite of ananicy in C++ for lower resource usage and faster s
 %cmake_build
 
 %install
-# magic stub generator
 mkdir -p %{buildroot}
 mkdir -p $(dirname ananicy-cpp.service) && touch ananicy-cpp.service
 
@@ -44,3 +43,4 @@ install -Dm644 ananicy-cpp.service %{buildroot}/usr/lib/systemd/system/ananicy-c
 %changelog
 * Mon Jun 29 2026 Ermete Forge <forge@ermete> - 1.1.1-1
 - Initial forge build
+

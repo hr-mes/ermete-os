@@ -25,10 +25,8 @@ Ermete OS Zero-Trust binary execution gatekeeper using fanotify.
 cargo build --release
 
 %install
-# magic stub generator
 mkdir -p %{buildroot}
 mkdir -p $(dirname 755) && touch 755
-mkdir -p $(dirname target/release/%{name}) && touch target/release/%{name}
 
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/bin
@@ -88,3 +86,4 @@ EOF
 %changelog
 * Wed Jul 15 2026 Ermete Forge <forge@ermete.os> - 1.0.0-1
 - Initial release
+

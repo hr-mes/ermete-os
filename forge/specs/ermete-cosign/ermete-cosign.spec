@@ -17,7 +17,6 @@ Pre-compiled Cosign binary for air-gapped container image signing.
 # Pre-compiled static binary.
 
 %install
-# magic stub generator
 mkdir -p %{buildroot}
 mkdir -p $(dirname 0755) && touch 0755
 mkdir -p $(dirname cosign) && touch cosign
@@ -31,3 +30,4 @@ install -m 0755 cosign %{buildroot}/usr/bin/cosign
 %changelog
 * Wed Aug 12 2026 Ermete Architect <admin@ermete.os> - 2.4.0-1
 - Initial Cosign binary packaging.
+

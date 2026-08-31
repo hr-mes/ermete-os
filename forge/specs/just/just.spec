@@ -29,9 +29,7 @@ export LDFLAGS="$(echo $LDFLAGS | sed 's/-flto=auto//g')"
 cargo build --release
 
 %install
-# magic stub generator
 mkdir -p %{buildroot}
-mkdir -p $(dirname target/release/just) && touch target/release/just
 
 rm -rf %{buildroot}
 install -Dm755 target/release/just %{buildroot}/usr/bin/just
@@ -42,3 +40,4 @@ install -Dm755 target/release/just %{buildroot}/usr/bin/just
 %changelog
 * Sat Aug 08 2026 Ermete Forge <forge@ermete.os> - 1.39.0-1
 - Native Rust source build integrated into Ermete Forge Tier0
+

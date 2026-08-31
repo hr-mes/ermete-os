@@ -25,10 +25,8 @@ Peer-to-peer mesh synchronization and WireGuard tunnel manager daemon for Ermete
 cargo build --release --locked
 
 %install
-# magic stub generator
 mkdir -p %{buildroot}
 mkdir -p $(dirname 0755) && touch 0755
-mkdir -p $(dirname target/release/%{name}) && touch target/release/%{name}
 
 mkdir -p %{buildroot}/usr/bin
 install -m 0755 target/release/%{name} %{buildroot}/usr/bin/%{name}
@@ -39,3 +37,4 @@ install -m 0755 target/release/%{name} %{buildroot}/usr/bin/%{name}
 %changelog
 * Wed Aug 05 2026 Ermete Forge <forge@ermete.os> - 1.0.0-1
 - Initial release of ermete-mesh-sync spec
+

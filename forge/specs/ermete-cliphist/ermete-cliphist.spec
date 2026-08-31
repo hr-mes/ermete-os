@@ -26,7 +26,6 @@ export GOCACHE=%{_builddir}/go-cache
 go build -v -o cliphist
 
 %install
-# magic stub generator
 mkdir -p %{buildroot}
 mkdir -p $(dirname 0755) && touch 0755
 mkdir -p $(dirname cliphist) && touch cliphist
@@ -40,3 +39,4 @@ install -m 0755 cliphist %{buildroot}/usr/bin/cliphist
 %changelog
 * Fri Jul 10 2026 Ermete Forge <forge@ermete.os> - 0.7.0-1
 - Initial encapsulation of cliphist for Ermete OS
+

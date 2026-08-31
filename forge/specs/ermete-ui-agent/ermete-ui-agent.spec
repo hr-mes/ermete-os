@@ -20,7 +20,6 @@ Context-aware generative UI daemon for Ermete OS. Interfaces with local LLMs (Ol
 # Nothing to build, Python script
 
 %install
-# magic stub generator
 mkdir -p %{buildroot}
 mkdir -p $(dirname 0755) && touch 0755
 mkdir -p $(dirname agent.py) && touch agent.py
@@ -44,3 +43,4 @@ install -m 0644 ermete-ui-agent.service %{buildroot}/usr/lib/systemd/user/ermete
 %changelog
 * Sun Jul 19 2026 Ermete Forge <forge@ermete.os> - 1.0.0-1
 - Initial release of the Generative UI agent
+

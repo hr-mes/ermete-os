@@ -19,7 +19,6 @@ Bibata cursor theme (Modern Classic). Packaged for Ermete OS.
 # No build required for cursors
 
 %install
-# magic stub generator
 mkdir -p %{buildroot}
 mkdir -p $(dirname Bibata-Modern-Classic/*) && touch Bibata-Modern-Classic/*
 
@@ -33,3 +32,4 @@ cp -r Bibata-Modern-Classic/* %{buildroot}/usr/share/icons/Bibata-Modern-Classic
 %changelog
 * Sun Jun 28 2026 Ermete Forge <forge@ermete.os> - 2.0.7-1
 - Repackaged binary asset into RPM for zero-network OS build
+
