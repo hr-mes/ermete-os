@@ -30,12 +30,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - name: ??? Install sccache Binary
-        run: |
-          set -euo pipefail
-          if ! command -v sccache >/dev/null 2>&1; then
-          fi
-
       - name: ??? Restore sccache Cache
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
@@ -65,14 +59,6 @@ jobs:
             ninja -C build
             sudo ninja -C build install
             sudo ldconfig
-          fi
-
-      - name: ???? Install Security Audit Tools (cargo-deny, cargo-vet)
-        run: |
-          set -euo pipefail
-          if ! command -v cargo-deny >/dev/null 2>&1; then
-          fi
-          if ! command -v cargo-vet >/dev/null 2>&1; then
           fi
 
       - name: Check Unsafe Code & Clippy Policies
@@ -195,11 +181,9 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - name: ??? Install sccache & Kani Binaries
+      - name: ??? Install Kani Binaries
         run: |
           set -euo pipefail
-          if ! command -v sccache >/dev/null 2>&1; then
-          fi
           if ! command -v cargo-kani >/dev/null 2>&1; then
             cargo install --locked kani-verifier
           fi
@@ -268,11 +252,9 @@ jobs:
       - name: Checkout Codebase
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - name: ??? Install sccache & Kani Binaries
+      - name: ??? Install Kani Binaries
         run: |
           set -euo pipefail
-          if ! command -v sccache >/dev/null 2>&1; then
-          fi
           if ! command -v cargo-kani >/dev/null 2>&1; then
             cargo install --locked kani-verifier
           fi
@@ -345,14 +327,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-
-      - name: ??? Install sccache & bpf-linker Binaries
-        run: |
-          set -euo pipefail
-          if ! command -v sccache >/dev/null 2>&1; then
-          fi
-          if ! command -v bpf-linker >/dev/null 2>&1; then
-          fi
 
       - name: ??? Restore sccache Cache
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
