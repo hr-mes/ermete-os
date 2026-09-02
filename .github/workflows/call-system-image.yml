@@ -21,8 +21,12 @@ on:
         required: false
 
 jobs:
+  lint:
+    uses: ./.github/workflows/call-lint.yml
+
   build-repo:
     name: 📦 Aggregate Repositories & Deploy DNF/Flatpak Channel
+    needs: [lint]
     if: ${{ inputs.has_changes }}
     runs-on: ubuntu-24.04
     timeout-minutes: 60

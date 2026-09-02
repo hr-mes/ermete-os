@@ -28,8 +28,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  lint:
+    uses: ./.github/workflows/call-lint.yml
+
   orchestrator-brain:
     name: 🧠 DAG Orchestrator Brain & Distributed Cache
+    needs: [lint]
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -46,6 +50,10 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
+      - name: Compute Dependency DAG & Topological Matrix
+        id: brain
+        run: ./scripts/dynamic-matrix.sh
+
       - name: 🧹 Fix Workspace Permissions (GH Actions Cleanup)
         if: always()
         run: |
@@ -57,6 +65,7 @@ jobs:
           fi
 
   build-builder:
+    needs: [lint]
     uses: ./.github/workflows/call-build-builder.yml
 
   dag-compile:

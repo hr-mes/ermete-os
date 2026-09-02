@@ -13,8 +13,12 @@ env:
   SCCACHE_CACHE_SIZE: 5G
 
 jobs:
+  lint:
+    uses: ./.github/workflows/call-lint.yml
+
   build-builder:
     name: 🏗️ Build Base Builder
+    needs: [lint]
     outputs:
       content_hash: ${{ steps.check_idempotency.outputs.content_hash }}
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
