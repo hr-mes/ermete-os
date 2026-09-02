@@ -2,17 +2,33 @@
 <!DOCTYPE policyconfig PUBLIC
  "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
  "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
+
+<!--
+  Azioni polkit di ermete-cloud-rs.
+
+  Correzione 2026-09-02: questo file dichiarava "os.ermete.cloud.trust", che nessun
+  codice controlla, mentre l'unica azione realmente applicata dal daemon è
+  "os.ermete.cloudsync.mount" (src/main.rs:182), che non era dichiarata da nessuna
+  parte. L'id sbagliato rendeva il mount sempre negato e la policy inerte.
+  Vedi ANALISI_2026-09-02.md §2.1.
+-->
 <policyconfig>
   <vendor>Ermete OS</vendor>
   <vendor_url>https://github.com/hr-mes/ermete-forge</vendor_url>
 
-  <action id="os.ermete.cloud.trust">
-    <description>Trust a new local device</description>
-    <message>Authentication is required to trust a new peer device for syncing.</message>
+  <!-- Monta un remote FUSE arbitrario su un mountpoint arbitrario, entrambi scelti
+       dal chiamante. Il sito di chiamata passa già allow_user_interaction = true,
+       quindi auth_admin_keep può davvero mostrare il dialogo. -->
+  <action id="os.ermete.cloudsync.mount">
+    <description>Mount a remote cloud filesystem</description>
+    <description xml:lang="it">Montare un filesystem cloud remoto</description>
+    <message>Authentication is required to mount a remote filesystem on this computer.</message>
+    <message xml:lang="it">È richiesta l'autenticazione per montare un filesystem remoto su questo computer.</message>
     <defaults>
       <allow_any>auth_admin</allow_any>
       <allow_inactive>auth_admin</allow_inactive>
       <allow_active>auth_admin_keep</allow_active>
     </defaults>
   </action>
+
 </policyconfig>

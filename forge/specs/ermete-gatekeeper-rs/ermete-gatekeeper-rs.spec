@@ -25,12 +25,16 @@ Ermete OS Zero-Trust binary execution gatekeeper using fanotify.
 cargo build --release
 
 %install
-mkdir -p %{buildroot}
-mkdir -p $(dirname 755) && touch 755
-
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/bin
-install -m 755 target/release/%{name} %{buildroot}/usr/bin/%{name}
+install -m 0755 target/release/%{name} %{buildroot}/usr/bin/%{name}
+
+# Polkit actions. Senza questo file nessun binario in quarantena puo' mai essere
+# approvato: le quattro azioni os.ermete.gatekeeper.* non erano registrate.
+# Vedi ANALISI_2026-09-02.md 2.1 e i commenti nel file .policy.
+SRC_OS_ERMETE_GATEKEEPER_POLICY=forge/specs/ermete-gatekeeper-rs/ermete-gatekeeper-rs-1.0.0/os.ermete.gatekeeper.policy
+[ -f "$SRC_OS_ERMETE_GATEKEEPER_POLICY" ] || SRC_OS_ERMETE_GATEKEEPER_POLICY=os.ermete.gatekeeper.policy
+install -D -m 0644 "$SRC_OS_ERMETE_GATEKEEPER_POLICY" %{buildroot}%{_datadir}/polkit-1/actions/os.ermete.gatekeeper.policy
 
 # systemd service
 mkdir -p %{buildroot}/usr/lib/systemd/system
@@ -82,6 +86,7 @@ EOF
 %files
 /usr/bin/%{name}
 /usr/lib/systemd/system/%{name}.service
+%{_datadir}/polkit-1/actions/os.ermete.gatekeeper.policy
 
 %changelog
 * Wed Jul 15 2026 Ermete Forge <forge@ermete.os> - 1.0.0-1

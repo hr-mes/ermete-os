@@ -26,19 +26,18 @@ cargo build --release --locked
 
 %install
 mkdir -p %{buildroot}
-mkdir -p $(dirname 0755) && touch 0755
-mkdir -p $(dirname 0644) && touch 0644
-mkdir -p $(dirname os.ermete.Store.conf) && touch os.ermete.Store.conf
-mkdir -p $(dirname 0644) && touch 0644
-mkdir -p $(dirname os.ermete.store.policy) && touch os.ermete.store.policy
 
 install -D -m 0755 target/release/%{name} %{buildroot}/usr/bin/%{name}
 
 # Install D-Bus system configuration
-install -D -m 0644 os.ermete.Store.conf %{buildroot}%{_datadir}/dbus-1/system.d/os.ermete.Store.conf
+SRC_OS_ERMETE_STORE_CONF=forge/specs/ermete-store-rs/ermete-store-rs-1.0.0/os.ermete.Store.conf
+[ -f "$SRC_OS_ERMETE_STORE_CONF" ] || SRC_OS_ERMETE_STORE_CONF=os.ermete.Store.conf
+install -D -m 0644 "$SRC_OS_ERMETE_STORE_CONF" %{buildroot}%{_datadir}/dbus-1/system.d/os.ermete.Store.conf
 
 # Install Polkit policy
-install -D -m 0644 os.ermete.store.policy %{buildroot}%{_datadir}/polkit-1/actions/os.ermete.store.policy
+SRC_OS_ERMETE_STORE_POLICY=forge/specs/ermete-store-rs/ermete-store-rs-1.0.0/os.ermete.store.policy
+[ -f "$SRC_OS_ERMETE_STORE_POLICY" ] || SRC_OS_ERMETE_STORE_POLICY=os.ermete.store.policy
+install -D -m 0644 "$SRC_OS_ERMETE_STORE_POLICY" %{buildroot}%{_datadir}/polkit-1/actions/os.ermete.store.policy
 
 # Create a systemd service file
 mkdir -p %{buildroot}/usr/lib/systemd/system

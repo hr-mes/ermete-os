@@ -24,19 +24,18 @@ cargo build --release --locked
 
 %install
 mkdir -p %{buildroot}
-mkdir -p $(dirname 0755) && touch 0755
-mkdir -p $(dirname 0644) && touch 0644
-mkdir -p $(dirname os.ermete.Lvfs.conf) && touch os.ermete.Lvfs.conf
-mkdir -p $(dirname 0644) && touch 0644
-mkdir -p $(dirname os.ermete.lvfs.policy) && touch os.ermete.lvfs.policy
 
 install -D -m 0755 target/release/%{name} %{buildroot}/usr/bin/%{name}
 
 # Install D-Bus system configuration
-install -D -m 0644 os.ermete.Lvfs.conf %{buildroot}%{_datadir}/dbus-1/system.d/os.ermete.Lvfs.conf
+SRC_OS_ERMETE_LVFS_CONF=forge/specs/ermete-lvfs-rs/ermete-lvfs-rs-1.0.0/os.ermete.Lvfs.conf
+[ -f "$SRC_OS_ERMETE_LVFS_CONF" ] || SRC_OS_ERMETE_LVFS_CONF=os.ermete.Lvfs.conf
+install -D -m 0644 "$SRC_OS_ERMETE_LVFS_CONF" %{buildroot}%{_datadir}/dbus-1/system.d/os.ermete.Lvfs.conf
 
 # Install Polkit policy
-install -D -m 0644 os.ermete.lvfs.policy %{buildroot}%{_datadir}/polkit-1/actions/os.ermete.lvfs.policy
+SRC_OS_ERMETE_LVFS_POLICY=forge/specs/ermete-lvfs-rs/ermete-lvfs-rs-1.0.0/os.ermete.lvfs.policy
+[ -f "$SRC_OS_ERMETE_LVFS_POLICY" ] || SRC_OS_ERMETE_LVFS_POLICY=os.ermete.lvfs.policy
+install -D -m 0644 "$SRC_OS_ERMETE_LVFS_POLICY" %{buildroot}%{_datadir}/polkit-1/actions/os.ermete.lvfs.policy
 
 # Create a systemd service file
 mkdir -p %{buildroot}/usr/lib/systemd/system

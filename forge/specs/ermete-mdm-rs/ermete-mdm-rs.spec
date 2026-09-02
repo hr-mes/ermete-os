@@ -24,19 +24,18 @@ cargo build --release --locked
 
 %install
 mkdir -p %{buildroot}
-mkdir -p $(dirname 0755) && touch 0755
-mkdir -p $(dirname 0644) && touch 0644
-mkdir -p $(dirname os.ermete.Mdm.conf) && touch os.ermete.Mdm.conf
-mkdir -p $(dirname 0644) && touch 0644
-mkdir -p $(dirname os.ermete.mdm.policy) && touch os.ermete.mdm.policy
 
 install -D -m 0755 target/release/%{name} %{buildroot}/usr/bin/%{name}
 
 # Install D-Bus system configuration
-install -D -m 0644 os.ermete.Mdm.conf %{buildroot}%{_datadir}/dbus-1/system.d/os.ermete.Mdm.conf
+SRC_OS_ERMETE_MDM_CONF=forge/specs/ermete-mdm-rs/ermete-mdm-rs-1.0.0/os.ermete.Mdm.conf
+[ -f "$SRC_OS_ERMETE_MDM_CONF" ] || SRC_OS_ERMETE_MDM_CONF=os.ermete.Mdm.conf
+install -D -m 0644 "$SRC_OS_ERMETE_MDM_CONF" %{buildroot}%{_datadir}/dbus-1/system.d/os.ermete.Mdm.conf
 
 # Install Polkit policy
-install -D -m 0644 os.ermete.mdm.policy %{buildroot}%{_datadir}/polkit-1/actions/os.ermete.mdm.policy
+SRC_OS_ERMETE_MDM_POLICY=forge/specs/ermete-mdm-rs/ermete-mdm-rs-1.0.0/os.ermete.mdm.policy
+[ -f "$SRC_OS_ERMETE_MDM_POLICY" ] || SRC_OS_ERMETE_MDM_POLICY=os.ermete.mdm.policy
+install -D -m 0644 "$SRC_OS_ERMETE_MDM_POLICY" %{buildroot}%{_datadir}/polkit-1/actions/os.ermete.mdm.policy
 
 # Create a systemd service file
 mkdir -p %{buildroot}/usr/lib/systemd/system

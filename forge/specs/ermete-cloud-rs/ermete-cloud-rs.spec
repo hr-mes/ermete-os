@@ -24,19 +24,18 @@ cargo build --release --locked
 
 %install
 mkdir -p %{buildroot}
-mkdir -p $(dirname 0755) && touch 0755
-mkdir -p $(dirname 0644) && touch 0644
-mkdir -p $(dirname os.ermete.Cloud.conf) && touch os.ermete.Cloud.conf
-mkdir -p $(dirname 0644) && touch 0644
-mkdir -p $(dirname os.ermete.cloud.policy) && touch os.ermete.cloud.policy
 
 install -D -m 0755 target/release/%{name} %{buildroot}/usr/bin/%{name}
 
 # Install D-Bus system configuration
-install -D -m 0644 os.ermete.Cloud.conf %{buildroot}%{_datadir}/dbus-1/system.d/os.ermete.Cloud.conf
+SRC_OS_ERMETE_CLOUD_CONF=forge/specs/ermete-cloud-rs/ermete-cloud-rs-1.0.0/os.ermete.Cloud.conf
+[ -f "$SRC_OS_ERMETE_CLOUD_CONF" ] || SRC_OS_ERMETE_CLOUD_CONF=os.ermete.Cloud.conf
+install -D -m 0644 "$SRC_OS_ERMETE_CLOUD_CONF" %{buildroot}%{_datadir}/dbus-1/system.d/os.ermete.Cloud.conf
 
 # Install Polkit policy
-install -D -m 0644 os.ermete.cloud.policy %{buildroot}%{_datadir}/polkit-1/actions/os.ermete.cloud.policy
+SRC_OS_ERMETE_CLOUD_POLICY=forge/specs/ermete-cloud-rs/ermete-cloud-rs-1.0.0/os.ermete.cloud.policy
+[ -f "$SRC_OS_ERMETE_CLOUD_POLICY" ] || SRC_OS_ERMETE_CLOUD_POLICY=os.ermete.cloud.policy
+install -D -m 0644 "$SRC_OS_ERMETE_CLOUD_POLICY" %{buildroot}%{_datadir}/polkit-1/actions/os.ermete.cloud.policy
 
 # Create a systemd service file
 mkdir -p %{buildroot}/usr/lib/systemd/system

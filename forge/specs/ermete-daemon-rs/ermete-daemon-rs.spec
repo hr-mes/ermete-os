@@ -29,6 +29,13 @@ install -m 0755 target/release/ermete-daemon-rs %{buildroot}/usr/bin/ermete-daem
 mkdir -p %{buildroot}%{_datadir}/dbus-1/services
 install -m 0644 org.ermete.Settings.service %{buildroot}%{_datadir}/dbus-1/services/org.ermete.Settings.service
 
+# Polkit actions. Senza questo file le cinque azioni applicate dal daemon non
+# sono registrate e CheckAuthorization nega sempre: niente rete, niente
+# Bluetooth, niente live patch. Vedi ANALISI_2026-09-02.md 2.1.
+SRC_OS_ERMETE_DAEMON_POLICY=forge/specs/ermete-daemon-rs/ermete-daemon-rs-0.2.1/os.ermete.daemon.policy
+[ -f "$SRC_OS_ERMETE_DAEMON_POLICY" ] || SRC_OS_ERMETE_DAEMON_POLICY=os.ermete.daemon.policy
+install -D -m 0644 "$SRC_OS_ERMETE_DAEMON_POLICY" %{buildroot}%{_datadir}/polkit-1/actions/os.ermete.daemon.policy
+
 mkdir -p %{buildroot}/usr/lib/systemd/system
 install -m 0644 %{_sourcedir}/../ermete-daemon.service %{buildroot}/usr/lib/systemd/system/ermete-daemon.service || install -m 0644 ermete-daemon.service %{buildroot}/usr/lib/systemd/system/ermete-daemon.service
 
@@ -45,6 +52,7 @@ install -m 0644 %{_sourcedir}/../ermete-daemon.service %{buildroot}/usr/lib/syst
 /usr/bin/ermete-daemon-rs
 %{_datadir}/dbus-1/services/org.ermete.Settings.service
 /usr/lib/systemd/system/ermete-daemon.service
+%{_datadir}/polkit-1/actions/os.ermete.daemon.policy
 
 %changelog
 * Fri Jul 17 2026 Ermete Forge <forge@ermete.os> - 0.2.1-1
