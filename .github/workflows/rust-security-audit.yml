@@ -67,12 +67,12 @@ jobs:
           cargo clippy --workspace --exclude ebpf-core --exclude ermete-sysmon-ebpf --exclude ermete-greeter --all-targets --all-features -- \
             -A clippy::undocumented_unsafe_blocks \
             -A clippy::multiple_unsafe_ops_per_block \
-            -A dead_code -A unused_variables
+            -A dead_code -A unused_variables 2>&1 | tee clippy.log
 
 
       - name: Upload Logs Artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: debug-logs
           path: |
@@ -81,45 +81,13 @@ jobs:
             kani.log
           if-no-files-found: ignore
 
-
-
-      - name: Post Logs to webhook
+      - name: Publish clippy log tail to the job summary
         if: always()
         run: |
-          echo "Clippy Log:" > all_logs.txt
-          cat clippy.log >> all_logs.txt || true
-          echo "=================" >> all_logs.txt
-          echo "eBPF Log:" >> all_logs.txt
-          cat ebpf.log >> all_logs.txt || true
-          echo "=================" >> all_logs.txt
-          echo "Kani Log:" >> all_logs.txt
-          cat kani.log >> all_logs.txt || true
-          
-          curl -X POST -H "Content-Type: text/plain" --data-binary @all_logs.txt https://webhook.site/7e5525c1-1c92-40c8-9810-843a1f0fef53
-
-      - name: Old dpaste
-        if: always()
-        run: |
-          echo "Clippy Log:" > all_logs.txt
-          cat clippy.log >> all_logs.txt || true
-          echo "=================" >> all_logs.txt
-          echo "eBPF Log:" >> all_logs.txt
-          cat ebpf.log >> all_logs.txt || true
-          echo "=================" >> all_logs.txt
-          echo "Kani Log:" >> all_logs.txt
-          cat kani.log >> all_logs.txt || true
-          
-          URL=cat all_logs.txt | curl -s -F "content=<-" -F "expiry_days=1" https://dpaste.com/api/v2/
-          echo "DPASTE_URL: "
-          
-          # Force it to fail the job if it was meant to fail, so we see it
-          cat all_logs.txt | tail -n 50
-
-      - name: Post Logs to Webhook
-        if: always()
-        run: |
-          cargo clippy --workspace --exclude ebpf-core --exclude ermete-sysmon-ebpf --exclude ermete-greeter --all-targets --all-features > clippy.log 2>&1 || true
-          curl -X POST -H "Content-Type: text/plain" --data-binary @clippy.log https://webhook.site/7e5525c1-1c92-40c8-9810-843a1f0fef53?type=clippy || true
+          set -euo pipefail
+          if [ -f clippy.log ]; then
+            { echo '## clippy (last 50 lines)'; echo '```'; tail -n 50 clippy.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Verify Cryptographic Supply-Chain Audits (cargo-vet)
         run: |
@@ -348,13 +316,12 @@ jobs:
           cd ${{ matrix.dir }}
           ${{ matrix.cmd }} > ebpf.log 2>&1 || true
           
-      - name: Post Logs to Webhook
+      - name: Check compile log and publish it to the job summary
         if: always()
         run: |
+          set -euo pipefail
           cd ${{ matrix.dir }}
-          curl -X POST -H "Content-Type: text/plain" --data-binary @ebpf.log https://webhook.site/7e5525c1-1c92-40c8-9810-843a1f0fef53?type=ebpf || true
-          
-          # Now fail the job if the compilation failed
+          { echo '## ${{ matrix.target_name }} build log (last 50 lines)'; echo '```'; tail -n 50 ebpf.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           cat ebpf.log
           if grep -q "error" ebpf.log || grep -q "panicked" ebpf.log || grep -q "Could not compile" ebpf.log; then exit 1; fi
 
@@ -363,7 +330,9 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: baremetal-artifact-${{ matrix.target_name }}
-          path: ${{ matrix.dir }}/target/**/*.sarif
+          path: |
+            ${{ matrix.dir }}/target/**/*.sarif
+            ${{ matrix.dir }}/ebpf.log
           if-no-files-found: ignore
           compression-level: 1
 
