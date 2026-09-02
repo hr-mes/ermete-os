@@ -32,7 +32,6 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - name: ⚙️ Set Default Rust Toolchain
       - name: ❄️ Install Nix (Bedrock Cache)
         uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
         with:
@@ -221,7 +220,6 @@ jobs:
         uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
         with:
           extra_nix_config: "experimental-features = nix-command flakes"
-      - name: ⚙️ Set Default Rust Toolchain
       - name: 🧹 Maximize build space
         uses: ublue-os/remove-unwanted-software@cc0becac701cf642c8f0a6613bbdaf5dc36b259e # v9
       - name: 🔑 Login to GHCR
@@ -299,7 +297,6 @@ jobs:
     steps:
       - name: 📥 Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - name: ⚙️ Set Default Rust Toolchain
       - name: 🟢 Set up Node.js (v22)
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
@@ -334,7 +331,6 @@ jobs:
     steps:
       - name: 📥 Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - name: ⚙️ Set Default Rust Toolchain
       - name: 📸 GTK4 UI & Wayland Headless Compositor Visual Regression Tests
         env:
           WLR_BACKENDS: headless

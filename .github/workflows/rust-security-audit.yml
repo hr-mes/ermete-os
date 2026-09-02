@@ -29,7 +29,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - name: ?????? Set Default Rust Toolchain
 
       - name: ??? Install sccache Binary
         run: |
@@ -195,7 +194,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - name: ?????? Set Default Rust Toolchain
 
       - name: ??? Install sccache & Kani Binaries
         run: |
@@ -269,7 +267,6 @@ jobs:
     steps:
       - name: Checkout Codebase
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - name: ?????? Set Default Rust Toolchain
 
       - name: ??? Install sccache & Kani Binaries
         run: |
@@ -348,9 +345,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - name: ?????? Set Default Rust Toolchain (Nightly for eBPF)
-        run: |
-          set -euo pipefail
 
       - name: ??? Install sccache & bpf-linker Binaries
         run: |
