@@ -80,7 +80,7 @@ RUN chmod +x /usr/libexec/ermete-tpm-luks-seal.sh
 
 # Declarative Systemd presets & sysusers
 RUN authselect enable-feature with-systemd-homed && \
-    systemctl enable rosenpass.service tetragon.service systemd-sysext.service systemd-homed.service keylime_agent.service ermete-tpm-rollback-check.service ermete-tpm-rollback-update.service ermete-tpm-luks-seal.service && systemd-sysusers && systemctl preset-all && systemctl --global preset-all
+    systemctl enable tetragon.service systemd-sysext.service systemd-homed.service ermete-tpm-rollback-check.service ermete-tpm-rollback-update.service ermete-tpm-luks-seal.service && systemd-sysusers && systemctl preset-all && systemctl --global preset-all
 
 # Initramfs & Unified Kernel Image (UKI) generation
 RUN --mount=type=secret,id=uki_key,required=false \
