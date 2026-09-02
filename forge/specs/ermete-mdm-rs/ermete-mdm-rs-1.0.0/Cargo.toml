@@ -8,6 +8,7 @@ description = "Ermete OS Mobile Device Management (Anti-Theft & Remote Wipe)"
 mimalloc = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 zbus = { workspace = true }
+ermete-bus-api = { path = "../../../../system/ermete-bus-api" }
 libc = { workspace = true }
 anyhow = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

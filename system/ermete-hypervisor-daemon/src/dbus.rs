@@ -1,95 +1,21 @@
 #![allow(clippy::too_many_arguments)]
+//! D-Bus service surface for the Micro-Hypervisor daemon.
+//!
+//! Registers two interfaces on the system bus: `org.ermete.Hypervisor1` (the
+//! real enclave lifecycle API: launch/enclose/terminate/list/attest/tunnel)
+//! and `org.ermete.AttestationAlarm1`, a smaller legacy-compatibility surface
+//! that mirrors the interface of the same name implemented independently by
+//! `system/confidential_computing/ermete-attestation` — see CQ-01 in
+//! `AUDIT_REPORT.md` and both crates' READMEs for the duplication this causes.
 use anyhow::Result;
 use log::{error, info};
-use std::collections::HashMap;
 use std::sync::Arc;
-use serde::{Deserialize, Serialize};
+use ermete_bus_api::polkit::check_polkit_auth_zbus;
 use zbus::{connection, interface, object_server::SignalEmitter};
-use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::attestation::{AttestationEngine, EnclaveLifecycleState};
 use crate::enclave::EnclaveManager;
 use crate::kvm::HardwareEnclaveType;
-
-#[derive(Debug, Clone, Serialize, Deserialize, Type)]
-pub struct PolkitSubject {
-    pub kind: String,
-    pub details: HashMap<String, OwnedValue>,
-}
-
-impl PolkitSubject {
-    pub fn unix_process(pid: u32) -> Self {
-        let mut details = std::collections::HashMap::new();
-        if let Ok(owned) = zbus::zvariant::Value::from(pid).try_into() {
-            details.insert("pid".to_string(), owned);
-        }
-        Self {
-            kind: "unix-process".to_string(),
-            details,
-        }
-    }
-
-    pub fn system_bus_name(name: impl Into<String>) -> Self {
-        let mut details = HashMap::new();
-        let val: Value = Value::from(name.into());
-        if let Ok(owned) = val.try_into() {
-            details.insert("name".to_string(), owned);
-        }
-        Self {
-            kind: "system-bus-name".to_string(),
-            details,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, Type)]
-pub struct PolkitAuthorizationResult {
-    pub is_authorized: bool,
-    pub is_challenge: bool,
-    pub details: HashMap<String, String>,
-}
-
-#[zbus::proxy(
-    interface = "org.freedesktop.PolicyKit1.Authority",
-    default_service = "org.freedesktop.PolicyKit1",
-    default_path = "/org/freedesktop/PolicyKit1/Authority"
-)]
-pub trait PolicyKitAuthority {
-    fn check_authorization(
-        &self,
-        subject: &PolkitSubject,
-        action_id: &str,
-        details: &HashMap<&str, &str>,
-        flags: u32,
-        cancellation_id: &str,
-    ) -> zbus::Result<PolkitAuthorizationResult>;
-}
-
-pub async fn check_polkit_auth_zbus(
-    conn: &zbus::Connection,
-    sender: &str,
-    action_id: &str,
-    allow_user_interaction: bool,
-) -> Result<bool, zbus::Error> {
-    if let Ok(creds) = conn.peer_creds().await {
-        if creds.unix_user_id() == Some(0) {
-            return Ok(true);
-        }
-    }
-
-    let proxy = PolicyKitAuthorityProxy::new(conn).await?;
-    // ZERO-TRUST FIX: Removed TOCTOU PID vulnerability.
-    // D-Bus broker natively resolves the unique sender name (:1.x) to the process safely.
-    let subject = PolkitSubject::system_bus_name(sender);
-    let details = HashMap::<&str, &str>::new();
-    let flags = if allow_user_interaction { 1u32 } else { 0u32 };
-
-    let result = proxy
-        .check_authorization(&subject, action_id, &details, flags, "")
-        .await?;
-
-    Ok(result.is_authorized)
-}
 
 /// D-Bus interface `org.ermete.Hypervisor1` for zero-trust micro-enclave orchestration
 pub struct HypervisorDbus {

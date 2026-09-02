@@ -1,92 +1,17 @@
+//! D-Bus surface for `org.ermete.Telemetry`: status/metrics queries and a manual
+//! anomaly-check trigger. The polkit gate comes from `ermete_bus_api::polkit` (the shared
+//! copy that replaced the per-daemon duplicates, CQ-01).
+
 use crate::oracle_bridge::AnomalyReport;
-use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use tokio::sync::mpsc;
-use serde::{Deserialize, Serialize};
+use ermete_bus_api::polkit::check_polkit_auth_zbus;
 use zbus::interface;
-use zbus::zvariant::{OwnedValue, Type, Value};
 
-#[derive(Debug, Clone, Serialize, Deserialize, Type)]
-pub struct PolkitSubject {
-    pub kind: String,
-    pub details: HashMap<String, OwnedValue>,
-}
-
-impl PolkitSubject {
-    pub fn unix_process(pid: u32) -> Self {
-        let mut details = std::collections::HashMap::new();
-        if let Ok(owned) = zbus::zvariant::Value::from(pid).try_into() {
-            details.insert("pid".to_string(), owned);
-        }
-        Self {
-            kind: "unix-process".to_string(),
-            details,
-        }
-    }
-
-    pub fn system_bus_name(name: impl Into<String>) -> Self {
-        let mut details = HashMap::new();
-        let val: Value = Value::from(name.into());
-        if let Ok(owned) = val.try_into() {
-            details.insert("name".to_string(), owned);
-        }
-        Self {
-            kind: "system-bus-name".to_string(),
-            details,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, Type)]
-pub struct PolkitAuthorizationResult {
-    pub is_authorized: bool,
-    pub is_challenge: bool,
-    pub details: HashMap<String, String>,
-}
-
-#[zbus::proxy(
-    interface = "org.freedesktop.PolicyKit1.Authority",
-    default_service = "org.freedesktop.PolicyKit1",
-    default_path = "/org/freedesktop/PolicyKit1/Authority"
-)]
-pub trait PolicyKitAuthority {
-    fn check_authorization(
-        &self,
-        subject: &PolkitSubject,
-        action_id: &str,
-        details: &HashMap<&str, &str>,
-        flags: u32,
-        cancellation_id: &str,
-    ) -> zbus::Result<PolkitAuthorizationResult>;
-}
-
-pub async fn check_polkit_auth_zbus(
-    conn: &zbus::Connection,
-    sender: &str,
-    action_id: &str,
-    allow_user_interaction: bool,
-) -> Result<bool, zbus::Error> {
-    if let Ok(creds) = conn.peer_creds().await {
-        if creds.unix_user_id() == Some(0) {
-            return Ok(true);
-        }
-    }
-
-    let proxy = PolicyKitAuthorityProxy::new(conn).await?;
-    // ZERO-TRUST FIX: Removed TOCTOU PID vulnerability.
-    // D-Bus broker natively resolves the unique sender name (:1.x) to the process safely.
-    let subject = PolkitSubject::system_bus_name(sender);
-    let details = HashMap::<&str, &str>::new();
-    let flags = if allow_user_interaction { 1u32 } else { 0u32 };
-
-    let result = proxy
-        .check_authorization(&subject, action_id, &details, flags, "")
-        .await?;
-
-    Ok(result.is_authorized)
-}
-
+/// Process-lifetime counters shared (via `Arc`) between the D-Bus interface
+/// and the daemon's background tasks, exposed through `status`/
+/// `get_telemetry_metrics`.
 pub struct TelemetryMetrics {
     pub total_records_parsed: AtomicU64,
     pub total_batches_processed: AtomicU64,
@@ -94,6 +19,7 @@ pub struct TelemetryMetrics {
 }
 
 impl TelemetryMetrics {
+    /// Creates a zeroed counter set.
     pub fn new() -> Self {
         Self {
             total_records_parsed: AtomicU64::new(0),
@@ -103,12 +29,18 @@ impl TelemetryMetrics {
     }
 }
 
+/// D-Bus object implementing `org.ermete.Telemetry`, serving live metrics and
+/// a manual anomaly-trigger method that feeds into the same
+/// [`AnomalyReport`] channel the log-analyzer task uses.
 pub struct TelemetryDbusInterface {
     metrics: Arc<TelemetryMetrics>,
     anomaly_trigger_sender: mpsc::Sender<AnomalyReport>,
 }
 
 impl TelemetryDbusInterface {
+    /// Builds the interface object, sharing `metrics` with the rest of the
+    /// daemon and routing triggered anomaly checks through
+    /// `anomaly_trigger_sender`.
     pub fn new(
         metrics: Arc<TelemetryMetrics>,
         anomaly_trigger_sender: mpsc::Sender<AnomalyReport>,
@@ -122,6 +54,9 @@ impl TelemetryDbusInterface {
 
 #[interface(name = "org.ermete.Telemetry")]
 impl TelemetryDbusInterface {
+    /// D-Bus method: returns a JSON status blob (daemon name/version, an
+    /// architecture label, and the current metric counters). No
+    /// authorization is required to call this — it's read-only.
     async fn status(&self) -> String {
         serde_json::json!({
             "daemon": "ermete-telemetry",
@@ -135,6 +70,8 @@ impl TelemetryDbusInterface {
         .to_string()
     }
 
+    /// D-Bus method: returns just the raw metric counters as JSON (a subset
+    /// of [`Self::status`]'s payload). Also unauthenticated/read-only.
     async fn get_telemetry_metrics(&self) -> String {
         serde_json::json!({
             "total_records_parsed": self.metrics.total_records_parsed.load(Ordering::Relaxed),
@@ -144,6 +81,17 @@ impl TelemetryDbusInterface {
         .to_string()
     }
 
+    /// D-Bus method: manually enqueues a synthetic, maximum-confidence
+    /// [`AnomalyReport`] for `unit_name` (`predicted_failure_mode =
+    /// "MANUAL_TEST_TRIGGER"`), routed through the same channel the
+    /// automated log-analyzer and [`crate::oracle_bridge`] use — useful for
+    /// testing the self-healing pipeline without waiting for a real anomaly.
+    /// Requires Polkit authorization for `org.ermete.telemetry.trigger`.
+    ///
+    /// # Errors
+    /// Returns `AccessDenied` if there's no D-Bus sender or the Polkit check
+    /// fails/denies, and `Failed` if the internal channel send fails (e.g. the
+    /// receiving task has already shut down).
     async fn trigger_anomaly_check(
         &self,
         #[zbus(header)] hdr: zbus::message::Header<'_>,

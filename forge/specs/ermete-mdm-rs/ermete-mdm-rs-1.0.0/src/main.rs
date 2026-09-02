@@ -1,3 +1,26 @@
+//! Ermete OS MDM (Mobile Device Management) daemon.
+//!
+//! Exposes the `os.ermete.Mdm` D-Bus system interface (see [`MdmDBusInterface`] in
+//! this file and [`dbus::MdmIface`]) so an administrator-controlled MDM server (or
+//! local UI, for the wipe path) can push a small set of device policies:
+//!
+//! - `disable_usb`: writes a modprobe blacklist for `usb-storage` and unloads the
+//!   `usb_storage` kernel module, to lock down removable-media exfiltration.
+//! - `force_vpn`: enables and starts the `openvpn-client@ermete.service` systemd unit.
+//!
+//! Every D-Bus call is gated by a Polkit authorization check
+//! (`ermete_bus_api::polkit::check_polkit_auth_zbus`) before anything is applied. There is currently
+//! no code in this crate that actually polls a remote MDM server on a schedule —
+//! [`wipe::WipeEngine::poll_server`] exists but nothing calls it, so policy
+//! application is push-only (driven by whoever calls the D-Bus method), not a
+//! background pull loop.
+//!
+//! `dbus.rs` additionally defines a second, unused `os.ermete.Mdm` interface type
+//! ([`dbus::MdmIface`]) exposing a `trigger_local_wipe` method that triggers a
+//! destructive LUKS-header wipe via [`wipe::WipeEngine`] — this daemon's `main()`
+//! only ever builds and serves the [`MdmDBusInterface`] defined in this file, so
+//! `MdmIface`/`trigger_local_wipe` is currently dead code, not a reachable action.
+
 mod dbus;
 mod wipe;
 
@@ -19,6 +42,10 @@ struct MdmPayload {
 struct MdmDBusInterface;
 
 impl MdmDBusInterface {
+    /// Blacklists the `usb-storage` kernel module (writes
+    /// `/etc/modprobe.d/disable-usb-storage.conf`) and unloads it via `rmmod`.
+    /// Returns `false` if the modprobe config couldn't be written; the `rmmod`
+    /// result is not checked (module may already be in use or absent).
     async fn disable_usb(&self) -> bool {
         info!("Disabling USB storage...");
         // Applying the policy directly to disk via non-blocking I/O
@@ -43,6 +70,8 @@ impl MdmDBusInterface {
         true
     }
 
+    /// Enables and starts `openvpn-client@ermete.service` via `systemctl`.
+    /// Returns `false` if the command couldn't run or exited non-zero.
     async fn force_vpn(&self) -> bool {
         info!("Forcing VPN...");
         let output = Command::new("systemctl")
@@ -62,6 +91,20 @@ impl MdmDBusInterface {
 
 #[interface(name = "os.ermete.Mdm")]
 impl MdmDBusInterface {
+    /// D-Bus method backing `os.ermete.Mdm.apply_policy`.
+    ///
+    /// Requires Polkit authorization for the `os.ermete.mdm.apply_policy` action
+    /// (via `ermete_bus_api::polkit::check_polkit_auth_zbus`). `payload_json` is
+    /// deserialized into
+    /// [`MdmPayload`] and dispatched to [`Self::disable_usb`] or
+    /// [`Self::force_vpn`] based on the `action` field; any other action name is
+    /// rejected. Emits the `policy_applied` signal on success.
+    ///
+    /// # Errors
+    /// Returns `AccessDenied` if the caller has no D-Bus sender or fails the
+    /// Polkit check, `InvalidArgs` if `payload_json` isn't valid JSON for
+    /// [`MdmPayload`], and `Failed` if the requested action's handler reports
+    /// failure.
     async fn apply_policy(
         &self,
         payload_json: &str,
@@ -72,7 +115,7 @@ impl MdmDBusInterface {
         info!("Received policy payload: {}", payload_json);
 
         let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
-        let is_auth = crate::dbus::check_polkit_auth_zbus(conn, sender.as_str(), "os.ermete.mdm.apply_policy", true)
+        let is_auth = ermete_bus_api::polkit::check_polkit_auth_zbus(conn, sender.as_str(), "os.ermete.mdm.apply_policy", true)
             .await
             .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit check failed: {}", e)))?;
 

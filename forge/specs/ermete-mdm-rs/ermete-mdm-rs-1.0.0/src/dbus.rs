@@ -1,101 +1,31 @@
+//! D-Bus interface plumbing for the `os.ermete.Mdm.trigger_local_wipe` method (polkit
+//! gate from `ermete_bus_api::polkit`).
+
+use ermete_bus_api::polkit::check_polkit_auth_zbus;
 use zbus::interface;
 use tracing::info;
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
-use zbus::zvariant::{OwnedValue, Type, Value};
 use crate::wipe::WipeEngine;
 
-#[derive(Debug, Clone, Serialize, Deserialize, Type)]
-pub struct PolkitSubject {
-    pub kind: String,
-    pub details: HashMap<String, OwnedValue>,
-}
-
-impl PolkitSubject {
-    pub fn unix_process(pid: u32) -> Self {
-        let mut details = std::collections::HashMap::new();
-        if let Ok(owned) = zbus::zvariant::Value::from(pid).try_into() {
-            details.insert("pid".to_string(), owned);
-        }
-        Self {
-            kind: "unix-process".to_string(),
-            details,
-        }
-    }
-
-    pub fn system_bus_name(name: impl Into<String>) -> Self {
-        let mut details = HashMap::new();
-        let val: Value = Value::from(name.into());
-        if let Ok(owned) = val.try_into() {
-            details.insert("name".to_string(), owned);
-        }
-        Self {
-            kind: "system-bus-name".to_string(),
-            details,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, Type)]
-pub struct PolkitAuthorizationResult {
-    pub is_authorized: bool,
-    pub is_challenge: bool,
-    pub details: HashMap<String, String>,
-}
-
-#[zbus::proxy(
-    interface = "org.freedesktop.PolicyKit1.Authority",
-    default_service = "org.freedesktop.PolicyKit1",
-    default_path = "/org/freedesktop/PolicyKit1/Authority"
-)]
-pub trait PolicyKitAuthority {
-    fn check_authorization(
-        &self,
-        subject: &PolkitSubject,
-        action_id: &str,
-        details: &HashMap<&str, &str>,
-        flags: u32,
-        cancellation_id: &str,
-    ) -> zbus::Result<PolkitAuthorizationResult>;
-}
-
-pub async fn check_polkit_auth_zbus(
-    conn: &zbus::Connection,
-    sender: &str,
-    action_id: &str,
-    allow_user_interaction: bool,
-) -> Result<bool, zbus::Error> {
-    if let Ok(creds) = conn.peer_creds().await {
-        if creds.unix_user_id() == Some(0) {
-            return Ok(true);
-        }
-    }
-
-    let proxy = PolicyKitAuthorityProxy::new(conn).await?;
-    let subject = if let Ok(creds) = conn.peer_creds().await {
-        if let Some(pid) = creds.process_id() {
-            PolkitSubject::unix_process(pid)
-        } else {
-            PolkitSubject::system_bus_name(sender)
-        }
-    } else {
-        PolkitSubject::system_bus_name(sender)
-    };
-    let details = HashMap::<&str, &str>::new();
-    let flags = if allow_user_interaction { 1u32 } else { 0u32 };
-
-    let result = proxy
-        .check_authorization(&subject, action_id, &details, flags, "")
-        .await?;
-
-    Ok(result.is_authorized)
-}
-
+/// A second `os.ermete.Mdm` D-Bus interface implementation exposing only the
+/// destructive local-wipe method. Note: `main.rs` builds and serves its own
+/// `MdmDBusInterface` (with `apply_policy`) at object path `/os/ermete/Mdm`
+/// under the same interface name; `main.rs` never constructs or serves this
+/// `MdmIface` type, so `trigger_local_wipe` as defined here is currently dead
+/// code / not wired into the running daemon.
 pub struct MdmIface;
 
 #[interface(name = "os.ermete.Mdm")]
 impl MdmIface {
-    /// Manually trigger a local device wipe (e.g. from the UI before giving PC away)
+    /// D-Bus method: manually triggers a local device wipe (e.g. from the UI
+    /// before giving the PC away). Requires Polkit authorization for the
+    /// `os.ermete.mdm.wipe` action, then delegates to
+    /// [`WipeEngine::execute_cryptsetup_erase`], which overwrites the LUKS
+    /// header of the detected root device and powers off the system.
+    ///
+    /// # Errors
+    /// Returns `AccessDenied` if there's no D-Bus sender or the Polkit check
+    /// fails/denies. Wipe-engine failures are *not* surfaced as a D-Bus error —
+    /// they're folded into an `Ok("Error: ...")` string response instead.
     async fn trigger_local_wipe(
         &self,
         #[zbus(header)] hdr: zbus::message::Header<'_>,

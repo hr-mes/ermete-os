@@ -15,6 +15,7 @@ path = "src/main.rs"
 libc = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 zbus = { workspace = true }
+ermete-bus-api = { path = "../../../../system/ermete-bus-api" }
 xattr = "1.0"
 pqc_dilithium = { workspace = true }
 uuid = { version = "1.0", features = ["v4"] }

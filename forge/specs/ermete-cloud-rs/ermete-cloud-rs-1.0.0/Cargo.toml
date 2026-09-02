@@ -7,6 +7,7 @@ description = "Ermete OS Continuity & Local P2P Sync Daemon"
 [dependencies]
 tokio = { workspace = true, features = ["full"] }
 zbus = { workspace = true }
+ermete-bus-api = { path = "../../../../system/ermete-bus-api" }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }

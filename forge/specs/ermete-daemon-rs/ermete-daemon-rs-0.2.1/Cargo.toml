@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 mimalloc = { workspace = true }
 zbus = { workspace = true, features = ["tokio"] }
+ermete-bus-api = { path = "../../../../system/ermete-bus-api" }
 tokio = { workspace = true, features = ["full"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }

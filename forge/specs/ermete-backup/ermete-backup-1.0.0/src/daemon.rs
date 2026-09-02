@@ -1,3 +1,12 @@
+//! `ermete-backup-daemon` — system D-Bus service (`org.ermete.Backup1`) that
+//! manages instant Bcachefs copy-on-write home-directory snapshots
+//! ("Time Machine" style). This is the binary actually packaged by
+//! `ermete-backup.spec`; the `ermete-backup` binary in `main.rs` is a
+//! separate, unpackaged `borg`-based implementation (see its module doc).
+//!
+//! All four D-Bus methods (`create_snapshot`, `list_snapshots`,
+//! `delete_snapshot`, `restore_snapshot`) are Polkit-gated per-action.
+
 use std::os::unix::fs::OpenOptionsExt;
 use chrono::Local;
 use serde::{Deserialize, Serialize};
@@ -6,96 +15,9 @@ use std::fs;
 use std::os::unix::ffi::OsStrExt;
 use std::os::unix::io::AsRawFd;
 use std::path::{Path, PathBuf};
+use ermete_bus_api::polkit::check_polkit_auth_zbus;
 use zbus::interface;
-use std::collections::HashMap;
 use zbus::message::Header;
-use zbus::zvariant::{OwnedValue, Type, Value};
-
-#[derive(Debug, Clone, Serialize, Deserialize, Type)]
-pub struct PolkitSubject {
-    pub kind: String,
-    pub details: HashMap<String, OwnedValue>,
-}
-
-impl PolkitSubject {
-    pub fn unix_process(pid: u32) -> Self {
-        let mut details = std::collections::HashMap::new();
-        if let Ok(owned) = zbus::zvariant::Value::from(pid).try_into() {
-            details.insert("pid".to_string(), owned);
-        }
-        Self {
-            kind: "unix-process".to_string(),
-            details,
-        }
-    }
-
-    pub fn system_bus_name(name: impl Into<String>) -> Self {
-        let mut details = HashMap::new();
-        let val: Value = Value::from(name.into());
-        if let Ok(owned) = val.try_into() {
-            details.insert("name".to_string(), owned);
-        }
-        Self {
-            kind: "system-bus-name".to_string(),
-            details,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, Type)]
-pub struct PolkitAuthorizationResult {
-    pub is_authorized: bool,
-    pub is_challenge: bool,
-    pub details: HashMap<String, String>,
-}
-
-#[zbus::proxy(
-    interface = "org.freedesktop.PolicyKit1.Authority",
-    default_service = "org.freedesktop.PolicyKit1",
-    default_path = "/org/freedesktop/PolicyKit1/Authority"
-)]
-pub trait PolicyKitAuthority {
-    fn check_authorization(
-        &self,
-        subject: &PolkitSubject,
-        action_id: &str,
-        details: &HashMap<&str, &str>,
-        flags: u32,
-        cancellation_id: &str,
-    ) -> zbus::Result<PolkitAuthorizationResult>;
-}
-
-pub async fn check_polkit_auth_zbus(
-    conn: &zbus::Connection,
-    sender: &str,
-    action_id: &str,
-    allow_user_interaction: bool,
-) -> Result<bool, zbus::Error> {
-    if let Ok(creds) = conn.peer_creds().await {
-        if creds.unix_user_id() == Some(0) {
-            return Ok(true);
-        }
-    }
-
-    let proxy = PolicyKitAuthorityProxy::new(conn).await?;
-    let subject = if let Ok(creds) = conn.peer_creds().await {
-        if let Some(pid) = creds.process_id() {
-            PolkitSubject::unix_process(pid)
-        } else {
-            PolkitSubject::system_bus_name(sender)
-        }
-    } else {
-        PolkitSubject::system_bus_name(sender)
-    };
-    let details = HashMap::<&str, &str>::new();
-    let flags = if allow_user_interaction { 1u32 } else { 0u32 };
-
-    let result = proxy
-        .check_authorization(&subject, action_id, &details, flags, "")
-        .await?;
-
-    Ok(result.is_authorized)
-}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Default)]
@@ -111,6 +33,15 @@ struct bch_ioctl_subvolume {
 const BCH_IOCTL_SUBVOLUME_CREATE: u64 = 0x40186210;
 const BCH_IOCTL_SUBVOLUME_DESTROY: u64 = 0x40186211;
 
+/// Creates a Bcachefs copy-on-write subvolume snapshot of `src` at `dst` via
+/// the `BCH_IOCTL_SUBVOLUME_CREATE` ioctl. Falls back to plain
+/// `create_dir_all` (an ordinary, non-CoW directory) if the ioctl fails or
+/// the filesystem doesn't support Bcachefs subvolumes, or if `dst` already
+/// exists as a directory.
+///
+/// # Errors
+/// Returns an error if `src`/`dst`'s parent cannot be opened, `dst` has no
+/// file name component, or the `create_dir_all` fallback itself fails.
 #[allow(unsafe_code)]
 pub fn native_bcachefs_snapshot(src: &Path, dst: &Path) -> std::io::Result<()> {
     if let Some(parent) = dst.parent() {
@@ -139,7 +70,14 @@ pub fn native_bcachefs_snapshot(src: &Path, dst: &Path) -> std::io::Result<()> {
         src_ptr: src_file.as_raw_fd() as u64,
     };
 
-    // SAFETY: FFI call to libc::ioctl to create bcachefs subvolume. Arguments are bounded by valid CString and file descriptor.
+    // SAFETY: `arg` is a `#[repr(C)]` struct matching the kernel's expected
+    // `bch_ioctl_subvolume` ABI layout, and `&mut arg` stays alive for the
+    // duration of this call (it's a local, not moved/dropped before the
+    // `ioctl` returns). `arg.dst_ptr`/`arg.src_ptr` point at `c_dst_name`
+    // (a `CString`, still in scope) and `src_file`'s raw fd respectively,
+    // both of which outlive this call. `src_file.as_raw_fd()` is a valid
+    // open file descriptor owned by `src_file`, which is not dropped before
+    // the ioctl runs.
     let res = unsafe {
         libc::ioctl(src_file.as_raw_fd(), BCH_IOCTL_SUBVOLUME_CREATE as _, &mut arg)
     };
@@ -154,6 +92,13 @@ pub fn native_bcachefs_snapshot(src: &Path, dst: &Path) -> std::io::Result<()> {
     }
 }
 
+/// Destroys a Bcachefs subvolume at `path` via `BCH_IOCTL_SUBVOLUME_DESTROY`.
+/// Falls back to `remove_dir_all` if the parent can't be opened or the ioctl
+/// fails (e.g. `path` is a plain directory, not a Bcachefs subvolume).
+///
+/// # Errors
+/// Returns `Ok(())` if `path` doesn't exist. Returns an error only if `path`
+/// has no file name component, or a fallback `remove_dir_all` itself fails.
 #[allow(unsafe_code)]
 pub fn native_bcachefs_delete(path: &Path) -> std::io::Result<()> {
     if !path.exists() {
@@ -182,7 +127,11 @@ pub fn native_bcachefs_delete(path: &Path) -> std::io::Result<()> {
         src_ptr: 0,
     };
 
-    // SAFETY: FFI call to libc::ioctl to destroy bcachefs subvolume. Arguments are bounded by valid CString and file descriptor.
+    // SAFETY: Same argument as the `SUBVOLUME_CREATE` call above: `arg`
+    // matches the kernel's expected ABI layout and outlives the call,
+    // `arg.dst_ptr` points at `c_name` (a live `CString`), and
+    // `parent_file.as_raw_fd()` is a valid fd owned by `parent_file`, not
+    // yet dropped.
     let res = unsafe {
         libc::ioctl(parent_file.as_raw_fd(), BCH_IOCTL_SUBVOLUME_DESTROY as _, &mut arg)
     };
@@ -197,15 +146,27 @@ pub fn native_bcachefs_delete(path: &Path) -> std::io::Result<()> {
     }
 }
 
+/// Metadata for one home-directory snapshot, persisted as `manifest.json`
+/// alongside the snapshot subvolume itself.
 #[derive(Debug, Clone, Serialize, Deserialize, zbus::zvariant::Type)]
 pub struct SnapshotInfo {
+    /// Snapshot ID in the form `snap-{YYYYMMDD-HHMMSS}`; also the subvolume
+    /// directory name under `snapshot_dir`.
     pub id: String,
+    /// Human-readable creation time (`DD/MM/YYYY HH:MM:SS`, local time).
     pub timestamp: String,
+    /// Caller-supplied note describing the snapshot.
     pub note: String,
+    /// Absolute filesystem path to the snapshot subvolume.
     pub path: String,
+    /// Always `"0 B (Bcachefs CoW)"` — not a real computed size, since
+    /// CoW snapshots share blocks with the source until they diverge.
     pub size_estimate: String,
 }
 
+/// D-Bus service object implementing `org.ermete.Backup1`. Manages
+/// Bcachefs CoW snapshots of the invoking user's `$HOME` under
+/// `snapshot_dir` (`~/.snapshots`).
 pub struct BackupServer {
     pub snapshot_dir: PathBuf,
 }
@@ -224,6 +185,11 @@ impl BackupServer {
         path
     }
 
+    /// Creates a `BackupServer` rooted at `$HOME/.snapshots` (falling back
+    /// to `dirs::home_dir()` then `/home` if `$HOME` is unset), creating
+    /// that directory if it doesn't already exist. A failure to create the
+    /// directory is logged, not propagated — later snapshot operations will
+    /// simply fail instead.
     pub fn new() -> Self {
         let home = std::env::var("HOME").unwrap_or_else(|_| dirs::home_dir().unwrap_or(std::path::PathBuf::from("/home")).to_string_lossy().into_owned().to_string());
         let mut path = PathBuf::from(&home);
@@ -234,6 +200,14 @@ impl BackupServer {
         Self { snapshot_dir: path }
     }
 
+    /// Creates a new Bcachefs CoW snapshot of `$HOME` and writes its
+    /// `SnapshotInfo` manifest to disk with `0o600` permissions.
+    ///
+    /// # Errors
+    /// Returns `Err` if the underlying Bcachefs snapshot ioctl (and its
+    /// `create_dir_all` fallback) both fail. A failure to write the
+    /// manifest JSON afterward is only logged, not returned as an error —
+    /// the snapshot itself still reports success in that case.
     pub fn create_snapshot_internal(&self, note: &str) -> Result<SnapshotInfo, String> {
         let now = Local::now();
         let id = format!("snap-{}", now.format("%Y%m%d-%H%M%S"));
@@ -274,6 +248,9 @@ impl BackupServer {
         Ok(info)
     }
 
+    /// Lists all snapshots with a readable, parseable `manifest.json` under
+    /// `snapshot_dir`, newest ID first. Entries with unreadable or malformed
+    /// manifests are silently skipped rather than surfaced as errors.
     pub fn list_snapshots_internal(&self) -> Vec<SnapshotInfo> {
         let mut list = Vec::new();
         if let Ok(entries) = fs::read_dir(&self.snapshot_dir) {
@@ -292,6 +269,12 @@ impl BackupServer {
         list
     }
 
+    /// Deletes the snapshot subvolume and manifest for `id`.
+    ///
+    /// `id` is rejected (returns `false`) if it contains `/`, `.`, or `\`,
+    /// which prevents it being used to escape `snapshot_dir` via a
+    /// directory-traversal path (e.g. `../../etc`) when joined onto
+    /// `snapshot_dir` below.
     pub fn delete_snapshot_internal(&self, id: &str) -> bool {
         if id.contains('/') || id.contains('.') || id.contains('\\') {
             return false;
@@ -310,6 +293,14 @@ impl BackupServer {
         true
     }
 
+    /// Restores `$HOME` from the snapshot `id`: deletes the current `$HOME`
+    /// subvolume, then snapshots `id` back into place as the new `$HOME`.
+    /// Same path-traversal guard on `id` as [`delete_snapshot_internal`].
+    /// Returns `false` if `id` is invalid, the snapshot doesn't exist
+    /// (checked via manifest or subvolume directory presence), or the
+    /// restore ioctl/fallback fails.
+    ///
+    /// [`delete_snapshot_internal`]: BackupServer::delete_snapshot_internal
     pub fn restore_snapshot_internal(&self, id: &str) -> bool {
         if id.contains('/') || id.contains('.') || id.contains('\\') {
             return false;
@@ -342,6 +333,7 @@ impl BackupServer {
 
 #[interface(name = "org.ermete.Backup1")]
 impl BackupServer {
+    /// `CreateSnapshot` D-Bus method, Polkit action `org.ermete.backup.create`.
     async fn create_snapshot(
         &self,
         note: &str,
@@ -360,6 +352,8 @@ impl BackupServer {
         self.create_snapshot_internal(note).map_err(zbus::fdo::Error::Failed)
     }
 
+    /// `ListSnapshots` D-Bus method, Polkit action `org.ermete.backup.list`
+    /// (does not require interactive auth).
     async fn list_snapshots(
         &self,
         #[zbus(header)] hdr: Header<'_>,
@@ -377,6 +371,7 @@ impl BackupServer {
         Ok(self.list_snapshots_internal())
     }
 
+    /// `DeleteSnapshot` D-Bus method, Polkit action `org.ermete.backup.delete`.
     async fn delete_snapshot(
         &self,
         id: &str,
@@ -395,6 +390,9 @@ impl BackupServer {
         Ok(self.delete_snapshot_internal(id))
     }
 
+    /// `RestoreSnapshot` D-Bus method, Polkit action `org.ermete.backup.restore`.
+    /// Overwrites the caller's current `$HOME` in place — there is no
+    /// automatic snapshot of the pre-restore state.
     async fn restore_snapshot(
         &self,
         id: &str,

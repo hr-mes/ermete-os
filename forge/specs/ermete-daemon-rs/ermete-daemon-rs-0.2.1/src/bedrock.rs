@@ -1,109 +1,53 @@
 extern crate serde;
+use ermete_bus_api::polkit;
 use zbus::interface;
-use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
-use serde::{Deserialize, Serialize};
 use zbus::fdo;
 use zbus::message::Header;
-use zbus::zvariant::{OwnedValue, Type, Value};
 
-#[derive(Debug, Clone, Serialize, Deserialize, Type)]
-pub struct PolkitSubject {
-    pub kind: String,
-    pub details: HashMap<String, OwnedValue>,
-}
-
-impl PolkitSubject {
-    pub fn unix_process(pid: u32) -> Self {
-        let mut details = std::collections::HashMap::new();
-        if let Ok(owned) = zbus::zvariant::Value::from(pid).try_into() {
-            details.insert("pid".to_string(), owned);
-        }
-        Self {
-            kind: "unix-process".to_string(),
-            details,
-        }
-    }
-
-    pub fn system_bus_name(name: impl Into<String>) -> Self {
-        let mut details = HashMap::new();
-        let val: Value = Value::from(name.into());
-        if let Ok(owned) = val.try_into() {
-            details.insert("name".to_string(), owned);
-        }
-        Self {
-            kind: "system-bus-name".to_string(),
-            details,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, Type)]
-pub struct PolkitAuthorizationResult {
-    pub is_authorized: bool,
-    pub is_challenge: bool,
-    pub details: HashMap<String, String>,
-}
-
-#[zbus::proxy(
-    interface = "org.freedesktop.PolicyKit1.Authority",
-    default_service = "org.freedesktop.PolicyKit1",
-    default_path = "/org/freedesktop/PolicyKit1/Authority"
-)]
-pub trait PolicyKitAuthority {
-    fn check_authorization(
-        &self,
-        subject: &PolkitSubject,
-        action_id: &str,
-        details: &HashMap<&str, &str>,
-        flags: u32,
-        cancellation_id: &str,
-    ) -> zbus::Result<PolkitAuthorizationResult>;
-}
-
+/// Checks a D-Bus caller's polkit authorization for `action_id`.
+///
+/// This daemon serves on the **session** bus, so `sender` (the unique name from the message
+/// header) means nothing to polkit, which lives on the system bus. The caller is resolved to
+/// a `unix-process` subject through the session bus driver, and that subject is sent to
+/// polkit over a system-bus connection. Fails closed: a missing sender, a bus failure, or a
+/// polkit error all yield `false`.
 pub async fn check_polkit_auth(sender: Option<&str>, action_id: &str) -> bool {
-    let sender_str = match sender {
+    let sender = match sender {
         Some(s) if !s.is_empty() => s,
         _ => return false,
     };
-
-    let conn = match zbus::Connection::system().await {
+    let Some(session) = get_session_conn().await else {
+        return false;
+    };
+    let subject = match polkit::unix_process_subject(&session, sender).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Polkit Zero-Trust] cannot resolve caller {sender} on the session bus: {e}");
+            return false;
+        }
+    };
+    let system = match zbus::Connection::system().await {
         Ok(c) => c,
         Err(e) => {
-            eprintln!("[Polkit Zero-Trust] Failed to connect to system bus: {}", e);
+            tracing::error!("[Polkit Zero-Trust] failed to connect to system bus: {e}");
             return false;
         }
     };
-
-    let proxy = match PolicyKitAuthorityProxy::new(&conn).await {
-        Ok(p) => p,
+    // AllowUserInteraction: os.ermete.network.configure and os.ermete.livepatcher.apply are
+    // auth_admin* in this daemon's .policy file; without the flag polkit could never prompt.
+    match polkit::check_subject(&system, &subject, action_id, true).await {
+        Ok(authorized) => authorized,
         Err(e) => {
-            eprintln!("[Polkit Zero-Trust] Failed to create PolicyKit authority proxy: {}", e);
-            return false;
-        }
-    };
-
-    let subject = if let Ok(creds) = conn.peer_creds().await {
-        if let Some(pid) = creds.process_id() {
-            PolkitSubject::unix_process(pid)
-        } else {
-            PolkitSubject::system_bus_name(sender_str)
-        }
-    } else {
-        PolkitSubject::system_bus_name(sender_str)
-    };
-    let details = HashMap::<&str, &str>::new();
-
-    match proxy.check_authorization(&subject, action_id, &details, 0, "").await {
-        Ok(result) => result.is_authorized,
-        Err(e) => {
-            eprintln!("[Polkit Zero-Trust] CheckAuthorization D-Bus call failed for action {}: {}", action_id, e);
+            tracing::error!("[Polkit Zero-Trust] CheckAuthorization failed for {action_id}: {e}");
             false
         }
     }
 }
-
+/// D-Bus object exposing `os.ermete.Bedrock`: a `ping` liveness check, the live-patch
+/// control surface (delegates to [`crate::live_patch::LivePatchManager`]), and the
+/// session audio volume property (mirrored to `os.ermete.AudioWorker`).
 #[derive(Clone)]
 pub struct Bedrock {
     volume: Arc<AtomicU64>,
@@ -116,6 +60,7 @@ impl Default for Bedrock {
 }
 
 impl Bedrock {
+    /// Creates a new instance with volume initialized to `0.5`.
     pub fn new() -> Self {
         Self {
             volume: Arc::new(AtomicU64::new(0.5f64.to_bits())),

@@ -1,111 +1,36 @@
+//! The `os.ermete.Gatekeeper` D-Bus interface: exposes user-facing approve/deny/rollback
+//! actions for quarantined-file executions, gated by Polkit authorization, plus a
+//! generic `request_root_privilege` prompt flow.
+
 use std::collections::HashMap;
 use std::os::unix::io::RawFd;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use serde::{Deserialize, Serialize};
+use ermete_bus_api::polkit::check_polkit_auth_zbus;
 use zbus::interface;
 use zbus::message::Header;
 use zbus::object_server::SignalEmitter;
-use zbus::zvariant::{OwnedValue, Type, Value};
-
-#[derive(Debug, Clone, Serialize, Deserialize, Type)]
-pub struct PolkitSubject {
-    pub kind: String,
-    pub details: HashMap<String, OwnedValue>,
-}
-
-impl PolkitSubject {
-    pub fn unix_process(pid: u32) -> Self {
-        let mut details = std::collections::HashMap::new();
-        if let Ok(owned) = zbus::zvariant::Value::from(pid).try_into() {
-            details.insert("pid".to_string(), owned);
-        }
-        Self {
-            kind: "unix-process".to_string(),
-            details,
-        }
-    }
-
-    pub fn system_bus_name(name: impl Into<String>) -> Self {
-        let mut details = HashMap::new();
-        let val: Value = Value::from(name.into());
-        if let Ok(owned) = val.try_into() {
-            details.insert("name".to_string(), owned);
-        }
-        Self {
-            kind: "system-bus-name".to_string(),
-            details,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, Type)]
-pub struct PolkitAuthorizationResult {
-    pub is_authorized: bool,
-    pub is_challenge: bool,
-    pub details: HashMap<String, String>,
-}
-
-#[zbus::proxy(
-    interface = "org.freedesktop.PolicyKit1.Authority",
-    default_service = "org.freedesktop.PolicyKit1",
-    default_path = "/org/freedesktop/PolicyKit1/Authority"
-)]
-pub trait PolicyKitAuthority {
-    fn check_authorization(
-        &self,
-        subject: &PolkitSubject,
-        action_id: &str,
-        details: &HashMap<&str, &str>,
-        flags: u32,
-        cancellation_id: &str,
-    ) -> zbus::Result<PolkitAuthorizationResult>;
-}
-
-pub async fn check_polkit_auth_zbus(
-    conn: &zbus::Connection,
-    sender: &str,
-    action_id: &str,
-    allow_user_interaction: bool,
-) -> Result<bool, zbus::Error> {
-    if let Ok(creds) = conn.peer_creds().await {
-        if creds.unix_user_id() == Some(0) {
-            return Ok(true);
-        }
-    }
-
-    let proxy = PolicyKitAuthorityProxy::new(conn).await?;
-    let subject = if let Ok(creds) = conn.peer_creds().await {
-        if let Some(pid) = creds.process_id() {
-            PolkitSubject::unix_process(pid)
-        } else {
-            PolkitSubject::system_bus_name(sender)
-        }
-    } else {
-        PolkitSubject::system_bus_name(sender)
-    };
-    let details = HashMap::<&str, &str>::new();
-    let flags = if allow_user_interaction { 1u32 } else { 0u32 };
-
-    let result = proxy
-        .check_authorization(&subject, action_id, &details, flags, "")
-        .await?;
-
-    Ok(result.is_authorized)
-}
 
 use crate::bcachefs::restore_bcachefs_snapshot_impl;
 use crate::fanotify::{respond_and_close, FAN_DENY};
 use crate::hypervisor::spawn_microvm_isolated_app;
 
 
+/// D-Bus object backing the `os.ermete.Gatekeeper` interface; holds the shared fanotify
+/// fd and the in-flight quarantined-execution state that `approve_execution` /
+/// `deny_execution` / `rollback_snapshot` act on.
 pub struct GatekeeperManager {
+    /// The process-wide fanotify file descriptor events are responded to on.
     pub fanotify_fd: RawFd,
+    /// Maps a pending event's `fd_id` (UUID) to the fanotify event's file descriptor.
     pub pending_events: Arc<tokio::sync::Mutex<HashMap<String, i32>>>, // fd_id -> event_fd
+    /// Maps a pending event's `fd_id` to the Bcachefs snapshot path taken for it, if any.
     pub pending_snapshots: Arc<tokio::sync::Mutex<HashMap<String, PathBuf>>>, // fd_id -> snapshot_path
 }
 
 impl GatekeeperManager {
+    /// Constructs a manager sharing the given fanotify fd and pending-state maps with
+    /// the daemon's fanotify event loop.
     pub fn new(
         fanotify_fd: RawFd,
         pending_events: Arc<tokio::sync::Mutex<HashMap<String, i32>>>,
@@ -128,7 +53,7 @@ impl GatekeeperManager {
         #[zbus(connection)] conn: &zbus::Connection,
     ) -> zbus::fdo::Result<()> {
         let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
-        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "os.ermete.gatekeeper.approve", false)
+        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "os.ermete.gatekeeper.approve", true)
             .await
             .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit zbus check failed: {}", e)))?;
 
@@ -210,7 +135,7 @@ impl GatekeeperManager {
         #[zbus(connection)] conn: &zbus::Connection,
     ) -> zbus::fdo::Result<bool> {
         let sender = hdr.sender().ok_or(zbus::fdo::Error::AccessDenied("No sender".into()))?;
-        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "os.ermete.gatekeeper.rollback", false)
+        let is_auth = check_polkit_auth_zbus(conn, sender.as_str(), "os.ermete.gatekeeper.rollback", true)
             .await
             .map_err(|e| zbus::fdo::Error::AccessDenied(format!("Polkit zbus check failed: {}", e)))?;
 
@@ -221,6 +146,9 @@ impl GatekeeperManager {
         restore_bcachefs_snapshot_impl(&fd_id, &self.pending_snapshots).await
     }
 
+    /// D-Bus signal emitted when a quarantined file's execution is intercepted and
+    /// needs the user to approve, deny, or roll back via `approve_execution` /
+    /// `deny_execution` / `rollback_snapshot`.
     #[zbus(signal)]
     pub async fn prompt_required(
         signal_ctxt: &SignalEmitter<'_>,
@@ -259,12 +187,14 @@ impl GatekeeperManager {
         Ok(())
     }
 
+    /// D-Bus signal emitted when a `request_root_privilege` request is granted.
     #[zbus(signal)]
     pub async fn permit(
         signal_ctxt: &SignalEmitter<'_>,
         req_id: u64,
     ) -> zbus::Result<()>;
 
+    /// D-Bus signal emitted when a `request_root_privilege` request is refused.
     #[zbus(signal)]
     pub async fn deny(
         signal_ctxt: &SignalEmitter<'_>,

@@ -1,3 +1,9 @@
+//! Byzantine Fault Tolerant (2-phase Prepare/Commit) consensus engine for validating clipboard and
+//! other state-update proposals across the fleet, gated on this crate's ZK-proof authentication.
+//! Note this is the *intended* path — the clipboard write itself (`wl-copy`) is never actually
+//! invoked from anywhere in this file; the only code path that writes to the clipboard is the
+//! separate, directly-TCP-reachable branch in `listener.rs` (see `AUDIT_REPORT.md` SEC-01/SEC-07).
+
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
@@ -7,20 +13,28 @@ use tokio::time::Instant;
 use tracing::{info, warn};
 use crate::zk::{ZkProofEngine, ZkProof};
 
+/// Phase of the two-phase BFT vote: `Prepare` (initial quorum) then `Commit` (final quorum).
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum BftVoteType {
     Prepare,
     Commit,
 }
 
+/// Lifecycle state of a BFT proposal.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum BftProposalState {
+    /// Just created/received, not yet at Prepare quorum.
     Proposed,
+    /// Prepare-vote quorum reached; Commit votes are being collected.
     Prepared,
+    /// Commit-vote quorum reached; consensus achieved.
     Committed,
+    /// Not currently set by any code path in this file.
     Rejected,
 }
 
+/// A proposed state update (e.g. a clipboard push) submitted for BFT consensus, authenticated by
+/// the proposer's ZK proof.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BftProposal {
     pub proposal_id: String,
@@ -32,6 +46,7 @@ pub struct BftProposal {
     pub zk_proof: ZkProof,
 }
 
+/// A Prepare or Commit vote on a [`BftProposal`], itself authenticated by the voter's ZK proof.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BftVote {
     pub proposal_id: String,
@@ -41,6 +56,7 @@ pub struct BftVote {
     pub zk_proof: ZkProof,
 }
 
+/// Tracks in-flight and committed BFT proposals for this node.
 pub struct BftConsensusEngine {
     node_id: String,
     zk_engine: Arc<ZkProofEngine>,
@@ -59,6 +75,8 @@ struct BftProposalRecord {
 }
 
 impl BftConsensusEngine {
+    /// Creates an empty consensus engine for `node_id`, backed by `zk_engine` for authenticating
+    /// proposals and votes.
     pub fn new(node_id: String, zk_engine: Arc<ZkProofEngine>) -> Self {
         info!("Initialized Byzantine Fault Tolerance (BFT) Consensus Engine for node {}", node_id);
         Self {
@@ -97,7 +115,11 @@ impl BftConsensusEngine {
         }
     }
 
-    /// Create a new proposal for BFT Consensus validation across the fleet
+    /// Create a new proposal for BFT Consensus validation across the fleet. The proposer
+    /// automatically self-votes both Prepare and Commit.
+    ///
+    /// # Errors
+    /// Returns an error if generating the ZK proof fails (e.g. system clock before UNIX epoch).
     pub async fn create_proposal(&self, data_type: &str, payload: &str, nonce: u64) -> Result<BftProposal> {
         let mut seq_guard = self.sequence_counter.lock().await;
         let seq = *seq_guard;
@@ -133,7 +155,12 @@ impl BftConsensusEngine {
         Ok(proposal)
     }
 
-    /// Receive and validate incoming proposal from a fleet peer
+    /// Receive and validate incoming proposal from a fleet peer. Returns `Ok(None)` if the ZK
+    /// proof fails verification or the proposal was already known; otherwise records it and
+    /// returns a Prepare vote to send back.
+    ///
+    /// # Errors
+    /// Returns an error if generating this node's own Prepare-vote ZK proof fails.
     pub async fn handle_proposal(&self, proposal: &BftProposal, total_fleet_peers: usize) -> Result<Option<BftVote>> {
         // 1. Validate ZK proof of proposer
         if !self.zk_engine.verify_proof(&proposal.zk_proof) {
@@ -178,7 +205,13 @@ impl BftConsensusEngine {
         Ok(Some(prepare_vote))
     }
 
-    /// Receive and process vote from a peer
+    /// Receive and process vote from a peer. Returns `Ok(None)` if the ZK proof fails
+    /// verification or the referenced proposal is unknown; on reaching Prepare quorum, returns a
+    /// Commit vote to broadcast; on reaching Commit quorum, records the proposal as committed and
+    /// returns `Ok(None)` (the commit itself is only observable via [`Self::is_committed`]).
+    ///
+    /// # Errors
+    /// Returns an error if generating this node's own Commit-vote ZK proof fails.
     pub async fn handle_vote(&self, vote: &BftVote, total_fleet_peers: usize) -> Result<Option<BftVote>> {
         if !self.zk_engine.verify_proof(&vote.zk_proof) {
             warn!("Rejected BFT vote from {}: Invalid ZK Proof", vote.voter_id);
@@ -242,6 +275,7 @@ impl BftConsensusEngine {
         }
     }
 
+    /// Returns a human-readable summary of tracked/committed proposal counts.
     pub async fn get_status(&self) -> String {
         let proposals = self.proposals.lock().await;
         let committed = self.committed_history.lock().await;

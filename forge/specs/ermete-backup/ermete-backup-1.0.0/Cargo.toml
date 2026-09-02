@@ -15,6 +15,7 @@ path = "src/daemon.rs"
 dirs = "5.0"
 glib = { workspace = true }
 zbus = { workspace = true, features = ["tokio"] }
+ermete-bus-api = { path = "../../../../system/ermete-bus-api" }
 tokio = { workspace = true, features = ["full"] }
 libc = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

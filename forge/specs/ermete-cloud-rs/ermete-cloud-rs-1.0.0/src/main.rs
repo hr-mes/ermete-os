@@ -1,8 +1,20 @@
+//! Ermete Cloud daemon (`ermete-cloud-rs`) entry point: universal clipboard sync and local P2P
+//! continuity over a self-organizing "fleet" of Ermete OS nodes.
+//!
+//! Wires up two D-Bus interfaces (`os.ermete.CloudSync` for OAuth/FUSE mounts here in `main.rs`,
+//! `os.ermete.Cloud` in `dbus.rs` for clipboard/BFT/ZK operations), then starts UDP peer discovery
+//! (`discovery.rs`) and a TCP listener (`listener.rs`) for clipboard sync and Byzantine
+//! Fault-Tolerant consensus proposals/votes (`bft.rs`). Peer/fleet membership is proven via a real
+//! Dilithium5-signature-backed zero-knowledge-style proof (`zk.rs`) — the Kyber/Dilithium keys
+//! involved are genuinely generated and used, unlike the mesh-bus/mesh-sync crates' PQC naming
+//! (see `AUDIT_REPORT.md` DOC-01). However, the actual clipboard-write authentication path in
+//! `listener.rs` has a live bypass (SEC-01): it accepts any self-signed keypair without checking
+//! it against any registered/pinned peer identity. See this crate's `README.md` for the full
+//! honest breakdown.
+
 use anyhow::Result;
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
+use ermete_bus_api::polkit::check_polkit_auth_zbus;
 use zbus::interface;
-use zbus::zvariant::{OwnedValue, Type, Value};
 use tokio::process::Command;
 use tracing::{info, error};
 
@@ -14,92 +26,8 @@ mod discovery;
 mod listener;
 mod clipboard;
 
-#[derive(Debug, Clone, Serialize, Deserialize, Type)]
-pub struct PolkitSubject {
-    pub kind: String,
-    pub details: HashMap<String, OwnedValue>,
-}
-
-impl PolkitSubject {
-    pub fn unix_process(pid: u32) -> Self {
-        let mut details = std::collections::HashMap::new();
-        if let Ok(owned) = zbus::zvariant::Value::from(pid).try_into() {
-            details.insert("pid".to_string(), owned);
-        }
-        Self {
-            kind: "unix-process".to_string(),
-            details,
-        }
-    }
-
-    pub fn system_bus_name(name: impl Into<String>) -> Self {
-        let mut details = HashMap::new();
-        let val: Value = Value::from(name.into());
-        if let Ok(owned) = val.try_into() {
-            details.insert("name".to_string(), owned);
-        }
-        Self {
-            kind: "system-bus-name".to_string(),
-            details,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, Type)]
-pub struct PolkitAuthorizationResult {
-    pub is_authorized: bool,
-    pub is_challenge: bool,
-    pub details: HashMap<String, String>,
-}
-
-#[zbus::proxy(
-    interface = "org.freedesktop.PolicyKit1.Authority",
-    default_service = "org.freedesktop.PolicyKit1",
-    default_path = "/org/freedesktop/PolicyKit1/Authority"
-)]
-pub trait PolicyKitAuthority {
-    fn check_authorization(
-        &self,
-        subject: &PolkitSubject,
-        action_id: &str,
-        details: &HashMap<&str, &str>,
-        flags: u32,
-        cancellation_id: &str,
-    ) -> zbus::Result<PolkitAuthorizationResult>;
-}
-
-pub async fn check_polkit_auth_zbus(
-    conn: &zbus::Connection,
-    sender: &str,
-    action_id: &str,
-    allow_user_interaction: bool,
-) -> Result<bool, zbus::Error> {
-    if let Ok(creds) = conn.peer_creds().await {
-        if creds.unix_user_id() == Some(0) {
-            return Ok(true);
-        }
-    }
-
-    let proxy = PolicyKitAuthorityProxy::new(conn).await?;
-    let subject = if let Ok(creds) = conn.peer_creds().await {
-        if let Some(pid) = creds.process_id() {
-            PolkitSubject::unix_process(pid)
-        } else {
-            PolkitSubject::system_bus_name(sender)
-        }
-    } else {
-        PolkitSubject::system_bus_name(sender)
-    };
-    let details = HashMap::<&str, &str>::new();
-    let flags = if allow_user_interaction { 1u32 } else { 0u32 };
-
-    let result = proxy
-        .check_authorization(&subject, action_id, &details, flags, "")
-        .await?;
-
-    Ok(result.is_authorized)
-}
-
+/// Implements the `os.ermete.CloudSync` D-Bus interface: OAuth token validation and polkit-gated
+/// FUSE remote mounts via `rclone`.
 pub struct CloudSyncIface {}
 
 #[interface(name = "os.ermete.CloudSync")]
@@ -196,7 +124,7 @@ async fn main() -> Result<()> {
     let sync_engine = std::sync::Arc::new(sync::SyncEngine::new()?);
     
     // Export D-Bus interfaces
-    let _conn = zbus::connection::Builder::session()?
+    let _conn = zbus::connection::Builder::system()?
         .name("os.ermete.CloudSync")?
         .serve_at("/os/ermete/CloudSync", CloudSyncIface {})?
         .serve_at("/os/ermete/Cloud", dbus::CloudIface { engine: sync_engine.clone() })?

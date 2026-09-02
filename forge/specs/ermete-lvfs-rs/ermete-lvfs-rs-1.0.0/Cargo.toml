@@ -8,6 +8,7 @@ description = "Ermete OS Firmware & LVFS Automation Daemon"
 mimalloc = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 zbus = { workspace = true }
+ermete-bus-api = { path = "../../../../system/ermete-bus-api" }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }

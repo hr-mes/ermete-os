@@ -1,98 +1,23 @@
 #![allow(clippy::all)]
 #![allow(clippy::pedantic)]
 
+//! Exposes `ermete-ebpf-sched`'s scheduling controls as the `os.ermete.SchedExt`
+//! D-Bus interface, gated by a `polkit` authorization check
+//! (`ermete_bus_api::polkit::check_polkit_auth_zbus`) on the mutating `update_sched_map` call.
+
 use crate::sched_ext::{SchedClass, SchedExtController, TaskSchedPolicy};
-use std::collections::HashMap;
 use std::sync::Arc;
-use serde::{Deserialize, Serialize};
+use ermete_bus_api::polkit::check_polkit_auth_zbus;
 use zbus::interface;
-use zbus::zvariant::{OwnedValue, Type, Value};
 
-#[derive(Debug, Clone, Serialize, Deserialize, Type)]
-pub struct PolkitSubject {
-    pub kind: String,
-    pub details: HashMap<String, OwnedValue>,
-}
-
-impl PolkitSubject {
-    pub fn unix_process(pid: u32) -> Self {
-        let mut details = std::collections::HashMap::new();
-        if let Ok(owned) = zbus::zvariant::Value::from(pid).try_into() {
-            details.insert("pid".to_string(), owned);
-        }
-        Self {
-            kind: "unix-process".to_string(),
-            details,
-        }
-    }
-
-    pub fn system_bus_name(name: impl Into<String>) -> Self {
-        let mut details = HashMap::new();
-        let val: Value = Value::from(name.into());
-        if let Ok(owned) = val.try_into() {
-            details.insert("name".to_string(), owned);
-        }
-        Self {
-            kind: "system-bus-name".to_string(),
-            details,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, Type)]
-pub struct PolkitAuthorizationResult {
-    pub is_authorized: bool,
-    pub is_challenge: bool,
-    pub details: HashMap<String, String>,
-}
-
-#[zbus::proxy(
-    interface = "org.freedesktop.PolicyKit1.Authority",
-    default_service = "org.freedesktop.PolicyKit1",
-    default_path = "/org/freedesktop/PolicyKit1/Authority"
-)]
-pub trait PolicyKitAuthority {
-    fn check_authorization(
-        &self,
-        subject: &PolkitSubject,
-        action_id: &str,
-        details: &HashMap<&str, &str>,
-        flags: u32,
-        cancellation_id: &str,
-    ) -> zbus::Result<PolkitAuthorizationResult>;
-}
-
-pub async fn check_polkit_auth_zbus(
-    conn: &zbus::Connection,
-    sender: &str,
-    action_id: &str,
-    allow_user_interaction: bool,
-) -> Result<bool, zbus::Error> {
-    if let Ok(creds) = conn.peer_creds().await {
-        if creds.unix_user_id() == Some(0) {
-            return Ok(true);
-        }
-    }
-
-    let proxy = PolicyKitAuthorityProxy::new(conn).await?;
-    // ZERO-TRUST FIX: Removed TOCTOU PID vulnerability.
-    // D-Bus broker natively resolves the unique sender name (:1.x) to the process safely.
-    let subject = PolkitSubject::system_bus_name(sender);
-    let details = HashMap::<&str, &str>::new();
-    let flags = if allow_user_interaction { 1u32 } else { 0u32 };
-
-    let result = proxy
-        .check_authorization(&subject, action_id, &details, flags, "")
-        .await?;
-
-    Ok(result.is_authorized)
-}
-
+/// Implements the `os.ermete.SchedExt` D-Bus interface over a shared
+/// [`SchedExtController`].
 pub struct SchedExtDbusInterface {
     controller: Arc<SchedExtController>,
 }
 
 impl SchedExtDbusInterface {
+    /// Wraps an existing controller for D-Bus registration.
     pub fn new(controller: Arc<SchedExtController>) -> Self {
         Self { controller }
     }
