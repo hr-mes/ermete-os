@@ -5,7 +5,7 @@ Release:        1%{?dist}
 Summary:        The minimal, blazing-fast, and infinitely customizable prompt for any shell!
 License:        ISC
 URL:            https://starship.rs
-Source0:        https://github.com/starship/starship/archive/refs/tags/v%{version}.tar.gz
+Source0:        https://github.com/starship/starship/archive/refs/tags/v%{version}.tar.gz#/starship-%{version}.tar.gz
 
 Provides:       starship = %{version}-%{release}
 Obsoletes:      starship < %{version}-%{release}

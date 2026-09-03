@@ -5,7 +5,7 @@ Summary:        Ermete-patched version of the Niri scrollable tiling compositor
 License:        GPL-3.0-or-later
 
 # Usa i sorgenti originali (Vanilla)
-Source0:        https://github.com/YaLTeR/niri/archive/refs/tags/v%{version}.tar.gz
+Source0:        https://github.com/YaLTeR/niri/archive/refs/tags/v%{version}.tar.gz#/niri-%{version}.tar.gz
 
 
 
