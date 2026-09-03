@@ -1,0 +1,7 @@
+# Configurazione del daemon Tetragon, letta da /etc/tetragon/tetragon.yaml.
+# Le tracing policy sono iniettate a runtime in /etc/tetragon/tetragon.tp.d.
+bpf-lib: /var/lib/tetragon/bpf/
+export-filename: /var/log/tetragon/tetragon.log
+log-format: json
+log-level: info
+process-cache-size: 65536

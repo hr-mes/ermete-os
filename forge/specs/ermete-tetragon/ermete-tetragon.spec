@@ -1,11 +1,13 @@
 Name:           ermete-tetragon
 Version:        1.3.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Cilium Tetragon eBPF Runtime Security
 
 License:        Apache-2.0
 URL:            https://github.com/cilium/tetragon
 Source0:        https://github.com/cilium/tetragon/releases/download/v%{version}/tetragon-v%{version}-amd64.tar.gz
+Source1:        tetragon.service
+Source2:        tetragon.yaml
 
 BuildRequires:  tar
 Requires:       systemd
@@ -29,13 +31,13 @@ mkdir -p %{buildroot}/usr/lib/systemd/system
 install -m 0755 tetragon-v%{version}-amd64/usr/local/bin/tetragon %{buildroot}/usr/bin/tetragon
 install -m 0755 tetragon-v%{version}-amd64/usr/local/bin/tetra %{buildroot}/usr/bin/tetra
 
-# Copy bpf bytecode
+# Bytecode eBPF: tetragon.yaml punta bpf-lib a questa directory
 cp -r tetragon-v%{version}-amd64/usr/local/lib/tetragon/bpf %{buildroot}%{_sharedstatedir}/tetragon/
 
-# Copy services and configs from SOURCES
-install -m 0644 %{_sourcedir}/tetragon.service %{buildroot}/usr/lib/systemd/system/tetragon.service
-install -m 0644 %{_sourcedir}/tetragon.yaml %{buildroot}/etc/tetragon/tetragon.yaml
-install -m 0644 %{_sourcedir}/tetragon.tp.d/sys_execve.yaml %{buildroot}/etc/tetragon/tetragon.tp.d/sys_execve.yaml
+# Unità systemd e configurazione del daemon. Le tracing policy sono iniettate a
+# runtime dal policy injector: tetragon.tp.d resta vuota e di proprietà del pacchetto.
+install -m 0644 %{SOURCE1} %{buildroot}/usr/lib/systemd/system/tetragon.service
+install -m 0644 %{SOURCE2} %{buildroot}/etc/tetragon/tetragon.yaml
 
 %post
 %systemd_post tetragon.service
@@ -52,8 +54,14 @@ install -m 0644 %{_sourcedir}/tetragon.tp.d/sys_execve.yaml %{buildroot}/etc/tet
 %{_sharedstatedir}/tetragon/bpf/
 /usr/lib/systemd/system/tetragon.service
 %config(noreplace) /etc/tetragon/tetragon.yaml
-%config(noreplace) /etc/tetragon/tetragon.tp.d/sys_execve.yaml
+%dir /etc/tetragon/tetragon.tp.d
 
 %changelog
+* Thu Sep 03 2026 Ermete Forge <forge@ermete.os> - 1.3.0-2
+- Dichiara tetragon.service e tetragon.yaml come Source1/Source2
+- Configurazione del daemon in YAML, il formato che tetragon legge da /etc/tetragon/tetragon.yaml
+- Rimossa la policy statica sys_execve.yaml, sostituita dal policy injector a runtime
+- La directory tetragon.tp.d appartiene al pacchetto
+
 * Mon Aug 03 2026 Ermete Forge <forge@ermete.os> - 1.3.0-1
 - Initial release for Ermete OS
