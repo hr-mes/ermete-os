@@ -12,7 +12,7 @@ La compilazione non è sequenziale. È orchestrata dal **DAG Orchestrator** (`fo
 Per scalare su build-farm, l'orchestratore utilizza **Redis** (o un fallback locale su disco) per memorizzare in cache gli hash dei layer OCI e saltare le ricompilazioni inutili.
 
 ### Flusso di Aggiunta di un Pacchetto:
-1. **Creazione dello Spec:** Creare la cartella `forge/specs/<nome-pacchetto>/` contenente il file `.spec` (standard RPM) e l'eventuale cartella `SOURCES/`.
+1. **Creazione dello Spec:** Creare la cartella `forge/specs/<nome-pacchetto>/` contenente il file `.spec` (standard RPM) e l'eventuale cartella `SOURCES/`. I file di supporto tracciati (unità systemd, configurazioni) vanno in `SOURCES/` e si dichiarano come `SourceN`; i tarball upstream **non** si committano (`*.gz` è ignorato): la spec dichiara l'URL e `SOURCES/sources.sha256` ne fissa il checksum.
 2. **Definizione nel Manifest:** Aggiungere il pacchetto al manifest JSON (se applicabile, in `forge/config/packages.json`).
 3. **Trigger della Pipeline:** L'orchestrazione (innescata da GitHub Actions o in locale tramite `./forge/scripts/build-offline.sh`) valuterà il DAG, capirà dove si posiziona il tuo pacchetto, spawnerà un micro-container OCI (Podman/Buildah), compilerà l'RPM ed esporterà l'artefatto in `~/.rpmbuild/RPMS/`.
 
@@ -24,7 +24,7 @@ Per mantenere l'integrità del sistema, ogni `.spec` o `Containerfile` deve sott
 
 ### ❌ Regola 1: Divieto di Download Dinamici (No `curl | sh`)
 Non è MAI permesso eseguire `curl`, `wget` o `git clone` all'interno delle fasi `%prep`, `%build` o `%install` del `.spec`, né disabilitare la verifica SSL (`http.sslVerify=false`).
-**Soluzione:** Tutti i sorgenti devono essere dichiarati come `Source0`, `Source1`, ecc. nell'intestazione del `.spec`. L'infrastruttura scaricherà i tarball *prima* di avviare il container isolato, verificandone gli hash (tramite Cosign o check SHA256).
+**Soluzione:** Tutti i sorgenti devono essere dichiarati come `Source0`, `Source1`, ecc. nell'intestazione del `.spec`, con l'URL upstream (frammento `#/nome.tar.gz` in stile Fedora se il nome dell'archivio differisce). Prima di `rpmbuild`, `forge/scripts/fetch_sources.sh` scarica ciò che manca e verifica ogni file contro `SOURCES/sources.sha256` (formato di `sha256sum`): una voce assente nel manifest, un checksum diverso o un download fallito fermano la build.
 
 ### ❌ Regola 2: Nessuna Mutazione di `/usr` o `/etc` a Runtime (`%post`)
 Non è permesso utilizzare lo scriptlet `%post` o script di provisioning eseguiti al boot per fare copie `cp` o `chmod` in `/usr` o in `/etc`. Questo distrugge l'immutabilità OCI (OSTree).
@@ -44,8 +44,8 @@ Il container OCI in cui avviene il `rpmbuild` viene istanziato con `bwrap --unsh
 Se sei un agente incaricato di scrivere un nuovo demone per l'OS, segui questa checklist:
 1. Sviluppa il codice in `system/ermete-example-daemon/` assicurandoti di non usare blocchi `unsafe` senza estrema giustificazione.
 2. Crea `forge/specs/ermete-example-daemon/ermete-example-daemon.spec`.
-3. Nel `.spec`, definisci il pacchetto, imposta `Source0` alla cartella del sorgente.
-4. Esegui la compilazione usando il wrapper Cargo offline.
+3. Nel `.spec`, definisci il pacchetto **senza** `Source0`: il crate vive nel workspace e il DAG compila il checkout in place (`rpmbuild --build-in-place`, scelto automaticamente per le spec senza `Source`), con la radice del repo come directory corrente di `%build` e `%install`. Le spec che dichiarano `Source` seguono invece il percorso ordinario, `%prep` incluso.
+4. In `%build`, `cargo build --release --locked -p <nome-crate>`; i file di dati del crate si riferiscono tramite `%global crate_dir <percorso del crate dalla radice>`.
 5. In `%install`, installa l'eseguibile in `/usr/libexec/` o `/usr/bin/` e il file `ermete-example-daemon.service` in `/usr/lib/systemd/system/`.
 6. Nel `%post`, esegui solo `systemctl preset ermete-example-daemon.service` (mai systemctl start).
 
