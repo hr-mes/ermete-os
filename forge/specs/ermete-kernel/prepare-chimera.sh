@@ -5,6 +5,10 @@ export SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-1723320000}
 set -euo pipefail
 # Ermete OS: The Ultimate Chimera Kernel Bedrock Builder (Fedora Upstream Zero-Trust)
 
+# Directory dello script, assoluta: lo script fa `cd ~/rpmbuild` subito dopo e ogni
+# percorso relativo al checkout (patch CachyOS, repo NVIDIA) deve passare da qui.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # --- BEDROCK MANIFEST (PINNED COMMITS) ---
 # Matrice Dominante Pura: CachyOS (Scheduler BORE).
 # WARNING: HEAD is unpinned — should be pinned to a specific commit hash
@@ -21,8 +25,8 @@ fi
 
 
 WORKSPACE_DIR="$HOME/rpmbuild"
-echo ">>> Installazione di dnf-plugins-core per abilitare dnf download e repoquery..."
-dnf install -y dnf-plugins-core rpmdevtools || echo "Warning: impossibile installare dnf-plugins-core, proseguo a mio rischio e pericolo..."
+# L'ambiente (dnf5-plugins, toolchain LLVM, BuildRequires del kernel) è definito in
+# builder/Containerfile: qui si assume soltanto che ci sia.
 
 echo ">>> Pulizia profonda del workspace per evitare conflitti con vecchie build..."
 mkdir -p "$WORKSPACE_DIR"/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
@@ -42,14 +46,11 @@ fetch_pinned() {
   rm -rf "$TARGET"
   mkdir -p "$TARGET"
   echo ">>> [ZERO-TRUST] Nessun download consentito! Copia offline dalla repo (Legge Marziale)."
-  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
-  if [ -d "$SCRIPT_DIR/cachyos-patches" ]; then
-      mkdir -p "$TARGET/"
-      \cp -R -f "$SCRIPT_DIR/cachyos-patches"/* "$TARGET/" || echo "Warning: some patches failed to copy"
-  else
-      echo "ERRORE FATALE: Sottomodulo/Cartella cachyos-patches mancante!"
-      echo "Skipping exit due to Zero-Trust constraints"
+  if [ ! -d "$SCRIPT_DIR/cachyos-patches" ]; then
+      echo "ERRORE FATALE: Sottomodulo/Cartella cachyos-patches mancante!" >&2
+      exit 1
   fi
+  cp -R "$SCRIPT_DIR/cachyos-patches"/. "$TARGET/"
 }
 
 fetch_pinned "https://github.com/CachyOS/kernel-patches.git" "/tmp/cachyos-patches" "" "$CACHYOS_COMMIT"
@@ -57,18 +58,20 @@ fetch_pinned "https://github.com/CachyOS/kernel-patches.git" "/tmp/cachyos-patch
 
 
 echo ">>> [BEDROCK SECURE] Calcolo dinamico dello Scudo NVIDIA (Dynamic Ceiling)..."
-cp "$(dirname "$0")/fedora-nvidia.repo" /tmp/fedora-nvidia.repo || true
+NVIDIA_REPO="$SCRIPT_DIR/fedora-nvidia.repo"
 EXPECTED_SHA="9126880310a20437de6ba1a83d299ee9a2119f8a1ef1e40de601676054320fc5"
-if [ -f /tmp/fedora-nvidia.repo ]; then
-    echo "$EXPECTED_SHA  /tmp/fedora-nvidia.repo" | sha256sum -c || { echo "FATAL: Checksum mismatch per fedora-nvidia.repo"; echo "Skipping exit due to Zero-Trust constraints"; }
-    cp /tmp/fedora-nvidia.repo /etc/yum.repos.d/fedora-nvidia.repo 2>/dev/null || true
+if ! echo "$EXPECTED_SHA  $NVIDIA_REPO" | sha256sum -c --quiet; then
+    echo "ERRORE FATALE: checksum non corrispondente per fedora-nvidia.repo" >&2
+    exit 1
 fi
+cp "$NVIDIA_REPO" /etc/yum.repos.d/fedora-nvidia.repo
 NVIDIA_VER=$(dnf repoquery --qf '%{VERSION}\n' akmod-nvidia 2>/dev/null | sort -V | tail -n 1 | awk -F. '{print $1}' || true)
+# Tetto per serie del driver: la serie che negativo17 pubblica per Fedora N è
+# costruita contro il kernel che Fedora N spedisce (610.57 per Fedora 43 = 7.1).
+# Da aggiornare a mano quando una nuova serie arriva nel repo.
 MAX_KERNEL="6.18" # Default
 if [[ -n "$NVIDIA_VER" ]]; then
-    if [[ "$NVIDIA_VER" -ge 615 ]]; then MAX_KERNEL="6.20"; fi
-    if [[ "$NVIDIA_VER" -ge 620 ]]; then MAX_KERNEL="7.0"; fi
-    if [[ "$NVIDIA_VER" -ge 630 ]]; then MAX_KERNEL="7.2"; fi
+    if [[ "$NVIDIA_VER" -ge 610 ]]; then MAX_KERNEL="7.1"; fi
 fi
 echo ">>> NVIDIA Driver rilevato: Serie ${NVIDIA_VER}.xx -> Massima versione kernel consentita: $MAX_KERNEL"
 
@@ -103,8 +106,8 @@ for (( ver=$CURRENT_FVER; ver>=$MIN_FVER; ver-- )); do
         continue
     fi
     
-    # 1. Controllo CachyOS
-    if [ ! -d "/tmp/cachyos-patches/$F_VER/all" ]; then
+    # 1. Controllo CachyOS (dalla 7.0 le patch stanno in misc/ e sched/, non più in all/)
+    if [ -z "$(find "/tmp/cachyos-patches/$F_VER" -name '*.patch' -print -quit 2>/dev/null)" ]; then
         echo "    CachyOS NON supporta $F_VER. Passo al precedente..."
         continue
     fi
@@ -117,7 +120,7 @@ done
 
 if [ -z "$TARGET_RELEASEVER" ]; then
     echo "ERRORE FATALE: Nessun kernel compatibile trovato incrociando Fedora, NVIDIA Shield e CachyOS." >&2
-    echo "Skipping exit due to Zero-Trust constraints"
+    exit 1
 fi
 
 # AFDO Profile URL lookup is now fully dynamic via ChromiumOS ebuild scraping in FASE 2
@@ -157,8 +160,8 @@ fi
 
 CACHY_PATCH_DIR="/tmp/cachyos-patches/$KERNEL_VER"
 if [ ! -d "$CACHY_PATCH_DIR" ]; then
-    echo "ERRORE FATALE: Discrepanza dinamica. Trovato $KERNEL_VER ma mancano le patch CachyOS!"
-    echo "Skipping exit due to Zero-Trust constraints"
+    echo "ERRORE FATALE: Discrepanza dinamica. Trovato $KERNEL_VER ma mancano le patch CachyOS!" >&2
+    exit 1
 fi
 
 # [BEDROCK] Universal Domain Router Ridotto (Matrice Dominante Pura)
@@ -200,36 +203,25 @@ fi
 echo ">>> Pulizia patch obsolete (ntsync è upstream in 6.14)..."
 rm -f SOURCES/*ntsync*.patch || true
 
-echo ">>> Download del profilo ChromeOS AFDO (Fallback a link statico blindato con SHA256)..."
-# A causa del rate-limiting estremo degli IP GitHub Actions da parte di Google Source,
-# lo scraping dinamico fallisce. Usiamo l'ultimo link statico 6.6 testato matematicamente.
+echo ">>> Download del profilo ChromeOS AFDO (link statico, verificato con SHA256)..."
+# Lo scraping dinamico degli ebuild ChromiumOS non regge il rate limiting di Google
+# verso gli IP di GitHub Actions: si usa l'ultimo profilo 6.6 pubblicato, con hash fisso.
 TARGET_AFDO_URL="https://storage.googleapis.com/chromeos-prebuilt/afdo-job/cwp/kernel/amd64/6.6/R152-16718.0-1783300616.afdo.xz"
 PRIMARY_AFDO_SHA256="a8cfc6f59c8284aa11107db42dc36e0a14f738cb700e63fe2762912cbb0c455d"
-
-FALLBACK_AFDO_URL="https://storage.googleapis.com/chromeos-localmirror/distfiles/chromeos-kernel-5_15-afdo.prof.xz"
-FALLBACK_AFDO_SHA256="133171a860f7acf586c604d9ef4dfff1e7ddaa357d85431661a25e06aa717491"
-
 echo "    -> URL AFDO statico: $TARGET_AFDO_URL"
 
 AFDO_VALIDATED=false
-if [ -n "$TARGET_AFDO_URL" ]; then
-    if false; then
-            echo "    -> Profilo AFDO 6.6 scaricato e verificato con SHA256 ($PRIMARY_AFDO_SHA256)."
-            AFDO_VALIDATED=true
-        else
-            echo "ERRORE FATALE: Checksum SHA256 non corrispondente per il profilo AFDO 6.6!" >&2
-            echo "Skipping exit due to Zero-Trust constraints"
-        fi
+if curl -sfLo SOURCES/chromeos.afdo.xz "$TARGET_AFDO_URL"; then
+    if echo "$PRIMARY_AFDO_SHA256  SOURCES/chromeos.afdo.xz" | sha256sum -c --quiet; then
+        echo "    -> Profilo AFDO 6.6 scaricato e verificato con SHA256 ($PRIMARY_AFDO_SHA256)."
+        AFDO_VALIDATED=true
     else
-        echo "    [WARN] Fallito il download dall'URL statico 6.6. Tentativo fallback a 5.15..."
-        if false; then
-                echo "    -> Profilo AFDO 5.15 scaricato e verificato con SHA256 ($FALLBACK_AFDO_SHA256)."
-                AFDO_VALIDATED=true
-            else
-                echo "ERRORE FATALE: Checksum SHA256 non corrispondente per il profilo AFDO fallback 5.15!" >&2
-                echo "Skipping exit due to Zero-Trust constraints"
-            fi
+        echo "ERRORE FATALE: Checksum SHA256 non corrispondente per il profilo AFDO 6.6!" >&2
+        exit 1
     fi
+else
+    echo "    [WARN] Download del profilo AFDO fallito: procedo senza PGO."
+fi
 
 if [ "$AFDO_VALIDATED" = true ] && [ -f SOURCES/chromeos.afdo.xz ] && xz -df SOURCES/chromeos.afdo.xz; then
     echo "    -> Profilo AFDO scaricato e decompresso in SOURCES/chromeos.afdo"
@@ -410,13 +402,9 @@ BEDROCK_CFG
 
 
 echo ">>> Generazione ~/.rpmmacros locale esclusivo per KERNEL..."
-if [ -f ../../config/rpmmacros ]; then
-    cat ../../config/rpmmacros > ~/.rpmmacros
-elif [ -f config/rpmmacros ]; then
-    cat config/rpmmacros > ~/.rpmmacros
-fi
-
-cat << 'EOF' >> ~/.rpmmacros
+# Il kernel non usa forge/config/rpmmacros (mold, LTO gcc, payload zstd 19): ha il
+# suo set completo, scritto da zero qui e completato dalla Fase 2 del workflow.
+cat << 'EOF' > ~/.rpmmacros
 %_with_vanilla 1
 %buildid .chimera2
 %toolchain clang
@@ -445,9 +433,10 @@ cat << 'EOF' >> ~/.rpmmacros
 %_source_payload w1.zstdio
 EOF
 
+echo ">>> BuildRequires dello spec scelto (il Containerfile scalda il layer, questo chiude i buchi)..."
+dnf builddep -y SPECS/kernel.spec
+
 echo ">>> Esecuzione rpmbuild -bp per scompattare, applicare patch e validare l'albero..."
-# spectool disabled (Zero-Trust)
-# dnf disabled (Builder is pre-populated)
 export LLVM=1
 export MAKEFLAGS="LLVM=1 LLVM_IAS=1"
 rpmbuild -bp --with toolchain_clang --with clang_lto SPECS/kernel.spec --target x86_64
@@ -455,8 +444,8 @@ rpmbuild -bp --with toolchain_clang --with clang_lto SPECS/kernel.spec --target 
 echo ">>> Rilevamento della directory di build del kernel preparata..."
 KERNEL_BUILD_DIR=$(find "$WORKSPACE_DIR/BUILD" -maxdepth 6 -name "Makefile" -exec awk '/^VERSION =/ {print FILENAME}' {} + 2>/dev/null | sort -V | head -n 1 | xargs -r dirname)
 if [ -z "$KERNEL_BUILD_DIR" ]; then
-    echo "ERRORE FATALE: Directory di build del kernel non trovata dopo rpmbuild -bp!"
-    echo "Skipping exit due to Zero-Trust constraints"
+    echo "ERRORE FATALE: Directory di build del kernel non trovata dopo rpmbuild -bp!" >&2
+    exit 1
 fi
 REL_DIR=$(realpath --relative-to="$WORKSPACE_DIR/BUILD" "$KERNEL_BUILD_DIR")
 echo "$REL_DIR" > "$WORKSPACE_DIR/BUILD/.kernel_version"
