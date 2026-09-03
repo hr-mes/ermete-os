@@ -311,7 +311,7 @@ jobs:
                 cp result/RPMS/*.rpm RPMS/
               else
             echo "📦 Compiling Custom Spec: $SPEC_DIR"
-            podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged --userns=keep-id \
+            podman run -i --rm \
               -e PKG_NAME="${PKG_NAME}" \
               -e SCCACHE_CACHE_SIZE="${SCCACHE_CACHE_SIZE}" \
               -v ${{ github.workspace }}:/workspace \
@@ -497,7 +497,7 @@ jobs:
                 cp result/RPMS/*.rpm RPMS/
               else
             echo "📦 Compiling Custom Spec: $SPEC_DIR"
-            podman run -i --rm --security-opt label=disable --security-opt seccomp=unconfined --privileged --userns=keep-id \
+            podman run -i --rm \
               -e PKG_NAME="${PKG_NAME}" \
               -e SCCACHE_CACHE_SIZE="${SCCACHE_CACHE_SIZE}" \
               -v ${{ github.workspace }}:/workspace \
