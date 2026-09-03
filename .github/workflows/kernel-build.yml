@@ -1,0 +1,55 @@
+name: Kernel Build
+
+# Il kernel Ermete (forge/specs/ermete-kernel, docs/architecture/doc_kernel_build.md).
+# `prep` scarica e verifica le sorgenti pinnate, applica le patch e passa i gate del
+# config in pochi minuti; `build` produce gli RPM. Una PR che tocca il kernel deve
+# provare la build intera: e' il gate che il bot di bump (fase K5) usera' per il merge.
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: "prep: sorgenti, patch e gate del config. build: anche gli RPM."
+        type: choice
+        options: [prep, build]
+        default: build
+  pull_request:
+    paths:
+      - forge/specs/ermete-kernel/**
+      - .github/workflows/kernel-build.yml
+
+concurrency:
+  group: kernel-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  kernel:
+    runs-on: self-hosted
+    # Kernel completo con ThinLTO e -O3: ore, non minuti, anche su 16 core.
+    timeout-minutes: 360
+    env:
+      STAGE: ${{ inputs.stage || 'build' }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Build the kernel builder image
+        run: podman build -t localhost/ermete-kernel-builder forge/specs/ermete-kernel/builder
+
+      - name: Run build.sh
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.cache/ermete-kernel" out
+          podman run --rm \
+            -v "$GITHUB_WORKSPACE:/forge" \
+            -v "$HOME/.cache/ermete-kernel:/var/cache/ermete-kernel" \
+            -w /forge localhost/ermete-kernel-builder \
+            bash forge/specs/ermete-kernel/build.sh --stage "$STAGE" --out /forge/out
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: kernel-${{ env.STAGE }}
+          path: out/
+          if-no-files-found: error
