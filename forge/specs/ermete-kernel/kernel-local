@@ -1,0 +1,53 @@
+# Delta Kconfig di Ermete OS sul config x86_64 di Fedora. kernel.spec lo fonde con
+# merge.py come partial-kernel-local-snip.config (Source3001); build.sh ne verifica
+# ogni riga sul config generato. Le opzioni che l'albero CachyOS introduce non
+# stanno qui: build.sh le accoda con i valori del config CachyOS pinnato.
+# Vedi docs/architecture/doc_kernel_build.md, sezione 4.
+
+# Scheduler: BORE sopra EEVDF e i tunable CachyOS.
+CONFIG_SCHED_BORE=y
+CONFIG_CACHY=y
+
+# Codegen: -O3 (ThinLTO lo accende il frammento clang_lto di Fedora).
+CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3=y
+# CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE is not set
+
+# ISA: x86-64 di base, ogni PC dal 2014/2015 in poi (patch more-uarches di CachyOS).
+CONFIG_GENERIC_CPU=y
+CONFIG_X86_64_VERSION=1
+
+# Rust: in 7.1 RUST dipende da !RANDSTRUCT e, con DEBUG_INFO_BTF acceso, da !LTO.
+# Con ThinLTO e RANDSTRUCT_FULL resta spento: rinuncia voluta, esplicita qui, da
+# rivedere in K4 se nova-core (NVIDIA) lo richiedera'.
+# CONFIG_RUST is not set
+
+# Hardening in piu' rispetto a Fedora.
+CONFIG_CFI=y
+# CONFIG_CFI_PERMISSIVE is not set
+CONFIG_ZERO_CALL_USED_REGS=y
+CONFIG_RANDSTRUCT_FULL=y
+# CONFIG_RANDSTRUCT_NONE is not set
+# RANDSTRUCT seleziona MODVERSIONS: controllo ABI dei moduli con layout randomizzati.
+CONFIG_MODVERSIONS=y
+CONFIG_MODULE_SIG_FORCE=y
+
+# Rete: BBRv3 (simbolo TCP_CONG_BBR3 della base CachyOS) e FQ di default.
+CONFIG_TCP_CONG_BBR3=y
+CONFIG_DEFAULT_BBR3=y
+# CONFIG_DEFAULT_CUBIC is not set
+CONFIG_NET_SCH_FQ=y
+CONFIG_NET_SCH_DEFAULT=y
+CONFIG_DEFAULT_FQ=y
+# CONFIG_DEFAULT_FQ_CODEL is not set
+
+# Memoria: zstd per zswap e zram (il default di zswap seleziona CRYPTO_ZSTD built-in).
+CONFIG_CRYPTO_ZSTD=y
+CONFIG_ZSWAP_COMPRESSOR_DEFAULT_ZSTD=y
+# CONFIG_ZSWAP_COMPRESSOR_DEFAULT_LZO is not set
+CONFIG_ZRAM_DEF_COMP_ZSTD=y
+# CONFIG_ZRAM_DEF_COMP_LZORLE is not set
+
+# Rootfs immutabile: EROFS nel kernel, config consultabile da /proc.
+CONFIG_EROFS_FS=y
+CONFIG_IKCONFIG=y
+CONFIG_IKCONFIG_PROC=y

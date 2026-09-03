@@ -1,40 +1,23 @@
-# Ermete OS: ambiente di build del kernel Chimera.
+# Ermete OS: ambiente di build del kernel (docs/architecture/doc_kernel_build.md, sezione 5).
 #
-# Il kernel è il pacchetto Fedora (kernel.spec dal SRPM di Fedora) ricostruito con
-# clang/ThinLTO e le patch CachyOS: gli servono dnf, i macro RPM di Fedora e le
-# BuildRequires di kernel.spec, che il builder Nix del resto della forge non ha.
-# Questa immagine è costruita dal job build-kernel sul runner (podman build, cache
-# di layer locale) e da build-local.sh: è l'unica definizione dell'ambiente.
-ARG FEDORA_VERSION=43
-FROM registry.fedoraproject.org/fedora:${FEDORA_VERSION}
+# Il kernel e' il pacchetto Fedora (kernel.spec dal SRPM pinnato in ../pins.env)
+# ricostruito con clang/ThinLTO sopra la base CachyOS: servono dnf, le macro RPM di
+# Fedora e la toolchain LLVM, che il builder Nix della forge non ha. build.sh installa
+# le BuildRequires dello spec pinnato con `dnf builddep`: qui c'e' solo la base.
+# L'immagine e' pinnata per digest: e' l'unico input che il repo non versiona.
+FROM registry.fedoraproject.org/fedora:43@sha256:31658c38c98ab8233128b8144e597fc850185c99b5b760d7ba1b15259f02ed2a
 
-# Nessuna dipendenza debole e niente cache: l'immagine resta minima e riproducibile.
+# Nessuna dipendenza debole e niente cache: l'immagine resta minima.
 RUN printf 'install_weak_deps=False\nkeepcache=False\n' >> /etc/dnf/dnf.conf
 
-# Toolchain LLVM completa (ThinLTO, lld, BOLT), strumenti RPM e i plugin dnf5 che
-# prepare-chimera.sh usa (download --source, builddep, repoquery). rust/bindgen-cli
-# servono a CONFIG_RUST, dwarves (pahole) al BTF, buildah al micro-container OCI.
+# Toolchain LLVM (ThinLTO, lld), strumenti RPM e il plugin builddep di dnf5, rust e
+# bindgen per CONFIG_RUST, dwarves (pahole) per il BTF, gnupg2 per le firme delle
+# sorgenti, python3 per merge.py di Fedora, python3-koji per ricucire la firma del SRPM.
 RUN dnf -y install \
-      rpm-build rpmdevtools dnf5-plugins \
-      clang lld llvm llvm-bolt ccache \
-      gcc gcc-c++ make cmake flex bison bc patch diffutils findutils \
+      rpm-build dnf5-plugins python3-koji \
+      clang lld llvm \
+      gcc gcc-c++ make flex bison bc patch diffutils findutils \
       ncurses-devel elfutils-libelf-devel elfutils-devel openssl-devel openssl dwarves \
       rust cargo rustfmt bindgen-cli \
-      tar cpio xz zstd rsync curl wget git jq gnupg2 hostname iproute perl python3 \
-      skopeo buildah \
-    && dnf clean all
-
-# BuildRequires del kernel.spec di Fedora, valutate con gli stessi %_without_* che
-# prepare-chimera.sh scrive in ~/.rpmmacros: niente perf, tools, selftests, debuginfo.
-# Lo script rilancia `dnf builddep` sullo spec scelto: qui si scalda il layer.
-RUN set -euo pipefail \
-    && dnf -y download --source kernel --enablerepo=fedora-source --enablerepo=updates-source --destdir=/tmp/srpm \
-    && rpm -i /tmp/srpm/kernel-*.src.rpm \
-    && dnf -y builddep \
-         --define '_without_perf 1' --define '_without_libperf 1' --define '_without_tools 1' \
-         --define '_without_selftests 1' --define '_without_ynl 1' --define '_without_bpftool 1' \
-         --define '_without_debug 1' --define '_without_debuginfo 1' --define '_without_doc 1' \
-         --define '_with_toolchain_clang 1' --define '_with_clang_lto 1' \
-         /root/rpmbuild/SPECS/kernel.spec \
-    && rm -r /root/rpmbuild /tmp/srpm \
+      tar cpio xz curl git gnupg2 python3 \
     && dnf clean all

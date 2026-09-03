@@ -1,0 +1,39 @@
+# ermete-kernel
+
+Il kernel di Ermete OS: il pacchetto `kernel` di Fedora ricostruito con clang/ThinLTO
+sopra la base CachyOS (BORE, -O3, tunable), con l'hardening in piu' di Ermete. La
+specifica e' `docs/architecture/doc_kernel_build.md`; qui c'e' solo cosa sta in questa
+directory e come si usa.
+
+| File | Ruolo |
+|------|-------|
+| `pins.env` | i pin: NVR Fedora (stesso patch level della release CachyOS), release CachyOS, commit del config e delle patch |
+| `SOURCES/sources.sha256` | hash di ogni file che build.sh scarica |
+| `SOURCES/keys/{cachyos,kernel.org}/` | chiavi pubbliche che firmano i tarball CachyOS e vanilla |
+| `kernel-local` | delta Kconfig di Ermete sul config x86_64 di Fedora |
+| `patches.list` | patch di CachyOS/kernel-patches applicate sopra la base |
+| `fedora-wins.list` | percorsi in cui un conflitto tra base CachyOS e patch Red Hat si risolve con l'albero Fedora |
+| `build.sh` | dai pin agli RPM: stadio `prep` (sorgenti, patch, gate del config) e `build` |
+| `builder/Containerfile` | l'ambiente: Fedora pinnata per digest piu' la toolchain LLVM |
+
+## Uso locale
+
+```sh
+podman build -t localhost/ermete-kernel-builder forge/specs/ermete-kernel/builder
+mkdir -p "$HOME/.cache/ermete-kernel" out
+podman run --rm -v "$PWD:/forge" -v "$HOME/.cache/ermete-kernel:/var/cache/ermete-kernel" \
+  -w /forge localhost/ermete-kernel-builder \
+  bash forge/specs/ermete-kernel/build.sh --stage prep --out /forge/out
+```
+
+`prep` dura pochi minuti e lascia in `out/` il config generato e il `kernel-local`
+completo delle opzioni derivate; `build` produce gli RPM (ore). La CI e'
+`.github/workflows/kernel-build.yml`.
+
+## Bump a mano (finche' non c'e' il bot, fase K5)
+
+1. Aggiorna `pins.env`.
+2. Lancia `prep`: scarica i file nuovi nella cache e si ferma sull'hash. Sostituisci in
+   `SOURCES/sources.sha256` le righe dei file cambiati con il loro `sha256sum`.
+3. `prep` verde, poi `build`. Se il gate del config elenca opzioni nuove o mancanti,
+   la decisione va in `kernel-local`.

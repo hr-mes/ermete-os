@@ -1,0 +1,4 @@
+# Patch di CachyOS/kernel-patches (commit CACHYOS_PATCHES_COMMIT di pins.env), percorsi
+# relativi alla directory della serie (7.1/...). build.sh le applica in quest'ordine
+# sopra la base CachyOS, con git apply: un hunk che non entra ferma la build.
+sched/0001-bore-cachy.patch
