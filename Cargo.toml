@@ -60,7 +60,7 @@ reqwest = { version = "0.13.4", features = ["stream", "rustls", "json"] }
 # GUI, Display & Wayland Ecosystem
 gtk4 = "0.7.3"
 gtk4-layer-shell = "0.2.0"
-glib = "0.18.5"
+glib = "0.22.9"
 relm4 = "0.7.1"
 smithay = { version = "0.3.0", default-features = false }
 wayland-server = "0.31.0"
