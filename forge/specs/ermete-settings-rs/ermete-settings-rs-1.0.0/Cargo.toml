@@ -11,7 +11,7 @@ gtk4 = { workspace = true }
 glib = { workspace = true }
 zbus = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
-rustix = { version = "0.38", features = ["process"] }
+rustix = { version = "1.1", features = ["process"] }
 relm4 = { workspace = true }
 anyhow = { workspace = true }
 libc = { workspace = true }
