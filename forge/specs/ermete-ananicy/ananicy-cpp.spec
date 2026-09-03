@@ -1,12 +1,19 @@
 %global debug_package %{nil}
+# Snapshot di master: l'ultimo tag (1.1.1, 2023) non compila con glibc 2.42 e clang 22
+# (std::int32_t/std::strerror senza <cstdint>/<cstring>, struct sched_attr ridefinita);
+# il merge "fix-glibc-2.42-headers" del 2026-08-18 li sistema. Versione post-release
+# nella notazione di Fedora: <ultimo tag>^<data>git<commit>.
+%global commit 3554447c1ca495478bd00e002078847dfd2205d6
+%global snapdate 20260818
+
 Name:           ananicy-cpp
-Version:        1.1.1
+Version:        1.1.1^%{snapdate}git%(echo %{commit} | cut -c1-7)
 Release:        1%{?dist}
 Summary:        Ananicy rewritten in C++
 
 License:        GPLv3
 URL:            https://gitlab.com/ananicy-cpp/ananicy-cpp
-
+Source0:        https://gitlab.com/ananicy-cpp/ananicy-cpp/-/archive/%{commit}/ananicy-cpp-%{commit}.tar.gz
 
 BuildRequires:  cmake
 BuildRequires:  gcc-c++
@@ -14,33 +21,56 @@ BuildRequires:  spdlog-devel
 BuildRequires:  fmt-devel
 BuildRequires:  systemd-devel
 BuildRequires:  nlohmann-json-devel
+Requires:       systemd
 
 %description
-Ananicy-cpp is a rewrite of ananicy in C++ for lower resource usage and faster startup.
+Ananicy-cpp is a rewrite of ananicy in C++ for lower resource usage and faster
+startup. It applies nice, ionice, cgroup and OOM score rules to processes as
+they are spawned. Rules are read from /etc/ananicy.d; the package ships none.
 
 %prep
-# Stub prep
+%autosetup -n ananicy-cpp-%{commit}
 
 %build
-%cmake -DUSE_EXTERNAL_SPDLOG=ON -DUSE_EXTERNAL_FMTLIB=ON -DUSE_EXTERNAL_JSON=ON -DENABLE_SYSTEMD=ON
-%cmake_build
+%set_build_flags
+# Librerie di sistema invece dei download di CPM; backend netlink (proc connector),
+# non quello eBPF, così la build non dipende dal BTF del kernel del builder.
+cmake -S . -B build \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX=%{_prefix} \
+  -DUSE_EXTERNAL_SPDLOG=ON \
+  -DUSE_EXTERNAL_FMTLIB=ON \
+  -DUSE_EXTERNAL_JSON=ON \
+  -DENABLE_SYSTEMD=ON \
+  -DUSE_BPF_PROC_IMPL=OFF
+cmake --build build %{?_smp_mflags}
 
 %install
-mkdir -p %{buildroot}
-mkdir -p $(dirname ananicy-cpp.service) && touch ananicy-cpp.service
+DESTDIR=%{buildroot} cmake --install build
+mkdir -p %{buildroot}%{_sysconfdir}/ananicy.d
 
-%cmake_install
-mkdir -p %{buildroot}/etc/ananicy.d/
-mkdir -p %{buildroot}/usr/lib/systemd/system
-install -Dm644 ananicy-cpp.service %{buildroot}/usr/lib/systemd/system/ananicy-cpp.service
+%post
+%systemd_post ananicy-cpp.service
+
+%preun
+%systemd_preun ananicy-cpp.service
+
+%postun
+%systemd_postun_with_restart ananicy-cpp.service
 
 %files
 %license LICENSE
-/usr/bin/ananicy-cpp
-/usr/lib/systemd/system/ananicy-cpp.service
-%config(noreplace) /etc/ananicy.d/
+%{_bindir}/ananicy-cpp
+%{_unitdir}/ananicy-cpp.service
+%dir %{_sysconfdir}/ananicy.d
 
 %changelog
-* Mon Jun 29 2026 Ermete Forge <forge@ermete> - 1.1.1-1
-- Initial forge build
+* Thu Sep 03 2026 Ermete Forge <forge@ermete.os> - 1.1.1^20260818git3554447-1
+- Spec riscritta: Source0 dall'archivio upstream GitLab verificato da
+  SOURCES/sources.sha256, cmake esplicito al posto delle macro %%cmake di Fedora,
+  unità systemd upstream installata da cmake invece del file vuoto creato con touch
+- Scriptlet systemd per l'unità; /etc/ananicy.d è una directory del pacchetto
+- Snapshot di master 3554447c (2026-08-18): compila con glibc 2.42 e clang 22
 
+* Mon Aug 03 2026 Ermete Forge <forge@ermete.os> - 1.1.1-1
+- Initial packaging
