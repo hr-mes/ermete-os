@@ -25,7 +25,9 @@
         security-tools = with pkgs; [ syft cosign ];
         c-toolchain = with pkgs; [ gcc gnumake cmake mold llvmPackages_latest.llvm llvmPackages_latest.clang llvmPackages_latest.lld ccache bpf-linker pahole elfutils ];
         rust-tools = with pkgs; [ rust-toolchain sccache clippy rustfmt cargo-deny cargo-vet cargo-fuzz ];
-        build-tools = with pkgs; [ rpm cpio buildah skopeo jq git gnutar xz curl wget rsync flex bison bc zstd perl pkg-config autoconf automake libtool ];
+        # Toolset POSIX di base incluso: rpmbuild, %autosetup e i Makefile upstream
+        # danno per scontati grep, diff, patch, gzip, file, which, m4, gettext.
+        build-tools = with pkgs; [ rpm cpio buildah skopeo jq git gnutar xz curl wget rsync flex bison bc zstd perl pkg-config autoconf automake libtool gnugrep diffutils patch which file gzip bzip2 unzip m4 gettext python3 ];
         system-deps = with pkgs; [ zlib openssl policycoreutils spdlog systemd nodejs_22 nlohmann_json fmt speechd gnupg ipxe ncurses iproute2 fio gtk4 pango cairo gtk4-layer-shell glib pkg-config ];
       in
       {
@@ -103,6 +105,60 @@ EOF
             ln -s ${pkgs.stdenv.cc.cc.lib}/lib/libgcc_s.so.1 $out/lib64/libgcc_s.so.1
           '';
 
+          # Macro RPM di systemd (%_unitdir, %systemd_post, …). In Fedora le fornisce
+          # systemd-rpm-macros; l'rpm di nixpkgs non le ha, e rpmbuild lascerebbe
+          # `%systemd_post` come testo letterale negli scriptlet. Rese dal template
+          # ufficiale di systemd con i percorsi del sistema di destinazione (Fedora,
+          # rootprefix /usr), non del builder: gli scriptlet girano sull'immagine finale.
+          # Il file segue il layout di rpm (macros.d/) e viene fuso nella sua config dir
+          # da builder-rpm-configdir, esposta con RPM_CONFIGDIR.
+          builder-rpm-macros-systemd =
+            let
+              targetPaths = {
+                LIBEXECDIR = "/usr/lib/systemd";
+                SYSTEMD_UPDATE_HELPER_PATH = "/usr/lib/systemd/systemd-update-helper";
+                SYSTEM_DATA_UNIT_DIR = "/usr/lib/systemd/system";
+                USER_DATA_UNIT_DIR = "/usr/lib/systemd/user";
+                SYSTEM_PRESET_DIR = "/usr/lib/systemd/system-preset";
+                USER_PRESET_DIR = "/usr/lib/systemd/user-preset";
+                SYSTEM_GENERATOR_DIR = "/usr/lib/systemd/system-generators";
+                USER_GENERATOR_DIR = "/usr/lib/systemd/user-generators";
+                SYSTEM_ENV_GENERATOR_DIR = "/usr/lib/systemd/system-environment-generators";
+                USER_ENV_GENERATOR_DIR = "/usr/lib/systemd/user-environment-generators";
+                SYSTEMD_CATALOG_DIR = "/usr/lib/systemd/catalog";
+                UDEV_HWDB_DIR = "/usr/lib/udev/hwdb.d";
+                UDEV_RULES_DIR = "/usr/lib/udev/rules.d";
+                KERNEL_INSTALL_DIR = "/usr/lib/kernel/install.d";
+                BINFMT_DIR = "/usr/lib/binfmt.d";
+                SYSCTL_DIR = "/usr/lib/sysctl.d";
+                SYSUSERS_DIR = "/usr/lib/sysusers.d";
+                TMPFILES_DIR = "/usr/lib/tmpfiles.d";
+                USER_TMPFILES_DIR = "/usr/share/user-tmpfiles.d";
+                ENVIRONMENT_DIR = "/usr/lib/environment.d";
+                MODULESLOAD_DIR = "/usr/lib/modules-load.d";
+                MODPROBE_DIR = "/usr/lib/modprobe.d";
+              };
+              substitutions = pkgs.lib.concatStringsSep " "
+                (pkgs.lib.mapAttrsToList (name: path: "-e 's|{{${name}}}|${path}|g'") targetPaths);
+            in
+            pkgs.runCommand "ermete-builder-rpm-macros-systemd" { } ''
+              mkdir -p $out/macros.d
+              sed ${substitutions} ${pkgs.systemd.src}/src/rpm/macros.systemd.in > $out/macros.d/macros.systemd
+              if grep -q '{{' $out/macros.d/macros.systemd; then
+                echo "macros.systemd: variabili del template non sostituite:" >&2
+                grep -o '{{[A-Za-z_]*}}' $out/macros.d/macros.systemd | sort -u >&2
+                exit 1
+              fi
+            '';
+
+          # Config dir di rpm del builder: quella di nixpkgs più le macro di systemd.
+          # rpm la trova tramite RPM_CONFIGDIR (config.Env dell'immagine); l'rpm di
+          # nixpkgs non consulta /etc/rpm.
+          builder-rpm-configdir = pkgs.symlinkJoin {
+            name = "ermete-builder-rpm-configdir";
+            paths = [ "${pkgs.rpm}/lib/rpm" builder-rpm-macros-systemd ];
+          };
+
           builderImage = pkgs.dockerTools.buildLayeredImage {
             name = "ghcr.io/hr-mes/ermete-os-builder";
             tag = "latest";
@@ -112,6 +168,10 @@ EOF
               Env = [
                 "PATH=/bin:/usr/bin"
                 "HOME=/root"
+                # Bundle CA di pkgs.cacert: senza questa variabile curl, cargo e git
+                # di nixpkgs non verificano alcun certificato TLS (idioma dockerTools).
+                "SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
+                "RPM_CONFIGDIR=${builder-rpm-configdir}"
                 "CC=clang"
                 "CXX=clang++"
                 "LD=ld.lld"
