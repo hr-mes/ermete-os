@@ -232,7 +232,7 @@ def has_binary_target(crate_dir):
         return True  # non giudicabile: resta soggetto al controllo
     return ((crate_dir / "src" / "main.rs").exists()
             or (crate_dir / "src" / "bin").is_dir()
-            or "[[bin]]" in read(cargo))
+            or re.search(r"^\s*\[\[\s*bin\s*\]\]", read(cargo), re.M) is not None)
 
 
 @check("shipped", "Ogni crate del workspace è impacchettato, o è dichiarato sperimentale")
