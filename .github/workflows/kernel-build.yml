@@ -36,6 +36,11 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
 
       - name: Build the kernel builder image
+        # Podman rootless sul runner WSL non ha una sessione systemd: crun non puo'
+        # creare lo scope del container di build ("sd-bus call: Access denied").
+        # L'isolamento chroot di buildah e' quello che gli altri workflow gia' usano.
+        env:
+          BUILDAH_ISOLATION: chroot
         run: podman build -t localhost/ermete-kernel-builder forge/specs/ermete-kernel/builder
 
       - name: Run build.sh
