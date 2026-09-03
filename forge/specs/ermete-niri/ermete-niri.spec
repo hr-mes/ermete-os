@@ -1,6 +1,6 @@
 Name:           ermete-niri
-Version:        0.1.8
-Release:        3.fc43
+Version:        26.04
+Release:        1%{?dist}
 Summary:        Ermete-patched version of the Niri scrollable tiling compositor
 License:        GPL-3.0-or-later
 
@@ -60,5 +60,10 @@ install -m 0644 resources/niri-shutdown.target %{buildroot}%{_userunitdir}/niri-
 %{_userunitdir}/niri-shutdown.target
 
 %changelog
+* Thu Sep 03 2026 Ermete Forge <forge@ermete.os> - 26.04-1
+- Aggiornato alla release upstream 26.04: la 0.1.8 usa pipewire-rs 0.8, che non
+  compila contro pipewire >= 1.4 (spa_pod_builder senza i campi data e size)
+- Release con %%{?dist} come le altre spec, non piu' .fc43 fisso
+
 * Sat Jul 18 2026 Ermete Forge <forge@ermete.os> - 0.1.8-1
 - Initial Ermete-patched Niri spec with soft-forking architecture.
