@@ -40,7 +40,6 @@
     "mold",
     "dock",
     "keylime",
-    "niri-ipc",
     "recovery",
     "cargo-tools",
     "just",
@@ -88,7 +87,6 @@
     "dart-sass",
     "dock",
     "keylime",
-    "niri-ipc",
     "recovery",
     "kernel-forge"
   ],
