@@ -138,13 +138,13 @@ jobs:
               if [ -d "specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="specs/ermete-${PKG_CLEAN}"; elif [ -d "specs/${PKG_CLEAN}" ]; then SPEC_DIR="specs/${PKG_CLEAN}"; fi
             
               if [ -d "$SPEC_DIR/SOURCES" ]; then 
-                cp -a $SPEC_DIR/SOURCES/* ~/rpmbuild/SOURCES/ || true
+                cp -a "$SPEC_DIR"/SOURCES/. ~/rpmbuild/SOURCES/
               fi
             
               mkdir -p ~/rpmbuild/BUILD/
               cp -a /workspace/. ~/rpmbuild/BUILD/ 2>/dev/null || true
    
-              spectool -g -R $SPEC_DIR/*.spec || true            
+              bash scripts/fetch_sources.sh "$SPEC_DIR" ~/rpmbuild/SOURCES
               rpmbuild -bb --nodeps $SPEC_DIR/*.spec
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
@@ -326,13 +326,13 @@ jobs:
               if [ -d "specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="specs/ermete-${PKG_CLEAN}"; elif [ -d "specs/${PKG_CLEAN}" ]; then SPEC_DIR="specs/${PKG_CLEAN}"; fi
             
               if [ -d "$SPEC_DIR/SOURCES" ]; then 
-                cp -a $SPEC_DIR/SOURCES/* ~/rpmbuild/SOURCES/ || true
+                cp -a "$SPEC_DIR"/SOURCES/. ~/rpmbuild/SOURCES/
               fi
             
               mkdir -p ~/rpmbuild/BUILD/
               cp -a /workspace/. ~/rpmbuild/BUILD/ 2>/dev/null || true
    
-              spectool -g -R $SPEC_DIR/*.spec || true            
+              bash scripts/fetch_sources.sh "$SPEC_DIR" ~/rpmbuild/SOURCES
               rpmbuild -bb --nodeps $SPEC_DIR/*.spec
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/
@@ -512,13 +512,13 @@ jobs:
               if [ -d "specs/ermete-${PKG_CLEAN}" ]; then SPEC_DIR="specs/ermete-${PKG_CLEAN}"; elif [ -d "specs/${PKG_CLEAN}" ]; then SPEC_DIR="specs/${PKG_CLEAN}"; fi
             
               if [ -d "$SPEC_DIR/SOURCES" ]; then 
-                cp -a $SPEC_DIR/SOURCES/* ~/rpmbuild/SOURCES/ || true
+                cp -a "$SPEC_DIR"/SOURCES/. ~/rpmbuild/SOURCES/
               fi
             
               mkdir -p ~/rpmbuild/BUILD/
               cp -a /workspace/. ~/rpmbuild/BUILD/ 2>/dev/null || true
    
-              spectool -g -R $SPEC_DIR/*.spec || true            
+              bash scripts/fetch_sources.sh "$SPEC_DIR" ~/rpmbuild/SOURCES
               rpmbuild -bb --nodeps $SPEC_DIR/*.spec
               mkdir -p /workspace/forge/RPMS
               cp ~/rpmbuild/RPMS/*/*.rpm /workspace/forge/RPMS/

@@ -4,8 +4,8 @@ Release:        1%{?dist}
 Summary:        Ermete OS Core Component - mold
 
 License:        GPLv3
-URL:            https://github.com/hr-mes/ermete-os
-Source0:        mold-2.36.0.tar.gz
+URL:            https://github.com/rui314/mold
+Source0:        https://github.com/rui314/mold/archive/refs/tags/v%{version}.tar.gz#/mold-%{version}.tar.gz
 
 %description
 Core component implementation for mold.
