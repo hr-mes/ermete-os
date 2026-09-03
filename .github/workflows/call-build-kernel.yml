@@ -36,7 +36,8 @@ jobs:
   build-kernel:
     name: 🧬 Build Chimera Kernel RPM (${{ matrix.target }})
     runs-on: self-hosted
-    timeout-minutes: 60
+    # Kernel completo con ThinLTO: ore, non minuti, anche su 16 core.
+    timeout-minutes: 360
     strategy:
       fail-fast: false
       matrix:
@@ -54,20 +55,25 @@ jobs:
         restore-keys: |
           kernel-ccache-${{ runner.os }}-
 
-    - name: 🚀 Boot Isolator (Start Ermete Builder Container)
+    - name: 🚀 Boot Isolator (Fedora kernel builder)
       env:
         TARGET: ${{ matrix.target }}
-        BUILDER_HASH: ${{ inputs.builder_content_hash }}
       run: |
         set -euo pipefail
-        echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
-        podman run -d --name chimera-builder-${TARGET} --pull=always \
+        # Il kernel è un pacchetto Fedora (kernel.spec dal SRPM): l'ambiente con dnf,
+        # macro RPM, BuildRequires e toolchain LLVM è forge/specs/ermete-kernel/builder,
+        # costruito qui con la cache di layer del runner. Il builder Nix resta per
+        # SBOM e firma, perché Fedora non pacchettizza syft e cosign.
+        podman build --build-arg FEDORA_VERSION=${FEDORA_VERSION} \
+          -t localhost/ermete-kernel-builder:${FEDORA_VERSION} \
+          forge/specs/ermete-kernel/builder
+        podman run -d --name chimera-builder-${TARGET} \
           --cap-add SYS_ADMIN \
           --security-opt label=disable \
           --security-opt seccomp=unconfined \
           -v ${{ github.workspace }}:/forge \
           -w /forge \
-          ghcr.io/hr-mes/ermete-os-builder:${BUILDER_HASH} sleep infinity
+          localhost/ermete-kernel-builder:${FEDORA_VERSION} sleep infinity
 
     - name: "🧬 Phase 1: Fetch, Validate & Chimera Merge"
       env:
@@ -169,21 +175,24 @@ jobs:
 
     - name: Generate Kernel SBOM (Syft)
       env:
-        TARGET: ${{ matrix.target }}
+        BUILDER_HASH: ${{ inputs.builder_content_hash }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         set -euo pipefail
-        podman exec chimera-builder-${TARGET} bash -c "set -euo pipefail; \
-          syft ghcr.io/hr-mes/ermete-os-kernel@${{ env.KERNEL_DIGEST }} -o spdx-json > /forge/kernel-sbom.spdx.json
-        "
+        echo "${GITHUB_TOKEN}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+        podman run --rm -v ${{ github.workspace }}:/forge -w /forge \
+          -e SYFT_REGISTRY_AUTH_AUTHORITY=ghcr.io -e SYFT_REGISTRY_AUTH_USERNAME=${{ github.actor }} -e SYFT_REGISTRY_AUTH_PASSWORD="${GITHUB_TOKEN}" \
+          ghcr.io/hr-mes/ermete-os-builder:${BUILDER_HASH} \
+          bash -c "set -euo pipefail; syft ghcr.io/hr-mes/ermete-os-kernel@${{ env.KERNEL_DIGEST }} -o spdx-json > /forge/kernel-sbom.spdx.json"
 
     - name: Sign & Attest Kernel Micro-Container OCI
       env:
         COSIGN_EXPERIMENTAL: 1
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        TARGET: ${{ matrix.target }}
+        BUILDER_HASH: ${{ inputs.builder_content_hash }}
       run: |
         set -euo pipefail
-        podman exec -e COSIGN_EXPERIMENTAL=1 -e ACTIONS_ID_TOKEN_REQUEST_URL="${ACTIONS_ID_TOKEN_REQUEST_URL:-}" -e ACTIONS_ID_TOKEN_REQUEST_TOKEN="${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" -e GITHUB_TOKEN=${GITHUB_TOKEN} chimera-builder-${TARGET} bash -c "set -euo pipefail; \
+        podman run --rm -v ${{ github.workspace }}:/forge -w /forge -e COSIGN_EXPERIMENTAL=1 -e ACTIONS_ID_TOKEN_REQUEST_URL="${ACTIONS_ID_TOKEN_REQUEST_URL:-}" -e ACTIONS_ID_TOKEN_REQUEST_TOKEN="${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" -e GITHUB_TOKEN=${GITHUB_TOKEN} ghcr.io/hr-mes/ermete-os-builder:${BUILDER_HASH} bash -c "set -euo pipefail; \
           cosign login ghcr.io -u ${{ github.actor }} -p \${GITHUB_TOKEN}
           IMAGE_REF='ghcr.io/hr-mes/ermete-os-kernel@${{ env.KERNEL_DIGEST }}'
           cosign sign -y \${IMAGE_REF}
@@ -192,10 +201,10 @@ jobs:
 
     - name: Verify Kernel Image Signature & Attestation
       env:
-        TARGET: ${{ matrix.target }}
+        BUILDER_HASH: ${{ inputs.builder_content_hash }}
       run: |
         set -euo pipefail
-        podman exec -e COSIGN_EXPERIMENTAL=1 chimera-builder-${TARGET} bash -c "set -euo pipefail; \
+        podman run --rm -e COSIGN_EXPERIMENTAL=1 ghcr.io/hr-mes/ermete-os-builder:${BUILDER_HASH} bash -c "set -euo pipefail; \
           IMAGE_REF='ghcr.io/hr-mes/ermete-os-kernel@${{ env.KERNEL_DIGEST }}'
           cosign verify --certificate-identity-regexp '^https://github.com/${{ github.repository_owner }}/' --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \${IMAGE_REF}
           cosign verify-attestation --type spdxjson --certificate-identity-regexp '^https://github.com/${{ github.repository_owner }}/' --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \${IMAGE_REF}
@@ -235,6 +244,12 @@ jobs:
           extra_nix_config: "experimental-features = nix-command flakes"
       - name: Authenticate Podman to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Build Fedora kernel builder image
+        run: |
+          set -euo pipefail
+          podman build --build-arg FEDORA_VERSION=${FEDORA_VERSION} \
+            -t localhost/ermete-kernel-builder:${FEDORA_VERSION} \
+            forge/specs/ermete-kernel/builder
       - name: Resolve Kernel Version and Install Chimera Headers
         id: kernel
         env:
@@ -244,12 +259,12 @@ jobs:
           podman run -i --rm  --security-opt label=disable --security-opt seccomp=unconfined --privileged \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
-            ghcr.io/hr-mes/ermete-os-builder:${BUILDER_HASH} \
+            localhost/ermete-kernel-builder:${FEDORA_VERSION} \
             bash <<'EOF'
               set -euo pipefail
               cp /workspace/forge/assets/repos/fedora-nvidia.repo /etc/yum.repos.d/fedora-nvidia.repo
               export BUILDAH_ISOLATION=chroot
-              buildah from ghcr.io/hr-mes/ermete-os-kernel:${BUILDER_HASH} > ctr_id
+              buildah from ghcr.io/hr-mes/ermete-os-kernel:latest > ctr_id
               ctr=$(cat ctr_id)
               mnt=$(buildah mount $ctr)
               find $mnt/ -name "*.rpm" ! -name "*debug*" -exec rpm -Uvh --noscripts --oldpackage --replacepkgs --force --nodeps {} +
@@ -284,11 +299,11 @@ jobs:
             -w /workspace \
             -e MOK_PRIVATE_KEY="${MOK_PRIVATE_KEY}" \
             -e MOK_PUBLIC_DER="${MOK_PUBLIC_DER}" \
-            ghcr.io/hr-mes/ermete-os-builder:${BUILDER_HASH} \
+            localhost/ermete-kernel-builder:${FEDORA_VERSION} \
             bash <<'EOF'
               cp /workspace/forge/assets/repos/fedora-nvidia.repo /etc/yum.repos.d/fedora-nvidia.repo
               export BUILDAH_ISOLATION=chroot
-              ctr=$(buildah from ghcr.io/hr-mes/ermete-os-kernel:${BUILDER_HASH})
+              ctr=$(buildah from ghcr.io/hr-mes/ermete-os-kernel:latest)
               mnt=$(buildah mount $ctr)
               find $mnt/ -name "*.rpm" ! -name "*debug*" -exec rpm -Uvh --noscripts --oldpackage --replacepkgs --force --nodeps {} +
               buildah umount $ctr

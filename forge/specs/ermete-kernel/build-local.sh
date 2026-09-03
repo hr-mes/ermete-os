@@ -10,6 +10,11 @@ FORGE_DIR=$(git rev-parse --show-toplevel)
 CACHE_DIR="$FORGE_DIR/.ccache_local"
 mkdir -p "$CACHE_DIR"
 
+echo ">>> [BEDROCK] Immagine di build del kernel (forge/specs/ermete-kernel/builder, la stessa della CI)..."
+podman build --build-arg FEDORA_VERSION=43 \
+  -t localhost/ermete-kernel-builder:43 \
+  "$FORGE_DIR/forge/specs/ermete-kernel/builder"
+
 echo ">>> [BEDROCK] Esecuzione Container Fedora 43 (Privileged limitato)..."
 podman run --rm -i \
   --cap-add SYS_ADMIN \
@@ -18,19 +23,9 @@ podman run --rm -i \
   -v "$FORGE_DIR":/forge \
   -w /forge \
   -e GITHUB_WORKSPACE=/forge \
-  registry.fedoraproject.org/fedora:43 \
+  localhost/ermete-kernel-builder:43 \
   /bin/bash -s << 'DOCKEREOF'
-    set -e
-    echo '>>> Configurazione DNF (Identica alla CI)...'
-    echo 'zchunk=False' >> /etc/dnf/dnf.conf
-    echo 'fastestmirror=True' >> /etc/dnf/dnf.conf
-    echo 'install_weak_deps=False' >> /etc/dnf/dnf.conf
-    sed -i "/tsflags=nodocs/d" /etc/dnf/dnf.conf
-    
-    echo '>>> Installazione Architettura di Compilazione...'
-    # Eliminato il bloat PGO (qemu-kvm, stress-ng, iperf3). Sistema nudo e crudo per Clang.
-    dnf install -y rpm-build rpmdevtools gcc gcc-c++ make cmake flex bison ncurses-devel elfutils-libelf-devel openssl-devel bc rsync tar wget curl cpio perl zstd git llvm clang lld ccache jq gnupg2 hostname skopeo elfutils-devel dwarves openssl rust cargo rustfmt bindgen iproute fio
-    
+    set -euo pipefail
     echo '>>> [FASE 1] Fetch, Validazione AST e Fusione Kconfig (Universal Matrix)...'
     # Questo script scarica il kernel, esegue le patch in Fuzz 1, scarta quelle rotte e imposta il LTO/BORE
     bash forge/specs/ermete-kernel/prepare-chimera.sh
