@@ -59,6 +59,16 @@ if [[ -n "$DIR" && -d "$DIR" ]]; then
       echo -n "config/packages.json"
       cat "config/packages.json"
     fi
+    if [[ "$PACKAGE" == "builder" ]]; then
+      # L'immagine builder è definita dal flake: senza queste righe una modifica a
+      # flake.nix o al lock darebbe CACHE_HIT e un builder stantio.
+      for f in ../flake.nix ../flake.lock; do
+        if [[ -f "$f" ]]; then
+          echo -n "$f"
+          cat "$f"
+        fi
+      done
+    fi
     echo -n "CACHE_EPOCH=v12"
   } | sha256sum | awk '{print $1}')
 else
