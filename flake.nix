@@ -23,12 +23,38 @@
         };
         
         security-tools = with pkgs; [ syft cosign ];
-        c-toolchain = with pkgs; [ gcc gnumake cmake mold llvmPackages_latest.llvm llvmPackages_latest.clang llvmPackages_latest.lld ccache bpf-linker pahole elfutils ];
+        # libclang: bindgen (libspa-sys di niri, aya) carica libclang.so da LIBCLANG_PATH.
+        c-toolchain = with pkgs; [ gcc gnumake cmake mold llvmPackages_latest.llvm llvmPackages_latest.clang llvmPackages_latest.lld llvmPackages_latest.libclang ccache bpf-linker pahole elfutils ];
         rust-tools = with pkgs; [ rust-toolchain sccache clippy rustfmt cargo-deny cargo-vet cargo-fuzz ];
         # Toolset POSIX di base incluso: rpmbuild, %autosetup e i Makefile upstream
         # danno per scontati grep, diff, patch, gzip, file, which, m4, gettext.
-        build-tools = with pkgs; [ rpm cpio buildah skopeo jq git gnutar xz curl wget rsync flex bison bc zstd perl pkg-config autoconf automake libtool gnugrep diffutils patch which file gzip bzip2 unzip m4 gettext python3 ];
+        build-tools = with pkgs; [ rpm cpio buildah skopeo jq git gnutar xz curl wget rsync flex bison bc zstd perl pkg-config autoconf automake libtool gnugrep diffutils patch which file gzip bzip2 unzip m4 gettext python3 go ];
         system-deps = with pkgs; [ zlib openssl policycoreutils spdlog systemd nodejs_22 nlohmann_json fmt speechd gnupg ipxe ncurses iproute2 fio gtk4 pango cairo gtk4-layer-shell glib pkg-config ];
+        # Header e .pc delle librerie di sistema, cioè i -devel di Fedora: in nixpkgs
+        # stanno nei dev output. closePropagation segue propagatedBuildInputs come fa
+        # stdenv, così le catene Requires dei .pc (gtk4 → pango → harfbuzz → …) sono
+        # complete e pkg-config le risolve da /lib/pkgconfig (PKG_CONFIG_PATH in Env).
+        # libdisplay-info alla versione della rootfs (Fedora 43: 0.2.0, soname .so.2):
+        # nixpkgs ha la 0.4.0, che il crate libdisplay-info-sys 0.3 di niri rifiuta
+        # (< 0.4.0) e che sulla rootfs non esisterebbe. Riusa il generic.nix di nixpkgs.
+        libdisplay-info-target = pkgs.callPackage
+          (import "${pkgs.path}/pkgs/by-name/li/libdisplay-info/generic.nix" {
+            version = "0.2.0";
+            hash = "sha256-6xmWBrPHghjok43eIDGeshpUEQTuwWLXNHg7CnBUt3Q=";
+          }) { };
+        system-libs = with pkgs; [
+          zlib openssl curl spdlog systemd fmt speechd ncurses
+          gtk4 pango cairo graphene gdk-pixbuf gtk4-layer-shell glib
+          # compositor niri (smithay): wayland, gbm/drm/egl, xkbcommon, libseat, libinput, pipewire, libdisplay-info
+          wayland wayland-protocols libgbm libdrm libglvnd libxkbcommon seatd libinput pipewire libdisplay-info-target
+        ];
+        system-lib-closure = pkgs.lib.closePropagation (map pkgs.lib.getDev system-libs);
+        system-dev = map pkgs.lib.getDev system-lib-closure;
+        # Gli output con le .so (per openssl, curl, glib, pango non sono quello di default):
+        # senza di loro la union /lib non ha libssl.so e un Makefile che fa `-lssl` fallisce.
+        # Non lib.getLib: sugli output già specificati (openssl.dev) restituisce
+        # l'output stesso, quindi la union resterebbe senza libssl.so.
+        system-lib = map (d: d.lib or d.out or d) system-lib-closure;
       in
       {
         devShells.default = pkgs.mkShell {
@@ -151,18 +177,40 @@ EOF
               fi
             '';
 
-          # Config dir di rpm del builder: quella di nixpkgs più le macro di systemd.
-          # rpm la trova tramite RPM_CONFIGDIR (config.Env dell'immagine); l'rpm di
-          # nixpkgs non consulta /etc/rpm.
+          # Percorsi del sistema di destinazione. L'rpm di nixpkgs è configurato con
+          # prefix = il proprio store path, quindi %{_bindir}, %{_datadir}, %{_libexecdir}
+          # e %{_localstatedir} finirebbero sotto /nix/store dentro i pacchetti (visto su
+          # ermete-daemon-rs: dbus service e polkit policy installati lì). I pacchetti
+          # sono per Fedora: prefix /usr, lib64, /var. Le macro derivate (_bindir, _libdir,
+          # _mandir, …) discendono da queste nel file macros di rpm.
+          builder-rpm-macros-target =
+            let
+              macros = {
+                _prefix = "/usr";
+                _exec_prefix = "%{_prefix}";
+                _lib = "lib64";
+                _localstatedir = "/var";
+                _docdir = "%{_datadir}/doc";
+              };
+              body = pkgs.lib.concatStringsSep "
+"
+                (pkgs.lib.mapAttrsToList (name: value: "%${name} ${value}") macros);
+            in
+            pkgs.writeTextDir "macros.d/macros.ermete-target" (body + "
+");
+
+          # Config dir di rpm del builder: quella di nixpkgs più le macro di systemd e
+          # dei percorsi di destinazione. rpm la trova tramite RPM_CONFIGDIR (config.Env
+          # dell'immagine); l'rpm di nixpkgs non consulta /etc/rpm.
           builder-rpm-configdir = pkgs.symlinkJoin {
             name = "ermete-builder-rpm-configdir";
-            paths = [ "${pkgs.rpm}/lib/rpm" builder-rpm-macros-systemd ];
+            paths = [ "${pkgs.rpm}/lib/rpm" builder-rpm-macros-systemd builder-rpm-macros-target ];
           };
 
           builderImage = pkgs.dockerTools.buildLayeredImage {
             name = "ghcr.io/hr-mes/ermete-os-builder";
             tag = "latest";
-            contents = [ builder-fhs-compat pkgs.bashInteractive pkgs.coreutils pkgs.findutils pkgs.gnused pkgs.gawk pkgs.cacert pkgs.tzdata pkgs.shadow ] ++ security-tools ++ c-toolchain ++ rust-tools ++ build-tools ++ system-deps;
+            contents = [ builder-fhs-compat pkgs.bashInteractive pkgs.coreutils pkgs.findutils pkgs.gnused pkgs.gawk pkgs.cacert pkgs.tzdata pkgs.shadow ] ++ security-tools ++ c-toolchain ++ rust-tools ++ build-tools ++ system-deps ++ system-dev ++ system-lib;
             config = {
               Cmd = [ "/bin/bash" ];
               Env = [
@@ -172,6 +220,30 @@ EOF
                 # di nixpkgs non verificano alcun certificato TLS (idioma dockerTools).
                 "SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
                 "RPM_CONFIGDIR=${builder-rpm-configdir}"
+                # I .pc dei dev output confluiscono qui dal symlinkJoin di contents;
+                # il pkg-config di nixpkgs da solo guarda soltanto nel proprio prefisso.
+                "PKG_CONFIG_PATH=/lib/pkgconfig:/share/pkgconfig"
+                # Makefile e cmake senza pkg-config (git, ananicy-cpp): header e librerie
+                # dalle union /include e /lib, che i wrapper gcc/clang di nixpkgs onorano.
+                # Gli header di glibc restano fuori da /include: su CPATH scavalcherebbero
+                # gli stdint.h/stddef.h integrati di clang (ridefinizione di __INT64_C).
+                "CPATH=/include"
+                "LIBRARY_PATH=/lib"
+                # Senza RUNPATH (sotto) i binari appena compilati trovano le librerie
+                # della union solo così, per esempio nei %check o nei build script.
+                "LD_LIBRARY_PATH=/lib"
+                # bindgen (libspa-sys di niri, aya) usa libclang direttamente, senza il
+                # wrapper: gli servono libclang.so e gli header di glibc, dopo quelli di clang.
+                "LIBCLANG_PATH=${pkgs.llvmPackages_latest.libclang.lib}/lib"
+                "BINDGEN_EXTRA_CLANG_ARGS=-idirafter ${pkgs.glibc.dev}/include"
+                # I wrapper gcc/clang di nixpkgs aggiungono un DT_RUNPATH verso /nix/store per
+                # ogni -L (glibc e libgcc compresi): nei pacchetti per Fedora è spazzatura.
+                # La variabile con suffisso di target è quella letta da ld-wrapper.sh.
+                "NIX_DONT_SET_RPATH_x86_64_unknown_linux_gnu=1"
+                # Stesso wrapper: senza questa variabile l'interprete ELF (PT_INTERP) di ogni
+                # binario è /nix/store/…-glibc/lib/ld-linux-x86-64.so.2, che sulla rootfs non
+                # esiste. Il percorso FHS vale anche nel builder (symlink di builder-fhs-compat).
+                "NIX_DYNAMIC_LINKER_x86_64_unknown_linux_gnu=/lib64/ld-linux-x86-64.so.2"
                 "CC=clang"
                 "CXX=clang++"
                 "LD=ld.lld"
