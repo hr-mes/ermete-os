@@ -1,7 +1,8 @@
 # Ermete OS: Specifica del Kernel (costruzione, pin, manutenzione automatica)
 
-Stato: **approvata il 2026-09-03** (serie `stable` 7.x, `-O3` e `RANDSTRUCT_FULL`
-accesi, debuginfo come OCI separato con retention di due versioni). Sostituisce il
+Stato: **approvata il 2026-09-03** (serie `stable` 7.x, `-O3` acceso, debuginfo
+come OCI separato con retention di due versioni; dal 2026-09-04 Rust acceso,
+ThinLTO e `RANDSTRUCT` spenti, sezione 13). Sostituisce il
 README "Testo Sacro" di `forge/specs/ermete-kernel/` e lo script
 `prepare-chimera.sh`. Il livello funzionale del kernel (eBPF, KVM, Gatekeeper) è
 descritto in [doc_kernel_layer.md](doc_kernel_layer.md): questo documento dice
@@ -112,6 +113,9 @@ identica in locale. Passi, tutti senza rete tranne i download verificati:
    PGP del tarball CachyOS e di quello vanilla contro le chiavi vendorizzate,
    firma RPM del SRPM ricucito;
 2. scrive `~/.rpmmacros` con `%_topdir` e `%buildid .ermete`; `rpm -i` del SRPM;
+   `dnf builddep -y SPECS/kernel.spec` con gli stessi bcond di rpmbuild, subito,
+   perché la derivazione del config deve vedere la toolchain vera (rust-src,
+   bindgen, pahole: `RUST_IS_AVAILABLE` e le opzioni che ne dipendono);
 3. genera `linux-kernel-test.patch`: repo git temporaneo con tre commit (vanilla,
    CachyOS, vanilla + patch Red Hat), `git merge-tree --write-tree` dei due rami
    sopra il vanilla, `patches.list` applicate sull'indice, diff dal commit
@@ -124,18 +128,17 @@ identica in locale. Passi, tutti senza rete tranne i download verificati:
    `-n` di `process_configs.sh` non trova opzioni senza decisione;
 5. riduce lo spec a x86_64: gli altri `kernel-*-fedora.config` diventano
    `# EMPTY`, il valore che `process_configs.sh` salta per contratto;
-6. `dnf builddep -y SPECS/kernel.spec` con gli stessi bcond di rpmbuild;
-7. `rpmbuild -bp --with toolchain_clang --with clang_lto --without debug
+6. `rpmbuild -bp --with toolchain_clang --with clang_lto --without debug
    --without tools --without perf --without libperf --without bpftool --without
    ynl --without selftests --without doc`: patch e `process_configs.sh -w -n -c`.
    Poi il gate di Ermete: ogni riga del delta committato deve valere nel config
    generato (Fedora segnala i mismatch solo sulle opzioni presenti nel
    risultato, un'opzione caduta per dipendenza non soddisfatta passerebbe in
    silenzio). Config e `kernel-local` finiscono nell'artefatto;
-8. stadio `build`: `rpmbuild -bb --noprep` sullo stesso albero. Il debuginfo si
+7. stadio `build`: `rpmbuild -bb --noprep` sullo stesso albero. Il debuginfo si
    costruisce e si pubblica a parte: serve a `perf`, `crash`, a un futuro AutoFDO
    e non entra nell'immagine;
-9. riproducibilità: `SOURCE_DATE_EPOCH` dalla changelog, `KBUILD_BUILD_USER=ermete`,
+8. riproducibilità: `SOURCE_DATE_EPOCH` dalla changelog, `KBUILD_BUILD_USER=ermete`,
    `KBUILD_BUILD_HOST=forge`, `KBUILD_BUILD_TIMESTAMP` derivato. Un job
    settimanale ricostruisce lo stesso pin su un runner diverso e confronta
    `vmlinuz`, moduli e `config`: la differenza è un bug da aprire;
@@ -165,10 +168,11 @@ delta, e resta corto:
 | ----------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------- |
 | `SCHED_BORE`                                          | y      | patch CachyOS, responsività desktop                                                                           |
 | `CC_OPTIMIZE_FOR_PERFORMANCE_O3`                      | y      | opzione della base CachyOS, come nei loro kernel; resta finché il benchmark (sezione 7) non dice il contrario |
-| `LTO_CLANG_THIN`                                      | y      | con `--with clang_lto`; objtool resta acceso                                                                  |
-| `CFI_CLANG`                                           | y      | kCFI, richiede clang; con IBT già attivo                                                                      |
+| `LTO_NONE`                                            | y      | ThinLTO spento: con `DEBUG_INFO_BTF`, `RUST` richiede `!LTO`; il bcond `clang_lto` resta per il toolchain (sezione 5) |
+| `RUST`                                                | y      | come Fedora: la porta ai driver che nascono in Rust; con kCFI seleziona `CFI_ICALL_NORMALIZE_INTEGERS`        |
+| `CFI`                                                 | y      | kCFI, richiede clang; con IBT già attivo                                                                      |
 | `ZERO_CALL_USED_REGS`                                 | y      | hardening a costo trascurabile                                                                                |
-| `RANDSTRUCT_FULL`                                     | y      | il seed vive in kernel-devel: i kmod costruiti contro di esso funzionano, i binari opachi no, ed è voluto     |
+| `RANDSTRUCT_NONE`                                     | y      | come Fedora: `RUST` dipende da `!RANDSTRUCT`, e il layout randomizzato costa in cache                         |
 | `MODULE_SIG_FORCE`                                    | y      | ogni modulo firmato: chiave effimera di build per l'albero, MOK per i kmod esterni                            |
 | `DEFAULT_TCP_CONG`                                    | "bbr3" | BBRv3 dalla base CachyOS                                                                                      |
 | `DEFAULT_FQ`                                          | y      | BBR richiede pacing: FQ come qdisc di default                                                                 |
@@ -197,12 +201,16 @@ da kconfig. Non serve uno script Ermete.
 
 clang, lld e llvm di Fedora 43 dal Containerfile, con la base
 `registry.fedoraproject.org/fedora:43@sha256:…` pinnata per digest e aggiornata
-dal bot. `LLVM=1` arriva dal bcond dello spec (`clang_make_opts`). Rust: in 7.1
-`RUST` dipende da `!RANDSTRUCT` e, con `DEBUG_INFO_BTF` acceso (l'eBPF di Ermete
-non può rinunciarvi), da `!LTO`. Con ThinLTO e `RANDSTRUCT_FULL` resta quindi
-spento: `# CONFIG_RUST is not set` esplicito nel delta, verificato dal gate. Si
-riapre in K4 se nova-core (NVIDIA Turing+) lo richiederà, rinunciando a una delle
-due; non si patchano i Makefile per forzarlo.
+dal bot. `LLVM=1` arriva dal bcond dello spec (`clang_make_opts`). Rust acceso come
+in Fedora: in 7.1 `RUST` dipende da `!RANDSTRUCT` e, con `DEBUG_INFO_BTF` acceso
+(l'eBPF di Ermete non può rinunciarvi), da `!LTO`, perché pahole non regge i DWARF
+fusi da LTO con unità Rust. Quindi ThinLTO e `RANDSTRUCT` restano spenti nel delta,
+verificato dal gate. Il bcond `--with clang_lto` resta comunque acceso: è l'unico
+con cui kernel.spec passa `HOSTCC=clang CC=clang LLVM=1` a `process_configs.sh`,
+senza il quale il config verrebbe valutato con gcc e kCFI sparirebbe; il
+frammento LTO che porta con sé è sovrascritto da `kernel-local`. Quando upstream
+toglierà il vincolo `!LTO`, ThinLTO si riaccende con due righe del delta; non si
+patchano i Makefile per forzarlo.
 
 ## 6. Firma e catena di avvio
 
@@ -230,7 +238,7 @@ amd_pstate=active zswap.enabled=1`. Niente `iommu=pt`, niente `mitigations=off`.
 
 Ogni PR di bump e ogni cambio in `forge/specs/ermete-kernel/**` passa:
 
-1. **build** sul runner self-hosted (stima 60–120 min con ThinLTO su 16 core);
+1. **build** sul runner self-hosted (60 min misurati su 16 core con ThinLTO);
 2. **config**: `process_configs.sh` con controlli accesi;
 3. **boot matrix** su runner GitHub-hosted con KVM, QEMU:
    `-cpu Nehalem` (prova che nessuna istruzione oltre il baseline è entrata),
@@ -328,6 +336,10 @@ l'implementazione scopre che un gancio Fedora non è come descritto.
 1. Serie: `stable` (segue 7.x con CachyOS, bump frequenti); `lts` (6.18) resta
    un valore possibile di `KERNEL_CHANNEL`.
 2. `-O3` acceso di default come CachyOS; il benchmark di K7 lo conferma o lo spegne.
-3. `RANDSTRUCT_FULL` acceso: hardening reale, i tool di debug binari (crash, drgn
-   su vmlinux esterno) perdono precisione.
+3. `RANDSTRUCT_FULL` era acceso; il 2026-09-04 la scelta è **Rust acceso, ThinLTO e
+   `RANDSTRUCT` spenti**: in 7.1 `RUST` esclude entrambi (sezione 5), il kernel deve
+   restare agnostico anche verso i driver futuri in Rust, ThinLTO vale pochi punti
+   percentuali che `RANDSTRUCT_FULL` in parte annulla, e questa è la configurazione
+   di Fedora e di CachyOS: il delta più corto da mantenere. ThinLTO tornerà quando
+   upstream toglierà il vincolo; `RANDSTRUCT` resta escluso per costruzione.
 4. Debuginfo pubblicato come OCI separato, retention di due versioni.

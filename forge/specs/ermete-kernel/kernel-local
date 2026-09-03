@@ -8,27 +8,31 @@
 CONFIG_SCHED_BORE=y
 CONFIG_CACHY=y
 
-# Codegen: -O3 (ThinLTO lo accende il frammento clang_lto di Fedora).
+# Codegen: -O3, niente LTO. Il frammento clang_lto di Fedora accende ThinLTO, ma
+# Rust con DEBUG_INFO_BTF richiede !LTO: si riaccende quando pahole reggera' i
+# DWARF fusi da LTO (decisione del 2026-09-04, sezione 13 della specifica).
 CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3=y
 # CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE is not set
+CONFIG_LTO_NONE=y
+# CONFIG_LTO_CLANG_THIN is not set
 
 # ISA: x86-64 di base, ogni PC dal 2014/2015 in poi (patch more-uarches di CachyOS).
 CONFIG_GENERIC_CPU=y
 CONFIG_X86_64_VERSION=1
 
-# Rust: in 7.1 RUST dipende da !RANDSTRUCT e, con DEBUG_INFO_BTF acceso, da !LTO.
-# Con ThinLTO e RANDSTRUCT_FULL resta spento: rinuncia voluta, esplicita qui, da
-# rivedere in K4 se nova-core (NVIDIA) lo richiedera'.
-# CONFIG_RUST is not set
+# Rust acceso come in Fedora: e' la porta ai driver che nasceranno in Rust. In 7.1
+# RUST dipende da !RANDSTRUCT e, con DEBUG_INFO_BTF, da !LTO. Con kCFI seleziona
+# CFI_ICALL_NORMALIZE_INTEGERS.
+CONFIG_RUST=y
+CONFIG_CFI_ICALL_NORMALIZE_INTEGERS=y
 
 # Hardening in piu' rispetto a Fedora.
 CONFIG_CFI=y
 # CONFIG_CFI_PERMISSIVE is not set
 CONFIG_ZERO_CALL_USED_REGS=y
-CONFIG_RANDSTRUCT_FULL=y
-# CONFIG_RANDSTRUCT_NONE is not set
-# RANDSTRUCT seleziona MODVERSIONS: controllo ABI dei moduli con layout randomizzati.
-CONFIG_MODVERSIONS=y
+# RANDSTRUCT resta NONE come in Fedora: RUST dipende da !RANDSTRUCT.
+CONFIG_RANDSTRUCT_NONE=y
+# CONFIG_RANDSTRUCT_FULL is not set
 CONFIG_MODULE_SIG_FORCE=y
 
 # Rete: BBRv3 (simbolo TCP_CONG_BBR3 della base CachyOS) e FQ di default.

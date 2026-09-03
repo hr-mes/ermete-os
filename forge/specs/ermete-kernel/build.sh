@@ -51,6 +51,9 @@ mapfile -t FEDORA_WINS < <(grep -vE '^\s*(#|$)' "$HERE/fedora-wins.list")
 [[ -z $(printf '%s\n' "${PATCHES[@]##*/}" | sort | uniq -d) ]] || die "patches.list: nomi di file duplicati"
 
 # Le stesse scelte per dnf builddep (--define) e per rpmbuild (--with/--without).
+# clang_lto resta acceso anche con LTO spento in kernel-local: e' l'unico bcond con
+# cui kernel.spec passa HOSTCC=clang CC=clang LLVM=1 a process_configs.sh, senza il
+# quale il config verrebbe valutato con gcc e kCFI sparirebbe.
 WITH=(toolchain_clang clang_lto)
 WITHOUT=(debug tools perf libperf bpftool ynl selftests doc)
 BCONDS=() DEFINES=()
@@ -101,6 +104,12 @@ rpmkeys --checksig --verbose "$SIGNED_SRPM" | grep "signature, key fingerprint: 
 step "kernel.spec e sorgenti Fedora in $TOP"
 printf '%%_topdir %s\n%%buildid .ermete\n' "$TOP" > "$HOME/.rpmmacros"
 rpm -i "$SIGNED_SRPM"
+
+# Prima della derivazione del config: listnewconfig deve vedere la stessa toolchain di
+# rpmbuild (rust-src, bindgen, pahole), altrimenti RUST_IS_AVAILABLE e le opzioni che
+# ne dipendono cambiano tra il pre-pass e il gate di Fedora.
+step "BuildRequires di kernel.spec"
+dnf -y builddep "${DEFINES[@]}" "$TOP/SPECS/kernel.spec"
 
 step "base CachyOS: merge a tre vie tra vanilla, CachyOS e la patch Red Hat, poi patches.list"
 tar -C "$WORK" -xf "$CACHE/$VANILLA_TAR" && mv "$WORK/linux-$KVER" "$WORK/a"
@@ -191,9 +200,6 @@ check_delta() { # ogni riga di kernel-local deve valere nel config generato
 }
 
 # --- rpmbuild -----------------------------------------------------------------------
-
-step "BuildRequires di kernel.spec"
-dnf -y builddep "${DEFINES[@]}" "$TOP/SPECS/kernel.spec"
 
 export KBUILD_BUILD_USER=ermete KBUILD_BUILD_HOST=forge
 
