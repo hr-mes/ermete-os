@@ -1,12 +1,13 @@
 %global debug_package %{nil}
+# Il crate vive nel workspace: la spec compila il checkout in place, non un tarball.
+%global crate_dir forge/specs/%{name}/%{name}-%{version}
 Name:           ermete-settings-rs
 Version:        1.0.0
-Release:        10%{?dist}
+Release:        11%{?dist}
 Summary:        Pure Rust native System Settings for Ermete OS
 
 License:        GPLv3+
 URL:            https://github.com/hr-mes/ermete-forge
-Source0:        %{name}-%{version}.tar.gz
 
 BuildRequires:  rust cargo
 BuildRequires:  gtk4-devel
@@ -19,25 +20,28 @@ Requires:       ostree
 Ermete Settings is the native control panel for Ermete OS, written in pure Rust with GTK4.
 
 %prep
-%autosetup
 
 %build
 %set_build_flags
 # cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
-cargo build --release --locked
+cargo build --release --locked -p %{name}
 
 %install
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT//usr/bin
 install -m 0755 target/release/%{name} $RPM_BUILD_ROOT//usr/bin/%{name}
 install -d $RPM_BUILD_ROOT/%{_datadir}/applications
-install -m 0644 os.ermete.Settings.desktop $RPM_BUILD_ROOT/%{_datadir}/applications/os.ermete.Settings.desktop
+install -m 0644 %{crate_dir}/os.ermete.Settings.desktop $RPM_BUILD_ROOT/%{_datadir}/applications/os.ermete.Settings.desktop
 
 %files
 /usr/bin/%{name}
 %{_datadir}/applications/os.ermete.Settings.desktop
 
 %changelog
+* Thu Sep 03 2026 Ermete Forge <forge@ermete.os> - 1.0.0-11
+- Compila il crate dal workspace in place (rpmbuild --build-in-place) invece di
+  un tarball mai tracciato in git; file di dati riferiti tramite %%{crate_dir}
+
 * Wed Jul 15 2026 Ermete Forge <forge@ermete.os> - 1.0.0-8
 - Implemented Enterprise Wi-Fi (802.1x EAP-TLS/PEAP) and Native VPN tunnel management (WireGuard/OpenVPN) in network page
 - Added Flatpak Sandbox Permissions Manager (`--socket=wayland/pulseaudio`, `--share=network`, `--filesystem=home`) in privacy page

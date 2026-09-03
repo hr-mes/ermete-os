@@ -1,11 +1,12 @@
 %global debug_package %{nil}
+# Il crate vive nel workspace: la spec compila il checkout in place, non un tarball.
+%global crate_dir forge/specs/%{name}/%{name}-%{version}
 Name:           ermete-daemon-rs
 Version:        0.2.1
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Ermete OS Native D-Bus Bedrock, ACID Settings & Multimedia Portal Daemon
 
 License:        MIT
-Source0:        ermete-daemon-rs-%{version}.tar.gz
 
 BuildRequires:  rust cargo gcc gcc-c++ pkgconf-pkg-config systemd-rpm-macros
 Requires: pipewire wireplumber
@@ -15,29 +16,26 @@ Requires:       dconf ermete-matugen niri speech-dispatcher psmisc wlsunset
 Pure Rust native D-Bus IPC service for Ermete OS audio, system bedrock management, ACID settings database, and XDG Desktop Portal backend (Settings, ScreenCast, RemoteDesktop).
 
 %prep
-%autosetup
 
 %build
 %set_build_flags
 # cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
-cargo build --release --locked
+cargo build --release --locked -p %{name}
 
 %install
 mkdir -p %{buildroot}/usr/bin
 install -m 0755 target/release/ermete-daemon-rs %{buildroot}/usr/bin/ermete-daemon-rs
 
 mkdir -p %{buildroot}%{_datadir}/dbus-1/services
-install -m 0644 org.ermete.Settings.service %{buildroot}%{_datadir}/dbus-1/services/org.ermete.Settings.service
+install -m 0644 %{crate_dir}/org.ermete.Settings.service %{buildroot}%{_datadir}/dbus-1/services/org.ermete.Settings.service
 
 # Polkit actions. Senza questo file le cinque azioni applicate dal daemon non
 # sono registrate e CheckAuthorization nega sempre: niente rete, niente
 # Bluetooth, niente live patch. Vedi ANALISI_2026-09-02.md 2.1.
-SRC_OS_ERMETE_DAEMON_POLICY=forge/specs/ermete-daemon-rs/ermete-daemon-rs-0.2.1/os.ermete.daemon.policy
-[ -f "$SRC_OS_ERMETE_DAEMON_POLICY" ] || SRC_OS_ERMETE_DAEMON_POLICY=os.ermete.daemon.policy
-install -D -m 0644 "$SRC_OS_ERMETE_DAEMON_POLICY" %{buildroot}%{_datadir}/polkit-1/actions/os.ermete.daemon.policy
+install -D -m 0644 %{crate_dir}/os.ermete.daemon.policy %{buildroot}%{_datadir}/polkit-1/actions/os.ermete.daemon.policy
 
 mkdir -p %{buildroot}/usr/lib/systemd/system
-install -m 0644 %{_sourcedir}/../ermete-daemon.service %{buildroot}/usr/lib/systemd/system/ermete-daemon.service || install -m 0644 ermete-daemon.service %{buildroot}/usr/lib/systemd/system/ermete-daemon.service
+install -m 0644 %{crate_dir}/ermete-daemon.service %{buildroot}/usr/lib/systemd/system/ermete-daemon.service
 
 %post
 %systemd_post ermete-daemon.service
@@ -55,6 +53,11 @@ install -m 0644 %{_sourcedir}/../ermete-daemon.service %{buildroot}/usr/lib/syst
 %{_datadir}/polkit-1/actions/os.ermete.daemon.policy
 
 %changelog
+* Thu Sep 03 2026 Ermete Forge <forge@ermete.os> - 0.2.1-3
+- Compila il crate dal workspace in place (rpmbuild --build-in-place) invece di
+  un tarball mai tracciato in git; file di dati riferiti tramite %%{crate_dir}
+- Un solo ermete-daemon.service, quello del crate
+
 * Fri Jul 17 2026 Ermete Forge <forge@ermete.os> - 0.2.1-1
 - Remove portal configuration files (migrated to dedicated xdg-desktop-portal-ermete package)
 

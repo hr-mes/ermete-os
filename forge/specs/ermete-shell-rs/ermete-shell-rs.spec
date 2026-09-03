@@ -1,11 +1,11 @@
 %global debug_package %{nil}
+# Il crate vive nel workspace: la spec compila il checkout in place, non un tarball.
 Name:           ermete-shell-rs
 Version:        1.0.0
-Release:        %{?autorelease}%{!?autorelease:12.fc43}
+Release:        22%{?dist}
 Summary:        Ermete OS Native Rust GTK4 Shell
 
 License:        MIT
-Source0:        ermete-shell-rs-%{version}.tar.gz
 
 BuildRequires:  rust cargo gcc gcc-c++ gtk4-devel glib2-devel pkgconf-pkg-config gtk4-layer-shell-devel clang-devel speech-dispatcher-devel upower-devel
 Requires: gtk4 gtk4-layer-shell glib2 cage upower xdg-utils plocate foot wl-clipboard
@@ -15,12 +15,11 @@ Requires:       cliphist niri
 Pure Rust native shell for Ermete OS, replacing AGS/GJS.
 
 %prep
-%autosetup
 
 %build
 %set_build_flags
 # cargo generate-lockfile // FORBIDDEN BY RULE 4 (Offline Build)
-cargo build --release --locked
+cargo build --release --locked -p %{name}
 
 %install
 mkdir -p %{buildroot}/usr/bin
@@ -30,6 +29,11 @@ install -m 0755 target/release/ermete-shell-rs %{buildroot}/usr/bin/ermete-shell
 /usr/bin/ermete-shell-rs
 
 %changelog
+* Thu Sep 03 2026 Ermete Forge <forge@ermete.os> - 1.0.0-22
+- Compila il crate dal workspace in place (rpmbuild --build-in-place) invece di
+  un tarball mai tracciato in git
+- Release numerica, allineata al changelog
+
 * Wed Jul 22 2026 Ermete Forge <forge@ermete.os> - 1.0.0-21
 - Added upower and upower-devel dependencies for Battery Monitor D-Bus integration.
 
