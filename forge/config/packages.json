@@ -42,7 +42,6 @@
     "keylime",
     "niri-ipc",
     "recovery",
-    "style",
     "cargo-tools",
     "just",
     "uki-tools",
@@ -91,7 +90,6 @@
     "keylime",
     "niri-ipc",
     "recovery",
-    "style",
     "kernel-forge"
   ],
   "custom_tier3": [

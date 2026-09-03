@@ -225,6 +225,16 @@ def check_paths():
 # 4. packaging — un crate che compila e basta non è nel prodotto
 # --------------------------------------------------------------------------- #
 
+def has_binary_target(crate_dir):
+    """True se il crate produce un eseguibile: src/main.rs, src/bin/ o una sezione [[bin]]."""
+    cargo = crate_dir / "Cargo.toml"
+    if not cargo.exists():
+        return True  # non giudicabile: resta soggetto al controllo
+    return ((crate_dir / "src" / "main.rs").exists()
+            or (crate_dir / "src" / "bin").is_dir()
+            or "[[bin]]" in read(cargo))
+
+
 @check("shipped", "Ogni crate del workspace è impacchettato, o è dichiarato sperimentale")
 def check_shipped():
     r = Result()
@@ -260,6 +270,9 @@ def check_shipped():
         name = Path(m).name
         name = re.sub(r"-\d+\.\d+\.\d+$", "", name)
         if name in exempt:
+            continue
+        if not has_binary_target(ROOT / m):
+            # Un crate libreria finisce dentro i binari che lo usano: niente da spedire.
             continue
         short = name.replace("ermete-", "")
         has_spec = name in spec_dirs or f"ermete-{short}" in spec_dirs
