@@ -60,9 +60,7 @@ jobs:
           set -euo pipefail
           # Lo stesso NVR che rpmbuild produce con `%buildid .ermete` (build.sh);
           # publish verifica che coincidano.
-          . forge/specs/ermete-kernel/pins.env
-          rel=${FEDORA_KERNEL_NVR#*-}
-          nvr="${FEDORA_KERNEL_NVR%%-*}-${rel%%.*}.ermete.${rel#*.}"
+          nvr=$(bash forge/specs/ermete-kernel/nvr.sh)
           python3 forge/specs/ermete-kernel/build-inputs.py > inputs.json
           reuse=false
           if cosign verify-attestation --type custom \
