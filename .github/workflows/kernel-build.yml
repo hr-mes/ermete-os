@@ -162,6 +162,12 @@ jobs:
           subject-name: ${{ env.IMAGE }}
           subject-digest: ${{ steps.publish.outputs.kernel }}
 
+      - name: Retention (retention.sh)
+        # Prima del gate: la verifica prova cio' che resta nel registro. Restano le release
+        # (tutte per kernel e devel, due per il debuginfo) e cio' che e' raggiungibile da
+        # esse: l'indice dei referrer `sha256-<hex>` e i bundle cosign che elenca.
+        run: bash forge/specs/ermete-kernel/retention.sh
+
       - name: Verify (gate K2)
         run: |
           set -euo pipefail
@@ -174,12 +180,6 @@ jobs:
             --certificate-oidc-issuer https://token.actions.githubusercontent.com "$ref" > /dev/null
           gh attestation verify "oci://${ref}" --repo "${GITHUB_REPOSITORY}"
           echo "verificato: $ref"
-
-      - name: Retention (retention.sh)
-        # Tutte le versioni NVR di kernel e devel, due del debuginfo; via ogni versione
-        # senza tag (manifesti sostituiti da un nuovo push) e i referrer cosign di cio'
-        # che se ne va.
-        run: bash forge/specs/ermete-kernel/retention.sh
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:

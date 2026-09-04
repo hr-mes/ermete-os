@@ -148,10 +148,14 @@ identica in locale. Passi, tutti senza rete tranne i download verificati:
    tre pacchetti OCI con i soli RPM dentro, `ghcr.io/hr-mes/ermete-os-kernel`
    (binari), `ermete-os-kernel-devel`, `ermete-os-kernel-debuginfo`, tag `<nvr>`.
    Pacchetti separati e non suffissi del tag, perché la retention di ghcr è per
-   pacchetto: del debuginfo restano le due versioni con tag NVR più recenti, delle
-   altre si cancellano immagine e referrer cosign; di ogni pacchetto se ne vanno le
-   versioni senza tag, cioè i manifesti sostituiti da un nuovo push dello stesso
-   NVR (`retention.sh`). Ogni immagine: firma cosign
+   pacchetto (`retention.sh`, prima del gate, che così verifica ciò che resta):
+   del debuginfo restano le due release più recenti, di kernel e devel tutte; con
+   ogni release resta ciò che è raggiungibile dal suo digest, cioè l'indice dei
+   referrer che cosign v3 tiene sotto il tag di fallback `sha256-<hex>` (ghcr non
+   ha l'API referrers) e i bundle Sigstore che elenca, manifesti senza tag. Tutto
+   il resto se ne va: release oltre il limite con i loro referrer, indici
+   sostituiti da ogni attestazione successiva, manifesti di un push ripetuto
+   dello stesso NVR. Ogni immagine: firma cosign
    keyless (identità OIDC del workflow), SBOM SPDX da syft come attestazione
    `spdxjson`, attestazione custom con i pin (pins.env, hash di manifest, delta,
    patches.list e Containerfile, immagine base del builder); la principale ha
