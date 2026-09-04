@@ -48,7 +48,7 @@ Directory `forge/specs/ermete-kernel/` dopo il blocco:
 | File                     | Ruolo                                                                                                                                                                               |
 | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `pins.env`               | `FEDORA_KERNEL_NVR` (es. `7.1.12-100.fc43`), `FEDORA_SOURCE_RELEASE` (43), `CACHYOS_RELEASE` (es. `cachyos-7.1.8-1`), `CACHYOS_PATCHES_COMMIT`, `KERNEL_CHANNEL` (`stable` o `lts`) |
-| `SOURCES/sources.sha256` | hash del SRPM, del tarball CachyOS, delle patch singole                                                                                                                             |
+| `SOURCES/sources.sha256` | hash del SRPM, del tarball CachyOS, delle patch singole; lo scrive `build.sh --stage manifest`                                                                                                                             |
 | `kernel-local`           | frammento di config, una riga di motivazione per opzione                                                                                                                            |
 | `patches.list`           | patch di `CachyOS/kernel-patches` da accodare dopo la base, in ordine                                                                                                               |
 | `patches/`               | patch di Ermete in formato git, applicate dopo `patches.list` in ordine di nome; il messaggio spiega il perché, e ogni patch è candidata all'upstream                            |
@@ -60,7 +60,7 @@ Directory `forge/specs/ermete-kernel/` dopo il blocco:
 | `build-inputs.py`        | gli input che cambiano gli RPM come JSON: predicato dell'attestazione dei pin e chiave del riuso (sezione 7)                                                                   |
 | `keys/mok/`              | certificato pubblico della MOK di progetto (sezione 6); la chiave privata è nell'environment `signing`                                                                        |
 | `microvm/`               | config e spec del kernel guest (sezione 9)                                                                                                                                          |
-| `KERNEL.md`              | cosa c'è nella directory, uso locale, bump a mano; il bot (K5) ne aggiorna la parte di versione                                                                                    |
+| `KERNEL.md`              | cosa c'è nella directory, uso locale, bump; il bot (K5) ne riscrive la tabella dei pin                                                                                               |
 
 Spariscono: `prepare-chimera.sh`, `build-local.sh`, `cachyos-patches/` (1031
 file, 7,4 milioni di righe), `patches/0001-acs-override.patch` (rompe
@@ -279,10 +279,13 @@ Ogni PR di bump e ogni cambio in `forge/specs/ermete-kernel/**` passa:
    `WARNING: CPU:`, `Oops:`, `Call Trace:`; gli avvisi hw-vuln come SRSO non lo
    sono); in UEFI anche `SecureBoot=1` e `MokListRT` presente. `publish`
    dipende da `boot`: senza matrice verde non si pubblica;
-4. **kmod NVIDIA** (`nvidia-kmod.yml`, sezione 10): `nvidia-open` (610) e ramo
-   legacy 580 compilano con `nvidia.sh` contro il `kernel-devel` pubblicato per
-   l'NVR dei pin, con la toolchain del kernel; ogni `.ko` deve portare il
-   vermagic del kernel e i tipi kCFI; il job `sign` li firma con la MOK del
+4. **kmod NVIDIA** (job `kmod` di `kernel-build.yml`, che chiama il workflow
+   riusabile `nvidia-build.yml`; sezione 10): `nvidia-open` (610) e ramo legacy
+   580 compilano con `nvidia.sh` contro il `kernel-devel` appena costruito, o
+   pubblicato per l'NVR dei pin quando il kernel è riusato, con la toolchain del
+   kernel; ogni `.ko` deve portare il vermagic del kernel e i tipi kCFI. Poi, sui
+   push, `nvidia-kmod.yml`, avviato da Kernel Build a valle della pubblicazione
+   (`workflow_run` vale solo dal branch di default): il job `sign` li firma con la MOK del
    progetto; il job `boot` (`boot.sh --mok --insmod`, casi UEFI) arruola la MOK
    di progetto accanto a quella effimera della UKI e nel guest carica il
    `nvidia.ko` firmato di ogni ramo, atteso `ENODEV` (firma accettata, GPU
@@ -292,6 +295,13 @@ Ogni PR di bump e ogni cambio in `forge/specs/ermete-kernel/**` passa:
    netperf loopback per cinque minuti, risultati come artefatto e grafico nel
    summary. È il numero che decide `-O3` e ogni futura opzione;
 6. **riproducibilità** settimanale (sezione 3).
+
+**Il check unico.** Il job `gate` di `kernel-build.yml` (check `Kernel gate`)
+dipende da tutti gli altri ed è verde solo se `inputs`, `boot` e `kmod` sono
+verdi e `build` è verde o saltato per riuso. È l'unico check richiesto dalla
+protezione del branch, e Kernel Build parte su ogni PR, senza filtro di
+percorsi: così il check esiste sempre e l'auto-merge del bot (sezione 8) ha un
+nome solo da aspettare.
 
 **Riuso.** Il job `inputs` calcola `build-inputs.py` (pin, manifest delle
 sorgenti, `kernel-local`, `patches.list`, `patches/`, `fedora-wins.list`, `build.sh`,
@@ -304,26 +314,46 @@ ricompila. La prova del riuso è una firma verificata, non un tag.
 
 ## 8. Auto-manutenzione: il bot di bump
 
-Workflow `kernel-bump.yml`, giornaliero, su runner GitHub-hosted:
+Workflow `kernel-bump.yml`, giornaliero (`schedule` vale solo dal branch di
+default; a mano con `workflow_dispatch` su qualunque branch), in tre job:
 
-1. legge `pins.env`; interroga Bodhi per l'NVR stable più recente della serie
-   consentita (43, poi 44), le release GitHub di `CachyOS/linux` per la stessa
-   `X.Y`, e `CachyOS/kernel-patches` per il commit di testa di `X.Y`;
-2. se nulla è cambiato, esce. Altrimenti, nel container Fedora: scarica e
-   verifica tutto, genera il diff base, prova `git apply --check` di ogni patch
-   sull'albero preparato (`rpmbuild -bp`, minuti, senza compilare), esegue
-   `make listnewconfig` e raccoglie le opzioni nuove da quando c'è il pin;
-3. apre una PR con `pins.env`, `sources.sha256`, `KERNEL.md` rigenerati e nel
-   corpo: NVR, release CachyOS, commit patch, esito di ogni patch, opzioni
-   Kconfig nuove (perché un umano veda i pomelli che Fedora ha aggiunto);
-4. la PR fa partire i gate della sezione 7; con tutto verde va in **auto-merge**.
-   Rosso: resta aperta con il log del gate fallito. È l'unico momento in cui
-   serve una persona, e sa già dove guardare.
+1. **check** (runner GitHub-hosted): `bump.py apply` legge `pins.env` e
+   interroga Bodhi (build `kernel` stable di F43, poi F44), le release GitHub di
+   `CachyOS/linux`, `CachyOS/kernel-patches` (testa della directory della
+   serie), `CachyOS/linux-cachyos` (il commit di `linux-cachyos/config` vigente
+   alla data della release CachyOS: il config con cui CachyOS ha spedito quel
+   kernel, non la testa di oggi, che può essere della serie dopo), i tag di
+   `NVIDIA/open-gpu-kernel-modules` e l'indice di download NVIDIA (dentro il
+   ramo pinnato, 610 e 580: un cambio di ramo è una PR umana), e il registro
+   Fedora per il digest dell'immagine base dei tre Containerfile. Coppia kernel
+   come in sezione 2; senza coppia il kernel resta dov'è e una nota nel corpo
+   della PR dice fin dove arrivano Fedora e CachyOS. Se nulla è cambiato esce;
+   altrimenti riscrive `pins.env`, i `FROM` e la tabella dei pin di `KERNEL.md`
+   e li passa come artefatto. Una PR di bump aperta alla volta (etichetta
+   `kernel-bump`).
+2. **prep** (runner self-hosted, dove il builder e la cache già esistono): nel
+   builder, `build.sh --stage manifest` e `nvidia.sh manifest` scaricano i
+   sorgenti dei pin nuovi e riscrivono i due manifesti degli hash (il `.run`
+   legacy è confrontato con l'hash che NVIDIA pubblica accanto); poi `build.sh
+   --stage prep`: firme PGP con le chiavi vendorizzate (una rotazione di chiave
+   è un prep rosso, mai un'accettazione silenziosa), patch applicate,
+   derivazione del config e gate di `kernel-local`. L'esito e le opzioni
+   derivate (`listnewconfig` con i valori CachyOS) vanno nel corpo della PR,
+   verde o rosso.
+3. **pr** (runner GitHub-hosted, con il PAT `KERNEL_BUMP_TOKEN`: le PR aperte
+   con il `GITHUB_TOKEN` non fanno partire i check): branch `bump/kernel-<data>`,
+   un commit con `pins.env`, i manifesti, i Containerfile e `KERNEL.md`, PR
+   verso il branch da cui il bot è partito, con nel corpo la tabella prima/dopo
+   dei pin, le note, l'esito di prep e le opzioni derivate; poi `gh pr merge
+   --auto --squash`.
 
-Il bot aggiorna anche il digest dell'immagine base del Containerfile e verifica
-che le chiavi PGP pinnate firmino ancora le release (una rotazione di chiave è
-una PR rossa, mai un'accettazione silenziosa). Il cambio di release Fedora della
-rootfs (43→44) e il cambio di `KERNEL_CHANNEL` restano PR umane.
+Il gate della PR è il check `Kernel gate` di `kernel-build.yml` (sezione 7),
+l'unico richiesto dalla protezione del branch. Con il check verde la PR va in
+merge da sola; rossa resta aperta con il log del gate fallito. È l'unico momento
+in cui serve una persona, e sa già dove guardare. Al merge il push fa partire
+Kernel Build, che pubblica il kernel e alla fine avvia `nvidia-kmod.yml` per
+firma, boot e pubblicazione dei moduli. Il cambio di release Fedora della rootfs
+(43→44) e il cambio di `KERNEL_CHANNEL` restano PR umane.
 
 ## 9. Kernel guest per le MicroVM
 
@@ -447,3 +477,5 @@ l'implementazione scopre che un gancio Fedora non è come descritto.
    di Fedora e di CachyOS: il delta più corto da mantenere. ThinLTO tornerà quando
    upstream toglierà il vincolo; `RANDSTRUCT` resta escluso per costruzione.
 4. Debuginfo pubblicato come OCI separato, retention di due versioni.
+
+| `bump.py`                | il bot di bump (sezione 8): pin nuovi da Bodhi, CachyOS, NVIDIA e registro; riscrive `pins.env`, i `FROM` e `KERNEL.md` |
