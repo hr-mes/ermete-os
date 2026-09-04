@@ -53,6 +53,7 @@ Directory `forge/specs/ermete-kernel/` dopo il blocco:
 | `patches.list`           | patch di `CachyOS/kernel-patches` da accodare dopo la base, in ordine                                                                                                               |
 | `fedora-wins.list`       | percorsi in cui un conflitto del merge tra base CachyOS e patch Red Hat si risolve con l'albero Fedora; ogni altro conflitto ferma la build                                        |
 | `cmdline`                | riga di comando del kernel, firmata nella UKI (sezione 6)                                                                                                                           |
+| `boot.sh`, `boot/`       | la boot matrix (sezione 7, gate 3): ambiente QEMU/OVMF/shim pinnato come il builder, PID 1 dell'initramfs di prova con le asserzioni                                              |
 | `builder/Containerfile`  | ambiente Fedora 43 (esiste già), base pinnata per digest                                                                                                                            |
 | `build.sh`               | l'intera build, riproducibile in locale e in CI                                                                                                                                     |
 | `microvm/`               | config e spec del kernel guest (sezione 9)                                                                                                                                          |
@@ -256,12 +257,20 @@ Ogni PR di bump e ogni cambio in `forge/specs/ermete-kernel/**` passa:
 
 1. **build** sul runner self-hosted (60 min misurati su 16 core con ThinLTO);
 2. **config**: `process_configs.sh` con controlli accesi;
-3. **boot matrix** su runner GitHub-hosted con KVM, QEMU:
-   `-cpu Nehalem` (prova che nessuna istruzione oltre il baseline è entrata),
-   `-cpu host`, UEFI OVMF con Secure Boot e MOK arruolata sulla UKI firmata,
-   BIOS legacy. Asserzioni: `uname -r` atteso, `/sys/kernel/btf/vmlinux`,
-   `bpftool feature`, `/sys/kernel/sched_ext`, lista misure IMA, stato lockdown,
-   `tcp_congestion_control=bbr`, `dmesg` senza `BUG`/`WARNING`/`taint`;
+3. **boot matrix** (job `boot`, runner GitHub-hosted `ubuntu-24.04` con KVM,
+   `boot.sh` nell'immagine `boot/Containerfile`): firmware {SeaBIOS, OVMF con
+   Secure Boot} × CPU {`-cpu Nehalem`, `-cpu host`}. Nehalem prova che nessuna
+   istruzione oltre il baseline è entrata. Il caso UEFI passa dallo shim Fedora
+   firmato Microsoft a una UKI di prova (vmlinuz, initramfs di prova, `cmdline`)
+   firmata con una MOK effimera arruolata nel varstore OVMF con `virt-fw-vars`:
+   la catena della sezione 6 con una chiave usa e getta al posto della MOK del
+   progetto, così il gate gira anche sulle PR, senza segreti. Asserzioni
+   (`boot/init`, sulla seriale): `uname -r` atteso, `/sys/kernel/btf/vmlinux`,
+   `bpftool feature probe`, `/sys/kernel/sched_ext`, lista misure IMA (con
+   `ima_policy=tcb` solo nella riga di comando di prova), lockdown `integrity`,
+   `tcp_congestion_control=bbr3`, `tainted=0`, `dmesg` senza `BUG:`, `WARNING:`,
+   `Oops`; in UEFI anche `SecureBoot=1` e `MokListRT` presente. `publish`
+   dipende da `boot`: senza matrice verde non si pubblica;
 4. **kmod NVIDIA**: `nvidia-open` (610) e ramo legacy 580 compilano contro
    `kernel-devel` e si firmano con la MOK;
 5. **benchmark di tendenza** (non bloccante): hackbench, schbench, fio null,

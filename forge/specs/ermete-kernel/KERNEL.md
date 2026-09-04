@@ -13,8 +13,11 @@ directory e come si usa.
 | `kernel-local` | delta Kconfig di Ermete sul config x86_64 di Fedora |
 | `patches.list` | patch di CachyOS/kernel-patches applicate sopra la base |
 | `fedora-wins.list` | percorsi in cui un conflitto tra base CachyOS e patch Red Hat si risolve con l'albero Fedora |
+| `cmdline` | la riga di comando del kernel che la UKI firma (spec, sezione 6) |
 | `build.sh` | dai pin agli RPM: stadio `prep` (sorgenti, patch, gate del config) e `build` |
 | `builder/Containerfile` | l'ambiente: Fedora pinnata per digest piu' la toolchain LLVM |
+| `boot.sh` | la boot matrix: dal kernel-core a quattro avvii QEMU con le asserzioni della spec |
+| `boot/Containerfile`, `boot/init` | l'ambiente della boot matrix (qemu, OVMF, shim, ukify) e il PID 1 dell'initramfs di prova |
 
 ## Uso locale
 
@@ -30,6 +33,20 @@ podman run --rm -v "$PWD:/forge" -v "$HOME/.cache/ermete-kernel:/var/cache/ermet
 completo delle opzioni derivate; `build` produce gli RPM (un'ora su 16 core) in
 `out/kernel`, `out/devel`, `out/debuginfo`, con l'NVR in `out/nvr`. La CI e'
 `.github/workflows/kernel-build.yml`.
+
+## Boot matrix
+
+```sh
+podman build -t localhost/ermete-kernel-boot forge/specs/ermete-kernel/boot
+podman run --rm --device /dev/kvm -v "$PWD:/forge" -w /forge localhost/ermete-kernel-boot bash forge/specs/ermete-kernel/boot.sh --rpms /forge/out --out /forge/boot-out
+```
+
+Quattro avvii, firmware {SeaBIOS, OVMF con Secure Boot via shim} x CPU {Nehalem,
+host}, ognuno con le asserzioni di `boot/init` (uname, BTF, bpftool, sched_ext, IMA,
+lockdown, BBR v3, taint, dmesg; in UEFI anche Secure Boot acceso e MOK arruolata).
+Serve solo il kernel-core: `--rpms` accetta l'`out/` di build.sh o una directory con
+il solo RPM. Senza `/dev/kvm` (WSL, podman machine) aggiungi `--accel tcg`: minuti
+invece di secondi, e `host` diventa `max`. Log seriali e riepilogo in `boot-out/`.
 
 ## Pubblicazione
 

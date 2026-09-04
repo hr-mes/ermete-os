@@ -1,0 +1,16 @@
+# Ermete OS: ambiente della boot matrix del kernel (docs/architecture/doc_kernel_build.md,
+# sezione 7, gate 3). Stessa base pinnata del builder, ma qui non si compila nulla:
+# boot.sh estrae vmlinuz dal kernel-core, costruisce un initramfs di prova e una UKI
+# firmata con una MOK effimera, arruola la MOK nel varstore OVMF e avvia QEMU.
+FROM registry.fedoraproject.org/fedora:43@sha256:31658c38c98ab8233128b8144e597fc850185c99b5b760d7ba1b15259f02ed2a
+
+RUN printf 'install_weak_deps=False\nkeepcache=False\n' >> /etc/dnf/dnf.conf
+
+# qemu con KVM o TCG e SeaBIOS; OVMF con Secure Boot; lo shim Fedora firmato Microsoft;
+# ukify e lo stub systemd per la UKI, sbsign per firmarla; virt-firmware per scrivere
+# la MOK nel varstore; busybox (statico) e bpftool per l'initramfs di prova.
+RUN dnf -y install \
+      qemu-system-x86-core edk2-ovmf shim-x64 \
+      systemd-ukify systemd-boot-unsigned sbsigntools python3-virt-firmware \
+      busybox bpftool cpio zstd openssl \
+    && dnf clean all

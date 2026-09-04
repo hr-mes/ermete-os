@@ -1,0 +1,67 @@
+#!/bin/sh
+# PID 1 dell'initramfs di prova della boot matrix (docs/architecture/doc_kernel_build.md,
+# sezione 7, gate 3). Nessun rootfs: monta gli pseudo-filesystem, verifica le asserzioni,
+# scrive sulla seriale un verdetto `K3 RESULT ok|fail` che boot.sh legge, e spegne la
+# macchina virtuale. I parametri k3.* li mette boot.sh nella riga di comando di prova.
+export PATH=/usr/sbin:/usr/bin:/sbin:/bin
+mount -t devtmpfs devtmpfs /dev
+exec > /dev/console 2>&1 < /dev/console
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t securityfs securityfs /sys/kernel/security
+[ -d /sys/firmware/efi/efivars ] && mount -t efivarfs efivarfs /sys/firmware/efi/efivars
+
+uname_expected='' sb=''
+# shellcheck disable=SC2013 # parole della riga di comando, non righe
+for w in $(cat /proc/cmdline); do
+  case $w in
+    k3.uname=*) uname_expected=${w#*=} ;;
+    k3.sb=1) sb=1 ;;
+  esac
+done
+
+fail=''
+check() { # check NOME COMANDO...
+  name=$1; shift
+  if "$@" > /tmp/check.out 2>&1; then
+    echo "K3 ok   $name"
+  else
+    echo "K3 FAIL $name"; sed 's/^/        /' /tmp/check.out; fail="$fail $name"
+  fi
+}
+secureboot() { # l'efivar SecureBoot: 4 byte di attributi, poi il valore (01 = acceso).
+  # Letto per intero: su efivarfs non si puo' fare seek.
+  v=$(hexdump -v -e '1/1 "%02x "' /sys/firmware/efi/efivars/SecureBoot-8be4df61-93ca-11d2-aa0d-00e098032b8c | awk '{print $5}')
+  echo "SecureBoot=$v"; [ "$v" = 01 ]
+}
+bbr() { # il default deve essere il BBR v3 di CachyOS, che si registra come "bbr3"
+  v=$(cat /proc/sys/net/ipv4/tcp_congestion_control)
+  echo "attuale: $v; disponibili: $(cat /proc/sys/net/ipv4/tcp_available_congestion_control)"; [ "$v" = bbr3 ]
+}
+ima() { # i file di securityfs hanno sempre dimensione 0: si guarda il contenuto
+  grep -q . /sys/kernel/security/ima/ascii_runtime_measurements
+}
+
+echo "K3 uname: $(uname -a)"
+echo "K3 cmdline: $(cat /proc/cmdline)"
+check uname       test "$(uname -r)" = "$uname_expected"
+check btf         test -s /sys/kernel/btf/vmlinux
+check bpftool     sh -c 'bpftool feature probe kernel | grep -q "^bpf() syscall is available"'
+check sched_ext   test -d /sys/kernel/sched_ext
+check ima         ima
+check lockdown    grep -q '\[integrity\]' /sys/kernel/security/lockdown
+check bbr         bbr
+check taint       test "$(cat /proc/sys/kernel/tainted)" = 0
+check dmesg       sh -c '! dmesg | grep -E "BUG:|WARNING:|Oops|Call Trace"'
+if [ "$sb" ]; then
+  check secureboot secureboot
+  check moklist    test -e /sys/firmware/efi/efivars/MokListRT-605dab50-e046-4300-abb6-3dd810dd8b23
+fi
+
+echo "K3 dmesg begin"; dmesg; echo "K3 dmesg end"
+if [ -z "$fail" ]; then echo "K3 RESULT ok"; else echo "K3 RESULT fail:$fail"; fi
+sync
+# Spegne la VM: QEMU esce. Se la chiamata ACPI non arriva, il sysrq `o` la forza.
+poweroff -f
+sleep 5
+echo o > /proc/sysrq-trigger

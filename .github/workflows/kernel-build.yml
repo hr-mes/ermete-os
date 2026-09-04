@@ -2,10 +2,12 @@ name: Kernel Build
 
 # Il kernel Ermete (forge/specs/ermete-kernel, docs/architecture/doc_kernel_build.md).
 # build: sul runner self-hosted, `prep` (sorgenti, patch, gate del config) in pochi
-# minuti o `build` (RPM) in un'ora. publish: su runner GitHub, pubblica gli RPM come
-# tre OCI (kernel, devel, debuginfo) firmati con cosign keyless, con SBOM, provenance
-# SLSA e attestazione dei pin; `:latest` si muove solo su main. Una PR costruisce e
-# non pubblica: e' il gate che il bot di bump (fase K5) usera' per il merge.
+# minuti o `build` (RPM) in un'ora. boot: su runner GitHub con KVM, la boot matrix
+# (SeaBIOS e OVMF con Secure Boot, CPU Nehalem e host) con le asserzioni della spec.
+# publish: su runner GitHub, pubblica gli RPM come tre OCI (kernel, devel, debuginfo)
+# firmati con cosign keyless, con SBOM, provenance SLSA e attestazione dei pin;
+# `:latest` si muove solo su main. Una PR costruisce e avvia ma non pubblica: e' il
+# gate che il bot di bump (fase K5) usera' per il merge.
 
 on:
   workflow_dispatch:
@@ -68,8 +70,66 @@ jobs:
           path: out/
           if-no-files-found: error
 
-  publish:
+      - name: Artifact for the boot matrix
+        # Al job boot serve solo vmlinuz: il kernel-core, 21 MB invece di 1.3 GB.
+        if: ${{ env.STAGE == 'build' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: kernel-boot
+          path: out/kernel/kernel-core-*.rpm
+          if-no-files-found: error
+
+  boot:
     needs: build
+    if: ${{ (inputs.stage || 'build') == 'build' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: kernel-boot
+          path: out
+
+      - name: Enable KVM for the runner user
+        # La regola udev che GitHub documenta per la virtualizzazione accelerata sui
+        # runner Linux: /dev/kvm nasce 0660 root:kvm e il runner non e' nel gruppo.
+        run: |
+          set -euo pipefail
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          test -w /dev/kvm
+
+      - name: Build the boot-matrix image
+        env:
+          BUILDAH_ISOLATION: chroot
+        run: podman build -t localhost/ermete-kernel-boot forge/specs/ermete-kernel/boot
+
+      - name: Run boot.sh
+        # Quattro avvii: {SeaBIOS, OVMF+Secure Boot via shim} x {Nehalem, host}, ognuno
+        # deve chiudere con `K3 RESULT ok` sulla seriale (asserzioni in boot/init).
+        run: |
+          set -euo pipefail
+          mkdir -p boot-out
+          podman run --rm --device /dev/kvm -v "$GITHUB_WORKSPACE:/forge" -w /forge localhost/ermete-kernel-boot bash forge/specs/ermete-kernel/boot.sh --rpms /forge/out --out /forge/boot-out
+
+      - name: Summary
+        if: ${{ always() }}
+        run: |
+          set -euo pipefail
+          if [[ -f boot-out/summary.md ]]; then cat boot-out/summary.md >> "$GITHUB_STEP_SUMMARY"; fi
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: ${{ always() }}
+        with:
+          name: kernel-boot-logs
+          path: boot-out/
+          if-no-files-found: error
+
+  publish:
+    needs: [build, boot]
     if: ${{ github.event_name != 'pull_request' && (inputs.stage || 'build') == 'build' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 60
