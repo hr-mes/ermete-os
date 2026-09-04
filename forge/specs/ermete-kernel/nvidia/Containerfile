@@ -1,0 +1,14 @@
+# Ermete OS: ambiente dei moduli kernel NVIDIA (docs/architecture/doc_kernel_build.md,
+# sezione 10, fase K4). Stessa base pinnata del builder del kernel, ma solo cio' che
+# serve a nvidia.sh: la toolchain LLVM con cui e' compilato il kernel (kCFI), Kbuild
+# dall'albero kernel-devel estratto dal RPM, kmod per modinfo, openssl e sign-file per
+# la firma. Niente rust, pahole o koji: e' un'immagine piu' piccola e piu' veloce del
+# builder, e non tocca il suo Containerfile (che e' un input del riuso del kernel).
+FROM registry.fedoraproject.org/fedora:43@sha256:31658c38c98ab8233128b8144e597fc850185c99b5b760d7ba1b15259f02ed2a
+
+RUN printf 'install_weak_deps=False\nkeepcache=False\n' >> /etc/dnf/dnf.conf
+
+RUN dnf -y install \
+      clang lld llvm make gcc elfutils-libelf-devel \
+      rpm cpio curl git kmod openssl findutils diffutils \
+    && dnf clean all

@@ -22,6 +22,8 @@ directory e come si usa.
 | `builder/Containerfile` | l'ambiente: Fedora pinnata per digest piu' la toolchain LLVM |
 | `boot.sh` | la boot matrix: dal kernel-core a quattro avvii QEMU con le asserzioni della spec |
 | `boot/Containerfile`, `boot/init` | l'ambiente della boot matrix (qemu, OVMF, shim, ukify) e il PID 1 dell'initramfs di prova |
+| `nvidia.sh` | i moduli kernel NVIDIA, rami `open` (610) e `legacy` (580), contro il kernel-devel: `build` e `sign` |
+| `nvidia/Containerfile` | l'ambiente di nvidia.sh: la toolchain LLVM del kernel, kmod, openssl |
 
 ## Uso locale
 
@@ -54,6 +56,21 @@ Serve solo il kernel-core: `--rpms` accetta l'`out/` di build.sh o una directory
 il solo RPM. Senza `/dev/kvm` (WSL, podman machine) aggiungi `--accel tcg`: minuti
 invece di secondi, e `host` diventa `max`. Log seriali e riepilogo in `boot-out/`.
 
+## Moduli NVIDIA
+
+```sh
+podman build -t localhost/ermete-kernel-nvidia forge/specs/ermete-kernel/nvidia
+podman run --rm -v "$PWD:/forge" -v "$HOME/.cache/ermete-kernel:/var/cache/ermete-kernel" \n  -w /forge localhost/ermete-kernel-nvidia \n  bash forge/specs/ermete-kernel/nvidia.sh build --driver open --devel /forge/out/devel --out /forge/nvidia-out
+```
+
+`--driver open` (610, GitHub al commit pinnato) o `legacy` (580, il `.run` nel
+manifest degli hash); `--devel` e' una directory con il `kernel-devel-*.rpm` (l'`out/`
+di build.sh, o l'immagine `ermete-os-kernel-devel:<nvr>`). I `.ko` finiscono in
+`nvidia-out/<driver>/` con il vermagic del kernel e i preamboli kCFI, senza firma:
+`nvidia.sh sign --key K --cert C --devel DIR --out DIR` li firma con sign-file del
+kernel-devel, in locale con una chiave effimera, in CI con la MOK di progetto
+(workflow `.github/workflows/nvidia-kmod.yml`).
+
 ## Pubblicazione
 
 Ogni push su `main` o `iso-v0` che tocca questa directory costruisce e pubblica tre
@@ -64,6 +81,7 @@ OCI con i soli RPM dentro, tag `<nvr>` (es. `7.1.8-100.ermete.fc43`):
 | `ghcr.io/hr-mes/ermete-os-kernel` | kernel, core, modules, modules-core/extra/internal, uki-virt |
 | `ghcr.io/hr-mes/ermete-os-kernel-devel` | kernel-devel, per i kmod esterni (NVIDIA, fase K4) |
 | `ghcr.io/hr-mes/ermete-os-kernel-debuginfo` | debuginfo, restano le due versioni piu' recenti |
+| `ghcr.io/hr-mes/ermete-os-nvidia` | i `.ko` NVIDIA firmati, tag `<nvr>-open` e `<nvr>-legacy` (workflow `nvidia-kmod.yml`) |
 
 Ognuna e' firmata con cosign keyless dall'identita' del workflow, porta un SBOM SPDX
 e un'attestazione custom con i pin (`pins.json`: pins.env, hash del manifest, del

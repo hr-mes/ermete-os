@@ -54,3 +54,4 @@ prune() { # prune PACKAGE KEEP
 prune ermete-os-kernel 1000000
 prune ermete-os-kernel-devel 1000000
 prune ermete-os-kernel-debuginfo 2
+prune ermete-os-nvidia 1000000

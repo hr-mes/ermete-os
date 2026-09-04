@@ -279,8 +279,11 @@ Ogni PR di bump e ogni cambio in `forge/specs/ermete-kernel/**` passa:
    `WARNING: CPU:`, `Oops:`, `Call Trace:`; gli avvisi hw-vuln come SRSO non lo
    sono); in UEFI anche `SecureBoot=1` e `MokListRT` presente. `publish`
    dipende da `boot`: senza matrice verde non si pubblica;
-4. **kmod NVIDIA**: `nvidia-open` (610) e ramo legacy 580 compilano contro
-   `kernel-devel` e si firmano con la MOK;
+4. **kmod NVIDIA** (`nvidia-kmod.yml`, sezione 10): `nvidia-open` (610) e ramo
+   legacy 580 compilano con `nvidia.sh` contro il `kernel-devel` pubblicato per
+   l'NVR dei pin, con la toolchain del kernel; ogni `.ko` deve portare il
+   vermagic del kernel e i tipi kCFI; il job `sign` li firma con la MOK del
+   progetto e `publish` verifica firma e attestazione con cosign;
 5. **benchmark di tendenza** (non bloccante): hackbench, schbench, fio null,
    netperf loopback per cinque minuti, risultati come artefatto e grafico nel
    summary. È il numero che decide `-O3` e ogni futura opzione;
@@ -339,12 +342,58 @@ kernel:
 | Livello         | GPU                              | Meccanismo                                                                                                                                                         |
 | --------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | default         | tutte                            | `nouveau` in-tree, firmware GSP; NVK in Mesa                                                                                                                       |
-| `nvidia-open`   | Turing 2018+                     | moduli aperti 610.x compilati nel container Fedora contro `kernel-devel`, clang e kCFI coerenti, firmati MOK; le patch `misc/nvidia/*` di CachyOS si applicano qui |
-| `nvidia-legacy` | Maxwell, Pascal, Volta 2014–2018 | ramo 580, stesso meccanismo                                                                                                                                        |
+| `nvidia-open`   | Turing 2018+                     | moduli aperti 610.x compilati nel container Fedora contro `kernel-devel`, clang e kCFI coerenti, firmati MOK                                                       |
+| `nvidia-legacy` | Maxwell, Pascal, Volta 2014–2018 | ramo 580, stesso meccanismo; la parte RM è il blob gcc di NVIDIA, senza kCFI né return thunk: rischio noto, verificabile solo su hardware                         |
 
 Pubblicazione `ermete-os-nvidia:<kernel-nvr>-<driver>`; le varianti
 dell'immagine (`-nvidia`, `-nvidia-legacy`) le consumano. Le versioni del driver
-sono pin in `pins.env`, alzate dal bot solo se il kmod compila.
+sono pin in `pins.env` (`NVIDIA_OPEN_VERSION` e il commit del tag, che è
+annotato e può muoversi; `NVIDIA_LEGACY_VERSION`, con il `.run` nel manifest
+degli hash), alzate dal bot solo se il kmod compila. `build-inputs.py` li
+esclude: non cambiano gli RPM del kernel e non invalidano il riuso.
+
+**Implementazione (K4).** `nvidia.sh build --driver open|legacy`, nell'immagine
+`nvidia/Containerfile` (la base pinnata del builder con la sola toolchain LLVM,
+kmod e openssl), estrae l'albero `kernel-devel` dal RPM e compila con Kbuild
+(`SYSSRC`, `CC=clang LLVM=1`; `IGNORE_CC_MISMATCH` perché il conftest NVIDIA
+pretende la stessa stringa di versione del compilatore, mentre gli hash kCFI
+dipendono dai tipi, non dalla versione). Il codice che passa da Kbuild riceve
+da solo i flag del kernel. La parte RM dei moduli aperti (`nv-kernel.o`,
+`nv-modeset-kernel.o`), che NVIDIA compila fuori da Kbuild con i propri
+Makefile, li riceve da `EXTRA_CFLAGS`, letti da `.config` nella grafia di
+clang: kCFI, retpoline, return thunk, SLS, IBT. Non è un dettaglio: i Makefile
+di NVIDIA provano solo le grafie gcc di retpoline e return thunk, che clang
+scarta in silenzio, e senza quei flag objtool conta oltre sedicimila chiamate
+indirette e `ret` non mitigati nel solo `nvidia.o`. Gate per ogni `.ko`: il
+vermagic del kernel e i preamboli `__cfi_`; per il ramo aperto objtool non
+deve trovare `ret` nudi né chiamate o salti indiretti senza retpoline in una
+funzione C, che è come si manifesta un flag mancante. Restano circa
+cinquecento avvisi, contati e non bloccanti perché sono proprietà del codice
+NVIDIA e non dei flag: clang non estende kCFI alle chiamate virtuali né i
+return thunk ai thunk del C++ di DisplayPort in `nvidia-modeset.o`, e il RM
+ha code di funzione irraggiungibili. `nvidia.sh sign` firma con `scripts/sign-file` del
+kernel-devel e l'hash di `CONFIG_MODULE_SIG_HASH`, e rilegge il firmatario con
+`modinfo`. Il workflow `nvidia-kmod.yml`: `build` (matrice dei due rami, runner
+self-hosted, kernel-devel dall'immagine pubblicata per l'NVR di `nvr.sh`),
+`sign` (runner GitHub, environment `signing`: vede solo i `.ko` e la chiave,
+montata in sola lettura per la durata del comando), `publish` (un'immagine
+`scratch` per ramo con i `.ko`, `version` e `kver`; cosign, SBOM dei moduli,
+attestazione dei pin `NVIDIA_*`, retention, gate di verifica). Le patch
+`misc/nvidia/*` di CachyOS al commit pinnato non entrano: la prima aggiunge
+solo `-mharden-sls=all` alla parte modeset (qui arriva da `EXTRA_CFLAGS`),
+l'ultima è un hack sul Makefile che non serve, le tre in mezzo sono correzioni
+DSC/DisplayPort: candidate a un `nvidia/patches.list` se servono, non default.
+
+**Il ramo legacy e il kernel 7.1.** Con `CONFIG_CFI=y`, il 7.1 rifiuta in
+modpost ogni modulo non GPL, anche uno vuoto che include solo `<linux/mm.h>`:
+`KCFI_REFERENCE(__clear_pages_unrolled)` in `asm/page_64.h` mette in ogni
+unità di compilazione un riferimento (sezione `.discard.addressable`) al
+simbolo, esportato GPL, e modpost lo legge prima che il linker scarti la
+sezione. Il riferimento serve solo a vmlinux, per il preambolo kCFI di
+`SYM_TYPED_FUNC_START`; in un modulo non risolve nulla. Il difetto è anche in
+mainline alla data: `patches/0001-compiler.h-keep-KCFI_REFERENCE-out-of-modules.patch`
+lascia `KCFI_REFERENCE` a vmlinux, come già per decompressore e vDSO, ed è
+candidata all'upstream.
 
 ## 11. Fuori dal kernel
 

@@ -1,0 +1,253 @@
+name: NVIDIA kmod
+
+# I moduli kernel NVIDIA per il kernel Ermete (forge/specs/ermete-kernel/nvidia.sh,
+# docs/architecture/doc_kernel_build.md, sezione 10). build: sul runner self-hosted, i
+# due rami (open 610, legacy 580) contro il kernel-devel pubblicato per l'NVR dei pin,
+# con la toolchain del kernel. sign: su runner GitHub nell'environment `signing`, un job
+# che vede solo i .ko e la MOK di progetto. publish: OCI ermete-os-nvidia:<nvr>-<ramo>
+# con cosign, SBOM, attestazione dei pin e retention. Parte dopo un Kernel Build verde
+# (workflow_run vale solo con il file sul branch di default), a mano, o su push e PR
+# che toccano nvidia.sh, il suo ambiente o i pin. Una PR costruisce e non firma.
+
+on:
+  workflow_run:
+    workflows: [Kernel Build]
+    types: [completed]
+    branches: [main, iso-v0]
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - forge/specs/ermete-kernel/nvidia.sh
+      - forge/specs/ermete-kernel/nvidia/**
+      - forge/specs/ermete-kernel/nvr.sh
+      - forge/specs/ermete-kernel/keys/mok/**
+      - forge/specs/ermete-kernel/pins.env
+      - forge/specs/ermete-kernel/SOURCES/sources.sha256
+      - .github/workflows/nvidia-kmod.yml
+  push:
+    branches: [main, iso-v0]
+    paths:
+      - forge/specs/ermete-kernel/nvidia.sh
+      - forge/specs/ermete-kernel/nvidia/**
+      - forge/specs/ermete-kernel/nvr.sh
+      - forge/specs/ermete-kernel/keys/mok/**
+      - forge/specs/ermete-kernel/pins.env
+      - forge/specs/ermete-kernel/SOURCES/sources.sha256
+      - .github/workflows/nvidia-kmod.yml
+
+concurrency:
+  group: nvidia-${{ github.event.workflow_run.head_branch || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  REF: ${{ github.event.workflow_run.head_sha || github.sha }}
+  KERNEL_IMAGE: ghcr.io/${{ github.repository_owner }}/ermete-os-kernel
+  IMAGE: ghcr.io/${{ github.repository_owner }}/ermete-os-nvidia
+
+jobs:
+  build:
+    # Dopo un Kernel Build fallito non c'e' nulla da compilare.
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: self-hosted
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        driver: [open, legacy]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ env.REF }}
+
+      - name: Build the nvidia image
+        env:
+          BUILDAH_ISOLATION: chroot
+        run: podman build -t localhost/ermete-kernel-nvidia forge/specs/ermete-kernel/nvidia
+
+      - name: Kernel-devel from the published image
+        # L'NVR viene dai pin (nvr.sh): il kernel per cui si compila e' quello pubblicato.
+        run: |
+          set -euo pipefail
+          nvr=$(bash forge/specs/ermete-kernel/nvr.sh)
+          ctr=$(podman create "${KERNEL_IMAGE}-devel:${nvr}" /kernel-devel)
+          mkdir -p devel && podman cp "${ctr}:/." devel/ && podman rm "$ctr" > /dev/null
+          ls devel
+
+      - name: Run nvidia.sh build
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.cache/ermete-kernel" out
+          podman run --rm \
+            -v "$GITHUB_WORKSPACE:/forge" \
+            -v "$HOME/.cache/ermete-kernel:/var/cache/ermete-kernel" \
+            -w /forge localhost/ermete-kernel-nvidia \
+            bash forge/specs/ermete-kernel/nvidia.sh build --driver "${{ matrix.driver }}" --devel /forge/devel --out /forge/out
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nvidia-${{ matrix.driver }}-unsigned
+          path: out/
+          if-no-files-found: error
+
+  sign:
+    needs: build
+    # Le PR non entrano nell'environment: costruiscono e basta.
+    if: ${{ github.event_name != 'pull_request' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: signing
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ env.REF }}
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: nvidia-*-unsigned
+          path: out
+          merge-multiple: true
+
+      - name: Build the nvidia image
+        env:
+          BUILDAH_ISOLATION: chroot
+        run: podman build -t localhost/ermete-kernel-nvidia forge/specs/ermete-kernel/nvidia
+
+      - name: Kernel-devel from the published image
+        # Solo per scripts/sign-file, che nvidia.sh estrae dal RPM.
+        run: |
+          set -euo pipefail
+          nvr=$(bash forge/specs/ermete-kernel/nvr.sh)
+          ctr=$(podman create "${KERNEL_IMAGE}-devel:${nvr}" /kernel-devel)
+          mkdir -p devel && podman cp "${ctr}:/." devel/ && podman rm "$ctr" > /dev/null
+
+      - name: Sign with the project MOK
+        # La chiave vive in un file 0600 nel tmp del runner per la durata del comando,
+        # montata in sola lettura nel container; il certificato pubblico e' nel repo.
+        env:
+          MOK_PRIVATE_KEY: ${{ secrets.MOK_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          printf '%s\n' "$MOK_PRIVATE_KEY" > "$RUNNER_TEMP/mok.key"
+          trap 'rm -f "$RUNNER_TEMP/mok.key"' EXIT
+          podman run --rm \
+            -v "$GITHUB_WORKSPACE:/forge" \
+            -v "$RUNNER_TEMP/mok.key:/run/mok.key:ro" \
+            -w /forge localhost/ermete-kernel-nvidia \
+            bash forge/specs/ermete-kernel/nvidia.sh sign --key /run/mok.key \
+              --cert forge/specs/ermete-kernel/keys/mok/ermete-mok.pem --devel /forge/devel --out /forge/out
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nvidia-signed
+          path: out/
+          if-no-files-found: error
+
+  publish:
+    needs: sign
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ env.REF }}
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: nvidia-signed
+          path: out
+
+      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6
+
+      - uses: anchore/sbom-action/download-syft@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26
+
+      - name: Publish one OCI image per branch
+        id: publish
+        env:
+          BUILDAH_ISOLATION: chroot
+        run: |
+          set -euo pipefail
+          nvr=$(bash forge/specs/ermete-kernel/nvr.sh)
+          echo "${GH_TOKEN}" | buildah login -u "${GITHUB_ACTOR}" --password-stdin ghcr.io
+          mkdir -p digests
+          for driver in open legacy; do
+            version=$(cat "out/${driver}/version")
+            [[ $(cat "out/${driver}/kver") == "${nvr}.x86_64" ]] || { echo "kver dei moduli ${driver} diverso da ${nvr}"; exit 1; }
+            ctr=$(buildah from scratch)
+            buildah copy "$ctr" "out/${driver}/" /
+            buildah config \
+              --label org.opencontainers.image.title="ermete-os-nvidia ${driver}" \
+              --label org.opencontainers.image.version="${nvr}-${driver}-${version}" \
+              --label org.opencontainers.image.revision="${REF}" \
+              --label org.opencontainers.image.source="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" \
+              "$ctr"
+            buildah commit --omit-timestamp "$ctr" "${IMAGE}:${nvr}-${driver}"
+            buildah push --digestfile "digests/${driver}" "${IMAGE}:${nvr}-${driver}"
+            echo "${IMAGE}:${nvr}-${driver} @$(cat "digests/${driver}")"
+          done
+          echo "nvr=${nvr}" >> "$GITHUB_OUTPUT"
+
+      - name: SBOM, sign, attest
+        # cosign keyless; la SBOM viene dal cataloger dei moduli kernel di syft; il
+        # predicato custom lega l'immagine ai pin NVIDIA e al kernel.
+        run: |
+          set -euo pipefail
+          echo "${GH_TOKEN}" | cosign login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
+          mkdir -p sbom
+          for driver in open legacy; do
+            ref="${IMAGE}@$(cat "digests/${driver}")"
+            python3 - "$driver" > "pins-${driver}.json" <<'PY'
+          import json, pathlib, re, sys
+          k = pathlib.Path("forge/specs/ermete-kernel")
+          pins = dict(re.findall(r"^(NVIDIA_\w+)=(.*)$", (k / "pins.env").read_text(), re.M))
+          driver = sys.argv[1]
+          print(json.dumps({"driver": driver, "version": (pathlib.Path("out") / driver / "version").read_text().strip(),
+                            "kernel": (pathlib.Path("out") / driver / "kver").read_text().strip(), "pins": pins}, indent=2))
+          PY
+            syft scan "registry:${ref}" -o "spdx-json=sbom/${driver}.spdx.json"
+            jq -e '[.packages[] | select(.name | startswith("nvidia"))] | length > 0' "sbom/${driver}.spdx.json" > /dev/null \
+              || { echo "SBOM di ${driver} senza moduli nvidia"; exit 1; }
+            cosign sign --yes "$ref"
+            cosign attest --yes --type spdxjson --predicate "sbom/${driver}.spdx.json" "$ref"
+            cosign attest --yes --type custom --predicate "pins-${driver}.json" "$ref"
+          done
+        env:
+          SYFT_REGISTRY_AUTH_AUTHORITY: ghcr.io
+          SYFT_REGISTRY_AUTH_USERNAME: ${{ github.actor }}
+          SYFT_REGISTRY_AUTH_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Retention (retention.sh)
+        run: bash forge/specs/ermete-kernel/retention.sh
+
+      - name: Verify (gate K4)
+        run: |
+          set -euo pipefail
+          for driver in open legacy; do
+            ref="${IMAGE}@$(cat "digests/${driver}")"
+            cosign verify \
+              --certificate-identity-regexp "^${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/" \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com "$ref" > /dev/null
+            cosign verify-attestation --type custom \
+              --certificate-identity-regexp "^${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/" \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com "$ref" > /dev/null
+            echo "verificato: $ref"
+          done
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nvidia-attestations
+          path: |
+            sbom/
+            pins-*.json
+            digests/
+          if-no-files-found: error

@@ -18,7 +18,12 @@ def sha(name):
     return hashlib.sha256((k / name).read_bytes()).hexdigest()
 
 
-pins = dict(re.findall(r"^(\w+)=(.*)$", (k / "pins.env").read_text(), re.M))
+# I pin NVIDIA_* riguardano i moduli esterni (nvidia.sh), non gli RPM del kernel.
+pins = {
+    key: value
+    for key, value in re.findall(r"^(\w+)=(.*)$", (k / "pins.env").read_text(), re.M)
+    if not key.startswith("NVIDIA_")
+}
 base = re.search(r"^FROM (\S+)", (k / "builder/Containerfile").read_text(), re.M).group(
     1
 )
