@@ -363,7 +363,11 @@ dipendono dai tipi, non dalla versione). Il codice che passa da Kbuild riceve
 da solo i flag del kernel. La parte RM dei moduli aperti (`nv-kernel.o`,
 `nv-modeset-kernel.o`), che NVIDIA compila fuori da Kbuild con i propri
 Makefile, li riceve da `EXTRA_CFLAGS`, letti da `.config` nella grafia di
-clang: kCFI, retpoline, return thunk, SLS, IBT. Non è un dettaglio: i Makefile
+clang: kCFI, retpoline, return thunk, SLS, IBT, e il padding delle funzioni di
+`CALL_PADDING` (`-fpatchable-function-entry=11,11`), senza il quale clang mette
+l'hash kCFI in fondo ai 16 byte del preambolo invece che in testa, dove il
+kernel e i chiamanti lo leggono: il modulo firma bene ma non carica (`no CFI
+hash found`, poi `CFI failure` sull'init). Non è un dettaglio: i Makefile
 di NVIDIA provano solo le grafie gcc di retpoline e return thunk, che clang
 scarta in silenzio, e senza quei flag objtool conta oltre sedicimila chiamate
 indirette e `ret` non mitigati nel solo `nvidia.o`. Gate per ogni `.ko`: il

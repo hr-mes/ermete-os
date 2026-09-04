@@ -73,7 +73,10 @@ mkdir -p "$OUT"
 echo "kernel $KVER"
 
 cfg() { grep -q "^$1=y" "$SYSSRC/.config"; } # cfg CONFIG_X: l'opzione e' accesa nel kernel
-cc_option() { clang -Werror "$@" -c -x c /dev/null -o /dev/null 2> /dev/null && echo " $*"; } # come cc-option di Kbuild
+cfg_val() { sed -n "s/^$1=//p" "$SYSSRC/.config"; } # cfg_val CONFIG_X: il valore dell'opzione
+cc_option() { # cc_option FLAG...: i flag se clang li accetta, come cc-option di Kbuild
+  if clang -Werror "$@" -c -x c /dev/null -o /dev/null 2> /dev/null; then echo " $*"; fi
+}
 
 build() {
   local src kodir version flags rm_targets=()
@@ -89,6 +92,15 @@ build() {
   cfg CONFIG_MITIGATION_RETHUNK && flags+=" -mfunction-return=thunk-extern"
   cfg CONFIG_MITIGATION_SLS && flags+=" -mharden-sls=all"
   cfg CONFIG_X86_KERNEL_IBT && flags+=" -fcf-protection=branch -fno-jump-tables"
+  # CALL_PADDING: il preambolo kCFI sta 16 byte prima dell'entry (movl dell'hash e 11 nop)
+  # e i chiamanti leggono l'hash a -15. Senza lo stesso padding il kernel, applicando
+  # FineIBT/kCFI al caricamento, non trova gli hash e il modulo non carica.
+  cfg CONFIG_CALL_PADDING && flags+=" -fpatchable-function-entry=$(cfg_val CONFIG_FUNCTION_PADDING_BYTES),$(cfg_val CONFIG_FUNCTION_PADDING_BYTES)"
+  local align alignflag
+  align=$(cfg_val CONFIG_FUNCTION_ALIGNMENT)
+  if [[ ${align:-0} -gt 0 ]]; then # come il Makefile del kernel: -fmin-function-alignment se c'e', altrimenti -falign-functions
+    alignflag=$(cc_option -fmin-function-alignment="$align"); flags+="${alignflag:- -falign-functions=$align}"
+  fi
 
   case $DRIVER in
     open)
