@@ -7,7 +7,9 @@ name: Kernel Build
 # publish: su runner GitHub, pubblica gli RPM come tre OCI (kernel, devel, debuginfo)
 # firmati con cosign keyless, con SBOM, provenance SLSA e attestazione dei pin;
 # `:latest` si muove solo su main. Una PR costruisce e avvia ma non pubblica: e' il
-# gate che il bot di bump (fase K5) usera' per il merge.
+# gate che il bot di bump (fase K5) usera' per il merge. inputs: se l'immagine con
+# questo NVR porta gia' l'attestazione degli identici input di build, build e publish
+# non partono e la boot matrix usa il kernel-core pubblicato.
 
 on:
   workflow_dispatch:
@@ -39,7 +41,45 @@ env:
   IMAGE: ghcr.io/${{ github.repository_owner }}/ermete-os-kernel
 
 jobs:
+  inputs:
+    # Un kernel gia' costruito da questi identici input non si ricompila: l'immagine
+    # `<nvr>` porta l'attestazione dei pin (build-inputs.py), verificata con cosign;
+    # se il predicato coincide con quello di questo commit, il riuso e' provato.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      nvr: ${{ steps.key.outputs.nvr }}
+      reuse: ${{ steps.key.outputs.reuse }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6
+
+      - id: key
+        run: |
+          set -euo pipefail
+          # Lo stesso NVR che rpmbuild produce con `%buildid .ermete` (build.sh);
+          # publish verifica che coincidano.
+          . forge/specs/ermete-kernel/pins.env
+          rel=${FEDORA_KERNEL_NVR#*-}
+          nvr="${FEDORA_KERNEL_NVR%%-*}-${rel%%.*}.ermete.${rel#*.}"
+          python3 forge/specs/ermete-kernel/build-inputs.py > inputs.json
+          reuse=false
+          if cosign verify-attestation --type custom \
+               --certificate-identity-regexp "^${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/" \
+               --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+               "${IMAGE}:${nvr}" 2> /dev/null \
+             | jq -cS '.payload | @base64d | fromjson | .predicate.Data | fromjson' \
+             | grep -qxF "$(jq -cS . inputs.json)"; then
+            reuse=true
+          fi
+          echo "kernel ${nvr}: $([[ $reuse == true ]] && echo "immagine pubblicata con gli stessi input, niente build" || echo "build necessaria")" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "nvr=${nvr}" >> "$GITHUB_OUTPUT"
+          echo "reuse=${reuse}" >> "$GITHUB_OUTPUT"
+
   build:
+    needs: inputs
+    if: ${{ (inputs.stage || 'build') == 'prep' || needs.inputs.outputs.reuse != 'true' }}
     runs-on: self-hosted
     # Kernel completo con -O3 e kCFI: un'ora su 16 core.
     timeout-minutes: 360
@@ -80,17 +120,29 @@ jobs:
           if-no-files-found: error
 
   boot:
-    needs: build
-    if: ${{ (inputs.stage || 'build') == 'build' }}
+    needs: [inputs, build]
+    # Anche con build saltato per riuso: la matrice gira sempre.
+    if: ${{ !cancelled() && (inputs.stage || 'build') == 'build' && needs.inputs.result == 'success' && (needs.build.result == 'success' || needs.inputs.outputs.reuse == 'true') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
 
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        if: ${{ needs.inputs.outputs.reuse != 'true' }}
         with:
           name: kernel-boot
           path: out
+
+      - name: Kernel-core from the published image
+        if: ${{ needs.inputs.outputs.reuse == 'true' }}
+        env:
+          NVR: ${{ needs.inputs.outputs.nvr }}
+        run: |
+          set -euo pipefail
+          ctr=$(podman create "${IMAGE}:${NVR}" /kernel-core)
+          mkdir -p out && podman cp "${ctr}:/." out/ && podman rm "$ctr" > /dev/null
+          ls out
 
       - name: Enable KVM for the runner user
         # La regola udev che GitHub documenta per la virtualizzazione accelerata sui
@@ -134,8 +186,8 @@ jobs:
           if-no-files-found: error
 
   publish:
-    needs: [build, boot]
-    if: ${{ github.event_name != 'pull_request' && (inputs.stage || 'build') == 'build' }}
+    needs: [inputs, build, boot]
+    if: ${{ !cancelled() && github.event_name != 'pull_request' && (inputs.stage || 'build') == 'build' && needs.build.result == 'success' && needs.boot.result == 'success' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
@@ -164,9 +216,11 @@ jobs:
         # nell'attestazione (step successivo).
         env:
           BUILDAH_ISOLATION: chroot
+          NVR_EXPECTED: ${{ needs.inputs.outputs.nvr }}
         run: |
           set -euo pipefail
           nvr=$(cat out/nvr)
+          [[ $nvr == "$NVR_EXPECTED" ]] || { echo "NVR prodotto ${nvr}, atteso dai pin ${NVR_EXPECTED}"; exit 1; }
           echo "${GH_TOKEN}" | buildah login -u "${GITHUB_ACTOR}" --password-stdin ghcr.io
           mkdir -p digests
           for group in kernel devel debuginfo; do
@@ -199,16 +253,7 @@ jobs:
           set -euo pipefail
           echo "${GH_TOKEN}" | cosign login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
           mkdir -p sbom
-          python3 - > pins.json <<'PY'
-          import hashlib, json, pathlib, re
-          k = pathlib.Path("forge/specs/ermete-kernel")
-          pins = dict(re.findall(r"^(\w+)=(.*)$", (k / "pins.env").read_text(), re.M))
-          sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
-          base = re.search(r"^FROM (\S+)", (k / "builder/Containerfile").read_text(), re.M).group(1)
-          print(json.dumps({"pins": pins, "sources_sha256": sha(k / "SOURCES/sources.sha256"),
-                            "kernel_local_sha256": sha(k / "kernel-local"), "patches_list_sha256": sha(k / "patches.list"),
-                            "builder_base": base, "containerfile_sha256": sha(k / "builder/Containerfile")}, indent=2))
-          PY
+          python3 forge/specs/ermete-kernel/build-inputs.py > pins.json
           for group in kernel devel debuginfo; do
             ref="${IMAGE}$([[ $group == kernel ]] || echo "-${group}")@$(cat "digests/${group}")"
             syft scan "registry:${ref}" --select-catalogers "+rpm-archive-cataloger" -o "spdx-json=sbom/${group}.spdx.json"

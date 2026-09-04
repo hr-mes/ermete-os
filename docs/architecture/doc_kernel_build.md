@@ -56,6 +56,7 @@ Directory `forge/specs/ermete-kernel/` dopo il blocco:
 | `boot.sh`, `boot/`       | la boot matrix (sezione 7, gate 3): ambiente QEMU/OVMF/shim pinnato come il builder, PID 1 dell'initramfs di prova con le asserzioni                                              |
 | `builder/Containerfile`  | ambiente Fedora 43 (esiste già), base pinnata per digest                                                                                                                            |
 | `build.sh`               | l'intera build, riproducibile in locale e in CI                                                                                                                                     |
+| `build-inputs.py`        | gli input che cambiano gli RPM come JSON: predicato dell'attestazione dei pin e chiave del riuso (sezione 7)                                                                   |
 | `microvm/`               | config e spec del kernel guest (sezione 9)                                                                                                                                          |
 | `KERNEL.md`              | cosa c'è nella directory, uso locale, bump a mano; il bot (K5) ne aggiorna la parte di versione                                                                                    |
 
@@ -277,6 +278,15 @@ Ogni PR di bump e ogni cambio in `forge/specs/ermete-kernel/**` passa:
    netperf loopback per cinque minuti, risultati come artefatto e grafico nel
    summary. È il numero che decide `-O3` e ogni futura opzione;
 6. **riproducibilità** settimanale (sezione 3).
+
+**Riuso.** Il job `inputs` calcola `build-inputs.py` (pin, manifest delle
+sorgenti, `kernel-local`, `patches.list`, `fedora-wins.list`, `build.sh`,
+Containerfile: solo ciò che cambia gli RPM) e lo confronta con il predicato
+dell'attestazione dei pin sull'immagine `ermete-os-kernel:<nvr>`, verificata con
+cosign. Se coincidono, `build` e `publish` non partono e la boot matrix usa il
+kernel-core dell'immagine pubblicata: un push che tocca solo test, retention o
+workflow costa i minuti della matrice, non l'ora di build. Un bump dei pin
+ricompila. La prova del riuso è una firma verificata, non un tag.
 
 ## 8. Auto-manutenzione: il bot di bump
 

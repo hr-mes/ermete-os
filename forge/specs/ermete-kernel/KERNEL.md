@@ -15,6 +15,7 @@ directory e come si usa.
 | `fedora-wins.list` | percorsi in cui un conflitto tra base CachyOS e patch Red Hat si risolve con l'albero Fedora |
 | `cmdline` | la riga di comando del kernel che la UKI firma (spec, sezione 6) |
 | `build.sh` | dai pin agli RPM: stadio `prep` (sorgenti, patch, gate del config) e `build` |
+| `build-inputs.py` | gli input della build come JSON: predicato dell'attestazione dei pin e chiave del riuso in CI |
 | `builder/Containerfile` | l'ambiente: Fedora pinnata per digest piu' la toolchain LLVM |
 | `boot.sh` | la boot matrix: dal kernel-core a quattro avvii QEMU con le asserzioni della spec |
 | `boot/Containerfile`, `boot/init` | l'ambiente della boot matrix (qemu, OVMF, shim, ukify) e il PID 1 dell'initramfs di prova |
@@ -32,7 +33,9 @@ podman run --rm -v "$PWD:/forge" -v "$HOME/.cache/ermete-kernel:/var/cache/ermet
 `prep` dura pochi minuti e lascia in `out/` il config generato e il `kernel-local`
 completo delle opzioni derivate; `build` produce gli RPM (un'ora su 16 core) in
 `out/kernel`, `out/devel`, `out/debuginfo`, con l'NVR in `out/nvr`. La CI e'
-`.github/workflows/kernel-build.yml`.
+`.github/workflows/kernel-build.yml`: ricompila solo se `build-inputs.py` non
+coincide con l'attestazione dei pin dell'immagine `<nvr>` gia' pubblicata; altrimenti
+la boot matrix gira sul kernel-core pubblicato e non si pubblica nulla.
 
 ## Boot matrix
 
