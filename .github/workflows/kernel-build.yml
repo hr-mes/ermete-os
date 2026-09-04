@@ -126,8 +126,11 @@ jobs:
       - name: SBOM, sign, attest
         # cosign keyless con l'identita' OIDC del workflow: firma, SBOM SPDX di ogni
         # immagine (syft cataloga gli RPM dentro), e i pin come predicato custom.
+        # cosign non legge l'auth.json di buildah: login proprio per caricare firme e
+        # attestazioni nel registro.
         run: |
           set -euo pipefail
+          echo "${GH_TOKEN}" | cosign login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
           mkdir -p sbom
           python3 - > pins.json <<'PY'
           import hashlib, json, pathlib, re
