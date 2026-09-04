@@ -2,10 +2,12 @@
 # Kernel Ermete: dai pin agli RPM, dentro builder/Containerfile.
 # Specifica: docs/architecture/doc_kernel_build.md. Tutto cio' che scarica e' pinnato
 # in pins.env, verificato con SOURCES/sources.sha256 e con le firme delle chiavi in
-# SOURCES/keys. Ogni controllo che fallisce ferma la build.
+# SOURCES/keys. Ogni controllo che fallisce ferma la build. La fase manifest scarica i
+# sorgenti dei pin e scrive il loro manifesto: e' cosi' che il bot di bump (bump.py)
+# rigenera SOURCES/sources.sha256.
 set -euo pipefail
 
-usage() { echo "uso: ${0##*/} --stage prep|build --out DIR" >&2; exit 2; }
+usage() { echo "uso: ${0##*/} --stage manifest|prep|build --out DIR" >&2; exit 2; }
 STAGE='' OUT=''
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -14,7 +16,7 @@ while [[ $# -gt 0 ]]; do
     *) usage ;;
   esac
 done
-[[ ( $STAGE == prep || $STAGE == build ) && -n $OUT ]] || usage
+[[ ( $STAGE == manifest || $STAGE == prep || $STAGE == build ) && -n $OUT ]] || usage
 
 die() { echo "build.sh: $*" >&2; exit 1; }
 step() { echo; echo ">>> $*"; }
@@ -48,6 +50,9 @@ CACHY_CONFIG_URL=https://raw.githubusercontent.com/CachyOS/linux-cachyos/$CACHYO
 PATCHES_URL=https://raw.githubusercontent.com/CachyOS/kernel-patches/$CACHYOS_PATCHES_COMMIT/$SERIES
 mapfile -t PATCHES < <(grep -vE '^\s*(#|$)' "$HERE/patches.list")
 mapfile -t ERMETE_PATCHES < <(find "$HERE/patches" -name '*.patch' | sort)
+# In cache le patch CachyOS portano il prefisso del commit: lo stesso nome di file torna
+# a ogni commit di kernel-patches con contenuto diverso, e la cache e' persistente.
+patch_file() { echo "${CACHYOS_PATCHES_COMMIT:0:12}-${1##*/}"; }
 mapfile -t FEDORA_WINS < <(grep -vE '^\s*(#|$)' "$HERE/fedora-wins.list")
 [[ -z $(printf '%s\n' "${PATCHES[@]##*/}" | sort | uniq -d) ]] || die "patches.list: nomi di file duplicati"
 
@@ -78,7 +83,17 @@ fetch "$CACHY_TAR.asc" "$CACHY_URL.asc"
 fetch "$VANILLA_TAR" "$VANILLA_URL/$VANILLA_TAR"
 fetch "$VANILLA_SIGN" "$VANILLA_URL/$VANILLA_SIGN"
 fetch "$CACHY_CONFIG" "$CACHY_CONFIG_URL"
-for p in "${PATCHES[@]}"; do fetch "${p##*/}" "$PATCHES_URL/$p"; done
+for p in "${PATCHES[@]}"; do fetch "$(patch_file "$p")" "$PATCHES_URL/$p"; done
+
+if [[ $STAGE == manifest ]]; then
+  # Il manifesto di questi pin, dai file appena scaricati. Le firme le verifica prep,
+  # che il bot esegue subito dopo sullo stesso manifesto.
+  files=("$SRPM" "$SRPM.sig" "$CACHY_TAR" "$CACHY_TAR.asc" "$VANILLA_TAR" "$VANILLA_SIGN" "$CACHY_CONFIG")
+  for p in "${PATCHES[@]}"; do files+=("$(patch_file "$p")"); done
+  (cd "$CACHE" && sha256sum "${files[@]}") > "$OUT/sources.sha256"
+  echo "manifesto di ${#files[@]} file in $OUT/sources.sha256"
+  exit 0
+fi
 
 step "hash (SOURCES/sources.sha256)"
 (cd "$CACHE" && sha256sum --check --quiet --strict "$HERE/SOURCES/sources.sha256")
@@ -147,8 +162,8 @@ else
   echo "conflitti risolti con l'albero Fedora (fedora-wins.list): ${CONFLICTS[*]}"
 fi
 for p in "${PATCHES[@]}"; do
-  g apply --cached "$CACHE/${p##*/}"
-  (cd "$WORK/b" && git apply "$CACHE/${p##*/}")     # l'albero CachyOS serve alla derivazione del config
+  g apply --cached "$CACHE/$(patch_file "$p")"
+  (cd "$WORK/b" && git apply "$CACHE/$(patch_file "$p")")     # l'albero CachyOS serve alla derivazione del config
 done
 # Le patch di Ermete (patches/), in ordine di nome, dopo quelle di CachyOS.
 for p in "${ERMETE_PATCHES[@]}"; do
