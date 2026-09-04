@@ -6,26 +6,36 @@
 # firmware {SeaBIOS, OVMF+Secure Boot via shim} x CPU {Nehalem, host}. Nehalem prova che
 # nel kernel non e' entrata nessuna istruzione oltre x86-64 baseline. Ogni avvio deve
 # terminare con `K3 RESULT ok` sulla seriale (le asserzioni sono in boot/init).
+# Con --mok e --insmod prova anche la catena dei moduli esterni (sezione 7, gate 4): la
+# MOK di progetto arruolata accanto a quella effimera, e un .ko firmato che il kernel
+# deve accettare (ENODEV: firma buona, GPU assente) o rifiutare (EKEYREJECTED).
 #
-# Uso: boot.sh --rpms DIR --out DIR [--accel kvm|tcg] [--case NOME]...
+# Uso: boot.sh --rpms DIR --out DIR [--accel kvm|tcg] [--case NOME]... [--mok CERT]...
+#               [--insmod FILE.ko:ERRNO]...
 #   --rpms   directory in cui cercare kernel-core-*.rpm (l'out di build.sh o l'artefatto)
 #   --out    log seriali, riepilogo e materiale di prova
 #   --accel  kvm (default, serve /dev/kvm) o tcg (emulazione: lento, `host` diventa `max`)
 #   --case   limita la matrice (ripetibile): bios-nehalem bios-host uefi-nehalem uefi-host
+#   --mok    certificato (PEM) da arruolare in MokList oltre a quello effimero della UKI
+#   --insmod modulo da caricare nel guest e errno atteso da insmod (ENODEV, EKEYREJECTED,
+#            oppure 0). Solo nei casi UEFI: senza shim non esiste MokListRT, e la fiducia
+#            nelle MOK arriva da li'.
 set -euo pipefail
 
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-RPMS='' OUT='' ACCEL=kvm CASES=()
+RPMS='' OUT='' ACCEL=kvm CASES=() MOKS=() INSMOD=()
 while [[ $# -gt 0 ]]; do
   case $1 in
     --rpms) RPMS=$2; shift 2 ;;
     --out) OUT=$2; shift 2 ;;
     --accel) ACCEL=$2; shift 2 ;;
     --case) CASES+=("$2"); shift 2 ;;
+    --mok) MOKS+=("$2"); shift 2 ;;
+    --insmod) INSMOD+=("$2"); shift 2 ;;
     *) echo "argomento sconosciuto: $1" >&2; exit 2 ;;
   esac
 done
-[[ $RPMS && $OUT ]] || { echo "uso: boot.sh --rpms DIR --out DIR [--accel kvm|tcg] [--case NOME]..." >&2; exit 2; }
+[[ $RPMS && $OUT ]] || { echo "uso: boot.sh --rpms DIR --out DIR [--accel kvm|tcg] [--case NOME]... [--mok CERT]... [--insmod FILE.ko:ERRNO]..." >&2; exit 2; }
 [[ ${#CASES[@]} -gt 0 ]] || CASES=(bios-nehalem bios-host uefi-nehalem uefi-host)
 [[ $ACCEL == kvm && ! -w /dev/kvm ]] && { echo "/dev/kvm non accessibile: usa --accel tcg" >&2; exit 2; }
 
@@ -61,6 +71,15 @@ install -m 755 /usr/sbin/bpftool "$R/usr/sbin/bpftool"
 ldd /usr/sbin/bpftool | awk '/=> \//{print $3} /^\s*\/lib64\/ld-linux/{print $1}' \
   | while read -r lib; do install -D "$lib" "$R/lib64/${lib##*/}"; done
 install -m 755 "$HERE/boot/init" "$R/init"
+# I moduli da provare, numerati: due rami hanno lo stesso nvidia.ko. Il parametro
+# k3.insmod elenca file:errno e va solo nella riga di comando della UKI (casi UEFI).
+K3_INSMOD=''
+for i in "${!INSMOD[@]}"; do
+  ko=${INSMOD[$i]%%:*}; errno=${INSMOD[$i]##*:}
+  [[ -f $ko && $errno && $errno != "$ko" ]] || die "--insmod vuole FILE.ko:ERRNO, ricevuto: ${INSMOD[$i]}"
+  install -D -m 644 "$ko" "$R/modules/$i-${ko##*/}"
+  K3_INSMOD+="${K3_INSMOD:+,}$i-${ko##*/}:$errno"
+done
 (cd "$R" && find . | cpio -o -H newc --quiet | zstd -q -T0 -19 -o "$WORK/initramfs.img")
 echo "initramfs: $(du -sh "$R" | cut -f1) in chiaro, $(du -h "$WORK/initramfs.img" | cut -f1) compresso"
 
@@ -68,13 +87,16 @@ step "UKI firmata con una MOK effimera, arruolata nel varstore OVMF"
 openssl req -x509 -newkey rsa:2048 -nodes -days 2 -subj '/CN=Ermete OS K3 test MOK/' \
   -keyout "$WORK/mok.key" -out "$OUT/mok.pem" 2> /dev/null
 ukify build --linux "$VMLINUZ" --initrd "$WORK/initramfs.img" --uname "$KVER" \
-  --cmdline "$TEST_CMDLINE k3.sb=1" --stub /usr/lib/systemd/boot/efi/linuxx64.efi.stub \
+  --cmdline "$TEST_CMDLINE k3.sb=1${K3_INSMOD:+ k3.insmod=$K3_INSMOD}" --stub /usr/lib/systemd/boot/efi/linuxx64.efi.stub \
   --signtool sbsign --secureboot-private-key "$WORK/mok.key" --secureboot-certificate "$OUT/mok.pem" \
   --output "$WORK/uki.efi" > "$OUT/ukify.log"
 sbverify --cert "$OUT/mok.pem" "$WORK/uki.efi" >> "$OUT/ukify.log"
 OVMF_CODE=/usr/share/edk2/ovmf/OVMF_CODE.secboot.fd
-virt-fw-vars -i /usr/share/edk2/ovmf/OVMF_VARS.secboot.fd -o "$WORK/vars.fd" \
-  --add-mok "$(< /proc/sys/kernel/random/uuid)" "$OUT/mok.pem" > "$OUT/varstore.log"
+# MokList: la MOK effimera della UKI e quelle di --mok (la MOK di progetto, per i moduli).
+# shim la copia in MokListRT e il kernel la carica nel keyring di piattaforma.
+ADD_MOK=()
+for cert in "$OUT/mok.pem" "${MOKS[@]}"; do ADD_MOK+=(--add-mok "$(< /proc/sys/kernel/random/uuid)" "$cert"); done
+virt-fw-vars -i /usr/share/edk2/ovmf/OVMF_VARS.secboot.fd -o "$WORK/vars.fd" "${ADD_MOK[@]}" > "$OUT/varstore.log"
 # ESP: shim al percorso removibile, la UKI dove shim cerca il secondo stadio.
 mkdir -p "$WORK/esp/EFI/BOOT"
 cp /boot/efi/EFI/fedora/shimx64.efi "$WORK/esp/EFI/BOOT/BOOTX64.EFI"
@@ -84,7 +106,7 @@ run_case() { # run_case NOME  (NOME = <bios|uefi>-<nehalem|host>)
   local name=$1 fw=${1%-*} cpu=${1#*-} log="$OUT/$1.log" args
   [[ $cpu == host && $ACCEL == tcg ]] && cpu=max
   [[ $cpu == nehalem ]] && cpu=Nehalem
-  args=(-machine "q35,smm=on" -accel "$ACCEL" -cpu "$cpu" -smp 2 -m 1024
+  args=(-machine "q35,smm=on" -accel "$ACCEL" -cpu "$cpu" -smp 2 -m 2048
         -display none -monitor none -serial "file:$log" -no-reboot
         -device virtio-rng-pci)
   case $fw in

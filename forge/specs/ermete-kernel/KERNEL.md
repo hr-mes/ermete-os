@@ -55,6 +55,10 @@ lockdown, BBR v3, taint, dmesg; in UEFI anche Secure Boot acceso e MOK arruolata
 Serve solo il kernel-core: `--rpms` accetta l'`out/` di build.sh o una directory con
 il solo RPM. Senza `/dev/kvm` (WSL, podman machine) aggiungi `--accel tcg`: minuti
 invece di secondi, e `host` diventa `max`. Log seriali e riepilogo in `boot-out/`.
+Con `--mok CERT` arruola altri certificati in MokList e con `--insmod FILE.ko:ERRNO`
+carica moduli nel guest (solo casi UEFI) pretendendo l'errno di insmod: `ENODEV` per un
+modulo firmato da una MOK arruolata senza il suo hardware, `EKEYREJECTED` per uno non
+firmato. E' la prova della catena dei moduli esterni (spec, sezione 7, gate 4).
 
 ## Moduli NVIDIA
 
@@ -70,7 +74,8 @@ di build.sh, o l'immagine `ermete-os-kernel-devel:<nvr>`). I `.ko` finiscono in
 sistema copia) con il vermagic del kernel e i preamboli kCFI, senza firma:
 `nvidia.sh sign --key K --cert C --devel DIR --out DIR` li firma con sign-file del
 kernel-devel, in locale con una chiave effimera, in CI con la MOK di progetto
-(workflow `.github/workflows/nvidia-kmod.yml`).
+(workflow `.github/workflows/nvidia-kmod.yml`, che poi li carica in QEMU sotto Secure
+Boot con `boot.sh --mok --insmod` prima di pubblicarli).
 
 ## Pubblicazione
 

@@ -4,7 +4,10 @@ name: NVIDIA kmod
 # docs/architecture/doc_kernel_build.md, sezione 10). build: sul runner self-hosted, i
 # due rami (open 610, legacy 580) contro il kernel-devel pubblicato per l'NVR dei pin,
 # con la toolchain del kernel. sign: su runner GitHub nell'environment `signing`, un job
-# che vede solo i .ko e la MOK di progetto. publish: OCI ermete-os-nvidia:<nvr>-<ramo>
+# che vede solo i .ko e la MOK di progetto. boot: in QEMU con Secure Boot e la MOK di
+# progetto arruolata, il nvidia.ko firmato di ogni ramo deve passare la verifica della
+# firma (ENODEV: niente GPU) e una copia non firmata deve essere respinta
+# (EKEYREJECTED). publish: OCI ermete-os-nvidia:<nvr>-<ramo>
 # con cosign, SBOM, attestazione dei pin e retention. Parte dopo un Kernel Build verde
 # (workflow_run vale solo con il file sul branch di default), a mano, o su push e PR
 # che toccano nvidia.sh, il suo ambiente o i pin. Una PR costruisce e non firma.
@@ -163,8 +166,71 @@ jobs:
           path: out/
           if-no-files-found: error
 
-  publish:
+  boot:
     needs: sign
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ env.REF }}
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: nvidia-signed
+          path: signed
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        # Il controllo negativo: lo stesso nvidia.ko prima della firma.
+        with:
+          name: nvidia-open-unsigned
+          path: unsigned
+
+      - name: Kernel-core from the published image
+        run: |
+          set -euo pipefail
+          nvr=$(bash forge/specs/ermete-kernel/nvr.sh)
+          ctr=$(podman create "${KERNEL_IMAGE}:${nvr}" /kernel-core)
+          mkdir -p out && podman cp "${ctr}:/." out/ && podman rm "$ctr" > /dev/null
+          echo "nvr=${nvr}" >> "$GITHUB_ENV"
+
+      - uses: ./.github/actions/kvm
+
+      - name: Build the boot-matrix image
+        env:
+          BUILDAH_ISOLATION: chroot
+        run: podman build -t localhost/ermete-kernel-boot forge/specs/ermete-kernel/boot
+
+      - name: Run boot.sh with the signed modules
+        # Solo i casi UEFI: la fiducia nella MOK arriva da MokListRT, che senza shim non
+        # esiste. La MOK di progetto entra nel varstore accanto a quella effimera della UKI.
+        run: |
+          set -euo pipefail
+          mkdir -p boot-out
+          ko="lib/modules/${nvr}.x86_64/extra/nvidia/nvidia.ko"
+          podman run --rm --device /dev/kvm -v "$GITHUB_WORKSPACE:/forge" -w /forge localhost/ermete-kernel-boot \
+            bash forge/specs/ermete-kernel/boot.sh --rpms /forge/out --out /forge/boot-out \
+              --case uefi-nehalem --case uefi-host \
+              --mok forge/specs/ermete-kernel/keys/mok/ermete-mok.pem \
+              --insmod "signed/open/${ko}:ENODEV" \
+              --insmod "signed/legacy/${ko}:ENODEV" \
+              --insmod "unsigned/open/${ko}:EKEYREJECTED"
+
+      - name: Summary
+        if: ${{ always() }}
+        run: |
+          set -euo pipefail
+          if [[ -f boot-out/summary.md ]]; then cat boot-out/summary.md >> "$GITHUB_STEP_SUMMARY"; fi
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: ${{ always() && hashFiles('boot-out/**') != '' }}
+        with:
+          name: nvidia-boot-logs
+          path: boot-out/
+          if-no-files-found: error
+
+  publish:
+    needs: [sign, boot]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:

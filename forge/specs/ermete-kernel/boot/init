@@ -11,12 +11,13 @@ mount -t sysfs sysfs /sys
 mount -t securityfs securityfs /sys/kernel/security
 [ -d /sys/firmware/efi/efivars ] && mount -t efivarfs efivarfs /sys/firmware/efi/efivars
 
-uname_expected='' sb=''
+uname_expected='' sb='' insmod_list=''
 # shellcheck disable=SC2013 # parole della riga di comando, non righe
 for w in $(cat /proc/cmdline); do
   case $w in
     k3.uname=*) uname_expected=${w#*=} ;;
     k3.sb=1) sb=1 ;;
+    k3.insmod=*) insmod_list=${w#*=} ;;
   esac
 done
 
@@ -26,8 +27,9 @@ check() { # check NOME COMANDO...
   if "$@" > /tmp/check.out 2>&1; then
     echo "K3 ok   $name"
   else
-    echo "K3 FAIL $name"; sed 's/^/        /' /tmp/check.out; fail="$fail $name"
+    echo "K3 FAIL $name"; fail="$fail $name"
   fi
+  sed 's/^/        /' /tmp/check.out
 }
 secureboot() { # l'efivar SecureBoot: 4 byte di attributi, poi il valore (01 = acceso).
   # Letto per intero: su efivarfs non si puo' fare seek.
@@ -40,6 +42,17 @@ bbr() { # il default deve essere il BBR v3 di CachyOS, che si registra come "bbr
 }
 ima() { # i file di securityfs hanno sempre dimensione 0: si guarda il contenuto
   grep -q . /sys/kernel/security/ima/ascii_runtime_measurements
+}
+insmod_expect() { # insmod_expect FILE ERRNO: insmod deve finire con l'errno atteso (o 0)
+  case $2 in
+    0) want='' ;;
+    ENODEV) want='No such device' ;;
+    EKEYREJECTED) want='Key was rejected by service' ;;
+    *) echo "errno sconosciuto: $2"; return 1 ;;
+  esac
+  out=$(insmod "/modules/$1" 2>&1); rc=$?
+  echo "insmod $1: rc=$rc ${out:+($out)}; atteso $2"
+  if [ "$want" ]; then [ $rc -ne 0 ] && echo "$out" | grep -qF "$want"; else [ $rc -eq 0 ]; fi
 }
 
 echo "K3 uname: $(uname -a)"
@@ -59,6 +72,11 @@ if [ "$sb" ]; then
   check secureboot secureboot
   check moklist    test -e /sys/firmware/efi/efivars/MokListRT-605dab50-e046-4300-abb6-3dd810dd8b23
 fi
+# Per ultimi: un modulo esterno macchia il kernel (taint O, P) anche se il suo init
+# fallisce, e le asserzioni sopra devono vederlo pulito.
+for item in $(echo "$insmod_list" | tr ',' ' '); do
+  check "insmod-${item%%:*}" insmod_expect "${item%%:*}" "${item##*:}"
+done
 
 echo "K3 dmesg begin"; dmesg; echo "K3 dmesg end"
 if [ -z "$fail" ]; then echo "K3 RESULT ok"; else echo "K3 RESULT fail:$fail"; fi

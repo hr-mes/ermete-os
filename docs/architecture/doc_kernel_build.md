@@ -283,7 +283,11 @@ Ogni PR di bump e ogni cambio in `forge/specs/ermete-kernel/**` passa:
    legacy 580 compilano con `nvidia.sh` contro il `kernel-devel` pubblicato per
    l'NVR dei pin, con la toolchain del kernel; ogni `.ko` deve portare il
    vermagic del kernel e i tipi kCFI; il job `sign` li firma con la MOK del
-   progetto e `publish` verifica firma e attestazione con cosign;
+   progetto; il job `boot` (`boot.sh --mok --insmod`, casi UEFI) arruola la MOK
+   di progetto accanto a quella effimera della UKI e nel guest carica il
+   `nvidia.ko` firmato di ogni ramo, atteso `ENODEV` (firma accettata, GPU
+   assente), e una copia non firmata, atteso `EKEYREJECTED`; `publish`
+   verifica firma e attestazione con cosign;
 5. **benchmark di tendenza** (non bloccante): hackbench, schbench, fio null,
    netperf loopback per cinque minuti, risultati come artefatto e grafico nel
    summary. È il numero che decide `-O3` e ogni futura opzione;
@@ -382,7 +386,8 @@ kernel-devel e l'hash di `CONFIG_MODULE_SIG_HASH`, e rilegge il firmatario con
 `modinfo`. Il workflow `nvidia-kmod.yml`: `build` (matrice dei due rami, runner
 self-hosted, kernel-devel dall'immagine pubblicata per l'NVR di `nvr.sh`),
 `sign` (runner GitHub, environment `signing`: vede solo i `.ko` e la chiave,
-montata in sola lettura per la durata del comando), `publish` (un'immagine
+montata in sola lettura per la durata del comando), `boot` (la catena della
+firma end-to-end in QEMU, gate 4 della sezione 7), `publish` (un'immagine
 `scratch` per ramo con `lib/modules/<kver>/extra/nvidia/*.ko`, il layout che
 l'immagine di sistema copia e che syft cataloga, più `version` e `kver`;
 cosign, SBOM dei moduli,
@@ -421,7 +426,7 @@ CachyOS: candidati da valutare con il benchmark, non default.
 | K1   | `pins.env`, manifest, `build.sh`, `kernel-local`, `patches.list`; rimozione di script, vendoring e README; workflow `kernel-build.yml` | RPM prodotti in locale e in CI, config onorato     |
 | K2   | pubblicazione OCI con cosign, SBOM, SLSA; debuginfo separato                                                                           | `cosign verify` sul tag                            |
 | K3   | boot matrix in QEMU con le asserzioni della sezione 7                                                                                  | verde su Nehalem, host, UEFI+SB, BIOS              |
-| K4   | `nvidia-kmod.yml` con i due rami, firma MOK                                                                                            | kmod compilati e firmati                           |
+| K4   | `nvidia-kmod.yml` con i due rami, firma MOK                                                                                            | kmod compilati, firmati, accettati sotto SB        |
 | K5   | bot di bump con auto-merge                                                                                                             | una PR di bump verde end-to-end                    |
 | K6   | kernel guest MicroVM                                                                                                                   | `vmlinux` avvia in Firecracker con rootfs di prova |
 | K7   | riproducibilità settimanale, benchmark di tendenza, `-O3` deciso dai numeri                                                            | primo report                                       |
