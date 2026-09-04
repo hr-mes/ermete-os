@@ -6,10 +6,14 @@ name: Kernel Build
 # (SeaBIOS e OVMF con Secure Boot, CPU Nehalem e host) con le asserzioni della spec.
 # publish: su runner GitHub, pubblica gli RPM come tre OCI (kernel, devel, debuginfo)
 # firmati con cosign keyless, con SBOM, provenance SLSA e attestazione dei pin;
-# `:latest` si muove solo su main. Una PR costruisce e avvia ma non pubblica: e' il
-# gate che il bot di bump (fase K5) usera' per il merge. inputs: se l'immagine con
-# questo NVR porta gia' l'attestazione degli identici input di build, build e publish
-# non partono e la boot matrix usa il kernel-core pubblicato.
+# `:latest` si muove solo su main. kmod: i moduli NVIDIA contro il kernel-devel appena
+# costruito (nvidia-build.yml, riusabile). gate: il check unico "Kernel gate" che la
+# protezione del branch richiede alle PR, anche a quelle del bot di bump (fase K5):
+# per questo il workflow parte su ogni PR, senza filtro di percorsi. Una PR costruisce
+# e avvia ma non pubblica. nvidia: sui push, a valle della pubblicazione, avvia
+# nvidia-kmod.yml (firma, boot con Secure Boot, pubblicazione dei moduli). inputs: se
+# l'immagine con questo NVR porta gia' l'attestazione degli identici input di build,
+# build e publish non partono, e boot matrix e kmod usano le immagini pubblicate.
 
 on:
   workflow_dispatch:
@@ -20,14 +24,12 @@ on:
         options: [prep, build]
         default: build
   pull_request:
-    paths:
-      - forge/specs/ermete-kernel/**
-      - .github/workflows/kernel-build.yml
   push:
     branches: [main, iso-v0]
     paths:
       - forge/specs/ermete-kernel/**
       - .github/workflows/kernel-build.yml
+      - .github/workflows/nvidia-build.yml
 
 concurrency:
   group: kernel-${{ github.ref }}
@@ -117,6 +119,15 @@ jobs:
           path: out/kernel/kernel-core-*.rpm
           if-no-files-found: error
 
+      - name: Artifact for the NVIDIA modules
+        # Al job kmod serve solo il kernel-devel.
+        if: ${{ env.STAGE == 'build' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: kernel-devel
+          path: out/devel/kernel-devel-[0-9]*.rpm
+          if-no-files-found: error
+
   boot:
     needs: [inputs, build]
     # Anche con build saltato per riuso: la matrice gira sempre.
@@ -170,6 +181,38 @@ jobs:
           name: kernel-boot-logs
           path: boot-out/
           if-no-files-found: error
+
+  kmod:
+    # I moduli NVIDIA (spec, sezione 7, gate 4) contro questo kernel: l'artefatto
+    # kernel-devel appena costruito, o l'immagine pubblicata quando il kernel e' riusato.
+    needs: [inputs, build]
+    if: ${{ !cancelled() && (inputs.stage || 'build') == 'build' && needs.inputs.result == 'success' && (needs.build.result == 'success' || needs.inputs.outputs.reuse == 'true') }}
+    permissions:
+      contents: read
+      packages: read
+    uses: ./.github/workflows/nvidia-build.yml
+    with:
+      devel-artifact: ${{ needs.inputs.outputs.reuse != 'true' && 'kernel-devel' || '' }}
+
+  gate:
+    # Il check unico richiesto dalla protezione del branch: verde solo se ogni gate e'
+    # verde, o saltato perche' il kernel e' riusato (build). Un solo nome da aspettare
+    # per l'auto-merge del bot di bump.
+    name: Kernel gate
+    needs: [inputs, build, boot, kmod]
+    if: ${{ always() && (inputs.stage || 'build') == 'build' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      RESULTS: ${{ toJSON(needs) }}
+      REUSE: ${{ needs.inputs.outputs.reuse }}
+    steps:
+      - run: |
+          set -euo pipefail
+          jq -r 'to_entries[] | "- \(.key): \(.value.result)"' <<< "$RESULTS" | tee -a "$GITHUB_STEP_SUMMARY"
+          result() { jq -r --arg job "$1" '.[$job].result' <<< "$RESULTS"; }
+          [[ $(result inputs) == success && $(result boot) == success && $(result kmod) == success ]]
+          [[ $(result build) == success || ( $(result build) == skipped && $REUSE == true ) ]]
 
   publish:
     needs: [inputs, build, boot]
@@ -289,3 +332,18 @@ jobs:
             pins.json
             digests/
           if-no-files-found: error
+
+  nvidia:
+    # La catena dei moduli (nvidia-kmod.yml: firma, boot con Secure Boot, pubblicazione)
+    # parte da qui, a valle della pubblicazione o del riuso del kernel: workflow_run vale
+    # solo dal branch di default, e i moduli servono anche quando publish non gira.
+    needs: [inputs, boot, kmod, publish]
+    if: ${{ !cancelled() && github.event_name != 'pull_request' && needs.boot.result == 'success' && needs.kmod.result == 'success' && (needs.publish.result == 'success' || (needs.publish.result == 'skipped' && needs.inputs.outputs.reuse == 'true')) }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - run: gh workflow run nvidia-kmod.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME"

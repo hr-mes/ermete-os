@@ -1,0 +1,80 @@
+name: NVIDIA kmod build
+
+# I moduli kernel NVIDIA (forge/specs/ermete-kernel/nvidia.sh, spec sezione 10) contro un
+# kernel-devel, sul runner self-hosted con la toolchain del kernel. Workflow riusabile:
+# lo chiama Kernel Build per il gate sulle PR e sui push (kernel-devel dell'artefatto
+# appena costruito, o dell'immagine pubblicata quando il kernel e' riusato) e NVIDIA kmod
+# per la catena di firma e pubblicazione. Carica gli artefatti nvidia-<ramo>-unsigned.
+
+on:
+  workflow_call:
+    inputs:
+      devel-artifact:
+        description: "artefatto con kernel-devel-*.rpm; vuoto: l'immagine ermete-os-kernel-devel:<nvr> pubblicata per i pin"
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+env:
+  KERNEL_IMAGE: ghcr.io/${{ github.repository_owner }}/ermete-os-kernel
+
+jobs:
+  build:
+    runs-on: self-hosted
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix:
+        driver: [open, legacy]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Build the nvidia image
+        env:
+          BUILDAH_ISOLATION: chroot
+        run: podman build -t localhost/ermete-kernel-nvidia forge/specs/ermete-kernel/nvidia
+
+      - name: Kernel-devel from the artifact
+        if: ${{ inputs.devel-artifact != '' }}
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ${{ inputs.devel-artifact }}
+          path: devel
+
+      - name: Kernel-devel from the published image
+        # L'NVR viene dai pin (nvr.sh): il kernel per cui si compila e' quello pubblicato.
+        # Login con il token del job: il pacchetto e' pubblico, ma il podman di un runner
+        # self-hosted puo' avere in auth.json credenziali ghcr stantie, e ghcr risponde 403
+        # al token anonimo. Logout a fine passo, cosi' non ne restano.
+        if: ${{ inputs.devel-artifact == '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          nvr=$(bash forge/specs/ermete-kernel/nvr.sh)
+          echo "${GH_TOKEN}" | podman login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
+          trap 'podman logout ghcr.io' EXIT
+          ctr=$(podman create "${KERNEL_IMAGE}-devel:${nvr}" /kernel-devel)
+          mkdir -p devel && podman cp "${ctr}:/." devel/ && podman rm "$ctr" > /dev/null
+
+      - name: Run nvidia.sh build
+        run: |
+          set -euo pipefail
+          ls devel
+          mkdir -p "$HOME/.cache/ermete-kernel" out
+          podman run --rm \
+            -v "$GITHUB_WORKSPACE:/forge" \
+            -v "$HOME/.cache/ermete-kernel:/var/cache/ermete-kernel" \
+            -w /forge localhost/ermete-kernel-nvidia \
+            bash forge/specs/ermete-kernel/nvidia.sh build --driver "${{ matrix.driver }}" --devel /forge/devel --out /forge/out
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nvidia-${{ matrix.driver }}-unsigned
+          path: out/
+          if-no-files-found: error
