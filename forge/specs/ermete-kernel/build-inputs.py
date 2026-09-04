@@ -29,6 +29,10 @@ print(
             "sources_sha256": sha("SOURCES/sources.sha256"),
             "kernel_local_sha256": sha("kernel-local"),
             "patches_list_sha256": sha("patches.list"),
+            "patches_sha256": {
+                p.name: sha(f"patches/{p.name}")
+                for p in sorted((k / "patches").glob("*.patch"))
+            },
             "fedora_wins_sha256": sha("fedora-wins.list"),
             "build_sh_sha256": sha("build.sh"),
             "builder_base": base,

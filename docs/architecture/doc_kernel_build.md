@@ -51,6 +51,7 @@ Directory `forge/specs/ermete-kernel/` dopo il blocco:
 | `SOURCES/sources.sha256` | hash del SRPM, del tarball CachyOS, delle patch singole                                                                                                                             |
 | `kernel-local`           | frammento di config, una riga di motivazione per opzione                                                                                                                            |
 | `patches.list`           | patch di `CachyOS/kernel-patches` da accodare dopo la base, in ordine                                                                                                               |
+| `patches/`               | patch di Ermete in formato git, applicate dopo `patches.list` in ordine di nome; il messaggio spiega il perché, e ogni patch è candidata all'upstream                            |
 | `fedora-wins.list`       | percorsi in cui un conflitto del merge tra base CachyOS e patch Red Hat si risolve con l'albero Fedora; ogni altro conflitto ferma la build                                        |
 | `cmdline`                | riga di comando del kernel, firmata nella UKI (sezione 6)                                                                                                                           |
 | `boot.sh`, `boot/`       | la boot matrix (sezione 7, gate 3): ambiente QEMU/OVMF/shim pinnato come il builder, PID 1 dell'initramfs di prova con le asserzioni                                              |
@@ -121,8 +122,8 @@ identica in locale. Passi, tutti senza rete tranne i download verificati:
    bindgen, pahole: `RUST_IS_AVAILABLE` e le opzioni che ne dipendono);
 3. genera `linux-kernel-test.patch`: repo git temporaneo con tre commit (vanilla,
    CachyOS, vanilla + patch Red Hat), `git merge-tree --write-tree` dei due rami
-   sopra il vanilla, `patches.list` applicate sull'indice, diff dal commit
-   Fedora al risultato. Le stesse patch vanno anche sull'albero CachyOS
+   sopra il vanilla, `patches.list` e poi `patches/` applicate sull'indice, diff
+   dal commit Fedora al risultato. Le stesse patch vanno anche sull'albero CachyOS
    estratto, che serve al passo 4;
 4. genera il `kernel-local` completo: il delta Ermete committato, più le opzioni
    che l'albero introduce (`make listnewconfig` sul config Fedora fuso con i
@@ -286,7 +287,7 @@ Ogni PR di bump e ogni cambio in `forge/specs/ermete-kernel/**` passa:
 6. **riproducibilità** settimanale (sezione 3).
 
 **Riuso.** Il job `inputs` calcola `build-inputs.py` (pin, manifest delle
-sorgenti, `kernel-local`, `patches.list`, `fedora-wins.list`, `build.sh`,
+sorgenti, `kernel-local`, `patches.list`, `patches/`, `fedora-wins.list`, `build.sh`,
 Containerfile: solo ciò che cambia gli RPM) e lo confronta con il predicato
 dell'attestazione dei pin sull'immagine `ermete-os-kernel:<nvr>`, verificata con
 cosign. Se coincidono, `build` e `publish` non partono e la boot matrix usa il

@@ -13,6 +13,7 @@ directory e come si usa.
 | `keys/mok/` | certificato pubblico della MOK di progetto, che firma UKI e moduli esterni; la chiave privata sta nel secret `MOK_PRIVATE_KEY` dell'environment `signing` |
 | `kernel-local` | delta Kconfig di Ermete sul config x86_64 di Fedora |
 | `patches.list` | patch di CachyOS/kernel-patches applicate sopra la base |
+| `patches/` | patch di Ermete, in formato git, applicate dopo quelle di CachyOS |
 | `fedora-wins.list` | percorsi in cui un conflitto tra base CachyOS e patch Red Hat si risolve con l'albero Fedora |
 | `cmdline` | la riga di comando del kernel che la UKI firma (spec, sezione 6) |
 | `build.sh` | dai pin agli RPM: stadio `prep` (sorgenti, patch, gate del config) e `build` |

@@ -47,6 +47,7 @@ CACHY_CONFIG=cachyos-config-${CACHYOS_CONFIG_COMMIT:0:12}
 CACHY_CONFIG_URL=https://raw.githubusercontent.com/CachyOS/linux-cachyos/$CACHYOS_CONFIG_COMMIT/linux-cachyos/config
 PATCHES_URL=https://raw.githubusercontent.com/CachyOS/kernel-patches/$CACHYOS_PATCHES_COMMIT/$SERIES
 mapfile -t PATCHES < <(grep -vE '^\s*(#|$)' "$HERE/patches.list")
+mapfile -t ERMETE_PATCHES < <(find "$HERE/patches" -name '*.patch' | sort)
 mapfile -t FEDORA_WINS < <(grep -vE '^\s*(#|$)' "$HERE/fedora-wins.list")
 [[ -z $(printf '%s\n' "${PATCHES[@]##*/}" | sort | uniq -d) ]] || die "patches.list: nomi di file duplicati"
 
@@ -111,7 +112,7 @@ rpm -i "$SIGNED_SRPM"
 step "BuildRequires di kernel.spec"
 dnf -y builddep "${DEFINES[@]}" "$TOP/SPECS/kernel.spec"
 
-step "base CachyOS: merge a tre vie tra vanilla, CachyOS e la patch Red Hat, poi patches.list"
+step "base CachyOS: merge a tre vie tra vanilla, CachyOS e la patch Red Hat, poi patches.list e patches/"
 tar -C "$WORK" -xf "$CACHE/$VANILLA_TAR" && mv "$WORK/linux-$KVER" "$WORK/a"
 tar -C "$WORK" -xzf "$CACHE/$CACHY_TAR" && mv "$WORK/$CACHYOS_RELEASE" "$WORK/b"
 tar -C "$WORK" -xf "$SRC/$VANILLA_TAR" && mv "$WORK/linux-$KVER" "$WORK/fedora-vanilla"
@@ -148,6 +149,11 @@ fi
 for p in "${PATCHES[@]}"; do
   g apply --cached "$CACHE/${p##*/}"
   (cd "$WORK/b" && git apply "$CACHE/${p##*/}")     # l'albero CachyOS serve alla derivazione del config
+done
+# Le patch di Ermete (patches/), in ordine di nome, dopo quelle di CachyOS.
+for p in "${ERMETE_PATCHES[@]}"; do
+  g apply --cached "$p"
+  (cd "$WORK/b" && git apply "$p")
 done
 g diff --binary "$FEDORA" "$(g write-tree)" -- . ':!.github' > "$SRC/linux-kernel-test.patch"
 

@@ -1,0 +1,41 @@
+From: ermete <kernel@ermete.os>
+Subject: [PATCH] compiler.h: keep KCFI_REFERENCE() out of modules
+
+KCFI_REFERENCE() takes the address of an asm function in a discarded
+section so that the compiler emits its __kcfi_typeid_ symbol, which
+SYM_TYPED_FUNC_START() resolves when vmlinux is linked. Its users
+(__memset, __memmove, __clear_pages_unrolled, copy_page) sit in
+arch/x86 headers that every translation unit includes, modules too.
+
+In a module the reference resolves nothing: the typed function and its
+preamble are in vmlinux. It is not harmless either: modpost reads the
+undefined symbol from .discard.addressable before the linker drops the
+section, so every module counts as a user of the symbol. With
+CONFIG_CFI=y and __clear_pages_unrolled exported GPL-only, no non-GPL
+module builds on x86_64 any more:
+
+  ERROR: modpost: GPL-incompatible module t.ko uses GPL-only symbol '__clear_pages_unrolled'
+
+for a module whose whole source is #include <linux/mm.h>.
+
+Leave the reference to vmlinux, as is already done for the decompressor
+(__DISABLE_EXPORTS) and the vDSO.
+---
+--- a/include/linux/compiler.h
++++ b/include/linux/compiler.h
+@@ -241,10 +241,13 @@
+ 
+ #endif /* __KERNEL__ */
+ 
+-#if defined(CONFIG_CFI) && !defined(__DISABLE_EXPORTS) && !defined(BUILD_VDSO)
++#if defined(CONFIG_CFI) && !defined(__DISABLE_EXPORTS) && !defined(BUILD_VDSO) && !defined(MODULE)
+ /*
+  * Force a reference to the external symbol so the compiler generates
+- * __kcfi_typid.
++ * __kcfi_typid. Only vmlinux consumes it, through SYM_TYPED_FUNC_START(): in
++ * a module the reference resolves nothing and only makes modpost count the
++ * module as a user of the symbol, which rejects a non-GPL module whenever the
++ * symbol is exported GPL-only.
+  */
+ #define KCFI_REFERENCE(sym) __ADDRESSABLE(sym)
+ #else
