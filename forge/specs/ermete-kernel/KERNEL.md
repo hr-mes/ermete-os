@@ -27,8 +27,30 @@ podman run --rm -v "$PWD:/forge" -v "$HOME/.cache/ermete-kernel:/var/cache/ermet
 ```
 
 `prep` dura pochi minuti e lascia in `out/` il config generato e il `kernel-local`
-completo delle opzioni derivate; `build` produce gli RPM (ore). La CI e'
+completo delle opzioni derivate; `build` produce gli RPM (un'ora su 16 core) in
+`out/kernel`, `out/devel`, `out/debuginfo`, con l'NVR in `out/nvr`. La CI e'
 `.github/workflows/kernel-build.yml`.
+
+## Pubblicazione
+
+Ogni push su `main` o `iso-v0` che tocca questa directory costruisce e pubblica tre
+OCI con i soli RPM dentro, tag `<nvr>` (es. `7.1.8-100.ermete.fc43`):
+
+| Immagine | Contenuto |
+|----------|-----------|
+| `ghcr.io/hr-mes/ermete-os-kernel` | kernel, core, modules, modules-core/extra/internal, uki-virt |
+| `ghcr.io/hr-mes/ermete-os-kernel-devel` | kernel-devel, per i kmod esterni (NVIDIA, fase K4) |
+| `ghcr.io/hr-mes/ermete-os-kernel-debuginfo` | debuginfo, restano le due versioni piu' recenti |
+
+Ognuna e' firmata con cosign keyless dall'identita' del workflow, porta un SBOM SPDX
+e un'attestazione custom con i pin (`pins.json`: pins.env, hash del manifest, del
+delta e del Containerfile, immagine base del builder); la principale ha anche la
+provenance SLSA di GitHub. `:latest` si muove solo su `main`. Verifica:
+
+```sh
+cosign verify --certificate-identity-regexp '^https://github.com/hr-mes/ermete-os/' \n  --certificate-oidc-issuer https://token.actions.githubusercontent.com \n  ghcr.io/hr-mes/ermete-os-kernel:7.1.8-100.ermete.fc43
+gh attestation verify oci://ghcr.io/hr-mes/ermete-os-kernel:7.1.8-100.ermete.fc43 --repo hr-mes/ermete-os
+```
 
 ## Bump a mano (finche' non c'e' il bot, fase K5)
 

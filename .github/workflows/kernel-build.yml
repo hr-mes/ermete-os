@@ -1,19 +1,26 @@
 name: Kernel Build
 
 # Il kernel Ermete (forge/specs/ermete-kernel, docs/architecture/doc_kernel_build.md).
-# `prep` scarica e verifica le sorgenti pinnate, applica le patch e passa i gate del
-# config in pochi minuti; `build` produce gli RPM. Una PR che tocca il kernel deve
-# provare la build intera: e' il gate che il bot di bump (fase K5) usera' per il merge.
+# build: sul runner self-hosted, `prep` (sorgenti, patch, gate del config) in pochi
+# minuti o `build` (RPM) in un'ora. publish: su runner GitHub, pubblica gli RPM come
+# tre OCI (kernel, devel, debuginfo) firmati con cosign keyless, con SBOM, provenance
+# SLSA e attestazione dei pin; `:latest` si muove solo su main. Una PR costruisce e
+# non pubblica: e' il gate che il bot di bump (fase K5) usera' per il merge.
 
 on:
   workflow_dispatch:
     inputs:
       stage:
-        description: "prep: sorgenti, patch e gate del config. build: anche gli RPM."
+        description: "prep: sorgenti, patch e gate del config. build: anche gli RPM e la pubblicazione."
         type: choice
         options: [prep, build]
         default: build
   pull_request:
+    paths:
+      - forge/specs/ermete-kernel/**
+      - .github/workflows/kernel-build.yml
+  push:
+    branches: [main, iso-v0]
     paths:
       - forge/specs/ermete-kernel/**
       - .github/workflows/kernel-build.yml
@@ -25,13 +32,15 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  STAGE: ${{ inputs.stage || 'build' }}
+  IMAGE: ghcr.io/${{ github.repository_owner }}/ermete-os-kernel
+
 jobs:
-  kernel:
+  build:
     runs-on: self-hosted
-    # Kernel completo con ThinLTO e -O3: ore, non minuti, anche su 16 core.
+    # Kernel completo con -O3 e kCFI: un'ora su 16 core.
     timeout-minutes: 360
-    env:
-      STAGE: ${{ inputs.stage || 'build' }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
 
@@ -57,4 +66,135 @@ jobs:
         with:
           name: kernel-${{ env.STAGE }}
           path: out/
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    if: ${{ github.event_name != 'pull_request' && (inputs.stage || 'build') == 'build' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: kernel-build
+          path: out
+
+      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6
+
+      - uses: anchore/sbom-action/download-syft@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26
+
+      - name: Publish the three OCI images
+        id: publish
+        # Un'immagine da scratch con i soli RPM per ciascun gruppo, digest in digests/.
+        # Le etichette OCI legano l'immagine al commit e all'NVR; i pin completi vanno
+        # nell'attestazione (step successivo).
+        env:
+          BUILDAH_ISOLATION: chroot
+        run: |
+          set -euo pipefail
+          nvr=$(cat out/nvr)
+          echo "${GH_TOKEN}" | buildah login -u "${GITHUB_ACTOR}" --password-stdin ghcr.io
+          mkdir -p digests
+          for group in kernel devel debuginfo; do
+            image=${IMAGE}$([[ $group == kernel ]] || echo "-${group}")
+            ctr=$(buildah from scratch)
+            buildah copy "$ctr" "out/${group}/" /
+            buildah config \
+              --label org.opencontainers.image.title="ermete-os-kernel ${group}" \
+              --label org.opencontainers.image.version="${nvr}" \
+              --label org.opencontainers.image.revision="${GITHUB_SHA}" \
+              --label org.opencontainers.image.source="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" \
+              "$ctr"
+            buildah commit --omit-timestamp "$ctr" "${image}:${nvr}"
+            buildah push --digestfile "digests/${group}" "${image}:${nvr}"
+            if [[ $GITHUB_REF == refs/heads/main ]]; then
+              buildah push "${image}:${nvr}" "docker://${image}:latest"
+            fi
+            echo "${image}@$(cat "digests/${group}")"
+            echo "${group}=$(cat "digests/${group}")" >> "$GITHUB_OUTPUT"
+          done
+
+      - name: SBOM, sign, attest
+        # cosign keyless con l'identita' OIDC del workflow: firma, SBOM SPDX di ogni
+        # immagine (syft cataloga gli RPM dentro), e i pin come predicato custom.
+        run: |
+          set -euo pipefail
+          mkdir -p sbom
+          python3 - > pins.json <<'PY'
+          import hashlib, json, pathlib, re
+          k = pathlib.Path("forge/specs/ermete-kernel")
+          pins = dict(re.findall(r"^(\w+)=(.*)$", (k / "pins.env").read_text(), re.M))
+          sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+          base = re.search(r"^FROM (\S+)", (k / "builder/Containerfile").read_text(), re.M).group(1)
+          print(json.dumps({"pins": pins, "sources_sha256": sha(k / "SOURCES/sources.sha256"),
+                            "kernel_local_sha256": sha(k / "kernel-local"), "patches_list_sha256": sha(k / "patches.list"),
+                            "builder_base": base, "containerfile_sha256": sha(k / "builder/Containerfile")}, indent=2))
+          PY
+          for group in kernel devel debuginfo; do
+            ref="${IMAGE}$([[ $group == kernel ]] || echo "-${group}")@$(cat "digests/${group}")"
+            syft scan "registry:${ref}" -o "spdx-json=sbom/${group}.spdx.json"
+            cosign sign --yes "$ref"
+            cosign attest --yes --type spdxjson --predicate "sbom/${group}.spdx.json" "$ref"
+            cosign attest --yes --type custom --predicate pins.json "$ref"
+          done
+        env:
+          SYFT_REGISTRY_AUTH_AUTHORITY: ghcr.io
+          SYFT_REGISTRY_AUTH_USERNAME: ${{ github.actor }}
+          SYFT_REGISTRY_AUTH_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Provenance SLSA (kernel)
+        id: provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.publish.outputs.kernel }}
+          push-to-registry: true
+
+      - name: Verify (gate K2)
+        run: |
+          set -euo pipefail
+          ref="${IMAGE}@$(cat digests/kernel)"
+          cosign verify \
+            --certificate-identity-regexp "^${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com "$ref" > /dev/null
+          cosign verify-attestation --type spdxjson \
+            --certificate-identity-regexp "^${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com "$ref" > /dev/null
+          gh attestation verify "oci://${ref}" --repo "${GITHUB_REPOSITORY}"
+          echo "verificato: $ref"
+
+      - name: Debuginfo retention (two versions)
+        # Il debuginfo pesa un giga a versione: restano le due versioni con tag NVR
+        # piu' recenti; delle altre si cancellano immagine e referrer cosign (.sig, .att).
+        run: |
+          set -euo pipefail
+          api="/users/${GITHUB_REPOSITORY_OWNER}/packages/container/ermete-os-kernel-debuginfo/versions"
+          versions=$(gh api --paginate "${api}?per_page=100" | jq -s 'add')
+          jq -r '[.[] | select(.metadata.container.tags | any(startswith("sha256-") | not))]
+                 | sort_by(.created_at) | reverse | .[2:] | .[] | .name' <<<"$versions" \
+          | while read -r digest; do
+              hex=${digest#sha256:}
+              jq -r --arg hex "$hex" '.[] | select(.name == "sha256:\($hex)" or (.metadata.container.tags | any(startswith("sha256-\($hex)")))) | .id' <<<"$versions" \
+              | while read -r id; do
+                  gh api --method DELETE "${api}/${id}"
+                  echo "cancellata la versione ${id} (${digest})"
+                done
+            done
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: kernel-attestations
+          path: |
+            sbom/
+            pins.json
+            digests/
           if-no-files-found: error
