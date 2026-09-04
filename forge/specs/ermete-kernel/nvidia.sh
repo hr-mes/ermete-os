@@ -4,7 +4,7 @@
 #   open    i moduli aperti (Turing e successive) dal repo GitHub
 #           NVIDIA/open-gpu-kernel-modules, al commit pinnato in pins.env;
 #   legacy  i moduli proprietari del ramo 580 (Maxwell, Pascal, Volta) dal .run di
-#           download.nvidia.com, pinnato per sha256 in SOURCES/sources.sha256.
+#           download.nvidia.com, pinnato per sha256 in nvidia/sources.sha256.
 # Compila contro l'albero kernel-devel con la toolchain del kernel (clang, LLVM): Kbuild
 # applica da solo i flag del kernel ai moduli; la parte RM dei moduli aperti, che NVIDIA
 # compila fuori da Kbuild, riceve gli stessi flag (kCFI, retpoline, return thunk, SLS,
@@ -109,7 +109,7 @@ build() {
       local run="NVIDIA-Linux-x86_64-$NVIDIA_LEGACY_VERSION-no-compat32.run"
       step "moduli proprietari $NVIDIA_LEGACY_VERSION dal .run"
       fetch "https://download.nvidia.com/XFree86/Linux-x86_64/$NVIDIA_LEGACY_VERSION/$run"
-      (cd "$CACHE" && grep " $run\$" "$HERE/SOURCES/sources.sha256" | sha256sum --check --quiet --strict)
+      (cd "$CACHE" && grep " $run\$" "$HERE/nvidia/sources.sha256" | sha256sum --check --quiet --strict)
       sh "$CACHE/$run" --extract-only --target "$WORK/run" > /dev/null
       src="$WORK/run/kernel"; kodir="$src"; version=$NVIDIA_LEGACY_VERSION
       ;;

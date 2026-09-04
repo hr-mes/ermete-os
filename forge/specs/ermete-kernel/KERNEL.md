@@ -23,7 +23,7 @@ directory e come si usa.
 | `boot.sh` | la boot matrix: dal kernel-core a quattro avvii QEMU con le asserzioni della spec |
 | `boot/Containerfile`, `boot/init` | l'ambiente della boot matrix (qemu, OVMF, shim, ukify) e il PID 1 dell'initramfs di prova |
 | `nvidia.sh` | i moduli kernel NVIDIA, rami `open` (610) e `legacy` (580), contro il kernel-devel: `build` e `sign` |
-| `nvidia/Containerfile` | l'ambiente di nvidia.sh: la toolchain LLVM del kernel, kmod, openssl |
+| `nvidia/Containerfile`, `nvidia/sources.sha256` | l'ambiente di nvidia.sh (la toolchain LLVM del kernel, kmod, openssl) e l'hash del `.run` legacy |
 
 ## Uso locale
 

@@ -348,9 +348,11 @@ kernel:
 Pubblicazione `ermete-os-nvidia:<kernel-nvr>-<driver>`; le varianti
 dell'immagine (`-nvidia`, `-nvidia-legacy`) le consumano. Le versioni del driver
 sono pin in `pins.env` (`NVIDIA_OPEN_VERSION` e il commit del tag, che è
-annotato e può muoversi; `NVIDIA_LEGACY_VERSION`, con il `.run` nel manifest
-degli hash), alzate dal bot solo se il kmod compila. `build-inputs.py` li
-esclude: non cambiano gli RPM del kernel e non invalidano il riuso.
+annotato e può muoversi; `NVIDIA_LEGACY_VERSION`, con l'hash del `.run` in
+`nvidia/sources.sha256`, separato dal manifest del kernel che `build.sh`
+verifica per intero e che è un input del riuso), alzate dal bot solo se il
+kmod compila. `build-inputs.py` li esclude: non cambiano gli RPM del kernel e
+non invalidano il riuso.
 
 **Implementazione (K4).** `nvidia.sh build --driver open|legacy`, nell'immagine
 `nvidia/Containerfile` (la base pinnata del builder con la sola toolchain LLVM,
