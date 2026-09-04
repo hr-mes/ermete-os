@@ -142,19 +142,7 @@ jobs:
           mkdir -p out && podman cp "${ctr}:/." out/ && podman rm "$ctr" > /dev/null
           ls out
 
-      - name: Enable KVM for the runner user
-        # La regola udev che GitHub documenta per la virtualizzazione accelerata sui
-        # runner Linux: /dev/kvm nasce 0660 root:kvm e il runner non e' nel gruppo.
-        # `trigger` accoda l'evento e torna subito: `settle` aspetta che udevd lo
-        # abbia applicato, altrimenti il test vede ancora i permessi vecchi.
-        run: |
-          set -euo pipefail
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-          sudo udevadm settle
-          ls -l /dev/kvm
-          test -w /dev/kvm
+      - uses: ./.github/actions/kvm
 
       - name: Build the boot-matrix image
         env:
