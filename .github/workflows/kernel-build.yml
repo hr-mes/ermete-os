@@ -185,7 +185,9 @@ jobs:
 
       - name: SBOM, sign, attest
         # cosign keyless con l'identita' OIDC del workflow: firma, SBOM SPDX di ogni
-        # immagine (syft cataloga gli RPM dentro), e i pin come predicato custom.
+        # immagine, e i pin come predicato custom. Le immagini contengono file .rpm, non
+        # un rpmdb: il cataloger degli archivi RPM di syft non e' tra quelli di default
+        # per le immagini, senza di lui la SBOM elenca zero pacchetti.
         # cosign non legge l'auth.json di buildah: login proprio per caricare firme e
         # attestazioni nel registro.
         run: |
@@ -204,7 +206,9 @@ jobs:
           PY
           for group in kernel devel debuginfo; do
             ref="${IMAGE}$([[ $group == kernel ]] || echo "-${group}")@$(cat "digests/${group}")"
-            syft scan "registry:${ref}" -o "spdx-json=sbom/${group}.spdx.json"
+            syft scan "registry:${ref}" --select-catalogers "+rpm-archive-cataloger" -o "spdx-json=sbom/${group}.spdx.json"
+            jq -e '[.packages[] | select(.name | startswith("kernel"))] | length > 0' "sbom/${group}.spdx.json" > /dev/null \
+              || { echo "SBOM di ${group} senza pacchetti kernel"; exit 1; }
             cosign sign --yes "$ref"
             cosign attest --yes --type spdxjson --predicate "sbom/${group}.spdx.json" "$ref"
             cosign attest --yes --type custom --predicate pins.json "$ref"
