@@ -16,8 +16,10 @@
 # Uso: nvidia.sh build --driver open|legacy --devel DIR --out DIR
 #      nvidia.sh sign  --key FILE --cert FILE --devel DIR --out DIR
 #   --devel    directory con kernel-devel-*.rpm (l'out/devel di build.sh o l'immagine)
-#   --out      build: i .ko in OUT/<driver>/ con `version`; sign: firma ogni OUT/*/*.ko
-#              con sign-file del kernel-devel e lo verifica con modinfo
+#   --out      build: i .ko in OUT/<driver>/lib/modules/<kver>/extra/nvidia/, il layout
+#              che l'immagine di sistema copia e che syft cataloga, con `version` e
+#              `kver` in OUT/<driver>/; sign: firma ogni .ko sotto OUT con sign-file del
+#              kernel-devel e lo verifica con modinfo
 #   --key/--cert  chiave privata e certificato (PEM o DER) della MOK: in CI quella di
 #              progetto dall'environment `signing`, in locale una effimera
 set -euo pipefail
@@ -136,15 +138,15 @@ build() {
     echo "objtool: $objtool avvisi, dal blob RM di NVIDIA e dal C++ di DisplayPort (attesi nel ramo legacy)"
   fi
 
-  mkdir -p "$OUT/$DRIVER"
-  local ko
+  local ko dest="$OUT/$DRIVER/lib/modules/$KVER/extra/nvidia"
+  mkdir -p "$dest"
   for ko in "$kodir"/*.ko; do
     [[ $(modinfo -F vermagic "$ko") == "$KVER "* ]] || die "${ko##*/}: vermagic $(modinfo -F vermagic "$ko") non e' del kernel $KVER"
     # I preamboli kCFI (__cfi_<funzione>) provano che i flag del kernel sono arrivati.
     # Non `nm | grep -q`: con pipefail, grep chiude la pipe al primo match e nm muore di
     # SIGPIPE sui moduli grandi, e il controllo fallirebbe a caso.
     grep -q ' __cfi_' <(nm "$ko") || die "${ko##*/}: nessun preambolo kCFI"
-    install -m 644 "$ko" "$OUT/$DRIVER/"
+    install -m 644 "$ko" "$dest/"
   done
   echo "$version" > "$OUT/$DRIVER/version"
   echo "$KVER" > "$OUT/$DRIVER/kver"
@@ -164,8 +166,8 @@ sign() {
   [[ $hash ]] || die "CONFIG_MODULE_SIG_HASH assente nel config"
   cn=$(cert_cn "$CERT")
   step "firma con $hash, certificato \"$cn\""
-  mapfile -t KOS < <(find "$OUT" -mindepth 2 -maxdepth 2 -name '*.ko' | sort)
-  [[ ${#KOS[@]} -gt 0 ]] || die "nessun modulo in $OUT/*/"
+  mapfile -t KOS < <(find "$OUT" -path '*/lib/modules/*' -name '*.ko' | sort)
+  [[ ${#KOS[@]} -gt 0 ]] || die "nessun modulo sotto $OUT/*/lib/modules/"
   for ko in "${KOS[@]}"; do
     "$SYSSRC/scripts/sign-file" "$hash" "$KEY" "$CERT" "$ko"
     signer=$(modinfo -F signer "$ko")

@@ -66,7 +66,8 @@ podman run --rm -v "$PWD:/forge" -v "$HOME/.cache/ermete-kernel:/var/cache/ermet
 `--driver open` (610, GitHub al commit pinnato) o `legacy` (580, il `.run` nel
 manifest degli hash); `--devel` e' una directory con il `kernel-devel-*.rpm` (l'`out/`
 di build.sh, o l'immagine `ermete-os-kernel-devel:<nvr>`). I `.ko` finiscono in
-`nvidia-out/<driver>/` con il vermagic del kernel e i preamboli kCFI, senza firma:
+`nvidia-out/<driver>/lib/modules/<kver>/extra/nvidia/` (il layout che l'immagine di
+sistema copia) con il vermagic del kernel e i preamboli kCFI, senza firma:
 `nvidia.sh sign --key K --cert C --devel DIR --out DIR` li firma con sign-file del
 kernel-devel, in locale con una chiave effimera, in CI con la MOK di progetto
 (workflow `.github/workflows/nvidia-kmod.yml`).

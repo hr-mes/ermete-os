@@ -377,7 +377,9 @@ kernel-devel e l'hash di `CONFIG_MODULE_SIG_HASH`, e rilegge il firmatario con
 self-hosted, kernel-devel dall'immagine pubblicata per l'NVR di `nvr.sh`),
 `sign` (runner GitHub, environment `signing`: vede solo i `.ko` e la chiave,
 montata in sola lettura per la durata del comando), `publish` (un'immagine
-`scratch` per ramo con i `.ko`, `version` e `kver`; cosign, SBOM dei moduli,
+`scratch` per ramo con `lib/modules/<kver>/extra/nvidia/*.ko`, il layout che
+l'immagine di sistema copia e che syft cataloga, più `version` e `kver`;
+cosign, SBOM dei moduli,
 attestazione dei pin `NVIDIA_*`, retention, gate di verifica). Le patch
 `misc/nvidia/*` di CachyOS al commit pinnato non entrano: la prima aggiunge
 solo `-mharden-sls=all` alla parte modeset (qui arriva da `EXTRA_CFLAGS`),
