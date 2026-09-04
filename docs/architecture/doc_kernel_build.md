@@ -149,12 +149,15 @@ identica in locale. Passi, tutti senza rete tranne i download verificati:
    (binari), `ermete-os-kernel-devel`, `ermete-os-kernel-debuginfo`, tag `<nvr>`.
    Pacchetti separati e non suffissi del tag, perché la retention di ghcr è per
    pacchetto: del debuginfo restano le due versioni con tag NVR più recenti, delle
-   altre si cancellano immagine e referrer cosign. Ogni immagine: firma cosign
+   altre si cancellano immagine e referrer cosign; di ogni pacchetto se ne vanno le
+   versioni senza tag, cioè i manifesti sostituiti da un nuovo push dello stesso
+   NVR (`retention.sh`). Ogni immagine: firma cosign
    keyless (identità OIDC del workflow), SBOM SPDX da syft come attestazione
    `spdxjson`, attestazione custom con i pin (pins.env, hash di manifest, delta,
    patches.list e Containerfile, immagine base del builder); la principale ha
    anche la provenance SLSA di GitHub (`actions/attest-build-provenance`, commit e
-   workflow), verificabile con `gh attestation verify`. Il gate K2 è il `cosign
+   workflow) nello store attestazioni di GitHub, non nel registro, verificabile
+   con `gh attestation verify`. Il gate K2 è il `cosign
    verify` e `verify-attestation` nel workflow stesso. `:latest` si muove solo su
    `main`, cioè al merge di una PR di bump. Una PR costruisce e non pubblica.
 

@@ -155,12 +155,12 @@ jobs:
           SYFT_REGISTRY_AUTH_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Provenance SLSA (kernel)
-        id: provenance
+        # Nello store attestazioni di GitHub, non nel registro: `gh attestation verify`
+        # legge da li', e senza referrer senza tag la retention resta esatta.
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8
         with:
           subject-name: ${{ env.IMAGE }}
           subject-digest: ${{ steps.publish.outputs.kernel }}
-          push-to-registry: true
 
       - name: Verify (gate K2)
         run: |
@@ -175,23 +175,11 @@ jobs:
           gh attestation verify "oci://${ref}" --repo "${GITHUB_REPOSITORY}"
           echo "verificato: $ref"
 
-      - name: Debuginfo retention (two versions)
-        # Il debuginfo pesa un giga a versione: restano le due versioni con tag NVR
-        # piu' recenti; delle altre si cancellano immagine e referrer cosign (.sig, .att).
-        run: |
-          set -euo pipefail
-          api="/users/${GITHUB_REPOSITORY_OWNER}/packages/container/ermete-os-kernel-debuginfo/versions"
-          versions=$(gh api --paginate "${api}?per_page=100" | jq -s 'add')
-          jq -r '[.[] | select(.metadata.container.tags | any(startswith("sha256-") | not))]
-                 | sort_by(.created_at) | reverse | .[2:] | .[] | .name' <<<"$versions" \
-          | while read -r digest; do
-              hex=${digest#sha256:}
-              jq -r --arg hex "$hex" '.[] | select(.name == "sha256:\($hex)" or (.metadata.container.tags | any(startswith("sha256-\($hex)")))) | .id' <<<"$versions" \
-              | while read -r id; do
-                  gh api --method DELETE "${api}/${id}"
-                  echo "cancellata la versione ${id} (${digest})"
-                done
-            done
+      - name: Retention (retention.sh)
+        # Tutte le versioni NVR di kernel e devel, due del debuginfo; via ogni versione
+        # senza tag (manifesti sostituiti da un nuovo push) e i referrer cosign di cio'
+        # che se ne va.
+        run: bash forge/specs/ermete-kernel/retention.sh
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
