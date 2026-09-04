@@ -213,7 +213,17 @@ cp "$CONFIG" "$SRC/kernel-local" "$OUT/"
 if [[ $STAGE == build ]]; then
   step "rpmbuild -bb"
   rpmbuild -bb --noprep --target x86_64 "${BCONDS[@]}" "$TOP/SPECS/kernel.spec"
-  cp "$TOP"/RPMS/x86_64/*.rpm "$OUT/"
+  # Tre OCI distinti (kernel-build.yml): binari, devel per i kmod esterni, debuginfo
+  # con la sua retention. La classificazione e' per nome di pacchetto.
+  mkdir -p "$OUT/kernel" "$OUT/devel" "$OUT/debuginfo"
+  for rpm in "$TOP"/RPMS/x86_64/*.rpm; do
+    case ${rpm##*/} in
+      *debuginfo*) cp "$rpm" "$OUT/debuginfo/" ;;
+      *devel*) cp "$rpm" "$OUT/devel/" ;;
+      *) cp "$rpm" "$OUT/kernel/" ;;
+    esac
+  done
+  rpm -qp --qf '%{VERSION}-%{RELEASE}' "$TOP"/RPMS/x86_64/kernel-core-*.rpm > "$OUT/nvr"
 fi
 
-step "fatto: $(find "$OUT" -mindepth 1 -printf "%f ")"
+step "fatto: $(find "$OUT" -type f -printf "%P ")"
