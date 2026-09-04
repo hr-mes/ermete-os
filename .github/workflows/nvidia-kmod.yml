@@ -53,6 +53,9 @@ jobs:
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: self-hosted
     timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: read
     strategy:
       fail-fast: false
       matrix:
@@ -69,9 +72,16 @@ jobs:
 
       - name: Kernel-devel from the published image
         # L'NVR viene dai pin (nvr.sh): il kernel per cui si compila e' quello pubblicato.
+        # Login con il token del job: il pacchetto e' pubblico, ma il podman di un runner
+        # self-hosted puo' avere in auth.json credenziali ghcr stantie, e ghcr risponde 403
+        # al token anonimo. Logout a fine passo, cosi' non ne restano.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           nvr=$(bash forge/specs/ermete-kernel/nvr.sh)
+          echo "${GH_TOKEN}" | podman login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
+          trap 'podman logout ghcr.io' EXIT
           ctr=$(podman create "${KERNEL_IMAGE}-devel:${nvr}" /kernel-devel)
           mkdir -p devel && podman cp "${ctr}:/." devel/ && podman rm "$ctr" > /dev/null
           ls devel
@@ -98,6 +108,9 @@ jobs:
     if: ${{ github.event_name != 'pull_request' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: read
     environment: signing
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -117,9 +130,13 @@ jobs:
 
       - name: Kernel-devel from the published image
         # Solo per scripts/sign-file, che nvidia.sh estrae dal RPM.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           nvr=$(bash forge/specs/ermete-kernel/nvr.sh)
+          echo "${GH_TOKEN}" | podman login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
+          trap 'podman logout ghcr.io' EXIT
           ctr=$(podman create "${KERNEL_IMAGE}-devel:${nvr}" /kernel-devel)
           mkdir -p devel && podman cp "${ctr}:/." devel/ && podman rm "$ctr" > /dev/null
 
