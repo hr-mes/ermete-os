@@ -269,8 +269,9 @@ Ogni PR di bump e ogni cambio in `forge/specs/ermete-kernel/**` passa:
    (`boot/init`, sulla seriale): `uname -r` atteso, `/sys/kernel/btf/vmlinux`,
    `bpftool feature probe`, `/sys/kernel/sched_ext`, lista misure IMA (con
    `ima_policy=tcb` solo nella riga di comando di prova), lockdown `integrity`,
-   `tcp_congestion_control=bbr3`, `tainted=0`, `dmesg` senza `BUG:`, `WARNING:`,
-   `Oops`; in UEFI anche `SecureBoot=1` e `MokListRT` presente. `publish`
+   `tcp_congestion_control=bbr3`, `tainted=0`, `dmesg` senza splat (`BUG:`,
+   `WARNING: CPU:`, `Oops:`, `Call Trace:`; gli avvisi hw-vuln come SRSO non lo
+   sono); in UEFI anche `SecureBoot=1` e `MokListRT` presente. `publish`
    dipende da `boot`: senza matrice verde non si pubblica;
 4. **kmod NVIDIA**: `nvidia-open` (610) e ramo legacy 580 compilano contro
    `kernel-devel` e si firmano con la MOK;

@@ -52,7 +52,9 @@ check ima         ima
 check lockdown    grep -q '\[integrity\]' /sys/kernel/security/lockdown
 check bbr         bbr
 check taint       test "$(cat /proc/sys/kernel/tainted)" = 0
-check dmesg       sh -c '! dmesg | grep -E "BUG:|WARNING:|Oops|Call Trace"'
+# Solo le firme degli splat: gli avvisi hw-vuln (es. SRSO su AMD in VM) contengono
+# "WARNING:" ma non sono errori del kernel; un WARN vero e' "WARNING: CPU: N PID: ...".
+check dmesg       sh -c '! dmesg | grep -E "BUG: |kernel BUG at|WARNING: CPU: |Oops: |Call Trace:|cut here"'
 if [ "$sb" ]; then
   check secureboot secureboot
   check moklist    test -e /sys/firmware/efi/efivars/MokListRT-605dab50-e046-4300-abb6-3dd810dd8b23
