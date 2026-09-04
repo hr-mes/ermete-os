@@ -1,0 +1,176 @@
+name: Kernel Bump
+
+# Il bot di bump del kernel (forge/specs/ermete-kernel/bump.py, spec sezione 8).
+# check: su runner GitHub, bump.py confronta i pin con Bodhi, le release CachyOS, i tag
+# NVIDIA e il registro Fedora; se nulla e' cambiato finisce qui. prep: sul runner
+# self-hosted, nel builder, rigenera i manifesti degli hash per i pin nuovi e passa
+# `build.sh --stage prep` (firme, patch, gate del config): l'esito va nella PR, verde o
+# rosso. pr: apre la PR con i file rigenerati e le mette l'auto-merge; il check
+# richiesto dalla protezione del branch e' "Kernel gate" di Kernel Build. Una PR di
+# bump aperta alla volta. `schedule` vale solo dal branch di default; a mano su
+# qualunque branch.
+
+on:
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: kernel-bump
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      changed: ${{ steps.bump.outputs.changed }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: One open bump PR at a time
+        id: open
+        run: |
+          set -euo pipefail
+          open=$(gh pr list --label kernel-bump --state open --json number --jq 'length')
+          [[ $open -eq 0 ]] || echo "una PR di bump e' gia' aperta: niente da fare finche' non e' chiusa" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "open=${open}" >> "$GITHUB_OUTPUT"
+
+      - name: Run bump.py apply
+        id: bump
+        if: ${{ steps.open.outputs.open == '0' }}
+        run: |
+          set -euo pipefail
+          python3 forge/specs/ermete-kernel/bump.py apply > body.md
+          changed=false
+          [[ -z $(git status --porcelain -- forge/specs/ermete-kernel) ]] || changed=true
+          echo "changed=${changed}" >> "$GITHUB_OUTPUT"
+          { echo "## bump: $([[ $changed == true ]] && echo "pin nuovi" || echo "pin invariati")"; echo; cat body.md; } >> "$GITHUB_STEP_SUMMARY"
+          git status --short -- forge/specs/ermete-kernel
+
+      - if: ${{ steps.bump.outputs.changed == 'true' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: bump-pins
+          path: |
+            body.md
+            forge/specs/ermete-kernel/pins.env
+            forge/specs/ermete-kernel/KERNEL.md
+            forge/specs/ermete-kernel/builder/Containerfile
+            forge/specs/ermete-kernel/boot/Containerfile
+            forge/specs/ermete-kernel/nvidia/Containerfile
+          if-no-files-found: error
+
+  prep:
+    needs: check
+    if: ${{ needs.check.outputs.changed == 'true' }}
+    runs-on: self-hosted
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: bump-pins
+
+      - name: Build the kernel builder image
+        env:
+          BUILDAH_ISOLATION: chroot
+        run: podman build -t localhost/ermete-kernel-builder forge/specs/ermete-kernel/builder
+
+      - name: Manifests for the new pins
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.cache/ermete-kernel"
+          builder() {
+            podman run --rm \
+              -v "$GITHUB_WORKSPACE:/forge" \
+              -v "$HOME/.cache/ermete-kernel:/var/cache/ermete-kernel" \
+              -w /forge localhost/ermete-kernel-builder "$@"
+          }
+          builder bash forge/specs/ermete-kernel/build.sh --stage manifest --out /forge/manifest/kernel
+          builder bash forge/specs/ermete-kernel/nvidia.sh manifest --out /forge/manifest/nvidia
+          cp manifest/kernel/sources.sha256 forge/specs/ermete-kernel/SOURCES/sources.sha256
+          cp manifest/nvidia/sources.sha256 forge/specs/ermete-kernel/nvidia/sources.sha256
+          git diff --stat -- forge/specs/ermete-kernel
+
+      - name: Prep (signatures, patches, config gate)
+        # Verde o rosso, l'esito e le opzioni derivate finiscono nel corpo della PR: la
+        # PR si apre comunque e il gate di Kernel Build la tiene rossa finche' un umano
+        # non decide.
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          outcome=ok
+          if ! podman run --rm \
+                 -v "$GITHUB_WORKSPACE:/forge" \
+                 -v "$HOME/.cache/ermete-kernel:/var/cache/ermete-kernel" \
+                 -w /forge localhost/ermete-kernel-builder \
+                 bash forge/specs/ermete-kernel/build.sh --stage prep --out /forge/out > prep.log 2>&1; then
+            outcome=FAIL
+          fi
+          {
+            echo; echo "## prep: ${outcome}"; echo
+            if [[ $outcome == FAIL ]]; then
+              echo '```'; tail -n 40 prep.log; echo '```'
+            fi
+            if grep -q '^opzioni derivate: ' prep.log; then
+              echo "<details><summary>$(grep '^opzioni derivate: ' prep.log) (listnewconfig con i valori CachyOS)</summary>"
+              echo; echo '```'
+              sed -n '/^opzioni derivate: /,/^>>> /{/^opzioni derivate: /d;/^>>> /d;p}' prep.log
+              echo '```'; echo "</details>"
+            fi
+          } > prep.md
+          cat prep.md >> "$GITHUB_STEP_SUMMARY"
+          echo "prep: ${outcome}"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: bump-prep
+          path: |
+            prep.md
+            prep.log
+            forge/specs/ermete-kernel/SOURCES/sources.sha256
+            forge/specs/ermete-kernel/nvidia/sources.sha256
+          if-no-files-found: error
+
+  pr:
+    needs: [check, prep]
+    if: ${{ needs.check.outputs.changed == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      # Un PAT: le PR aperte con il GITHUB_TOKEN non fanno partire i check.
+      GH_TOKEN: ${{ secrets.KERNEL_BUMP_TOKEN }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          token: ${{ secrets.KERNEL_BUMP_TOKEN }}
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: bump-*
+          merge-multiple: true
+
+      - name: Branch, commit, PR with auto-merge
+        run: |
+          set -euo pipefail
+          git add forge/specs/ermete-kernel
+          keys=$(git diff --cached -U0 -- forge/specs/ermete-kernel/pins.env | sed -n 's/^+\([A-Z_]\+\)=.*/\1/p')
+          git diff --cached --quiet -- 'forge/specs/ermete-kernel/*/Containerfile' || keys+=$'\n'"immagine base"
+          title="chore(kernel): bump $(paste -sd, - <<< "$keys" | sed 's/,/, /g')"
+          branch="bump/kernel-$(date -u +%Y%m%d-%H%M)"
+          git config user.name "ermete-bump"
+          git config user.email "kernel@ermete.os"
+          git checkout -b "$branch"
+          git commit -q -m "$title" -m "Aperta dal bot di bump (kernel-bump.yml, spec sezione 8)."
+          git push -u origin "$branch"
+          cat body.md prep.md > pr.md
+          url=$(gh pr create --base "$GITHUB_REF_NAME" --head "$branch" --label kernel-bump --title "$title" --body-file pr.md)
+          gh pr merge --auto --squash "$url"
+          echo "PR: ${url} (auto-merge con il check Kernel gate verde)" | tee -a "$GITHUB_STEP_SUMMARY"
