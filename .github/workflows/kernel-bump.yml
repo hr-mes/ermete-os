@@ -8,12 +8,18 @@ name: Kernel Bump
 # rosso. pr: apre la PR con i file rigenerati e le mette l'auto-merge; il check
 # richiesto dalla protezione del branch e' "Kernel gate" di Kernel Build. Una PR di
 # bump aperta alla volta. `schedule` vale solo dal branch di default; a mano su
-# qualunque branch.
+# qualunque branch; e al push di questo file: un cambio al bot lo esercita subito,
+# ed e' cosi' che GitHub registra il workflow fuori dal branch di default, dove
+# workflow_dispatch da solo non lo rende avviabile.
 
 on:
   schedule:
     - cron: "17 5 * * *"
   workflow_dispatch:
+  push:
+    branches: [main, iso-v0]
+    paths:
+      - .github/workflows/kernel-bump.yml
 
 concurrency:
   group: kernel-bump
