@@ -15,11 +15,15 @@
 #
 # Uso: nvidia.sh build --driver open|legacy --devel DIR --out DIR
 #      nvidia.sh sign  --key FILE --cert FILE --devel DIR --out DIR
+#      nvidia.sh manifest --out DIR
 #   --devel    directory con kernel-devel-*.rpm (l'out/devel di build.sh o l'immagine)
 #   --out      build: i .ko in OUT/<driver>/lib/modules/<kver>/extra/nvidia/, il layout
 #              che l'immagine di sistema copia e che syft cataloga, con `version` e
 #              `kver` in OUT/<driver>/; sign: firma ogni .ko sotto OUT con sign-file del
-#              kernel-devel e lo verifica con modinfo
+#              kernel-devel e lo verifica con modinfo; manifest: scarica il .run del
+#              ramo legacy pinnato in pins.env, lo confronta con l'hash che NVIDIA
+#              pubblica accanto e scrive OUT/sources.sha256 (il bot di bump lo copia
+#              in nvidia/sources.sha256)
 #   --key/--cert  chiave privata e certificato (PEM o DER) della MOK: in CI quella di
 #              progetto dall'environment `signing`, in locale una effimera
 set -euo pipefail
@@ -42,12 +46,14 @@ done
 usage() {
   echo "uso: nvidia.sh build --driver open|legacy --devel DIR --out DIR" >&2
   echo "     nvidia.sh sign --key FILE --cert FILE --devel DIR --out DIR" >&2
+  echo "     nvidia.sh manifest --out DIR" >&2
   exit 2
 }
-[[ $DEVEL && $OUT ]] || usage
+[[ $OUT ]] || usage
 case $STAGE in
-  build) [[ $DRIVER == open || $DRIVER == legacy ]] || usage ;;
-  sign) [[ $KEY && $CERT ]] || usage ;;
+  build) [[ $DEVEL && ( $DRIVER == open || $DRIVER == legacy ) ]] || usage ;;
+  sign) [[ $DEVEL && $KEY && $CERT ]] || usage ;;
+  manifest) ;;
   *) usage ;;
 esac
 
@@ -60,17 +66,19 @@ fetch() { # fetch URL: nella cache, se manca
 # shellcheck source=pins.env
 . "$HERE/pins.env"
 
-# L'albero kernel-devel estratto dal RPM: Kbuild per i moduli esterni non ha bisogno
-# dell'installazione, cosi' non servono ne' rete ne' dnf.
-mapfile -t DEVEL_RPM < <(find "$DEVEL" -name 'kernel-devel-[0-9]*.rpm')
-[[ ${#DEVEL_RPM[@]} -eq 1 ]] || die "atteso un solo kernel-devel-*.rpm in $DEVEL, trovati ${#DEVEL_RPM[@]}"
-KVER=$(rpm -qp --qf '%{VERSION}-%{RELEASE}.%{ARCH}' "${DEVEL_RPM[0]}")
 WORK=$(mktemp -d)
-mkdir -p "$WORK/devel" && (cd "$WORK/devel" && rpm2cpio "${DEVEL_RPM[0]}" | cpio -idm --quiet)
-SYSSRC="$WORK/devel/usr/src/kernels/$KVER"
-[[ -f $SYSSRC/Makefile && -f $SYSSRC/.config ]] || die "albero kernel-devel non trovato per $KVER"
 mkdir -p "$OUT"
-echo "kernel $KVER"
+
+devel_tree() { # l'albero kernel-devel estratto dal RPM: Kbuild per i moduli esterni non
+  # ha bisogno dell'installazione, cosi' non servono ne' rete ne' dnf.
+  mapfile -t DEVEL_RPM < <(find "$DEVEL" -name 'kernel-devel-[0-9]*.rpm')
+  [[ ${#DEVEL_RPM[@]} -eq 1 ]] || die "atteso un solo kernel-devel-*.rpm in $DEVEL, trovati ${#DEVEL_RPM[@]}"
+  KVER=$(rpm -qp --qf '%{VERSION}-%{RELEASE}.%{ARCH}' "${DEVEL_RPM[0]}")
+  mkdir -p "$WORK/devel" && (cd "$WORK/devel" && rpm2cpio "${DEVEL_RPM[0]}" | cpio -idm --quiet)
+  SYSSRC="$WORK/devel/usr/src/kernels/$KVER"
+  [[ -f $SYSSRC/Makefile && -f $SYSSRC/.config ]] || die "albero kernel-devel non trovato per $KVER"
+  echo "kernel $KVER"
+}
 
 cfg() { grep -q "^$1=y" "$SYSSRC/.config"; } # cfg CONFIG_X: l'opzione e' accesa nel kernel
 cfg_val() { sed -n "s/^$1=//p" "$SYSSRC/.config"; } # cfg_val CONFIG_X: il valore dell'opzione
@@ -80,6 +88,7 @@ cc_option() { # cc_option FLAG...: i flag se clang li accetta, come cc-option di
 
 build() {
   local src kodir version flags rm_targets=()
+  devel_tree
   grep -q '^CONFIG_CC_VERSION_TEXT="clang' "$SYSSRC/.config" || die "il kernel non e' compilato con clang: i moduli devono usare la stessa toolchain"
   cfg CONFIG_CFI || die "il kernel non ha CONFIG_CFI"
   # I flag con cui Kbuild compila i moduli, letti da .config nella grafia di clang
@@ -174,6 +183,7 @@ cert_cn() { # cert_cn FILE: il CN del certificato, PEM o DER
 
 sign() {
   local hash cn ko signer
+  devel_tree
   hash=$(sed -n 's/^CONFIG_MODULE_SIG_HASH="\(.*\)"$/\1/p' "$SYSSRC/.config")
   [[ $hash ]] || die "CONFIG_MODULE_SIG_HASH assente nel config"
   cn=$(cert_cn "$CERT")
@@ -188,5 +198,18 @@ sign() {
   done
 }
 
-case $STAGE in build) build ;; sign) sign ;; esac
+manifest() {
+  local run="NVIDIA-Linux-x86_64-$NVIDIA_LEGACY_VERSION-no-compat32.run"
+  local url="https://download.nvidia.com/XFree86/Linux-x86_64/$NVIDIA_LEGACY_VERSION"
+  step "manifesto del .run $NVIDIA_LEGACY_VERSION"
+  fetch "$url/$run"
+  fetch "$url/$run.sha256sum"
+  # L'hash che NVIDIA pubblica accanto al file, dallo stesso host: controllo di
+  # integrita' del download, non di autenticita' (il .run non e' firmato).
+  (cd "$CACHE" && sha256sum --check --quiet --strict "$run.sha256sum")
+  (cd "$CACHE" && sha256sum "$run") > "$OUT/sources.sha256"
+  echo "manifesto in $OUT/sources.sha256"
+}
+
+case $STAGE in build) build ;; sign) sign ;; manifest) manifest ;; esac
 step "fatto: $(find "$OUT" -type f -name '*.ko' -printf '%P ')"
