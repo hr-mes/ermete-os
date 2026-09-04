@@ -10,6 +10,7 @@ directory e come si usa.
 | `pins.env` | i pin: NVR Fedora (stesso patch level della release CachyOS), release CachyOS, commit del config e delle patch |
 | `SOURCES/sources.sha256` | hash di ogni file che build.sh scarica |
 | `SOURCES/keys/{cachyos,kernel.org}/` | chiavi pubbliche che firmano i tarball CachyOS e vanilla |
+| `keys/mok/` | certificato pubblico della MOK di progetto, che firma UKI e moduli esterni; la chiave privata sta nel secret `MOK_PRIVATE_KEY` dell'environment `signing` |
 | `kernel-local` | delta Kconfig di Ermete sul config x86_64 di Fedora |
 | `patches.list` | patch di CachyOS/kernel-patches applicate sopra la base |
 | `fedora-wins.list` | percorsi in cui un conflitto tra base CachyOS e patch Red Hat si risolve con l'albero Fedora |

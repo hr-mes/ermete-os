@@ -37,6 +37,9 @@ forge/*.tar.gz
 # Security / Keys
 *.key
 *.pem
+# Il certificato pubblico della MOK di progetto: solo la parte pubblica, la chiave
+# privata sta nell'environment GitHub `signing` (docs/architecture/doc_kernel_build.md, sezione 6).
+!forge/specs/ermete-kernel/keys/mok/ermete-mok.pem
 .tmp_repo/
 tier0_extracted/
 

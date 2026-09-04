@@ -57,6 +57,7 @@ Directory `forge/specs/ermete-kernel/` dopo il blocco:
 | `builder/Containerfile`  | ambiente Fedora 43 (esiste già), base pinnata per digest                                                                                                                            |
 | `build.sh`               | l'intera build, riproducibile in locale e in CI                                                                                                                                     |
 | `build-inputs.py`        | gli input che cambiano gli RPM come JSON: predicato dell'attestazione dei pin e chiave del riuso (sezione 7)                                                                   |
+| `keys/mok/`              | certificato pubblico della MOK di progetto (sezione 6); la chiave privata è nell'environment `signing`                                                                        |
 | `microvm/`               | config e spec del kernel guest (sezione 9)                                                                                                                                          |
 | `KERNEL.md`              | cosa c'è nella directory, uso locale, bump a mano; il bot (K5) ne aggiorna la parte di versione                                                                                    |
 
@@ -235,9 +236,13 @@ patchano i Makefile per forzarlo.
 - **Moduli in albero**: firmati dalla chiave effimera generata dallo spec, il
   cui certificato è dentro il kernel. `MODULE_SIG_FORCE` rende il rifiuto un
   comportamento di compilazione, non di riga di comando.
-- **Moduli esterni** (NVIDIA): firmati con la MOK del progetto (segreti
-  `MOK_PRIVATE_KEY`/`MOK_PUBLIC_DER` già esistenti), in un job separato che non
-  vede altro.
+- **Moduli esterni** (NVIDIA): firmati con la MOK del progetto, in un job
+  separato che non vede altro. La chiave privata (RSA 4096, generata offline il
+  2026-09-04, copia cifrata fuori da GitHub) sta nel secret `MOK_PRIVATE_KEY`
+  dell'environment `signing`, ammesso solo ai branch `main` e `iso-v0`; il
+  certificato pubblico è committato in `keys/mok/ermete-mok.pem` (`.der` per
+  `mokutil --import` e `sign-file`). Un secret non è più sicuro per essere nato
+  sul runner: conta dove si usa, e chi ne ha la custodia.
 - **UKI**: kernel, initrd, `cmdline` e microcode early in un'unica immagine
   firmata con la MOK dietro lo shim Fedora; la produce la fase system-image,
   perché l'initrd dipende dall'immagine, non dal kernel. Lo spec Fedora fornisce
