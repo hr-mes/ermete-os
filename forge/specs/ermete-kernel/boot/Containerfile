@@ -10,7 +10,7 @@
 FROM registry.fedoraproject.org/fedora:43@sha256:8d775fbb86b8aa62172a2fd33203d285743ad2b74df8416322066e59e917b4ef AS schbench
 ARG SCHBENCH_COMMIT=24e32b8ef67cbafb0761aed68747d90a291767ae
 RUN dnf -y install gcc make tar \
-    && curl -fsSL "https://github.com/masoncl/schbench/archive/${SCHBENCH_COMMIT}.tar.gz" | tar -xz -C /tmp \
+    && curl -fsSL "https://github.com/masoncl/schbench/archive/${SCHBENCH_COMMIT}.tar.gz" | tar -xz -C /tmp --no-same-owner \
     && make -C "/tmp/schbench-${SCHBENCH_COMMIT}" \
     && install -m 755 "/tmp/schbench-${SCHBENCH_COMMIT}/schbench" /usr/local/bin/schbench
 
@@ -35,6 +35,6 @@ ARG FIRECRACKER=v1.16.1
 ARG FIRECRACKER_SHA256=382a02a869e4d6d5cb14c40577f9545e8458021ea8b0b2d3fc10ec14d9c242e6
 RUN curl -fsSL -o /tmp/firecracker.tgz "https://github.com/firecracker-microvm/firecracker/releases/download/${FIRECRACKER}/firecracker-${FIRECRACKER}-x86_64.tgz" \
     && echo "${FIRECRACKER_SHA256}  /tmp/firecracker.tgz" | sha256sum --check --quiet \
-    && tar -xzf /tmp/firecracker.tgz -C /tmp \
+    && tar -xzf /tmp/firecracker.tgz -C /tmp --no-same-owner "release-${FIRECRACKER}-x86_64/firecracker-${FIRECRACKER}-x86_64" \
     && install -m 755 "/tmp/release-${FIRECRACKER}-x86_64/firecracker-${FIRECRACKER}-x86_64" /usr/local/bin/firecracker \
     && rm -r /tmp/firecracker.tgz "/tmp/release-${FIRECRACKER}-x86_64"
