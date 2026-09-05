@@ -106,6 +106,18 @@ jobs:
           path: repro-out/
           if-no-files-found: error
 
+      - name: Keep the rebuilt kernel-core and modules-core (B) for the diagnosis
+        # Solo se il confronto e' rosso: A e' nel registro, B altrimenti sparirebbe col runner.
+        if: ${{ failure() && hashFiles('out-b/kernel/kernel-core-*.rpm') != '' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: repro-b-rpms
+          path: |
+            out-b/kernel/kernel-core-*.rpm
+            out-b/kernel/kernel-modules-core-*.rpm
+          retention-days: 7
+          if-no-files-found: error
+
   variant:
     if: ${{ inputs.variant != '' && inputs.variant != 'none' }}
     runs-on: self-hosted
