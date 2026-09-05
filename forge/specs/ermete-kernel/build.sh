@@ -265,7 +265,7 @@ if [[ $STAGE == microvm || $STAGE == build ]]; then
   # pacchetto ne' KBUILD_BUILD_TIMESTAMP sarebbero riproducibili.
   epoch=$(rpmspec -q --srpm --qf '[%{changelogtime} ]' "$TOP/SPECS/kernel.spec" | cut -d' ' -f1)
   [[ $epoch =~ ^[0-9]+$ ]] || die "changelog di kernel.spec senza data"
-  SOURCE_DATE_EPOCH=$epoch rpmbuild -bb --target x86_64 --define "source_date_epoch_from_changelog 0" \
+  SOURCE_DATE_EPOCH=$epoch rpmbuild -bb --target x86_64 --define "source_date_epoch_from_changelog 0" --define "use_source_date_epoch_as_buildtime 1" \
     --define "kernel_tree $TREE" --define "objdir $MICROVM_OBJ" \
     --define "kversion ${NVR%%-*}" --define "krelease ${NVR#*-}" \
     --define "make_opts ${MAKE_OPTS[*]}" "$HERE/microvm/ermete-kernel-microvm.spec"
