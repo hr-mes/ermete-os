@@ -1,0 +1,74 @@
+# Kernel guest per le MicroVM (docs/architecture/doc_kernel_build.md, sezione 9): il
+# frammento che build.sh fonde sopra x86_64_defconfig + kvm_guest.config, stessa sorgente
+# e stesso pin del kernel principale. Stesso formato di kernel-local: ogni riga deve
+# valere nel config generato (check_delta), una riga di motivazione per opzione.
+
+# Identita': uname -r finisce in -microvm, senza suffisso git.
+CONFIG_LOCALVERSION="-microvm"
+# CONFIG_LOCALVERSION_AUTO is not set
+# Niente moduli: tutto built-in, un solo file da caricare e da attestare.
+# CONFIG_MODULES is not set
+# Il config nel kernel: e' cio' che l'attestazione e il gate leggono a runtime.
+CONFIG_IKCONFIG=y
+CONFIG_IKCONFIG_PROC=y
+
+# Virtio: bus MMIO (Firecracker enumera i device dalla riga di comando) e PCI
+# (cloud-hypervisor); dischi, rete, console, vsock per hypervisor-daemon, rng, balloon.
+CONFIG_VIRTIO_MMIO=y
+CONFIG_VIRTIO_MMIO_CMDLINE_DEVICES=y
+CONFIG_VIRTIO_PCI=y
+CONFIG_VIRTIO_BLK=y
+CONFIG_VIRTIO_NET=y
+CONFIG_VIRTIO_CONSOLE=y
+CONFIG_VSOCKETS=y
+CONFIG_VIRTIO_VSOCKETS=y
+CONFIG_HW_RANDOM_VIRTIO=y
+CONFIG_VIRTIO_BALLOON=y
+
+# File system: 9p e virtiofs per le directory condivise dall'host, EROFS per la rootfs
+# immutabile (come il sistema), overlay per lo strato scrivibile, ext4 per i volumi.
+CONFIG_NET_9P=y
+CONFIG_NET_9P_VIRTIO=y
+CONFIG_9P_FS=y
+CONFIG_FUSE_FS=y
+CONFIG_VIRTIO_FS=y
+CONFIG_EROFS_FS=y
+CONFIG_OVERLAY_FS=y
+CONFIG_EXT4_FS=y
+# dm-verity: la rootfs del guest e' verificata come quella dell'host.
+CONFIG_MD=y
+CONFIG_BLK_DEV_DM=y
+CONFIG_DM_VERITY=y
+
+# BPF con BTF, come nel kernel principale: osservabilita' e policy anche nel guest.
+CONFIG_BPF_SYSCALL=y
+CONFIG_BPF_JIT=y
+CONFIG_DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT=y
+CONFIG_DEBUG_INFO_BTF=y
+
+# Hardening del kernel principale che vale anche in un guest: kCFI (clang), Landlock.
+CONFIG_CFI=y
+CONFIG_SECURITY=y
+CONFIG_SECURITY_LANDLOCK=y
+# Guest confidenziali, per gli host che li hanno.
+CONFIG_AMD_MEM_ENCRYPT=y
+CONFIG_INTEL_TDX_GUEST=y
+
+# La console e' la seriale che Firecracker e cloud-hypervisor espongono.
+CONFIG_SERIAL_8250=y
+CONFIG_SERIAL_8250_CONSOLE=y
+
+# Nessun driver fisico: via cio' che defconfig accende per le macchine vere.
+# CONFIG_DRM is not set
+# CONFIG_SOUND is not set
+# CONFIG_USB_SUPPORT is not set
+# CONFIG_ATA is not set
+# CONFIG_ETHERNET is not set
+# CONFIG_WLAN is not set
+# CONFIG_INPUT_KEYBOARD is not set
+# CONFIG_INPUT_MOUSE is not set
+# CONFIG_HID_SUPPORT is not set
+# CONFIG_I2C is not set
+# CONFIG_AGP is not set
+# THERMAL e HWMON restano: li selezionano ACPI (che cloud-hypervisor e Firecracker usano
+# per enumerare i device) e la piattaforma x86; senza sensori non fanno nulla.

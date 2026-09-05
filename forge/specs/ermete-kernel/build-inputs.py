@@ -3,7 +3,8 @@
 sezione 3 passo 8 e sezione 7): e' il predicato dell'attestazione dei pin che publish
 allega alle immagini, e la chiave con cui il job inputs riconosce un kernel gia'
 costruito da questi identici input. Entra solo cio' che cambia gli RPM: pin, manifest
-delle sorgenti, delta di config, patch, regole di merge, build.sh e l'ambiente. Non
+delle sorgenti, delta di config, patch, regole di merge, il kernel guest (frammento e
+spec), build.sh e l'ambiente. Non
 cmdline, boot/, retention.sh o il workflow: cambiarli non deve ricompilare nulla."""
 
 import hashlib
@@ -39,6 +40,10 @@ print(
                 for p in sorted((k / "patches").glob("*.patch"))
             },
             "fedora_wins_sha256": sha("fedora-wins.list"),
+            "microvm_sha256": {
+                name: sha(f"microvm/{name}")
+                for name in ("kernel-local", "ermete-kernel-microvm.spec")
+            },
             "build_sh_sha256": sha("build.sh"),
             "builder_base": base,
             "containerfile_sha256": sha("builder/Containerfile"),

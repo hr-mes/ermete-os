@@ -4,10 +4,11 @@
 # in pins.env, verificato con SOURCES/sources.sha256 e con le firme delle chiavi in
 # SOURCES/keys. Ogni controllo che fallisce ferma la build. La fase manifest scarica i
 # sorgenti dei pin e scrive il loro manifesto: e' cosi' che il bot di bump (bump.py)
-# rigenera SOURCES/sources.sha256.
+# rigenera SOURCES/sources.sha256. Lo stadio microvm fa il prep e compila solo il
+# kernel guest delle MicroVM (sezione 9); build compila entrambi i kernel.
 set -euo pipefail
 
-usage() { echo "uso: ${0##*/} --stage manifest|prep|build --out DIR" >&2; exit 2; }
+usage() { echo "uso: ${0##*/} --stage manifest|prep|microvm|build --out DIR" >&2; exit 2; }
 STAGE='' OUT=''
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -16,7 +17,7 @@ while [[ $# -gt 0 ]]; do
     *) usage ;;
   esac
 done
-[[ ( $STAGE == manifest || $STAGE == prep || $STAGE == build ) && -n $OUT ]] || usage
+[[ ( $STAGE == manifest || $STAGE == prep || $STAGE == microvm || $STAGE == build ) && -n $OUT ]] || usage
 
 die() { echo "build.sh: $*" >&2; exit 1; }
 step() { echo; echo ">>> $*"; }
@@ -27,8 +28,10 @@ source "$HERE/pins.env"
 CACHE=${ERMETE_KERNEL_CACHE:-/var/cache/ermete-kernel}
 TOP=$HOME/rpmbuild
 SRC=$TOP/SOURCES
-WORK=$TOP/ermete
-mkdir -p "$CACHE" "$OUT" "$WORK"
+mkdir -p "$CACHE" "$OUT" "$TOP"
+# Area di lavoro nuova a ogni esecuzione: il repo git del merge non sopporta un secondo
+# giro sullo stesso indice (le patch risultano gia' applicate).
+WORK=$(mktemp -d "$TOP/ermete.XXXXXX")
 
 # Nomi e URL derivati dai pin.
 SRPM=kernel-$FEDORA_KERNEL_NVR.src.rpm
@@ -207,7 +210,7 @@ for f in "$SRC"/kernel-*-fedora.config; do
   [[ $f == */kernel-x86_64-fedora.config ]] || printf '# EMPTY\n' > "$f"
 done
 
-check_delta() { # ogni riga di kernel-local deve valere nel config generato
+check_delta() { # check_delta CONFIG FRAGMENT: ogni riga del frammento deve valere nel config
   local bad=0 line name
   while IFS= read -r line; do
     name=$(grep -oE 'CONFIG_\w+' <<< "$line")
@@ -216,8 +219,8 @@ check_delta() { # ogni riga di kernel-local deve valere nel config generato
     else
       ! grep -qE "^$name=" "$1" || { echo "  richiesto $line, generato: $(grep -E "^$name=" "$1")"; bad=1; }
     fi
-  done < <(grep -E '^(CONFIG_\w+=|# CONFIG_\w+ is not set)' "$HERE/kernel-local")
-  [[ $bad -eq 0 ]] || die "il config generato non rispetta kernel-local"
+  done < <(grep -E '^(CONFIG_\w+=|# CONFIG_\w+ is not set)' "$2")
+  [[ $bad -eq 0 ]] || die "il config generato non rispetta ${2#"$HERE"/}"
 }
 
 # --- rpmbuild -----------------------------------------------------------------------
@@ -228,8 +231,47 @@ step "rpmbuild -bp: patch e gate del config (process_configs.sh -w -n -c)"
 rpmbuild -bp --target x86_64 "${BCONDS[@]}" "$TOP/SPECS/kernel.spec"
 CONFIG=$(find "$TOP/BUILD" -path '*/configs/kernel-*-x86_64.config' -print -quit)
 [[ -n $CONFIG ]] || die "config generato non trovato sotto $TOP/BUILD"
-check_delta "$CONFIG"
+check_delta "$CONFIG" "$HERE/kernel-local"
 cp "$CONFIG" "$SRC/kernel-local" "$OUT/"
+
+# --- kernel guest MicroVM (sezione 9) ---------------------------------------------------
+
+# Stessa sorgente (l'albero preparato da rpmbuild -bp) e stesso pin, secondo config:
+# x86_64_defconfig + kvm_guest.config + microvm/kernel-local, in una directory oggetto
+# separata (O=), cosi' l'albero resta pulito per rpmbuild -bb. Il gate del frammento
+# (check_delta) gira in ogni stadio, la compilazione solo in microvm e build.
+TREE=$(dirname "$(dirname "$CONFIG")")
+[[ -f $TREE/Makefile ]] || die "albero kernel non trovato accanto a $CONFIG"
+MICROVM_OBJ=$WORK/microvm
+step "config MicroVM: x86_64_defconfig + kvm_guest.config + microvm/kernel-local"
+# rpmbuild -bp lascia in albero include/config e include/generated (process_configs.sh)
+# e O= pretende un albero pulito; mrproper e' anche il primo passo di InitBuildVars in
+# kernel.spec (da cui BuildKernel riparte con configs/), quindi per il kernel
+# principale non cambia nulla.
+make -s -C "$TREE" mrproper
+mkdir -p "$MICROVM_OBJ"
+make -s -C "$TREE" O="$MICROVM_OBJ" "${MAKE_OPTS[@]}" x86_64_defconfig kvm_guest.config
+"$TREE/scripts/kconfig/merge_config.sh" -m -O "$MICROVM_OBJ" "$MICROVM_OBJ/.config" "$HERE/microvm/kernel-local"
+make -s -C "$TREE" O="$MICROVM_OBJ" "${MAKE_OPTS[@]}" olddefconfig
+check_delta "$MICROVM_OBJ/.config" "$HERE/microvm/kernel-local"
+cp "$MICROVM_OBJ/.config" "$OUT/microvm.config"
+echo "config MicroVM: $(grep -c '=y$' "$MICROVM_OBJ/.config") opzioni built-in, $(grep -c '=m$' "$MICROVM_OBJ/.config") moduli"
+
+if [[ $STAGE == microvm || $STAGE == build ]]; then
+  NVR=$(bash "$HERE/nvr.sh")
+  step "kernel MicroVM: rpmbuild -bb microvm/ermete-kernel-microvm.spec (O=$MICROVM_OBJ)"
+  # Lo stesso SOURCE_DATE_EPOCH del kernel principale, che rpm prende dalla changelog di
+  # kernel.spec: lo spec del guest non ne ha una, e senza epoch ne' i timestamp del
+  # pacchetto ne' KBUILD_BUILD_TIMESTAMP sarebbero riproducibili.
+  epoch=$(rpmspec -q --srpm --qf '[%{changelogtime} ]' "$TOP/SPECS/kernel.spec" | cut -d' ' -f1)
+  [[ $epoch =~ ^[0-9]+$ ]] || die "changelog di kernel.spec senza data"
+  SOURCE_DATE_EPOCH=$epoch rpmbuild -bb --target x86_64 --define "source_date_epoch_from_changelog 0" \
+    --define "kernel_tree $TREE" --define "objdir $MICROVM_OBJ" \
+    --define "kversion ${NVR%%-*}" --define "krelease ${NVR#*-}" \
+    --define "make_opts ${MAKE_OPTS[*]}" "$HERE/microvm/ermete-kernel-microvm.spec"
+  mkdir -p "$OUT/microvm"
+  mv "$TOP"/RPMS/x86_64/ermete-kernel-microvm-*.rpm "$OUT/microvm/"
+fi
 
 if [[ $STAGE == build ]]; then
   step "rpmbuild -bb"
