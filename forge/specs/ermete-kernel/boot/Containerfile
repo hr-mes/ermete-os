@@ -2,7 +2,18 @@
 # sezione 7, gate 3). Stessa base pinnata del builder, ma qui non si compila nulla:
 # boot.sh estrae vmlinuz dal kernel-core, costruisce un initramfs di prova e una UKI
 # firmata con una MOK effimera, arruola la MOK nel varstore OVMF e avvia QEMU.
-# microvm/boot.sh (sezione 9) avvia il kernel guest in Firecracker con una rootfs ext4.
+# microvm/boot.sh (sezione 9) avvia il kernel guest in Firecracker con una rootfs ext4;
+# bench.sh (sezione 7, gate 5) misura il kernel in QEMU con hackbench, schbench, fio, netperf.
+
+# schbench non e' nei repo Fedora: dal sorgente al commit pinnato, in uno stadio a parte
+# cosi' gcc non entra nell'immagine.
+FROM registry.fedoraproject.org/fedora:43@sha256:8d775fbb86b8aa62172a2fd33203d285743ad2b74df8416322066e59e917b4ef AS schbench
+ARG SCHBENCH_COMMIT=24e32b8ef67cbafb0761aed68747d90a291767ae
+RUN dnf -y install gcc make tar \
+    && curl -fsSL "https://github.com/masoncl/schbench/archive/${SCHBENCH_COMMIT}.tar.gz" | tar -xz -C /tmp \
+    && make -C "/tmp/schbench-${SCHBENCH_COMMIT}" \
+    && install -m 755 "/tmp/schbench-${SCHBENCH_COMMIT}/schbench" /usr/local/bin/schbench
+
 FROM registry.fedoraproject.org/fedora:43@sha256:8d775fbb86b8aa62172a2fd33203d285743ad2b74df8416322066e59e917b4ef
 
 RUN printf 'install_weak_deps=False\nkeepcache=False\n' >> /etc/dnf/dnf.conf
@@ -10,12 +21,14 @@ RUN printf 'install_weak_deps=False\nkeepcache=False\n' >> /etc/dnf/dnf.conf
 # qemu con KVM o TCG e SeaBIOS; OVMF con Secure Boot; lo shim Fedora firmato Microsoft;
 # ukify e lo stub systemd per la UKI, sbsign per firmarla; virt-firmware per scrivere
 # la MOK nel varstore; busybox (statico) e bpftool per l'initramfs di prova;
-# e2fsprogs per la rootfs ext4 del kernel guest.
+# e2fsprogs per la rootfs ext4 del kernel guest; realtime-tests (hackbench), fio e netperf
+# per il benchmark.
 RUN dnf -y install \
       qemu-system-x86-core edk2-ovmf shim-x64 \
       systemd-ukify systemd-boot-unsigned sbsigntools python3-virt-firmware \
-      busybox bpftool cpio zstd openssl e2fsprogs \
+      busybox bpftool cpio zstd openssl e2fsprogs realtime-tests fio netperf \
     && dnf clean all
+COPY --from=schbench /usr/local/bin/schbench /usr/local/bin/schbench
 
 # Firecracker non e' nei repo Fedora: la release GitHub, pinnata per hash.
 ARG FIRECRACKER=v1.16.1

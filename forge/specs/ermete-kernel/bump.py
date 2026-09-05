@@ -35,7 +35,7 @@ BODHI = "https://bodhi.fedoraproject.org/updates/"
 NVIDIA_INDEX = "https://download.nvidia.com/XFree86/Linux-x86_64/"
 NVR_RE = re.compile(r"^kernel-(\d+\.\d+\.\d+)-(\d+)\.fc(\d+)$")
 CACHY_TAG_RE = re.compile(r"^cachyos-(\d+\.\d+\.\d+)-(\d+)$")
-FROM_RE = re.compile(r"^FROM (\S+?):(\S+?)@(sha256:[0-9a-f]{64})$", re.M)
+FROM_RE = re.compile(r"^FROM (\S+?):(\S+?)@(sha256:[0-9a-f]{64})(?: AS \S+)?$", re.M)
 MANIFEST_ACCEPT = ", ".join(
     [
         "application/vnd.oci.image.index.v1+json",
