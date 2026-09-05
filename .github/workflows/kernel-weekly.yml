@@ -1,0 +1,206 @@
+name: Kernel Weekly
+
+# Riproducibilita' e benchmark del kernel (forge/specs/ermete-kernel; spec sezione 3 passo
+# 8 e sezione 7, gate 5 e 6; fase K7). repro: sul runner self-hosted ricostruisce il pin
+# pubblicato con cache vuota e builder appena costruito e lo confronta con l'OCI pubblicato
+# (repro.py: config, System.map, vmlinux sezione per sezione, moduli senza firma); una
+# differenza oltre la traccia della chiave di firma effimera e' un job rosso, un bug da
+# aprire. variant: a richiesta, la stessa build con un frammento di variants/ (o2: -O2 al
+# posto di -O3) per il confronto A/B. bench: su runner GitHub con KVM, il kernel pubblicato
+# e la variante, se c'e', in QEMU con hackbench, schbench, fio e netperf (bench.sh); i
+# risultati si accumulano tra i run e bench-report.py ne fa tabelle e grafici nel summary.
+# Non blocca nulla: e' il numero che decide -O3 e le opzioni future. `schedule` vale solo
+# dal branch di default; `push` sul file stesso registra il workflow sul branch (senza,
+# workflow_dispatch da' 404 fuori dal branch di default) e ne prova il job bench.
+
+on:
+  schedule:
+    - cron: "23 4 * * 0"
+  workflow_dispatch:
+    inputs:
+      repro:
+        description: "ricostruisce il pin e lo confronta con l'immagine pubblicata"
+        type: boolean
+        default: true
+      bench:
+        description: "benchmark del kernel pubblicato in QEMU/KVM"
+        type: boolean
+        default: true
+      variant:
+        description: "variante (variants/<nome>) da costruire e mettere a confronto nel benchmark"
+        type: choice
+        options: [none, o2]
+        default: none
+  push:
+    branches: [main, iso-v0]
+    paths:
+      - .github/workflows/kernel-weekly.yml
+
+concurrency:
+  group: kernel-weekly-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/ermete-os-kernel
+
+jobs:
+  repro:
+    if: ${{ github.event_name == 'schedule' || inputs.repro }}
+    runs-on: self-hosted
+    timeout-minutes: 240
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Build the kernel builder image
+        env:
+          BUILDAH_ISOLATION: chroot
+        run: podman build -t localhost/ermete-kernel-builder forge/specs/ermete-kernel/builder
+
+      - name: Rebuild the pinned kernel with an empty cache (B)
+        # Cache nuova: ogni sorgente si riscarica e si riverifica, come alla prima build.
+        run: |
+          set -euo pipefail
+          cache=$(mktemp -d)
+          mkdir -p out-b
+          podman run --rm \
+            -v "$GITHUB_WORKSPACE:/forge" \
+            -v "$cache:/var/cache/ermete-kernel" \
+            -w /forge localhost/ermete-kernel-builder \
+            bash forge/specs/ermete-kernel/build.sh --stage build --out /forge/out-b
+
+      - name: Published kernel (A)
+        # Sempre dal registro: una copia locale dell'immagine potrebbe essere una build
+        # precedente con lo stesso tag.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          nvr=$(bash forge/specs/ermete-kernel/nvr.sh)
+          [[ $(cat out-b/nvr) == "$nvr" ]] || { echo "NVR ricostruito $(cat out-b/nvr), pubblicato ${nvr}"; exit 1; }
+          echo "${GH_TOKEN}" | podman login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
+          trap 'podman logout ghcr.io' EXIT
+          podman pull "${IMAGE}:${nvr}"
+          ctr=$(podman create "${IMAGE}:${nvr}" /kernel)
+          mkdir -p out-a && podman cp "${ctr}:/." out-a/ && podman rm "$ctr" > /dev/null
+          ls out-a
+
+      - name: Compare (repro.py)
+        run: |
+          set -euo pipefail
+          rc=0
+          podman run --rm -v "$GITHUB_WORKSPACE:/forge" -w /forge localhost/ermete-kernel-builder \
+            python3 forge/specs/ermete-kernel/repro.py --a /forge/out-a --b /forge/out-b --out /forge/repro-out || rc=$?
+          cat repro-out/summary.md >> "$GITHUB_STEP_SUMMARY"
+          exit "$rc"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: ${{ always() && hashFiles('repro-out/**') != '' }}
+        with:
+          name: repro-report
+          path: repro-out/
+          if-no-files-found: error
+
+  variant:
+    if: ${{ inputs.variant != '' && inputs.variant != 'none' }}
+    runs-on: self-hosted
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Build the kernel builder image
+        env:
+          BUILDAH_ISOLATION: chroot
+        run: podman build -t localhost/ermete-kernel-builder forge/specs/ermete-kernel/builder
+
+      - name: Run build.sh --variant
+        env:
+          VARIANT: ${{ inputs.variant }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.cache/ermete-kernel" out-v
+          podman run --rm \
+            -v "$GITHUB_WORKSPACE:/forge" \
+            -v "$HOME/.cache/ermete-kernel:/var/cache/ermete-kernel" \
+            -w /forge localhost/ermete-kernel-builder \
+            bash forge/specs/ermete-kernel/build.sh --stage build --variant "$VARIANT" --out /forge/out-v
+          cat out-v/nvr
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: kernel-variant
+          path: out-v/kernel/kernel-core-*.rpm
+          if-no-files-found: error
+
+  bench:
+    needs: variant
+    if: ${{ !cancelled() && (github.event_name != 'workflow_dispatch' || inputs.bench) && (needs.variant.result == 'success' || needs.variant.result == 'skipped') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: read
+      actions: read
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - uses: ./.github/actions/kvm
+
+      - name: Build the boot-matrix image
+        env:
+          BUILDAH_ISOLATION: chroot
+        run: podman build -t localhost/ermete-kernel-boot forge/specs/ermete-kernel/boot
+
+      - name: Published kernel
+        run: |
+          set -euo pipefail
+          nvr=$(bash forge/specs/ermete-kernel/nvr.sh)
+          podman pull "${IMAGE}:${nvr}"
+          ctr=$(podman create "${IMAGE}:${nvr}" /kernel)
+          mkdir -p out-a && podman cp "${ctr}:/." out-a/ && podman rm "$ctr" > /dev/null
+
+      - if: ${{ needs.variant.result == 'success' }}
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: kernel-variant
+          path: out-v
+
+      - name: Run bench.sh
+        env:
+          VARIANT: ${{ inputs.variant }}
+        run: |
+          set -euo pipefail
+          bench() { # bench RPMS OUT LABEL
+            podman run --rm --device /dev/kvm -v "$GITHUB_WORKSPACE:/forge" -w /forge localhost/ermete-kernel-boot \
+              bash forge/specs/ermete-kernel/bench.sh --rpms "/forge/$1" --out "/forge/bench-out/$2" --label "$3"
+          }
+          bench out-a published published
+          if [[ -d out-v ]]; then bench out-v "variant-${VARIANT}" "$VARIANT"; fi
+
+      - name: History and report
+        # I risultati dei run settimanali precedenti riusciti su questo branch, in ordine
+        # di run, piu' questo: tabelle, confronto A/B e grafici nel summary.
+        run: |
+          set -euo pipefail
+          mkdir -p history
+          for id in $(gh run list --workflow kernel-weekly.yml --status success --branch "$GITHUB_REF_NAME" --limit 30 --json databaseId --jq '.[].databaseId' | sort -n); do
+            if gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${id}/artifacts" --jq '.artifacts[].name' | grep -qx bench-results; then
+              gh run download "$id" -n bench-results -D "history/$id"
+            fi
+          done
+          mkdir -p "history/$GITHUB_RUN_ID" && cp -r bench-out/. "history/$GITHUB_RUN_ID/"
+          python3 forge/specs/ermete-kernel/bench-report.py history/* | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: ${{ always() && hashFiles('bench-out/**') != '' }}
+        with:
+          name: bench-results
+          path: bench-out/
+          if-no-files-found: error
