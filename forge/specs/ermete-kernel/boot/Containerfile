@@ -2,12 +2,8 @@
 # sezione 7, gate 3). Stessa base pinnata del builder, ma qui non si compila nulla:
 # boot.sh estrae vmlinuz dal kernel-core, costruisce un initramfs di prova e una UKI
 # firmata con una MOK effimera, arruola la MOK nel varstore OVMF e avvia QEMU.
-<<<<<<< HEAD
-FROM registry.fedoraproject.org/fedora:43@sha256:8d775fbb86b8aa62172a2fd33203d285743ad2b74df8416322066e59e917b4ef
-=======
 # microvm/boot.sh (sezione 9) avvia il kernel guest in Firecracker con una rootfs ext4.
-FROM registry.fedoraproject.org/fedora:43@sha256:31658c38c98ab8233128b8144e597fc850185c99b5b760d7ba1b15259f02ed2a
->>>>>>> 8002f6ec (test(kernel): gate del kernel guest, vmlinux in Firecracker con una rootfs di prova)
+FROM registry.fedoraproject.org/fedora:43@sha256:8d775fbb86b8aa62172a2fd33203d285743ad2b74df8416322066e59e917b4ef
 
 RUN printf 'install_weak_deps=False\nkeepcache=False\n' >> /etc/dnf/dnf.conf
 
