@@ -5,14 +5,17 @@
 # SOURCES/keys. Ogni controllo che fallisce ferma la build. La fase manifest scarica i
 # sorgenti dei pin e scrive il loro manifesto: e' cosi' che il bot di bump (bump.py)
 # rigenera SOURCES/sources.sha256. Lo stadio microvm fa il prep e compila solo il
-# kernel guest delle MicroVM (sezione 9); build compila entrambi i kernel.
+# kernel guest delle MicroVM (sezione 9); build compila entrambi i kernel. --variant NOME
+# (variants/NOME) e' la stessa build con un frammento che sovrascrive kernel-local, per
+# il confronto A/B del benchmark (kernel-weekly.yml): buildid .ermete.NOME, mai pubblicata.
 set -euo pipefail
 
-usage() { echo "uso: ${0##*/} --stage manifest|prep|microvm|build --out DIR" >&2; exit 2; }
-STAGE='' OUT=''
+usage() { echo "uso: ${0##*/} --stage manifest|prep|microvm|build --out DIR [--variant NOME]" >&2; exit 2; }
+STAGE='' OUT='' VARIANT=''
 while [[ $# -gt 0 ]]; do
   case $1 in
     --stage) STAGE=${2:?}; shift 2 ;;
+    --variant) VARIANT=${2:?}; shift 2 ;;
     --out) OUT=${2:?}; shift 2 ;;
     *) usage ;;
   esac
@@ -32,6 +35,17 @@ mkdir -p "$CACHE" "$OUT" "$TOP"
 # Area di lavoro nuova a ogni esecuzione: il repo git del merge non sopporta un secondo
 # giro sullo stesso indice (le patch risultano gia' applicate).
 WORK=$(mktemp -d "$TOP/ermete.XXXXXX")
+# Il delta di config effettivo: kernel-local, oppure kernel-local con le righe dei simboli
+# che la variante ridefinisce sostituite dal frammento variants/NOME.
+LOCAL=$HERE/kernel-local
+if [[ $VARIANT ]]; then
+  [[ -f $HERE/variants/$VARIANT ]] || die "variante sconosciuta: $VARIANT (variants/)"
+  LOCAL=$WORK/kernel-local
+  {
+    grep -vEf <(grep -oE 'CONFIG_\w+' "$HERE/variants/$VARIANT" | sed 's/.*/^(# )?&[= ]/') "$HERE/kernel-local"
+    echo; echo "# --- variante $VARIANT (variants/$VARIANT) ---"; cat "$HERE/variants/$VARIANT"
+  } > "$LOCAL"
+fi
 
 # Nomi e URL derivati dai pin.
 SRPM=kernel-$FEDORA_KERNEL_NVR.src.rpm
@@ -121,7 +135,7 @@ rpmkeys --checksig --verbose "$SIGNED_SRPM" | grep "signature, key fingerprint: 
 # --- albero -------------------------------------------------------------------------
 
 step "kernel.spec e sorgenti Fedora in $TOP"
-printf '%%_topdir %s\n%%buildid .ermete\n' "$TOP" > "$HOME/.rpmmacros"
+printf '%%_topdir %s\n%%buildid .ermete%s\n' "$TOP" "${VARIANT:+.$VARIANT}" > "$HOME/.rpmmacros"
 rpm -i "$SIGNED_SRPM"
 
 # Prima della derivazione del config: listnewconfig deve vedere la stessa toolchain di
@@ -182,7 +196,7 @@ step "kernel-local: delta Ermete, poi le opzioni nuove dell'albero con i valori 
 # kernel-local. Su quel config listnewconfig elenca le opzioni che l'albero introduce.
 merged=$WORK/merged.config
 cp "$SRC/kernel-x86_64-fedora.config" "$merged"
-for snip in "$SRC/partial-clang-snip.config" "$SRC/partial-clang_lto-x86_64-snip.config" "$HERE/kernel-local"; do
+for snip in "$SRC/partial-clang-snip.config" "$SRC/partial-clang_lto-x86_64-snip.config" "$LOCAL"; do
   python3 "$SRC/merge.py" "$snip" "$merged" > "$merged.tmp" && mv "$merged.tmp" "$merged"
 done
 derived=$WORK/derived.config
@@ -199,7 +213,7 @@ done
 [[ ! -s $WORK/new ]] || die "derivazione del config non convergente: $(head -3 "$WORK/new" | tr '\n' ' ')"
 echo "opzioni derivate: $(wc -l < "$derived")"; cat "$derived"
 {
-  cat "$HERE/kernel-local"
+  cat "$LOCAL"
   echo
   echo "# Opzioni introdotte dall'albero, con i valori di $CACHY_CONFIG (derivate da build.sh)."
   cat "$derived"
@@ -231,7 +245,7 @@ step "rpmbuild -bp: patch e gate del config (process_configs.sh -w -n -c)"
 rpmbuild -bp --target x86_64 "${BCONDS[@]}" "$TOP/SPECS/kernel.spec"
 CONFIG=$(find "$TOP/BUILD" -path '*/configs/kernel-*-x86_64.config' -print -quit)
 [[ -n $CONFIG ]] || die "config generato non trovato sotto $TOP/BUILD"
-check_delta "$CONFIG" "$HERE/kernel-local"
+check_delta "$CONFIG" "$LOCAL"
 cp "$CONFIG" "$SRC/kernel-local" "$OUT/"
 
 # --- kernel guest MicroVM (sezione 9) ---------------------------------------------------
@@ -257,7 +271,8 @@ check_delta "$MICROVM_OBJ/.config" "$HERE/microvm/kernel-local"
 cp "$MICROVM_OBJ/.config" "$OUT/microvm.config"
 echo "config MicroVM: $(grep -c '=y$' "$MICROVM_OBJ/.config") opzioni built-in, $(grep -c '=m$' "$MICROVM_OBJ/.config") moduli"
 
-if [[ $STAGE == microvm || $STAGE == build ]]; then
+# Una variante e' solo il kernel principale da misurare: niente kernel guest.
+if [[ ( $STAGE == microvm || $STAGE == build ) && -z $VARIANT ]]; then
   NVR=$(bash "$HERE/nvr.sh")
   step "kernel MicroVM: rpmbuild -bb microvm/ermete-kernel-microvm.spec (O=$MICROVM_OBJ)"
   # Lo stesso SOURCE_DATE_EPOCH del kernel principale, che rpm prende dalla changelog di

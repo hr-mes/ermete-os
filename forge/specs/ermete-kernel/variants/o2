@@ -1,0 +1,8 @@
+# Variante -O2 per il confronto A/B del benchmark (docs/architecture/doc_kernel_build.md,
+# sezione 7 gate 5 e sezione 11: "-O3 deciso dai numeri"). build.sh --variant o2 la fonde
+# sopra kernel-local sostituendo le righe con lo stesso simbolo; il buildid diventa
+# .ermete.o2 e il pacchetto non si pubblica. Stesso formato di kernel-local.
+
+# Il default del kernel (-O2) al posto dell'opzione CachyOS accesa in kernel-local.
+CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE=y
+# CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3 is not set
