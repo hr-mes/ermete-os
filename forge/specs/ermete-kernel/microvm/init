@@ -1,0 +1,28 @@
+#!/bin/sh
+# PID 1 della rootfs di prova del gate K6 (microvm/boot.sh): asserzioni sul kernel guest
+# in Firecracker, esito sulla seriale, poi reboot (con reboot=k e' cosi' che Firecracker
+# esce). Ogni check stampa `K6 ok` o `K6 FAIL`, la riga finale `K6 RESULT ok|FAIL`.
+mount -t proc proc /proc
+mount -t sysfs sys /sys
+mount -t devtmpfs dev /dev 2> /dev/null
+exec > /dev/console 2>&1
+
+fail=0
+check() { # check NOME COMANDO...: stampa l'esito e l'output del comando
+  name=$1; shift
+  if out=$("$@" 2>&1); then echo "K6 ok   $name: $out"; else echo "K6 FAIL $name: $out"; fail=1; fi
+}
+release=$(sed -n 's/.*k6\.release=\([^ ]*\).*/\1/p' /proc/cmdline)
+
+check uname sh -c "[ \"\$(uname -r)\" = '$release' ] && uname -r"
+check root sh -c 'grep -E "^/dev/(root|vda) / ext4 " /proc/mounts'
+check btf sh -c 'test -e /sys/kernel/btf/vmlinux && echo "$(wc -c < /sys/kernel/btf/vmlinux) byte"'
+check filesystems sh -c 'for fs in erofs 9p virtiofs overlay ext4; do grep -qw "$fs" /proc/filesystems || exit 1; done; echo "erofs 9p virtiofs overlay ext4"'
+check device-mapper sh -c 'grep -q " device-mapper$" /proc/devices && test -e /dev/mapper/control && echo "/dev/mapper/control"'
+check config sh -c 'zcat /proc/config.gz | grep -x "CONFIG_DM_VERITY=y\|CONFIG_CFI=y\|CONFIG_VIRTIO_VSOCKETS=y" | tr "\n" " "'
+check no-modules sh -c 'test ! -e /proc/modules && echo "senza moduli"'
+check dmesg sh -c '! dmesg | grep -E "BUG: |kernel BUG at|WARNING: CPU: |Oops: |Call Trace:|cut here" && echo pulito'
+
+if [ $fail = 0 ]; then echo "K6 RESULT ok"; else echo "K6 RESULT FAIL"; fi
+sync
+reboot -f

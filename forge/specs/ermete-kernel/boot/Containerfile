@@ -2,15 +2,30 @@
 # sezione 7, gate 3). Stessa base pinnata del builder, ma qui non si compila nulla:
 # boot.sh estrae vmlinuz dal kernel-core, costruisce un initramfs di prova e una UKI
 # firmata con una MOK effimera, arruola la MOK nel varstore OVMF e avvia QEMU.
+<<<<<<< HEAD
 FROM registry.fedoraproject.org/fedora:43@sha256:8d775fbb86b8aa62172a2fd33203d285743ad2b74df8416322066e59e917b4ef
+=======
+# microvm/boot.sh (sezione 9) avvia il kernel guest in Firecracker con una rootfs ext4.
+FROM registry.fedoraproject.org/fedora:43@sha256:31658c38c98ab8233128b8144e597fc850185c99b5b760d7ba1b15259f02ed2a
+>>>>>>> 8002f6ec (test(kernel): gate del kernel guest, vmlinux in Firecracker con una rootfs di prova)
 
 RUN printf 'install_weak_deps=False\nkeepcache=False\n' >> /etc/dnf/dnf.conf
 
 # qemu con KVM o TCG e SeaBIOS; OVMF con Secure Boot; lo shim Fedora firmato Microsoft;
 # ukify e lo stub systemd per la UKI, sbsign per firmarla; virt-firmware per scrivere
-# la MOK nel varstore; busybox (statico) e bpftool per l'initramfs di prova.
+# la MOK nel varstore; busybox (statico) e bpftool per l'initramfs di prova;
+# e2fsprogs per la rootfs ext4 del kernel guest.
 RUN dnf -y install \
       qemu-system-x86-core edk2-ovmf shim-x64 \
       systemd-ukify systemd-boot-unsigned sbsigntools python3-virt-firmware \
-      busybox bpftool cpio zstd openssl \
+      busybox bpftool cpio zstd openssl e2fsprogs \
     && dnf clean all
+
+# Firecracker non e' nei repo Fedora: la release GitHub, pinnata per hash.
+ARG FIRECRACKER=v1.16.1
+ARG FIRECRACKER_SHA256=382a02a869e4d6d5cb14c40577f9545e8458021ea8b0b2d3fc10ec14d9c242e6
+RUN curl -fsSL -o /tmp/firecracker.tgz "https://github.com/firecracker-microvm/firecracker/releases/download/${FIRECRACKER}/firecracker-${FIRECRACKER}-x86_64.tgz" \
+    && echo "${FIRECRACKER_SHA256}  /tmp/firecracker.tgz" | sha256sum --check --quiet \
+    && tar -xzf /tmp/firecracker.tgz -C /tmp \
+    && install -m 755 "/tmp/release-${FIRECRACKER}-x86_64/firecracker-${FIRECRACKER}-x86_64" /usr/local/bin/firecracker \
+    && rm -r /tmp/firecracker.tgz "/tmp/release-${FIRECRACKER}-x86_64"
