@@ -4,7 +4,8 @@ name: Kernel Build
 # build: sul runner self-hosted, `prep` (sorgenti, patch, gate del config) in pochi
 # minuti o `build` (RPM) in un'ora. boot: su runner GitHub con KVM, la boot matrix
 # (SeaBIOS e OVMF con Secure Boot, CPU Nehalem e host) con le asserzioni della spec.
-# publish: su runner GitHub, pubblica gli RPM come tre OCI (kernel, devel, debuginfo)
+# publish: su runner GitHub, pubblica gli RPM come quattro OCI (kernel, devel,
+# debuginfo, e il kernel guest delle MicroVM come tag <nvr>-microvm del kernel)
 # firmati con cosign keyless, con SBOM, provenance SLSA e attestazione dei pin;
 # `:latest` si muove solo su main. kmod: i moduli NVIDIA contro il kernel-devel appena
 # costruito (nvidia-build.yml, riusabile). gate: il check unico "Kernel gate" che la
@@ -111,12 +112,15 @@ jobs:
           if-no-files-found: error
 
       - name: Artifact for the boot matrix
-        # Al job boot serve solo vmlinuz: il kernel-core, 21 MB invece di 1.3 GB.
+        # Al job boot servono solo vmlinuz (il kernel-core, 21 MB invece di 1.3 GB) e
+        # il pacchetto del kernel guest.
         if: ${{ env.STAGE == 'build' }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: kernel-boot
-          path: out/kernel/kernel-core-*.rpm
+          path: |
+            out/kernel/kernel-core-*.rpm
+            out/microvm/*.rpm
           if-no-files-found: error
 
       - name: Artifact for the NVIDIA modules
@@ -143,14 +147,17 @@ jobs:
           name: kernel-boot
           path: out
 
-      - name: Kernel-core from the published image
+      - name: Kernel-core and the guest kernel from the published images
         if: ${{ needs.inputs.outputs.reuse == 'true' }}
         env:
           NVR: ${{ needs.inputs.outputs.nvr }}
         run: |
           set -euo pipefail
-          ctr=$(podman create "${IMAGE}:${NVR}" /kernel-core)
-          mkdir -p out && podman cp "${ctr}:/." out/ && podman rm "$ctr" > /dev/null
+          mkdir -p out
+          for tag in "${NVR}" "${NVR}-microvm"; do
+            ctr=$(podman create "${IMAGE}:${tag}" /kernel)
+            podman cp "${ctr}:/." out/ && podman rm "$ctr" > /dev/null
+          done
           ls out
 
       - uses: ./.github/actions/kvm
@@ -168,11 +175,20 @@ jobs:
           mkdir -p boot-out
           podman run --rm --device /dev/kvm -v "$GITHUB_WORKSPACE:/forge" -w /forge localhost/ermete-kernel-boot bash forge/specs/ermete-kernel/boot.sh --rpms /forge/out --out /forge/boot-out
 
+      - name: Run microvm/boot.sh
+        # Il kernel guest (spec, sezione 9): il vmlinux del pacchetto avvia in Firecracker
+        # con una rootfs di prova e chiude con `K6 RESULT ok` (asserzioni in microvm/init).
+        run: |
+          set -euo pipefail
+          podman run --rm --device /dev/kvm -v "$GITHUB_WORKSPACE:/forge" -w /forge localhost/ermete-kernel-boot bash forge/specs/ermete-kernel/microvm/boot.sh --rpms /forge/out --out /forge/boot-out/microvm
+
       - name: Summary
         if: ${{ always() }}
         run: |
           set -euo pipefail
-          if [[ -f boot-out/summary.md ]]; then cat boot-out/summary.md >> "$GITHUB_STEP_SUMMARY"; fi
+          for f in boot-out/summary.md boot-out/microvm/summary.md; do
+            if [[ -f $f ]]; then cat "$f" >> "$GITHUB_STEP_SUMMARY"; fi
+          done
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         # Anche se la matrice fallisce, ma solo se boot.sh ha scritto qualcosa.
@@ -238,9 +254,10 @@ jobs:
 
       - uses: anchore/sbom-action/download-syft@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26
 
-      - name: Publish the three OCI images
+      - name: Publish the four OCI images
         id: publish
-        # Un'immagine da scratch con i soli RPM per ciascun gruppo, digest in digests/.
+        # Un'immagine da scratch con i soli RPM per ciascun gruppo, digest in digests/;
+        # il kernel guest e' un tag <nvr>-microvm dello stesso pacchetto del kernel.
         # Le etichette OCI legano l'immagine al commit e all'NVR; i pin completi vanno
         # nell'attestazione (step successivo).
         env:
@@ -252,8 +269,12 @@ jobs:
           [[ $nvr == "$NVR_EXPECTED" ]] || { echo "NVR prodotto ${nvr}, atteso dai pin ${NVR_EXPECTED}"; exit 1; }
           echo "${GH_TOKEN}" | buildah login -u "${GITHUB_ACTOR}" --password-stdin ghcr.io
           mkdir -p digests
-          for group in kernel devel debuginfo; do
-            image=${IMAGE}$([[ $group == kernel ]] || echo "-${group}")
+          for group in kernel devel debuginfo microvm; do
+            case $group in
+              kernel) image=$IMAGE tag=$nvr latest=latest ;;
+              microvm) image=$IMAGE tag="${nvr}-microvm" latest=latest-microvm ;;
+              *) image="${IMAGE}-${group}" tag=$nvr latest=latest ;;
+            esac
             ctr=$(buildah from scratch)
             buildah copy "$ctr" "out/${group}/" /
             buildah config \
@@ -262,10 +283,10 @@ jobs:
               --label org.opencontainers.image.revision="${GITHUB_SHA}" \
               --label org.opencontainers.image.source="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" \
               "$ctr"
-            buildah commit --omit-timestamp "$ctr" "${image}:${nvr}"
-            buildah push --digestfile "digests/${group}" "${image}:${nvr}"
+            buildah commit --omit-timestamp "$ctr" "${image}:${tag}"
+            buildah push --digestfile "digests/${group}" "${image}:${tag}"
             if [[ $GITHUB_REF == refs/heads/main ]]; then
-              buildah push "${image}:${nvr}" "docker://${image}:latest"
+              buildah push "${image}:${tag}" "docker://${image}:${latest}"
             fi
             echo "${image}@$(cat "digests/${group}")"
             echo "${group}=$(cat "digests/${group}")" >> "$GITHUB_OUTPUT"
@@ -283,10 +304,12 @@ jobs:
           echo "${GH_TOKEN}" | cosign login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
           mkdir -p sbom
           python3 forge/specs/ermete-kernel/build-inputs.py > pins.json
-          for group in kernel devel debuginfo; do
-            ref="${IMAGE}$([[ $group == kernel ]] || echo "-${group}")@$(cat "digests/${group}")"
+          for group in kernel devel debuginfo microvm; do
+            image=$IMAGE
+            [[ $group == kernel || $group == microvm ]] || image="${IMAGE}-${group}"
+            ref="${image}@$(cat "digests/${group}")"
             syft scan "registry:${ref}" --select-catalogers "+rpm-archive-cataloger" -o "spdx-json=sbom/${group}.spdx.json"
-            jq -e '[.packages[] | select(.name | startswith("kernel"))] | length > 0' "sbom/${group}.spdx.json" > /dev/null \
+            jq -e '[.packages[] | select(.name | test("kernel"))] | length > 0' "sbom/${group}.spdx.json" > /dev/null \
               || { echo "SBOM di ${group} senza pacchetti kernel"; exit 1; }
             cosign sign --yes "$ref"
             cosign attest --yes --type spdxjson --predicate "sbom/${group}.spdx.json" "$ref"
