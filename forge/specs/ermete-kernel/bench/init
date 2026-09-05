@@ -1,0 +1,52 @@
+#!/bin/sh
+# PID 1 dell'initramfs del benchmark (bench.sh): le prove in sequenza, ognuna stampa una
+# riga `K7 <metrica> <valore> <unita'>` sulla seriale, poi `K7 RESULT ok` e reboot.
+# Durata di ogni prova da k7.seconds sulla riga di comando (default 30).
+mount -t proc proc /proc
+mount -t sysfs sys /sys
+mount -t devtmpfs dev /dev 2> /dev/null
+exec > /dev/console 2>&1
+
+seconds=$(sed -n 's/.*k7\.seconds=\([0-9]*\).*/\1/p' /proc/cmdline)
+seconds=${seconds:-30}
+cpus=$(nproc)
+ip link set lo up
+echo "K7 START cpus=$cpus seconds=$seconds uname=$(uname -r)"
+
+# hackbench (realtime-tests): gruppi di processi che si passano messaggi in pipe; lavoro fisso
+# (500 loop per secondo di prova: la stessa quantita' a parita' di k7.seconds), la metrica e'
+# il tempo. Piu' basso e' meglio.
+loops=$(( seconds * 500 ))
+t=$(hackbench -p -g "$cpus" -l "$loops" 2>&1 | sed -n 's/^Time: //p')
+echo "K7 hackbench_s ${t:-nan} s"
+
+# schbench: latenza di wakeup (p99) e richieste al secondo (p50) con due message thread e
+# un worker per CPU. Latenza: piu' bassa e' meglio; RPS: piu' alto e' meglio.
+out=$(schbench -m 2 -t "$cpus" -r "$seconds" 2>&1)
+wake=$(echo "$out" | awk '/^Wakeup Latencies/{s=1} /^Request Latencies|^RPS/{s=0} s && /99\.0th:/ { sub(/.*99\.0th: */, ""); sub(/ .*/, ""); print; exit }')
+rps=$(echo "$out" | awk '/^RPS percentiles/{s=1} s && /50\.0th:/ { sub(/.*50\.0th: */, ""); sub(/ .*/, ""); print; exit }')
+echo "K7 schbench_wakeup_p99_us ${wake:-nan} us"
+echo "K7 schbench_rps_p50 ${rps:-nan} rps"
+
+# fio con ioengine null: il percorso I/O di fio senza disco, un job per CPU; IOPS in
+# lettura dal formato minimal (campo 8). Piu' alto e' meglio.
+iops=$(fio --name=null --ioengine=null --rw=randread --bs=4k --size=1G --time_based --runtime="$seconds" \
+  --numjobs="$cpus" --group_reporting --minimal 2> /dev/null | awk -F';' 'NR == 1 { print $8 }')
+echo "K7 fio_null_read_iops ${iops:-nan} iops"
+
+# netperf su loopback: throughput TCP_STREAM (Mbit/s) e transazioni TCP_RR al secondo.
+# Piu' alto e' meglio. netperf risolve gli host con AI_ADDRCONFIG e glibc non conta
+# 127.0.0.1 e ::1 tra gli indirizzi configurati: con la sola loopback nemmeno "127.0.0.1"
+# si risolve. Un indirizzo in piu' su lo basta. netserver in primo piano: gli errori
+# finiscono sulla seriale, e si aspetta che ascolti invece di dormire a tempo.
+ip addr add 10.99.0.1/32 dev lo
+netserver -D -p 12865 &
+i=0; until netstat -tln 2> /dev/null | grep -q ':12865 '; do i=$((i + 1)); [ "$i" -ge 10 ] && break; sleep 1; done
+tp=$(netperf -H 127.0.0.1 -p 12865 -t TCP_STREAM -l "$seconds" -P 0 -- -o throughput 2> /dev/null | tail -n 1)
+rr=$(netperf -H 127.0.0.1 -p 12865 -t TCP_RR -l "$seconds" -P 0 -- -o transaction_rate 2> /dev/null | tail -n 1)
+echo "K7 netperf_tcp_stream_mbps ${tp:-nan} Mbit/s"
+echo "K7 netperf_tcp_rr_tps ${rr:-nan} tps"
+
+echo "K7 RESULT ok"
+sync
+reboot -f
