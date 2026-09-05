@@ -239,7 +239,15 @@ check_delta() { # check_delta CONFIG FRAGMENT: ogni riga del frammento deve vale
 
 # --- rpmbuild -----------------------------------------------------------------------
 
-export KBUILD_BUILD_USER=ermete KBUILD_BUILD_HOST=forge
+# Riproducibilita' (spec, sezione 3 passo 8): utente, host e data del build fissi. La
+# data e' quella della changelog di kernel.spec, lo stesso SOURCE_DATE_EPOCH che rpm usa
+# per i timestamp dei pacchetti; il kernel la scrive in UTS_VERSION (linux_banner in
+# .rodata, init_uts_ns in .data, `uname -v`) e senza questa variabile userebbe l'ora
+# corrente: due build dello stesso pin differivano proprio li' (repro.py, K7).
+EPOCH=$(rpmspec -q --srpm --qf '[%{changelogtime} ]' "$TOP/SPECS/kernel.spec" | cut -d' ' -f1)
+[[ $EPOCH =~ ^[0-9]+$ ]] || die "changelog di kernel.spec senza data"
+KBUILD_BUILD_TIMESTAMP=$(date -u -d "@$EPOCH" '+%a %b %e %H:%M:%S UTC %Y')
+export KBUILD_BUILD_USER=ermete KBUILD_BUILD_HOST=forge KBUILD_BUILD_TIMESTAMP
 
 step "rpmbuild -bp: patch e gate del config (process_configs.sh -w -n -c)"
 rpmbuild -bp --target x86_64 "${BCONDS[@]}" "$TOP/SPECS/kernel.spec"
@@ -276,11 +284,9 @@ if [[ ( $STAGE == microvm || $STAGE == build ) && -z $VARIANT ]]; then
   NVR=$(bash "$HERE/nvr.sh")
   step "kernel MicroVM: rpmbuild -bb microvm/ermete-kernel-microvm.spec (O=$MICROVM_OBJ)"
   # Lo stesso SOURCE_DATE_EPOCH del kernel principale, che rpm prende dalla changelog di
-  # kernel.spec: lo spec del guest non ne ha una, e senza epoch ne' i timestamp del
-  # pacchetto ne' KBUILD_BUILD_TIMESTAMP sarebbero riproducibili.
-  epoch=$(rpmspec -q --srpm --qf '[%{changelogtime} ]' "$TOP/SPECS/kernel.spec" | cut -d' ' -f1)
-  [[ $epoch =~ ^[0-9]+$ ]] || die "changelog di kernel.spec senza data"
-  SOURCE_DATE_EPOCH=$epoch rpmbuild -bb --target x86_64 --define "source_date_epoch_from_changelog 0" --define "use_source_date_epoch_as_buildtime 1" \
+  # kernel.spec: lo spec del guest non ne ha una, e senza epoch i timestamp del pacchetto
+  # non sarebbero riproducibili (KBUILD_BUILD_TIMESTAMP e' gia' nell'ambiente).
+  SOURCE_DATE_EPOCH=$EPOCH rpmbuild -bb --target x86_64 --define "source_date_epoch_from_changelog 0" --define "use_source_date_epoch_as_buildtime 1" \
     --define "kernel_tree $TREE" --define "objdir $MICROVM_OBJ" \
     --define "kversion ${NVR%%-*}" --define "krelease ${NVR#*-}" \
     --define "make_opts ${MAKE_OPTS[*]}" "$HERE/microvm/ermete-kernel-microvm.spec"
