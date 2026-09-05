@@ -144,8 +144,13 @@ identica in locale. Passi, tutti senza rete tranne i download verificati:
    e non entra nell'immagine;
 8. riproducibilità: `SOURCE_DATE_EPOCH` dalla changelog, `KBUILD_BUILD_USER=ermete`,
    `KBUILD_BUILD_HOST=forge`, `KBUILD_BUILD_TIMESTAMP` derivato. Un job
-   settimanale ricostruisce lo stesso pin su un runner diverso e confronta
-   `vmlinuz`, moduli e `config`: la differenza è un bug da aprire;
+   settimanale (`kernel-weekly.yml`, job `repro`) ricostruisce lo stesso pin
+   con cache vuota e builder ricostruito (sul runner self-hosted: un secondo
+   runner quando ci sarà) e confronta con l'OCI pubblicato `config`,
+   `System.map`, `vmlinux` sezione per sezione e i moduli senza la firma
+   (`repro.py`): la chiave che firma moduli e immagine nasce in ogni build,
+   quindi firma dei `.ko` e certificato in `.init.data` sono attesi; ogni altra
+   differenza è un bug da aprire, e il job è rosso;
 7. ccache su directory persistente del runner (non `actions/cache`): tra due
    patch level cambiano pochi file, la LTO finale no;
 8. pubblicazione (job `publish` su runner GitHub, dall'artefatto del job `build`):
@@ -302,6 +307,22 @@ verdi e `build` è verde o saltato per riuso. È l'unico check richiesto dalla
 protezione del branch, e Kernel Build parte su ogni PR, senza filtro di
 percorsi: così il check esiste sempre e l'auto-merge del bot (sezione 8) ha un
 nome solo da aspettare.
+
+**Settimanale (K7).** `kernel-weekly.yml` (domenica, dal branch di default; a
+mano con `workflow_dispatch`): job `repro` (gate 6, sezione 3) e job `bench`
+(gate 5) su `ubuntu-24.04` con KVM: `bench.sh` avvia il kernel pubblicato in
+QEMU (4 vCPU, 4 GiB) con un initramfs che porta hackbench (realtime-tests), schbench
+(dal sorgente, commit pinnato in `boot/Containerfile`), fio e netperf;
+`bench/init` esegue le prove (30 s ciascuna: hackbench a lavoro fisso, wakeup
+p99 e RPS p50 di schbench, IOPS di fio con `ioengine=null`, TCP_STREAM e TCP_RR
+di netperf su loopback) e stampa `K7 <metrica> <valore> <unità>`; i
+`results.json` restano negli artefatti e `bench-report.py` scrive nel summary
+tabella, confronto e un grafico Mermaid per metrica. I runner GitHub cambiano
+CPU da un run all'altro: l'andamento è indicativo, la decisione sta nel
+confronto A/B nello stesso run, con l'input `variant`: `build.sh --variant
+<nome>` fonde `variants/<nome>` sopra `kernel-local` (le righe con lo stesso
+simbolo vengono sostituite), buildid `.ermete.<nome>`, mai pubblicato, misurato
+accanto al kernel pubblicato. `o2` è il confronto che decide `-O3`.
 
 **Riuso.** Il job `inputs` calcola `build-inputs.py` (pin, manifest delle
 sorgenti, `kernel-local`, `patches.list`, `patches/`, `fedora-wins.list`, `build.sh`,

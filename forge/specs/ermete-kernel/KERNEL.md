@@ -16,13 +16,16 @@ directory e come si usa.
 | `patches/` | patch di Ermete, in formato git, applicate dopo quelle di CachyOS |
 | `fedora-wins.list` | percorsi in cui un conflitto tra base CachyOS e patch Red Hat si risolve con l'albero Fedora |
 | `cmdline` | la riga di comando del kernel che la UKI firma (spec, sezione 6) |
-| `build.sh` | dai pin agli RPM: stadi `manifest` (scarica i sorgenti dei pin e scrive il loro manifesto), `prep` (sorgenti, patch, gate dei config), `microvm` (prep e il solo kernel guest) e `build` (entrambi i kernel) |
+| `build.sh` | dai pin agli RPM: stadi `manifest` (scarica i sorgenti dei pin e scrive il loro manifesto), `prep` (sorgenti, patch, gate dei config), `microvm` (prep e il solo kernel guest) e `build` (entrambi i kernel); `--variant NOME` per una variante di `variants/` |
+| `variants/` | frammenti che sovrascrivono righe di `kernel-local` per il confronto A/B del benchmark (`o2`: -O2 al posto di -O3); buildid `.ermete.NOME`, mai pubblicati |
+| `repro.py` | la riproducibilita': due build dello stesso pin a confronto (config, System.map, vmlinux per sezioni, moduli senza firma) |
+| `bench.sh`, `bench/init`, `bench-report.py` | il benchmark di tendenza: kernel in QEMU/KVM con hackbench, schbench, fio, netperf; tabelle, confronto A/B e grafici dai `results.json` |
 | `build-inputs.py` | gli input della build come JSON: predicato dell'attestazione dei pin e chiave del riuso in CI |
 | `bump.py` | il bot di bump: `check` (JSON dei pin nuovi) e `apply` (riscrive pins.env, i `FROM` dei Containerfile e la tabella dei pin qui sotto; stampa il corpo della PR) |
 | `nvr.sh` | l'NVR del kernel derivato dai pin, lo stesso che rpmbuild produce e che i tag OCI usano |
 | `builder/Containerfile` | l'ambiente: Fedora pinnata per digest piu' la toolchain LLVM |
 | `boot.sh` | la boot matrix: dal kernel-core a quattro avvii QEMU con le asserzioni della spec |
-| `boot/Containerfile`, `boot/init` | l'ambiente della boot matrix (qemu, OVMF, shim, ukify, Firecracker) e il PID 1 dell'initramfs di prova |
+| `boot/Containerfile`, `boot/init` | l'ambiente della boot matrix (qemu, OVMF, shim, ukify, Firecracker, strumenti di benchmark) e il PID 1 dell'initramfs di prova |
 | `microvm/kernel-local`, `microvm/ermete-kernel-microvm.spec` | il kernel guest per le MicroVM (spec, sezione 9): frammento sopra x86_64_defconfig + kvm_guest.config e lo spec minimo che mette vmlinux, bzImage, config e release in `/usr/lib/ermete/microvm/` |
 | `microvm/boot.sh`, `microvm/init` | il gate del kernel guest: vmlinux in Firecracker con una rootfs ext4 di prova, `K6 RESULT ok` sulla seriale |
 | `nvidia.sh` | i moduli kernel NVIDIA, rami `open` (610) e `legacy` (580), contro il kernel-devel: `build`, `sign` e `manifest` (l'hash del `.run` legacy) |
@@ -90,6 +93,20 @@ podman run --rm --device /dev/kvm -v "$PWD:/forge" -w /forge localhost/ermete-ke
 ```
 
 Firecracker vuole KVM: senza `/dev/kvm` il gate gira solo in CI.
+
+## Settimanale: riproducibilita' e benchmark
+
+`.github/workflows/kernel-weekly.yml` (domenica, dal branch di default; a mano con
+`workflow_dispatch`, anche con la variante `o2` per il confronto A/B di -O3). In locale:
+
+```sh
+podman run --rm -v "$PWD:/forge" -w /forge localhost/ermete-kernel-builder python3 forge/specs/ermete-kernel/repro.py --a /forge/out-a --b /forge/out-b --out /forge/repro-out
+podman run --rm --device /dev/kvm -v "$PWD:/forge" -w /forge localhost/ermete-kernel-boot bash forge/specs/ermete-kernel/bench.sh --rpms /forge/out --out /forge/bench-out
+```
+
+`--a` e `--b` sono due directory di RPM dello stesso pin (la B con il kernel-devel, da cui
+viene `scripts/extract-vmlinux`). Il benchmark senza KVM (`--accel tcg`) prova solo
+l'initramfs: i numeri misurerebbero l'emulatore.
 
 ## Moduli NVIDIA
 
