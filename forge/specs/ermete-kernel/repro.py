@@ -14,7 +14,9 @@ OUT/summary.md e OUT/results.json; esce 1 se c'e' una differenza non attesa.
 """
 
 import argparse
+import gzip
 import hashlib
+import lzma
 import json
 import struct
 import subprocess
@@ -63,9 +65,21 @@ def module_payload(data):
     return data[: len(data) - len(SIG_MARKER) - 12 - sig_len - signer_len - key_id_len]
 
 
+def module_bytes(path):
+    """Il modulo decompresso (Fedora spedisce .ko.xz: la firma sta dentro il flusso)."""
+    data = path.read_bytes()
+    if path.suffix == ".xz":
+        return lzma.decompress(data)
+    if path.suffix == ".gz":
+        return gzip.decompress(data)
+    if path.suffix == ".zst":
+        sys.exit(f"{path.name}: moduli .zst, manca il decompressore")
+    return data
+
+
 def modules(tree):
     return {
-        p.relative_to(tree).as_posix(): sha(module_payload(p.read_bytes()))
+        p.relative_to(tree).as_posix(): sha(module_payload(module_bytes(p)))
         for p in tree.rglob("*.ko*")
     }
 
@@ -73,7 +87,9 @@ def modules(tree):
 def sections(vmlinux):
     """{sezione: sha256 del contenuto}: offset e size da llvm-readelf, byte dal file."""
     data = vmlinux.read_bytes()
-    (elf,) = json.loads(run("llvm-readelf", "-S", "--elf-output-style=JSON", str(vmlinux)))
+    (elf,) = json.loads(
+        run("llvm-readelf", "-S", "--elf-output-style=JSON", str(vmlinux))
+    )
     out = {}
     for entry in elf["Sections"]:
         section = entry["Section"]
@@ -176,6 +192,21 @@ def main():
         findings.append(
             f"moduli presenti in una sola build: {len(only_a)} solo in A, {len(only_b)} solo in B"
         )
+    # Per i primi moduli diversi, quali sezioni differiscono: distingue codice diverso da
+    # soli simboli, rilocazioni o build-id.
+    mod_sections = {}
+    for name in diff_mods[:3]:
+        hashes = {}
+        for label in ("a", "b"):
+            ko = work / f"mod-{label}-{len(mod_sections)}.ko"
+            ko.write_bytes(module_payload(module_bytes(trees[label] / name)))
+            hashes[label] = sections(ko)
+        mod_sections[name] = sorted(
+            s
+            for s in set(hashes["a"]) | set(hashes["b"])
+            if hashes["a"].get(s) != hashes["b"].get(s)
+        )
+    results["modules"]["sections"] = mod_sections
     if diff_mods:
         findings.append(
             f"{len(diff_mods)} moduli con contenuto diverso (firma esclusa)"
@@ -203,6 +234,10 @@ def main():
             f"- {f}" for f in findings
         ]
         if diff_mods:
+            lines += ["", "| modulo | sezioni diverse |", "| --- | --- |"] + [
+                f"| `{name.rsplit('/', 1)[-1]}` | {' '.join(secs) or 'nessuna'} |"
+                for name, secs in mod_sections.items()
+            ]
             lines += (
                 ["", "<details><summary>moduli diversi</summary>", "", "```"]
                 + diff_mods[:200]
