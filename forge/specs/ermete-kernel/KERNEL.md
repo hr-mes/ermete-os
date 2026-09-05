@@ -16,13 +16,15 @@ directory e come si usa.
 | `patches/` | patch di Ermete, in formato git, applicate dopo quelle di CachyOS |
 | `fedora-wins.list` | percorsi in cui un conflitto tra base CachyOS e patch Red Hat si risolve con l'albero Fedora |
 | `cmdline` | la riga di comando del kernel che la UKI firma (spec, sezione 6) |
-| `build.sh` | dai pin agli RPM: stadi `manifest` (scarica i sorgenti dei pin e scrive il loro manifesto), `prep` (sorgenti, patch, gate del config) e `build` |
+| `build.sh` | dai pin agli RPM: stadi `manifest` (scarica i sorgenti dei pin e scrive il loro manifesto), `prep` (sorgenti, patch, gate dei config), `microvm` (prep e il solo kernel guest) e `build` (entrambi i kernel) |
 | `build-inputs.py` | gli input della build come JSON: predicato dell'attestazione dei pin e chiave del riuso in CI |
 | `bump.py` | il bot di bump: `check` (JSON dei pin nuovi) e `apply` (riscrive pins.env, i `FROM` dei Containerfile e la tabella dei pin qui sotto; stampa il corpo della PR) |
 | `nvr.sh` | l'NVR del kernel derivato dai pin, lo stesso che rpmbuild produce e che i tag OCI usano |
 | `builder/Containerfile` | l'ambiente: Fedora pinnata per digest piu' la toolchain LLVM |
 | `boot.sh` | la boot matrix: dal kernel-core a quattro avvii QEMU con le asserzioni della spec |
-| `boot/Containerfile`, `boot/init` | l'ambiente della boot matrix (qemu, OVMF, shim, ukify) e il PID 1 dell'initramfs di prova |
+| `boot/Containerfile`, `boot/init` | l'ambiente della boot matrix (qemu, OVMF, shim, ukify, Firecracker) e il PID 1 dell'initramfs di prova |
+| `microvm/kernel-local`, `microvm/ermete-kernel-microvm.spec` | il kernel guest per le MicroVM (spec, sezione 9): frammento sopra x86_64_defconfig + kvm_guest.config e lo spec minimo che mette vmlinux, bzImage, config e release in `/usr/lib/ermete/microvm/` |
+| `microvm/boot.sh`, `microvm/init` | il gate del kernel guest: vmlinux in Firecracker con una rootfs ext4 di prova, `K6 RESULT ok` sulla seriale |
 | `nvidia.sh` | i moduli kernel NVIDIA, rami `open` (610) e `legacy` (580), contro il kernel-devel: `build`, `sign` e `manifest` (l'hash del `.run` legacy) |
 | `nvidia/Containerfile`, `nvidia/sources.sha256` | l'ambiente di nvidia.sh (la toolchain LLVM del kernel, kmod, openssl) e l'hash del `.run` legacy |
 
@@ -77,6 +79,18 @@ carica moduli nel guest (solo casi UEFI) pretendendo l'errno di insmod: `ENODEV`
 modulo firmato da una MOK arruolata senza il suo hardware, `EKEYREJECTED` per uno non
 firmato. E' la prova della catena dei moduli esterni (spec, sezione 7, gate 4).
 
+## Kernel guest MicroVM
+
+`build.sh --stage microvm` fa il prep e compila solo il kernel guest (pochi minuti): il
+pacchetto `ermete-kernel-microvm` finisce in `out/microvm/`, con `build` accanto agli
+RPM del kernel. Il gate:
+
+```sh
+podman run --rm --device /dev/kvm -v "$PWD:/forge" -w /forge localhost/ermete-kernel-boot bash forge/specs/ermete-kernel/microvm/boot.sh --rpms /forge/out --out /forge/boot-out/microvm
+```
+
+Firecracker vuole KVM: senza `/dev/kvm` il gate gira solo in CI.
+
 ## Moduli NVIDIA
 
 ```sh
@@ -105,6 +119,7 @@ OCI con i soli RPM dentro, tag `<nvr>` (es. `7.1.8-100.ermete.fc43`):
 |----------|-----------|
 | `ghcr.io/hr-mes/ermete-os-kernel` | kernel, core, modules, modules-core/extra/internal, uki-virt |
 | `ghcr.io/hr-mes/ermete-os-kernel-devel` | kernel-devel, per i kmod esterni (NVIDIA, fase K4) |
+| `ghcr.io/hr-mes/ermete-os-kernel:<nvr>-microvm` | ermete-kernel-microvm: vmlinux, bzImage, config e release del kernel guest (sezione 9) |
 | `ghcr.io/hr-mes/ermete-os-kernel-debuginfo` | debuginfo, restano le due versioni piu' recenti |
 | `ghcr.io/hr-mes/ermete-os-nvidia` | i `.ko` NVIDIA firmati, tag `<nvr>-open` e `<nvr>-legacy` (workflow `nvidia-kmod.yml`) |
 

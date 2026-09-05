@@ -366,6 +366,26 @@ pubblicato in `ermete-os-kernel:<nvr>-microvm`. È il kernel che
 `hypervisor-daemon` avvia in Firecracker o cloud-hypervisor; SEV/TDX guest
 restano opzioni del frammento per gli host che li hanno.
 
+**Implementazione (K6).** `build.sh`, dopo `rpmbuild -bp`, deriva il config in
+una directory oggetto separata (`make O=… x86_64_defconfig kvm_guest.config`,
+`merge_config.sh` con `microvm/kernel-local`, `olddefconfig`) e lo verifica riga
+per riga come `kernel-local` (`check_delta`): il gate del frammento gira anche
+in `prep`, quindi nelle PR del bot. Negli stadi `microvm` e `build` compila con
+`rpmbuild -bb microvm/ermete-kernel-microvm.spec` (una quarantina di righe:
+`%build` con `O=` sull'albero preparato, `%install` di `vmlinux` senza DWARF ma
+con simboli e `.BTF`, `bzImage`, `config` e `release` in
+`/usr/lib/ermete/microvm/`), pochi minuti prima del kernel principale, che
+trova l'albero pulito. Il pacchetto va in `out/microvm/` e nell'OCI
+`ermete-os-kernel:<nvr>-microvm` (stesso `publish`: SBOM, firma, attestazione
+dei pin, retention come release). Gate (job `boot`, `microvm/boot.sh`):
+Firecracker, release GitHub pinnata per hash in `boot/Containerfile`, avvia il
+`vmlinux` con una rootfs ext4 di prova (busybox, `microvm/init`) e il guest
+chiude con `K6 RESULT ok` dopo le asserzioni: `uname -r` atteso, root su
+virtio-blk, BTF, erofs/9p/virtiofs/overlay/ext4, device-mapper con
+`DM_VERITY` nel config, niente moduli, kCFI, `dmesg` pulito. Con il kernel
+riusato il pacchetto viene dall'OCI pubblicato. Frammento e spec sono input del
+riuso (`build-inputs.py`).
+
 ## 10. NVIDIA, AMD, Intel
 
 AMD e Intel sono in-tree (`amdgpu`, `radeon`, `i915`, `xe`) con `linux-firmware`
